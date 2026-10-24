@@ -9,11 +9,17 @@ import {fileURLToPath} from 'node:url';
 const root=dirname(dirname(fileURLToPath(import.meta.url)));
 const repo='dajuns5567/FFL-trade-finder';
 const pr=404;
-const audit=spawnSync(process.execPath,[join(root,'scripts','fleeced-local-playwright-audit.mjs')],{
+let audit=spawnSync(process.execPath,[join(root,'scripts','fleeced-local-playwright-audit.mjs')],{
  cwd:root,stdio:'inherit',env:{...process.env,FLEECED_HEADLESS:'1'},timeout:180000
 });
 if(audit.error)throw audit.error;
-const report=JSON.parse(await readFile(join(root,'playwright-local-audit.json'),'utf8'));
+let report=JSON.parse(await readFile(join(root,'playwright-local-audit.json'),'utf8'));
+if(!report.authenticated&&process.env.FLEECED_ALLOW_INTERACTIVE==='1'){
+ console.log('Saved session unavailable. Opening the persistent browser profile for interactive sign-in.');
+ audit=spawnSync(process.execPath,[join(root,'scripts','fleeced-local-playwright-audit.mjs')],{cwd:root,stdio:'inherit',env:{...process.env,FLEECED_HEADLESS:'0'},timeout:240000});
+ if(audit.error)throw audit.error;
+ report=JSON.parse(await readFile(join(root,'playwright-local-audit.json'),'utf8'));
+}
 const checks=report.checks||{};
 const safe={
  source:'fleeced-local-playwright-audit',
@@ -24,6 +30,8 @@ const safe={
  complete_edition_verified:report.complete_edition_verified===true,
  week5_diagnostic:checks.week5_diagnostic||null,
  week5_draft_readback:checks.week5_draft_readback||null,
+ preview_diagnostic_requests:checks.preview_diagnostic_requests||[],
+ reader_runtime:checks.reader_runtime||null,
  ui_flags:{
   not_ready:checks.not_ready===true,
   missing_archive:checks.missing_archive===true,

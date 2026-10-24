@@ -153,3 +153,12 @@ test('weekly structural checker blocks recycled column openings instead of rewar
  assert.match(previewJobSource,/auditPrivateEdition\(edition\)/);
  assert.match(previewJobSource,/auditPrivateEdition\(readback\)/);
 });
+
+test('exact saved manuscript digest is required before any week is marked completed',()=>{
+ assert.match(previewJobSource,/createHash/);
+ assert.match(previewJobSource,/fingerprint\(readback\)!==fingerprint\(edition\)/);
+ const write=previewJobSource.indexOf('await store.setJSON(identity.edition,edition)');
+ const digest=previewJobSource.indexOf('fingerprint(readback)!==fingerprint(edition)');
+ const complete=previewJobSource.indexOf("state:'completed'",write);
+ assert.ok(write>=0&&digest>write&&complete>digest);
+});

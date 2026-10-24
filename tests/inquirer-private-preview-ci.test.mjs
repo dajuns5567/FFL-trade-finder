@@ -268,3 +268,10 @@ test('forward newsroom performs plural team possessive edit after narrative cura
  const possessive=source.indexOf('replaceAll(team+"\'s",team+"\'")',curation);
  assert.ok(curation>=0&&possessive>curation);
 });
+
+test('forward fan scenes rotate direct football satire with fictional-fan vignettes',()=>{
+ const generator=readFileSync(new URL('../netlify/functions/inquirer-editorial-v31.mjs',import.meta.url),'utf8');
+ assert.match(generator,/const footballAngles=\[/);
+ assert.match(generator,/Number\(week\)>=5&&Number\(t\.roster_id\)%2===0/);
+ assert.match(generator,/return footballAngles\[/);
+});

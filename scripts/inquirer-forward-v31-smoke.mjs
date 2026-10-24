@@ -43,11 +43,18 @@ const badTeams=(lastQuality?.issues||[]).filter(x=>x.id==='plural-team-agreement
 const badAgreement=(lastCandidate?.teams||[]).flatMap(t=>[t.inquirer_article?.headline,...(t.inquirer_article?.paragraphs||[])]).concat(
   ...(lastCandidate?.league_overview?.sections||[]).flatMap(s=>[s.heading,...(s.paragraphs||[])]),
   ...(lastCandidate?.league_overview?.hot_takes||[]).flatMap(h=>[h.title,h.take])).filter(s=>badTeams.some(name=>String(s||'').toLowerCase().includes(name.toLowerCase())&&new RegExp(name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+' (?:does|gets|has|is|needs|sits|keeps|projects)\\b','i').test(String(s||'')))).slice(0,8);
+const copyEntities=[...lastCandidate.teams,...week2.teams].flatMap(t=>[t.team_name,t.manager_name,t.opponent_name,t.next_opponent_name,...(t.starter_details||[]).map(p=>p.name)]).filter(Boolean).map(String).sort((a,b)=>b.length-a.length);
+const copyEscape=value=>[...String(value)].map(ch=>".*+?^$(){}|[]".includes(ch)||ch.charCodeAt(0)===92?'\\'+ch:ch).join('');
+const copyNorm=value=>{
+ let out=String(value||'');
+ for(const entity of copyEntities)out=out.replace(new RegExp(copyEscape(entity),'gi'),'[ENTITY]');
+ return out.toLowerCase().replace(/\\b\\d+(?:\\.\\d+)?%?\\b/g,'[#]').replace(/\\s+/g,' ').trim();
+};
 const copiedExamples=(lastCandidate?.teams||[]).filter(t=>['Tampa Bay Buccaneers','Seattle Seahawks'].includes(t.team_name)).map(t=>{
  const prev=week2.teams.find(p=>String(p.roster_id)===String(t.roster_id));
  const sentences=x=>String((x?.inquirer_article?.paragraphs||[]).join(' ')).split(/(?<=[.!?])\\s+/).map(y=>y.trim()).filter(y=>y.split(/\\s+/).length>=10);
- const prior=new Set(sentences(prev).map(x=>x.toLowerCase().replace(/\\b\\d+(?:\\.\\d+)?%?\\b/g,'[#]').replace(/\\s+/g,' ').trim()));
- return{team:t.team_name,reused:sentences(t).filter(y=>prior.has(y.toLowerCase().replace(/\\b\\d+(?:\\.\\d+)?%?\\b/g,'[#]').replace(/\\s+/g,' ').trim())).slice(0,8)};
+ const prior=new Set(sentences(prev).map(copyNorm));
+ return{team:t.team_name,reused:sentences(t).filter(y=>prior.has(copyNorm(y))).slice(0,8)};
 });
 assert.ok(week3,'Forward engine must find a non-copying Week 3 variant within the live retry budget; last quality='+JSON.stringify(lastQuality)+'; grammar excerpts='+JSON.stringify(badAgreement)+'; repeated content='+JSON.stringify(copiedExamples));
 assert.equal(week3.teams.length,32);

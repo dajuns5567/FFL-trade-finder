@@ -40,6 +40,14 @@ export default async function inquirerPreviewDiagnostic(req){
    status={state:'completed',season:identity.season,week:identity.week,preview_only:true,
      restored_from_saved_manuscript:true};
  }
+ // Persisted status alone is never proof that the stored draft still meets
+ // the current newsroom contract. Fail closed even for old completed flags.
+ if(status?.state==='completed'&&!(savedEdition&&
+    Number(savedEdition.season)===identity.season&&Number(savedEdition.week)===identity.week&&
+    savedEdition.preview_only===true&&savedEdition.published_locked===false&&
+    auditPrivateEdition(savedEdition).passed))
+  status={state:'editorial-hold',season:identity.season,week:identity.week,
+    reason:'Saved draft is missing or does not pass the current editorial audit'};
  // A status saved under a previous UI version or a week-mislabeled error
  // must never pass the requested Week 5 diagnostic or be treated as complete.
  if(status&&!previewStatusMatchesIdentity(status,identity))
@@ -52,7 +60,7 @@ export default async function inquirerPreviewDiagnostic(req){
   if(!draft||Number(draft.season)!==identity.season||Number(draft.week)!==identity.week)
    return json({ready:false,error:'Private manuscript identity or storage mismatch'},409);
   const audit=auditPrivateEdition(draft);
-  return json({ready:true,season:identity.season,week:identity.week,editorial:audit,
+  return json({ready:audit.passed,season:identity.season,week:identity.week,editorial:audit,
    publication_ready:false,requires_human_editorial_review:true,
    status:audit.passed?'STRUCTURAL_PASS_HUMAN_REVIEW_REQUIRED':'HOLD'});
  }
@@ -75,8 +83,8 @@ export default async function inquirerPreviewDiagnostic(req){
   let edition;
   try{edition=await store.get(identity.edition,{type:'json'})||await legacy.get(identity.edition,{type:'json'})}
   catch(error){return json({error:'Private draft storage temporarily unavailable'},503)}
-  return edition?.preview_only===true&&edition?.published_locked===false
-   ?json(edition):json({error:'Unpublished draft not found'},404);
+  return edition?.preview_only===true&&edition?.published_locked===false&&auditPrivateEdition(edition).passed
+   ?json(edition):json({error:'Unpublished draft failed current editorial requirements'},409);
  }
  return json({
   status:status||{state:'not-started'},

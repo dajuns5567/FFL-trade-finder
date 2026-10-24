@@ -210,7 +210,7 @@ test('verified persisted manuscript wins over lost preview status after redeploy
 
 test('a persisted preview cannot regain completed status with empty evidence-backed value desks',()=>{
  const audit=readFileSync(new URL('../netlify/functions/lib/inquirer-preview-diagnostics.mjs',import.meta.url),'utf8');
- assert.match(audit,/empty value desk despite market data roster/);
+ assert.match(audit,/empty value desk roster/);
  assert.match(previewDiagnosticSource,/auditPrivateEdition\(savedEdition\)\.passed/);
 });
 
@@ -231,4 +231,10 @@ test('audit readiness requires both upstream quality gates and completed audited
  assert.match(previewDiagnosticSource,/const approved=audit\.passed&&draft\.preview_editorial_audit\?\.ok===true&&/);
  assert.match(previewDiagnosticSource,/draft\.preview_generation_quality\?\.ok===true&&status\?\.state==='completed'/);
  assert.match(previewDiagnosticSource,/ready:approved/);
+});
+
+test('value desk quality gate does not depend on optional roster-value adapter keys',()=>{
+ const audit=readFileSync(new URL('../netlify/functions/lib/inquirer-preview-diagnostics.mjs',import.meta.url),'utf8');
+ assert.match(audit,/value\.paragraphs\.some/);
+ assert.doesNotMatch(audit,/value_history_week/);
 });

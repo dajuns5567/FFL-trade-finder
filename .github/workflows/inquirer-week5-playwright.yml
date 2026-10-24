@@ -58,9 +58,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install Chromium
-        run: |
-          npm install --no-save --package-lock=false playwright
-          npx playwright install --with-deps chromium
+      - name: Install Playwright library (use preinstalled Chrome)
+        run: npm install --no-save --package-lock=false playwright
       - name: Verify actual reader in Chromium using synthetic Week 5 fixtures
         run: node scripts/inquirer-reader-browser-regression.mjs

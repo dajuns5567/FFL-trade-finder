@@ -88,6 +88,8 @@ for(const week of [5,6,9,14]){
     const fanDiagnostics=audit.issues.filter(x=>x.id==='fan-sentiment').map(x=>({team:x.team,sections:edition.teams.find(t=>t.team_name===x.team)?.inquirer_article?.sections?.filter(s=>s.kind==='sentiment').map(s=>s.paragraphs?.map(p=>String(p).length))}));
     assert.ok(audit.ok,'Week '+week+' salt '+salt+' failed publication copy audit: '+JSON.stringify(audit.issues.slice(0,8))+'; fan details='+JSON.stringify(fanDiagnostics));
     assert.ok(edition.teams.every(t=>!/(?:could not turn the came in result|eligible option|fleeced signal)/i.test((t.inquirer_article?.paragraphs||[]).join(' '))),'Forward copy must not contain malformed or meta prose');
+    const readerCopy=edition.teams.flatMap(t=>[t.inquirer_article?.headline,...(t.inquirer_article?.paragraphs||[])]).join(' ');
+    assert.doesNotMatch(readerCopy,/\ban 9(?:\.\d+)?-point\b/i,'Nine-point numeric adjectives require a, not an');
     const q=evaluateInquirerEditionQuality(edition,week2);
     const badGrammarTeams=q.issues.filter(x=>x.id==='plural-team-agreement').map(x=>x.team);
     const grammarExamples=badGrammarTeams.flatMap(name=>{

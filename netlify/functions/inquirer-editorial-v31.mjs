@@ -4083,6 +4083,13 @@ function assertWeek2Originality(result,previousEdition){
       article.sections=sectionOrder.map(k=>byKind.get(k)).filter(Boolean);
       article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);
       curateForwardTeamNarrative(t,week);
+      // Final-stage copy edits must run after narrative curation, which may
+      // rewrite sections. English plural team names take a trailing apostrophe.
+      if(/s$/i.test(team)){
+        for(const desk of article.sections||[])
+          desk.paragraphs=(desk.paragraphs||[]).map(p=>String(p).replaceAll(team+"'s",team+"'"));
+      }
+      article.paragraphs=(article.sections||[]).flatMap(s=>s.paragraphs||[]);
     }
     const first=overview.sections?.[0];
     if(first?.blocks?.length){

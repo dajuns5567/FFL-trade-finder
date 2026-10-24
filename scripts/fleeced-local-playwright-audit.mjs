@@ -88,6 +88,20 @@ try{
  };
  report.checks.reader_consistency.inconsistent=report.checks.reader_consistency.completed_week5_diagnostic&&report.checks.reader_consistency.valid_week5_draft&&report.checks.reader_consistency.visible_week6_failure;
  if(report.checks.reader_consistency.inconsistent)report.errors.push('STALE_READER_WEEK_MISMATCH: validated Week 5 draft exists, but the rendered page displays Week 6 failure.');
+ // Probe the requested manuscript endpoint after the UI has settled. This
+ // separates an old rendered error from a current server-side failure.
+ const reader=draftUrl.href;
+ try{
+  const res=await context.request.get(reader,{timeout:20000});
+  const payload=await res.json().catch(()=>null);
+  report.checks.reader_vs_endpoint={
+   reader_not_ready:report.checks.not_ready===true,
+   endpoint_http_status:res.status(),
+   endpoint_correct_week:Number(payload?.week)===5&&Number(payload?.season)===2026,
+   endpoint_private:payload?.preview_only===true&&payload?.published_locked===false,
+   inconsistency:report.checks.not_ready===true&&res.status()===200&&Number(payload?.week)===5&&payload?.preview_only===true&&payload?.published_locked===false
+  };
+ }catch(e){report.checks.reader_vs_endpoint={error:String(e.message||e).slice(0,160)};}
  report.checks.reader_runtime={
   current_url:page.url().replace(/([?&])[^=]+=[^&]*/g,'$1[redacted]'),
   page_errors:jsFailures.slice(0,10),

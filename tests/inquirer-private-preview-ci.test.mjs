@@ -190,3 +190,12 @@ test('production candidate evaluator enforces original Week5 anti-scaffold findi
  assert.match(narrative,/nameSalt/);
  assert.match(narrative,/The play-by-play records/);
 });
+
+test('a previously saved edition cannot be overwritten or regenerated after a lost status key',()=>{
+ const preexisting=previewJobSource.indexOf('const previouslySaved=await store.get(identity.edition');
+ const generation=previewJobSource.indexOf('const edition=await weeklyReport(');
+ assert.ok(preexisting>=0&&generation>preexisting,'existing draft check precedes generation');
+ assert.match(previewJobSource,/if\(previouslySaved\)/);
+ assert.match(previewJobSource,/setJSON\(identity\.edition,edition,\{onlyIfNew:true\}\)/);
+ assert.match(previewJobSource,/existing weekly manuscript won the create-only write/);
+});

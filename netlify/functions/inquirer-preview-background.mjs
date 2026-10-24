@@ -21,6 +21,14 @@ export default async function generateInquirerPreview(req){
  const legacy=getDeployStore({name:PREVIEW_DIAGNOSTIC_STORE,consistency:'strong'});
  // A transient store outage is not evidence that no draft exists.
  // Fail closed rather than launching overlapping 32-column jobs.
+ // A prior manuscript is sacrosanct even if its completion status was lost.
+ // Never regenerate or replace a reviewed draft merely because of a rebuild,
+ // changed quality policy, or missing status record.
+ const previouslySaved=await store.get(identity.edition,{type:'json'})||await legacy.get(identity.edition,{type:'json'});
+ if(previouslySaved){
+  console.info('inquirer-preview-background-existing-manuscript-protected',identity.week);
+  return;
+ }
  const observed=await store.get(identity.status,{type:'json'})||await legacy.get(identity.status,{type:'json'});
  const existing=previewStatusMatchesIdentity(observed,identity)?observed:null;
  const age=Date.now()-Date.parse(existing?.started_at||0);
@@ -57,7 +65,9 @@ export default async function generateInquirerPreview(req){
    failure.rejected_summary={...summarizePreviewDiagnostic(edition),structural};
    throw failure;
   }
-  await store.setJSON(identity.edition,edition);
+  const write=await store.setJSON(identity.edition,edition,{onlyIfNew:true});
+  if(write?.modified!==true)
+   throw Error('An existing weekly manuscript won the create-only write; refusing replacement.');
   // Never mark a week complete until the *same deploy-local manuscript* can
   // be read back and independently passes the exact requested-week checks.
   // An incomplete write must remain a hold, not a phantom completed edition.

@@ -254,3 +254,10 @@ test('blank-market safeguards also reject legacy n/a placeholders',()=>{
  assert.ok(generator.includes('!/\\^n\\/?a$/i.test'.replace('\\^','^')));
  assert.ok(audit.includes('!/\\^n\\/?a$/i.test'.replace('\\^','^')));
 });
+
+test('the public publication gate rejects blank valuation desks without relying on a market-value field',()=>{
+ const guard=readFileSync(new URL('../netlify/functions/inquirer-publication-guard.mjs',import.meta.url),'utf8');
+ assert.match(guard,/if\(Number\(edition\?\.season\)>=2026&&Number\(edition\?\.week\)>=5\)/);
+ assert.match(guard,/id:'empty-value-desk'/);
+ assert.doesNotMatch(guard,/t\.value_history_week\?\.value!=null/);
+});

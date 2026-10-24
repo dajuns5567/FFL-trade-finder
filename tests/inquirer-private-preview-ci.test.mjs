@@ -162,3 +162,11 @@ test('exact saved manuscript digest is required before any week is marked comple
  const complete=previewJobSource.indexOf("state:'completed'",write);
  assert.ok(write>=0&&digest>write&&complete>digest);
 });
+
+test('private weekly manuscripts survive preview rebuilds in a PR-isolated store',()=>{
+ assert.match(previewJobSource,/getStore\('fleeced-inquirer-private-pr402-persistent'/);
+ assert.match(previewJobSource,/getDeployStore/);
+ assert.match(previewDiagnosticSource,/getStore\('fleeced-inquirer-private-pr402-persistent'/);
+ assert.match(previewDiagnosticSource,/legacy\.get\(identity\.edition/);
+ assert.match(previewJobSource,/get\(identity\.status/);
+});

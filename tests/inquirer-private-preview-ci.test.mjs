@@ -30,16 +30,15 @@ test('the only successful unattended enqueue is HTTP 202; operational errors sti
   assert.match(queueJob,/exit 1/);
 });
 
-test('authenticated preview reader starts an isolated draft and reports real states',()=>{
-  assert.match(readerSource,/inquirer-preview-diagnostic\?draft=1/);
-  assert.match(readerSource,/inquirer-preview-background\?start=1/);
-  assert.match(readerSource,/status\.state==='not-started'/);
-  assert.match(readerSource,/status\.state==='running'/);
-  assert.match(readerSource,/status\.state==='error'/);
-  assert.match(readerSource,/queued\.status!==202/);
+test('preview reader is read-only and reports real states without starting regeneration',()=>{
+  assert.match(readerSource,/inquirer-preview-diagnostic\\?draft=1/);
+  assert.doesNotMatch(readerSource,/fetch\\(info\\?\\.start_url/);
+  assert.doesNotMatch(readerSource,/fetch\\(\\'\\/\\.netlify\\/functions\\/inquirer-preview-background/);
+  assert.match(readerSource,/status\\.state==='not-started'/);
+  assert.match(readerSource,/status\\.state==='running'/);
+  assert.match(readerSource,/status\\.state==='error'/);
+  assert.match(readerSource,/no generation was triggered/);
   assert.match(readerSource,/preview is not ready/);
-  assert.match(readerSource,/if\(isRunning&&\+\+inquirerPreviewPollAttempts/);
-  assert.doesNotMatch(readerSource,/<h3>Private Week 5 preview is generating<\/h3>/);
 });
 
 test('a failed editorial gate retains only a deploy-local rejected review copy',()=>{
@@ -82,7 +81,7 @@ test('every private draft targets the requested or latest completed week rather 
 test('private reader never shares a completed Week 3 result with a Week 5 or Week 6 request',()=>{
  const diagnostics=readFileSync(new URL('../netlify/functions/lib/inquirer-preview-diagnostics.mjs',import.meta.url),'utf8');
  assert.match(readerSource,/inquirer-preview-diagnostic\?draft=1'\+scope/);
- assert.match(readerSource,/info\?\.start_url/);
+ assert.doesNotMatch(readerSource,/fetch\(info\?\.start_url/);
  assert.match(readerSource,/scope\?'\?'\+scope\.slice\(1\)/);
  assert.match(previewJobSource,/get\(identity\.status/);
  assert.match(previewJobSource,/setJSON\(identity\.edition/);
@@ -98,20 +97,12 @@ test('unpublished previews explain missing historical archives before generic we
  assert.match(previewJobSource,/edition\?\.preview_only!==true\|\|edition\?\.published_locked!==false\|\|edition\?\.available!==true/);
 });
 
-test('a previously failed Week 5 preview automatically retries only after the exact locked history is restored',()=>{
- assert.match(readerSource,/async function canRetryArchiveBlockedPreview\(season,targetWeek\)/);
- assert.match(readerSource,/length:targetWeek-3/);
- assert.match(readerSource,/isVerifiedHistoricalPreviewEdition\(edition,season,i\+3\)/);
- assert.match(readerSource,/if\(!history\.every\(/);
- assert.match(readerSource,/const week4=history\[1\]/);
- assert.match(readerSource,/cool-throne/);
- assert.match(readerSource,/Week 3 is the earliest missing locked archive/);
- assert.match(readerSource,/if\(again\.status===202\)throw Error/);
- assert.match(readerSource,/!inquirerPreviewLaunchAttempted/);
- assert.match(readerSource,/info\?\.target\?\.week/);
- assert.match(readerSource,/status\.week/);
+test('failed historical preview never auto-retries or regenerates while the reader opens',()=>{
+ assert.match(readerSource,/async function canRetryArchiveBlockedPreview\\(season,targetWeek\\)/);
  assert.match(readerSource,/Refusing to display stale diagnostic text/);
- assert.match(readerSource,/inquirerPreviewPollAttempts<=80/);
+ assert.doesNotMatch(readerSource,/if\\(again\\.status===202\\)throw Error/);
+ assert.doesNotMatch(readerSource,/fetch\\(info\\?\\.start_url/);
+ assert.match(readerSource,/no generation was triggered/);
 });
 
 test('diagnostic outages never masquerade as a missing week or launch duplicate expensive jobs',()=>{

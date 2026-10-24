@@ -7,7 +7,7 @@ const base='https://deploy-preview-402--transcendent-manatee-2f0123.netlify.app'
 const html='<html><head><title>Fleeced! Preview</title></head><body><div class="tabs"><button data-tab="daily">Daily</button></div><main><section class="tab" id="daily"></section></main><script src="/league-hub-v451.js"></script></body></html>';
 const checks=[];let browser;
 try{
- browser=await chromium.launch({headless:true});
+ browser=await chromium.launch({headless:true,channel:'chrome'});
  for(const sample of [{name:'missing-draft',status:404},{name:'wrong-week',status:200}]){
   const ctx=await browser.newContext();const page=await ctx.newPage();const requests=[];
   page.on('request',r=>requests.push(r.url()));

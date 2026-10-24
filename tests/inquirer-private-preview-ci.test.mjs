@@ -170,3 +170,11 @@ test('private weekly manuscripts survive preview rebuilds in a PR-isolated store
  assert.match(previewDiagnosticSource,/legacy\.get\(identity\.edition/);
  assert.match(previewJobSource,/get\(identity\.status/);
 });
+
+test('sitewide persistent draft is visible only on the originating protected PR402 host',()=>{
+ const expected='deploy-preview-402--transcendent-manatee-2f0123.netlify.app';
+ assert.ok(previewJobSource.includes(expected));
+ assert.ok(previewDiagnosticSource.includes(expected));
+ assert.match(previewJobSource,/new Response\('Forbidden',\{status:403\}\)/);
+ assert.match(previewDiagnosticSource,/Private editorial store reserved for PR 402/);
+});

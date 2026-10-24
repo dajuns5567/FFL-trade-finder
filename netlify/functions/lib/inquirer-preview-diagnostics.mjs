@@ -70,7 +70,7 @@ const REQUIRED_DESKS=['lede','players','management','hot-seat','cool-throne','va
 const REQUIRED_BEATS=['lead','standings','players','decisions','league','outlook'];
 export function auditPrivateEdition(edition){
  const teams=Array.isArray(edition?.teams)?edition.teams:[],counts={},rosters=new Set(),paragraphs=new Map();
- const issues=[],lengths=[];
+ const issues=[],lengths=[],openings=new Map();
  for(const t of teams){
   const id=String(t?.roster_id||'');rosters.add(id);
   const article=t?.inquirer_article||{},sections=Array.isArray(article.sections)?article.sections:[];
@@ -79,6 +79,14 @@ export function auditPrivateEdition(edition){
   if(REQUIRED_DESKS.some(kind=>!kinds.includes(kind)))issues.push('missing desks roster '+id);
   if(!String(article.headline||'').trim())issues.push('missing headline roster '+id);
   const prose=sections.flatMap(s=>Array.isArray(s?.paragraphs)?s.paragraphs:[]);
+  // Repeated opening riffs make 32 otherwise valid columns read like one
+  // template. Limit normalized, sufficiently substantial opening sentences.
+  const first=String(prose.find(p=>String(p||'').trim())||'').split(/[.!?](?:\\s|$)/)[0]
+   .toLowerCase().replace(/[^a-z0-9\\s]/g,'').replace(/\\s+/g,' ').trim();
+  if(first.split(' ').length>=10){
+   const seen=openings.get(first)||[];
+   seen.push(id);openings.set(first,seen);
+  }
   const words=prose.join(' ').trim().split(/\s+/).filter(Boolean).length;
   lengths.push(words);
   if(words<300||words>650)issues.push('article length roster '+id+': '+words);
@@ -91,6 +99,8 @@ export function auditPrivateEdition(edition){
  if(teams.length!==32||rosters.size!==32)issues.push('32 distinct team articles required');
  if(Object.keys(counts).length!==4||Object.values(counts).some(c=>c!==8))issues.push('four reporters, eight articles each required');
  const repeated=[...paragraphs].filter(([,ids])=>ids.size>=3);
+ const repeatedOpenings=[...openings].filter(([,ids])=>ids.length>=3);
+ if(repeatedOpenings.length)issues.push('recycled column openings: '+repeatedOpenings.length);
  if(repeated.length)issues.push('repeated cross-roster paragraphs: '+repeated.length);
  const overview=edition?.league_overview||{},blocks=overview?.sections?.[0]?.blocks||[];
  if(!Array.isArray(overview.sections)||overview.sections.length<4||
@@ -100,5 +110,5 @@ export function auditPrivateEdition(edition){
  if(edition?.preview_editorial_audit?.ok!==true||edition?.preview_generation_quality?.ok!==true)issues.push('underlying editorial audit failed');
  return{passed:issues.length===0,issues,article_count:teams.length,reporter_counts:counts,
   word_counts:{minimum:lengths.length?Math.min(...lengths):null,maximum:lengths.length?Math.max(...lengths):null,average:lengths.length?Math.round(lengths.reduce((a,b)=>a+b,0)/lengths.length):null},
-  repeated_paragraph_groups:repeated.length,recap_beats:blocks.map(b=>b.kind)};
+  repeated_paragraph_groups:repeated.length,recycled_opening_groups:repeatedOpenings.length,recap_beats:blocks.map(b=>b.kind)};
 }

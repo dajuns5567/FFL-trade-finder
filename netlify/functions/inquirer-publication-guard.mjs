@@ -37,6 +37,13 @@ export function inspectEditionBeforePublication(edition) {
     if(!article?.headline||!article?.byline||!article?.reporter?.id)issues.push({id:'article-metadata',team});
     const paragraphs=articleParagraphs(article),substantive=paragraphs.filter(p=>p.trim().length>=50);
     if(substantive.length<6)issues.push({id:'article-depth',team,count:substantive.length});
+    // A heading without prose is not an editorial desk. Check forward
+    // editions with real valuation snapshots without altering locked history.
+    if(Number(edition?.season)>=2026&&Number(edition?.week)>=5&&t.value_history_week?.value!=null){
+      const value=(article?.sections||[]).find(s=>s.kind==='value');
+      if(!value||(value.paragraphs||[]).every(p=>!String(p||'').trim()))
+        issues.push({id:'empty-value-desk',team});
+    }
     const fan=(article?.sections||[]).find(s=>s.kind==='sentiment');
     if(!fan||fan.paragraphs?.filter(p=>String(p).length>=50).length<2)issues.push({id:'fan-sentiment',team});
     const opponent=rosterById.get(String(t.opponent_roster_id));

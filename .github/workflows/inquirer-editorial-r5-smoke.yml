@@ -92,6 +92,7 @@ jobs:
           node --check scripts/inquirer-v25-generated-audit.mjs
           node --check scripts/inquirer-forward-v31-smoke.mjs
           node --check scripts/inquirer-authenticated-browser-audit.mjs
+          node --check scripts/inquirer-playwright-auth-setup.mjs
           node --check scripts/migrate-fleeced-blobs.mjs
           node --check netlify/functions/lib/inquirer-legacy-history.mjs
           node --check scripts/inquirer-preview-browser-audit.js

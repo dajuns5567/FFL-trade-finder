@@ -4,48 +4,47 @@ on:
   pull_request:
     paths:
       - '.github/workflows/inquirer-week5-playwright.yml'
-      - 'scripts/inquirer-week5-playwright-audit.mjs'
-      - 'netlify/functions/inquirer-preview-diagnostic.mjs'
-      - 'netlify/functions/lib/inquirer-preview-diagnostics.mjs'
+      - 'scripts/inquirer-authenticated-browser-audit.mjs'
 permissions:
   contents: read
 jobs:
   browser:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 15
+    env:
+      PREVIEW_URL: https://deploy-preview-402--transcendent-manatee-2f0123.netlify.app/?inquirer_preview=1&preview_week=5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Gate missing SSO authentication without claiming success
-        id: auth
+      - name: Require valid private audit credentials (do not report a skipped audit as passed)
         env:
-          HAS_BROWSER_STATE: ${{ secrets.INQUIRER_PLAYWRIGHT_STORAGE_STATE != '' }}
+          STATE_B64: ${{ secrets.FLEECED_PLAYWRIGHT_STORAGE_STATE_B64 }}
+        shell: bash
         run: |
-          if [ "$HAS_BROWSER_STATE" != "true" ]; then
-            echo 'SSO browser state unavailable: live browser verification is NOT complete.' >> "$GITHUB_STEP_SUMMARY"
-            echo 'available=false' >> "$GITHUB_OUTPUT"
-          else
-            echo 'available=true' >> "$GITHUB_OUTPUT"
+          if [ -z "$STATE_B64" ]; then
+            echo "::error::Private browser audit BLOCKED: authenticated SSO state unavailable."
+            exit 1
           fi
-      - name: Install Playwright only when authenticated
-        if: steps.auth.outputs.available == 'true'
+          umask 077
+          printf '%s' "$STATE_B64" | base64 --decode | gzip -dc > "$RUNNER_TEMP/netlify-playwright-state.json"
+          node -e "const s=require(process.argv[1]);if(!Array.isArray(s.cookies)||!Array.isArray(s.origins))process.exit(1)" "$RUNNER_TEMP/netlify-playwright-state.json"
+      - name: Install Playwright
         run: |
           npm install --no-save --package-lock=false playwright
           npx playwright install --with-deps chromium
-      - name: Inspect protected Week 5 preview
-        if: steps.auth.outputs.available == 'true'
+      - name: Inspect actual protected Week 5 newspaper
         env:
-          INQUIRER_PLAYWRIGHT_STORAGE_STATE: ${{ secrets.INQUIRER_PLAYWRIGHT_STORAGE_STATE }}
-        run: node scripts/inquirer-week5-playwright-audit.mjs
-      - name: Save private browser audit and screenshot
-        if: always() && steps.auth.outputs.available == 'true'
+          PLAYWRIGHT_STATE_FILE: ${{ runner.temp }}/netlify-playwright-state.json
+        run: node scripts/inquirer-authenticated-browser-audit.mjs
+      - name: Upload truthful browser diagnostic (never credentials)
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: fleeced-week5-private-browser-audit
-          path: |
-            /tmp/inquirer-week5-browser-audit.json
-            /tmp/inquirer-week5-browser.png
-          if-no-files-found: warn
-          retention-days: 2
+          name: week5-protected-browser-audit
+          path: playwright-audit-result.json
+          if-no-files-found: ignore
+      - name: Destroy ephemeral browser authentication
+        if: always()
+        run: rm -f "$RUNNER_TEMP/netlify-playwright-state.json"

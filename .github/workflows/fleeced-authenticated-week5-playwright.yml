@@ -6,8 +6,6 @@ on:
     paths:
       - 'scripts/inquirer-authenticated-browser-audit.mjs'
       - '.github/workflows/fleeced-authenticated-week5-playwright.yml'
-  pull_request:
-    types: [opened, synchronize, reopened]
   workflow_dispatch:
     inputs:
       target_url:

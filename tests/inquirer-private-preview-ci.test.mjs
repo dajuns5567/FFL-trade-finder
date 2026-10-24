@@ -178,3 +178,15 @@ test('sitewide persistent draft is visible only on the originating protected PR4
  assert.match(previewJobSource,/new Response\('Forbidden',\{status:403\}\)/);
  assert.match(previewDiagnosticSource,/Private editorial store reserved for PR 402/);
 });
+
+test('production candidate evaluator enforces original Week5 anti-scaffold findings for every future week',()=>{
+ const editorial=readFileSync(new URL('../netlify/functions/inquirer-editorial-v31.mjs',import.meta.url),'utf8');
+ const narrative=readFileSync(new URL('../netlify/functions/inquirer-narrative-architecture.mjs',import.meta.url),'utf8');
+ assert.match(editorial,/cross-team-nine-word-scaffold/);
+ assert.match(editorial,/extendedPhraseOwners/);
+ assert.match(editorial,/zero-point-production-praise/);
+ assert.match(editorial,/scored exactly 0\.0, including 0\.0/);
+ assert.match(narrative,/const evidenceIndex=/);
+ assert.match(narrative,/nameSalt/);
+ assert.match(narrative,/The play-by-play records/);
+});

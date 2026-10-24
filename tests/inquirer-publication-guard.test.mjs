@@ -20,7 +20,7 @@ const makeEdition=()=>{
    {kind:'management',heading:'Management judgment',paragraphs:[prose[3]]},
    {kind:'hot-seat',heading:'The problem to solve',paragraphs:[prose[4]]},
    {kind:'cool-throne',heading:'The bright spot',paragraphs:[prose[5]]},
-   {kind:'value',heading:'Market movement report',paragraphs:[]},
+   {kind:'value',heading:'Market movement report',paragraphs:[name+' recorded a verified '+id+'-point market movement; '+distinct+' tracks its own roster valuation without pretending that a market movement is a fantasy score.']},
    {kind:'sentiment',heading:'Fan reaction',paragraphs:[
     'Supporters '+distinct+' of '+name+' are '+distinct+' reacting to '+Array(Math.min(i+4,13)).fill('distinctly local evidence '+distinct).join(' ')+' as the '+distinct+' roster assesses the matchup.',
     'The '+distinct+' group chat for '+name+' has '+distinct+' '+Array(Math.min(i+5,13)).fill('a separate observation '+distinct).join(' ')+' before the manager responds.'
@@ -169,4 +169,13 @@ test('empty recap desks and hot takes block publication instead of silently disa
  const ids=new Set(inspectEditionBeforePublication(e).issues.map(x=>x.id));
  assert(ids.has('empty-recap-desk'));
  assert(ids.has('empty-recap-hot-take'));
+});
+
+test('publication gate rejects every blank or placeholder forward valuation desk even without market adapter fields',()=>{
+ const e=makeEdition();
+ delete e.teams[0].value_history_week;
+ e.teams[0].inquirer_article.sections.find(s=>s.kind==='value').paragraphs=[];
+ assert.ok(inspectEditionBeforePublication(e).issues.some(i=>i.id==='empty-value-desk'));
+ e.teams[0].inquirer_article.sections.find(s=>s.kind==='value').paragraphs=['n/a'];
+ assert.ok(inspectEditionBeforePublication(e).issues.some(i=>i.id==='empty-value-desk'));
 });

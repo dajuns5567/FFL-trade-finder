@@ -901,7 +901,7 @@ function w2BenchRead(t,r,miss,gap,won,margin){
     starter+" kept the "+slot+" job while "+reserve+" scored "+points+" extra points from the bench.",
     reserve+"'s "+points+"-point edge over "+starter+" makes that "+slot+" choice sting.",
     "Management chose "+starter+" for "+slot+"; "+reserve+" answered with "+points+" more points.",
-    "The missed "+slot+" call: "+reserve+" beat "+starter+" by "+points+".",
+    "The missed "+String(slot).toUpperCase()+" call: "+reserve+" beat "+starter+" by "+points+".",
     reserve+" supplied "+points+" more than "+starter+" without getting the "+slot+" start.",
     "A "+points+"-point advantage for "+reserve+" over starter "+starter+" did "+team+" no good from the sideline.",
     starter+" got the nod at "+slot+"; "+reserve+"'s extra "+points+" points stayed unused.",
@@ -914,7 +914,7 @@ function w2BenchRead(t,r,miss,gap,won,margin){
     team+" keeps the win, but "+reserve+"'s "+points+"-point advantage over "+starter+" will still come up in lineup review.",
     "The result belongs to "+team+"; the unused "+reserve+" points belong in the manager's notes.",
     reserve+" outscored "+starter+" without even taking the "+slot+" start.",
-    "Nobody is returning the win, but somebody should review that lineup card."
+    "The result stands; "+team+" still needs to explain why those "+points+" unused points stayed on the bench."
   ]:[
     reserve+" outscored "+starter+" during a "+marginText+"-point loss. That hurts.",
     "Those unused points will be much louder at the next lineup meeting.",

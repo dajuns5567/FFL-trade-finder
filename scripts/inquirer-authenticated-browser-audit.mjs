@@ -45,6 +45,26 @@ try {
  // Mark those checks pending rather than asserting a fictional pass.
  report.checks.all_32_articles='not_verified_by_landing_page';
  report.checks.exact_blob_readback='not_verified_by_browser';
+ // Record independent navigation evidence without assuming the landing page contains all features.
+ // Only follow same-origin anchors; never open publication or regeneration controls.
+ const sameOriginLinks=snapshot.links.filter(x=>{
+  try { const u=new URL(x.href,current);return u.origin===new URL(current).origin&&/inquirer|recap|reporter|award|spotlight|badge/i.test(x.label+' '+u.pathname+' '+u.search); }
+  catch{return false;}
+ });
+ report.checks.discovered_feature_links=sameOriginLinks.length;
+ report.checks.feature_navigation=[];
+ for(const link of sameOriginLinks.slice(0,12)){
+  const target=new URL(link.href,current);
+  const tab=await ctx.newPage();
+  try {
+   const res=await tab.goto(target.href,{waitUntil:'domcontentloaded',timeout:20000});
+   const pageText=(await tab.locator('body').innerText({timeout:10000})).slice(0,50000);
+   const finalHost=new URL(tab.url()).host;
+   report.checks.feature_navigation.push({label:link.label,pathname:target.pathname,http_status:res?.status()??null,authenticated:finalHost===new URL(current).host,text_characters:pageText.length,week5_visible:/week\\s*5/i.test(pageText)});
+  }catch(e){report.checks.feature_navigation.push({label:link.label,pathname:target.pathname,error:String(e.message||e).slice(0,180)});}
+  finally{await tab.close();}
+ }
+
  report.landing_page_verified=report.checks.week5_visible&&report.checks.inquirer_visible&&snapshot.textLength>200;
  if(!report.landing_page_verified)throw new Error('Authenticated preview loaded but Week 5 Inquirer rendering was not confirmed.');
  await save();

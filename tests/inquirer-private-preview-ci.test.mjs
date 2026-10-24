@@ -136,3 +136,13 @@ test('authenticated Playwright workflow fails closed and never mistakes a landin
  assert.match(audit,/exact_blob_readback='not_verified_by_browser'/);
  assert.doesNotMatch(audit,/complete_edition_verified=true/);
 });
+
+test('read-only Playwright feature navigation rejects mutation-like preview links',()=>{
+ const audit=readFileSync(new URL('../scripts/inquirer-authenticated-browser-audit.mjs',import.meta.url),'utf8');
+ assert.match(audit,/sameOriginLinks/);
+ assert.match(audit,/u\.origin===new URL\(current\)\.origin/);
+ assert.match(audit,/start=1\|draft=1\|generate\|publish\|enqueue\|regenerate\|queue\|delete\|write\|import/);
+ assert.match(audit,/feature_navigation/);
+ assert.match(audit,/report\.landing_page_verified/);
+ assert.match(audit,/complete_edition_verified:false/);
+});

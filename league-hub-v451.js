@@ -87,6 +87,9 @@ async function loadInquirerPreview(){
   throw Error('Unpublished preview not ready (state: '+String(status.state||'unknown')+').');
  }
  const edition=await response.json();
+ // An explicit review target must never accept a manuscript from another week.
+ // Check the identity before any rendering, regardless of status text.
+ if(inquirerPreviewRequestedWeek&&Number(edition?.week)!==inquirerPreviewRequestedWeek)throw Error('Requested Week '+inquirerPreviewRequestedWeek+' but draft endpoint returned Week '+String(edition?.week)+'.');
  if(edition?.preview_only!==true||edition?.published_locked!==false||!edition?.league_overview||!Array.isArray(edition?.teams)||edition.teams.length!==32)throw Error('Invalid unpublished editorial draft');
  if(inquirerPreviewRequestedWeek&&Number(edition.week)!==inquirerPreviewRequestedWeek)throw Error('Private preview generated Week '+edition.week+' instead of requested Week '+inquirerPreviewRequestedWeek+'; refusing to present the wrong manuscript.');
  if(edition.preview_editorial_audit?.ok!==true||edition.preview_generation_quality?.ok!==true)throw Error('Refusing to display a manuscript that failed its independent editorial gates.');

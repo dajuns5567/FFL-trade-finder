@@ -18,11 +18,22 @@ on:
       - 'tests/inquirer-weekly-publication-consistency.test.mjs'
       - 'netlify/functions/lib/inquirer-preview-diagnostics.mjs'
       - 'tests/inquirer-private-edition-audit.test.mjs'
+      - 'tests/inquirer-private-preview-ci.test.mjs'
+      - 'tests/inquirer-complete-feature-package.test.mjs'
+      - 'tests/inquirer-spotlight-readiness.test.mjs'
+      - 'tests/inquirer-editorial-language-audit.test.mjs'
+      - 'tests/inquirer-exact-copy-preflight.test.mjs'
+      - 'tests/inquirer-week5-release-authorization.test.mjs'
+      - 'tests/inquirer-week5-lock-preparation.test.mjs'
+      - 'tests/inquirer-week5-readback-verification.test.mjs'
+      - 'scripts/inquirer-week5-exact-copy-preflight.mjs'
+      - 'netlify/functions/lib/inquirer-editorial-language-audit.mjs'
       - 'league-hub-v451.js'
       - 'tests/inquirer-narrative-architecture.test.mjs'
       - 'tests/week5-forward-editorial-repair.test.mjs'
       - 'docs/INQUIRER-EDITORIAL-GENERATION-CONTRACT.md'
       - 'scripts/inquirer-*.mjs'
+      - '.github/workflows/fleeced-authenticated-week5-playwright.yml'
       - 'scripts/migrate-fleeced-blobs.mjs'
       - 'scripts/inquirer-preview-browser-audit.js'
       - 'scripts/one-time-fleeced-archive-recovery.sh'
@@ -49,6 +60,20 @@ jobs:
 
       - name: Install generator dependency
         run: npm install --no-save --package-lock=false @netlify/blobs
+      - name: Verify complete published Week5 readback is fail-closed
+        run: node --test tests/inquirer-week5-readback-verification.test.mjs
+      - name: Verify reviewed Week5 lock preparation preserves exact copy
+        run: node --test tests/inquirer-week5-lock-preparation.test.mjs
+      - name: Verify authenticated release authorization never publishes
+        run: node --test tests/inquirer-week5-release-authorization.test.mjs
+      - name: Verify exact-copy publication preflight is non-mutating
+        run: node --test tests/inquirer-exact-copy-preflight.test.mjs
+      - name: Verify sarcasm and repetition audit mechanics
+        run: node --test tests/inquirer-editorial-language-audit.test.mjs
+      - name: Verify complete manager spotlight readiness
+        run: node --test tests/inquirer-spotlight-readiness.test.mjs
+      - name: Verify complete Week 5 manager and player award package
+        run: node --test tests/inquirer-complete-feature-package.test.mjs
       - name: Audit machine-readable private manuscript contract
         run: node --test tests/inquirer-private-edition-audit.test.mjs
       - name: Syntax check active Inquirer
@@ -66,6 +91,8 @@ jobs:
           node --check scripts/inquirer-v25-audit.mjs
           node --check scripts/inquirer-v25-generated-audit.mjs
           node --check scripts/inquirer-forward-v31-smoke.mjs
+          node --check scripts/inquirer-authenticated-browser-audit.mjs
+          node --check scripts/inquirer-playwright-auth-setup.mjs
           node --check scripts/migrate-fleeced-blobs.mjs
           node --check netlify/functions/lib/inquirer-legacy-history.mjs
           node --check scripts/inquirer-preview-browser-audit.js
@@ -163,7 +190,9 @@ jobs:
 
   seed-private-preview:
     needs: inquirer-r6
-    if: github.event_name == 'pull_request'
+    # Isolated award-guard PR #404 must not waste Netlify/CI minutes or regenerate
+    # a newspaper already undergoing editorial review on PR #402.
+    if: github.event_name == 'pull_request' && github.head_ref != 'fix/inquirer-week5-feature-package-guard'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

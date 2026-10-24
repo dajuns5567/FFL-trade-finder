@@ -1,3 +1,4 @@
+import {auditInquirerLanguage} from './lib/inquirer-editorial-language-audit.mjs';
 // Fail-closed editorial admission: every public edition requires substantive
 // checks AND a review approval bound to the exact copy digest. No public HTTP
 // route may approve a draft. Historical locked editions are never rewritten.
@@ -25,8 +26,8 @@ export function editorialCopyDigest(edition) {
   return createHash('sha256').update(JSON.stringify({season:Number(edition?.season),week:Number(edition?.week),teams,recap})).digest('hex');
 }
 
-export function inspectEditionBeforePublication(edition) {
-  const issues=[...inspectInquirerFormatContract(edition),...inspectNarrativeArchitecture(edition)],teams=edition?.teams||[],unique=new Set(teams.map(t=>String(t.roster_id)));
+export function inspectEditionBeforePublication(edition,previousEdition=null) {
+  const issues=[...inspectInquirerFormatContract(edition),...inspectNarrativeArchitecture(edition),...auditInquirerLanguage(edition,previousEdition).issues],teams=edition?.teams||[],unique=new Set(teams.map(t=>String(t.roster_id)));
   if(teams.length!==32||unique.size!==32)issues.push({id:'coverage',detail:'32 unique team articles required'});
   const rosterById=new Map(teams.map(t=>[String(t.roster_id),t]));
   const scaffoldOwners=new Map(),phraseOwners=new Map();

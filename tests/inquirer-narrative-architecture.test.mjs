@@ -214,3 +214,28 @@ test('Week 4-style readable section headings and plural mascot headline are not 
  assert.ok(!ids.includes('plural-mascot-headline-agreement'));
  assert.ok(!ids.includes('lowercase-editorial-section-heading'));
 });
+
+
+test('final depth restoration removes verbatim desk echoes without dropping verified player evidence',()=>{
+ const t=makeStory(14);
+ const copy='Put this onscreen: Top Runner scored 22.0 fantasy points with 92 rushing yards, one touchdown and four catches.';
+ t.inquirer_article.sections.find(s=>s.kind==='players').paragraphs.push(copy);
+ t.inquirer_article.sections.find(s=>s.kind==='sentiment').paragraphs.push(copy);
+ restoreForwardArticleDepth(t,5);
+ const rows=t.inquirer_article.sections.flatMap(s=>s.paragraphs||[]);
+ assert.equal(rows.filter(p=>p===copy).length,1);
+ assert.deepEqual(t.inquirer_article.paragraphs,rows);
+ assert.ok(rows.some(p=>p.includes('fantasy points')));
+});
+
+
+test('Week 8 final newsroom avoids the Week 5 recycled speaker joke without inventing a box score',()=>{
+ const t=makeStory(8);
+ t.points=108.2;t.opponent_points=70.1;t.next_opponent_name='Actual Week 9 Opponent';
+ t.inquirer_article.sections.find(s=>s.kind==='outlook').paragraphs[0]='The club gets another Sunday to prove the Week 8 noise came from a real speaker and not somebody dropping a pan.';
+ restoreForwardArticleDepth(t,8);
+ const copy=t.inquirer_article.paragraphs.join(' ');
+ assert.doesNotMatch(copy,/real speaker and not somebody dropping a pan/i);
+ assert.ok(copy.includes('108.2'));
+ assert.match(copy,/Actual Week 9 Opponent/);
+});

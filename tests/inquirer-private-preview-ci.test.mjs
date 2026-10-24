@@ -30,16 +30,15 @@ test('the only successful unattended enqueue is HTTP 202; operational errors sti
   assert.match(queueJob,/exit 1/);
 });
 
-test('authenticated preview reader starts an isolated draft and reports real states',()=>{
+test('preview reader is read-only and reports real states without starting regeneration',()=>{
   assert.match(readerSource,/inquirer-preview-diagnostic\?draft=1/);
-  assert.match(readerSource,/inquirer-preview-background\?start=1/);
+  assert.doesNotMatch(readerSource,/fetch\(info\?\.start_url/);
+  assert.doesNotMatch(readerSource,/fetch\(\'\/\.netlify\/functions\/inquirer-preview-background/);
   assert.match(readerSource,/status\.state==='not-started'/);
   assert.match(readerSource,/status\.state==='running'/);
   assert.match(readerSource,/status\.state==='error'/);
-  assert.match(readerSource,/queued\.status!==202/);
+  assert.match(readerSource,/no generation was triggered/);
   assert.match(readerSource,/preview is not ready/);
-  assert.match(readerSource,/if\(isRunning&&\+\+inquirerPreviewPollAttempts/);
-  assert.doesNotMatch(readerSource,/<h3>Private Week 5 preview is generating<\/h3>/);
 });
 
 test('a failed editorial gate retains only a deploy-local rejected review copy',()=>{
@@ -82,7 +81,7 @@ test('every private draft targets the requested or latest completed week rather 
 test('private reader never shares a completed Week 3 result with a Week 5 or Week 6 request',()=>{
  const diagnostics=readFileSync(new URL('../netlify/functions/lib/inquirer-preview-diagnostics.mjs',import.meta.url),'utf8');
  assert.match(readerSource,/inquirer-preview-diagnostic\?draft=1'\+scope/);
- assert.match(readerSource,/info\?\.start_url/);
+ assert.doesNotMatch(readerSource,/fetch\(info\?\.start_url/);
  assert.match(readerSource,/scope\?'\?'\+scope\.slice\(1\)/);
  assert.match(previewJobSource,/get\(identity\.status/);
  assert.match(previewJobSource,/setJSON\(identity\.edition/);
@@ -98,20 +97,12 @@ test('unpublished previews explain missing historical archives before generic we
  assert.match(previewJobSource,/edition\?\.preview_only!==true\|\|edition\?\.published_locked!==false\|\|edition\?\.available!==true/);
 });
 
-test('a previously failed Week 5 preview automatically retries only after the exact locked history is restored',()=>{
+test('failed historical preview never auto-retries or regenerates while the reader opens',()=>{
  assert.match(readerSource,/async function canRetryArchiveBlockedPreview\(season,targetWeek\)/);
- assert.match(readerSource,/length:targetWeek-3/);
- assert.match(readerSource,/isVerifiedHistoricalPreviewEdition\(edition,season,i\+3\)/);
- assert.match(readerSource,/if\(!history\.every\(/);
- assert.match(readerSource,/const week4=history\[1\]/);
- assert.match(readerSource,/cool-throne/);
- assert.match(readerSource,/Week 3 is the earliest missing locked archive/);
- assert.match(readerSource,/if\(again\.status===202\)throw Error/);
- assert.match(readerSource,/!inquirerPreviewLaunchAttempted/);
- assert.match(readerSource,/info\?\.target\?\.week/);
- assert.match(readerSource,/status\.week/);
  assert.match(readerSource,/Refusing to display stale diagnostic text/);
- assert.match(readerSource,/inquirerPreviewPollAttempts<=80/);
+ assert.doesNotMatch(readerSource,/if\(again\.status===202\)throw Error/);
+ assert.doesNotMatch(readerSource,/fetch\(info\?\.start_url/);
+ assert.match(readerSource,/no generation was triggered/);
 });
 
 test('diagnostic outages never masquerade as a missing week or launch duplicate expensive jobs',()=>{
@@ -120,4 +111,61 @@ test('diagnostic outages never masquerade as a missing week or launch duplicate 
  assert.match(previewDiagnosticSource,/Private preview storage temporarily unavailable/);
  assert.match(previewDiagnosticSource,/return json\(\{error:'Private draft storage temporarily unavailable'\},503\)/);
  assert.match(previewDiagnosticSource,/target:\{season:identity\.season,week:identity\.week\}/);
+});
+
+test('authenticated Playwright workflow fails closed and never mistakes a landing page for complete edition readback',()=>{
+ const workflow=readFileSync(new URL('../.github/workflows/fleeced-authenticated-week5-playwright.yml',import.meta.url),'utf8');
+ const audit=readFileSync(new URL('../scripts/inquirer-authenticated-browser-audit.mjs',import.meta.url),'utf8');
+ assert.match(workflow,/workflow_dispatch:/);
+ assert.match(workflow,/FLEECED_PLAYWRIGHT_STORAGE_STATE_B64/);
+ assert.match(workflow,/Protected preview was NOT audited/);
+ assert.match(workflow,/exit 1/);
+ assert.match(workflow,/node --check scripts\/inquirer-authenticated-browser-audit\.mjs/);
+ assert.match(audit,/SSO; cannot audit protected content/);
+ assert.match(audit,/complete_edition_verified:false/);
+ assert.match(audit,/all_32_articles='not_verified_by_landing_page'/);
+ assert.match(audit,/exact_blob_readback='not_verified_by_browser'/);
+ assert.doesNotMatch(audit,/complete_edition_verified=true/);
+});
+
+test('read-only Playwright feature navigation rejects mutation-like preview links',()=>{
+ const audit=readFileSync(new URL('../scripts/inquirer-authenticated-browser-audit.mjs',import.meta.url),'utf8');
+ assert.match(audit,/sameOriginLinks/);
+ assert.match(audit,/u\.origin===new URL\(current\)\.origin/);
+ assert.match(audit,/start=1\|draft=1\|generate\|publish\|enqueue\|regenerate\|queue\|delete\|write\|import/);
+ assert.match(audit,/feature_navigation/);
+ assert.match(audit,/report\.landing_page_verified/);
+ assert.match(audit,/complete_edition_verified:false/);
+});
+
+test('weekly reader is strictly read-only even when archive history is incomplete',()=>{
+ assert.doesNotMatch(readerSource,/fetch\(info\?\.start_url/);
+ assert.doesNotMatch(readerSource,/fetch\(\x27\/\.netlify\/functions\/inquirer-preview-background/);
+ assert.match(readerSource,/no generation was triggered/);
+ assert.match(readerSource,/inquirerPreviewRequestedWeek/);
+});
+
+test('unattended browser checks cannot claim complete edition verification from a landing page',()=>{
+ const audit=readFileSync(new URL('../scripts/fleeced-local-playwright-audit.mjs',import.meta.url),'utf8');
+ const reporter=readFileSync(new URL('../scripts/fleeced-auto-report.mjs',import.meta.url),'utf8');
+ assert.match(audit,/complete_edition_verified:false/);
+ assert.match(audit,/STALE_READER_WEEK_MISMATCH/);
+ assert.match(reporter,/if\(!report.authenticated\)/);
+ assert.match(reporter,/week5_draft_readback/);
+ assert.match(reporter,/reader_consistency/);
+});
+
+test('preview navigation never invokes stale archive regeneration code',()=>{
+ const start=readerSource.indexOf('async function loadInquirerPreview()');
+ const end=readerSource.indexOf('const esc=',start);
+ assert.ok(start>=0&&end>start,'reader preview loader is present');
+ const loader=readerSource.slice(start,end);
+ assert.doesNotMatch(loader,/canRetryArchiveBlockedPreview/);
+ assert.doesNotMatch(loader,/inquirerPreviewLaunchAttempted/);
+ assert.doesNotMatch(loader,/start_url/);
+ assert.doesNotMatch(loader,/inquirer-preview-background/);
+ assert.match(loader,/draft=1/);
+ assert.match(loader,/preview_week/);
+ assert.match(loader,/preview_editorial_audit/);
+ assert.match(loader,/preview_generation_quality/);
 });

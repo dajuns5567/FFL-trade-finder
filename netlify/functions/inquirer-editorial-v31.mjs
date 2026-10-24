@@ -1,3 +1,4 @@
+import {auditInquirerLanguage,editorialSentenceSkeleton,editorialSentenceParts} from './lib/inquirer-editorial-language-audit.mjs';
 // Reusable Fleeced! Inquirer V31 editorial layer.
 // Derived from the locked Week 2 V31 newsroom logic.
 // Week 1/2 preloads remain immutable; Week 3+ runs this layer with week-aware
@@ -8,7 +9,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=39;
+export const FORWARD_EDITORIAL_REVISION=40;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -577,6 +578,32 @@ export function polishForwardTeamCopy(teams,week,salt){
   const sections=(article.sections||[]).map(section=>({...section,paragraphs:(section.paragraphs||[]).map(p=>rewrite(p,section.kind))}));
   return {...t,inquirer_article:{...article,headline,sections,paragraphs:sections.flatMap(s=>s.paragraphs||[])}};
  });
+}
+// When a stale prior-week Hot Seat line is removed, rebuild the desk from
+// this week's actual starter ledger instead of restoring reused copy.
+function forwardFreshHotSeat(t,week,salt){
+ const ranked=(t.starter_details||[]).filter(p=>p&&p.name&&p.points!==null&&p.points!==undefined&&p.points!==''&&Number.isFinite(Number(p.points)))
+  .sort((a,b)=>Number(a.points)-Number(b.points));
+ const weak=ranked[0];if(!weak)return null;
+ const team=String(t.team_name||'This club'),name=String(weak.name),
+  pos=String(weak.position||'starter'),pts=Number(weak.points).toFixed(1),
+  foe=String(t.opponent_name||'the opposition');
+ const variants=[
+  name+' was the smallest entry on '+team+'\'s starting card: '+pts+' fantasy points at '+pos+'. Against '+foe+', that slot is an argument the manager cannot outsource to the standings.',
+  'The '+pos+' spot occupied by '+name+' returned '+pts+' fantasy points for '+team+'. '+foe+' did not draft the lineup; whoever did now owns the explanation.',
+  team+' received '+pts+' fantasy points from '+name+' at '+pos+'. Every roster has a weak link, but putting its name on the Week '+week+' ledger makes denial rather difficult.',
+  'There is a specific receipt for the '+team+' coaching staff: '+name+', '+pos+', '+pts+' fantasy points. The case for keeping that slot unchanged needs more than a postgame shrug.',
+  'Find '+name+' on the '+team+' starter sheet and there is the problem: '+pts+' fantasy points at '+pos+'. The next depth-chart meeting should begin with the number, not an alibi.',
+  foe+' only had to play the starters '+team+' chose. One was '+name+' at '+pos+', whose '+pts+' fantasy points now belong in the manager\'s least comfortable review.',
+  'The quietest '+team+' starting contribution was '+name+'\'s '+pts+' fantasy points. The position was '+pos+'; the duty to reconsider its use belongs upstairs.',
+  'For '+team+', '+name+' supplied just '+pts+' fantasy points from the '+pos+' slot. It is one documented number, but an excellent reason to ask what the lineup plan actually was.',
+  'A line in the '+team+' scoring ledger reads '+name+' — '+pts+' fantasy points at '+pos+'. There is no need to invent a crisis when the official lineup provides its own question.',
+  'The manager sent '+name+' into Week '+week+' at '+pos+' and received '+pts+' fantasy points. That is the uncomfortable evidence before any debate about what '+foe+' did.',
+  'At the bottom of '+team+'\'s documented starting totals sits '+name+' with '+pts+' fantasy points. A '+pos+' slot can be changed; rewriting Sunday\'s number is not an option.',
+  name+' finished on '+pts+' fantasy points for '+team+' from '+pos+'. If a lineup adjustment is coming, that verified entry is where the meeting ought to start.'
+ ];
+ const id=Number(t.roster_id)||0;
+ return variants[((id*5+Number(week)*7+Number(salt)*11)%variants.length+variants.length)%variants.length];
 }
 export function applyInquirerEditorialV31({season,week,rawInquirer,rawOverview,previousEdition=null,weekClassification=null,variationSalt=0}={}){
   season=Number(season);week=Number(week);variationSalt=Number(variationSalt)||0;
@@ -2550,7 +2577,7 @@ function w2InjuryOutlookRead(t,r,x,next){
     "tess-delaney":hard?[name+" arrives at Week 3 listed "+d+", which may force the "+w2Alias(t).mascot+" to reset a place before "+foe+" enters the room.",name+" is "+d+" for the next appointment. The "+w2Alias(t).mascot+" may need a different place setting against "+foe+"."]
       :[name+" has a "+d+" tag for Week 3, so the "+w2Alias(t).mascot+" cannot finish the seating chart for "+foe+" just yet.",name+" reaches the "+foe+" appointment as "+d+". The room should care because one starting chair remains unsettled."],
     "mack-hollis":hard?[name+" is "+d+" for Week 3. If he cannot go, the "+w2Alias(t).mascot+" need a replacement before "+foe+" and that is a bigger story than another depth percentage.",name+" has "+d+" next to his name for the "+foe+" game, which could change the actual starting card before anybody starts yelling about trends."]
-      :[name+" is carrying a "+d+" tag into Week 3, so the "+w2Alias(t).mascot+" have a real availability question before "+foe+".",name+" is "+d+" ahead of "+foe+". Put that on the Week 3 board because it may change the lineup, not just the pregame chatter."],
+      :[name+" has a "+d+" designation on the "+foe+" injury watch. The "+w2Alias(t).mascot+" need to resolve that starting slot before Week 3.",name+" is "+d+" ahead of "+foe+". Put that on the Week 3 board because it may change the lineup, not just the pregame chatter."],
     "nora-voss":hard?[name+" is "+d+" heading toward "+foe+", giving rivals a concrete lineup uncertainty to watch before Week 3.",name+" carries "+d+" status into the "+foe+" matchup. If the "+w2Alias(t).mascot+" need a replacement, that changes the next joke before kickoff."]
       :[name+" is "+d+" for the "+foe+" game, and rivals will notice whether that tag changes the "+w2Alias(t).mascot+" starting lineup.",name+" takes a "+d+" designation into Week 3 against "+foe+". The designation matters because it may force the "+w2Alias(t).mascot+" to change starters before kickoff."]
   };
@@ -4093,13 +4120,13 @@ function assertWeek2Originality(result,previousEdition){
   // Composition is the last writer. Therefore grammar cleanup must run AFTER
   // composition, not before it, on both the recap and the team columns.
   if(week>=3){
-    const plural=teams.map(t=>w2DisplayTeam(t.team_name)).filter(w2PluralTeamName).sort((a,b)=>b.length-a.length);
+    const plural=[...new Set([...teams.map(t=>w2DisplayTeam(t.team_name)).filter(w2PluralTeamName),'Washington Commanders','Baltimore Ravens','Carolina Panthers','New Orleans Aints'])].sort((a,b)=>b.length-a.length);
     const clean=s=>{
       let x=String(s||'');
       for(const name of plural){
-        const re=new RegExp('\\b'+w2EscRe(name)+' (faces|does|gets|has|is|needs|sits|keeps|projects)\\b','gi');
+        const re=new RegExp('\\b'+w2EscRe(name)+' (now\\s+)?(faces|does|gets|has|is|needs|sits|keeps|projects)\\b','gi');
         const verbs={faces:'face',does:'do',gets:'get',has:'have',is:'are',needs:'need',sits:'sit',keeps:'keep',projects:'project'};
-        x=x.replace(re,(_,v)=>name+' '+verbs[v.toLowerCase()]);
+        x=x.replace(re,(_,now,v)=>name+' '+(now||'')+verbs[v.toLowerCase()]);
       }
       return x.replace(/\bThe margin asks more:\s*/gi,'')
         .replace(/\b(?:Look at the personnel:\s*)?The record is \d+-\d+[^.]*\./gi,'')
@@ -4265,6 +4292,55 @@ function assertWeek2Originality(result,previousEdition){
       'Make Week '+week+' Look Less Accidental',
       'Make Their Week '+week+' Win Harder to Ignore');
   }
+  // A new edition must never carry full sentence templates forward from
+  // the same club's prior locked newspaper. Prune only redundant prior-edition
+  // sentences; retain current facts, and let independent depth/format gates
+  // HOLD any story made too thin. Never replace prose with generic filler.
+  if(week>=5&&previousEdition?.teams?.length){
+    const oldByRoster=new Map(previousEdition.teams.map(x=>[String(x.roster_id),x]));
+    for(const t of teams){
+      const prior=oldByRoster.get(String(t.roster_id)),article=t.inquirer_article;
+      if(!prior?.inquirer_article||!Array.isArray(article?.sections))continue;
+      const oldSentences=new Set((prior.inquirer_article.sections||[])
+        .flatMap(x=>x.paragraphs||[]).flatMap(p=>editorialSentenceParts(p))
+        .map(x=>editorialSentenceSkeleton(x,prior)).filter(x=>x.split(' ').length>=13));
+      let dropped=0;
+      for(const section of article.sections){
+        const originalParagraphs=section.paragraphs||[];
+        section.paragraphs=originalParagraphs.map(p=>{
+          const parts=editorialSentenceParts(p);
+          const kept=parts.filter(sentence=>{
+            if(editorialSentenceSkeleton(sentence,t).split(' ').length<13)return true;
+            if(!oldSentences.has(editorialSentenceSkeleton(sentence,t)))return true;
+            dropped++;return false;
+          });
+          return kept.join(' ').trim();
+        }).filter(Boolean);
+        if(dropped&&section.kind==='hot-seat'&&originalParagraphs.length&&!section.paragraphs.length){
+          const factual=forwardFreshHotSeat(t,week,variationSalt);
+          if(factual)section.paragraphs=[factual];
+        }
+      }
+      if(dropped)article.paragraphs=article.sections.flatMap(x=>x.paragraphs||[]);
+    }
+  }
+  // Recap prose receives the same late factual/grammar curation as team desks.
+  // Keep its six-beat paragraph mirror synchronized for reader and admission.
+  if(week>=5&&overview?.hot_takes?.length){
+    for(const take of overview.hot_takes){
+      let copy=String(take.take||'');
+      if(take.kind==='division')copy=copy
+       .replace('The gap is real but thin; one stumble turns the leader from front-runner into participant again',
+        'The leader owns a genuine cushion; one bad Sunday can dent it, not erase the standings.')
+       .replace(/while ([^.]{0,85}?) are close enough to turn one ordinary Sunday into a three-team argument/g,
+        'while $1 are fighting to avoid a much deeper hole');
+      if(take.kind==='upset')copy=copy.replace(
+       /([A-Z][a-z]+(?: [A-Z][a-z]+)* over [A-Z][a-z]+(?: [A-Z][a-z]+)*) are the (Week \d+ upset call)/,
+       'The $2 is $1.');
+      copy=copy.replace(/Washington Commanders now has a reason/g,'Washington Commanders now have a reason');
+      take.take=copy;
+    }
+  }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 
@@ -4277,7 +4353,7 @@ function forwardArticleSentences(t){return forwardSentenceParts((t?.inquirer_art
 function forwardRecapSentences(e){return forwardSentenceParts([...(e?.league_overview?.sections||[]).flatMap(s=>s.paragraphs||[]),...(e?.league_overview?.hot_takes||[]).filter(x=>!/division board/i.test(String(x?.title||''))).flatMap(x=>[x?.title,x?.take])].filter(Boolean).join(' ')).filter(x=>forwardWordCount(x)>=10)}
 
 export function evaluateInquirerEditionQuality(current,previous=null){
-  const issues=[...inspectInquirerFormatContract(current),...inspectNarrativeArchitecture(current)],teams=current?.teams||[],entities=forwardEntities(current).concat(forwardEntities(previous));
+  const issues=[...inspectInquirerFormatContract(current),...inspectNarrativeArchitecture(current),...auditInquirerLanguage(current,previous).issues],teams=current?.teams||[],entities=forwardEntities(current).concat(forwardEntities(previous));
   const dated=teams.filter(t=>t.mida_outlook);
   if(Number(current?.week)>=3&&dated.length&&dated.every(t=>{
     const stamp=Date.parse(String(t.mida_outlook?.source_date||t.mida_outlook?.as_of||''));

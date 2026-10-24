@@ -518,7 +518,7 @@ export async function weeklyReport(req){
    const drafted=applyInquirerEditorialV31({season,week,rawInquirer,rawOverview,previousEdition:previousBroadcast,weekClassification,variationSalt:salt});
    const candidate={season,week,teams:drafted.inquirer.teams,league_overview:drafted.leagueOverview};
    const q=evaluateInquirerEditionQuality(candidate,previousBroadcast);
-   const a=inspectEditionBeforePublication(candidate);
+   const a=inspectEditionBeforePublication(candidate,previousBroadcast);
    const score=q.issues.length*4+a.issues.length;
    if(!best||score<bestScore){best=drafted;bestQuality=q;bestSalt=salt;bestScore=score}
    if(q.ok&&a.ok){accepted=drafted;quality=q;variationSalt=salt;break}
@@ -533,7 +533,7 @@ export async function weeklyReport(req){
  // Every publication entry point (including ?weekly=1) must pass this
  // admission boundary. A passing structural draft is only a staged candidate,
  // never publication authority. No future draft can mutate locked editions.
- const audit=inspectEditionBeforePublication(result);
+ const audit=inspectEditionBeforePublication(result,previousBroadcast);
  if(previewReadOnly)return{...result,available:true,published_locked:false,preview_only:true,
   preview_editorial_audit:audit,preview_generation_quality:quality,
   preview_warning:'Unpublished draft. No shared data was written.'};
@@ -636,8 +636,16 @@ export function isTrustedWeeklyAwardCache(rec,season,week){
  const badges=rec?.manager_awards;
  if(!Array.isArray(badges)||!['highest-scorer','lowest-scorer'].every(kind=>badges.some(b=>b.type===kind)))
   return false;
- if(Number(season)>2026||(Number(season)===2026&&Number(week)>=5))
-  return Number(rec?.newsroom_editorial_revision)>=39&&rec?.newsroom_engine==='v31-forward';
+ if(Number(season)>2026||(Number(season)===2026&&Number(week)>=5)){
+  // Revision-39 awards built before the complete manager-badge gate are stale,
+  // even if the headline's newsroom stamp looks new. Rebuild once from the
+  // locked edition, then reuse the verified cache without 3MB article reads.
+  const expected=rec?.manager_awards_expected_types;
+  return Number(rec?.newsroom_editorial_revision)>=39&&rec?.newsroom_engine==='v31-forward'&&
+   Number(rec?.manager_awards_generation_version)>=2&&
+   Array.isArray(expected)&&['highest-scorer','lowest-scorer'].every(k=>expected.includes(k))&&
+   expected.every(k=>badges.some(b=>b?.type===k&&b?.roster_id!=null));
+ }
  return true;
 }
 export async function weeklyAwards(){
@@ -668,11 +676,14 @@ export async function weeklyAwards(){
    const built=await Promise.all(validPairs.map(async p=>{
     const stats=await fetchJson(`${API}/stats/nfl/regular/${p.season}/${p.week}`).catch(()=>({}));
     const broadcast=p.edition;
+    const managerAwardRows=weeklyManagerAwards(broadcast);
     const rec={season:p.season,week:p.week,
      captured_at:String(broadcast.generated_at||p.captured_at||new Date().toISOString()),
      newsroom_editorial_revision:Number(broadcast.editorial_revision)||null,
      newsroom_engine:String(broadcast?.editorial_generation?.engine||''),
-     manager_awards:weeklyManagerAwards(broadcast),
+     manager_awards:managerAwardRows,
+     manager_awards_generation_version:2,
+     manager_awards_expected_types:managerAwardRows.map(a=>a.type),
      players_of_week:weeklyPlayersOfWeek(stats,players,scoring)};
     return rec;
    }));
@@ -739,7 +750,7 @@ function managerScoringSummary(scoringGames,career,currentSeason,currentWeek){
  const currentRows=rows.filter(g=>Number(g.season)===Number(currentSeason));
  return{since_season:2024,through_season:Number(currentSeason)||null,through_week:Math.max(0,Math.min(17,(Number(currentWeek)||1)-1)),games:rows.map(decorate),season_extremes,record_history,all_time:{highest:highest||null,lowest:lowest||null},leaderboards:{all_time_highest:ranked(rows,true).slice(0,50),all_time_lowest:ranked(rows,false).slice(0,50),year_highest:ranked(currentRows,true).slice(0,50),year_lowest:ranked(currentRows,false).slice(0,50)}};
 }
-async function managerHistory(){
+export async function managerHistory(){
  const s=store(),nfl=await fetchJson(`${API}/state/nfl`).catch(()=>({})),currentSeason=Number(nfl?.season)||new Date().getFullYear(),currentWeek=Number(nfl?.week)||1;
  let league=await fetchJson(`${API}/league/${LEAGUE}`),chain=[];for(let guard=0;league&&guard<12;guard++){chain.push(league);if(!league.previous_league_id)break;league=await fetchJson(`${API}/league/${league.previous_league_id}`).catch(()=>null)}chain.sort((a,b)=>Number(a.season)-Number(b.season));
  const career={},assignments=[],current=[],games=[],scoringGames=[],assignmentKeys=new Set();

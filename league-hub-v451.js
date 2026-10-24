@@ -66,27 +66,17 @@ async function loadInquirerPreview(){
      (Number(info?.target?.week)!==inquirerPreviewRequestedWeek||
       (status?.week!=null&&Number(status.week)!==inquirerPreviewRequestedWeek)))
    throw Error('Week '+inquirerPreviewRequestedWeek+' preview returned a different week identity. Refusing to display stale diagnostic text.');
-  if(status.state==='error'&&!inquirerPreviewLaunchAttempted&&
-     /Week 3 is the earliest missing locked archive/.test(String(status.error||''))){
-   inquirerPreviewLaunchAttempted=true;
-   if(await canRetryArchiveBlockedPreview(Number(info?.target?.season),Number(info?.target?.week))){
-    const again=await fetch(info?.start_url||('/.netlify/functions/inquirer-preview-background?start=1'+scope),{cache:'no-store'});
-    if(again.status===202)throw Error('Private preview generation started after verified historical archive restoration.');
-   }
-  }
-  if(status.state==='not-started'){
-   if(!inquirerPreviewLaunchAttempted){
-    inquirerPreviewLaunchAttempted=true;
-    const queued=await fetch(info?.start_url||('/.netlify/functions/inquirer-preview-background?start=1'+scope),{cache:'no-store'});
-    if(queued.status!==202)throw Error('Private preview generation could not start (HTTP '+queued.status+').');
-   }
-   throw Error('Private preview generation started; awaiting the final editorial audit.');
-  }
+  // Reading an unpublished preview must never generate or replace it.
+  // Generation is an explicit, separately authorized action only.
+  if(status.state==='not-started')throw Error('Private preview has not been started; no generation was triggered.');
   if(status.state==='running')throw Error('Private preview generation in progress.');
   if(status.state==='error')throw Error('Private preview generation failed: '+String(status.error||'Unknown error'));
   throw Error('Unpublished preview not ready (state: '+String(status.state||'unknown')+').');
  }
  const edition=await response.json();
+ // An explicit review target must never accept a manuscript from another week.
+ // Check the identity before any rendering, regardless of status text.
+ if(inquirerPreviewRequestedWeek&&Number(edition?.week)!==inquirerPreviewRequestedWeek)throw Error('Requested Week '+inquirerPreviewRequestedWeek+' but draft endpoint returned Week '+String(edition?.week)+'.');
  if(edition?.preview_only!==true||edition?.published_locked!==false||!edition?.league_overview||!Array.isArray(edition?.teams)||edition.teams.length!==32)throw Error('Invalid unpublished editorial draft');
  if(inquirerPreviewRequestedWeek&&Number(edition.week)!==inquirerPreviewRequestedWeek)throw Error('Private preview generated Week '+edition.week+' instead of requested Week '+inquirerPreviewRequestedWeek+'; refusing to present the wrong manuscript.');
  if(edition.preview_editorial_audit?.ok!==true||edition.preview_generation_quality?.ok!==true)throw Error('Refusing to display a manuscript that failed its independent editorial gates.');

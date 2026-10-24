@@ -27,6 +27,6 @@ test('sentiment uses the two latest game outcomes rather than cumulative record'
 test('the production generator does not silently insert replacement scoreboard prose',()=>{
  const s=fs.readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
  assert(!s.includes('repairNewEditionCopy('));
- assert(s.includes('inspectEditionBeforePublication(result)'));
+ assert(s.includes('inspectEditionBeforePublication(result,previousBroadcast)'));
  assert(s.includes('if(!accepted){accepted=best;quality=bestQuality;variationSalt=bestSalt}'));
 });

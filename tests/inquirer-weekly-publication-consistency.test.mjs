@@ -12,9 +12,9 @@ test('only ONE forward editorial writer remains in both production and private p
  assert.match(hub,/applyInquirerEditorialV31\(\{season,week/);
  assert.match(hub,/for\(const salt of \[5,0,1,2,3,4\]\)/);
  assert.match(hub,/const q=evaluateInquirerEditionQuality\(candidate,previousBroadcast\)/);
- assert.match(hub,/const a=inspectEditionBeforePublication\(candidate\)/);
+ assert.match(hub,/const a=inspectEditionBeforePublication\(candidate,previousBroadcast\)/);
  assert.match(hub,/if\(q\.ok&&a\.ok\)/);
- assert.match(source,/FORWARD_EDITORIAL_REVISION=39/);
+ assert.match(source,/FORWARD_EDITORIAL_REVISION=40/);
  assert.match(hub,/preview_editorial_audit:audit,preview_generation_quality:quality/);
 });
 test('previous published copy can neither be invented nor overwritten after partial failure',()=>{
@@ -46,10 +46,14 @@ test('the reader never labels old Players of the Week as the current newspaper w
 
 test('never certify old locked Week5 awards or incomplete player/scorer badges',()=>{
  const valid={season:2026,week:5,newsroom_editorial_revision:39,newsroom_engine:'v31-forward',
+  manager_awards_generation_version:2,
+  manager_awards_generation_version:2,manager_awards_expected_types:['highest-scorer','lowest-scorer'],
   players_of_week:{offense:{player_id:'O1'},defense:{player_id:'D1'}},
   manager_awards:[{type:'highest-scorer',roster_id:'1'},{type:'lowest-scorer',roster_id:'2'}]};
  assert.equal(isTrustedWeeklyAwardCache(valid,2026,5),true);
  assert.equal(isTrustedWeeklyAwardCache({...valid,newsroom_editorial_revision:14},2026,5),false);
+ assert.equal(isTrustedWeeklyAwardCache({...valid,manager_awards_generation_version:1},2026,5),false);
+ assert.equal(isTrustedWeeklyAwardCache({...valid,manager_awards_expected_types:['highest-scorer','cool-throne']},2026,5),false);
  assert.equal(isTrustedWeeklyAwardCache({...valid,newsroom_engine:'legacy'},2026,5),false);
  assert.equal(isTrustedWeeklyAwardCache({...valid,players_of_week:{offense:{player_id:'O1'},defense:null}},2026,5),false);
  assert.equal(isTrustedWeeklyAwardCache({...valid,manager_awards:[{type:'hot-seat'}]},2026,5),false);
@@ -86,14 +90,18 @@ test('scheduled publisher must repair pending Week 5 awards before generating We
 });
 
 test('publisher completion cannot be claimed without the matching locked newsroom and all weekly features',()=>{
- const report={available:true,published_locked:true,season:2026,week:5};
+ const teams=Array.from({length:32},(_,i)=>({roster_id:String(i+1),points:100+i,opponent_points:100+i+(i%2===0?10:-10),won:i%2===1,projected:120,opponent_projected:110}));
+ const report={available:true,published_locked:true,season:2026,week:5,teams};
  const award={season:2026,week:5,newsroom_editorial_revision:39,newsroom_engine:'v31-forward',
+  manager_awards_generation_version:2,
   players_of_week:{offense:{player_id:'O1'},defense:{player_id:'D1'}},
-  manager_awards:[{type:'highest-scorer',roster_id:'1'},{type:'lowest-scorer',roster_id:'2'}]};
+  manager_awards:[{type:'highest-scorer',roster_id:'32'},{type:'lowest-scorer',roster_id:'1'},
+   {type:'hot-seat',roster_id:'1'},{type:'cool-throne',roster_id:'10'}]};
  const complete={records:[award]};
  assert.equal(hasCompleteWeekFeaturePackage(report,complete),true);
  assert.equal(hasCompleteWeekFeaturePackage({...report,published_locked:false},complete),false);
  assert.equal(hasCompleteWeekFeaturePackage({...report,available:false},complete),false);
+ assert.equal(hasCompleteWeekFeaturePackage({...report,teams:teams.slice(1)},complete),false);
  assert.equal(hasCompleteWeekFeaturePackage(report,null),false);
  assert.equal(hasCompleteWeekFeaturePackage(report,{records:[]}),false);
  assert.equal(hasCompleteWeekFeaturePackage(report,{records:[{...award,week:6}]}),false);

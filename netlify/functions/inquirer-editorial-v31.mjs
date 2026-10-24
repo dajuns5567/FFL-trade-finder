@@ -4335,7 +4335,7 @@ export function evaluateInquirerEditionQuality(current,previous=null){
     if(prior){
       const pset=new Set(forwardArticleSentences(prior).map(s=>forwardNormSentence(s,entities))),overlap=norms.filter(n=>pset.has(n));
       const ratio=norms.length?overlap.length/norms.length:0;
-      if(overlap.length>=5||ratio>.16)issues.push({id:'same-team-copy-forward',team:t.team_name,overlap:overlap.length,ratio:Number(ratio.toFixed(3))});
+      if(overlap.length>=5||ratio>.16)issues.push({id:'same-team-copy-forward',team:t.team_name,overlap:overlap.length,ratio:Number(ratio.toFixed(3)),examples:sentences.filter((sentence,i)=>pset.has(norms[i])).slice(0,6)});
     }
     const rid=String(t?.inquirer_article?.reporter?.id||''),copy=(t?.inquirer_article?.paragraphs||[]).join(' '),
       valueCopy=(t?.inquirer_article?.sections||[]).filter(s=>String(s?.kind||'')==='value').flatMap(s=>s?.paragraphs||[]).join(' ');

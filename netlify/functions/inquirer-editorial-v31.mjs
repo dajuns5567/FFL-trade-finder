@@ -2243,7 +2243,7 @@ function w2SentimentFollowup(t,prev,r,fs,prevSent,won){
 // remains untouched for locked editions; bench screenshots are one possible
 // subject, not the mandatory premise of every fan reaction.
 function forwardFanScenes(t,won,week,variationSalt){
- const name=w2DisplayTeam(t.team_name),a=w2Alias(t),leader=(t.starter_details||[])[0],
+ const name=w2DisplayTeam(t.team_name),a=w2Alias(t),leader=(t.starter_details||[]).slice().sort((x,y)=>Number(y.points||0)-Number(x.points||0))[0],
   low=(t.starter_details||[]).slice().sort((x,y)=>Number(x.points)-Number(y.points))[0],
   miss=t.best_lineup_miss,record=w2Record(t),points=w2One(t.points),
   opponent=w2DisplayTeam(t.opponent_name||'the opposition'),next=w2DisplayTeam(t.next_opponent_name||'the next opponent'),

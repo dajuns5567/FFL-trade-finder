@@ -37,6 +37,15 @@ export function inspectEditionBeforePublication(edition) {
     if(!article?.headline||!article?.byline||!article?.reporter?.id)issues.push({id:'article-metadata',team});
     const paragraphs=articleParagraphs(article),substantive=paragraphs.filter(p=>p.trim().length>=50);
     if(substantive.length<6)issues.push({id:'article-depth',team,count:substantive.length});
+    // Exact substantial sentences repeated inside the same article are not
+    // additional reporting, even when placed under different desk headings.
+    const ownSentences=new Set();
+    for(const p of paragraphs)for(const sentence of String(p).split(/(?<=[.!?])\s+/)){
+      const phrase=normalized(sentence).replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+      if(phrase.split(' ').length<13)continue;
+      if(ownSentences.has(phrase))issues.push({id:'within-article-prose-reuse',team,excerpt:phrase.slice(0,150)});
+      ownSentences.add(phrase);
+    }
     // A heading without prose is not an editorial desk. Check forward
     // editions with real valuation snapshots without altering locked history.
     if(Number(edition?.season)>=2026&&Number(edition?.week)>=5){

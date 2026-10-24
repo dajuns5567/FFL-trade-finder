@@ -1,4 +1,4 @@
-import {getDeployStore} from '@netlify/blobs';
+import {getStore,getDeployStore} from '@netlify/blobs';
 import {isPreviewDiagnosticContext,resolvePreviewIdentity,previewStatusMatchesIdentity,PREVIEW_DIAGNOSTIC_STORE,auditPrivateEdition} from './lib/inquirer-preview-diagnostics.mjs';
 
 const json=(value,status=200)=>new Response(JSON.stringify(value),{
@@ -18,9 +18,10 @@ export default async function inquirerPreviewDiagnostic(req){
  if(!isPreviewDiagnosticContext(req.url)||req.method!=='GET')return json({error:'Preview-only diagnostic'},403);
  let identity;
  try{identity=await resolvePreviewIdentity(req.url)}catch(error){return json({error:String(error?.message||error),status:{state:'error'}},503)}
- const store=getDeployStore({name:PREVIEW_DIAGNOSTIC_STORE,consistency:'strong'});
+ const store=getStore('fleeced-inquirer-private-pr402-persistent',{consistency:'strong'});
+ const legacy=getDeployStore({name:PREVIEW_DIAGNOSTIC_STORE,consistency:'strong'});
  let status;
- try{status=await store.get(identity.status,{type:'json'})}
+ try{status=await store.get(identity.status,{type:'json'})||await legacy.get(identity.status,{type:'json'})}
  catch(error){console.error('inquirer-preview-diagnostic-status-read',String(error?.message||error));return json({error:'Private preview storage temporarily unavailable',status:{state:'storage-unavailable'},target:{season:identity.season,week:identity.week}},503)}
  // A status saved under a previous UI version or a week-mislabeled error
  // must never pass the requested Week 5 diagnostic or be treated as complete.
@@ -29,7 +30,7 @@ export default async function inquirerPreviewDiagnostic(req){
  if(new URL(req.url).searchParams.get('audit')==='1'){
   if(status?.state!=='completed')return json({ready:false,state:status?.state||'not-started',target:{season:identity.season,week:identity.week},reason:'No completed private manuscript to audit'},409);
   let draft;
-  try{draft=await store.get(identity.edition,{type:'json'})}
+  try{draft=await store.get(identity.edition,{type:'json'})||await legacy.get(identity.edition,{type:'json'})}
   catch(error){return json({ready:false,error:'Private manuscript storage unavailable'},503)}
   if(!draft||Number(draft.season)!==identity.season||Number(draft.week)!==identity.week)
    return json({ready:false,error:'Private manuscript identity or storage mismatch'},409);
@@ -43,7 +44,7 @@ export default async function inquirerPreviewDiagnostic(req){
   // The canonical reader never consumes this route or treats it as publishable.
   if(status?.state!=='error')return json({error:'No rejected manuscript for this deployment'},404);
   let rejected;
-  try{rejected=await store.get(identity.rejected,{type:'json'})}
+  try{rejected=await store.get(identity.rejected,{type:'json'})||await legacy.get(identity.rejected,{type:'json'})}
   catch(error){return json({error:'Rejected draft storage temporarily unavailable'},503)}
   const edition=rejected?.started_at===status.started_at?rejected.edition:null;
   return edition?.preview_only===true&&edition?.published_locked===false

@@ -275,3 +275,12 @@ test('forward fan scenes rotate direct football satire with fictional-fan vignet
  assert.match(generator,/Number\(week\)>=5&&Number\(t\.roster_id\)%2===0/);
  assert.match(generator,/return footballAngles\[/);
 });
+
+test('final forward handoff deduplicates exact substantial sentences after curation',()=>{
+ const generator=readFileSync(new URL('../netlify/functions/inquirer-editorial-v31.mjs',import.meta.url),'utf8');
+ const curation=generator.lastIndexOf('curateForwardTeamNarrative(t,week)');
+ const dedup=generator.lastIndexOf('const usedSentences=new Set()');
+ assert.ok(curation>=0&&dedup>curation);
+ assert.match(generator.slice(dedup,dedup+900),/usedSentences\.has\(key\)/);
+ assert.match(generator.slice(dedup,dedup+900),/article\.paragraphs=/);
+});

@@ -68,6 +68,12 @@ try{
    error:String(data?.error||'').slice(0,180)
   };
  }catch(e){report.checks.week5_draft_readback={error:String(e.message||e).slice(0,180)};}
+ // Compare requested-week draft API with the actual browser fetches. URLs only,
+ // and only same-origin diagnostic requests. Never log manuscripts or cookies.
+ const requests=await page.evaluate(()=>performance.getEntriesByType('resource')
+  .map(x=>x.name).filter(x=>x.includes('/.netlify/functions/inquirer-preview-diagnostic'))
+  .map(x=>{const u=new URL(x);return u.pathname+u.search}).slice(0,12));
+ report.checks.preview_diagnostic_requests=requests;
  report.checks.reader_runtime={
   current_url:page.url().replace(/([?&])[^=]+=[^&]*/g,'$1[redacted]'),
   page_errors:jsFailures.slice(0,10),

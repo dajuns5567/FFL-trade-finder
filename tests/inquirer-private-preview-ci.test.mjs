@@ -261,3 +261,10 @@ test('the public publication gate rejects blank valuation desks without relying 
  assert.match(guard,/id:'empty-value-desk'/);
  assert.doesNotMatch(guard,/t\.value_history_week\?\.value!=null/);
 });
+
+test('forward newsroom performs plural team possessive edit after narrative curation',()=>{
+ const source=readFileSync(new URL('../netlify/functions/inquirer-editorial-v31.mjs',import.meta.url),'utf8');
+ const curation=source.indexOf('curateForwardTeamNarrative(t,week);');
+ const possessive=source.indexOf('replaceAll(team+"\'s",team+"\'")',curation);
+ assert.ok(curation>=0&&possessive>curation);
+});

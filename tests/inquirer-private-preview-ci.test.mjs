@@ -137,3 +137,20 @@ test('read-only Playwright feature navigation rejects mutation-like preview link
  assert.match(audit,/report\.landing_page_verified/);
  assert.match(audit,/complete_edition_verified:false/);
 });
+
+test('weekly reader is strictly read-only even when archive history is incomplete',()=>{
+ assert.doesNotMatch(readerSource,/fetch\(info\?\.start_url/);
+ assert.doesNotMatch(readerSource,/fetch\(\x27\/\.netlify\/functions\/inquirer-preview-background/);
+ assert.match(readerSource,/no generation was triggered/);
+ assert.match(readerSource,/inquirerPreviewRequestedWeek/);
+});
+
+test('unattended browser checks cannot claim complete edition verification from a landing page',()=>{
+ const audit=readFileSync(new URL('../scripts/fleeced-local-playwright-audit.mjs',import.meta.url),'utf8');
+ const reporter=readFileSync(new URL('../scripts/fleeced-auto-report.mjs',import.meta.url),'utf8');
+ assert.match(audit,/complete_edition_verified:false/);
+ assert.match(audit,/STALE_READER_WEEK_MISMATCH/);
+ assert.match(reporter,/if\(!report.authenticated\)/);
+ assert.match(reporter,/week5_draft_readback/);
+ assert.match(reporter,/reader_consistency/);
+});

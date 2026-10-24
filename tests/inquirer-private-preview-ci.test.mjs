@@ -199,3 +199,11 @@ test('a previously saved edition cannot be overwritten or regenerated after a lo
  assert.match(previewJobSource,/setJSON\(identity\.edition,edition,\{onlyIfNew:true\}\)/);
  assert.match(previewJobSource,/existing weekly manuscript won the create-only write/);
 });
+
+test('verified persisted manuscript wins over lost preview status after redeploy',()=>{
+ assert.match(previewDiagnosticSource,/restored_from_saved_manuscript:true/);
+ assert.match(previewDiagnosticSource,/savedEdition\.preview_editorial_audit\?\.ok===true/);
+ assert.match(previewDiagnosticSource,/savedEdition\.preview_generation_quality\?\.ok===true/);
+ assert.match(previewDiagnosticSource,/savedEdition\.published_locked===false/);
+ assert.match(previewDiagnosticSource,/Number\(savedEdition\.week\)===identity\.week/);
+});

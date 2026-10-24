@@ -154,3 +154,18 @@ test('unattended browser checks cannot claim complete edition verification from 
  assert.match(reporter,/week5_draft_readback/);
  assert.match(reporter,/reader_consistency/);
 });
+
+test('preview navigation never invokes stale archive regeneration code',()=>{
+ const start=readerSource.indexOf('async function loadInquirerPreview()');
+ const end=readerSource.indexOf('const esc=',start);
+ assert.ok(start>=0&&end>start,'reader preview loader is present');
+ const loader=readerSource.slice(start,end);
+ assert.doesNotMatch(loader,/canRetryArchiveBlockedPreview/);
+ assert.doesNotMatch(loader,/inquirerPreviewLaunchAttempted/);
+ assert.doesNotMatch(loader,/start_url/);
+ assert.doesNotMatch(loader,/inquirer-preview-background/);
+ assert.match(loader,/draft=1/);
+ assert.match(loader,/preview_week/);
+ assert.match(loader,/preview_editorial_audit/);
+ assert.match(loader,/preview_generation_quality/);
+});

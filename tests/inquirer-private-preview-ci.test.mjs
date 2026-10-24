@@ -30,16 +30,18 @@ test('the only successful unattended enqueue is HTTP 202; operational errors sti
   assert.match(queueJob,/exit 1/);
 });
 
-test('authenticated preview reader starts an isolated draft and reports real states',()=>{
-  assert.match(readerSource,/inquirer-preview-diagnostic\?draft=1/);
-  assert.match(readerSource,/inquirer-preview-background\?start=1/);
-  assert.match(readerSource,/status\.state==='not-started'/);
-  assert.match(readerSource,/status\.state==='running'/);
-  assert.match(readerSource,/status\.state==='error'/);
-  assert.match(readerSource,/queued\.status!==202/);
-  assert.match(readerSource,/preview is not ready/);
-  assert.match(readerSource,/if\(isRunning&&\+\+inquirerPreviewPollAttempts/);
-  assert.doesNotMatch(readerSource,/<h3>Private Week 5 preview is generating<\/h3>/);
+test('authenticated preview reader loads an existing draft without starting a job',()=>{
+ const loader=readerSource.slice(readerSource.indexOf('async function loadInquirerPreview()'),readerSource.indexOf('const esc='));
+ assert.match(loader,/inquirer-preview-diagnostic\?draft=1/);
+ assert.match(loader,/status\.state==='not-started'/);
+ assert.match(loader,/status\.state==='running'/);
+ assert.match(loader,/status\.state==='error'/);
+ assert.doesNotMatch(loader,/inquirer-preview-background\?start=1/);
+ assert.doesNotMatch(loader,/queued\.status!==202/);
+ assert.match(loader,/no generation was triggered/);
+ assert.match(loader,/preview_editorial_audit/);
+ assert.match(loader,/preview_generation_quality/);
+ assert.doesNotMatch(readerSource,/<h3>Private Week 5 preview is generating<\/h3>/);
 });
 
 test('a failed editorial gate retains only a deploy-local rejected review copy',()=>{

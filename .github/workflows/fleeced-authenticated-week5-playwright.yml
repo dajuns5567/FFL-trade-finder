@@ -1,0 +1,46 @@
+name: Authenticated Week 5 Playwright verification
+on:
+  workflow_dispatch:
+jobs:
+  protected-preview-playwright:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      PREVIEW_URL: https://deploy-preview-402--transcendent-manatee-2f0123.netlify.app/?inquirer_preview=1&preview_week=5
+      PLAYWRIGHT_STORAGE_STATE_B64: ${{ secrets.FLEECED_PLAYWRIGHT_STORAGE_STATE_B64 }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Require authenticated browser state
+        shell: bash
+        run: |
+          if [ -z "$PLAYWRIGHT_STORAGE_STATE_B64" ]; then
+            echo "::error::Protected preview was NOT audited. Set the repository secret FLEECED_PLAYWRIGHT_STORAGE_STATE_B64 from an authorized Playwright storage state."
+            exit 1
+          fi
+          umask 077
+          printf '%s' "$PLAYWRIGHT_STORAGE_STATE_B64" | base64 --decode > "$RUNNER_TEMP/netlify-playwright-state.json"
+          node -e "const fs=require('fs');const p=process.argv[1];const s=JSON.parse(fs.readFileSync(p));if(!Array.isArray(s.cookies)||!Array.isArray(s.origins))process.exit(1)" "$RUNNER_TEMP/netlify-playwright-state.json"
+      - name: Install Playwright
+        run: |
+          npm install --no-save --package-lock=false playwright
+          npx playwright install --with-deps chromium
+      - name: Audit protected preview with real browser
+        env:
+          PLAYWRIGHT_STATE_FILE: ${{ runner.temp }}/netlify-playwright-state.json
+        run: node scripts/inquirer-authenticated-browser-audit.mjs
+      - name: Upload diagnostic only (no cookies)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: week5-authenticated-playwright-audit
+          path: playwright-audit-result.json
+          if-no-files-found: ignore
+      - name: Remove browser state
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/netlify-playwright-state.json"

@@ -4304,7 +4304,14 @@ export function evaluateInquirerEditionQuality(current,previous=null){
     const fullCopy=(t?.inquirer_article?.sections||[]).flatMap(x=>x?.paragraphs||[]).join(' ');
     const uniqueLongPhrases=new Set();
     const tokens=(fullCopy.toLowerCase().match(/[a-z0-9]+/g)||[]);
-    for(let at=0;at+9<=tokens.length;at++)uniqueLongPhrases.add(tokens.slice(at,at+9).join(' '));
+    for(let at=0;at+9<=tokens.length;at++){
+      const window=tokens.slice(at,at+9);
+      // Numeric records shared by multiple teams (e.g., 0-0 in Weeks 2/3)
+      // are facts, not recycled editorial phrasing; never weaken the
+      // independent rejection of repeated jokes and prose.
+      if(window.filter(word=>/^\\d+$/.test(word)).length>=2)continue;
+      uniqueLongPhrases.add(window.join(' '));
+    }
     for(const phrase of uniqueLongPhrases){
       const owners=extendedPhraseOwners.get(phrase)||new Set();
       owners.add(String(t.roster_id));extendedPhraseOwners.set(phrase,owners);

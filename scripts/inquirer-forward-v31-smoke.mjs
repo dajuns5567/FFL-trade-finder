@@ -204,7 +204,9 @@ assert.doesNotMatch(handReview[0].inquirer_article.paragraphs.join(' '),/the fir
 // survive the final editorial pass as an empty decorative heading.
 const valuationFixture=clone(week2.teams[0]);
 valuationFixture.value_history_week={value:50514,baseline_value:50614,delta:-100,period:'7D'};
-valuationFixture.inquirer_article.sections.find(section=>section.kind==='value').paragraphs=[];
+const fixtureValueDesk=valuationFixture.inquirer_article.sections.find(section=>section.kind==='value');
+if(fixtureValueDesk)fixtureValueDesk.paragraphs=[];
+else valuationFixture.inquirer_article.sections.push({kind:'value',paragraphs:[]});
 restoreForwardArticleDepth(valuationFixture,5);
 assert.ok(valuationFixture.inquirer_article.sections.find(section=>section.kind==='value').paragraphs.some(p=>/50,514/.test(p)&&/100/.test(p)),
   'Final editorial depth repair must restore evidence-backed market copy');

@@ -13,6 +13,10 @@ export default async function generateInquirerPreview(req){
  }
  // getDeployStore is scoped to this single Deploy Preview, never production's shared Blob store.
  const identity=await resolvePreviewIdentity(req.url);
+ // The persistent store is site-wide; never expose PR #402 drafts to other
+ // deploy previews even if their functions share the same Netlify site ID.
+ if(new URL(req.url).hostname!=='deploy-preview-402--transcendent-manatee-2f0123.netlify.app')
+  return new Response('Forbidden',{status:403});
  const store=getStore('fleeced-inquirer-private-pr402-persistent',{consistency:'strong'});
  const legacy=getDeployStore({name:PREVIEW_DIAGNOSTIC_STORE,consistency:'strong'});
  // A transient store outage is not evidence that no draft exists.

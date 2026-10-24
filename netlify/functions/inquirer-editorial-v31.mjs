@@ -4288,6 +4288,7 @@ export function evaluateInquirerEditionQuality(current,previous=null){
     issues.push({id:'stale-forecast-presented-as-current',detail:'Forecast source is more than seven days old.'});
   if(!teams.length)issues.push({id:'no-team-articles',detail:'No team articles were generated.'});
   const articleScaffold=new Map();
+  const extendedPhraseOwners=new Map();
   const recurringTeamPhrases=[
     'the next Sunday changes the season sample; it does not simply photocopy',
     'same stars are fine; same emergency dependence is not',
@@ -4300,6 +4301,17 @@ export function evaluateInquirerEditionQuality(current,previous=null){
   let trioMentions=0;
   for(const t of teams){
     const sentences=forwardArticleSentences(t),norms=sentences.map(s=>forwardNormSentence(s,entities));
+    const fullCopy=(t?.inquirer_article?.sections||[]).flatMap(x=>x?.paragraphs||[]).join(' ');
+    const uniqueLongPhrases=new Set();
+    const tokens=(fullCopy.toLowerCase().match(/[a-z0-9]+/g)||[]);
+    for(let at=0;at+9<=tokens.length;at++)uniqueLongPhrases.add(tokens.slice(at,at+9).join(' '));
+    for(const phrase of uniqueLongPhrases){
+      const owners=extendedPhraseOwners.get(phrase)||new Set();
+      owners.add(String(t.roster_id));extendedPhraseOwners.set(phrase,owners);
+    }
+    if(Number(t?.points)===0&&/\bgot something from\b/i.test(fullCopy))
+      issues.push({id:'zero-point-production-praise',team:t.team_name});
+
     for(const n of new Set(norms)){if(!articleScaffold.has(n))articleScaffold.set(n,new Set());articleScaffold.get(n).add(String(t.roster_id))}
     const prior=(previous?.teams||[]).find(x=>String(x.roster_id)===String(t.roster_id));
     if(prior){
@@ -4310,7 +4322,10 @@ export function evaluateInquirerEditionQuality(current,previous=null){
     const rid=String(t?.inquirer_article?.reporter?.id||''),copy=(t?.inquirer_article?.paragraphs||[]).join(' '),
       valueCopy=(t?.inquirer_article?.sections||[]).filter(s=>String(s?.kind||'')==='value').flatMap(s=>s?.paragraphs||[]).join(' ');
     trioMentions+=(copy.match(/\btrio\b/gi)||[]).length;
-    for(const [phrase,owners] of repeatedTeamPhrases)if(copy.toLowerCase().includes(phrase.toLowerCase()))owners.push(t.team_name);
+    const longRecycled=[...extendedPhraseOwners].filter(([,owners])=>owners.size>=4);
+  if(longRecycled.length)issues.push({id:'cross-team-nine-word-scaffold',count:longRecycled.length,
+    examples:longRecycled.slice(0,3).map(([phrase,owners])=>({phrase,team_count:owners.size}))});
+  for(const [phrase,owners] of repeatedTeamPhrases)if(copy.toLowerCase().includes(phrase.toLowerCase()))owners.push(t.team_name);
     if(/already on the roster when Week \d+ began/i.test(valueCopy))issues.push({id:'value-roster-status-filler',team:t.team_name});
     if(/could not turn the (?:came in|finished|closed the week) result/i.test(copy))issues.push({id:'malformed-result-idiom',team:t.team_name});
     if(rid==='tess-delaney'&&/\b(?:furniture|chair|chairs|tablecloth|linen|napkin|china|silverware|place setting|dining room|dinner|centerpiece|velvet rope|chaise|ballroom|salon|coat check)\b/i.test(copy))issues.push({id:'roycington-retired-metaphor',team:t.team_name});

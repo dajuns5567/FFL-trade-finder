@@ -18,6 +18,7 @@ on:
       - 'tests/inquirer-weekly-publication-consistency.test.mjs'
       - 'netlify/functions/lib/inquirer-preview-diagnostics.mjs'
       - 'tests/inquirer-private-edition-audit.test.mjs'
+      - 'tests/inquirer-private-preview-ci.test.mjs'
       - 'tests/inquirer-complete-feature-package.test.mjs'
       - 'tests/inquirer-spotlight-readiness.test.mjs'
       - 'tests/inquirer-editorial-language-audit.test.mjs'

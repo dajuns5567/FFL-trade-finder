@@ -19,6 +19,7 @@ try {
  const externalAuth=/netlify\.com\/authorize|login\.netlify|login\.microsoftonline|accounts\.google|\/\.netlify\/identity\/login/i.test(current);
  const authWall=/sign in to continue|log in to (?:netlify|continue)|single sign.on|you must log in|access denied|authentication required/i.test(body.slice(0,2500));
  report.checks.http_status=response?.status()??null;
+ report.checks.authentication_classification=response?.status()===401?'NETLIFY_SESSION_UNAUTHORIZED':response?.status()===403?'NETLIFY_ACCESS_FORBIDDEN':'other';
  report.checks.final_host=new URL(current).host;
  report.checks.document_title=title;
  report.checks.sso_redirect=externalAuth;

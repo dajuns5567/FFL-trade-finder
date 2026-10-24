@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {inspectEditionBeforePublication,editorialCopyDigest,editorialApprovalMatches,deterministicInquirerAdmission,isReadOnlyEditorialPreview}
+import {inspectEditionBeforePublication,editorialCopyDigest,editorialApprovalMatches,deterministicInquirerAdmission,inspectPreviousWeekEditorialReuse,isReadOnlyEditorialPreview}
  from '../netlify/functions/inquirer-publication-guard.mjs';
 
 const makeEdition=()=>{
@@ -178,4 +178,14 @@ test('publication gate rejects every blank or placeholder forward valuation desk
  assert.ok(inspectEditionBeforePublication(e).issues.some(i=>i.id==='empty-value-desk'));
  e.teams[0].inquirer_article.sections.find(s=>s.kind==='value').paragraphs=['n/a'];
  assert.ok(inspectEditionBeforePublication(e).issues.some(i=>i.id==='empty-value-desk'));
+});
+
+test('successive weeks cannot recycle a fourteen-word editorial sentence from the prior edition',()=>{
+ const earlier=makeEdition(),current=makeEdition();
+ earlier.week=4; earlier.published_locked=true;
+ current.teams[0].inquirer_article.sections[0].paragraphs.push(
+  earlier.teams[0].inquirer_article.sections[0].paragraphs[0]);
+ assert.ok(inspectPreviousWeekEditorialReuse(current,earlier).some(i=>i.id==='prior-week-prose-reuse'));
+ current.teams[0].inquirer_article.sections[0].paragraphs.pop();
+ assert.equal(inspectPreviousWeekEditorialReuse(current,earlier).length,0);
 });

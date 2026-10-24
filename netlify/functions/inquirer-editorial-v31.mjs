@@ -3668,6 +3668,10 @@ function assertWeek2Originality(result,previousEdition){
   overview=deepStrings(overview,s=>adaptWeekLanguage(s,week,weekClassification));
   if(week>=3)teams=evolveForwardTeams(teams,previousEdition,week,variationSalt);
   if(week>=3)teams=polishForwardTeamCopy(teams,week,variationSalt);
+  // Polishing may reintroduce an unchanged Week N-1 sentence. Run the
+  // same deterministic prior-edition freshness repair on the finished copy.
+  // Every newsroom edition gets this pass, not a special Week 5 exception.
+  if(week>=3)teams=evolveForwardTeams(teams,previousEdition,week,variationSalt+307);
   // Recheck the finished language: polishing can expose collisions that the
   // earlier pass could not see, especially across distinct reporter desks.
   if(week>=3&&forwardCrossReporterPhraseOffenders(teams,[...forwardEntities({teams}),...forwardEntities(previousEdition)]).size)

@@ -65,6 +65,20 @@ try {
   finally{await tab.close();}
  }
 
+ // Read-only week-scoped status and manuscript metadata; never expose article content.
+ const origin=new URL(url).origin;
+ for(const [key,route] of [
+   ['week5_diagnostic','/.netlify/functions/inquirer-preview-diagnostic?preview_week=5'],
+   ['week5_draft_readback','/.netlify/functions/inquirer-preview-diagnostic?draft=1&preview_week=5']
+ ]){
+  try{
+   const res=await ctx.request.get(origin+route,{timeout:20000});
+   const data=await res.json().catch(()=>null);
+   report.checks[key]=key==='week5_diagnostic'
+    ?{http_status:res.status(),target_week:data?.target?.week??null,state:data?.status?.state??null,status_week:data?.status?.week??null}
+    :{http_status:res.status(),week:data?.week??null,season:data?.season??null,preview_only:data?.preview_only===true,published_locked:data?.published_locked===true,team_count:Array.isArray(data?.teams)?data.teams.length:null,recap_present:!!data?.league_overview,editorial_audit_ok:data?.preview_editorial_audit?.ok===true,generation_quality_ok:data?.preview_generation_quality?.ok===true};
+  }catch(e){report.checks[key]={error:String(e.message||e).slice(0,160)};}
+ }
  report.landing_page_verified=snapshot.textLength>200&&/fleeced/i.test(body);
  if(!report.landing_page_verified)throw new Error('Authenticated Fleeced project page did not render correctly.');
  await save();

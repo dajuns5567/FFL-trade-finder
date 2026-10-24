@@ -4050,10 +4050,22 @@ function assertWeek2Originality(result,previousEdition){
           :[top?`${top.name} put ${forwardOne(top.points)} fantasy points on ${team}'s Week ${week} board.`:`${team} could not identify a verified individual scoring leader.`];
         byKind.set('cool-throne',{kind:'cool-throne',heading:creditHeadings[String(r.name||'').toLowerCase()]||'Credit Where It Is Due',paragraphs:credit});
       }
-      if(!byKind.has('value')){
-        // The Week 4 market section may be intentionally empty. A small
-        // value fluctuation is not a story and must not force filler prose.
-        byKind.set('value',{kind:'value',heading:'The Roster-Value Ledger',paragraphs:[]});
+      // Never send a blank market desk to the newspaper. Report the actual
+      // measured movement, however small, or explicitly disclose absent data.
+      // Do not invent an estimate or inflate a routine fluctuation into news.
+      const marketDesk=byKind.get('value');
+      if(!(marketDesk?.paragraphs||[]).some(p=>String(p||'').trim())){
+        const market=t.value_history_week||{},delta=Number(market.delta),current=Number(market.value);
+        const validDelta=market.delta!=null&&Number.isFinite(delta);
+        const validCurrent=market.value!=null&&Number.isFinite(current);
+        const magnitude=validDelta?Math.abs(Math.round(delta)).toLocaleString('en-US'):null;
+        const observed=validDelta
+          ?team+' registered a '+(delta>0?'gain of ':delta<0?'decline of ':'flat movement of ')+magnitude+' roster-value points in the Week '+week+' ledger.'
+          :team+' has no verified Week '+week+' roster-value movement in the available league snapshot; this desk will not invent one.';
+        const context=validCurrent
+          ?'Its recorded roster valuation is '+Math.round(current).toLocaleString('en-US')+' points; that number describes the roster market, not the result of a fantasy matchup.'
+          :'The absence of a verified current valuation is a data limitation, not evidence of a roster gaining or losing value.';
+        byKind.set('value',{kind:'value',heading:marketDesk?.heading||'The Roster-Value Ledger',paragraphs:[observed+' '+context]});
       }
       const outlook=byKind.get('outlook');
       if(outlook?.paragraphs?.length>3){

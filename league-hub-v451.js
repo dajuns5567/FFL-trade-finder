@@ -66,7 +66,9 @@ async function loadInquirerPreview(){
      (Number(info?.target?.week)!==inquirerPreviewRequestedWeek||
       (status?.week!=null&&Number(status.week)!==inquirerPreviewRequestedWeek)))
    throw Error('Week '+inquirerPreviewRequestedWeek+' preview returned a different week identity. Refusing to display stale diagnostic text.');
-  // Reading an unpublished preview must never generate or replace it.\n  // Generation is an explicit, separately authorized action only.\n  if(status.state==='not-started')throw Error('Private preview has not been started; no generation was triggered.');
+  // Reading an unpublished preview must never generate or replace it.
+  // Generation is an explicit, separately authorized action only.
+  if(status.state==='not-started')throw Error('Private preview has not been started; no generation was triggered.');
   if(status.state==='running')throw Error('Private preview generation in progress.');
   if(status.state==='error')throw Error('Private preview generation failed: '+String(status.error||'Unknown error'));
   throw Error('Unpublished preview not ready (state: '+String(status.state||'unknown')+').');

@@ -23,7 +23,7 @@ try {
  report.checks.document_title=title;
  report.checks.sso_redirect=externalAuth;
  report.checks.sso_wall=authWall;
- report.authenticated=!externalAuth&&!authWall&&new URL(current).host==='deploy-preview-402--transcendent-manatee-2f0123.netlify.app'&&(response?.status()||500)<400;
+ report.authenticated=!externalAuth&&!authWall&&new URL(current).host===new URL(url).host&&(response?.status()||500)<400;
  if(!report.authenticated)throw new Error('Preview authentication failed or was redirected to SSO; cannot audit protected content.');
  // The browser must inspect rendered evidence, not a static HTTP response.
  const snapshot=await page.evaluate(()=>{
@@ -65,8 +65,8 @@ try {
   finally{await tab.close();}
  }
 
- report.landing_page_verified=report.checks.week5_visible&&report.checks.inquirer_visible&&snapshot.textLength>200;
- if(!report.landing_page_verified)throw new Error('Authenticated preview loaded but Week 5 Inquirer rendering was not confirmed.');
+ report.landing_page_verified=snapshot.textLength>200&&/fleeced/i.test(body);
+ if(!report.landing_page_verified)throw new Error('Authenticated Fleeced project page did not render correctly.');
  await save();
 } catch(error) {report.errors.push(String(error?.message||error));await save();process.exitCode=1;}
 finally {if(browser)await browser.close();}

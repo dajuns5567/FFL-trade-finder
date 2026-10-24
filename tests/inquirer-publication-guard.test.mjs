@@ -191,3 +191,11 @@ test('successive weeks cannot recycle a fourteen-word editorial sentence from th
  current.teams[0].inquirer_article.sections[0].paragraphs.pop();
  assert.equal(inspectPreviousWeekEditorialReuse(current,earlier).length,0);
 });
+
+test('an article cannot reuse a long substantive sentence in two different desks',()=>{
+ const e=makeEdition(),article=e.teams[0].inquirer_article;
+ const sentence='This roster failed to capitalize on its verified bench advantage despite a narrow fantasy loss that will have consequences next week.';
+ article.sections.find(s=>s.kind==='lede').paragraphs.push(sentence);
+ article.sections.find(s=>s.kind==='management').paragraphs.push(sentence);
+ assert.ok(inspectEditionBeforePublication(e).issues.some(i=>i.id==='within-article-prose-reuse'));
+});

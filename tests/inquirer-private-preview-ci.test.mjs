@@ -243,6 +243,6 @@ test('forward weekly newspaper populates otherwise blank value desks without mak
  const generator=readFileSync(new URL('../netlify/functions/inquirer-editorial-v31.mjs',import.meta.url),'utf8');
  assert.match(generator,/const marketDesk=byKind\.get\('value'\)/);
  assert.match(generator,/market\.delta!=null&&Number\.isFinite\(delta\)/);
- assert.match(generator,/no verified Week /);
+ assert.match(generator,/no verified market movement for Week /);
  assert.match(generator,/paragraphs:\[observed\+' '\+context\]/);
 });

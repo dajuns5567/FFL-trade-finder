@@ -4121,7 +4121,7 @@ function assertWeek2Originality(result,previousEdition){
         desk.paragraphs=(desk.paragraphs||[]).map(paragraph=>{
           const sentences=String(paragraph).split(/(?<=[.!?])\s+/);
           return sentences.filter(sentence=>{
-            const key=sentence.toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\\s+/g,' ').trim();
+            const key=sentence.toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
             if(key.split(' ').length<13)return true;
             if(usedSentences.has(key))return false;
             usedSentences.add(key);return true;

@@ -4309,7 +4309,7 @@ export function evaluateInquirerEditionQuality(current,previous=null){
       // Numeric records shared by multiple teams (e.g., 0-0 in Weeks 2/3)
       // are facts, not recycled editorial phrasing; never weaken the
       // independent rejection of repeated jokes and prose.
-      if(window.filter(word=>/^\\d+$/.test(word)).length>=2)continue;
+      if(window.filter(word=>/^\d+$/.test(word)).length>=2)continue;
       uniqueLongPhrases.add(window.join(' '));
     }
     for(const phrase of uniqueLongPhrases){

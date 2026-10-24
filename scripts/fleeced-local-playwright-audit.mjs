@@ -29,6 +29,14 @@ try{
   const rl=createInterface({input:stdin,output:stdout});
   try{await rl.question('Login required: sign in to Fleeced, then press Enter to audit: ');}finally{rl.close();}
  }
+ // Authentication redirects can strip review query parameters. Restore the exact
+ // requested read-only preview URL once, after the browser has authenticated.
+ const afterAuth=new URL(page.url());
+ if(afterAuth.origin===u.origin&&(afterAuth.searchParams.get('preview_week')!=='5'||afterAuth.searchParams.get('inquirer_preview')!=='1')){
+  report.checks.review_query_lost_during_auth=true;
+  await page.goto(target,{waitUntil:'domcontentloaded',timeout:60000});
+  await page.waitForTimeout(3000);
+ }else report.checks.review_query_lost_during_auth=false;
  const current=new URL(page.url());
  const text=await page.locator('body').innerText({timeout:20000});
  report.authenticated=current.host===u.host&&!/sign in to continue|authentication required|access denied/i.test(text.slice(0,2200));

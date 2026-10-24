@@ -35,6 +35,7 @@ const safe={
  reader_runtime:checks.reader_runtime||null,
  reader_consistency:checks.reader_consistency||null,
  reader_vs_endpoint:checks.reader_vs_endpoint||null,
+ review_query_lost_during_auth:checks.review_query_lost_during_auth===true,
  ui_flags:{
   not_ready:checks.not_ready===true,
   missing_archive:checks.missing_archive===true,

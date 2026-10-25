@@ -24,6 +24,12 @@ export default async function publishInquirerInBackground(req){
  // never bypass the hold and regenerate an unreviewed production newspaper.
  const siteId=globalThis.Netlify?.env?.get?.('SITE_ID')||process.env.SITE_ID||'';
  const host=new URL(req.url).hostname;
+ // Deploy previews and branch deploys can inspect draft copy, never publish.
+ // Keep this independent of environment flags and queue credentials.
+ if(/^deploy-(?:preview|branch)-/.test(host)){
+  console.warn('inquirer-background-preview-write-held');
+  return new Response('Preview deployment cannot publish',{status:403});
+ }
  const replacement=siteId==='8776d155-bc7b-4dcd-bafc-3d70d3d51800'||
   host==='transcendent-manatee-2f0123.netlify.app';
  const enabled=globalThis.Netlify?.env?.get?.('FLEECED_ENABLE_NEW_SITE_PUBLISHER')||

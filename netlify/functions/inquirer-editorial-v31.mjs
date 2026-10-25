@@ -4096,7 +4096,7 @@ function assertWeek2Originality(result,previousEdition){
         const validBaseline=market.baseline_value!=null&&Number.isFinite(baseline);
         // Rotate factual reporting angles by roster and week, rather than
         // stapling an identical punchline to every team's market numbers.
-        const slot=(Number(t.roster_id||0)+Number(week||0))%8;
+        const slot=(Math.imul(Number(t.roster_id||0),7)+Number(week||0))%8;
         const signed=validDelta?(delta>0?'+':delta<0?'-':'')+magnitude:null;
         const now=validCurrent?Math.round(current).toLocaleString('en-US'):null;
         const before=validBaseline?Math.round(baseline).toLocaleString('en-US'):null;

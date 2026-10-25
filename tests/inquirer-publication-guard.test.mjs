@@ -223,3 +223,10 @@ test('zero-point starters cannot receive fictional Cool Throne credit',()=>{
  ];
  assert.ok(inspectEditionBeforePublication(e).issues.some(i=>i.id==='zero-point-false-credit'&&i.team==='Team 1'));
 });
+
+test('tiny but genuine victory cannot be praised as a dominant performance',()=>{
+ const e=makeEdition(),team=e.teams[0],opponent=e.teams[1];
+ team.points=1.4;team.opponent_points=0;opponent.points=0;opponent.opponent_points=1.4;
+ team.inquirer_article.sections.find(s=>s.kind==='lede').paragraphs.push('A dominant performance settled the contest.');
+ assert.ok(inspectEditionBeforePublication(e).issues.some(i=>i.id==='low-score-unearned-triumphalism'&&i.team==='Team 1'));
+});

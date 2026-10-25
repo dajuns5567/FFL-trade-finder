@@ -146,7 +146,7 @@ export function inspectEditionBeforePublication(edition) {
   if(Number(edition?.season)>2026||(Number(edition?.season)===2026&&Number(edition?.week)>=5)){
     const genericJokes=[
       /the kind of headline that usually gets folded underneath the newspaper/i,
-      /rivals can keep the week \\d+ joke only if the same flaw survives/i,
+      /rivals can keep the week \d+ joke only if the same flaw survives/i,
       /the box score finally gave the highlight tape a number worth printing/i,
       /rivals can spot it: the dropped matchup leaves/i
     ];

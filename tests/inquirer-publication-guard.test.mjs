@@ -236,3 +236,10 @@ test('even two teams recycling a stock newspaper kicker must be held',()=>{
  for(const team of e.teams.slice(0,2))team.inquirer_article.sections.find(s=>s.kind==='outlook').paragraphs.push('No need to romanticize it: next Sunday will examine the facts.');
  assert.ok(inspectEditionBeforePublication(e).issues.some(i=>i.id==='recycled-stock-kicker'&&i.teams.length===2));
 });
+
+test('zero-point player false praise is rejected even outside Cool Throne',()=>{
+ const e=makeEdition();
+ e.teams[0].starter_details=[{name:'Zero Runner',points:0},{name:'Zero Defender',points:0}];
+ e.teams[0].inquirer_article.sections.find(s=>s.kind==='lede').paragraphs.push('Team 1 got something from Zero Runner, a statement unsupported by his zero points.');
+ assert.ok(inspectEditionBeforePublication(e).issues.some(i=>i.id==='zero-point-player-praise'));
+});

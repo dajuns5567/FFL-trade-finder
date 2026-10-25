@@ -166,6 +166,8 @@ test('revision44 does not reintroduce repeated Week 5 editorial hooks',()=>{
 
 test('cross-team rhetorical repairs target paired and three-team collisions',()=>{
  assert.match(source,/\.\.\.pairedOffenders\.keys\(\)/);
+ assert.match(source,/forwardEditorialPhraseKeys\(sentence,entities,12,false\)\.some\(x=>clauseOffenders\.has\(x\)\)/);
+ assert.match(source,/forwardEditorialPhraseKeys\(sentence,entities,16,false\)\.some\(x=>pairedOffenders\.has\(x\)\)/);
  assert.match(source,/\(clauseOffenders\.get\(gram\)\|\|\[\]\)\.indexOf\(t\.team_name\)>=1/);
  assert.match(source,/\(pairedOffenders\.get\(gram\)\|\|\[\]\)\.indexOf\(t\.team_name\)>=1/);
  assert.match(source,/offender=forwardWordCount\(sentence\)>=10&&/);

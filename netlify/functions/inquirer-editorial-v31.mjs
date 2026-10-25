@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=41;
+export const FORWARD_EDITORIAL_REVISION=42;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -484,7 +484,7 @@ export function polishForwardTeamCopy(teams,week,salt){
    s=s.replace(/that headliner shift made the second scoreboard louder\./gi,
      pick(t,'headliner-shift',[`The week-to-week scoring jump is real; the next defense will have the scouting report.`,
        `The new total raised expectations, a punishment reserved for players who actually produce.`,
-       `The box score finally gave the highlight tape a number worth printing.`,
+       `The measurable change matters more than any highlight clip.`,
        `Somebody in the rival chat just retired last week's joke.`]));
    s=s.replace(/the third score turned the Week \d+ volume up\./gi,
      pick(t,'third-score',[`The supporting points matter because the matchup is scored beyond its biggest star.`,
@@ -2059,7 +2059,7 @@ function w2OpeningHook(t,r,won,margin,opp,top){
       won?(wide?team+" hit Week 2 like somebody had taped the accelerator down.":team+" found just enough live wires to keep "+foe+" from cutting the power."):tight?team+" lost close enough that every quiet starter can hear the replay machine warming up.":foe+" kept landing punches while "+team+" waited for too many lineup spots to swing back.",
       won?team+" put together a Sunday with enough noise from enough directions that nobody could mute the whole thing.":team+" had some useful noise, but "+foe+" found the dead outlets and charged rent.",
       won?"The "+a.mascot+" got a win without asking the same hero to save every paragraph of the box score.":"The "+a.mascot+" do not need an autopsy montage; the bad numbers are already standing under bright lights.",
-      won?"Week 2 gave "+team+" a headline it can actually hang on the wall.":"Week 2 gave "+team+" the kind of headline that usually gets folded underneath the newspaper."
+      won?"Week 2 gave "+team+" a headline it can actually hang on the wall.":"Week 2 gave "+team+" a scoreboard deficit that needs an actual football fix next week."
     ],
     "nora-voss":[
       won?"Week 2 made the "+a.mascot+" considerably harder to dismiss than anyone waiting on a quick collapse had planned.":"The "+a.mascot+" made the loss easy to criticize before the final whistle had even finished the paperwork.",
@@ -2630,7 +2630,7 @@ function w2ClosingRead(t,r,won,margin,top,weak,next){
         unbeaten:w2Hash(team+"|filch-unbeaten-close")%2===0?("Rivals have to work around a 2-0 "+w2Alias(t).mascot+" record before "+foe+". Cleaning up "+team+"’s visible Week 2 weak spot would take away the easiest remaining rival material."):("The "+w2Alias(t).mascot+" carry 2-0 into "+foe+", so rivals are already short on ammunition. A cleaner bottom half of the lineup would make the next punch line even harder to find."),
         winless:"At 0-2, "+team+" has already supplied rivals enough material. "+foe+" is next, and changing the obvious Week 2 problem is the fastest way to retire the joke.",
         close:"A "+w2One(margin)+"-point decision means the punch line could have changed with one ordinary score. "+foe+" gets the next look at whether "+team+" learned anything from it.",
-        win:"The win puts "+team+" at "+rec+" before "+foe+". Rivals can keep the Week 2 joke only if the same flaw survives into the next lineup.",
+        win:"The win puts "+team+" at "+rec+" before "+foe+". A clean win is not permission to ignore the one starter who barely showed up.",
         loss:"The loss leaves "+team+" at "+rec+" with "+foe+" next. Fix the part everybody saw and rivals have to find new material."
       }
     };

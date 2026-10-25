@@ -2630,7 +2630,7 @@ function w2ClosingRead(t,r,won,margin,top,weak,next){
         unbeaten:w2Hash(team+"|filch-unbeaten-close")%2===0?("Rivals have to work around a 2-0 "+w2Alias(t).mascot+" record before "+foe+". Cleaning up "+team+"’s visible Week 2 weak spot would take away the easiest remaining rival material."):("The "+w2Alias(t).mascot+" carry 2-0 into "+foe+", so rivals are already short on ammunition. A cleaner bottom half of the lineup would make the next punch line even harder to find."),
         winless:"At 0-2, "+team+" has already supplied rivals enough material. "+foe+" is next, and changing the obvious Week 2 problem is the fastest way to retire the joke.",
         close:"A "+w2One(margin)+"-point decision means the punch line could have changed with one ordinary score. "+foe+" gets the next look at whether "+team+" learned anything from it.",
-        win:"The win puts "+team+" at "+rec+" before "+foe+". The next lineup needs more from its quietest starter; the Week 2 final score cannot answer that Week 3 question.",
+        win:"The win puts "+team+" at "+rec+" before "+foe+". The next lineup needs more from "+(weak?.name||"its weakest starter")+" after a "+w2One(weak?.points||0)+"-point Week 2; "+foe+" gets to test whether that slot improves.",
         loss:"The loss leaves "+team+" at "+rec+" with "+foe+" next. Fix the part everybody saw and rivals have to find new material."
       }
     };

@@ -71,6 +71,15 @@ export function inspectEditionBeforePublication(edition) {
       if(/\\b(?:earned (?:(?:its|his|her|their) )?(?:own )?credit|deserves? credit|something (?:concrete )?to celebrate|got something from|delivered (?:a|the) performance|a standout|hero of the week)\\b/i.test(credit))
         issues.push({id:'zero-point-false-credit',team});
     }
+    // Winning 1.4–0.0 is a recorded result, not evidence of dominance.
+    // Flag unqualified triumphalism only when the actual winner scores under
+    // five points; never change the underlying score or win/loss designation.
+    if(Number.isFinite(Number(t.points))&&Number.isFinite(Number(t.opponent_points))&&
+       Number(t.points)>Number(t.opponent_points)&&Number(t.points)<5){
+      const rhetoric=paragraphs.join(' ');
+      if(/\\b(?:dominant performance|commanding victory|brilliant victory|masterclass in winning|convincing victory|something concrete to celebrate)\\b/i.test(rhetoric))
+        issues.push({id:'low-score-unearned-triumphalism',team,points:t.points,opponent_points:t.opponent_points});
+    }
     const fan=(article?.sections||[]).find(s=>s.kind==='sentiment');
     if(!fan||fan.paragraphs?.filter(p=>String(p).length>=50).length<2)issues.push({id:'fan-sentiment',team});
     const opponent=rosterById.get(String(t.opponent_roster_id));

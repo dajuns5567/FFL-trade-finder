@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {isTrustedWeeklyAwardCache} from '../netlify/functions/league-hub.mjs';
-import {hasCompleteWeekFeaturePackage} from '../netlify/functions/inquirer-publish-background.mjs';
+import publishInquirerInBackground,{hasCompleteWeekFeaturePackage} from '../netlify/functions/inquirer-publish-background.mjs';
 import {FORWARD_EDITORIAL_REVISION} from '../netlify/functions/inquirer-editorial-v31.mjs';
 const hub=readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
 const pub=readFileSync(new URL('../netlify/functions/inquirer-publish-background.mjs',import.meta.url),'utf8');
@@ -130,4 +130,10 @@ test('private deploy previews cannot invoke publishing worker even with valid qu
  assert.match(pub,/inquirer-background-preview-write-held/);
  assert.match(pub,/deploy-\(\?:preview\|branch\)-/);
  assert.ok(pub.indexOf('inquirer-background-preview-write-held')<pub.indexOf('const expected='));
+});
+
+test('preview publish worker returns 403 without touching blob stores',async()=>{
+ const response=await publishInquirerInBackground(new Request('https://deploy-preview-402--transcendent-manatee-2f0123.netlify.app/.netlify/functions/inquirer-publish-background',{method:'POST',headers:{'x-fleeced-queue-key':'not-a-secret'}}));
+ assert.equal(response.status,403);
+ assert.match(await response.text(),/Preview deployment cannot publish/);
 });

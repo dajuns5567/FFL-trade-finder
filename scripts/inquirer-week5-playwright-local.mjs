@@ -114,8 +114,8 @@ try{
  const safe={source:'authenticated-local-32-team-audit',week:5,revision:FORWARD_EDITORIAL_REVISION,
   status:report.status,diagnostic_ready:report.audit?.ready===true,
   independent:report.independent};
- const body='<!-- fleeced-week5-private-editorial-metrics -->\\n### Authenticated Week 5 independent editorial metrics\\n\\n'+
-  '\\u0060\\u0060\\u0060json\\n'+JSON.stringify(safe,null,2)+'\\n\\u0060\\u0060\\u0060\\n'+
+ const body='<!-- fleeced-week5-private-editorial-metrics -->\n### Authenticated Week 5 independent editorial metrics\n\n'+
+  '\u0060\u0060\u0060json\n'+JSON.stringify(safe,null,2)+'\n\u0060\u0060\u0060\n'+
   'No cookies, tokens, article text or unpublished manuscript attached. Subjective editorial sign-off remains required.';
  const gh=spawnSync('gh',['auth','status'],{encoding:'utf8',timeout:10000});
  if(gh.status===0){

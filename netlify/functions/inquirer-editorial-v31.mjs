@@ -4094,14 +4094,32 @@ function assertWeek2Originality(result,previousEdition){
         const magnitude=validDelta?Math.abs(Math.round(delta)).toLocaleString('en-US'):null;
         const baseline=Number(market.baseline_value);
         const validBaseline=market.baseline_value!=null&&Number.isFinite(baseline);
-        const observed=validDelta
-          ?team+' finished the Week '+week+' market window '+(delta>0?'up ':delta<0?'down ':'unchanged at ')+magnitude+' valuation points.'
-          :team+' has no verified market movement for Week '+week+'; '+team+' gets no imaginary rise or fall.';
-        const context=validCurrent&&validBaseline
-          ?'From '+Math.round(baseline).toLocaleString('en-US')+' to '+Math.round(current).toLocaleString('en-US')+', '+team+' has a recorded price tag; '+team+' still must win games.'
-          :validCurrent
-            ?team+' has a recorded valuation of '+Math.round(current).toLocaleString('en-US')+' points; '+team+' still has to win games.'
-            :team+' lacks a verified current price; '+team+' gets a data caveat instead.';
+        // Rotate factual reporting angles by roster and week, rather than
+        // stapling an identical punchline to every team's market numbers.
+        const slot=(Number(t.roster_id||0)+Number(week||0))%8;
+        const signed=validDelta?(delta>0?'+':delta<0?'-':'')+magnitude:null;
+        const now=validCurrent?Math.round(current).toLocaleString('en-US'):null;
+        const before=validBaseline?Math.round(baseline).toLocaleString('en-US'):null;
+        const observed=validDelta?[
+          team+' recorded a Week '+week+' roster-value change of '+signed+' points.',
+          'The Week '+week+' market ledger shows '+team+' at '+signed+' points of movement.',
+          'For '+team+', the verified Week '+week+' valuation change was '+signed+' points.',
+          team+' closed the Week '+week+' valuation window '+(delta>0?'higher by ':delta<0?'lower by ':'unchanged at ')+magnitude+' points.',
+          'The Week '+week+' value sheet records '+signed+' points for '+team+'.',
+          'Measured roster value moved '+signed+' points for '+team+' in Week '+week+'.',
+          team+' finished Week '+week+' with '+signed+' points of recorded value movement.',
+          'On the Week '+week+' valuation sheet, '+team+' registered '+signed+' points.'
+        ][slot]:team+' has no verified Week '+week+' market movement; no change is claimed.';
+        const context=validCurrent&&validBaseline?[
+          'The recorded endpoints were '+before+' and '+now+' valuation points. That is not itself proof of better lineup decisions.',
+          'The market shifted from '+before+' to '+now+' valuation points; actual fantasy scoring remains separate evidence.',
+          'The verifiable comparison is '+before+' previously and '+now+' valuation points now, not a claim about a particular player.',
+          'Snapshots show '+before+' then '+now+' valuation points. Those numbers alone cannot explain the matchup result.',
+          'The baseline was '+before+' and the current reading '+now+' valuation points; the football verdict belongs to the starters.',
+          'From '+before+' to '+now+' valuation points, the market series supplies a measurement rather than a manager grade.',
+          'A move from '+before+' to '+now+' valuation points is documented; no individual player is assigned an invented cause.',
+          'The two measured values are '+before+' and '+now+' points. Roster prices and weekly scores answer different questions.'
+        ][slot]:validCurrent?'The current verified valuation is '+now+' points; no comparable baseline was supplied.':'No verified current valuation is available; editorial approval must wait for genuine market data.';
         byKind.set('value',{kind:'value',heading:marketDesk?.heading||'The Roster-Value Ledger',paragraphs:[observed+' '+context]});
       }
       const outlook=byKind.get('outlook');

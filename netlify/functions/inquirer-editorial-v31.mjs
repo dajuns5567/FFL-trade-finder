@@ -4097,6 +4097,10 @@ function assertWeek2Originality(result,previousEdition){
         // Rotate factual reporting angles by roster and week, rather than
         // stapling an identical punchline to every team's market numbers.
         const slot=(Math.imul(Number(t.roster_id||0),7)+Number(week||0))%8;
+        // Pair independently rotated fact angles: 32 unique combinations
+        // for 32 rosters, with week-aware variation and no invented facts.
+        const rosterOffset=((Number(t.roster_id||1)-1)%32+32)%32;
+        const contextSlot=(Math.floor(rosterOffset/8)*2+Math.floor((rosterOffset%8)/4)+Number(week||0))%8;
         const signed=validDelta?(delta>0?'+':delta<0?'-':'')+magnitude:null;
         const now=validCurrent?Math.round(current).toLocaleString('en-US'):null;
         const before=validBaseline?Math.round(baseline).toLocaleString('en-US'):null;
@@ -4119,7 +4123,7 @@ function assertWeek2Originality(result,previousEdition){
           'From '+before+' to '+now+' valuation points, the market series supplies a measurement rather than a manager grade.',
           'A move from '+before+' to '+now+' valuation points is documented; no individual player is assigned an invented cause.',
           'The two measured values are '+before+' and '+now+' points. Roster prices and weekly scores answer different questions.'
-        ][slot]:validCurrent?'The current verified valuation is '+now+' points; no comparable baseline was supplied.':'No verified current valuation is available; editorial approval must wait for genuine market data.';
+        ][contextSlot]:validCurrent?'The current verified valuation is '+now+' points; no comparable baseline was supplied.':'No verified current valuation is available; editorial approval must wait for genuine market data.';
         byKind.set('value',{kind:'value',heading:marketDesk?.heading||'The Roster-Value Ledger',paragraphs:[observed+' '+context]});
       }
       const outlook=byKind.get('outlook');

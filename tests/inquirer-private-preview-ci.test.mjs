@@ -307,3 +307,8 @@ test('forward private drafts isolate each generator revision from saved previous
  assert.match(previewIdentitySource,/season>=2026&&week>=5/);
  assert.match(previewJobSource,/onlyIfNew:true/);
 });
+
+test('revision-isolated private writer rejects stale edition before create-only storage',()=>{
+ assert.match(previewJobSource,/Number\(edition\?\.editorial_revision\)!==FORWARD_EDITORIAL_REVISION/);
+ assert.ok(previewJobSource.indexOf('Private generator revision mismatch')<previewJobSource.indexOf('onlyIfNew:true'));
+});

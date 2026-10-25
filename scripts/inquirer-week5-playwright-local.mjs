@@ -30,19 +30,23 @@ try{
  await page.goto(base+'/?inquirer_preview=1&preview_week=5',{waitUntil:'domcontentloaded',timeout:60000});
  // Reuse the locally stored browser session; the profile directory is owner-only.
  // A login is only required if Netlify has actually expired the saved session.
- const needsLogin=()=>new URL(page.url()).host!==new URL(base).host;
- if(needsLogin()){
+ const needsLogin=async()=>{
+  if(new URL(page.url()).host!==new URL(base).host)return true;
+  const probe=await getJSON('/.netlify/functions/inquirer-preview-diagnostic?preview_week=5');
+  return probe.http===401||probe.http===403;
+ };
+ if(await needsLogin()){
   console.log('Netlify session expired. Sign in once in the opened local browser; no tokens are exported.');
   await ask.question('After signing in, press Enter to continue...');
   await page.goto(base+'/?inquirer_preview=1&preview_week=5',{waitUntil:'domcontentloaded',timeout:60000});
-  if(needsLogin())throw Error('Authentication did not complete; private audit held.');
+  if(await needsLogin())throw Error('Authentication did not complete; private audit held.');
  }
  let status=await getJSON('/.netlify/functions/inquirer-preview-diagnostic?preview_week=5');
  if(status.body?.target?.week!==5)throw Error('Wrong preview target week: refusing action.');
- if(status.body?.status?.state==='not-started'){
+ if(status.body?.status?.state==='not-started'||!status.body?.status){
   console.log('No revision-scoped Week 5 draft found; initiating one PRIVATE preview generation.');
   const start=await getJSON('/.netlify/functions/inquirer-preview-background?start=1&preview_week=5');
-  if(start.http!==202&&start.http!==200)console.log('Background endpoint responded HTTP '+start.http);
+  if(start.http!==202&&start.http!==200)throw Error('Private generation request not accepted: HTTP '+start.http);
   report.generated=true;
   for(let n=0;n<48;n++){
    await page.waitForTimeout(10000);

@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=46;
+export const FORWARD_EDITORIAL_REVISION=47;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -481,8 +481,8 @@ export function polishForwardTeamCopy(teams,week,salt){
    s=s.replace(/same stars are fine; same emergency dependence is not\./gi,
      pick(t,'emergency-dependence',[`Against ${next}, ${team} needs more than one rescuer.`,
        `The next opponent will happily let the rest of the lineup disappear again.`,
-       `A single star can win an argument; the supporting cast has to win a matchup.`,
-       `Management should ask the quiet starters why the rescue shift keeps falling to somebody else.`]));
+       `Against ${next}, ${team} needs more than one producer after scoring ${Number(t.points||0).toFixed(1)} points last Sunday.`,
+       `After ${Number(t.points||0).toFixed(1)} points, ${team} needs its quiet starters to take a larger share against ${next}.`]));
    s=s.replace(/that headliner shift made the second scoreboard louder\./gi,
      pick(t,'headliner-shift',[`The week-to-week scoring jump is real; the next defense will have the scouting report.`,
        `The new total raised expectations, a punishment reserved for players who actually produce.`,
@@ -2901,7 +2901,7 @@ function w2ProjectionOutlookRead(t,r,next){
         "tess-delaney":fav+" takes the "+edge+"-point favorite seat",
         "mack-hollis":fav+" owns the "+edge+"-point projection megaphone",
         "nora-voss":"Rivals see a "+edge+"-point forecast advantage for "+fav
-       }[rid]||fav+" has a "+edge+"-point forecast edge")+", enough to set an expectation without settling the argument.":"There is no projection favorite; the numbers have declined to pick a side.")+" The lineup still has to earn the part that matters.",
+       }[rid]||fav+" has a "+edge+"-point forecast edge")+", enough to set an expectation without settling the argument.":"There is no projection favorite; the numbers have declined to pick a side.")+" For "+team+", the "+Number(t.points||0).toFixed(1)+"-point previous result is a better measure than the forecast alone.",
       "The Week 3 board has "+team+" at "+ownPts+" and "+foe+" at "+oppPts+". "+(fav?fav+" carries the projection edge of "+edge+", which is useful context rather than a permission slip.":"That leaves no projection favorite and no numerical excuse for confidence.")+" Sunday gets the final word.",
       ownPts+" for "+team+" and "+oppPts+" for "+foe+" is the current projection. "+(fav?fav+" enters as "+label+" with a "+edge+"-point edge.":"The projection favorite is nobody; the line is even.")+" Treat that as the starting expectation, not a verdict with shoulder pads.",
       "Projection-wise, "+team+" brings "+ownPts+" to "+foe+"’s "+oppPts+". "+(fav?fav+" owns the "+edge+"-point edge and therefore the favorite label for now.":"Neither side owns a projection edge.")+" The actual lineup remains inconveniently necessary."
@@ -2957,7 +2957,7 @@ function w2LedeAliasRead(t,r,prev,prevWon,won){
         team+" has dropped both games, so the focus has shifted from patience to repair: which lineup spots actually change the next result?"
       ],
       "lw":[
-        "The "+a.mascot+" answered the opening loss with a win. That is a response worth keeping without pretending one correction has settled the roster.",
+        "The "+a.mascot+" answered the opening loss with a "+Number(t.points||0).toFixed(1)+"-point win. That leaves "+team+" with a result worth keeping and a specific next opponent to prepare for.",
         team+" split the first two Sundays by responding to the opener. The win matters most as proof that the first result did not have to repeat."
       ],
       "wl":[

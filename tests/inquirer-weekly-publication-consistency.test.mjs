@@ -178,3 +178,8 @@ test('value desk never falls back to an identical four-team closing sentence',()
  assert.match(source,/The measured valuation moved from/);
  assert.match(source,/These are distinct measures/);
 });
+
+test('declining starters do not inherit a repeated generic editorial demand',()=>{
+ assert.doesNotMatch(source,/that is enough decline to demand a Week 3 response/);
+ assert.match(source,/point reduction leaves/);
+});

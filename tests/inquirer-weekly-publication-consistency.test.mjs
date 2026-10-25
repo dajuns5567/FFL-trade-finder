@@ -161,7 +161,7 @@ test('revision46 does not reintroduce repeated Week 5 editorial hooks',()=>{
  assert.doesNotMatch(source,/scoreboard deficit that needs an actual football fix/);
  assert.doesNotMatch(source,/A clean win is not permission to ignore/);
  assert.doesNotMatch(source,/'One concrete weakness:'/);
- assert.match(source,/FORWARD_EDITORIAL_REVISION=50/);
+ assert.match(source,/FORWARD_EDITORIAL_REVISION=51/);
 });
 
 test('cross-team rhetorical repairs target paired and three-team collisions',()=>{
@@ -213,4 +213,9 @@ test('division recaps do not call multi-game deficits a one-game tossup',()=>{
 test('AFC East contenders paragraph cannot produce are still have',()=>{
  assert.doesNotMatch(source,/chasePair\+" "\+chaseBe\+" still have ground/);
  assert.match(source,/chasePair\+" still have ground to make up/);
+});
+
+test('player Jr suffix is not misread as sentence boundary before lowercase problem',()=>{
+ assert.match(source,/\(\?=\\s\+\[A-Za-z0-9\]\)/);
+ assert.doesNotMatch(source,/\(\?=\\s\+\[A-Z0-9\]\)/);
 });

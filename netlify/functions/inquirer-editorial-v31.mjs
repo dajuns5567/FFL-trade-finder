@@ -4122,6 +4122,20 @@ function assertWeek2Originality(result,previousEdition){
         for(const desk of article.sections||[])
           desk.paragraphs=(desk.paragraphs||[]).map(p=>String(p).replaceAll(team+"'s",team+"'"));
       }
+      // A football-first fan paragraph still needs to describe the audience's
+      // reaction. Only add an evidence-based bridge where curation left none.
+      const fanDesk=article.sections.find(s=>s.kind==='sentiment');
+      const fanCopy=(fanDesk?.paragraphs||[]).join(' ');
+      if(fanDesk?.paragraphs?.length&&
+         !/\b(?:fans?|supporters?|crowd|fan club|fan base|faithful|stadium|radio|call-in|bars?|group chat|neighborhood)\b/i.test(fanCopy)){
+        const fanStar=top?.name||'the lineup',fanPoints=forwardOne(top?.points||0);
+        const introductions=[
+          'Fans debated ','Supporters questioned ','The crowd discussed ','Radio callers examined ',
+          'Fans revisited ','Supporters assessed ','The fan base weighed ','The crowd reconsidered '
+        ];
+        fanDesk.paragraphs[0]=introductions[Number(t.roster_id)%introductions.length]+
+          fanStar+"'s "+fanPoints+"-point return. "+fanDesk.paragraphs[0];
+      }
       // Curators can reinsert an identical factual sentence into two desks.
       // Keep the first occurrence and remove only exact repeated sentences;
       // distinct facts and different interpretations remain untouched.

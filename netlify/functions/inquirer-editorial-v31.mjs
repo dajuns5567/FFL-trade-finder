@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=47;
+export const FORWARD_EDITORIAL_REVISION=48;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -1740,7 +1740,7 @@ function w2OutlookLead(t,r,next,nrecord,nctx,ndiv){
       "Week 3 sends "+team+" to "+next+", currently "+nrecord+" and "+rankText+". Now the Week 2 strengths have to travel against a team sitting in a different part of the league order.",
       next+" is next for "+team+" at "+nrecord+" ("+rankText+"). That matchup gives the "+a.mascot+" a chance to test whether the first two weeks describe a repeatable lineup rather than a favorable start.",
       "The Week 3 opponent is "+next+", carrying a "+nrecord+" record and "+rankText+". For "+team+", the assignment is to make the same useful players matter without needing the same exact Sunday.",
-      team+" gets "+next+" in Week 3, with "+next+" sitting "+nrecord+" and "+rankText+". The next Sunday is a new roster test, not a rerun of the first two."
+      team+" gets "+next+" in Week 3, with "+next+" sitting "+nrecord+" and "+rankText+". For "+team+", the next test is to follow "+w2One(Number(t.points||0))+" points against "+String(t.opponent_name||"the previous rival")+" with a real answer to "+next+"."
     ],
     "tess-delaney":[
       next+" arrives for Week 3 at "+nrecord+" and "+rankText+". The "+a.mascot+" have another appointment to prove the current outfit travels.",

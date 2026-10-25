@@ -249,7 +249,7 @@ export function restoreForwardArticleDepth(t,week){
  }
  // A zero-point lineup has no individual scoring hero. Rewrite the credit
  // desk from recorded facts, even if an earlier writer supplied false praise.
- const scoredStarters=(t.starter_details||[]).filter(p=>Number.isFinite(Number(p.points)));
+ const scoredStarters=(t.starter_details||[]).filter(p=>p?.points!=null&&String(p.points).trim()!==''&&Number.isFinite(Number(p.points)));
  const noPositiveStarter=scoredStarters.length>0&&scoredStarters.every(p=>Number(p.points)<=0);
  if(cool&&noPositiveStarter){
   cool.paragraphs=[team+' received no positive scoring contribution from its recorded starters in Week '+week+'. The Cool Throne stays empty: awarding credit for zero points would be a performance review written by the scoreboard’s defense attorney.'];

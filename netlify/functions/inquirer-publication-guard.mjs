@@ -140,6 +140,21 @@ export function inspectEditionBeforePublication(edition) {
       if(owners.length>=2)issues.push({id:'recycled-stock-kicker',teams:owners,riff:String(riff)});
     }
   }
+  // Rhetorical lines are not interchangeable league statistics. Pairwise
+  // recurrence of a demonstrably recycled joke blocks future editions, even
+  // when a team name, result or reporter prefix differs.
+  if(Number(edition?.season)>2026||(Number(edition?.season)===2026&&Number(edition?.week)>=5)){
+    const genericJokes=[
+      /the kind of headline that usually gets folded underneath the newspaper/i,
+      /rivals can keep the week \\d+ joke only if the same flaw survives/i,
+      /the box score finally gave the highlight tape a number worth printing/i,
+      /rivals can spot it: the dropped matchup leaves/i
+    ];
+    for(const pattern of genericJokes){
+      const victims=teams.filter(t=>articleParagraphs(t.inquirer_article).some(p=>pattern.test(p))).map(t=>t.team_name);
+      if(victims.length>=2)issues.push({id:'duplicated-rhetorical-punchline',teams:victims,phrase:String(pattern)});
+    }
+  }
   for(const [sentence,owners] of scaffoldOwners)if(owners.size>=3)
     issues.push({id:'reused-prose-scaffold',teams:[...owners],excerpt:sentence.slice(0,150)});
   const repeated=new Map();

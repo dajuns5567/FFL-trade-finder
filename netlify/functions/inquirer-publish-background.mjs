@@ -26,7 +26,10 @@ export default async function publishInquirerInBackground(req){
  const host=new URL(req.url).hostname;
  // Deploy previews and branch deploys can inspect draft copy, never publish.
  // Keep this independent of environment flags and queue credentials.
- if(/^deploy-(?:preview|branch)-/.test(host)){
+ const context=globalThis.Netlify?.env?.get?.('CONTEXT')||process.env.CONTEXT||'';
+ if(context==='deploy-preview'||context==='branch-deploy'||
+    /^deploy-preview-/.test(host)||
+    (host.endsWith('--transcendent-manatee-2f0123.netlify.app')&&host!=='transcendent-manatee-2f0123.netlify.app')){
   console.warn('inquirer-background-preview-write-held');
   return new Response('Preview deployment cannot publish',{status:403});
  }

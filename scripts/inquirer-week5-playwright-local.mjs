@@ -67,7 +67,32 @@ try{
   }
  }
  report.generation_state=status.body?.status?.state||'unknown';
- if(report.generation_state!=='completed')throw Error('Week 5 private draft remains held: '+JSON.stringify(status.body?.status?.error||status.body?.status?.reason||report.generation_state));
+ if(report.generation_state==='error'){
+  // A rejected manuscript is deliberately NOT publishable, but its protected
+  // diagnostic remains readable to the authorized local editor. Collect it
+  // instead of terminating before the source-level failure can be inspected.
+  report.rejected_summary=status.body?.status?.summary||null;
+  const rejected=await getJSON('/.netlify/functions/inquirer-preview-diagnostic?review=1&preview_week=5');
+  report.rejected_review_http=rejected.http;
+  if(rejected.http===200&&rejected.body?.review_only===true&&rejected.body?.preview_only===true&&
+     rejected.body?.published_locked===false&&rejected.body?.week===5&&
+     Number(rejected.body.editorial_revision)===FORWARD_EDITORIAL_REVISION){
+    const edition=rejected.body;
+    const publication=inspectEditionBeforePublication(edition);
+    const quality=evaluateInquirerEditionQuality(edition);
+    const issueCounts=issues=>Object.fromEntries([...new Set((issues||[]).map(x=>String(x?.id||x||'unknown')))]
+      .map(k=>[k,(issues||[]).filter(x=>String(x?.id||x||'unknown')===k).length]));
+    report.rejected_independent={revision:edition.editorial_revision,team_count:edition.teams?.length||0,
+      publication_ok:publication.ok,publication_issue_types:issueCounts(publication.issues),
+      quality_ok:quality.ok,quality_issue_types:issueCounts(quality.issues),
+      upstream_generation_quality:edition.preview_generation_quality||null,
+      upstream_editorial_audit:edition.preview_editorial_audit||null};
+    await mkdir(reportDir,{recursive:true,mode:0o700});
+    await writeFile(reportDir+'/week5-rejected-review.json',JSON.stringify(edition),{mode:0o600});
+    console.log('Saved protected rejected manuscript for editorial diagnosis; it remains unpublished and unapproved.');
+  }
+}
+if(report.generation_state!=='completed')throw Error('Week 5 private draft remains held: '+JSON.stringify(status.body?.status?.error||status.body?.status?.reason||report.generation_state));
  const audit=await getJSON('/.netlify/functions/inquirer-preview-diagnostic?audit=1&preview_week=5');
  report.http=audit.http;
  report.audit=audit.body;

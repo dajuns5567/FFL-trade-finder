@@ -158,10 +158,10 @@ const EVOLUTION_INTROS={
     'Look at the personnel:','The margin asks more:','Follow the scoring:','The numbers resist spin:','Forget the excuses:','Sunday left a clue:','The box score settles this:','Carry this into Monday:'
   ],
   'tess-delaney':[
-    'The unromantic version:','Spare me the excuses:','The football is plain:','No need to romanticize it:','Nicely put, but:','After the applause:','The lineup still answers:','Cut through the commotion:'
+    'The unromantic version:','Spare me the excuses:','The football is plain:','Read the final score first:','Nicely put, but:','After the applause:','The lineup still answers:','Cut through the commotion:'
   ],
   'mack-hollis':[
-    'Here is the noise:','Put this onscreen:','Back-page material:','Forget the preamble:','Turn it up:','Screenshot this:','No fine print:','Monday will have questions:'
+    'Here is the noise:','Put this onscreen:','Back-page material:','Forget the preamble:','Turn it up:','Screenshot this:','No fine print:','The game tape will answer:'
   ],
   'nora-voss':[
     'Rivals noticed:','Across the sideline:','Nothing mysterious here:','File that under obvious:','The irritating part:','Rivals can spot it:','One lineup detail:','Next week remembers:'
@@ -237,16 +237,18 @@ function evolveSentence(sentence,reporterId,seed){
     const choice=choices[(h+i*7)%choices.length];out=out.replace(re,choice);
   }
   out=out.trim();if(out)out=out[0].toUpperCase()+out.slice(1);
-  // The former eight stock prefaces were attached to every evolved sentence,
-  // inevitably repeating across a 32-team newsroom even after names change.
-  // Evolve the actual sentence using source-grounded lexical variants; strip
-  // inherited boilerplate instead of replacing it with a different cliché.
+  const intro=EVOLUTION_INTROS[rid][h%EVOLUTION_INTROS[rid].length];
+  // Never stack a prefatory cue on copy that already has one; that produced
+  // "The box score settles this: Look at the personnel: ..." in Week 5.
   const existingPrefaces=Object.values(EVOLUTION_INTROS).flat();
   const priorCue=existingPrefaces.find(prefix=>out.toLowerCase().startsWith(prefix.toLowerCase()));
   if(priorCue){
-    out=out.slice(priorCue.length).trim();
-    if(out)out=out[0].toUpperCase()+out.slice(1);
-  }
+    // Existing newsroom cues must EVOLVE, not freeze unchanged merely because
+    // the previous edition already used one. Replace, never stack, the cue.
+    const variants=EVOLUTION_INTROS[rid].filter(prefix=>prefix.toLowerCase()!==priorCue.toLowerCase());
+    const replacement=variants[h%variants.length]||intro;
+    out=replacement+' '+out.slice(priorCue.length).trim();
+  }else out=intro+' '+out;
   if(!/[.!?]$/.test(out))out+='.';
   return out;
 }
@@ -4435,14 +4437,10 @@ function assertWeek2Originality(result,previousEdition){
             out=evolveSentence(out,rid,[week,variationSalt,t.roster_id,sec.kind,si,pi,sj,attempt].join('|'));
             if(!old.has(forwardNormSentence(out,entities)))break;
           }
-          // If lexical evolution still matches the locked prior edition,
-          // omit the stale sentence rather than conceal it with a stock cue.
-          return old.has(forwardNormSentence(out,entities))?'':out;
-        }).filter(Boolean).join(' ')
+          return out;
+        }).join(' ')
       )}));
-      const next={...t,inquirer_article:{...a,sections,paragraphs:sections.flatMap(x=>x.paragraphs||[])}};
-      restoreForwardArticleDepth(next,week);
-      return next;
+      return {...t,inquirer_article:{...a,sections,paragraphs:sections.flatMap(x=>x.paragraphs||[])}};
     });
   }
   // Final reader-facing grammar pass: later variation/architecture steps can

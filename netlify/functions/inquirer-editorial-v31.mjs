@@ -302,7 +302,7 @@ function evolveForwardTeams(teams,previousEdition,week,salt){
   for(const t of teams||[])for(const s of forwardArticleSentences(t)){const n=forwardNormSentence(s,entities);currentCounts.set(n,(currentCounts.get(n)||0)+1)}
   const clauseOffenders=forwardCrossTeamClauseOffenders(teams,entities);
   const pairedOffenders=forwardPairedNarrativeOffenders(teams,entities);
-  const phraseOffenders=new Set([...forwardCrossReporterPhraseOffenders(teams,entities).keys(),...clauseOffenders.keys()]);
+  const phraseOffenders=new Set([...forwardCrossReporterPhraseOffenders(teams,entities).keys(),...clauseOffenders.keys(),...pairedOffenders.keys()]);
   return (teams||[]).map(t=>{
     const a=t?.inquirer_article;if(!a)return t;const rid=String(a?.reporter?.id||'walter-mercer'),prior=priorByRoster.get(String(t.roster_id))||new Set();
     const sections=(a.sections||[]).map((section,si)=>({...section,paragraphs:(section.paragraphs||[]).map((p,pi)=>{
@@ -311,7 +311,7 @@ function evolveForwardTeams(teams,previousEdition,week,salt){
           offender=forwardWordCount(sentence)>=10&&(prior.has(n)||(currentCounts.get(n)||0)>3||phraseCollision),
           seed=[week,salt,t.roster_id,section.kind||section.heading,si,pi,sj,n].join('|');
         if(!offender)return sentence;
-        const targetedClause=forwardEditorialPhraseKeys(sentence,entities,12,false).some(gram=>(clauseOffenders.get(gram)||[]).indexOf(t.team_name)>=2)||
+        const targetedClause=forwardEditorialPhraseKeys(sentence,entities,12,false).some(gram=>(clauseOffenders.get(gram)||[]).indexOf(t.team_name)>=1)||
           forwardEditorialPhraseKeys(sentence,entities,16,false).some(gram=>(pairedOffenders.get(gram)||[]).indexOf(t.team_name)>=1);
         if(targetedClause)return '';
         const evolved=evolveSentence(sentence,rid,seed);

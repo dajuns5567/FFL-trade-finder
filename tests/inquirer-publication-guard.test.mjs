@@ -199,3 +199,10 @@ test('an article cannot reuse a long substantive sentence in two different desks
  article.sections.find(s=>s.kind==='management').paragraphs.push(sentence);
  assert.ok(inspectEditionBeforePublication(e).issues.some(i=>i.id==='within-article-prose-reuse'));
 });
+
+test('publication holds a synthetic market desk when real roster valuation is unavailable',()=>{
+ const e=makeEdition();
+ const value=e.teams[0].inquirer_article.sections.find(s=>s.kind==='value');
+ value.paragraphs=['Team 1 has no verified market movement for Week 5; Team 1 gets no imaginary rise or fall. Team 1 lacks a verified current price; Team 1 gets a data caveat instead.'];
+ assert.ok(inspectEditionBeforePublication(e).issues.some(i=>i.id==='unverified-value-desk'&&i.team==='Team 1'));
+});

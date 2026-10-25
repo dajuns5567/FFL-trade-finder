@@ -4459,7 +4459,7 @@ function assertWeek2Originality(result,previousEdition){
         const name=String(p.name);
         value=forwardSentenceParts(value).map(sentence=>
           sentence.toLowerCase().includes(name.toLowerCase())&&
-          /\\b(?:got something from|deserves? (?:its|his|her|their) credit|provided a boost|came through in the clutch|earned a cool throne)\\b/i.test(sentence)
+          /\b(?:got something from|deserves? (?:its|his|her|their) credit|provided a boost|came through in the clutch|earned a cool throne)\b/i.test(sentence)
            ?name+' contributed 0.0 fantasy points in the recorded Week '+week+' starting lineup; that is a shortfall, not a contribution worth praising.':sentence
         ).join(' ');
       }

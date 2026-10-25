@@ -214,3 +214,12 @@ test('recycled Week 5 valuation punchline from preserved manuscript blocks publi
  ];
  assert.ok(inspectEditionBeforePublication(e).issues.some(i=>i.id==='stock-market-punchline'));
 });
+
+test('zero-point starters cannot receive fictional Cool Throne credit',()=>{
+ const e=makeEdition();
+ e.teams[0].starter_details=[{name:'Zero Runner',points:0},{name:'Zero Defender',points:0}];
+ e.teams[0].inquirer_article.sections.find(s=>s.kind==='cool-throne').paragraphs=[
+  'Zero Runner earned his own credit despite the entire recorded lineup scoring no points.'
+ ];
+ assert.ok(inspectEditionBeforePublication(e).issues.some(i=>i.id==='zero-point-false-credit'&&i.team==='Team 1'));
+});

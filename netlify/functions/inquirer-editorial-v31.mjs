@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=48;
+export const FORWARD_EDITORIAL_REVISION=49;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -1365,7 +1365,7 @@ function w2PlayerColumnRead(t,r,p,pp,i,opp,won){
     ],
     "nora-voss":[
       [
-        won?name+" gave rivals a big number and no final score to hide behind.":name+" did the work; rivals only get to laugh because the final score overruled it.",
+        won?name+" gave rivals a big number and no final score to hide behind.":name+" contributed "+w2One(Number(p.points||0))+" points for "+team+"; the final score against "+String(t.opponent_name||"the opponent")+" does not erase that work.",
         won?name+" made the top of the "+a.mascot+" lineup difficult to mock.":name+" gave "+team+" one performance rivals have to skip past on the way to the joke.",
         won?name+" supplied the kind of line that makes the rival complaint department change subjects.":name+" did enough individually that the rival joke has to start somewhere else.",
         won?name+" put up the number that forces rivals to argue about somebody else.":name+" gave supporters one clean rebuttal even though the scoreboard gave rivals the last word."
@@ -1553,7 +1553,7 @@ function w2DivisionBoardTake(flags,reporter,subject){
       case "AFC EAST":
         context=leaders.length===1
           ?leadOne+" "+w2TeamVerb(leadOne,"owns","own")+" the early edge at "+y.record+", but "+chasePair+" "+chaseVerb+" the chase tight enough that nobody gets a velvet rope yet."+midaNote+titleNote
-          :leaderNames+" share the top at "+y.record+", while "+chasePair+" "+chaseBe+" close enough to turn one ordinary Sunday into a three-team argument."+midaNote+titleNote;
+          :leaderNames+" share the top at "+y.record+", while "+chasePair+" "+chaseBe+" still have ground to make up before this becomes a fight for first place."+midaNote+titleNote;
         break;
       case "AFC NORTH":
         context=leaders.length>1
@@ -1577,7 +1577,7 @@ function w2DivisionBoardTake(flags,reporter,subject){
           :(leaders.length===1?leadOne+" "+w2TeamVerb(leadOne,"holds","hold"):leaderNames+" hold")+" the top line at "+y.record+", but "+chasePair+" "+chaseVerb+" the race packed tightly enough that nobody can hide behind the calendar."+midaNote+titleNote;
         break;
       case "NFC SOUTH":
-        context=leadSubject+" "+leadVerb("owns","own")+" "+y.record+", with "+chasePair+" providing the nearest pressure. The gap is real but thin; one stumble turns the leader from front-runner into participant again."+midaNote+titleNote;
+        context=leadSubject+" "+leadVerb("owns","own")+" "+y.record+", with "+chasePair+" providing the nearest pressure. The chase remains possible, but a single stumble will not erase a multi-game lead."+midaNote+titleNote;
         break;
       case "NFC WEST":
         context=leadSubject+" "+leadVerb("has","have")+" banked "+y.record+", while "+chasePair+" "+chaseVerb+" the chase from becoming a postcard. The leader has daylight, not distance."+midaNote+titleNote;

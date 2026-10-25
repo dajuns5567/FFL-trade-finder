@@ -52,6 +52,10 @@ export function inspectEditionBeforePublication(edition) {
       const value=(article?.sections||[]).find(s=>s.kind==='value');
       if(!value||(value.paragraphs||[]).every(p=>!String(p||'').trim()||/^n\/?a$/i.test(String(p).trim())))
         issues.push({id:'empty-value-desk',team});
+      // A missing-data disclaimer is not a valuation report. Hold the whole
+      // edition until verified market data is available for every roster.
+      if(value&&(value.paragraphs||[]).some(p=>/\bno verified market movement\b|\blacks a verified current price\b|\bgets a data caveat instead\b/i.test(String(p))))
+        issues.push({id:'unverified-value-desk',team});
     }
     const fan=(article?.sections||[]).find(s=>s.kind==='sentiment');
     if(!fan||fan.paragraphs?.filter(p=>String(p).length>=50).length<2)issues.push({id:'fan-sentiment',team});

@@ -1,3 +1,4 @@
+import {FORWARD_EDITORIAL_REVISION} from '../inquirer-editorial-v31.mjs';
 // Deploy Preview diagnostics are isolated from shared league publication storage.
 export const PREVIEW_DIAGNOSTIC_STORE = 'fleeced-inquirer-editorial-diagnostics';
 export const PREVIEW_DIAGNOSTIC_STATUS = 'current-status.json';
@@ -27,7 +28,11 @@ export async function resolvePreviewIdentity(url=''){
  if(!Number.isInteger(season)||season<2026||!Number.isInteger(current)||current<1)
   throw Error('Sleeper season/week clock invalid; preview held.');
  const week=value===null?Math.min(17,Math.max(1,current-1)):Number(value);
- const prefix=season+'/week-'+String(week).padStart(2,'0');
+ // Each forward editorial revision gets an independent create-only draft key.
+ // An older manuscript remains intact and readable from its original Blob
+ // key; never overwrite it to test a new generator.
+ const prefix=season+'/week-'+String(week).padStart(2,'0')+
+  (season>=2026&&week>=5?'/editorial-r'+FORWARD_EDITORIAL_REVISION:'');
  return{
   season,week,explicit:value!==null,
   status:prefix+'/status.json',

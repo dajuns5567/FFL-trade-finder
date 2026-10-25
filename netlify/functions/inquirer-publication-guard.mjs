@@ -65,7 +65,7 @@ export function inspectEditionBeforePublication(edition) {
     // appearance of a player name in legitimate statistical reporting.
     const starters=Array.isArray(t.starter_details)?t.starter_details:[];
     const played=starters.filter(p=>p?.points!=null&&String(p.points).trim()!==''&&Number.isFinite(Number(p.points)));
-    if(played.length&&played.every(p=>Number(p.points)<=0)){
+    if(played.length&&played.length===starters.length&&played.every(p=>Number(p.points)<=0)){
       const cool=(article?.sections||[]).find(s=>s.kind==='cool-throne');
       const credit=(cool?.paragraphs||[]).join(' ');
       if(/\b(?:earned (?:(?:its|his|her|their) )?(?:own )?credit|deserves? credit|something (?:concrete )?to celebrate|got something from|delivered (?:a|the) performance|a standout|hero of the week)\b/i.test(credit))

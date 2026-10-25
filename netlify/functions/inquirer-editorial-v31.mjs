@@ -225,7 +225,7 @@ function evolveCrossReporterSentence(sentence,reporterId,seed){
       'mack-hollis':' Next Sunday gets a vote.',
       'nora-voss':' The next opponent will have a fresh box score to examine.'
     };
-    out=out.replace(/[.!?]?$/,'.')+tails[rid];
+    out=out.replace(/[.!?]?$/,'.')+(rid==='nora-voss'?[' The next matchup supplies the evidence.',' The opponent will test that inference.',' Another Sunday may alter the verdict.',' The current numbers invite further scrutiny.',' One more result could overturn that finding.',' The following box score must settle it.',' The next lineup will face its own audit.',' A fresh opponent means fresh evidence.'][h%8]:tails[rid]);
   }
   return out;
 }

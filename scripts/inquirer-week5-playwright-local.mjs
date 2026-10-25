@@ -53,7 +53,7 @@ try{
   for(let n=0;n<48;n++){
    await page.waitForTimeout(10000);
    status=await getJSON('/.netlify/functions/inquirer-preview-diagnostic?preview_week=5');
-   if(status.body?.status?.state==='completed'||status.body?.status?.state==='error')break;
+   if(['completed','error','editorial-hold'].includes(status.body?.status?.state))break;
   }
  }
  report.generation_state=status.body?.status?.state||'unknown';
@@ -61,7 +61,7 @@ try{
  const audit=await getJSON('/.netlify/functions/inquirer-preview-diagnostic?audit=1&preview_week=5');
  report.http=audit.http;
  report.audit=audit.body;
- report.status=audit.http===200&&audit.body?.ready===true&&audit.body?.editorial?.passed===true?'STRUCTURAL_PASS_HUMAN_REVIEW_REQUIRED':'HOLD';
+ report.status=audit.http===200&&audit.body?.ready===true&&audit.body?.editorial?.passed===true&&audit.body?.matches_current_generator===true?'STRUCTURAL_PASS_HUMAN_REVIEW_REQUIRED':'HOLD';
  await page.goto(base+'/?inquirer_preview=1&preview_week=5',{waitUntil:'domcontentloaded',timeout:45000});
  await mkdir(reportDir,{recursive:true});
  try{

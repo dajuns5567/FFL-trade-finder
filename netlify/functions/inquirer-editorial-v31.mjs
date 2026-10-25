@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=45;
+export const FORWARD_EDITORIAL_REVISION=46;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -1755,7 +1755,7 @@ function w2OutlookLead(t,r,next,nrecord,nctx,ndiv){
       team+" gets "+next+" in Week 3, and "+next+" brings a "+nrecord+" record plus "+rankText+". There is enough resistance here to tell us whether the Week 2 headline has a sequel."
     ],
     "nora-voss":[
-      next+" is waiting in Week 3 at "+nrecord+" and "+rankText+". Rivals get to find out whether the Week 2 strengths survive a new opponent or whether the joke simply changes names.",
+      next+" is waiting in Week 3 at "+nrecord+" and "+rankText+". After "+w2One(Number(t.points||0))+" points against "+String(t.opponent_name||"the opponent")+", "+team+" must show its scoring is repeatable against "+next+".",
       "The next rival is "+next+", carrying "+nrecord+" and "+rankText+". The "+a.mascot+" can improve their argument by making the same flaw disappear against somebody new.",
       "Week 3 brings "+next+" with a "+nrecord+" record and "+rankText+". If the same weak spot survives the opponent change, rivals will not have to invent new material.",
       team+" meets "+next+" next, and "+next+" enters at "+nrecord+" ("+rankText+"). Somebody’s early talking point is going to get more annoying."
@@ -2583,7 +2583,7 @@ function w2ManagementMoveRead(t,r,won,margin){
       "walter-mercer":[w2Hash(team+"|walter-nonstarter-adds")%2===0?("None of the additions started for "+team+" in Week 2, so the roster changed while Sunday’s scoring lineup stayed intact."):("The incoming players stayed outside "+team+"’s Week 2 starters; those moves altered the roster, not the lineup that produced this result."),"Those additions did not reach the Week 2 starters, which makes them roster work rather than an explanation for Sunday."],
       "tess-delaney":["None of the new arrivals reached the Week 2 starting table, so the room changed without changing Sunday’s place settings.","The new guests did not make the Week 2 starting table for "+team+"; Sunday still belongs to the starters who were already seated."],
       "mack-hollis":["A silent box score from the new arrivals makes the actual starters responsible for Sunday’s result.","The additions stayed off the Week 2 starting card. That is roster churn, not a scoring explanation."],
-      "nora-voss":["None of the additions made the Week 2 starting lineup, so rivals cannot credit or blame the transactions for this score yet.","The new names stayed outside the Week 2 starters. That keeps the move jokes on hold until somebody actually enters the lineup."]
+      "nora-voss":["None of the additions made the Week 2 starting lineup for "+t.team_name+". The "+w2One(Number(t.points||0))+"-point result against "+String(t.opponent_name||"the opponent")+" therefore belongs to the starters, not to these transactions.","The new names stayed outside the Week 2 starters. That keeps the move jokes on hold until somebody actually enters the lineup."]
     };
     impact=(tails[rid]||tails["walter-mercer"])[v]
   }

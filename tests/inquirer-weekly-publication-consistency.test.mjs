@@ -125,3 +125,9 @@ test('replacement publisher kill switch is enforced in worker as well as schedul
  assert.match(pub,/replacement&&enabled!=='true'/);
  assert.ok(pub.indexOf("replacement&&enabled!=='true'")<pub.indexOf('await statusStore.setJSON('));
 });
+
+test('private deploy previews cannot invoke publishing worker even with valid queue credentials',()=>{
+ assert.match(pub,/inquirer-background-preview-write-held/);
+ assert.match(pub,/deploy-\(\?:preview\|branch\)-/);
+ assert.ok(pub.indexOf('inquirer-background-preview-write-held')<pub.indexOf('const expected='));
+});

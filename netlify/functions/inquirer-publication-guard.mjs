@@ -64,7 +64,7 @@ export function inspectEditionBeforePublication(edition) {
     // reason a team succeeded. Check the specific credited desk, not every
     // appearance of a player name in legitimate statistical reporting.
     const starters=Array.isArray(t.starter_details)?t.starter_details:[];
-    const played=starters.filter(p=>Number.isFinite(Number(p?.points)));
+    const played=starters.filter(p=>p?.points!=null&&String(p.points).trim()!==''&&Number.isFinite(Number(p.points)));
     if(played.length&&played.every(p=>Number(p.points)<=0)){
       const cool=(article?.sections||[]).find(s=>s.kind==='cool-throne');
       const credit=(cool?.paragraphs||[]).join(' ');

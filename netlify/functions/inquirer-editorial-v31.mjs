@@ -4452,7 +4452,20 @@ function assertWeek2Originality(result,previousEdition){
   teams=teams.map(t=>{
     const a=t?.inquirer_article;
     if(!a)return t;
-    const sections=(a.sections||[]).map(sec=>({...sec,paragraphs:(sec.paragraphs||[]).map(finishGrammar)}));
+    const zeros=(t.starter_details||[]).filter(p=>p?.points!=null&&String(p.points).trim()!==''&&Number(p.points)===0&&p.name);
+    const accurateZeroCopy=line=>{
+      let value=finishGrammar(line);
+      for(const p of zeros){
+        const name=String(p.name);
+        value=forwardSentenceParts(value).map(sentence=>
+          sentence.toLowerCase().includes(name.toLowerCase())&&
+          /\\b(?:got something from|deserves? (?:its|his|her|their) credit|provided a boost|came through in the clutch|earned a cool throne)\\b/i.test(sentence)
+           ?name+' contributed 0.0 fantasy points in the recorded Week '+week+' starting lineup; that is a shortfall, not a contribution worth praising.':sentence
+        ).join(' ');
+      }
+      return value;
+    };
+    const sections=(a.sections||[]).map(sec=>({...sec,paragraphs:(sec.paragraphs||[]).map(accurateZeroCopy)}));
     return {...t,inquirer_article:{...a,headline:finishGrammar(a.headline||''),sections,paragraphs:sections.flatMap(sec=>sec.paragraphs)}};
   });
   overview=deepStrings(overview,finishGrammar);

@@ -161,7 +161,7 @@ test('revision46 does not reintroduce repeated Week 5 editorial hooks',()=>{
  assert.doesNotMatch(source,/scoreboard deficit that needs an actual football fix/);
  assert.doesNotMatch(source,/A clean win is not permission to ignore/);
  assert.doesNotMatch(source,/'One concrete weakness:'/);
- assert.match(source,/FORWARD_EDITORIAL_REVISION=47/);
+ assert.match(source,/FORWARD_EDITORIAL_REVISION=48/);
 });
 
 test('cross-team rhetorical repairs target paired and three-team collisions',()=>{
@@ -197,4 +197,9 @@ test('Week 5 newspaper avoids four verified pairwise copied long-form passages',
  'A single star can win an argument; the supporting cast has to win a matchup',
  'Management should ask the quiet starters why the rescue shift keeps falling to somebody else'
  ])assert.ok(!source.includes(copy),'repeated 16-word narrative scaffold: '+copy);
+});
+
+test('future outlook does not repeat the Cardinals/Denver shared 16-word kicker',()=>{
+ assert.doesNotMatch(source,/The next Sunday is a new roster test, not a rerun of the first two/);
+ assert.match(source,/the next test is to follow/);
 });

@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=44;
+export const FORWARD_EDITORIAL_REVISION=45;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -4124,7 +4124,7 @@ function assertWeek2Originality(result,previousEdition){
           'The baseline was '+before+' and the current reading '+now+' valuation points; the football verdict belongs to the starters.',
           'From '+before+' to '+now+' valuation points, the market series supplies a measurement rather than a manager grade.',
           'A move from '+before+' to '+now+' valuation points is documented; no individual player is assigned an invented cause.',
-          'The two measured values are '+before+' and '+now+' points. Roster prices and weekly scores answer different questions.'
+          'The measured valuation moved from '+before+' to '+now+' points for '+team+'; its Week '+week+' fantasy output was '+Number(t.points||0).toFixed(1)+' points against '+String(t.opponent_name||'the opponent')+'. These are distinct measures.'
         ][contextSlot]:validCurrent?'The current verified valuation is '+now+' points; no comparable baseline was supplied.':'No verified current valuation is available; editorial approval must wait for genuine market data.';
         byKind.set('value',{kind:'value',heading:marketDesk?.heading||'The Roster-Value Ledger',paragraphs:[observed+' '+context]});
       }

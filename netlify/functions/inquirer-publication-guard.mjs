@@ -116,6 +116,18 @@ export function inspectEditionBeforePublication(edition) {
       }
     }
   }
+  // Known generic kicker/preface jokes are editorial text, not shared stats.
+  // Even a two-team recurrence makes them sound copied; apply to every
+  // forward week instead of accumulating Week-5-only manual edits.
+  if(Number(edition?.season)>=2026&&Number(edition?.week)>=5){
+    const stockRiffs=[/no need to romanticize it/i,/monday will have questions/i,
+      /the same flaw will follow/i,/the same headline folded/i];
+    for(const riff of stockRiffs){
+      const owners=teams.filter(t=>articleParagraphs(t.inquirer_article).some(p=>riff.test(p)))
+        .map(t=>t.team_name||String(t.roster_id));
+      if(owners.length>=2)issues.push({id:'recycled-stock-kicker',teams:owners,riff:String(riff)});
+    }
+  }
   for(const [sentence,owners] of scaffoldOwners)if(owners.size>=3)
     issues.push({id:'reused-prose-scaffold',teams:[...owners],excerpt:sentence.slice(0,150)});
   const repeated=new Map();

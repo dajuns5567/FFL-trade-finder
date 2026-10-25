@@ -68,7 +68,7 @@ export function inspectEditionBeforePublication(edition) {
     if(played.length&&played.every(p=>Number(p.points)<=0)){
       const cool=(article?.sections||[]).find(s=>s.kind==='cool-throne');
       const credit=(cool?.paragraphs||[]).join(' ');
-      if(/\\b(?:earned (?:its|his|her|their|own) credit|deserves? credit|something (?:concrete )?to celebrate|got something from|delivered (?:a|the) performance|a standout|hero of the week)\\b/i.test(credit))
+      if(/\\b(?:earned (?:(?:its|his|her|their) )?(?:own )?credit|deserves? credit|something (?:concrete )?to celebrate|got something from|delivered (?:a|the) performance|a standout|hero of the week)\\b/i.test(credit))
         issues.push({id:'zero-point-false-credit',team});
     }
     const fan=(article?.sections||[]).find(s=>s.kind==='sentiment');

@@ -6,6 +6,7 @@ const source=readFileSync(new URL('../.github/workflows/inquirer-editorial-r5-sm
 const queueJob=source.split('  seed-private-preview:\n')[1];
 const readerSource=readFileSync(new URL('../league-hub-v451.js',import.meta.url),'utf8');
 const previewJobSource=readFileSync(new URL('../netlify/functions/inquirer-preview-background.mjs',import.meta.url),'utf8');
+const localAuditSource=readFileSync(new URL('../scripts/inquirer-week5-playwright-local.mjs',import.meta.url),'utf8');
 const previewDiagnosticSource=readFileSync(new URL('../netlify/functions/inquirer-preview-diagnostic.mjs',import.meta.url),'utf8');
 const previewIdentitySource=readFileSync(new URL('../netlify/functions/lib/inquirer-preview-diagnostics.mjs',import.meta.url),'utf8');
 
@@ -311,4 +312,15 @@ test('forward private drafts isolate each generator revision from saved previous
 test('revision-isolated private writer rejects stale edition before create-only storage',()=>{
  assert.match(previewJobSource,/Number\(edition\?\.editorial_revision\)!==FORWARD_EDITORIAL_REVISION/);
  assert.ok(previewJobSource.indexOf('Private generator revision mismatch')<previewJobSource.indexOf('onlyIfNew:true'));
+});
+
+test('local private audit independently checks actual manuscript without leaking copy to GitHub',()=>{
+ assert.match(localAuditSource,/inquirer-preview-diagnostic\?draft=1&preview_week=5/);
+ assert.match(localAuditSource,/inspectEditionBeforePublication\(edition\)/);
+ assert.match(localAuditSource,/evaluateInquirerEditionQuality\(edition\)/);
+ assert.match(localAuditSource,/auditPrivateEdition\(edition\)/);
+ assert.match(localAuditSource,/week5-private-manuscript\.json/);
+ assert.match(localAuditSource,/github_report_submitted/);
+ assert.match(localAuditSource,/issues=>Object\.fromEntries/);
+ assert.doesNotMatch(localAuditSource,/--body',JSON\.stringify\(edition\)/);
 });

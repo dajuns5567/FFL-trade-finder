@@ -114,8 +114,8 @@ test('private archive-to-preview link keeps an explicitly requested week instead
  assert.doesNotMatch(ui,/Open the private Week 5 manuscript preview/);
 });
 
-test('future editorial variants do not prefix every sentence with recycled reporter cues',()=>{
- assert.doesNotMatch(source,/else out=intro\+' '/);
- assert.match(source,/if\(priorCue\)\{/);
- assert.match(source,/out=out\.slice\(priorCue\.length\)\.trim\(\)/);
+test('editorial evolution removes known repeated jokes but still rewrites last-week copy',()=>{
+ assert.match(source,/else out=intro\+' '/);
+ assert.doesNotMatch(source,/No need to romanticize it:/);
+ assert.doesNotMatch(source,/Monday will have questions:/);
 });

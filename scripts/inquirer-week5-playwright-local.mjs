@@ -28,7 +28,7 @@ async function getJSON(path){
 }
 try{
  await page.goto(base+'/?inquirer_preview=1&preview_week=5',{waitUntil:'domcontentloaded',timeout:60000});
- // Reuse the same encrypted-by-OS-profile browser session as earlier Fleeced audits.
+ // Reuse the locally stored browser session; the profile directory is owner-only.
  // A login is only required if Netlify has actually expired the saved session.
  const needsLogin=()=>new URL(page.url()).host!==new URL(base).host;
  if(needsLogin()){

@@ -276,3 +276,9 @@ test('pairwise repetition of a stock Week 5 joke is not publication-safe',()=>{
  for(const t of e.teams.slice(0,2))t.inquirer_article.sections.find(s=>s.kind==='lede').paragraphs.push('Week 5 gave '+t.team_name+' the kind of headline that usually gets folded underneath the newspaper.');
  assert.ok(inspectEditionBeforePublication(e).issues.some(i=>i.id==='duplicated-rhetorical-punchline'));
 });
+
+test('week-numbered repeated outlook joke is rejected with actual week digits',()=>{
+ const e=makeEdition();
+ for(const t of e.teams.slice(0,2))t.inquirer_article.sections.find(s=>s.kind==='outlook').paragraphs.push('Rivals can keep the Week 5 joke only if the same flaw survives into the next lineup.');
+ assert.ok(inspectEditionBeforePublication(e).issues.some(i=>i.id==='duplicated-rhetorical-punchline'));
+});

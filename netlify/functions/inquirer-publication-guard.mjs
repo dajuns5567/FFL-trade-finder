@@ -60,6 +60,17 @@ export function inspectEditionBeforePublication(edition) {
       if(value&&(value.paragraphs||[]).some(p=>/\bno verified market movement\b|\blacks a verified current price\b|\bgets a data caveat instead\b/i.test(String(p))))
         issues.push({id:'unverified-value-desk',team});
     }
+    // Factual-tone gate: zero-scoring starters cannot be portrayed as the
+    // reason a team succeeded. Check the specific credited desk, not every
+    // appearance of a player name in legitimate statistical reporting.
+    const starters=Array.isArray(t.starter_details)?t.starter_details:[];
+    const played=starters.filter(p=>Number.isFinite(Number(p?.points)));
+    if(played.length&&played.every(p=>Number(p.points)<=0)){
+      const cool=(article?.sections||[]).find(s=>s.kind==='cool-throne');
+      const credit=(cool?.paragraphs||[]).join(' ');
+      if(/\\b(?:earned (?:its|his|her|their|own) credit|deserves? credit|something (?:concrete )?to celebrate|got something from|delivered (?:a|the) performance|a standout|hero of the week)\\b/i.test(credit))
+        issues.push({id:'zero-point-false-credit',team});
+    }
     const fan=(article?.sections||[]).find(s=>s.kind==='sentiment');
     if(!fan||fan.paragraphs?.filter(p=>String(p).length>=50).length<2)issues.push({id:'fan-sentiment',team});
     const opponent=rosterById.get(String(t.opponent_roster_id));

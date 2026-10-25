@@ -2059,7 +2059,7 @@ function w2OpeningHook(t,r,won,margin,opp,top){
       won?(wide?team+" hit Week 2 like somebody had taped the accelerator down.":team+" found just enough live wires to keep "+foe+" from cutting the power."):tight?team+" lost close enough that every quiet starter can hear the replay machine warming up.":foe+" kept landing punches while "+team+" waited for too many lineup spots to swing back.",
       won?team+" put together a Sunday with enough noise from enough directions that nobody could mute the whole thing.":team+" had some useful noise, but "+foe+" found the dead outlets and charged rent.",
       won?"The "+a.mascot+" got a win without asking the same hero to save every paragraph of the box score.":"The "+a.mascot+" do not need an autopsy montage; the bad numbers are already standing under bright lights.",
-      won?"Week 2 gave "+team+" a headline it can actually hang on the wall.":"Week 2 gave "+team+" a scoreboard deficit that needs an actual football fix next week."
+      won?"Week 2 gave "+team+" a headline it can actually hang on the wall.":"Week 2 gave "+team+" a loss worth checking against the actual opponent and final score."
     ],
     "nora-voss":[
       won?"Week 2 made the "+a.mascot+" considerably harder to dismiss than anyone waiting on a quick collapse had planned.":"The "+a.mascot+" made the loss easy to criticize before the final whistle had even finished the paperwork.",

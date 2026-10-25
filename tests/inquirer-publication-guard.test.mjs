@@ -257,3 +257,9 @@ test('partially unknown lineup cannot support a whole-lineup zero-point verdict'
  e.teams[0].inquirer_article.sections.find(s=>s.kind==='cool-throne').paragraphs=['Unknown Runner earned his own credit; there is no verified scoring record for him.'];
  assert.equal(inspectEditionBeforePublication(e).issues.some(i=>i.id==='zero-point-false-credit'),false);
 });
+
+test('new season Week 1 still rejects cross-team recycled newspaper kickers',()=>{
+ const e=makeEdition();e.season=2027;e.week=1;
+ for(const team of e.teams.slice(0,2))team.inquirer_article.sections.find(s=>s.kind==='outlook').paragraphs.push('Monday will have questions when the same story comes around again.');
+ assert.ok(inspectEditionBeforePublication(e).issues.some(i=>i.id==='recycled-stock-kicker'));
+});

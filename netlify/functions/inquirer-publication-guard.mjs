@@ -12,6 +12,9 @@ const misleading = [
   {id:'mechanical-draft-language', pattern:/the useful weakness-or-strength note|the second scorer moved|the third scorer moved|the football read is straightforward|the rival-chat version is uncomfortable:/i},
   {id:'mechanical-lesson-scaffold',pattern:/\bthe useful lesson is not\b|\bthe margin asks more:/i},
   {id:'copy-repair-scaffold', pattern:/fantasy points, a \d+(?:\.\d+)?-point margin in Week \d+/i},
+  // Saved 2026 Week 5 candidates repeated this supposedly witty valuation
+  // punchline across the newsroom. Real figures do not excuse stock prose.
+  {id:'stock-market-punchline',pattern:/recorded price tag moved;?\s*[^.!?]{0,120}scoreboard remains another debate/i},
   {id:'editorial-placeholder', pattern:/\b(?:TBD|TODO|lorem ipsum)\b|\bn\/a\b/i},
   {id:'unrendered-data-placeholder', pattern:/\b(?:null|undefined)\b/i}
 ];

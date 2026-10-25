@@ -223,7 +223,7 @@ function evolveCrossReporterSentence(sentence,reporterId,seed){
       'walter-mercer':' The next week gets to test that read.',
       'tess-delaney':' Sunday gets the rebuttal.',
       'mack-hollis':' Next Sunday gets a vote.',
-      'nora-voss':' Rivals get the next chance to prove the point wrong.'
+      'nora-voss':' The next opponent will have a fresh box score to examine.'
     };
     out=out.replace(/[.!?]?$/,'.')+tails[rid];
   }
@@ -3986,7 +3986,7 @@ function assertWeek2Originality(result,previousEdition){
       teams=teams.map(t=>{
         const a=t.inquirer_article;if(!a)return t;
         const sections=(a.sections||[]).map((s,si)=>({...s,paragraphs:(s.paragraphs||[]).map((p,pi)=>forwardSentenceParts(p).map((sentence,sj)=>{
-          const collided=forwardEditorialPhraseKeys(sentence,entities,12,false).some(gram=>(offenders.get(gram)||[]).indexOf(t.team_name)>=2)||
+          const collided=forwardEditorialPhraseKeys(sentence,entities,12,false).some(gram=>(offenders.get(gram)||[]).includes(t.team_name))||
             forwardEditorialPhraseKeys(sentence,entities,16,false).some(gram=>(paired.get(gram)||[]).indexOf(t.team_name)>=1);
           return collided?'':sentence;
         }).filter(Boolean).join(' ')).filter(Boolean)}));

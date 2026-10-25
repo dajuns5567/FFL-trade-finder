@@ -542,7 +542,16 @@ export async function weeklyReport(req){
  const approval=await s.get(approvalKey,{type:'json'}).catch(()=>null);
  const manualAdmission=editorialApprovalMatches(result,approval);
  const automatedAdmission=deterministicInquirerAdmission(result,{quality,audit,previousEdition:previousBroadcast});
- const admission=manualAdmission.approved?manualAdmission:automatedAdmission;
+ // The replacement site's deterministic generator is a candidate creator,
+ // never its own release approver. Require an explicit exact-copy reviewed
+ // digest before any replacement-site public write, even after the scheduler
+ // and background-worker flags are eventually enabled.
+ const publicationHost=new URL(req.url).hostname;
+ const publicationSiteId=globalThis.Netlify?.env?.get?.('SITE_ID')||process.env.SITE_ID||'';
+ const replacementPublicationSite=publicationSiteId==='8776d155-bc7b-4dcd-bafc-3d70d3d51800'||
+  publicationHost==='transcendent-manatee-2f0123.netlify.app';
+ const admission=manualAdmission.approved?manualAdmission:
+  replacementPublicationSite?{approved:false,digest:automatedAdmission.digest,mode:'exact-copy-review-required'}:automatedAdmission;
  // A clean basic manuscript audit is not enough: the full cross-week
  // evaluator also rejects recycled paragraphs and cross-reporter scaffolds.
  // Never allow a reviewed digest to override an unresolved generation failure.

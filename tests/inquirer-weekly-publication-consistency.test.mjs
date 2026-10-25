@@ -128,12 +128,20 @@ test('replacement publisher kill switch is enforced in worker as well as schedul
 
 test('private deploy previews cannot invoke publishing worker even with valid queue credentials',()=>{
  assert.match(pub,/inquirer-background-preview-write-held/);
- assert.match(pub,/deploy-\(\?:preview\|branch\)-/);
+ assert.match(pub,/context==='branch-deploy'/);
+ assert.match(pub,/context==='deploy-preview'/);
+ assert.match(pub,/host\.endsWith\('--transcendent-manatee-2f0123\.netlify\.app'\)/);
  assert.ok(pub.indexOf('inquirer-background-preview-write-held')<pub.indexOf('const expected='));
 });
 
 test('preview publish worker returns 403 without touching blob stores',async()=>{
  const response=await publishInquirerInBackground(new Request('https://deploy-preview-402--transcendent-manatee-2f0123.netlify.app/.netlify/functions/inquirer-publish-background',{method:'POST',headers:{'x-fleeced-queue-key':'not-a-secret'}}));
+ assert.equal(response.status,403);
+ assert.match(await response.text(),/Preview deployment cannot publish/);
+});
+
+test('branch-deploy hostname is forbidden in publication worker before persistence',async()=>{
+ const response=await publishInquirerInBackground(new Request('https://editorial-review--transcendent-manatee-2f0123.netlify.app/.netlify/functions/inquirer-publish-background',{method:'POST',headers:{'x-fleeced-queue-key':'not-a-secret'}}));
  assert.equal(response.status,403);
  assert.match(await response.text(),/Preview deployment cannot publish/);
 });

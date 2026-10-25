@@ -19,6 +19,19 @@ export function hasCompleteWeekFeaturePackage(report,awards){
 }
 
 export default async function publishInquirerInBackground(req){
+ // Apply the replacement site's explicit publication kill switch at the
+ // worker itself, not only at the scheduler. A direct queued invocation must
+ // never bypass the hold and regenerate an unreviewed production newspaper.
+ const siteId=globalThis.Netlify?.env?.get?.('SITE_ID')||process.env.SITE_ID||'';
+ const host=new URL(req.url).hostname;
+ const replacement=siteId==='8776d155-bc7b-4dcd-bafc-3d70d3d51800'||
+  host==='transcendent-manatee-2f0123.netlify.app';
+ const enabled=globalThis.Netlify?.env?.get?.('FLEECED_ENABLE_NEW_SITE_PUBLISHER')||
+  process.env.FLEECED_ENABLE_NEW_SITE_PUBLISHER||'';
+ if(replacement&&enabled!=='true'){
+  console.warn('inquirer-background-replacement-publisher-held');
+  return new Response('Publication disabled on replacement site',{status:403});
+ }
  const expected=globalThis.Netlify?.env?.get('FLEECED_INQUIRER_QUEUE_KEY')||process.env.FLEECED_INQUIRER_QUEUE_KEY||'';
  if(req.method!=='POST'||!expected||req.headers.get('x-fleeced-queue-key')!==expected){
   console.error('inquirer-background rejected unauthorized invocation');

@@ -263,3 +263,10 @@ test('new season Week 1 still rejects cross-team recycled newspaper kickers',()=
  for(const team of e.teams.slice(0,2))team.inquirer_article.sections.find(s=>s.kind==='outlook').paragraphs.push('Monday will have questions when the same story comes around again.');
  assert.ok(inspectEditionBeforePublication(e).issues.some(i=>i.id==='recycled-stock-kicker'));
 });
+
+test('real Netlify branch deploy URLs are always read-only editorial previews',()=>{
+ assert.equal(isReadOnlyEditorialPreview('https://editorial-review--transcendent-manatee-2f0123.netlify.app/?preview_week=5'),true);
+ assert.equal(isReadOnlyEditorialPreview('https://deploy-preview-402--transcendent-manatee-2f0123.netlify.app/'),true);
+ assert.equal(isReadOnlyEditorialPreview('https://transcendent-manatee-2f0123.netlify.app/'),false);
+ assert.equal(isReadOnlyEditorialPreview('https://example.com/','branch-deploy'),true);
+});

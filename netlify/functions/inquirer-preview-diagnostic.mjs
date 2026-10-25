@@ -1,4 +1,5 @@
 import {getStore,getDeployStore} from '@netlify/blobs';
+import {FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
 import {isPreviewDiagnosticContext,resolvePreviewIdentity,previewStatusMatchesIdentity,PREVIEW_DIAGNOSTIC_STORE,auditPrivateEdition} from './lib/inquirer-preview-diagnostics.mjs';
 
 const json=(value,status=200)=>new Response(JSON.stringify(value),{
@@ -61,9 +62,14 @@ export default async function inquirerPreviewDiagnostic(req){
   if(!draft||Number(draft.season)!==identity.season||Number(draft.week)!==identity.week)
    return json({ready:false,error:'Private manuscript identity or storage mismatch'},409);
   const audit=auditPrivateEdition(draft);
-  const approved=audit.passed&&draft.preview_editorial_audit?.ok===true&&
+  const manuscriptRevision=Number(draft.editorial_revision)||null;
+  const matchesCurrentGenerator=manuscriptRevision===FORWARD_EDITORIAL_REVISION;
+  const approved=matchesCurrentGenerator&&audit.passed&&draft.preview_editorial_audit?.ok===true&&
     draft.preview_generation_quality?.ok===true&&status?.state==='completed';
   return json({ready:approved,season:identity.season,week:identity.week,editorial:audit,
+   manuscript_revision:manuscriptRevision,generator_revision:FORWARD_EDITORIAL_REVISION,
+   matches_current_generator:matchesCurrentGenerator,
+   reason:!matchesCurrentGenerator?'Preserved private draft uses an earlier editorial revision; it has NOT been regenerated under the current generator.':undefined,
    publication_ready:false,requires_human_editorial_review:true,
    status:approved?'STRUCTURAL_PASS_HUMAN_REVIEW_REQUIRED':'HOLD'});
  }

@@ -7,6 +7,7 @@ const queueJob=source.split('  seed-private-preview:\n')[1];
 const readerSource=readFileSync(new URL('../league-hub-v451.js',import.meta.url),'utf8');
 const previewJobSource=readFileSync(new URL('../netlify/functions/inquirer-preview-background.mjs',import.meta.url),'utf8');
 const previewDiagnosticSource=readFileSync(new URL('../netlify/functions/inquirer-preview-diagnostic.mjs',import.meta.url),'utf8');
+const previewIdentitySource=readFileSync(new URL('../netlify/functions/lib/inquirer-preview-diagnostics.mjs',import.meta.url),'utf8');
 
 test('only audit-passing pull requests attempt automatic private draft enqueue',()=>{
   assert.ok(queueJob,'preview job must exist');
@@ -299,4 +300,10 @@ test('private reader refuses an old revision without overwriting the saved editi
  assert.match(previewDiagnosticSource,/Number\(savedEdition\.editorial_revision\)===FORWARD_EDITORIAL_REVISION/);
  assert.match(previewDiagnosticSource,/Number\(edition\.editorial_revision\)===FORWARD_EDITORIAL_REVISION/);
  assert.match(previewDiagnosticSource,/status=\{state:'editorial-hold'/);
+});
+
+test('forward private drafts isolate each generator revision from saved previous copy',()=>{
+ assert.match(previewIdentitySource,/editorial-r.*FORWARD_EDITORIAL_REVISION/);
+ assert.match(previewIdentitySource,/season>=2026&&week>=5/);
+ assert.match(previewJobSource,/onlyIfNew:true/);
 });

@@ -164,7 +164,7 @@ const EVOLUTION_INTROS={
     'Here is the noise:','Put this onscreen:','Back-page material:','Forget the preamble:','Turn it up:','Screenshot this:','No fine print:','The game tape will answer:'
   ],
   'nora-voss':[
-    'Rivals noticed:','Across the sideline:','Nothing mysterious here:','File that under obvious:','The irritating part:','Rivals can spot it:','One lineup detail:','Next week remembers:'
+    'Rivals noticed:','Across the sideline:','Nothing mysterious here:','File that under obvious:','The irritating part:','One concrete weakness:','One lineup detail:','Next week remembers:'
   ]
 };
 const EVOLUTION_TAILS={

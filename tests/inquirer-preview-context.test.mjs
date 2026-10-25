@@ -55,7 +55,7 @@ test('diagnostic keys differ across the same season Week 3, Week 5 and Week 6',a
   assert.equal(new Set([w3.status,w5.status,w6.status]).size,3);
   assert.equal(new Set([w3.edition,w5.edition,w6.edition]).size,3);
   assert.equal(new Set([w3.rejected,w5.rejected,w6.rejected]).size,3);
-  assert.match(w5.status,/2026\/week-05\/status\.json$/);
+  assert.match(w5.status,/2026\/week-05\/editorial-r\d+\/status\.json$/);
   assert.equal(w6.status,latest.status);
  }finally{globalThis.fetch=savedFetch}
 });

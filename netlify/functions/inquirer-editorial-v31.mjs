@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=49;
+export const FORWARD_EDITORIAL_REVISION=50;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -1553,7 +1553,7 @@ function w2DivisionBoardTake(flags,reporter,subject){
       case "AFC EAST":
         context=leaders.length===1
           ?leadOne+" "+w2TeamVerb(leadOne,"owns","own")+" the early edge at "+y.record+", but "+chasePair+" "+chaseVerb+" the chase tight enough that nobody gets a velvet rope yet."+midaNote+titleNote
-          :leaderNames+" share the top at "+y.record+", while "+chasePair+" "+chaseBe+" still have ground to make up before this becomes a fight for first place."+midaNote+titleNote;
+          :leaderNames+" share the top at "+y.record+", while "+chasePair+" still have ground to make up before this becomes a fight for first place."+midaNote+titleNote;
         break;
       case "AFC NORTH":
         context=leaders.length>1

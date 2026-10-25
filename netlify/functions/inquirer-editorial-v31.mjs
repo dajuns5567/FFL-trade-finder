@@ -4435,10 +4435,14 @@ function assertWeek2Originality(result,previousEdition){
             out=evolveSentence(out,rid,[week,variationSalt,t.roster_id,sec.kind,si,pi,sj,attempt].join('|'));
             if(!old.has(forwardNormSentence(out,entities)))break;
           }
-          return out;
-        }).join(' ')
+          // If lexical evolution still matches the locked prior edition,
+          // omit the stale sentence rather than conceal it with a stock cue.
+          return old.has(forwardNormSentence(out,entities))?'':out;
+        }).filter(Boolean).join(' ')
       )}));
-      return {...t,inquirer_article:{...a,sections,paragraphs:sections.flatMap(x=>x.paragraphs||[])}};
+      const next={...t,inquirer_article:{...a,sections,paragraphs:sections.flatMap(x=>x.paragraphs||[])}};
+      restoreForwardArticleDepth(next,week);
+      return next;
     });
   }
   // Final reader-facing grammar pass: later variation/architecture steps can

@@ -161,7 +161,7 @@ test('revision46 does not reintroduce repeated Week 5 editorial hooks',()=>{
  assert.doesNotMatch(source,/scoreboard deficit that needs an actual football fix/);
  assert.doesNotMatch(source,/A clean win is not permission to ignore/);
  assert.doesNotMatch(source,/'One concrete weakness:'/);
- assert.match(source,/FORWARD_EDITORIAL_REVISION=49/);
+ assert.match(source,/FORWARD_EDITORIAL_REVISION=50/);
 });
 
 test('cross-team rhetorical repairs target paired and three-team collisions',()=>{
@@ -208,4 +208,9 @@ test('division recaps do not call multi-game deficits a one-game tossup',()=>{
  assert.doesNotMatch(source,/close enough to turn one ordinary Sunday into a three-team argument/);
  assert.doesNotMatch(source,/one stumble turns the leader from front-runner into participant again/);
  assert.doesNotMatch(source,/rivals only get to laugh because the final score overruled it/);
+});
+
+test('AFC East contenders paragraph cannot produce are still have',()=>{
+ assert.doesNotMatch(source,/chasePair\+" "\+chaseBe\+" still have ground/);
+ assert.match(source,/chasePair\+" still have ground to make up/);
 });

@@ -237,18 +237,16 @@ function evolveSentence(sentence,reporterId,seed){
     const choice=choices[(h+i*7)%choices.length];out=out.replace(re,choice);
   }
   out=out.trim();if(out)out=out[0].toUpperCase()+out.slice(1);
-  const intro=EVOLUTION_INTROS[rid][h%EVOLUTION_INTROS[rid].length];
-  // Never stack a prefatory cue on copy that already has one; that produced
-  // "The box score settles this: Look at the personnel: ..." in Week 5.
+  // The former eight stock prefaces were attached to every evolved sentence,
+  // inevitably repeating across a 32-team newsroom even after names change.
+  // Evolve the actual sentence using source-grounded lexical variants; strip
+  // inherited boilerplate instead of replacing it with a different cliché.
   const existingPrefaces=Object.values(EVOLUTION_INTROS).flat();
   const priorCue=existingPrefaces.find(prefix=>out.toLowerCase().startsWith(prefix.toLowerCase()));
   if(priorCue){
-    // Existing newsroom cues must EVOLVE, not freeze unchanged merely because
-    // the previous edition already used one. Replace, never stack, the cue.
-    const variants=EVOLUTION_INTROS[rid].filter(prefix=>prefix.toLowerCase()!==priorCue.toLowerCase());
-    const replacement=variants[h%variants.length]||intro;
-    out=replacement+' '+out.slice(priorCue.length).trim();
-  }else out=intro+' '+out;
+    out=out.slice(priorCue.length).trim();
+    if(out)out=out[0].toUpperCase()+out.slice(1);
+  }
   if(!/[.!?]$/.test(out))out+='.';
   return out;
 }

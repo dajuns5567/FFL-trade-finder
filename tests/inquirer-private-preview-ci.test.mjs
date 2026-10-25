@@ -294,3 +294,9 @@ test('forward articles keep the locked editorial word ceiling without cutting se
  assert.match(clip,/\['sentiment','outlook','lede'\]/);
  assert.match(clip,/slice\(0,-1\)\.join\(' '\)/);
 });
+
+test('private reader refuses an old revision without overwriting the saved edition',()=>{
+ assert.match(previewDiagnosticSource,/Number\(savedEdition\.editorial_revision\)===FORWARD_EDITORIAL_REVISION/);
+ assert.match(previewDiagnosticSource,/Number\(edition\.editorial_revision\)===FORWARD_EDITORIAL_REVISION/);
+ assert.match(previewDiagnosticSource,/status=\{state:'editorial-hold'/);
+});

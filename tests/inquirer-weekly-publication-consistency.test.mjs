@@ -157,11 +157,11 @@ test('declining quiet player scores cannot be praised as an uptick',()=>{
  assert.match(source,/need substance, not another scoring shortfall/);
 });
 
-test('revision45 does not reintroduce repeated Week 5 editorial hooks',()=>{
+test('revision46 does not reintroduce repeated Week 5 editorial hooks',()=>{
  assert.doesNotMatch(source,/scoreboard deficit that needs an actual football fix/);
  assert.doesNotMatch(source,/A clean win is not permission to ignore/);
  assert.doesNotMatch(source,/'One concrete weakness:'/);
- assert.match(source,/FORWARD_EDITORIAL_REVISION=45/);
+ assert.match(source,/FORWARD_EDITORIAL_REVISION=46/);
 });
 
 test('cross-team rhetorical repairs target paired and three-team collisions',()=>{
@@ -182,4 +182,10 @@ test('value desk never falls back to an identical four-team closing sentence',()
 test('declining starters do not inherit a repeated generic editorial demand',()=>{
  assert.doesNotMatch(source,/that is enough decline to demand a Week 3 response/);
  assert.match(source,/point reduction leaves/);
+});
+
+test('paired management and outlook prose cannot recycle identical long closers',()=>{
+ assert.doesNotMatch(source,/None of the additions made the Week 2 starting lineup, so rivals cannot credit or blame/);
+ assert.doesNotMatch(source,/Rivals get to find out whether the Week 2 strengths survive a new opponent/);
+ assert.match(source,/therefore belongs to the starters, not to these transactions/);
 });

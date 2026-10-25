@@ -4109,7 +4109,7 @@ function assertWeek2Originality(result,previousEdition){
           'Measured roster value moved '+signed+' points for '+team+' in Week '+week+'.',
           team+' finished Week '+week+' with '+signed+' points of recorded value movement.',
           'On the Week '+week+' valuation sheet, '+team+' registered '+signed+' points.'
-        ][slot]:team+' has no verified Week '+week+' market movement; no change is claimed.';
+        ][slot]:team+' has no verified market movement for Week '+week+'; no change is claimed.';
         const context=validCurrent&&validBaseline?[
           'The recorded endpoints were '+before+' and '+now+' valuation points. That is not itself proof of better lineup decisions.',
           'The market shifted from '+before+' to '+now+' valuation points; actual fantasy scoring remains separate evidence.',

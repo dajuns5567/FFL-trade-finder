@@ -161,7 +161,7 @@ test('revision46 does not reintroduce repeated Week 5 editorial hooks',()=>{
  assert.doesNotMatch(source,/scoreboard deficit that needs an actual football fix/);
  assert.doesNotMatch(source,/A clean win is not permission to ignore/);
  assert.doesNotMatch(source,/'One concrete weakness:'/);
- assert.match(source,/FORWARD_EDITORIAL_REVISION=46/);
+ assert.match(source,/FORWARD_EDITORIAL_REVISION=47/);
 });
 
 test('cross-team rhetorical repairs target paired and three-team collisions',()=>{
@@ -188,4 +188,13 @@ test('paired management and outlook prose cannot recycle identical long closers'
  assert.doesNotMatch(source,/None of the additions made the Week 2 starting lineup, so rivals cannot credit or blame/);
  assert.doesNotMatch(source,/Rivals get to find out whether the Week 2 strengths survive a new opponent/);
  assert.match(source,/therefore belongs to the starters, not to these transactions/);
+});
+
+test('Week 5 newspaper avoids four verified pairwise copied long-form passages',()=>{
+ for(const copy of [
+ 'That is a response worth keeping without pretending one correction has settled the roster',
+ 'The lineup still has to earn the part that matters',
+ 'A single star can win an argument; the supporting cast has to win a matchup',
+ 'Management should ask the quiet starters why the rescue shift keeps falling to somebody else'
+ ])assert.ok(!source.includes(copy),'repeated 16-word narrative scaffold: '+copy);
 });

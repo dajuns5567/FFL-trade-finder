@@ -36,6 +36,7 @@ export default async function inquirerPreviewDiagnostic(req){
  catch(error){console.error('inquirer-preview-diagnostic-edition-read',String(error?.message||error));}
  if(savedEdition&&Number(savedEdition.season)===identity.season&&Number(savedEdition.week)===identity.week&&
     savedEdition.preview_only===true&&savedEdition.published_locked===false&&
+    Number(savedEdition.editorial_revision)===FORWARD_EDITORIAL_REVISION&&
     savedEdition.preview_editorial_audit?.ok===true&&savedEdition.preview_generation_quality?.ok===true&&
     auditPrivateEdition(savedEdition).passed){
    status={state:'completed',season:identity.season,week:identity.week,preview_only:true,
@@ -46,6 +47,7 @@ export default async function inquirerPreviewDiagnostic(req){
  if(status?.state==='completed'&&!(savedEdition&&
     Number(savedEdition.season)===identity.season&&Number(savedEdition.week)===identity.week&&
     savedEdition.preview_only===true&&savedEdition.published_locked===false&&
+    Number(savedEdition.editorial_revision)===FORWARD_EDITORIAL_REVISION&&
     savedEdition.preview_editorial_audit?.ok===true&&savedEdition.preview_generation_quality?.ok===true&&
     auditPrivateEdition(savedEdition).passed))
   status={state:'editorial-hold',season:identity.season,week:identity.week,
@@ -92,7 +94,8 @@ export default async function inquirerPreviewDiagnostic(req){
   let edition;
   try{edition=await store.get(identity.edition,{type:'json'})||await legacy.get(identity.edition,{type:'json'})}
   catch(error){return json({error:'Private draft storage temporarily unavailable'},503)}
-  return edition?.preview_only===true&&edition?.published_locked===false&&auditPrivateEdition(edition).passed
+  return edition?.preview_only===true&&edition?.published_locked===false&&
+    Number(edition.editorial_revision)===FORWARD_EDITORIAL_REVISION&&auditPrivateEdition(edition).passed
    ?json(edition):json({error:'Unpublished draft failed current editorial requirements'},409);
  }
  return json({

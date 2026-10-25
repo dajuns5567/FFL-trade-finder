@@ -250,3 +250,10 @@ test('missing starter points are not silently converted into zero-point evidence
  e.teams[0].inquirer_article.sections.find(s=>s.kind==='cool-throne').paragraphs=['Unknown Runner earned his own credit, but no verified score was supplied.'];
  assert.equal(inspectEditionBeforePublication(e).issues.some(i=>i.id==='zero-point-false-credit'||i.id==='zero-point-player-praise'),false);
 });
+
+test('partially unknown lineup cannot support a whole-lineup zero-point verdict',()=>{
+ const e=makeEdition();
+ e.teams[0].starter_details=[{name:'Known Zero',points:0},{name:'Unknown Runner',points:null}];
+ e.teams[0].inquirer_article.sections.find(s=>s.kind==='cool-throne').paragraphs=['Unknown Runner earned his own credit; there is no verified scoring record for him.'];
+ assert.equal(inspectEditionBeforePublication(e).issues.some(i=>i.id==='zero-point-false-credit'),false);
+});

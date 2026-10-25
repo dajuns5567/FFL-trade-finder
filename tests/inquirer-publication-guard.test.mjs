@@ -270,3 +270,9 @@ test('real Netlify branch deploy URLs are always read-only editorial previews',(
  assert.equal(isReadOnlyEditorialPreview('https://transcendent-manatee-2f0123.netlify.app/'),false);
  assert.equal(isReadOnlyEditorialPreview('https://example.com/','branch-deploy'),true);
 });
+
+test('pairwise repetition of a stock Week 5 joke is not publication-safe',()=>{
+ const e=makeEdition();
+ for(const t of e.teams.slice(0,2))t.inquirer_article.sections.find(s=>s.kind==='lede').paragraphs.push('Week 5 gave '+t.team_name+' the kind of headline that usually gets folded underneath the newspaper.');
+ assert.ok(inspectEditionBeforePublication(e).issues.some(i=>i.id==='duplicated-rhetorical-punchline'));
+});

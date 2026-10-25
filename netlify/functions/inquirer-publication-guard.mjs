@@ -71,6 +71,18 @@ export function inspectEditionBeforePublication(edition) {
       if(/\b(?:earned (?:(?:its|his|her|their) )?(?:own )?credit|deserves? credit|something (?:concrete )?to celebrate|got something from|delivered (?:a|the) performance|a standout|hero of the week)\b/i.test(credit))
         issues.push({id:'zero-point-false-credit',team});
     }
+    // Catch the same false-positive praise outside the Cool Throne: an
+    // all-zero player's name and an affirmative compliment in one sentence.
+    const zeros=played.filter(p=>Number(p.points)===0&&String(p.name||'').trim());
+    for(const zero of zeros){
+      const player=normalized(zero.name);
+      for(const p of paragraphs)for(const sentence of String(p).split(/(?<=[.!?])\\s+/)){
+        const line=normalized(sentence);
+        if(!line.includes(player))continue;
+        if(/\\b(?:got something from|deserves? (?:its|his|her|their) credit|provided a boost|came through in the clutch|earned a cool throne)\\b/i.test(line))
+          issues.push({id:'zero-point-player-praise',team,player:zero.name});
+      }
+    }
     // Winning 1.4–0.0 is a recorded result, not evidence of dominance.
     // Flag unqualified triumphalism only when the actual winner scores under
     // five points; never change the underlying score or win/loss designation.

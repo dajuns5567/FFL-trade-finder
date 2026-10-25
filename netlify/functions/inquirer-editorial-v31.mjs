@@ -1612,7 +1612,7 @@ function w2HotTrend(t,r,weak,weakPrev){
     "The arrow for "+weak.name+" points up from "+w2One(old)+" to "+w2One(cur)+". This time the change is large enough to deserve the arrow."
   ];
   const rowsDown=[
-    weak.name+" fell from "+w2One(old)+" in Week 1 to "+w2One(cur)+" in Week 2; for "+a.mascot+", that is enough decline to demand a Week 3 response.",
+    weak.name+" fell from "+w2One(old)+" in Week 1 to "+w2One(cur)+" in Week 2. The "+w2One(Math.abs(delta))+"-point reduction leaves "+t.team_name+" needing a specific plan for "+weak.name+" next Sunday.",
     "The two-week line for "+weak.name+" went the wrong way: "+w2One(old)+" to "+w2One(cur)+". The rest of the lineup cannot keep absorbing that drop.",
     weak.name+" followed "+w2One(old)+" in the opener with "+w2One(cur)+" this week; the "+a.mascot+" now have a real downward trend to watch.",
     "For "+a.mascot+", Week 2 made the "+weak.name+" problem harder to dismiss after a better opener; panic is unnecessary, but "+w2One(cur)+" cannot be the answer again.",

@@ -247,6 +247,13 @@ export function restoreForwardArticleDepth(t,week){
    ?`${weak.name} gave ${team} ${one(scored)} points from ${text(String(weak.lineup_slot||'a starting spot').replaceAll('_',' ').replace(/\bidp\b/i,'IDP'))}, ${one(miss)} short of the ${one(projected)} projection. ${gap>0?`The final defeat was ${one(gap)} points; this was a real shortfall, although not the only one.`:'The win covered the number but did not turn it into a good starting return.'}`
    :`${weak.name} supplied just ${one(scored)} points in ${team}'s Week ${week} lineup. The manager has an identifiable weak spot to revisit before the next opponent.`];
  }
+ // A zero-point lineup has no individual scoring hero. Rewrite the credit
+ // desk from recorded facts, even if an earlier writer supplied false praise.
+ const scoredStarters=(t.starter_details||[]).filter(p=>Number.isFinite(Number(p.points)));
+ const noPositiveStarter=scoredStarters.length>0&&scoredStarters.every(p=>Number(p.points)<=0);
+ if(cool&&noPositiveStarter){
+  cool.paragraphs=[team+' received no positive scoring contribution from its recorded starters in Week '+week+'. The Cool Throne stays empty: awarding credit for zero points would be a performance review written by the scoreboard’s defense attorney.'];
+ }
  if(cool&&!(cool.paragraphs||[]).length&&leader?.name){
   const share=Number(t.points)>0?Math.round(100*Number(leader.points)/Number(t.points)):0;
   cool.paragraphs=[`${leader.name} scored ${one(leader.points)}, accounting for ${share}% of ${team}'s ${one(t.points)}-point total. ${gap>0?`Even in the loss to ${opponent}, the individual performance earned its own credit.`:'That return gave the winning roster something concrete to celebrate.'}`];

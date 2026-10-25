@@ -229,6 +229,8 @@ export function deterministicInquirerAdmission(edition,{quality,audit,previousEd
 
 export function isReadOnlyEditorialPreview(url,context=''){
  const host=new URL(url).hostname;
- return /^deploy-preview-|^deploy-branch-/.test(host)||
+ return /^deploy-preview-/.test(host)||
+   // Netlify branch URLs are <branch>--<site>.netlify.app, not deploy-branch-*.
+   (host.endsWith('--transcendent-manatee-2f0123.netlify.app')&&host!=='transcendent-manatee-2f0123.netlify.app')||
    ['deploy-preview','branch-deploy'].includes(String(context));
 }

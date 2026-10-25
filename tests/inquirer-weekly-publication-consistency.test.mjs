@@ -157,7 +157,7 @@ test('declining quiet player scores cannot be praised as an uptick',()=>{
  assert.match(source,/need substance, not another scoring shortfall/);
 });
 
-test('revision43 does not reintroduce repeated Week 5 editorial hooks',()=>{
+test('revision44 does not reintroduce repeated Week 5 editorial hooks',()=>{
  assert.doesNotMatch(source,/scoreboard deficit that needs an actual football fix/);
  assert.doesNotMatch(source,/A clean win is not permission to ignore/);
  assert.doesNotMatch(source,/'One concrete weakness:'/);
@@ -168,5 +168,5 @@ test('cross-team rhetorical repairs target paired and three-team collisions',()=
  assert.match(source,/\.\.\.pairedOffenders\.keys\(\)/);
  assert.match(source,/\(clauseOffenders\.get\(gram\)\|\|\[\]\)\.indexOf\(t\.team_name\)>=1/);
  assert.match(source,/\(pairedOffenders\.get\(gram\)\|\|\[\]\)\.indexOf\(t\.team_name\)>=1/);
- assert.match(source,/const offender=forwardWordCount\(sentence\)>=10&&/);
+ assert.match(source,/offender=forwardWordCount\(sentence\)>=10&&/);
 });

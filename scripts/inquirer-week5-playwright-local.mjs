@@ -48,6 +48,8 @@ try{
   const start=await getJSON('/.netlify/functions/inquirer-preview-background?start=1&preview_week=5');
   if(start.http!==202&&start.http!==200)throw Error('Private generation request not accepted: HTTP '+start.http);
   report.generated=true;
+ }
+ if(status.body?.status?.state==='running'||report.generated){
   for(let n=0;n<48;n++){
    await page.waitForTimeout(10000);
    status=await getJSON('/.netlify/functions/inquirer-preview-diagnostic?preview_week=5');

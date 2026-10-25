@@ -228,7 +228,7 @@ test('editorial hold remains inspectable without serving the rejected manuscript
 });
 
 test('audit readiness requires both upstream quality gates and completed audited status',()=>{
- assert.match(previewDiagnosticSource,/const approved=audit\.passed&&draft\.preview_editorial_audit\?\.ok===true&&/);
+ assert.match(previewDiagnosticSource,/const approved=matchesCurrentGenerator&&audit\.passed&&draft\.preview_editorial_audit\?\.ok===true&&/);
  assert.match(previewDiagnosticSource,/draft\.preview_generation_quality\?\.ok===true&&status\?\.state==='completed'/);
  assert.match(previewDiagnosticSource,/ready:approved/);
 });

@@ -151,3 +151,8 @@ test('replacement production cannot self-authorize deterministic newspaper relea
  assert.match(hub,/const admission=manualAdmission\.approved\?manualAdmission:/);
  assert.match(hub,/editorialApprovalMatches\(result,approval\)/);
 });
+
+test('declining quiet player scores cannot be praised as an uptick',()=>{
+ assert.doesNotMatch(source,/need substance, not a technical uptick/);
+ assert.match(source,/need substance, not another scoring shortfall/);
+});

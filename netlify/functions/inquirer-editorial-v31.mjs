@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=50;
+export const FORWARD_EDITORIAL_REVISION=51;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -3674,7 +3674,7 @@ function rewriteWeek2Overview(overview,teams,previousEdition,week=2){
   }
   return{...overview,headline:"Fleeced! Weekly Recap — Week 2 • Regular Season",deck:"Week 2 gets its own newspaper: new games, new arguments, and just enough memory of the opener to know what changed.",sections,hot_takes:hot,editorial_revision:14,inquirer_version:31}
 }
-function w2SentenceParts(s){return String(s||"").replace(/\b(?:[A-Z]\.){2,}/g,m=>m.replaceAll(".","§")).replace(/\b(?:St|Jr|Sr|Dr|Mr|Mrs|Ms|No)\.(?=\s+[A-Z0-9])/g,m=>m.replace(".","§")).split(/(?<=[.!?])\s+/).map(x=>x.replaceAll("§",".").trim()).filter(Boolean)}
+function w2SentenceParts(s){return String(s||"").replace(/\b(?:[A-Z]\.){2,}/g,m=>m.replaceAll(".","§")).replace(/\b(?:St|Jr|Sr|Dr|Mr|Mrs|Ms|No)\.(?=\s+[A-Za-z0-9])/g,m=>m.replace(".","§")).split(/(?<=[.!?])\s+/).map(x=>x.replaceAll("§",".").trim()).filter(Boolean)}
 // Week 2 publication-only rewrite: Week 1 remains an immutable comparison source, never a prose template.
 function assertWeek2Originality(result,previousEdition){
   const entities=[...(result.teams||[]),...(previousEdition?.teams||[])].flatMap(t=>[t.team_name,t.manager_name,t.opponent_name,t.next_opponent_name,...(t.starter_details||[]).map(p=>p.name)]).filter(Boolean).map(String).sort((a,b)=>b.length-a.length);
@@ -4474,7 +4474,7 @@ function assertWeek2Originality(result,previousEdition){
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 
-function forwardSentenceParts(s){return String(s||'').replace(/\b(?:[A-Z]\.){2,}/g,m=>m.replaceAll('.','§')).replace(/\b(?:St|Jr|Sr|Dr|Mr|Mrs|Ms|No)\.(?=\s+[A-Z0-9])/g,m=>m.replace('.','§')).split(/(?<=[.!?])\s+/).map(x=>x.replaceAll('§','.').trim()).filter(Boolean)}
+function forwardSentenceParts(s){return String(s||'').replace(/\b(?:[A-Z]\.){2,}/g,m=>m.replaceAll('.','§')).replace(/\b(?:St|Jr|Sr|Dr|Mr|Mrs|Ms|No)\.(?=\s+[A-Za-z0-9])/g,m=>m.replace('.','§')).split(/(?<=[.!?])\s+/).map(x=>x.replaceAll('§','.').trim()).filter(Boolean)}
 function forwardWordCount(s){return String(s||'').trim().split(/\s+/).filter(Boolean).length}
 function forwardEscRe(s){return [...String(s||'')].map(ch=>'.*+?^$(){}|[]'.includes(ch)||ch.charCodeAt(0)===92?'\\'+ch:ch).join('')}
 function forwardEntities(edition){return[...(edition?.teams||[])].flatMap(t=>[t.team_name,t.manager_name,t.opponent_name,t.next_opponent_name,...(t.starter_details||[]).map(p=>p.name)]).filter(Boolean).map(String).sort((a,b)=>b.length-a.length)}

@@ -19,13 +19,18 @@ const page=await context.newPage();
 const ask=createInterface({input,output});
 let report={status:'NOT_VERIFIED',week:5,site:base,generated:false};
 async function getJSON(path){
- const r=await page.evaluate(async path=>{
-  const response=await fetch(path,{method:'GET',credentials:'same-origin',cache:'no-store'});
-  let body=null;try{body=await response.json()}catch{}
-  return{http:response.status,body};
- },path);
- return r;
+ // Request through the authenticated browser context instead of page.evaluate:
+ // the League Hub can navigate/re-render during a fetch and destroy its JS context.
+ // Playwright's request context shares the persistent browser's cookies.
+ const target=new URL(path,base);
+ if(target.origin!==base)throw Error('Refusing an off-site diagnostic request');
+ const response=await context.request.get(target.href,{timeout:30000,maxRedirects:0,failOnStatusCode:false});
+ const raw=await response.text();
+ let body=null;
+ try{body=JSON.parse(raw)}catch{}
+ return{http:response.status(),body};
 }
+
 try{
  await page.goto(base+'/?inquirer_preview=1&preview_week=5',{waitUntil:'domcontentloaded',timeout:60000});
  // Reuse the locally stored browser session; the profile directory is owner-only.
@@ -33,7 +38,7 @@ try{
  const needsLogin=async()=>{
   if(new URL(page.url()).host!==new URL(base).host)return true;
   const probe=await getJSON('/.netlify/functions/inquirer-preview-diagnostic?preview_week=5');
-  return probe.http===401||probe.http===403;
+  return probe.http===401||probe.http===403||!probe.body?.target;
  };
  if(await needsLogin()){
   console.log('Netlify session expired. Sign in once in the opened local browser; no tokens are exported.');
@@ -42,7 +47,7 @@ try{
   if(await needsLogin())throw Error('Authentication did not complete; private audit held.');
  }
  let status=await getJSON('/.netlify/functions/inquirer-preview-diagnostic?preview_week=5');
- if(status.body?.target?.week!==5)throw Error('Wrong preview target week: refusing action.');
+ if(status.http!==200||status.body?.target?.week!==5)throw Error('Private diagnostic inaccessible or wrong preview target week (HTTP '+status.http+').');
  if(status.body?.status?.state==='not-started'||!status.body?.status){
   console.log('No revision-scoped Week 5 draft found; initiating one PRIVATE preview generation.');
   const start=await getJSON('/.netlify/functions/inquirer-preview-background?start=1&preview_week=5');

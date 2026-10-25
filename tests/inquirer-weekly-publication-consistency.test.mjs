@@ -119,3 +119,9 @@ test('editorial evolution removes known repeated jokes but still rewrites last-w
  assert.doesNotMatch(source,/No need to romanticize it:/);
  assert.doesNotMatch(source,/Monday will have questions:/);
 });
+
+test('replacement publisher kill switch is enforced in worker as well as scheduler',()=>{
+ assert.match(pub,/inquirer-background-replacement-publisher-held/);
+ assert.match(pub,/replacement&&enabled!=='true'/);
+ assert.ok(pub.indexOf("replacement&&enabled!=='true'")<pub.indexOf('await statusStore.setJSON('));
+});

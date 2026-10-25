@@ -131,7 +131,7 @@ export function inspectEditionBeforePublication(edition) {
   // Known generic kicker/preface jokes are editorial text, not shared stats.
   // Even a two-team recurrence makes them sound copied; apply to every
   // forward week instead of accumulating Week-5-only manual edits.
-  if(Number(edition?.season)>=2026&&Number(edition?.week)>=5){
+  if(Number(edition?.season)>2026||(Number(edition?.season)===2026&&Number(edition?.week)>=5)){
     const stockRiffs=[/no need to romanticize it/i,/monday will have questions/i,
       /the same flaw will follow/i,/the same headline folded/i];
     for(const riff of stockRiffs){

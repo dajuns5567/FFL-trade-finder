@@ -2300,7 +2300,7 @@ function forwardFanScenes(t,won,week,variationSalt){
    [name+' posted '+points+' points; '+record+' is where '+name+' stands after the final score, regardless of the spin.',star+' delivered '+starPts+'. Against '+next+', this roster needs a second answer with numbers rather than applause.'],
    [danger+' registered '+dangerPts+' for '+name+'. That is a score, not a clever excuse in search of a writer.','The first lineup question against '+next+' belongs to the manager. The box score has already submitted its testimony.'],
    [name+' and '+opponent+' finished their game. '+(won?'The win deserves credit, not instant sainthood.':'The defeat deserves scrutiny, not a documentary about bad luck.'),star+' produced '+starPts+' while '+danger+' supplied '+dangerPts+'. A manager who sees identical performances deserves the next result.'],
-   ['At '+record+', '+name+' has a league position rather than a personality test. The scoreboard shows '+points+'.','Against '+next+', '+danger+' and '+dangerPts+' leave '+name+' a lineup problem that jokes cannot solve.'],
+   ['At '+record+', '+name+' has a league position rather than a personality test. The scoreboard shows '+points+'.','The '+dangerPts+' from '+danger+' gives '+name+' a specific lineup question to resolve against '+next+'; '+danger+' needs a different answer than the scoreboard supplied.'],
    [star+' came through with '+starPts+' fantasy points for '+name+'. Compliments are free, but the number is earned.','The rest of the debate starts with '+danger+' at '+dangerPts+'. '+next+' is unlikely to hand out partial credit for good intentions.'],
    ['The line on '+name+' this week is '+points+' points against '+opponent+'. There is no appeals court for fantasy scores.','Supporters can debate the lineup all week; against '+next+' the only persuasive rebuttal will arrive in the scoring column.'],
    ['There is a difference between being optimistic about '+name+' and ignoring '+danger+' at '+dangerPts+'. The latter is an expensive hobby.',star+' did bring '+starPts+' to the argument. The task against '+next+' is to make that contribution less lonely.'],
@@ -4145,6 +4145,17 @@ function assertWeek2Originality(result,previousEdition){
           if(i<0)continue;
           desk.paragraphs[i]=String(desk.paragraphs[i]).split(/(?<=[.!?])\s+/).slice(0,-1).join(' ');
           reduced=true;break;
+        }
+        if(!reduced){
+          // If every optional paragraph is a single sentence, remove one
+          // complete excess commentary paragraph while preserving desk minima.
+          const minima={sentiment:2,outlook:2,lede:2,players:2,management:1};
+          for(const kind of ['outlook','lede','sentiment','players','management']){
+            const desk=article.sections.find(s=>s.kind===kind);
+            if((desk?.paragraphs||[]).length>(minima[kind]||1)){
+              desk.paragraphs.pop();reduced=true;break;
+            }
+          }
         }
         if(!reduced)break;
       }

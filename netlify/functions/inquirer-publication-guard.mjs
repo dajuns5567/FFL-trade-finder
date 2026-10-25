@@ -76,10 +76,10 @@ export function inspectEditionBeforePublication(edition) {
     const zeros=played.filter(p=>Number(p.points)===0&&String(p.name||'').trim());
     for(const zero of zeros){
       const player=normalized(zero.name);
-      for(const p of paragraphs)for(const sentence of String(p).split(/(?<=[.!?])\\s+/)){
+      for(const p of paragraphs)for(const sentence of String(p).split(/(?<=[.!?])\s+/)){
         const line=normalized(sentence);
         if(!line.includes(player))continue;
-        if(/\\b(?:got something from|deserves? (?:its|his|her|their) credit|provided a boost|came through in the clutch|earned a cool throne)\\b/i.test(line))
+        if(/\b(?:got something from|deserves? (?:its|his|her|their) credit|provided a boost|came through in the clutch|earned a cool throne)\b/i.test(line))
           issues.push({id:'zero-point-player-praise',team,player:zero.name});
       }
     }

@@ -230,3 +230,9 @@ test('tiny but genuine victory cannot be praised as a dominant performance',()=>
  team.inquirer_article.sections.find(s=>s.kind==='lede').paragraphs.push('A dominant performance settled the contest.');
  assert.ok(inspectEditionBeforePublication(e).issues.some(i=>i.id==='low-score-unearned-triumphalism'&&i.team==='Team 1'));
 });
+
+test('even two teams recycling a stock newspaper kicker must be held',()=>{
+ const e=makeEdition();
+ for(const team of e.teams.slice(0,2))team.inquirer_article.sections.find(s=>s.kind==='outlook').paragraphs.push('No need to romanticize it: next Sunday will examine the facts.');
+ assert.ok(inspectEditionBeforePublication(e).issues.some(i=>i.id==='recycled-stock-kicker'&&i.teams.length===2));
+});

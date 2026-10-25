@@ -243,3 +243,10 @@ test('zero-point player false praise is rejected even outside Cool Throne',()=>{
  e.teams[0].inquirer_article.sections.find(s=>s.kind==='lede').paragraphs.push('Team 1 got something from Zero Runner, a statement unsupported by his zero points.');
  assert.ok(inspectEditionBeforePublication(e).issues.some(i=>i.id==='zero-point-player-praise'));
 });
+
+test('missing starter points are not silently converted into zero-point evidence',()=>{
+ const e=makeEdition();
+ e.teams[0].starter_details=[{name:'Unknown Runner',points:null},{name:'Unknown Defender',points:''}];
+ e.teams[0].inquirer_article.sections.find(s=>s.kind==='cool-throne').paragraphs=['Unknown Runner earned his own credit, but no verified score was supplied.'];
+ assert.equal(inspectEditionBeforePublication(e).issues.some(i=>i.id==='zero-point-false-credit'||i.id==='zero-point-player-praise'),false);
+});

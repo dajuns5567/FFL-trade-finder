@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {isTrustedWeeklyAwardCache} from '../netlify/functions/league-hub.mjs';
 import {hasCompleteWeekFeaturePackage} from '../netlify/functions/inquirer-publish-background.mjs';
+import {FORWARD_EDITORIAL_REVISION} from '../netlify/functions/inquirer-editorial-v31.mjs';
 const hub=readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
 const pub=readFileSync(new URL('../netlify/functions/inquirer-publish-background.mjs',import.meta.url),'utf8');
 const ui=readFileSync(new URL('../league-hub-v451.js',import.meta.url),'utf8');
@@ -14,7 +15,7 @@ test('only ONE forward editorial writer remains in both production and private p
  assert.match(hub,/const q=evaluateInquirerEditionQuality\(candidate,previousBroadcast\)/);
  assert.match(hub,/const a=inspectEditionBeforePublication\(candidate\)/);
  assert.match(hub,/if\(q\.ok&&a\.ok\)/);
- assert.match(source,/FORWARD_EDITORIAL_REVISION=39/);
+ assert.match(source,new RegExp('FORWARD_EDITORIAL_REVISION='+FORWARD_EDITORIAL_REVISION+'\\b'));
  assert.match(hub,/preview_editorial_audit:audit,preview_generation_quality:quality/);
 });
 test('previous published copy can neither be invented nor overwritten after partial failure',()=>{

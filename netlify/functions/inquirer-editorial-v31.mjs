@@ -307,7 +307,9 @@ function evolveForwardTeams(teams,previousEdition,week,salt){
     const a=t?.inquirer_article;if(!a)return t;const rid=String(a?.reporter?.id||'walter-mercer'),prior=priorByRoster.get(String(t.roster_id))||new Set();
     const sections=(a.sections||[]).map((section,si)=>({...section,paragraphs:(section.paragraphs||[]).map((p,pi)=>{
       const rows=forwardSentenceParts(p);return rows.map((sentence,sj)=>{
-        const n=forwardNormSentence(sentence,entities),phraseCollision=forwardEditorialPhraseKeys(sentence,entities).some(x=>phraseOffenders.has(x)),
+        const n=forwardNormSentence(sentence,entities),phraseCollision=forwardEditorialPhraseKeys(sentence,entities).some(x=>phraseOffenders.has(x))||
+          forwardEditorialPhraseKeys(sentence,entities,12,false).some(x=>clauseOffenders.has(x))||
+          forwardEditorialPhraseKeys(sentence,entities,16,false).some(x=>pairedOffenders.has(x)),
           offender=forwardWordCount(sentence)>=10&&(prior.has(n)||(currentCounts.get(n)||0)>3||phraseCollision),
           seed=[week,salt,t.roster_id,section.kind||section.heading,si,pi,sj,n].join('|');
         if(!offender)return sentence;

@@ -46,7 +46,14 @@ try{
  report.status=audit.http===200&&audit.body?.ready===true&&audit.body?.editorial?.passed===true?'STRUCTURAL_PASS_HUMAN_REVIEW_REQUIRED':'HOLD';
  await page.goto(base+'/?inquirer_preview=1&preview_week=5',{waitUntil:'domcontentloaded',timeout:45000});
  await mkdir(reportDir,{recursive:true});
- await page.screenshot({path:reportDir+'/week5-preview.png',fullPage:true});
+ try{
+  // Screenshot rendering can hang on remote fonts; it must never erase a
+  // completed independent editorial audit or turn its result into HOLD.
+  await page.screenshot({path:reportDir+'/week5-preview.png',fullPage:true,animations:'disabled',timeout:15000});
+ }catch(error){
+  report.screenshot_warning=String(error?.message||error);
+  console.warn('Optional screenshot unavailable; preserving editorial audit result.');
+ }
  console.log('Editorial outcome: '+report.status);
 } catch(e){
  report.status='HOLD';report.error=String(e?.message||e);console.error(report.error);process.exitCode=1;

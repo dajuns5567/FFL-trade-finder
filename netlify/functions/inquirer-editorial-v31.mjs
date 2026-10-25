@@ -4118,7 +4118,7 @@ function assertWeek2Originality(result,previousEdition){
           'The recorded endpoints were '+before+' and '+now+' valuation points. That is not itself proof of better lineup decisions.',
           'The market shifted from '+before+' to '+now+' valuation points; actual fantasy scoring remains separate evidence.',
           'The verifiable comparison is '+before+' previously and '+now+' valuation points now, not a claim about a particular player.',
-          'Snapshots show '+before+' then '+now+' valuation points. Those numbers alone cannot explain the matchup result.',
+          'Market snapshots: '+before+' then '+now+' points. Result causation remains unproven.',
           'The baseline was '+before+' and the current reading '+now+' valuation points; the football verdict belongs to the starters.',
           'From '+before+' to '+now+' valuation points, the market series supplies a measurement rather than a manager grade.',
           'A move from '+before+' to '+now+' valuation points is documented; no individual player is assigned an invented cause.',

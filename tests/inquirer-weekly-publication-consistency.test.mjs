@@ -156,3 +156,10 @@ test('declining quiet player scores cannot be praised as an uptick',()=>{
  assert.doesNotMatch(source,/need substance, not a technical uptick/);
  assert.match(source,/need substance, not another scoring shortfall/);
 });
+
+test('revision43 does not reintroduce repeated Week 5 editorial hooks',()=>{
+ assert.doesNotMatch(source,/scoreboard deficit that needs an actual football fix/);
+ assert.doesNotMatch(source,/A clean win is not permission to ignore/);
+ assert.doesNotMatch(source,/'One concrete weakness:'/);
+ assert.match(source,/FORWARD_EDITORIAL_REVISION=43/);
+});

@@ -123,7 +123,7 @@ test('forward player desk keeps the verified second contributor even below 15 po
 });
 
 
-test('under-length team reporting adds a distinct verified reserve fact rather than fan boilerplate',()=>{
+test('under-length articles are held rather than being padded with an unrelated third stat line',()=>{
  const t=makeStory();
  t.starter_details.push(
   {name:'Reliable Receiver',position:'WR',points:12.3,real_stats:{rec:6,rec_tgt:8,rec_yd:84}},

@@ -583,6 +583,15 @@ async function broadcastArchive(){
   const season=Number(p.season),week=Number(p.week),key=String(season)+'|'+String(week);
   if(!rows.some(x=>String(Number(x.season))+'|'+String(Number(x.week))===key))rows.push({type:'week',season,week,key:'preloaded:'+season+':'+week,captured_at:String(p.generated_at||''),preloaded:true});
  }
+ // A verified historical Blob can exist without a broadcasts/index.json row.
+ // Discover approved Weeks 3–4 read-only; never rewrite or auto-promote a draft.
+ for(const week of [3,4]){
+  if(rows.some(x=>Number(x.season)===2026&&Number(x.week)===week))continue;
+  const key='broadcasts/2026/week-'+String(week).padStart(2,'0')+'.json';
+  const archived=await s.get(key,{type:'json'}).catch(()=>null);
+  if(archived&&isLockedInquirerEdition(archived,2026,week))
+   rows.push({type:'week',season:2026,week,key,captured_at:String(archived.generated_at||''),recovered_index:true});
+ }
  rows.sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));return{reports:rows};
 }
 async function broadcastStored(season,week){

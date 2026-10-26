@@ -4549,9 +4549,9 @@ function assertWeek2Originality(result,previousEdition){
       const eligible=teams.filter(t=>t.team_name&&t.next_opponent_name&&Number.isFinite(Number(t.points))&&Number.isFinite(Number(t.opponent_points)));
       const selected=eligible.slice().sort((a,b)=>Math.abs(Number(b.points)-Number(b.opponent_points))-Math.abs(Number(a.points)-Number(a.opponent_points))).slice(0,3);
       outlook.paragraphs=selected.map(t=>{
-        const result=Number(t.points)>Number(t.opponent_points)?'won':'lost';
+        const result=Number(t.points)>Number(t.opponent_points)?'won by':'lost by';
         return 'After Week '+week+', '+w2DisplayTeam(t.team_name)+' '+result+' '+w2One(Math.abs(Number(t.points)-Number(t.opponent_points)))+
-          ' fantasy points clear of its opponent in the latest recorded matchup. The upcoming opponent is '+w2DisplayTeam(t.next_opponent_name)+
+          ' fantasy points in the latest recorded matchup. The upcoming opponent is '+w2DisplayTeam(t.next_opponent_name)+
           '; the lineup must confront that specific matchup with the production established by this week rather than an imaginary forecast.';
       });
       for(const section of overview.sections||[])if(section.blocks?.includes(outlook))

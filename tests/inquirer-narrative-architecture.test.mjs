@@ -231,3 +231,15 @@ test('week 5 editorial gate rejects fact-only desks and repetitive forecasts',()
  for(const id of ['thin-management-analysis','ledger-only-value-reporting','thin-fan-psychology','raw-stat-feed-published-as-prose','uninterpreted-roster-value-ledger','repeated-outlook-conclusion'])
   assert(ids.has(id),'missing substantive gate: '+id);
 });
+
+
+test('forward Weekly Recap cannot pass with six empty-sounding template beats',()=>{
+ const teams=Array.from({length:32},(_,i)=>makeStory(i+1));
+ const kinds=['lead','standings','players','decisions','league','outlook'];
+ const blocks=kinds.map(kind=>({kind,paragraphs:['The next week gets to test that read. Sunday gets the final word.']}));
+ const edition={season:2026,week:5,teams,league_overview:{sections:[{blocks}]}};
+ const issues=inspectNarrativeArchitecture(edition);
+ const ids=new Set(issues.map(i=>i.id));
+ for(const id of ['weekly-recap-insufficient-league-coverage','weekly-recap-thin-beat','weekly-recap-stock-closer','weekly-recap-repeated-argument'])
+  assert(ids.has(id),'missing comprehensive recap gate: '+id);
+});

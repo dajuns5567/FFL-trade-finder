@@ -4661,6 +4661,32 @@ function assertWeek2Originality(result,previousEdition){
       return {...t,inquirer_article:{...a,sections,paragraphs:sections.flatMap(sec=>sec.paragraphs||[])}};
     });
   }
+  // Restore fan reporting after prior-edition de-duplication has finished.
+  // Anchor the fiction in recorded performance; never mention sentiment indices.
+  teams=teams.map(t=>{
+    const a=t.inquirer_article,fan=a?.sections?.find(s=>s.kind==='sentiment');
+    if(!fan||forwardWordCount((fan.paragraphs||[]).join(' '))>=45)return t;
+    const score=Number(t.points),against=Number(t.opponent_points);
+    if(!Number.isFinite(score)||!Number.isFinite(against))return t;
+    const won=score>against,margin=w2One(Math.abs(score-against));
+    const top=(t.starter_details||[]).filter(p=>p?.name&&Number.isFinite(Number(p.points)))
+      .sort((a,b)=>Number(b.points)-Number(a.points))[0];
+    const club=w2DisplayTeam(t.team_name),foe=w2DisplayTeam(t.opponent_name||'the opposition');
+    const scenes=[
+      'Supporters outside '+club+' headquarters '+(won?'built a cardboard triumphal arch':'held a mock public inquiry')+
+      ' following the '+margin+'-point '+(won?'victory':'defeat')+' against '+foe+'. The official evidence consisted of the '+w2One(score)+' to '+w2One(against)+' scoreboard, not imaginary scouting reports.',
+      'The local fan club '+(won?'rehearsed a wildly premature trophy procession':'issued ceremonial citations to empty folding chairs')+
+      ' after '+club+' scored '+w2One(score)+' against '+foe+' at '+w2One(against)+'. The '+margin+'-point margin set the ridiculous tone for their next meeting.',
+      'A neighborhood supporters committee '+(won?'commissioned a paper crown':'convened a pretend emergency council')+
+      ' over '+club+' finishing '+margin+' points '+(won?'ahead':'behind')+' of '+foe+'. Even the committee agreed the '+w2One(score)+'-point team performance was a real number.',
+      'Fans '+(won?'declared a temporary civic holiday':'staged a mock funeral for their betting slips')+
+      ' when '+club+' logged '+w2One(score)+' to '+foe+'\'s '+w2One(against)+'. The '+margin+'-point '+(won?'win':'loss')+' was enough evidence for absurd public theatrics.'
+    ];
+    const line=scenes[Math.abs(Number(t.roster_id)||0)%scenes.length]+
+      (top?' A cardboard award also bears '+top.name+'\'s name and the actual '+w2One(top.points)+' fantasy points contributed.':' Nobody at the meeting could verify an individual stat line, so the mock awards stayed blank.');
+    fan.paragraphs.push(line);
+    return {...t,inquirer_article:{...a,paragraphs:a.sections.flatMap(s=>s.paragraphs||[])}};
+  });
   // Recap hot-takes are outside the section-block pruning loop. Recheck every
   // reader-facing recap sentence at the last writer, including the hot takes.
   // Never retain a prior week's normalized sentence with changed team labels.

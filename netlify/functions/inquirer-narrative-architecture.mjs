@@ -121,7 +121,7 @@ export function curateForwardTeamNarrative(t,week){
     if(/\b(?:second punch turned the Week \d+ volume up|made this Sunday harder to mock)\b/i.test(sentence))return false;
     if(/\b(?:the star receiver|the star tight end|the second scorer|the top rival target|second punch)\b/i.test(sentence)&&!featured.some(f=>sentence.includes(f.name)))return false;
     return true;
-   }).join(' ')).filter(p=>p&&featured.some(f=>p.includes(f.name))).slice(0,1);
+   }).join(' ')).filter(p=>p&&featured.some(f=>p.includes(f.name))).slice(0,3);
   players.paragraphs=[...statRows,...additional];
  }
  const management=byKind.get('management');
@@ -142,7 +142,14 @@ export function curateForwardTeamNarrative(t,week){
   };
   const pruneMove=p=>clauseParts(p.replace(/\bby added\b/gi,': added'))
    .filter(sentence=>!/\b(?:The additions stayed off|Those additions did not reach|Until an addition enters|That is roster churn)\b/i.test(sentence)).join(' ');
-  management.paragraphs=[pruneCase(first),move&&pruneMove(move)].filter(Boolean);
+  const retained=rows.slice(1).filter(p=>p!==move)
+   .map(pruneCase).filter(p=>p&&
+     // Preserve source-grounded consequences and original reporting, but not
+     // duplicate start/sit comparisons or stock administrative transitions.
+     !(benchNames.length===2&&benchNames.every(n=>p.includes(n)))&&
+     !/^(?:the decision|the useful lesson|the football read|the lineup still answers)/i.test(p));
+  management.paragraphs=[pruneCase(first),move&&pruneMove(move),...retained.slice(0,2)]
+   .filter((p,i,arr)=>p&&!arr.slice(0,i).includes(p));
  }
  const credit=byKind.get('cool-throne');
  if(credit)credit.paragraphs=credit.paragraphs.map(p=>cullRecycledMetaphors(p))

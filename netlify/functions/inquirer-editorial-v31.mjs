@@ -4586,6 +4586,23 @@ function assertWeek2Originality(result,previousEdition){
     }
   }
   overview=deepStrings(overview,finishGrammar);
+  // Recap hot-takes are outside the section-block pruning loop. Recheck every
+  // reader-facing recap sentence at the last writer, including the hot takes.
+  // Never retain a prior week's normalized sentence with changed team labels.
+  if(Number(week)>=5&&previousEdition?.league_overview){
+    const entities=[...forwardEntities({teams}),...forwardEntities(previousEdition)];
+    const archive=new Set(forwardRecapSentences(previousEdition).map(s=>forwardNormSentence(s,entities)));
+    const strip=paragraph=>forwardSentenceParts(paragraph).filter(sentence=>
+      forwardWordCount(sentence)<10||!archive.has(forwardNormSentence(sentence,entities))).join(' ');
+    for(const sec of overview.sections||[]){
+      if(sec.blocks?.length){
+        for(const b of sec.blocks)b.paragraphs=(b.paragraphs||[]).map(strip).filter(Boolean);
+        sec.paragraphs=sec.blocks.flatMap(b=>b.paragraphs||[]);
+      }else sec.paragraphs=(sec.paragraphs||[]).map(strip).filter(Boolean);
+    }
+    overview.hot_takes=(overview.hot_takes||[]).map(h=>
+      /division board/i.test(String(h.title||''))?h:{...h,take:strip(h.take||'')});
+  }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 

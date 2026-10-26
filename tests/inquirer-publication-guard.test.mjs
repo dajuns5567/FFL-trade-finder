@@ -40,7 +40,7 @@ const makeEdition=()=>{
  const blocks=recapKinds.map((kind,i)=>{
   const covered=teams.slice(i*3,i*3+10).map(t=>t.team_name+' scored '+t.points+' against '+t.opponent_name+' on '+t.opponent_points+'').join('; ');
   return {kind,heading:kind,paragraphs:[
-   'The '+kind+' report develops distinct verified Week 5 league evidence rather than a generic closing thought. '+covered+'. The relevant point is that these original fixture results create separate lineup and standings questions for each participant.',
+   'The '+kind+' report develops distinct verified Week 5 league evidence rather than a generic closing thought. '+covered+'. ' + 'The '+kind+' desk must account for its own named evidence: '+teams[(i*3)%32].team_name+' recorded '+teams[(i*3)%32].points+' points, while '+teams[(i*3)%32].opponent_name+' had '+teams[(i*3)%32].opponent_points+'. Each beat draws a different documented consequence from those numbers.' + '',
    ...(['league','outlook'].includes(kind)?['Another independent '+kind+' perspective studies the next contest using these named participants and their recorded scoring totals.']:[])
   ]};
  });

@@ -299,7 +299,10 @@ export function restoreForwardArticleDepth(t,week){
    'The scoreboard margin was '+one(margin)+' for '+team+'. On those numbers, the unused '+one(benchGap)+'-point advantage '+verdict+'; the selection deserves scrutiny independent of hindsight theater.',
    team+' left '+one(benchGap)+' possible points in this documented swap while the final spread measured '+one(margin)+'. The difference '+verdict+'; the manager now has a concrete selection question.'
   ];
-  management.paragraphs.push(contexts[rosterSlot%contexts.length].replace(' won or lost by ',' finished with a margin of '));
+  const commentary=contexts[rosterSlot%contexts.length].replace(' won or lost by ',' finished with a margin of ');
+  const last=management.paragraphs.length-1;
+  if(last>=0)management.paragraphs[last]+=' '+commentary;
+  else management.paragraphs=[commentary];
  }
  if(players&&deskSize('players')<24&&leader?.name&&Number.isFinite(Number(leader.points))&&Number(t.points)>0){
   const share=Math.round(100*Number(leader.points)/Number(t.points));
@@ -322,12 +325,12 @@ export function restoreForwardArticleDepth(t,week){
  const fan=desk('sentiment'),sent=a.fan_sentiment||{},sentScore=Number(sent.score),sentChange=Number(sent.change);
  if(fan&&deskSize('sentiment')<50&&Number.isFinite(sentScore)&&sent.score!=null){
   const direction=sent.change==null?'without a verified week-over-week comparison':
-   'after a '+(sentChange>=0?'+':'')+sentChange+'-point shift since the previous week';
+   '('+(sentChange>=0?'+':'')+sentChange+' modeled points against the prior index)';
   const fanContext=[
    'The measured '+team+' fan index sits at '+sentScore+' '+direction+'. Its '+one(t.points)+'-point output against '+opponent+' gives supporters real evidence, but a single score cannot answer every lineup question.',
    'Supporters have a '+sentScore+' sentiment reading '+direction+'. '+team+' finished on '+one(t.points)+' points; the tension is between the result people saw and how much trust the next opponent has earned.',
    team+' carries a fan score of '+sentScore+' '+direction+'. The '+one(margin)+'-point matchup margin explains the immediate mood; the performance distribution decides whether confidence is durable.',
-   'At '+sentScore+' on the sentiment scale '+direction+', the fan argument about '+team+' is not merely cheering or booing. A '+one(t.points)+'-point Sunday supplies the evidence; selection errors supply the reservations.'
+   'At '+sentScore+' on the sentiment scale '+direction+', the fan argument about '+team+' is not merely cheering or booing. A '+one(t.points)+'-point Sunday has not erased the '+one(margin)+'-point result margin, and the weakest lineup position still has a named player behind it.'
   ];
   fan.paragraphs.unshift(fanContext[rosterSlot%fanContext.length]);
  }

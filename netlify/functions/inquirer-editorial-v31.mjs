@@ -4517,7 +4517,7 @@ function assertWeek2Originality(result,previousEdition){
         const margin=w2One(Math.abs(score-against));
         const addition=w2DisplayTeam(t.team_name)+' '+(score>against?'won':'lost')+' by '+margin+
           ' fantasy points. '+leader.name+' supplied '+w2One(leader.points)+
-          ' of the recorded '+w2One(score)+'; that scoring concentration gives the staff a concrete lineup question for the next matchup.';
+          ' of the recorded '+w2One(score)+'. The remaining starters need closer scrutiny.';
         if(!(management.paragraphs||[]).some(p=>String(p).includes(addition)))
           management.paragraphs.push(addition);
       }

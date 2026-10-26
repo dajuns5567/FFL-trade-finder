@@ -243,3 +243,17 @@ test('forward Weekly Recap cannot pass with six empty-sounding template beats',(
  for(const id of ['weekly-recap-insufficient-league-coverage','weekly-recap-thin-beat','weekly-recap-stock-closer','weekly-recap-repeated-argument'])
   assert(ids.has(id),'missing comprehensive recap gate: '+id);
 });
+
+
+test('fan sentiment uses performance-based absurd fan behavior instead of index exposition',()=>{
+ const t=makeStory(2);
+ const fan=t.inquirer_article.sections.find(s=>s.kind==='sentiment');
+ fan.paragraphs=['Fans have complaints.'];
+ t.inquirer_article.fan_sentiment={score:72,change:13};
+ curateForwardTeamNarrative(t,5);
+ restoreForwardArticleDepth(t,5);
+ const copy=t.inquirer_article.sections.find(s=>s.kind==='sentiment').paragraphs.join(' ');
+ assert.match(copy,/fans|supporters|fan club|faithful|tailgate/i);
+ assert.match(copy,/points/);
+ assert.doesNotMatch(copy,/index sits at|sentiment reading|sentiment scale|modeled points against the prior index/i);
+});

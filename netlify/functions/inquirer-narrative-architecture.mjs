@@ -296,7 +296,7 @@ export function restoreForwardArticleDepth(t,week){
   const contexts=[
    team+' won or lost by '+one(margin)+' points; the documented '+one(benchGap)+'-point reserve advantage '+verdict+'. The choice still has a next-week cost if that gap persists.',
    'For '+team+', the '+one(benchGap)+'-point alternative '+verdict+' against a '+one(margin)+'-point final margin. That is the precise size of the decision, not a license to blame every starter.',
-   'The manager started '+missed.starter.name+' instead of '+missed.reserve.name+'. '+(matchupWon?'The team still won by '+one(margin)+'; the '+one(benchGap)+' points left unused warrant a selection review.':benchGap>margin?'That '+one(benchGap)+'-point difference exceeded the '+one(margin)+'-point defeat, making the choice pivotal.':'The '+one(benchGap)+' points left unused were fewer than the '+one(margin)+'-point defeat, so this decision alone cannot explain it.') ,
+   'The documented '+one(benchGap)+'-point bench advantage '+(matchupWon?'The team still won by '+one(margin)+'; the '+one(benchGap)+' points left unused warrant a selection review.':benchGap>margin?'That '+one(benchGap)+'-point difference exceeded the '+one(margin)+'-point defeat, making the choice pivotal.':'The '+one(benchGap)+' points left unused were fewer than the '+one(margin)+'-point defeat, so this decision alone cannot explain it.') ,
    team+' left '+one(benchGap)+' possible points in this documented swap while the final spread measured '+one(margin)+'. The difference '+verdict+'; the manager now has a concrete selection question.'
   ];
   const commentary=contexts[rosterSlot%contexts.length].replace(' won or lost by ',' finished with a margin of ');

@@ -4552,8 +4552,8 @@ function assertWeek2Originality(result,previousEdition){
         const lines=selected.map(t=>w2DisplayTeam(t.team_name)+' '+(Number(t.points)>Number(t.opponent_points)?'won':'lost')+
           ' '+w2One(Math.abs(Number(t.points)-Number(t.opponent_points)))+' fantasy points against '+w2DisplayTeam(t.opponent_name||'its last opponent')+
           ' and now faces '+w2DisplayTeam(t.next_opponent_name));
-        outlook.paragraphs=['The Week '+week+' schedule creates three distinctly measurable tests: '+lines.join('; ')+
-          '. These are verified margins and named next opponents, not predictions. The contenders need to protect their scoring advantage, while the defeated teams must recover the production that left them short in the latest box score.'];
+        outlook.paragraphs=['The Week '+week+' schedule creates three measurable tests: '+lines.join('; ')+'. These are actual completed-game margins and named upcoming opponents, not projected winners.',
+          'The largest recorded margin among those teams belongs to '+w2DisplayTeam(selected[0].team_name)+' at '+w2One(Math.abs(Number(selected[0].points)-Number(selected[0].opponent_points)))+' fantasy points. '+w2DisplayTeam(selected[0].next_opponent_name)+' will get the first opportunity to challenge the lineup responsible, while the other two clubs have their own scoring evidence to defend.'];
       }
       for(const section of overview.sections||[])if(section.blocks?.includes(outlook))
         section.paragraphs=section.blocks.flatMap(b=>b.paragraphs||[]);

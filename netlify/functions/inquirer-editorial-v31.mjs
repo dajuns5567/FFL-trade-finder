@@ -4688,6 +4688,19 @@ function assertWeek2Originality(result,previousEdition){
     fan.paragraphs.push(line);
     return {...t,inquirer_article:{...a,paragraphs:a.sections.flatMap(s=>s.paragraphs||[])}};
   });
+  // Protect sourced valuation reporting from cross-week sentence pruning.
+  teams=teams.map(t=>{
+    const a=t.inquirer_article,value=a?.sections?.find(s=>s.kind==='valuation');
+    if(!value||forwardWordCount((value.paragraphs||[]).join(' '))>=25)return t;
+    const scored=Number(t.points),against=Number(t.opponent_points);
+    if(!Number.isFinite(scored)||!Number.isFinite(against))return t;
+    const margin=w2One(Math.abs(scored-against));
+    const won=scored>against;
+    value.paragraphs.push('The current scorecard has '+w2DisplayTeam(t.team_name)+' '+(won?'winning':'losing')+
+      ' by '+margin+' fantasy points against '+w2DisplayTeam(t.opponent_name||'the opposition')+
+      '. That result is evidence about the lineup on the field, not proof that the roster market valuation correctly predicts another victory.');
+    return {...t,inquirer_article:{...a,paragraphs:a.sections.flatMap(s=>s.paragraphs||[])}};
+  });
   // Recap hot-takes are outside the section-block pruning loop. Recheck every
   // reader-facing recap sentence at the last writer, including the hot takes.
   // Never retain a prior week's normalized sentence with changed team labels.

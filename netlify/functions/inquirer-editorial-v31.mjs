@@ -4474,7 +4474,9 @@ function assertWeek2Originality(result,previousEdition){
     return copy;
   };
   // Correct singular subjects AFTER plural-team rewriting, including fan scenes.
-  const finishGrammar=s=>repairPluralClubAgreement(String(s)
+  const finishGrammar=s=>repairPluralClubAgreement((Number(week)>=6
+    ?String(s).replace(/\b(?:The margin asks more|The box score settles this|Back-page material|Follow the scoring|Spare me the excuses|Sunday left a clue|Look at the personnel|No fine print):\s*/gi,'')
+    :String(s))
     .replace(/\\bThe margin asks more:\\s*/gi,'')
     .replace(/\ban (?=9(?:\.\d+)?-point\b)/gi,'a ')
     .replace(/\ba (?=8(?:\.\d+)?-point\b)/gi,'an '))

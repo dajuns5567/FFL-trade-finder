@@ -306,6 +306,19 @@ export function restoreForwardArticleDepth(t,week){
   const reading=share>=40?'That degree of dependence makes the next opponent\'s defensive or lineup countermeasure more consequential.':'There was enough scoring beyond the leader to ask which contribution is repeatable rather than assign the entire result to one name.';
   players.paragraphs.push(leader.name+' accounted for '+share+'% of '+(/s$/i.test(team)?team+'’':team+'\'s')+' '+one(t.points)+' fantasy points this week. '+reading);
  }
+ const vdesk=desk('value'),v=t.value_history_week||{};
+ if(vdesk&&deskSize('value')<25&&v.value!=null&&v.delta!=null&&Number.isFinite(Number(v.value))&&Number.isFinite(Number(v.delta))){
+  const current=Math.round(Number(v.value)).toLocaleString('en-US');
+  const delta=Number(v.delta),absolute=Math.round(Math.abs(delta)).toLocaleString('en-US');
+  const relative=delta>0?'higher':delta<0?'lower':'unchanged';
+  const valueReads=[
+   'The verified asset inventory is '+current+' points after a '+absolute+'-point move '+relative+' in the recorded interval. For '+team+', that is a market observation, not evidence that the '+one(t.points)+'-point lineup was managed well.',
+   team+' is priced at '+current+' market points; the latest measured adjustment was '+absolute+' points '+relative+'. The '+one(margin)+'-point matchup margin is a separate result, and neither number identifies a specific player as the cause of the price change.',
+   'In the current valuation record, '+team+' carries '+current+' points, a shift of '+absolute+' points '+relative+'. Compare that long-horizon market reading with the '+one(t.points)+' points actually scored: they answer different questions about the same roster.',
+   'A confirmed '+absolute+'-point '+relative+' valuation places '+team+' at '+current+' on the market scale. That cannot substitute for explaining this week’s '+one(t.points)+'-point fantasy performance; player-level causes require verified movement data.'
+  ];
+  vdesk.paragraphs.push(valueReads[rosterSlot%valueReads.length]);
+ }
  const fan=desk('sentiment'),sent=a.fan_sentiment||{},sentScore=Number(sent.score),sentChange=Number(sent.change);
  if(fan&&deskSize('sentiment')<50&&Number.isFinite(sentScore)&&sent.score!=null){
   const direction=sent.change==null?'without a verified week-over-week comparison':

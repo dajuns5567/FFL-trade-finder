@@ -4474,7 +4474,9 @@ function assertWeek2Originality(result,previousEdition){
     return copy;
   };
   // Correct singular subjects AFTER plural-team rewriting, including fan scenes.
-  const finishGrammar=s=>repairPluralClubAgreement(String(s)
+  const finishGrammar=s=>repairPluralClubAgreement((Number(week)>=5
+    ?String(s).replace(/\b(?:The margin asks more|The box score settles this|Back-page material|Follow the scoring|Spare me the excuses|Sunday left a clue|Look at the personnel|No fine print):\s*/gi,'')
+    :String(s))
     .replace(/\\bThe margin asks more:\\s*/gi,'')
     .replace(/\ban (?=9(?:\.\d+)?-point\b)/gi,'a ')
     .replace(/\ba (?=8(?:\.\d+)?-point\b)/gi,'an '))
@@ -4548,12 +4550,13 @@ function assertWeek2Originality(result,previousEdition){
     if(outlook&&wordCount((outlook.paragraphs||[]).join(' '))<40){
       const eligible=teams.filter(t=>t.team_name&&t.next_opponent_name&&Number.isFinite(Number(t.points))&&Number.isFinite(Number(t.opponent_points)));
       const selected=eligible.slice().sort((a,b)=>Math.abs(Number(b.points)-Number(b.opponent_points))-Math.abs(Number(a.points)-Number(a.opponent_points))).slice(0,3);
-      outlook.paragraphs=selected.map(t=>{
-        const result=Number(t.points)>Number(t.opponent_points)?'won by':'lost by';
-        return 'After Week '+week+', '+w2DisplayTeam(t.team_name)+' '+result+' '+w2One(Math.abs(Number(t.points)-Number(t.opponent_points)))+
-          ' fantasy points in the latest recorded matchup. The upcoming opponent is '+w2DisplayTeam(t.next_opponent_name)+
-          '; the lineup must confront that specific matchup with the production established by this week rather than an imaginary forecast.';
-      });
+      if(selected.length){
+        const lines=selected.map(t=>w2DisplayTeam(t.team_name)+' '+(Number(t.points)>Number(t.opponent_points)?'won':'lost')+
+          ' '+w2One(Math.abs(Number(t.points)-Number(t.opponent_points)))+' fantasy points against '+w2DisplayTeam(t.opponent_name||'its last opponent')+
+          ' and now faces '+w2DisplayTeam(t.next_opponent_name));
+        outlook.paragraphs=['The Week '+week+' schedule creates three distinctly measurable tests: '+lines.join('; ')+
+          '. These are verified margins and named next opponents, not predictions. The contenders need to protect their scoring advantage, while the defeated teams must recover the production that left them short in the latest box score.'];
+      }
       for(const section of overview.sections||[])if(section.blocks?.includes(outlook))
         section.paragraphs=section.blocks.flatMap(b=>b.paragraphs||[]);
     }

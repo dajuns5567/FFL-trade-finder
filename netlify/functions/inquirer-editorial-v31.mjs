@@ -4538,6 +4538,25 @@ function assertWeek2Originality(result,previousEdition){
       return value;
     };
     const sections=(a.sections||[]).map(sec=>({...sec,paragraphs:(sec.paragraphs||[]).map(accurateZeroCopy)}));
+    // Evaluate the actual final sections after grammatical cleanup. This
+    // closes the gap between pre-polish word counts and publication copy.
+    for(const kind of ['management','players']){
+      const desk=sections.find(s=>s.kind===kind);
+      if(!desk)continue;
+      const minimum=kind==='management'?25:24;
+      const length=forwardWordCount((desk.paragraphs||[]).join(' '));
+      if(length>=minimum)continue;
+      const starters=(t.starter_details||[]).filter(p=>p?.name&&Number.isFinite(Number(p.points)))
+        .sort((a,b)=>Number(b.points)-Number(a.points));
+      const first=starters[0],second=starters[1];
+      if(!first||!Number.isFinite(Number(t.points))||!Number.isFinite(Number(t.opponent_points)))continue;
+      const line=kind==='players'&&second
+        ?first.name+' registered '+w2One(first.points)+' points; '+second.name+' added '+w2One(second.points)+
+          '. The difference in their recorded production was '+w2One(Number(first.points)-Number(second.points))+' fantasy points.'
+        :w2DisplayTeam(t.team_name)+' recorded '+w2One(t.points)+' against '+w2One(t.opponent_points)+
+          '. '+first.name+' contributed '+w2One(first.points)+' from the starting lineup; this result gives the manager evidence for the next selection.';
+      desk.paragraphs.push(line);
+    }
     return {...t,inquirer_article:{...a,headline:finishGrammar(a.headline||''),sections,paragraphs:sections.flatMap(sec=>sec.paragraphs)}};
   });
   // The last cross-edition curation can leave a recap beat nominally present

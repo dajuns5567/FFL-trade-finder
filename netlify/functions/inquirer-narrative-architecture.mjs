@@ -304,6 +304,13 @@ export function restoreForwardArticleDepth(t,week){
   if(last>=0)management.paragraphs[last]+=' '+commentary;
   else management.paragraphs=[commentary];
  }
+ if(players&&deskSize('players')<24&&leader?.name&&Number.isFinite(Number(leader.points))&&Number(t.points)<=0){
+  const recorded=(t.starter_details||[]).filter(p=>p?.name&&p.points!=null&&Number.isFinite(Number(p.points)));
+  if(recorded.length){
+   const low=recorded.slice().sort((a,b)=>Number(a.points)-Number(b.points))[0];
+   players.paragraphs.push(team+' received no positive fantasy scoring total in the recorded matchup. '+leader.name+' led the lineup at '+one(leader.points)+' points, while '+low.name+' finished on '+one(low.points)+'. That is the recorded scoring spread, not evidence of a successful supporting cast.');
+  }
+ }
  if(players&&deskSize('players')<24&&leader?.name&&Number.isFinite(Number(leader.points))&&Number(t.points)>0){
   const share=Math.round(100*Number(leader.points)/Number(t.points));
   const reading=share>=40?'That degree of dependence makes the next opponent\'s defensive or lineup countermeasure more consequential.':'There was enough scoring beyond the leader to ask which contribution is repeatable rather than assign the entire result to one name.';

@@ -4503,6 +4503,25 @@ function assertWeek2Originality(result,previousEdition){
         if(!((fan.paragraphs||[]).join(' ').includes(candidate)))fan.paragraphs.push(candidate);
       }
     }
+    // The final archive/collision passes can shorten an otherwise valid
+    // management desk. Check its *rendered* words, rather than assuming an
+    // earlier depth-repair pass survived composition unchanged.
+    const management=a.sections?.find(s=>s.kind==='management');
+    const managementWords=()=>String((management?.paragraphs||[]).join(' ')).trim().split(/\s+/).filter(Boolean).length;
+    if(management&&managementWords()<25){
+      const score=Number(t.points),against=Number(t.opponent_points);
+      const starters=(t.starter_details||[]).filter(p=>p?.name&&p.points!=null&&Number.isFinite(Number(p.points)))
+        .sort((left,right)=>Number(right.points)-Number(left.points));
+      const leader=starters[0];
+      if(Number.isFinite(score)&&Number.isFinite(against)&&leader){
+        const margin=w2One(Math.abs(score-against));
+        const addition=w2DisplayTeam(t.team_name)+' '+(score>against?'won':'lost')+' by '+margin+
+          ' fantasy points. '+leader.name+' supplied '+w2One(leader.points)+
+          ' of the recorded '+w2One(score)+'; that scoring concentration gives the staff a concrete lineup question for the next matchup.';
+        if(!(management.paragraphs||[]).some(p=>String(p).includes(addition)))
+          management.paragraphs.push(addition);
+      }
+    }
     const zeros=(t.starter_details||[]).filter(p=>p?.points!=null&&String(p.points).trim()!==''&&Number(p.points)===0&&p.name);
     const accurateZeroCopy=line=>{
       let value=finishGrammar(line);

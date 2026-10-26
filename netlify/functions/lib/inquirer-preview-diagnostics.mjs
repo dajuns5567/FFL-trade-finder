@@ -12,6 +12,14 @@ export function isPreviewDiagnosticContext(url='') {
 }
 
 
+export function detectStalledPreview(status,now=Date.now()){
+ if(status?.state!=='running')return status;
+ const started=Date.parse(status.started_at||'');
+ if(!Number.isFinite(started)||started>now)return {...status,state:'error',error:'Private preview started_at is invalid; generation cannot be certified.'};
+ if(now-started<20*60*1000)return status;
+ return {...status,state:'error',error:'Private preview exceeded the 20-minute generation/retry window without a completion record. Background execution may have timed out; inspect Netlify function logs and safely retry. No edition has been published.',timed_out:true};
+}
+
 // A Deploy Preview can inspect several weeks without allowing a Week 3 draft
 // to masquerade as Week 5. Keep all diagnostic keys season/week scoped.
 // Resolve the default from Sleeper's NFL clock, never from a stale shared key.

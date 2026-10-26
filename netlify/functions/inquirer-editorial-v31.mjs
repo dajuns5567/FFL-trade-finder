@@ -4478,7 +4478,7 @@ function assertWeek2Originality(result,previousEdition){
   const finishGrammar=s=>repairPluralClubAgreement((Number(week)>=6
     ?String(s).replace(/\b(?:The margin asks more|The box score settles this|Back-page material|Follow the scoring|Spare me the excuses|Sunday left a clue|Look at the personnel|No fine print):\s*/gi,'')
     :String(s))
-    .replace(/\\bThe margin asks more:\\s*/gi,'')
+    .replace(/\bThe margin asks more:\s*/gi,'')
     .replace(/\ban (?=9(?:\.\d+)?-point\b)/gi,'a ')
     .replace(/\ba (?=8(?:\.\d+)?-point\b)/gi,'an '))
     .replace(/(?:this round of games|these games|games)\u2019s/gi,'this week\u2019s')

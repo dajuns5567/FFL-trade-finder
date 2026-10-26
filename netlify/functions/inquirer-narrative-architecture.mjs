@@ -330,11 +330,11 @@ export function inspectNarrativeArchitecture(edition){
   if(deskWords('value')<25)issues.push({id:'ledger-only-value-reporting',team,words:deskWords('value')});
   if(deskWords('sentiment')<45)issues.push({id:'thin-fan-psychology',team,words:deskWords('sentiment')});
   if(deskWords('players')<24)issues.push({id:'stat-feed-without-player-analysis',team,words:deskWords('players')});
-  if(/receiving\\s*\\/\\s*receptions:|\\b\\d+\\/\\d+ rec,\\s*\\d+ yds\\b/i.test(deskText('players')))
+  if(/receiving\s*\/\s*receptions:|\b\d+\/\d+ rec,\s*\d+ yds\b/i.test(deskText('players')))
     issues.push({id:'raw-stat-feed-published-as-prose',team});
-  if(/recorded a Week \\d+ roster-value change of [+-]?\\d+(?:\\.\\d+)? points\\.?$/i.test(deskText('value').trim()))
+  if(/recorded a Week \d+ roster-value change of [+-]?\d+(?:\.\d+)? points\.?$/i.test(deskText('value').trim()))
     issues.push({id:'uninterpreted-roster-value-ledger',team});
-  const outlookSentences=deskText('outlook').split(/(?<=[.!?])\\s+/).filter(Boolean);
+  const outlookSentences=deskText('outlook').split(/(?<=[.!?])\s+/).filter(Boolean);
   const weakForecast=outlookSentences.filter(x=>/the next week gets to test that read|sunday gets the final word|the next test is whether/i.test(x));
   if(weakForecast.length>=2)issues.push({id:'repeated-outlook-conclusion',team,examples:weakForecast});
   if(words<300)issues.push({id:'article-below-week4-editorial-floor',team,words});

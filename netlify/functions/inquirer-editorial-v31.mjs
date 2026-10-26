@@ -4494,7 +4494,7 @@ function assertWeek2Originality(result,previousEdition){
         const top=(t.starter_details||[]).slice().sort((p,q)=>Number(q.points||0)-Number(p.points||0))[0];
         const low=(t.starter_details||[]).slice().sort((p,q)=>Number(p.points||0)-Number(q.points||0))[0];
         const performances=[
-          ()=> 'A supporter has proposed '+(won?'a mock coronation':'a mock tribunal')+' for the '+w2One(t.points)+'-point result; the crowd insists '+(top?.name||'the top scorer')+' and '+w2One(top?.points||0)+' points be entered into evidence before anybody bangs the gavel.',
+          ()=> 'A supporter has proposed '+(won?'a mock coronation':'a mock tribunal')+' for the '+w2One(t.points)+'-point result; the crowd insists '+(top?.name||'the top scorer')+'\'s '+w2One(top?.points||0)+'-point performance be read aloud before the mock hearing begins.',
           ()=> 'At the unofficial fan-club meeting, '+(won?'the celebratory confetti':'the protest placards')+' came with a receipt: '+(low?.name||'the quietest starter')+' supplied '+w2One(low?.points||0)+' points, and the room demanded a lineup explanation rather than another inspirational speech.',
           ()=> 'Supporters have drafted '+(won?'an absurdly premature victory proclamation':'an absurdly detailed grievance scroll')+' after scoring '+w2One(t.points)+' against '+w2DisplayTeam(t.opponent_name||'the opposition')+'. Even their imaginary officials know the scoreboard is real and the next lineup must answer for it.',
           ()=> 'The fan club is staging '+(won?'a trophy-polishing rehearsal':'a mock funeral for abandoned optimism')+' while '+(top?.name||'the leading scorer')+'\'s '+w2One(top?.points||0)+'-point contribution remains the one exhibit that nobody in the room can dispute.'

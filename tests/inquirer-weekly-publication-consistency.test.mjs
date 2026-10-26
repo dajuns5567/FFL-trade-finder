@@ -161,7 +161,7 @@ test('revision46 does not reintroduce repeated Week 5 editorial hooks',()=>{
  assert.doesNotMatch(source,/scoreboard deficit that needs an actual football fix/);
  assert.doesNotMatch(source,/A clean win is not permission to ignore/);
  assert.doesNotMatch(source,/'One concrete weakness:'/);
- assert.match(source,/FORWARD_EDITORIAL_REVISION=55/);
+ assert.ok(Number(source.match(/FORWARD_EDITORIAL_REVISION=(\\d+)/)?.[1])>=56,'forward revision must isolate the hardened newsroom contract');
 });
 
 test('cross-team rhetorical repairs target paired and three-team collisions',()=>{

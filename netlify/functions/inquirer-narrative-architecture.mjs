@@ -335,16 +335,8 @@ export function restoreForwardArticleDepth(t,week){
  for(const section of a.sections||[])section.paragraphs=(section.paragraphs||[]).map(line=>String(line).replace(
   /receiving\s*\/\s*receptions:\s*(\d+)\/(\d+)\s+rec(?:,\s*(\d+)\s+yds)?(?:,\s*(\d+)\s+TDs?)?/gi,
   (_,c,tg,y,td)=>c+' receptions on '+tg+' targets'+(y==null?'':' for '+y+' yards')+(td==null?'':' and '+td+' receiving '+(Number(td)===1?'touchdown':'touchdowns'))));
- const words=()=>a.sections.flatMap(s=>s.paragraphs||[]).join(' ').split(/\s+/).filter(Boolean).length;
- if(words()>=300){a.paragraphs=a.sections.flatMap(s=>s.paragraphs||[]);return;}
- // Apply only after all newsroom de-duplication. Earlier supplementation was
- // itself removed by the final phrase pass, leaving an unreported short copy.
- const candidates=(t.starter_details||[]).slice().sort((x,y)=>Number(y.points)-Number(x.points));
- for(const [i,p] of candidates.entries()){
-  if(words()>=300)break;
-  if(!p?.name||players.paragraphs.some(row=>row.includes(p.name)))continue;
-  players.paragraphs.push(storyStat(p,t.opponent_name,i,(Number(t.roster_id)||1)+Number(week)+i));
- }
+ // A word-count shortage is a substantive editorial hold, not permission to
+ // pad the article with repetitive box-score rows until it reaches 300.
  a.paragraphs=a.sections.flatMap(s=>s.paragraphs||[]);
 }
 

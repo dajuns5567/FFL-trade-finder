@@ -32,15 +32,17 @@ test('the only successful unattended enqueue is HTTP 202; operational errors sti
   assert.match(queueJob,/exit 1/);
 });
 
-test('authenticated preview reader loads an existing draft without starting a job',()=>{
+test('authenticated preview reader only starts a missing draft on the explicit protected preview',()=>{
  const loader=readerSource.slice(readerSource.indexOf('async function loadInquirerPreview()'),readerSource.indexOf('const esc='));
  assert.match(loader,/inquirer-preview-diagnostic\?draft=1/);
  assert.match(loader,/status\.state==='not-started'/);
  assert.match(loader,/status\.state==='running'/);
  assert.match(loader,/status\.state==='error'/);
- assert.doesNotMatch(loader,/inquirer-preview-background\?start=1/);
+ assert.match(loader,/inquirer-preview-background\?start=1/);
+ assert.match(loader,/!inquirerPreviewLaunchAttempted/);
+ assert.match(loader,/location\.hostname==='deploy-preview-402--transcendent-manatee-2f0123\.netlify\.app'/);
  assert.doesNotMatch(loader,/queued\.status!==202/);
- assert.match(loader,/no generation was triggered/);
+ assert.match(loader,/generation started/);
  assert.match(loader,/preview_editorial_audit/);
  assert.match(loader,/preview_generation_quality/);
  assert.doesNotMatch(readerSource,/<h3>Private Week 5 preview is generating<\/h3>/);
@@ -102,13 +104,14 @@ test('unpublished previews explain missing historical archives before generic we
  assert.match(previewJobSource,/edition\?\.preview_only!==true\|\|edition\?\.published_locked!==false\|\|edition\?\.available!==true/);
 });
 
-test('Week 5 reader never retries manuscript generation or launches a preview job',()=>{
+test('Week 5 reader allows a single protected preview launch and rejects unsafe retries',()=>{
  const loader=readerSource.slice(readerSource.indexOf('async function loadInquirerPreview()'),readerSource.indexOf('const esc='));
  assert.match(loader,/draft=1/);
  assert.match(loader,/preview_week/);
  assert.match(loader,/Refusing to display stale diagnostic text/);
  assert.doesNotMatch(loader,/fetch\(info\?\.start_url/);
- assert.doesNotMatch(loader,/inquirer-preview-background/);
+ assert.match(loader,/inquirer-preview-background\?start=1/);
+ assert.match(loader,/inquirerPreviewLaunchAttempted=true/);
  assert.doesNotMatch(loader,/canRetryArchiveBlockedPreview/);
  assert.match(loader,/preview_editorial_audit/);
  assert.match(loader,/preview_generation_quality/);

@@ -4599,6 +4599,24 @@ function assertWeek2Originality(result,previousEdition){
       const sections=(a.sections||[]).map(sec=>({...sec,paragraphs:(sec.paragraphs||[]).map(p=>
         forwardSentenceParts(p).filter(sentence=>forwardWordCount(sentence)<10||
           !archive.has(forwardNormSentence(sentence,entities))).join(' ')).filter(Boolean)}));
+      const playerDesk=sections.find(s=>s.kind==='players');
+      if(playerDesk&&forwardWordCount((playerDesk.paragraphs||[]).join(' '))<24){
+        const starters=(t.starter_details||[]).filter(p=>p?.name&&p.points!=null&&Number.isFinite(Number(p.points)))
+          .sort((a,b)=>Number(b.points)-Number(a.points));
+        const first=starters[0],second=starters[1],total=Number(t.points);
+        if(first&&second&&Number.isFinite(total)){
+          const lead=Number(first.points),support=Number(second.points),spread=lead-support;
+          const angles=[
+            first.name+' supplied '+w2One(lead)+' of '+w2DisplayTeam(t.team_name)+'\'s '+w2One(total)+' fantasy points. '+second.name+' contributed '+w2One(support)+'. Their '+w2One(spread)+'-point difference places a measurable burden on the next lineup selection.',
+            second.name+' finished at '+w2One(support)+' while '+first.name+' reached '+w2One(lead)+'. For '+w2DisplayTeam(t.team_name)+', those contributions account for '+w2One(lead+support)+' of '+w2One(total)+' recorded points; that comparison is more useful than calling the roster balanced.',
+            'The '+w2DisplayTeam(t.team_name)+' starting group recorded '+w2One(total)+' points. '+first.name+' and '+second.name+' produced '+w2One(lead)+' and '+w2One(support)+' respectively, showing exactly where the scoring load sat in this matchup.',
+            first.name+' led with '+w2One(lead)+', followed by '+second.name+' on '+w2One(support)+'. The '+w2One(spread)+'-point separation matters because '+w2DisplayTeam(t.team_name)+' finished the week with '+w2One(total)+' altogether, not because of an invented trend.',
+            'For '+w2DisplayTeam(t.team_name)+', the recorded scorer hierarchy began with '+first.name+' ('+w2One(lead)+') and '+second.name+' ('+w2One(support)+'). Their combined '+w2One(lead+support)+' points give the manager a concrete account of the lineup\'s productive core.',
+            second.name+' backed up '+first.name+' with '+w2One(support)+' against '+w2One(lead)+' fantasy points. The team registered '+w2One(total)+' in all; the next selection can be evaluated against those two actual contributions rather than a hypothetical substitution.'
+          ];
+          playerDesk.paragraphs.push(angles[Math.abs(Number(t.roster_id)||0)%angles.length]);
+        }
+      }
       return {...t,inquirer_article:{...a,sections,paragraphs:sections.flatMap(sec=>sec.paragraphs||[])}};
     });
   }

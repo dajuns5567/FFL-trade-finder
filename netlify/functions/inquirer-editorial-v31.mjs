@@ -4462,10 +4462,21 @@ function assertWeek2Originality(result,previousEdition){
   }
   // Final reader-facing grammar pass: later variation/architecture steps can
   // introduce numeric adjectives after earlier copy polishing has run.
-  const finishGrammar=s=>String(s)
-    .replace(/\bThe margin asks more:\s*/gi,'')
+  const pluralClubNames=[...new Set(teams.map(t=>String(t.team_name||'').trim()))]
+    .filter(name=>/s$/i.test(name.split(/\\s+/).at(-1)||''));
+  const repairPluralClubAgreement=value=>{
+    let copy=String(value);
+    for(const name of pluralClubNames){
+      const escaped=forwardEscRe(name);
+      copy=copy.replace(new RegExp('\\\\b'+escaped+' (has|is|does|gets|sits|needs|keeps|projects|faces)\\\\b','g'),
+        (_,verb)=>name+' '+({has:'have',is:'are',does:'do',gets:'get',sits:'sit',needs:'need',keeps:'keep',projects:'project',faces:'face'}[verb]||verb));
+    }
+    return copy;
+  };
+  const finishGrammar=s=>repairPluralClubAgreement(String(s)
+    .replace(/\\bThe margin asks more:\\s*/gi,'')
     .replace(/\ban (?=9(?:\.\d+)?-point\b)/gi,'a ')
-    .replace(/\ba (?=8(?:\.\d+)?-point\b)/gi,'an ');
+    .replace(/\ba (?=8(?:\.\d+)?-point\b)/gi,'an '));
   teams=teams.map(t=>{
     const a=t?.inquirer_article;
     if(!a)return t;

@@ -219,3 +219,22 @@ test('player Jr suffix is not misread as sentence boundary before lowercase prob
  assert.match(source,/\(\?=\\s\+\[A-Za-z0-9\]\)/);
  assert.doesNotMatch(source,/\(\?=\\s\+\[A-Z0-9\]\)/);
 });
+
+
+test('standalone bench verdict and subject capitalization are regression protected',()=>{
+ assert.match(source,/choice===11\?"The bench advantage deserves a Week 6 review\."/);
+ assert.match(source,/w2Sentence\(who\)\+" has averaged "/);
+ assert.doesNotMatch(source,/^\s+who\+" has averaged "/m);
+});
+
+test('automatic release keeps the replacement publisher held until verified historical archives and authorization',()=>{
+ const scheduled=readFileSync(new URL('../netlify/functions/inquirer-publish-scheduled.mjs',import.meta.url),'utf8');
+ const schedule=readFileSync(new URL('../netlify/functions/lib/inquirer-schedule-decision.mjs',import.meta.url),'utf8');
+ const config=readFileSync(new URL('../netlify.toml',import.meta.url),'utf8');
+ assert.match(config,/schedule = "0 \*\/2 \* \* \*"/);
+ assert.match(scheduled,/verifiedReplacementHistory\(week3,week4\)/);
+ assert.match(scheduled,/publishingEnabled!=='true'/);
+ assert.match(scheduled,/inquirerScheduleDecision\(\{status,nfl,revision:FORWARD_EDITORIAL_REVISION\}\)/);
+ assert.match(schedule,/const finishedWeek=stateWeek-1/);
+ assert.match(schedule,/Unchanged earlier-week editorial hold/);
+});

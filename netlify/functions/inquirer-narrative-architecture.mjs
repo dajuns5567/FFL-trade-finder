@@ -344,7 +344,7 @@ export function restoreForwardArticleDepth(t,week){
   const relative=delta>0?'higher':delta<0?'lower':'unchanged';
   const valueReads=[
    'The verified asset inventory is '+current+' points after a '+absolute+'-point move '+relative+' in the recorded interval. For '+team+', that is a market observation, not evidence that the '+one(t.points)+'-point lineup was managed well.',
-   team+' is priced at '+current+' market points; the latest measured adjustment was '+absolute+' points '+relative+'. The '+one(margin)+'-point matchup margin is a separate result, and neither number identifies a specific player as the cause of the price change.',
+   team+' carries a recorded valuation of '+current+' points, '+absolute+' points '+relative+' than the prior mark. The club '+(matchupWon?'won':'lost')+' its fantasy matchup by '+one(margin)+' points; that result alone cannot explain how the roster market moved.',
    'In the current valuation record, '+team+' carries '+current+' points, a shift of '+absolute+' points '+relative+'. Compare that long-horizon market reading with the '+one(t.points)+' points actually scored: they answer different questions about the same roster.',
    'A confirmed '+absolute+'-point '+relative+' valuation places '+team+' at '+current+' on the market scale. That cannot substitute for explaining this week’s '+one(t.points)+'-point fantasy performance; player-level causes require verified movement data.'
   ];

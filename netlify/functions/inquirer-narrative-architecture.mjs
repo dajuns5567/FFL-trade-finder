@@ -333,7 +333,7 @@ export function restoreForwardArticleDepth(t,week){
   const reading=second
    ?(share>=40
      ?leader.name+' carried a large share while '+second.name+' supplied '+one(second.points)+'. The staff must decide whether that gap leaves the lineup too dependent on one starter.'
-     :second.name+' scored '+one(second.points)+' while '+leader.name+' scored '+one(leader.points)+'. '+(Number(second.points)>0?leader.name+' finished at '+one(leader.points)+' compared with '+second.name+' at '+one(second.points)+'. The '+one(Number(leader.points)-Number(second.points))+'-point gap is the documented difference between those two performances.':'The '+one(Number(leader.points)-Number(second.points))+'-point spread left the top scorer with almost no support.'))
+     :leader.name+' ('+String(leader.position||'starter')+') delivered '+one(leader.points)+' and '+second.name+' ('+String(second.position||'starter')+') provided '+one(second.points)+'. '+(Number(second.points)>=Number(leader.points)*0.7?'The two leading contributions were relatively close in the recorded lineup.':'The scoring load remained concentrated in the leading starter.'))
    :leader.name+' is the only starter with a verified scoring figure here; the available record does not establish broader lineup support.';
   players.paragraphs.push(reading);
  }

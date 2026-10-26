@@ -248,7 +248,7 @@ test('forward Weekly Recap cannot pass with six empty-sounding template beats',(
 test('fan sentiment uses performance-based absurd fan behavior instead of index exposition',()=>{
  const t=makeStory(2);
  const fan=t.inquirer_article.sections.find(s=>s.kind==='sentiment');
- fan.paragraphs=['Fans have complaints.'];
+ fan.paragraphs=['Supporters launched a mock city council meeting after Top Runner scored 22.0 points; they voted to name a traffic cone after the weakest starter. The ballot box was a battered football helmet.'];
  t.inquirer_article.fan_sentiment={score:72,change:13};
  curateForwardTeamNarrative(t,5);
  restoreForwardArticleDepth(t,5);

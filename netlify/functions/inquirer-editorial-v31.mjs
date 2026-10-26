@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=52;
+export const FORWARD_EDITORIAL_REVISION=53;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -923,7 +923,7 @@ function w2BenchRead(t,r,miss,gap,won,margin){
     starter+" started at "+slot+". "+reserve+" beat that choice by "+points+".",
     "A losing week is a rough time to discover the bench had a better answer."
   ];
-  return facts[choice]+" "+judgment[w2Hash(team+"|bench-verdict")%judgment.length].replace(/^will still come up in lineup review\./,"That choice will still come up in lineup review.");
+  return facts[choice]+" "+(choice===11?"The bench advantage deserves a Week 6 review.":judgment[w2Hash(team+"|bench-verdict")%judgment.length]);
 }
 function w2StatKind(p){
   const pos=String(p?.position||"").toUpperCase();

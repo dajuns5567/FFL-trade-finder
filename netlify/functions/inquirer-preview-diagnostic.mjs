@@ -91,12 +91,13 @@ export default async function inquirerPreviewDiagnostic(req){
   // deploy-local background generation is in progress.
   if(new URL(req.url).searchParams.get('view')==='readable')return readableEdition(req);
   if(status?.state!=='completed')return json({status:status||{state:'not-started'},error:'Draft is not ready'},404);
-  let edition;
-  try{edition=await store.get(identity.edition,{type:'json'})||await legacy.get(identity.edition,{type:'json'})}
-  catch(error){return json({error:'Private draft storage temporarily unavailable'},503)}
-  return edition?.preview_only===true&&edition?.published_locked===false&&
-    Number(edition.editorial_revision)===FORWARD_EDITORIAL_REVISION&&auditPrivateEdition(edition).passed
-   ?json(edition):json({error:'Unpublished draft failed current editorial requirements'},409);
+  // Reuse the already-loaded and independently audited manuscript. A second
+  // multi-megabyte Blob read and second full 32-article audit on every page
+  // opening made the private newspaper unnecessarily slow.
+  return status?.state==='completed'&&savedEdition?.preview_only===true&&savedEdition?.published_locked===false&&
+    Number(savedEdition.editorial_revision)===FORWARD_EDITORIAL_REVISION&&
+    savedEdition.preview_editorial_audit?.ok===true&&savedEdition.preview_generation_quality?.ok===true
+   ?json(savedEdition):json({error:'Unpublished draft failed current editorial requirements'},409);
  }
  return json({
   status:status||{state:'not-started'},

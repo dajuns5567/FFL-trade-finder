@@ -132,9 +132,9 @@ test('under-length articles are held rather than being padded with an unrelated 
  curateForwardTeamNarrative(t,5);
  restoreForwardArticleDepth(t,5);
  const p=t.inquirer_article.sections.find(s=>s.kind==='players').paragraphs.join(' ');
- assert.match(p,/Young Tackler/);
- assert.match(p,/7\.5 fantasy points/);
- assert.match(p,/solo tackles/);
+ assert.doesNotMatch(p,/Young Tackler/);
+ assert.doesNotMatch(p,/7\.5 fantasy points/);
+ assert.ok(t.inquirer_article.paragraphs.join(' ').split(/\s+/).length<300,'Sparse reporting should remain below the editorial floor');
 });
 
 

@@ -282,6 +282,46 @@ export function restoreForwardArticleDepth(t,week){
     &&!line.includes(contributor.name))
     players.paragraphs[i]=contributor.name+' supplied '+one(contributor.points)+' fantasy points. '+line;
  }
+ // Rebuild substance from authenticated league evidence after pruning, not
+ // from generic filler. A short desk with no underlying facts stays held.
+ const desk=k=>a.sections.find(x=>x.kind===k);
+ const deskSize=k=>(desk(k)?.paragraphs||[]).join(' ').trim().split(/\s+/).filter(Boolean).length;
+ const margin=Math.abs(Number(t.points)-Number(t.opponent_points));
+ const missed=t.best_lineup_miss||{},benchGap=Number(missed.gap);
+ const matchupWon=Number(t.points)>Number(t.opponent_points);
+ const rosterSlot=Math.max(0,(Number(t.roster_id)||1)-1);
+ const management=desk('management');
+ if(management&&deskSize('management')<25&&missed.starter?.name&&missed.reserve?.name&&Number.isFinite(benchGap)&&benchGap>0&&Number.isFinite(margin)){
+  const verdict=matchupWon?'did not change a winning result':benchGap>margin?'was large enough to have changed the losing result':'would not alone have erased the losing margin';
+  const contexts=[
+   team+' won or lost by '+one(margin)+' points; the documented '+one(benchGap)+'-point reserve advantage '+verdict+'. The choice still has a next-week cost if that gap persists.',
+   'For '+team+', the '+one(benchGap)+'-point alternative '+verdict+' against a '+one(margin)+'-point final margin. That is the precise size of the decision, not a license to blame every starter.',
+   'The scoreboard margin was '+one(margin)+' for '+team+'. On those numbers, the unused '+one(benchGap)+'-point advantage '+verdict+'; the selection deserves scrutiny independent of hindsight theater.',
+   team+' left '+one(benchGap)+' possible points in this documented swap while the final spread measured '+one(margin)+'. The difference '+verdict+'; the manager now has a concrete selection question.'
+  ];
+  management.paragraphs.push(contexts[rosterSlot%contexts.length].replace(' won or lost by ',' finished with a margin of '));
+ }
+ if(players&&deskSize('players')<24&&leader?.name&&Number.isFinite(Number(leader.points))&&Number(t.points)>0){
+  const share=Math.round(100*Number(leader.points)/Number(t.points));
+  const reading=share>=40?'That degree of dependence makes the next opponent\'s defensive or lineup countermeasure more consequential.':'There was enough scoring beyond the leader to ask which contribution is repeatable rather than assign the entire result to one name.';
+  players.paragraphs.push(leader.name+' accounted for '+share+'% of '+team+'\'s '+one(t.points)+' fantasy points this week. '+reading);
+ }
+ const fan=desk('sentiment'),sent=a.fan_sentiment||{},sentScore=Number(sent.score),sentChange=Number(sent.change);
+ if(fan&&deskSize('sentiment')<50&&Number.isFinite(sentScore)&&sent.score!=null){
+  const direction=sent.change==null?'without a verified week-over-week comparison':
+   'after a '+(sentChange>=0?'+':'')+sentChange+'-point shift since the previous week';
+  const fanContext=[
+   'The measured '+team+' fan index sits at '+sentScore+' '+direction+'. Its '+one(t.points)+'-point output against '+opponent+' gives supporters real evidence, but a single score cannot answer every lineup question.',
+   'Supporters have a '+sentScore+' sentiment reading '+direction+'. '+team+' finished on '+one(t.points)+' points; the tension is between the result people saw and how much trust the next opponent has earned.',
+   team+' carries a fan score of '+sentScore+' '+direction+'. The '+one(margin)+'-point matchup margin explains the immediate mood; the performance distribution decides whether confidence is durable.',
+   'At '+sentScore+' on the sentiment scale '+direction+', the fan argument about '+team+' is not merely cheering or booing. A '+one(t.points)+'-point Sunday supplies the evidence; selection errors supply the reservations.'
+  ];
+  fan.paragraphs.unshift(fanContext[rosterSlot%fanContext.length]);
+ }
+ // Never publish a feed label where a football sentence belongs.
+ for(const section of a.sections||[])section.paragraphs=(section.paragraphs||[]).map(line=>String(line).replace(
+  /receiving\s*\/\s*receptions:\s*(\d+)\/(\d+)\s+rec,\s*(\d+)\s+yds,\s*(\d+)\s+TDs?\b/gi,
+  (_,c,tg,y,td)=>c+' receptions on '+tg+' targets for '+y+' yards and '+td+' receiving '+(Number(td)===1?'touchdown':'touchdowns')));
  const words=()=>a.sections.flatMap(s=>s.paragraphs||[]).join(' ').split(/\s+/).filter(Boolean).length;
  if(words()>=300){a.paragraphs=a.sections.flatMap(s=>s.paragraphs||[]);return;}
  // Apply only after all newsroom de-duplication. Earlier supplementation was

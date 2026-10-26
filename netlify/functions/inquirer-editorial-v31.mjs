@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=54;
+export const FORWARD_EDITORIAL_REVISION=55;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -935,6 +935,27 @@ function w2StatKind(p){
 function w2LedeShape(t,r,won,margin,opp,top){
   const a=w2Alias(t),star=top?.[0]?.name||t.team_name,close=margin<=6,wide=margin>=20,k=w2Hash(String(t.roster_id)+"|lede|"+String(r?.id||""))%6,team=w2DisplayTeam(t.team_name),foe=w2DisplayTeam(opp);
   const second=top?.[1],support=Number(second?.points)||0;
+  // Lead with the actual shape of the box score before falling back to desk prose.
+  // These are mutually exclusive editorial angles, not a shuffled sentence bank.
+  const starPoints=Number(top?.[0]?.points)||0,total=Number(t.points)||0;
+  const topShare=total>0?starPoints/total:0,secondName=second?.name||"the second scorer";
+  const voice=String(r?.id||"");
+  if(total>0&&starPoints>=18&&topShare>=0.43){
+    const claim=w2One(starPoints)+" of "+w2One(total)+" points came from "+star;
+    if(voice==='mack-hollis')return claim+". The rest of "+team+" can send a thank-you note; "+foe+" already knows where the damage came from.";
+    if(voice==='nora-voss')return claim+". That share makes the supporting lineup, not the star, the first place management should inspect before facing the next opponent.";
+    if(voice==='tess-delaney')return claim+". A splendid starring performance, although "+team+" would be wise not to confuse a soloist with a complete orchestra of fantasy points.";
+    return claim+". The result was "+(won?"a win":"a loss")+" against "+foe+"; the second scoring name will matter at least as much next Sunday.";
+  }
+  if(close&&second&&support>=14&&starPoints-support<=5){
+    if(voice==='mack-hollis')return star+" and "+secondName+" posted "+w2One(starPoints)+" and "+w2One(support)+". That is a two-man scoreboard argument in a "+w2One(margin)+"-point "+(won?"win":"loss")+". Nobody gets to call the supporting role decorative.";
+    if(voice==='tess-delaney')return star+" scored "+w2One(starPoints)+" and "+secondName+" answered with "+w2One(support)+". In a contest decided by "+w2One(margin)+", the second act earned equal billing.";
+    return star+" led with "+w2One(starPoints)+", "+secondName+" supplied "+w2One(support)+", and "+foe+" finished "+w2One(margin)+" points "+(won?"behind":"ahead")+". That is where the "+team+" result was decided.";
+  }
+  if(!won&&total>0&&starPoints<10&&margin>=15){
+    if(voice==='nora-voss')return team+" lost by "+w2One(margin)+" to "+foe+". Even the leading starter, "+star+", managed just "+w2One(starPoints)+". There is no mystery suspect when the entire top line is that quiet.";
+    return team+" fell "+w2One(margin)+" behind "+foe+" with a leading score of only "+w2One(starPoints)+" from "+star+". The lineup needed production, not a more imaginative postgame excuse.";
+  }
   if(!won&&Number(top?.[0]?.points||0)===0&&Number(t.points||0)===0)
     return team+" scored exactly 0.0, including 0.0 from "+star+". It takes commitment to submit a whole starting lineup and bring home absolutely nothing; "+foe+" only needed to show up on the scoreboard.";
   if(won){

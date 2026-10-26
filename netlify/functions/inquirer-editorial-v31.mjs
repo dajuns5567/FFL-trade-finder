@@ -4538,6 +4538,26 @@ function assertWeek2Originality(result,previousEdition){
     const sections=(a.sections||[]).map(sec=>({...sec,paragraphs:(sec.paragraphs||[]).map(accurateZeroCopy)}));
     return {...t,inquirer_article:{...a,headline:finishGrammar(a.headline||''),sections,paragraphs:sections.flatMap(sec=>sec.paragraphs)}};
   });
+  // The last cross-edition curation can leave a recap beat nominally present
+  // but without an argument. Rebuild the forward outlook only from verified
+  // scoreboard and upcoming-opponent fields, never from recycled recap prose.
+  if(Number(week)>=5){
+    const recapBlocks=(overview.sections||[]).flatMap(s=>s.blocks?.length?s.blocks:[s]);
+    const outlook=recapBlocks.find(b=>b.kind==='outlook');
+    const wordCount=value=>String(value||'').trim().split(/\s+/).filter(Boolean).length;
+    if(outlook&&wordCount((outlook.paragraphs||[]).join(' '))<40){
+      const eligible=teams.filter(t=>t.team_name&&t.next_opponent_name&&Number.isFinite(Number(t.points))&&Number.isFinite(Number(t.opponent_points)));
+      const selected=eligible.slice().sort((a,b)=>Math.abs(Number(b.points)-Number(b.opponent_points))-Math.abs(Number(a.points)-Number(a.opponent_points))).slice(0,3);
+      outlook.paragraphs=selected.map(t=>{
+        const result=Number(t.points)>Number(t.opponent_points)?'won':'lost';
+        return 'After Week '+week+', '+w2DisplayTeam(t.team_name)+' '+result+' '+w2One(Math.abs(Number(t.points)-Number(t.opponent_points)))+
+          ' fantasy points clear of its opponent in the latest recorded matchup. The upcoming opponent is '+w2DisplayTeam(t.next_opponent_name)+
+          '; the lineup must confront that specific matchup with the production established by this week rather than an imaginary forecast.';
+      });
+      for(const section of overview.sections||[])if(section.blocks?.includes(outlook))
+        section.paragraphs=section.blocks.flatMap(b=>b.paragraphs||[]);
+    }
+  }
   overview=deepStrings(overview,finishGrammar);
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }

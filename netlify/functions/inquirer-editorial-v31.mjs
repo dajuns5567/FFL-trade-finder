@@ -4481,6 +4481,7 @@ function assertWeek2Originality(result,previousEdition){
     .replace(/\\bThe margin asks more:\\s*/gi,'')
     .replace(/\ban (?=9(?:\.\d+)?-point\b)/gi,'a ')
     .replace(/\ba (?=8(?:\.\d+)?-point\b)/gi,'an '))
+    .replace(/(?:this round of games|these games|games)\u2019s/gi,'this week\u2019s')
     .replace(/\b(The radio station covering [^.?!\n]{4,85}?) have declared\b/gi,'$1 has declared')
     .replace(/\b(The (?:AFC|NFC) (?:EAST|WEST|NORTH|SOUTH) race around [^.?!\n]{4,85}?) are already compressed\b/gi,'$1 is already compressed');
   teams=teams.map(t=>{

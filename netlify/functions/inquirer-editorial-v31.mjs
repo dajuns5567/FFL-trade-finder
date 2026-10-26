@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=55;
+export const FORWARD_EDITORIAL_REVISION=56;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -218,15 +218,9 @@ function evolveCrossReporterSentence(sentence,reporterId,seed){
     if(re.test(out)){re.lastIndex=0;out=out.replace(re,repl);changed++}
     if(changed>=3)break;
   }
-  if(!changed){
-    const tails={
-      'walter-mercer':' The next week gets to test that read.',
-      'tess-delaney':' Sunday gets the rebuttal.',
-      'mack-hollis':' Next Sunday gets a vote.',
-      'nora-voss':' The next opponent will have a fresh box score to examine.'
-    };
-    out=out.replace(/[.!?]?$/,'.')+(rid==='nora-voss'?[' The next matchup supplies the evidence.',' The opponent will test that inference.',' Another Sunday may alter the verdict.',' The current numbers invite further scrutiny.',' One more result could overturn that finding.',' The following box score must settle it.',' The next lineup will face its own audit.',' A fresh opponent means fresh evidence.'][h%8]:tails[rid]);
-  }
+  // No dictionary substitution was appropriate. Do not fabricate a
+  // repetitive forward-looking kicker just to distinguish copied prose.
+  // The immutable-history similarity gate must reject the unchanged text.
   return out;
 }
 function evolveSentence(sentence,reporterId,seed){

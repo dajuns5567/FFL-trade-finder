@@ -148,7 +148,7 @@ export function curateForwardTeamNarrative(t,week){
      // duplicate start/sit comparisons or stock administrative transitions.
      !(benchNames.length===2&&benchNames.every(n=>p.includes(n)))&&
      !/^(?:the decision|the useful lesson|the football read|the lineup still answers)/i.test(p));
-  management.paragraphs=[pruneCase(first),move&&pruneMove(move),...retained.slice(0,2)]
+  management.paragraphs=[pruneCase(first),move&&pruneMove(move),...retained.slice(0,move?0:1)]
    .filter((p,i,arr)=>p&&!arr.slice(0,i).includes(p));
  }
  const credit=byKind.get('cool-throne');
@@ -304,7 +304,7 @@ export function restoreForwardArticleDepth(t,week){
  if(players&&deskSize('players')<24&&leader?.name&&Number.isFinite(Number(leader.points))&&Number(t.points)>0){
   const share=Math.round(100*Number(leader.points)/Number(t.points));
   const reading=share>=40?'That degree of dependence makes the next opponent\'s defensive or lineup countermeasure more consequential.':'There was enough scoring beyond the leader to ask which contribution is repeatable rather than assign the entire result to one name.';
-  players.paragraphs.push(leader.name+' accounted for '+share+'% of '+team+'\'s '+one(t.points)+' fantasy points this week. '+reading);
+  players.paragraphs.push(leader.name+' accounted for '+share+'% of '+(/s$/i.test(team)?team+'’':team+'\'s')+' '+one(t.points)+' fantasy points this week. '+reading);
  }
  const fan=desk('sentiment'),sent=a.fan_sentiment||{},sentScore=Number(sent.score),sentChange=Number(sent.change);
  if(fan&&deskSize('sentiment')<50&&Number.isFinite(sentScore)&&sent.score!=null){
@@ -320,8 +320,8 @@ export function restoreForwardArticleDepth(t,week){
  }
  // Never publish a feed label where a football sentence belongs.
  for(const section of a.sections||[])section.paragraphs=(section.paragraphs||[]).map(line=>String(line).replace(
-  /receiving\s*\/\s*receptions:\s*(\d+)\/(\d+)\s+rec,\s*(\d+)\s+yds,\s*(\d+)\s+TDs?\b/gi,
-  (_,c,tg,y,td)=>c+' receptions on '+tg+' targets for '+y+' yards and '+td+' receiving '+(Number(td)===1?'touchdown':'touchdowns')));
+  /receiving\s*\/\s*receptions:\s*(\d+)\/(\d+)\s+rec(?:,\s*(\d+)\s+yds)?(?:,\s*(\d+)\s+TDs?)?/gi,
+  (_,c,tg,y,td)=>c+' receptions on '+tg+' targets'+(y==null?'':' for '+y+' yards')+(td==null?'':' and '+td+' receiving '+(Number(td)===1?'touchdown':'touchdowns'))));
  const words=()=>a.sections.flatMap(s=>s.paragraphs||[]).join(' ').split(/\s+/).filter(Boolean).length;
  if(words()>=300){a.paragraphs=a.sections.flatMap(s=>s.paragraphs||[]);return;}
  // Apply only after all newsroom de-duplication. Earlier supplementation was

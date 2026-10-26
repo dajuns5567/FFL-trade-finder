@@ -4473,10 +4473,13 @@ function assertWeek2Originality(result,previousEdition){
     }
     return copy;
   };
+  // Correct singular subjects AFTER plural-team rewriting, including fan scenes.
   const finishGrammar=s=>repairPluralClubAgreement(String(s)
     .replace(/\\bThe margin asks more:\\s*/gi,'')
     .replace(/\ban (?=9(?:\.\d+)?-point\b)/gi,'a ')
-    .replace(/\ba (?=8(?:\.\d+)?-point\b)/gi,'an '));
+    .replace(/\ba (?=8(?:\.\d+)?-point\b)/gi,'an '))
+    .replace(/\b(The radio station covering [^.?!\n]{4,85}?) have declared\b/gi,'$1 has declared')
+    .replace(/\b(The (?:AFC|NFC) (?:EAST|WEST|NORTH|SOUTH) race around [^.?!\n]{4,85}?) are already compressed\b/gi,'$1 is already compressed');
   teams=teams.map(t=>{
     const a=t?.inquirer_article;
     if(!a)return t;

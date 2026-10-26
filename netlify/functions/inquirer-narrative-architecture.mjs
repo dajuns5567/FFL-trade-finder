@@ -313,7 +313,15 @@ export function restoreForwardArticleDepth(t,week){
  }
  if(players&&deskSize('players')<24&&leader?.name&&Number.isFinite(Number(leader.points))&&Number(t.points)>0){
   const share=Math.round(100*Number(leader.points)/Number(t.points));
-  const reading=share>=40?'That degree of dependence makes the next opponent\'s defensive or lineup countermeasure more consequential.':'There was enough scoring beyond the leader to ask which contribution is repeatable rather than assign the entire result to one name.';
+  const supporting=(t.starter_details||[])
+   .filter(p=>p?.name&&p.name!==leader.name&&p.points!=null&&Number.isFinite(Number(p.points)))
+   .sort((a,b)=>Number(b.points)-Number(a.points));
+  const second=supporting[0];
+  const reading=second
+   ?(share>=40
+     ?leader.name+' carried a large share while '+second.name+' supplied '+one(second.points)+'. The staff must decide whether that gap leaves the lineup too dependent on one starter.'
+     :second.name+' provided '+one(second.points)+' alongside '+leader.name+'\'s '+one(leader.points)+'. Those two actual totals, rather than a generic claim about balance, define the production the manager must evaluate.')
+   :leader.name+' is the only starter with a verified scoring figure here; the available record does not establish broader lineup support.';
   players.paragraphs.push(leader.name+' accounted for '+share+'% of '+(/s$/i.test(team)?team+'’':team+'\'s')+' '+one(t.points)+' fantasy points this week. '+reading);
  }
  const vdesk=desk('value'),v=t.value_history_week||{};

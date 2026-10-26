@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=51;
+export const FORWARD_EDITORIAL_REVISION=52;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -923,7 +923,7 @@ function w2BenchRead(t,r,miss,gap,won,margin){
     starter+" started at "+slot+". "+reserve+" beat that choice by "+points+".",
     "A losing week is a rough time to discover the bench had a better answer."
   ];
-  return facts[choice]+" "+judgment[w2Hash(team+"|bench-verdict")%judgment.length];
+  return facts[choice]+" "+judgment[w2Hash(team+"|bench-verdict")%judgment.length].replace(/^will still come up in lineup review\./,"That choice will still come up in lineup review.");
 }
 function w2StatKind(p){
   const pos=String(p?.position||"").toUpperCase();
@@ -2319,7 +2319,7 @@ function forwardFanScenes(t,won,week,variationSalt){
    [star+' supplied '+starPts+' on a '+points+'-point Sunday for '+name+'. That is the sort of labor a headline can fairly reward.',danger+' added '+dangerPts+'. There is a reason '+next+' will study both parts of the lineup, not only the flattering one.'],
    ['The optimism around '+name+' is understandable only to the extent that '+points+' and '+record+' support it.','A skeptic can cite '+danger+' at '+dangerPts+'; a believer can cite '+star+' at '+starPts+'. Next week provides the referee.'],
    ['Against '+opponent+', '+name+' earned the scoreboard figure '+points+'. Calling it destiny would be a terrible use of a calculator.',star+' and '+danger+' were separated by real production; '+next+' gets a chance to discover whether the manager noticed.'],
-   ['The '+record+' line beside '+name+' is not a mood. It is a cumulative account of finished games.','The '+starPts+' from '+star+' belong on the positive side. The '+dangerPts+' from '+danger+' still demand a place in the manager’s next decision.'],
+   ['A '+record+' record is not a mood. It is a cumulative account of finished games for '+name+'.','The '+starPts+' from '+star+' belong on the positive side. The '+dangerPts+' from '+danger+' still demand a place in the manager’s next decision.'],
    ['There were '+points+' fantasy points on the '+name+' board. Anyone promising to fix the result retroactively should begin by inventing time travel.','The '+danger+' assignment now belongs to '+name+'\'s staff before '+next+'. A '+dangerPts+'-point output deserves a football explanation, not another press conference.'],
    [name+' has one useful advantage in the debate over '+opponent+': the game has already been scored at '+points+'.','The next opponent, '+next+', will not accept a better narrative in place of improved production from the starting lineup.'],
    ['For '+name+', '+star+' and '+starPts+' handed '+name+' a scoring highlight the staff will want to display.','The accompanying footnote is '+danger+' at '+dangerPts+'. Against '+next+', the footnote could become the headline if nothing changes.'],

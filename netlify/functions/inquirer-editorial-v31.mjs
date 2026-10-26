@@ -4585,7 +4585,7 @@ function assertWeek2Originality(result,previousEdition){
         section.paragraphs=section.blocks.flatMap(b=>b.paragraphs||[]);
     }
   }
-  overview=deepStrings(overview,finishGrammar);
+  overview=deepStrings(overview,s=>finishGrammar(s).replace(/\b(?:this round of games|these games)\u2019s\b/gi,'this week\u2019s'));
   // Last-writer audit of team copy against the prior issue. An earlier pass
   // cannot guarantee freshness when later grammar and depth layers append prose.
   // Remove only exact archive-normalized sentences; keep new factual evidence.

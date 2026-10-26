@@ -416,6 +416,27 @@ export function inspectNarrativeArchitecture(edition){
  }
  if((edition?.teams||[]).length>=16&&orders.size<3)
   issues.push({id:'one-template-for-thirty-two-stories',distinctOrders:orders.size});
+ // A six-box layout is not itself a comprehensive league newspaper.
+ // Require substantial, independent reporting within each Weekly Recap beat.
+ const recapBlocks=edition?.league_overview?.sections?.[0]?.blocks||[];
+ if(recapBlocks.length===6){
+  const recapText=recapBlocks.flatMap(b=>b.paragraphs||[]).join(' ');
+  const covered=(edition.teams||[]).filter(t=>t?.team_name&&recapText.includes(t.team_name));
+  if(covered.length<8)issues.push({id:'weekly-recap-insufficient-league-coverage',teams:covered.length,minimum:8});
+  const seen=new Set();
+  for(const b of recapBlocks){
+   const copy=(b.paragraphs||[]).join(' '),size=copy.split(/\s+/).filter(Boolean).length;
+   if(size<40)issues.push({id:'weekly-recap-thin-beat',beat:b.kind,words:size});
+   if(/the next week gets to test that read|sunday gets the final word|the scoreboard will decide|the next result supplies the answer/i.test(copy))
+    issues.push({id:'weekly-recap-stock-closer',beat:b.kind});
+   for(const sentence of copy.split(/(?<=[.!?])\s+/)){
+    const normalized=text(sentence).toLowerCase().replace(/\s+/g,' ').trim();
+    if(normalized.split(' ').length<12)continue;
+    if(seen.has(normalized))issues.push({id:'weekly-recap-repeated-argument',beat:b.kind,excerpt:sentence.slice(0,140)});
+    seen.add(normalized);
+   }
+  }
+ }
  for(const p of (edition?.league_overview?.sections||[]).flatMap(s=>s.blocks?.length?s.blocks.flatMap(b=>b.paragraphs||[]):s.paragraphs||[])){
   if(/\bThe record is \d+-\d+\b/i.test(p))
    issues.push({id:'unattributed-or-stale-season-record',excerpt:String(p).slice(0,130)});

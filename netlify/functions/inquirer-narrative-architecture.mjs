@@ -320,7 +320,7 @@ export function restoreForwardArticleDepth(t,week){
   const reading=second
    ?(share>=40
      ?leader.name+' carried a large share while '+second.name+' supplied '+one(second.points)+'. The staff must decide whether that gap leaves the lineup too dependent on one starter.'
-     :second.name+' scored '+one(second.points)+' while '+leader.name+' scored '+one(leader.points)+'. '+(Number(second.points)>0?'Both contributed real points, but their '+one(Number(leader.points)-Number(second.points))+'-point difference identifies the heavier load.':'The '+one(Number(leader.points)-Number(second.points))+'-point spread left the top scorer with almost no support.'))
+     :second.name+' scored '+one(second.points)+' while '+leader.name+' scored '+one(leader.points)+'. '+(Number(second.points)>0?leader.name+' outscored '+second.name+' by '+one(Number(leader.points)-Number(second.points))+' fantasy points; the manager must assess that specific distribution when reviewing the lineup.':'The '+one(Number(leader.points)-Number(second.points))+'-point spread left the top scorer with almost no support.'))
    :leader.name+' is the only starter with a verified scoring figure here; the available record does not establish broader lineup support.';
   players.paragraphs.push(leader.name+' accounted for '+share+'% of '+(/s$/i.test(team)?team+'’':team+'\'s')+' '+one(t.points)+' fantasy points this week. '+reading);
  }

@@ -214,3 +214,20 @@ test('Week 4-style readable section headings and plural mascot headline are not 
  assert.ok(!ids.includes('plural-mascot-headline-agreement'));
  assert.ok(!ids.includes('lowercase-editorial-section-heading'));
 });
+
+
+test('week 5 editorial gate rejects fact-only desks and repetitive forecasts',()=>{
+ const teams=Array.from({length:32},(_,i)=>makeStory(i+1));
+ for(const t of teams){
+  const byKind=k=>t.inquirer_article.sections.find(s=>s.kind===k);
+  byKind('management').paragraphs=['Starter X scored only 3.2 points.'];
+  byKind('players').paragraphs=['Against Cleveland Browns, Brock Bowers led the Ravens with 23.0 fantasy points; receiving / receptions: 8/10 rec, 110 yds, 1 TD.'];
+  byKind('value').paragraphs=['Baltimore Ravens recorded a Week 5 roster-value change of +192 points.'];
+  byKind('sentiment').paragraphs=['Someone baked a cake for the fans.'];
+  byKind('outlook').paragraphs=['The next week gets to test that read. Sunday gets the final word. The next week gets to test that read.'];
+  t.inquirer_article.paragraphs=t.inquirer_article.sections.flatMap(s=>s.paragraphs);
+ }
+ const ids=new Set(inspectNarrativeArchitecture({season:2026,week:5,teams}).map(i=>i.id));
+ for(const id of ['thin-management-analysis','ledger-only-value-reporting','thin-fan-psychology','raw-stat-feed-published-as-prose','uninterpreted-roster-value-ledger','repeated-outlook-conclusion'])
+  assert(ids.has(id),'missing substantive gate: '+id);
+});

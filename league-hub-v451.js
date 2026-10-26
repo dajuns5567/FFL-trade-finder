@@ -8,6 +8,7 @@ const inquirerPreviewMode=onNetlifyDeployPreview&&new URLSearchParams(location.s
 const inquirerPreviewRequestedWeek=Number(new URLSearchParams(location.search).get('preview_week'))||0;
 const inquirerPreviewEntryUrl='/?inquirer_preview=1'+(inquirerPreviewRequestedWeek?'&preview_week='+inquirerPreviewRequestedWeek:'');
 let inquirerPreviewEdition=null;
+let inquirerPreviewRequest=null;
 let inquirerPreviewPollAttempts=0;
 let inquirerPreviewLaunchAttempted=false;
 // A prior preview may be blocked because the NEW Netlify site lacked historic
@@ -56,6 +57,12 @@ async function canRetryArchiveBlockedPreview(season,targetWeek){
 async function loadInquirerPreview(){
  if(!inquirerPreviewMode)return null;
  if(inquirerPreviewEdition)return inquirerPreviewEdition;
+ // Deduplicate simultaneous full-edition fetches; the manuscript is large.
+ if(inquirerPreviewRequest)return inquirerPreviewRequest;
+ inquirerPreviewRequest=fetchInquirerPreview();
+ try{return await inquirerPreviewRequest}finally{inquirerPreviewRequest=null}
+}
+async function fetchInquirerPreview(){
  const scope=inquirerPreviewRequestedWeek?'&preview_week='+inquirerPreviewRequestedWeek:'';
  const response=await fetch('/.netlify/functions/inquirer-preview-diagnostic?draft=1'+scope,{cache:'no-store'});
  if(!response.ok){

@@ -236,7 +236,7 @@ test('week 5 editorial gate rejects fact-only desks and repetitive forecasts',()
 test('forward Weekly Recap cannot pass with six empty-sounding template beats',()=>{
  const teams=Array.from({length:32},(_,i)=>makeStory(i+1));
  const kinds=['lead','standings','players','decisions','league','outlook'];
- const blocks=kinds.map(kind=>({kind,paragraphs:['The next week gets to test that read. Sunday gets the final word.']}));
+ const blocks=kinds.map(kind=>({kind,paragraphs:['The next week gets to test that read. This is a deliberately repeated generic conclusion that offers no concrete reporting about any team or player.']}));
  const edition={season:2026,week:5,teams,league_overview:{sections:[{blocks}]}};
  const issues=inspectNarrativeArchitecture(edition);
  const ids=new Set(issues.map(i=>i.id));

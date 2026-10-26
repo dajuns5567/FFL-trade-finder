@@ -4628,6 +4628,25 @@ function assertWeek2Originality(result,previousEdition){
       }
       if(playerDesk&&!(playerDesk.paragraphs||[]).some(p=>String(p).includes('fantasy points'))&&Number.isFinite(Number(t.points)))
         playerDesk.paragraphs.unshift('In the '+w2DisplayTeam(t.team_name)+' matchup against '+w2DisplayTeam(t.opponent_name||'the opposition')+', the final roster return was '+w2One(t.points)+' fantasy points. '+((Number(t.roster_id)||0)%2?'Specific player scoring remains unverified in this starting-lineup record.':'The newspaper cannot assign individual credit without confirmed starter totals.'));
+      const mgmt=sections.find(s=>s.kind==='management');
+      if(mgmt&&forwardWordCount((mgmt.paragraphs||[]).join(' '))<25&&
+          Number.isFinite(Number(t.points))&&Number.isFinite(Number(t.opponent_points))){
+        const score=Number(t.points),other=Number(t.opponent_points);
+        const won=score>other,margin=w2One(Math.abs(score-other));
+        const opponent=w2DisplayTeam(t.opponent_name||'the opposing roster');
+        const next=w2DisplayTeam(t.next_opponent_name||'the next opposing roster');
+        const reads=[
+          'The '+w2One(score)+' to '+w2One(other)+' result against '+opponent+' leaves a '+margin+'-point '+(won?'win':'defeat')+'. Before '+next+', the manager must review that actual scoring gap rather than explain away the recorded result.',
+          'Against '+opponent+', the roster registered '+w2One(score)+' points to '+w2One(other)+'. A '+margin+'-point '+(won?'victory':'loss')+' changes the decision facing the staff when '+next+' arrives, regardless of what the previous newspaper predicted.',
+          'The coach now has a concrete comparison: '+w2One(score)+' recorded fantasy points against '+opponent+' at '+w2One(other)+'. That '+margin+'-point '+(won?'advantage':'deficit')+' should frame preparation for '+next+', not an invented bench substitution.',
+          'The recorded '+margin+'-point margin against '+opponent+' reflects '+w2One(score)+' scored and '+w2One(other)+' allowed. The manager must take those finished numbers into the selection discussion before facing '+next+'.',
+          'This week the club '+(won?'earned a win':'absorbed a defeat')+' against '+opponent+', scoring '+w2One(score)+' to '+w2One(other)+'. The upcoming '+next+' assignment tests whether the staff responds to the '+margin+'-point difference with defensible lineup choices.',
+          'The official fantasy scoreboard lists '+w2One(score)+' for this roster and '+w2One(other)+' for '+opponent+'. That leaves the manager a '+margin+'-point '+(won?'cushion to protect':'shortfall to investigate')+' before the scheduled meeting with '+next+'.'
+        ];
+        const addition=reads[Math.abs(Number(t.roster_id)||0)%reads.length];
+        if(mgmt.paragraphs.length)mgmt.paragraphs[mgmt.paragraphs.length-1]+=' '+addition;
+        else mgmt.paragraphs=[addition];
+      }
       return {...t,inquirer_article:{...a,sections,paragraphs:sections.flatMap(sec=>sec.paragraphs||[])}};
     });
   }

@@ -304,6 +304,19 @@ export function restoreForwardArticleDepth(t,week){
   if(last>=0)management.paragraphs[last]+=' '+commentary;
   else management.paragraphs=[commentary];
  }
+ // A missing bench-swap record must not leave management without reporting.
+ // Discuss the verified result and lead starter rather than invent a reserve choice.
+ if(management&&deskSize('management')<25&&
+    !(missed.starter?.name&&missed.reserve?.name&&Number.isFinite(benchGap)&&benchGap>0)&&
+    leader?.name&&Number.isFinite(Number(leader.points))&&
+    Number.isFinite(Number(t.points))&&Number.isFinite(Number(t.opponent_points))){
+  const share=Number(t.points)>0?Math.round(Number(leader.points)/Number(t.points)*100):0;
+  const consequence=matchupWon
+   ?team+' won by '+one(margin)+' points. '+leader.name+' produced '+one(leader.points)+' of the '+one(t.points)+' scored, leaving the manager to judge how much of the victory relied on that starter.'
+   :team+' lost by '+one(margin)+' points. '+leader.name+' contributed '+one(leader.points)+' of the '+one(t.points)+' scored; the manager must identify support elsewhere in the recorded lineup before the next matchup.';
+  const existing=(management.paragraphs||[]).join(' ');
+  if(!existing.includes(consequence))management.paragraphs.push(consequence);
+ }
  if(players&&deskSize('players')<24&&leader?.name&&Number.isFinite(Number(leader.points))&&Number(t.points)<=0){
   const recorded=(t.starter_details||[]).filter(p=>p?.name&&p.points!=null&&Number.isFinite(Number(p.points)));
   if(recorded.length){

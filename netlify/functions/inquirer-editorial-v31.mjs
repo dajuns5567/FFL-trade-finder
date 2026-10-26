@@ -4586,6 +4586,22 @@ function assertWeek2Originality(result,previousEdition){
     }
   }
   overview=deepStrings(overview,finishGrammar);
+  // Last-writer audit of team copy against the prior issue. An earlier pass
+  // cannot guarantee freshness when later grammar and depth layers append prose.
+  // Remove only exact archive-normalized sentences; keep new factual evidence.
+  if(Number(week)>=5&&previousEdition?.teams?.length){
+    const entities=[...forwardEntities({teams}),...forwardEntities(previousEdition)];
+    const oldTeams=new Map(previousEdition.teams.map(t=>[String(t.roster_id),t]));
+    teams=teams.map(t=>{
+      const a=t.inquirer_article,old=oldTeams.get(String(t.roster_id));
+      if(!a||!old)return t;
+      const archive=new Set(forwardArticleSentences(old).map(s=>forwardNormSentence(s,entities)));
+      const sections=(a.sections||[]).map(sec=>({...sec,paragraphs:(sec.paragraphs||[]).map(p=>
+        forwardSentenceParts(p).filter(sentence=>forwardWordCount(sentence)<10||
+          !archive.has(forwardNormSentence(sentence,entities))).join(' ')).filter(Boolean)}));
+      return {...t,inquirer_article:{...a,sections,paragraphs:sections.flatMap(sec=>sec.paragraphs||[])}};
+    });
+  }
   // Recap hot-takes are outside the section-block pruning loop. Recheck every
   // reader-facing recap sentence at the last writer, including the hot takes.
   // Never retain a prior week's normalized sentence with changed team labels.

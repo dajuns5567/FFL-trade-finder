@@ -4520,8 +4520,10 @@ function assertWeek2Originality(result,previousEdition){
         const addition=w2DisplayTeam(t.team_name)+' '+(score>against?'won':'lost')+' by '+margin+
           ' fantasy points. '+leader.name+' supplied '+w2One(leader.points)+
           ' of the recorded '+w2One(score)+'. The remaining starters need closer scrutiny.';
-        if(!(management.paragraphs||[]).some(p=>String(p).includes(addition)))
-          management.paragraphs.push(addition);
+        if(!(management.paragraphs||[]).some(p=>String(p).includes(addition))){
+          if(management.paragraphs.length>=2)management.paragraphs[management.paragraphs.length-1]+=' '+addition;
+          else management.paragraphs.push(addition);
+        }
       }
     }
     const zeros=(t.starter_details||[]).filter(p=>p?.points!=null&&String(p.points).trim()!==''&&Number(p.points)===0&&p.name);

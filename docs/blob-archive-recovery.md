@@ -86,3 +86,7 @@ Keep the private backup folder offline and outside GitHub; it contains sensitive
 6. No merge to `main`, public publication, enabling of `FLEECED_ENABLE_NEW_SITE_PUBLISHER`, project deletion or transfer is authorized by this procedure.
 
 **Important:** a CLI dry run, passing CI simulation, or successfully generated **Week 3** preview is not evidence that Week 5 is restored or independently accepted.
+
+## Release-preview verification checkpoint (2026-10-26)
+
+The owner ran the replacement-only read-only archive preflight: 2026 Week 3 and Week 4 both returned EXACT_MATCH to the documented SHA-256 hashes. Do not restore or overwrite these originals. Editorial revision 55 completed all four GitHub CI workflows. This documentation-only commit is intended to trigger a fresh PR #402 Netlify deploy preview for revision 55; it does not enable the publisher, change production, or modify archived editions. Confirm the preview deploy's commit SHA before trusting its output.

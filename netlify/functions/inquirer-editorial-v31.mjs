@@ -4621,9 +4621,14 @@ function assertWeek2Originality(result,previousEdition){
           const original=a.sections?.find(sec=>sec.kind==='players');
           const fact=(original?.paragraphs||[]).find(p=>/\b\d+(?:\.\d+)?\b/.test(p)&&
             /fantasy points|scored|recorded|produced|contributed/i.test(p));
-          if(fact)playerDesk.paragraphs.push(fact);
+          if(fact)playerDesk.paragraphs.unshift(fact);
+          else playerDesk.paragraphs.unshift(w2DisplayTeam(t.team_name)+' recorded '+w2One(total)+
+            ' fantasy points overall. No individually scored starter is verified in this source packet, so attributing that number to any named player would fabricate a contribution.');
         }
       }
+      if(playerDesk&&!(playerDesk.paragraphs||[]).some(p=>String(p).includes('fantasy points'))&&Number.isFinite(Number(t.points)))
+        playerDesk.paragraphs.unshift('The recorded lineup for '+w2DisplayTeam(t.team_name)+
+          ' produced '+w2One(t.points)+' fantasy points as a team; the individual contributions must be supported by the source before the newsroom credits a player.');
       return {...t,inquirer_article:{...a,sections,paragraphs:sections.flatMap(sec=>sec.paragraphs||[])}};
     });
   }

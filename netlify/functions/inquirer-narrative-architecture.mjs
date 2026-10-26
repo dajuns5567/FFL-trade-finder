@@ -296,7 +296,7 @@ export function restoreForwardArticleDepth(t,week){
   const contexts=[
    team+' finished '+(matchupWon?'ahead':'behind')+' by '+one(margin)+' points. The unused '+one(benchGap)+'-point reserve advantage '+(matchupWon?'did not affect the recorded win.':benchGap>margin?'exceeded the loss margin.':'fell short of the losing margin.'),
    'For '+team+', the '+one(benchGap)+'-point alternative '+verdict+' against a '+one(margin)+'-point final margin. That is the precise size of the decision, not a license to blame every starter.',
-   (matchupWon?team+' still won '+one(t.points)+' to '+one(t.opponent_points)+'. The '+one(benchGap)+'-point reserve advantage was measurable, even though it did not determine the winner.':benchGap>margin?team+' lost by '+one(margin)+' despite leaving '+one(benchGap)+' points available from the documented reserve choice. That swing was larger than the defeat.':team+' lost by '+one(margin)+'; the '+one(benchGap)+'-point reserve edge would have narrowed the deficit but could not by itself have reversed the result.') ,
+   (matchupWon?team+' still won '+one(t.points)+' to '+one(t.opponent_points)+'. The bench choice did not decide it.':benchGap>margin?team+' lost by '+one(margin)+' despite leaving '+one(benchGap)+' points available from the documented reserve choice. That swing was larger than the defeat.':team+' lost by '+one(margin)+'; the '+one(benchGap)+'-point reserve edge would have narrowed the deficit but could not by itself have reversed the result.') ,
    team+' left '+one(benchGap)+' possible points in this documented swap while the final spread measured '+one(margin)+'. The difference '+verdict+'; the manager now has a concrete selection question.'
   ];
   const commentary=contexts[rosterSlot%contexts.length].replace(' won or lost by ',' finished with a margin of ');
@@ -333,7 +333,7 @@ export function restoreForwardArticleDepth(t,week){
   const reading=second
    ?(share>=40
      ?leader.name+' carried a large share while '+second.name+' supplied '+one(second.points)+'. The staff must decide whether that gap leaves the lineup too dependent on one starter.'
-     :leader.name+' ('+String(leader.position||'starter')+') delivered '+one(leader.points)+' and '+second.name+' ('+String(second.position||'starter')+') provided '+one(second.points)+'. '+(Number(second.points)>=Number(leader.points)*0.7?'Both players supplied at least '+one(Math.min(Number(leader.points),Number(second.points)))+' points, reducing dependence on a single starter.':'The scoring load remained concentrated in the leading starter.'))
+     :leader.name+' ('+String(leader.position||'starter')+') delivered '+one(leader.points)+' and '+second.name+' ('+String(second.position||'starter')+') provided '+one(second.points)+'. '+(Number(second.points)>=Number(leader.points)*0.7?'Neither starter was a passenger in that scoring.':'The scoring load remained concentrated in the leading starter.'))
    :leader.name+' is the only starter with a verified scoring figure here; the available record does not establish broader lineup support.';
   players.paragraphs.push(reading);
  }

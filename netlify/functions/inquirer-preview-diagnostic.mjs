@@ -1,6 +1,6 @@
 import {getStore,getDeployStore} from '@netlify/blobs';
 import {FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
-import {isPreviewDiagnosticContext,resolvePreviewIdentity,previewStatusMatchesIdentity,PREVIEW_DIAGNOSTIC_STORE,auditPrivateEdition} from './lib/inquirer-preview-diagnostics.mjs';
+import {isPreviewDiagnosticContext,resolvePreviewIdentity,previewStatusMatchesIdentity,PREVIEW_DIAGNOSTIC_STORE,auditPrivateEdition,detectStalledPreview} from './lib/inquirer-preview-diagnostics.mjs';
 
 const json=(value,status=200)=>new Response(JSON.stringify(value),{
  status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-robots-tag':'noindex'}
@@ -56,6 +56,10 @@ export default async function inquirerPreviewDiagnostic(req){
  // must never pass the requested Week 5 diagnostic or be treated as complete.
  if(status&&!previewStatusMatchesIdentity(status,identity))
   status={state:'not-started',season:identity.season,week:identity.week,reason:'Mismatched prior private preview status ignored; generate this exact week again.'};
+ // A background process can be killed by the platform without a final status write.
+ // Never report a timed-out job as still making progress; retain stored state
+ // so a safe, revision-scoped retry remains possible.
+ status=detectStalledPreview(status);
  if(new URL(req.url).searchParams.get('audit')==='1'){
   if(status?.state!=='completed'&&status?.state!=='editorial-hold')return json({ready:false,state:status?.state||'not-started',target:{season:identity.season,week:identity.week},reason:'No completed private manuscript to audit'},409);
   let draft;

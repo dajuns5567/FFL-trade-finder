@@ -4607,7 +4607,7 @@ function assertWeek2Originality(result,previousEdition){
         if(first&&second&&Number.isFinite(total)){
           const lead=Number(first.points),support=Number(second.points),spread=lead-support;
           const angles=[
-            first.name+' supplied '+w2One(lead)+' of '+w2DisplayTeam(t.team_name)+'\'s '+w2One(total)+' fantasy points. '+second.name+' contributed '+w2One(support)+'. Their '+w2One(spread)+'-point difference places a measurable burden on the next lineup selection.',
+            first.name+' supplied '+w2One(lead)+' of '+(w2PluralTeamName(t.team_name)?w2DisplayTeam(t.team_name)+'\'':w2DisplayTeam(t.team_name)+'\'s')+' '+w2One(total)+' fantasy points. '+second.name+' contributed '+w2One(support)+'. Their '+w2One(spread)+'-point difference places a measurable burden on the next lineup selection.',
             second.name+' finished at '+w2One(support)+' while '+first.name+' reached '+w2One(lead)+'. For '+w2DisplayTeam(t.team_name)+', those contributions account for '+w2One(lead+support)+' of '+w2One(total)+' recorded points; that comparison is more useful than calling the roster balanced.',
             'The '+w2DisplayTeam(t.team_name)+' starting group recorded '+w2One(total)+' points. '+first.name+' and '+second.name+' produced '+w2One(lead)+' and '+w2One(support)+' respectively, showing exactly where the scoring load sat in this matchup.',
             first.name+' led with '+w2One(lead)+', followed by '+second.name+' on '+w2One(support)+'. The '+w2One(spread)+'-point separation matters because '+w2DisplayTeam(t.team_name)+' finished the week with '+w2One(total)+' altogether, not because of an invented trend.',
@@ -4615,6 +4615,13 @@ function assertWeek2Originality(result,previousEdition){
             second.name+' backed up '+first.name+' with '+w2One(support)+' against '+w2One(lead)+' fantasy points. The team registered '+w2One(total)+' in all; the next selection can be evaluated against those two actual contributions rather than a hypothetical substitution.'
           ];
           playerDesk.paragraphs.push(angles[Math.abs(Number(t.roster_id)||0)%angles.length]);
+        }else if(Number.isFinite(total)){
+          // If the source lacks individually scored starters, retain a
+          // verifiable original player observation rather than make one up.
+          const original=a.sections?.find(sec=>sec.kind==='players');
+          const fact=(original?.paragraphs||[]).find(p=>/\b\d+(?:\.\d+)?\b/.test(p)&&
+            /fantasy points|scored|recorded|produced|contributed/i.test(p));
+          if(fact)playerDesk.paragraphs.push(fact);
         }
       }
       return {...t,inquirer_article:{...a,sections,paragraphs:sections.flatMap(sec=>sec.paragraphs||[])}};

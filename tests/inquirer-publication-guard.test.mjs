@@ -36,9 +36,17 @@ const makeEdition=()=>{
    inquirer_article:{headline:name+' Week 5 analysis',byline:'Editorial desk',reporter:{id:'writer-'+(i%4)},
     sections,paragraphs:sections.flatMap(s=>s.paragraphs)}};
  });
+ const recapKinds=['lead','standings','players','decisions','league','outlook'];
+ const blocks=recapKinds.map((kind,i)=>{
+  const covered=teams.slice(i*3,i*3+10).map(t=>t.team_name+' scored '+t.points+' against '+t.opponent_name+' on '+t.opponent_points+'').join('; ');
+  return {kind,heading:kind,paragraphs:[
+   'The '+kind+' report develops distinct verified Week 5 league evidence rather than a generic closing thought. '+covered+'. The relevant point is that these original fixture results create separate lineup and standings questions for each participant.',
+   ...(['league','outlook'].includes(kind)?['Another independent '+kind+' perspective studies the next contest using these named participants and their recorded scoring totals.']:[])
+  ]};
+ });
  return{season:2026,week:5,teams,
   league_overview:{headline:'Week 5 recap',sections:[
-   {heading:'Review',blocks:['lead','standings','players','decisions','league','outlook'].map(kind=>({kind,heading:kind,paragraphs:['Verified '+kind+' football reporting.',...(['league','outlook'].includes(kind)?['A second independently reported '+kind+' angle.']:[])]})),paragraphs:['lead','standings','players','decisions','league','outlook'].flatMap(kind=>['Verified '+kind+' football reporting.',...(['league','outlook'].includes(kind)?['A second independently reported '+kind+' angle.']:[])])},
+   {heading:'Review',blocks,paragraphs:blocks.flatMap(b=>b.paragraphs)},
    ...['Second reporter','Third reporter','Fourth reporter'].map(heading=>({heading,paragraphs:['Independent commentary.']}))]}};
 };
 

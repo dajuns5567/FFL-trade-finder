@@ -4650,6 +4650,17 @@ function assertWeek2Originality(result,previousEdition){
       return {...t,inquirer_article:{...a,sections,paragraphs:sections.flatMap(sec=>sec.paragraphs||[])}};
     });
   }
+  // Legacy weak-player copy can reappear from source newsroom repair in late
+  // weeks. A five-team identical two-week stat observation is not journalism.
+  if(Number(week)>=5){
+    teams=teams.map(t=>{
+      const a=t.inquirer_article;if(!a)return t;
+      const sections=(a.sections||[]).map(sec=>({...sec,paragraphs:(sec.paragraphs||[]).map(p=>
+        forwardSentenceParts(p).filter(sentence=>!/\bposted\s+[-+]?\d+(?:\.\d+)?\s+in both Week\s+\d+\s+and Week\s+\d+\b/i.test(sentence)).join(' ')
+      ).filter(Boolean)}));
+      return {...t,inquirer_article:{...a,sections,paragraphs:sections.flatMap(sec=>sec.paragraphs||[])}};
+    });
+  }
   // Recap hot-takes are outside the section-block pruning loop. Recheck every
   // reader-facing recap sentence at the last writer, including the hot takes.
   // Never retain a prior week's normalized sentence with changed team labels.

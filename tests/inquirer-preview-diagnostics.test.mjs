@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {isPreviewDiagnosticContext,summarizePreviewDiagnostic} from '../netlify/functions/lib/inquirer-preview-diagnostics.mjs';
+import {isPreviewDiagnosticContext,summarizePreviewDiagnostic,detectStalledPreview} from '../netlify/functions/lib/inquirer-preview-diagnostics.mjs';
 
 test('diagnostics are permitted only in Deploy Preview',()=>{
  const original=process.env.CONTEXT;
@@ -30,4 +30,17 @@ test('summary has audit results without article manuscripts',()=>{
  assert.equal(summary.reporter_counts['desk-a'],1);
  assert.equal(summary.editorial_audit.ok,true);
  assert.equal(JSON.stringify(summary).includes('Private manuscript'),false);
+});
+
+test('stalled private jobs are reported as timed out, without changing a completed manuscript',()=>{
+ const started_at='2026-10-26T22:49:20.012Z';
+ const running={state:'running',season:2026,week:5,started_at};
+ const now=Date.parse(started_at);
+ assert.equal(detectStalledPreview(running,now+19*60*1000).state,'running');
+ const stale=detectStalledPreview(running,now+20*60*1000);
+ assert.equal(stale.state,'error');
+ assert.equal(stale.timed_out,true);
+ assert.match(stale.error,/retry window/);
+ assert.equal(detectStalledPreview({state:'completed',started_at},now+30*60*1000).state,'completed');
+ assert.equal(detectStalledPreview({state:'running',started_at:'bad'},now).state,'error');
 });

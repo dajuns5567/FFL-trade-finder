@@ -147,7 +147,7 @@ test('branch-deploy hostname is forbidden in publication worker before persisten
 });
 
 test('replacement production cannot self-authorize deterministic newspaper release',()=>{
- assert.match(hub,/replacementPublicationSite\?\{approved:false,digest:automatedAdmission\.digest,mode:'exact-copy-review-required'\}:automatedAdmission/);
+ assert.match(hub,/replacementPublicationSite&&week===5\?\{approved:false,digest:automatedAdmission\.digest,mode:'week5-exact-copy-review-required'\}:automatedAdmission/);
  assert.match(hub,/const admission=manualAdmission\.approved\?manualAdmission:/);
  assert.match(hub,/editorialApprovalMatches\(result,approval\)/);
 });

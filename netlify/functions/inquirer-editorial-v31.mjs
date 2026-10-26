@@ -4690,7 +4690,7 @@ function assertWeek2Originality(result,previousEdition){
   });
   // Protect sourced valuation reporting from cross-week sentence pruning.
   teams=teams.map(t=>{
-    const a=t.inquirer_article,value=a?.sections?.find(s=>s.kind==='valuation');
+    const a=t.inquirer_article,value=a?.sections?.find(s=>s.kind==='value');
     if(!value||forwardWordCount((value.paragraphs||[]).join(' '))>=25)return t;
     const scored=Number(t.points),against=Number(t.opponent_points);
     if(!Number.isFinite(scored)||!Number.isFinite(against))return t;

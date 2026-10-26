@@ -329,27 +329,10 @@ export function restoreForwardArticleDepth(t,week){
   ];
   vdesk.paragraphs.push(valueReads[rosterSlot%valueReads.length]);
  }
- const fan=desk('sentiment');
- // The numeric fan index belongs in the visual meter, not in the comic copy.
- // Start with the existing over-the-top scene. If it is thin, deepen the
- // actual fan behavior around sourced football events instead of explaining
- // the sentiment model or tacking on a second unrelated fictional scene.
- if(fan&&deskSize('sentiment')<50){
-  const star=leader?.name||'the leading scorer',starPoints=one(leader?.points);
-  const weakName=weak?.name||'the lowest-scoring starter',weakPoints=one(weak?.points);
-  const stake=matchupWon?'a win':'a loss';
-  const ridiculous=[
-   'The '+team+' faithful have demanded that the '+(matchupWon?'victory parade':'emergency protest')+' committee explain why '+weakName+' managed '+weakPoints+' while '+star+' delivered '+starPoints+'. The committee has appointed a mascot to chair the inquiry; nobody trusts the mascot with a lineup card.',
-   'A '+team+' supporter has printed '+star+'\'s '+starPoints+' points on a giant ceremonial receipt, then stapled '+weakName+'\'s '+weakPoints+' to the back in microscopic type. The crowd is arguing over whether the receipt is proof of '+stake+' or evidence for a grievance hearing.',
-   'The '+team+' fan club has offered to rename an entire street after '+star+' for '+starPoints+' points. A rival faction wants the street to dead-end at '+weakName+'\'s '+weakPoints+'; city planning has sensibly refused to take calls.',
-   'Some '+team+' supporters have staged a mock awards banquet for '+star+'\'s '+starPoints+' points, complete with a trophy made of stacked lineup cards. '+weakName+'\'s '+weakPoints+' has earned a separate invitation printed on a napkin.',
-   'At a fictional '+team+' tailgate, the fans have replaced the scoreboard with two giant cardboard portraits: '+star+' at '+starPoints+' and '+weakName+' at '+weakPoints+'. Every time someone mentions the '+one(margin)+'-point margin, the cardboard committee starts another absurd argument.'
-  ];
-  // Append one evidence-bound beat only when the existing scene is short.
-  // A complete original two-paragraph comedy scene is not overwritten.
-  if((fan.paragraphs||[]).length===0)fan.paragraphs=[ridiculous[rosterSlot%ridiculous.length]];
-  else if(deskSize('sentiment')<45)fan.paragraphs.push(ridiculous[rosterSlot%ridiculous.length]);
- }
+ // Preserve the original roster-specific comic fan scenes. Rotating five
+ // generic fallback sketches across 32 teams created cross-reporter clones.
+ // Short scenes remain editorial failures until the upstream writer supplies
+ // actual distinct fan behavior; do not mask them with a second canned joke.
  // Never publish a feed label where a football sentence belongs.
  for(const section of a.sections||[])section.paragraphs=(section.paragraphs||[]).map(line=>String(line).replace(
   /receiving\s*\/\s*receptions:\s*(\d+)\/(\d+)\s+rec(?:,\s*(\d+)\s+yds)?(?:,\s*(\d+)\s+TDs?)?/gi,

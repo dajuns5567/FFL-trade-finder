@@ -322,6 +322,21 @@ export function inspectNarrativeArchitecture(edition){
   // words each. The rejected October 17 Week 5 snapshot ballooned to 683-905
   // words after losing key desks. Allow room for more facts, not double-length
   // recycled commentary. This is an editorial gate, never a truncation step.
+  // Publication-quality desks must develop an argument, not simply occupy a slot.
+  // These are independent of the historical Week 4 archive, which is never rewritten.
+  const deskWords=k=>(kind(k)?.paragraphs||[]).join(' ').split(/\s+/).filter(Boolean).length;
+  const deskText=k=>(kind(k)?.paragraphs||[]).join(' ');
+  if(deskWords('management')<25)issues.push({id:'thin-management-analysis',team,words:deskWords('management')});
+  if(deskWords('value')<25)issues.push({id:'ledger-only-value-reporting',team,words:deskWords('value')});
+  if(deskWords('sentiment')<45)issues.push({id:'thin-fan-psychology',team,words:deskWords('sentiment')});
+  if(deskWords('players')<24)issues.push({id:'stat-feed-without-player-analysis',team,words:deskWords('players')});
+  if(/receiving\\s*\\/\\s*receptions:|\\b\\d+\\/\\d+ rec,\\s*\\d+ yds\\b/i.test(deskText('players')))
+    issues.push({id:'raw-stat-feed-published-as-prose',team});
+  if(/recorded a Week \\d+ roster-value change of [+-]?\\d+(?:\\.\\d+)? points\\.?$/i.test(deskText('value').trim()))
+    issues.push({id:'uninterpreted-roster-value-ledger',team});
+  const outlookSentences=deskText('outlook').split(/(?<=[.!?])\\s+/).filter(Boolean);
+  const weakForecast=outlookSentences.filter(x=>/the next week gets to test that read|sunday gets the final word|the next test is whether/i.test(x));
+  if(weakForecast.length>=2)issues.push({id:'repeated-outlook-conclusion',team,examples:weakForecast});
   if(words<300)issues.push({id:'article-below-week4-editorial-floor',team,words});
   if(words>650)issues.push({id:'article-above-week4-editorial-ceiling',team,words,maximum:650});
   if(ss.some(section=>/^[a-z]/.test(text(section?.heading))))

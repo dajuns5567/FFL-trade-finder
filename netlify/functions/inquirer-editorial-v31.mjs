@@ -4339,18 +4339,6 @@ function assertWeek2Originality(result,previousEdition){
           for(const block of section.blocks){
             const before=block.paragraphs||[],after=before.map(fresh).filter(Boolean),floor=['league','outlook'].includes(block.kind)?2:1;
             if(after.length>=floor)block.paragraphs=after;
-            else if(before.length){
-              // Never restore recycled prose just because pruning would leave
-              // fewer than two paragraphs. Derive a new account from this week's
-              // recorded games, with distinct teams for each recap desk.
-              const offset=(sectionIndex*7+section.blocks.indexOf(block)*3)%Math.max(1,teams.length);
-              const examples=[teams[offset],teams[(offset+11)%teams.length]].filter(Boolean);
-              const evidence=examples.filter(t=>t.team_name&&t.opponent_name&&Number.isFinite(Number(t.points))&&Number.isFinite(Number(t.opponent_points)))
-                .map(t=>w2DisplayTeam(t.team_name)+' '+(Number(t.points)>Number(t.opponent_points)?'beat':'lost to')+' '+w2DisplayTeam(t.opponent_name)+
-                   ' with a recorded '+w2One(t.points)+' to '+w2One(t.opponent_points)+' fantasy scoreboard');
-              block.paragraphs=[...after,...evidence.map((line,i)=>
-                'The Week '+week+' results put '+line+'. '+(i===0?'That matchup supplies a concrete current-week comparison rather than the earlier edition’s unchanged verdict.':'The result changes the weekly discussion for this club without rewriting a past score or attributing production to an unverified player.'))];
-            }
           }
           section.paragraphs=section.blocks.flatMap(b=>b.paragraphs||[]);
         }else{

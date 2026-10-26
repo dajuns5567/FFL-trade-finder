@@ -322,17 +322,26 @@ export function restoreForwardArticleDepth(t,week){
   ];
   vdesk.paragraphs.push(valueReads[rosterSlot%valueReads.length]);
  }
- const fan=desk('sentiment'),sent=a.fan_sentiment||{},sentScore=Number(sent.score),sentChange=Number(sent.change);
- if(fan&&deskSize('sentiment')<50&&Number.isFinite(sentScore)&&sent.score!=null){
-  const direction=sent.change==null?'without a verified week-over-week comparison':
-   '('+(sentChange>=0?'+':'')+sentChange+' modeled points against the prior index)';
-  const fanContext=[
-   'The measured '+team+' fan index sits at '+sentScore+' '+direction+'. Its '+one(t.points)+'-point output against '+opponent+' gives supporters real evidence, but a single score cannot answer every lineup question.',
-   'Supporters have a '+sentScore+' sentiment reading '+direction+'. '+team+' finished on '+one(t.points)+' points; the tension is between the result people saw and how much trust the next opponent has earned.',
-   team+' carries a fan score of '+sentScore+' '+direction+'. The '+one(margin)+'-point matchup margin explains the immediate mood; the performance distribution decides whether confidence is durable.',
-   'At '+sentScore+' on the sentiment scale '+direction+', the fan argument about '+team+' is not merely cheering or booing. A '+one(t.points)+'-point Sunday has not erased the '+one(margin)+'-point result margin, and the weakest lineup position still has a named player behind it.'
+ const fan=desk('sentiment');
+ // The numeric fan index belongs in the visual meter, not in the comic copy.
+ // Start with the existing over-the-top scene. If it is thin, deepen the
+ // actual fan behavior around sourced football events instead of explaining
+ // the sentiment model or tacking on a second unrelated fictional scene.
+ if(fan&&deskSize('sentiment')<50){
+  const star=leader?.name||'the leading scorer',starPoints=one(leader?.points);
+  const weakName=weak?.name||'the lowest-scoring starter',weakPoints=one(weak?.points);
+  const stake=matchupWon?'a win':'a loss';
+  const ridiculous=[
+   'The '+team+' faithful have demanded that the victory parade committee explain why '+weakName+' managed '+weakPoints+' while '+star+' delivered '+starPoints+'. The committee has appointed a mascot to chair the inquiry; nobody trusts the mascot with a lineup card.',
+   'A '+team+' supporter has printed '+star+'\'s '+starPoints+' points on a giant ceremonial receipt, then stapled '+weakName+'\'s '+weakPoints+' to the back in microscopic type. The crowd is arguing over whether the receipt is proof of '+stake+' or evidence for a grievance hearing.',
+   'The '+team+' fan club has offered to rename an entire street after '+star+' for '+starPoints+' points. A rival faction wants the street to dead-end at '+weakName+'\'s '+weakPoints+'; city planning has sensibly refused to take calls.',
+   'Some '+team+' supporters have staged a mock awards banquet for '+star+'\'s '+starPoints+' points, complete with a trophy made of stacked lineup cards. '+weakName+'\'s '+weakPoints+' has earned a separate invitation printed on a napkin.',
+   'At a fictional '+team+' tailgate, the fans have replaced the scoreboard with two giant cardboard portraits: '+star+' at '+starPoints+' and '+weakName+' at '+weakPoints+'. Every time someone mentions the '+one(margin)+'-point margin, the cardboard committee starts another absurd argument.'
   ];
-  fan.paragraphs.unshift(fanContext[rosterSlot%fanContext.length]);
+  // Append one evidence-bound beat only when the existing scene is short.
+  // A complete original two-paragraph comedy scene is not overwritten.
+  if((fan.paragraphs||[]).length===0)fan.paragraphs=[ridiculous[rosterSlot%ridiculous.length]];
+  else if(deskSize('sentiment')<45)fan.paragraphs.push(ridiculous[rosterSlot%ridiculous.length]);
  }
  // Never publish a feed label where a football sentence belongs.
  for(const section of a.sections||[])section.paragraphs=(section.paragraphs||[]).map(line=>String(line).replace(

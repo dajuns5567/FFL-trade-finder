@@ -4555,7 +4555,9 @@ function assertWeek2Originality(result,previousEdition){
           '. The difference in their recorded production was '+w2One(Number(first.points)-Number(second.points))+' fantasy points.'
         :w2DisplayTeam(t.team_name)+' recorded '+w2One(t.points)+' against '+w2One(t.opponent_points)+
           '. '+first.name+' contributed '+w2One(first.points)+' from the starting lineup; this result gives the manager evidence for the next selection.';
-      desk.paragraphs.push(line);
+      if(kind==='management'&&desk.paragraphs.length){
+        desk.paragraphs[desk.paragraphs.length-1]+=' '+line;
+      }else desk.paragraphs.push(line);
     }
     return {...t,inquirer_article:{...a,headline:finishGrammar(a.headline||''),sections,paragraphs:sections.flatMap(sec=>sec.paragraphs)}};
   });

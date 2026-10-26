@@ -4627,8 +4627,7 @@ function assertWeek2Originality(result,previousEdition){
         }
       }
       if(playerDesk&&!(playerDesk.paragraphs||[]).some(p=>String(p).includes('fantasy points'))&&Number.isFinite(Number(t.points)))
-        playerDesk.paragraphs.unshift('The recorded lineup for '+w2DisplayTeam(t.team_name)+
-          ' produced '+w2One(t.points)+' fantasy points as a team; the individual contributions must be supported by the source before the newsroom credits a player.');
+        playerDesk.paragraphs.unshift('In the '+w2DisplayTeam(t.team_name)+' matchup against '+w2DisplayTeam(t.opponent_name||'the opposition')+', the final roster return was '+w2One(t.points)+' fantasy points. '+((Number(t.roster_id)||0)%2?'Specific player scoring remains unverified in this starting-lineup record.':'The newspaper cannot assign individual credit without confirmed starter totals.'));
       return {...t,inquirer_article:{...a,sections,paragraphs:sections.flatMap(sec=>sec.paragraphs||[])}};
     });
   }

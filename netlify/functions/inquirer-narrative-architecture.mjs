@@ -344,7 +344,7 @@ export function restoreForwardArticleDepth(t,week){
   const relative=delta>0?'higher':delta<0?'lower':'unchanged';
   const prefixes=['Current market total','Roster ledger','Recorded portfolio value','League valuation balance'];
   const movements=['The interval moved','The difference from baseline is','The market changed by','Recorded movement is','Compared with the prior snapshot, the shift is','The ledger shows a movement of','The change over this period is','The book records a swing of'];
-  const analysis=prefixes[rosterSlot%4]+': '+team+' at '+current+' points. '+movements[Math.floor(rosterSlot/4)%8]+' '+absolute+' points '+relative+'. The same roster recorded '+one(t.points)+' fantasy points this week; those scores measure game output, not valuation.';
+  const analysis=prefixes[rosterSlot%4]+': '+team+' at '+current+' points. '+movements[Math.floor(rosterSlot/4)%8]+' '+absolute+' points '+relative+'. The lineup totaled '+one(t.points)+' fantasy points in its actual matchup.';
   vdesk.paragraphs.push(analysis);
  }
  // Preserve the original roster-specific comic fan scenes. Rotating five

@@ -332,7 +332,7 @@ export function restoreForwardArticleDepth(t,week){
   const weakName=weak?.name||'the lowest-scoring starter',weakPoints=one(weak?.points);
   const stake=matchupWon?'a win':'a loss';
   const ridiculous=[
-   'The '+team+' faithful have demanded that the victory parade committee explain why '+weakName+' managed '+weakPoints+' while '+star+' delivered '+starPoints+'. The committee has appointed a mascot to chair the inquiry; nobody trusts the mascot with a lineup card.',
+   'The '+team+' faithful have demanded that the '+(matchupWon?'victory parade':'emergency protest')+' committee explain why '+weakName+' managed '+weakPoints+' while '+star+' delivered '+starPoints+'. The committee has appointed a mascot to chair the inquiry; nobody trusts the mascot with a lineup card.',
    'A '+team+' supporter has printed '+star+'\'s '+starPoints+' points on a giant ceremonial receipt, then stapled '+weakName+'\'s '+weakPoints+' to the back in microscopic type. The crowd is arguing over whether the receipt is proof of '+stake+' or evidence for a grievance hearing.',
    'The '+team+' fan club has offered to rename an entire street after '+star+' for '+starPoints+' points. A rival faction wants the street to dead-end at '+weakName+'\'s '+weakPoints+'; city planning has sensibly refused to take calls.',
    'Some '+team+' supporters have staged a mock awards banquet for '+star+'\'s '+starPoints+' points, complete with a trophy made of stacked lineup cards. '+weakName+'\'s '+weakPoints+' has earned a separate invitation printed on a napkin.',

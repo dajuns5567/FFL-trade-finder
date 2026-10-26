@@ -4339,6 +4339,7 @@ function assertWeek2Originality(result,previousEdition){
           for(const block of section.blocks){
             const before=block.paragraphs||[],after=before.map(fresh).filter(Boolean),floor=['league','outlook'].includes(block.kind)?2:1;
             if(after.length>=floor)block.paragraphs=after;
+            else block.paragraphs=after; // Never retain copied archival prose merely to meet a paragraph floor.
           }
           section.paragraphs=section.blocks.flatMap(b=>b.paragraphs||[]);
         }else{

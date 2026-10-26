@@ -296,7 +296,7 @@ export function restoreForwardArticleDepth(t,week){
   const contexts=[
    team+' won or lost by '+one(margin)+' points; the documented '+one(benchGap)+'-point reserve advantage '+verdict+'. The choice still has a next-week cost if that gap persists.',
    'For '+team+', the '+one(benchGap)+'-point alternative '+verdict+' against a '+one(margin)+'-point final margin. That is the precise size of the decision, not a license to blame every starter.',
-   'The documented reserve swap offered '+one(benchGap)+' against a '+one(margin)+'-point matchup spread for '+team+'. Its effect on the outcome '+(matchupWon?'was nil because the team won':'depends on whether the scoring swing exceeded the loss')+'.',
+   'The manager started '+missed.starter.name+' instead of '+missed.reserve.name+'. '+(matchupWon?'The team still won by '+one(margin)+'; the '+one(benchGap)+' points left unused warrant a selection review.':benchGap>margin?'That '+one(benchGap)+'-point difference exceeded the '+one(margin)+'-point defeat, making the choice pivotal.':'The '+one(benchGap)+' points left unused were fewer than the '+one(margin)+'-point defeat, so this decision alone cannot explain it.') ,
    team+' left '+one(benchGap)+' possible points in this documented swap while the final spread measured '+one(margin)+'. The difference '+verdict+'; the manager now has a concrete selection question.'
   ];
   const commentary=contexts[rosterSlot%contexts.length].replace(' won or lost by ',' finished with a margin of ');
@@ -320,7 +320,7 @@ export function restoreForwardArticleDepth(t,week){
   const reading=second
    ?(share>=40
      ?leader.name+' carried a large share while '+second.name+' supplied '+one(second.points)+'. The staff must decide whether that gap leaves the lineup too dependent on one starter.'
-     :second.name+' posted '+one(second.points)+' against '+leader.name+'\'s '+one(leader.points)+'. Their scoring difference was '+one(Number(leader.points)-Number(second.points))+'; the next lineup decision must account for the recorded scoring gap between those two starters.')
+     :second.name+' scored '+one(second.points)+' while '+leader.name+' scored '+one(leader.points)+'. '+(Number(second.points)>0?'Both contributed real points, but their '+one(Number(leader.points)-Number(second.points))+'-point difference identifies the heavier load.':'The '+one(Number(leader.points)-Number(second.points))+'-point spread left the top scorer with almost no support.'))
    :leader.name+' is the only starter with a verified scoring figure here; the available record does not establish broader lineup support.';
   players.paragraphs.push(leader.name+' accounted for '+share+'% of '+(/s$/i.test(team)?team+'’':team+'\'s')+' '+one(t.points)+' fantasy points this week. '+reading);
  }

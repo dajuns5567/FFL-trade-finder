@@ -66,9 +66,18 @@ async function loadInquirerPreview(){
      (Number(info?.target?.week)!==inquirerPreviewRequestedWeek||
       (status?.week!=null&&Number(status.week)!==inquirerPreviewRequestedWeek)))
    throw Error('Week '+inquirerPreviewRequestedWeek+' preview returned a different week identity. Refusing to display stale diagnostic text.');
-  // Reading an unpublished preview must never generate or replace it.
-  // Generation is an explicit, separately authorized action only.
-  if(status.state==='not-started')throw Error('Private preview has not been started; no generation was triggered.');
+  // The explicit private-preview URL is the owner's generation request.
+  // Queue once only on the PR 402 preview; background code is create-only,
+  // idempotent, deploy-isolated and cannot publish public archives.
+  if(status.state==='not-started'){
+   if(!inquirerPreviewLaunchAttempted&&location.hostname==='deploy-preview-402--transcendent-manatee-2f0123.netlify.app'){
+    inquirerPreviewLaunchAttempted=true;
+    const launch=await fetch('/.netlify/functions/inquirer-preview-background?start=1'+scope,{cache:'no-store'});
+    if(launch.ok||launch.status===202)throw Error('Private preview generation started.');
+    throw Error('Private preview could not start (HTTP '+launch.status+').');
+   }
+   throw Error('Private preview has not been started; generation request was not accepted.');
+  }
   if(status.state==='running')throw Error('Private preview generation in progress.');
   if(status.state==='error')throw Error('Private preview generation failed: '+String(status.error||'Unknown error'));
   throw Error('Unpublished preview not ready (state: '+String(status.state||'unknown')+').');

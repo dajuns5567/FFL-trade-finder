@@ -3071,7 +3071,7 @@ function w2PreviousWeekBridge(t,r,prev,prevWon,won,prevOpp,prevScore){
   const banks={
     "walter-mercer":[
       "A week earlier, "+team+" "+outcome+" "+foe+" "+score+". That opener belongs in the comparison, but the current Sunday gets its own evaluation.",
-      "In the prior matchup, "+team+" "+outcome+" "+foe+" by a recorded "+score+". "+playerLead+" supplies a distinct current-week performance to compare against that earlier result.",
+      "The previous "+team+" matchup against "+foe+" ended "+score+" ("+(prevWon?"a win":"a loss")+"). "+playerLead+" is the named player performance to compare against that earlier team result.",
       team+" came out of Week 1 with a "+score+" "+(prevWon?"win over ":"loss to ")+foe+". The next Sunday changes the season sample; it does not simply photocopy the first conclusion.",
       "In the earlier visit with "+foe+", "+team+" "+(prevWon?"banked":"dropped")+" the "+score+" decision. "+playerLead+" now offers the beat desk its next, more revealing piece of evidence."
     ],

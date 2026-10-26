@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=53;
+export const FORWARD_EDITORIAL_REVISION=54;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -1178,25 +1178,25 @@ function w2PlayerTrajectoryContext(t,r,p,pp,slot=0,ref=""){
     const rows={
       "walter-mercer":[
         "Two Sundays now have "+who+" at "+avg+" per game after "+prior+" last season, enough evidence to treat the early jump as more than one hot box score.",
-        who+" is averaging "+avg+" through two weeks after "+prior+" last year; paired with the larger opportunity, the rise has earned another week of serious attention.",
+        w2Sentence(who)+" is averaging "+avg+" through two weeks after "+prior+" last year; paired with the larger opportunity, the rise has earned another week of serious attention.",
         "The two-week number is "+avg+" for "+who+" versus "+prior+" last season, which gives the early role growth something sturdier than one Sunday underneath it.",
         "At "+avg+" per game across both weeks after "+prior+" last year, "+who+" has moved beyond the one-game-flier stage without pretending the season is settled."
       ],
       "tess-delaney":[
         "Two Sundays at "+avg+" per game after "+prior+" last season give "+who+" enough substance that the larger role no longer looks like decorative optimism.",
-        who+" has served "+avg+" per game across two weeks after "+prior+" last year, and the extra opportunity is beginning to look like part of the arrangement.",
+        w2Sentence(who)+" has served "+avg+" per game across two weeks after "+prior+" last year, and the extra opportunity is beginning to look like part of the arrangement.",
         "The early table has "+who+" at "+avg+" a game versus "+prior+" last season; two servings make the rise worth noticing without ordering a coronation.",
         "Across both weeks, "+who+" is at "+avg+" after "+prior+" last year, which is enough runway to treat the bigger role as something more than one flashy course."
       ],
       "mack-hollis":[
-        who+" has averaged "+avg+" over the recent two games, against "+prior+" last season. That is a change worth tracking.",
-        who+" is sitting at "+avg+" through two games after "+prior+" last year; with the workload up too, the early surge has real voltage behind it.",
+        w2Sentence(who)+" has averaged "+avg+" over the recent two games, against "+prior+" last season. That is a change worth tracking.",
+        w2Sentence(who)+" is sitting at "+avg+" through two games after "+prior+" last year; with the workload up too, the early surge has real voltage behind it.",
         "The two-week average is "+avg+" for "+who+" versus "+prior+" last season, enough repeated noise to stop treating the jump like one lucky blast.",
         "Both Sundays have pushed "+who+" to "+avg+" per game after "+prior+" last year, which makes the larger role worth tracking instead of screaming about one box score."
       ],
       "nora-voss":[
         "Two weeks at "+avg+" per game after "+prior+" last season give "+who+" a rise rivals actually have to account for, not one inconvenient screenshot.",
-        who+" is averaging "+avg+" through two Sundays after "+prior+" last year; that is enough repetition to make the larger role harder to laugh off.",
+        w2Sentence(who)+" is averaging "+avg+" through two Sundays after "+prior+" last year; that is enough repetition to make the larger role harder to laugh off.",
         "The early average sits at "+avg+" for "+who+" versus "+prior+" last season, so rivals now need more than 'one good game' if they want to dismiss the change.",
         "Across both weeks, "+who+" has reached "+avg+" per game after "+prior+" last year, which is annoyingly real enough to keep on the radar."
       ]
@@ -1205,26 +1205,26 @@ function w2PlayerTrajectoryContext(t,r,p,pp,slot=0,ref=""){
   }
   const rows={
     "walter-mercer":[
-      who+" is at "+avg+" per game through two weeks after "+prior+" last season, so the slow start has enough repetition to monitor without pretending the résumé disappeared.",
+      w2Sentence(who)+" is at "+avg+" per game through two weeks after "+prior+" last season, so the slow start has enough repetition to monitor without pretending the résumé disappeared.",
       "Two quiet Sundays have pulled "+who+" to "+avg+" per game from a "+prior+" baseline; that turns the concern into a trend worth checking again next week.",
       "The two-week average is "+avg+" for "+who+" after "+prior+" last year. One bad Sunday is noise; two in the same direction deserve a note.",
-      who+" has opened at "+avg+" per game across both weeks after "+prior+" last season, enough of a repeated drop to make Week 3 matter."
+      w2Sentence(who)+" has opened at "+avg+" per game across both weeks after "+prior+" last season, enough of a repeated drop to make Week 3 matter."
     ],
     "tess-delaney":[
       "Two weeks at "+avg+" per game after "+prior+" last season leave "+who+" with a smaller early serving than the old table expected.",
-      who+" has managed "+avg+" per game across both Sundays after "+prior+" last year; the smaller portion has repeated often enough to notice.",
+      w2Sentence(who)+" has managed "+avg+" per game across both Sundays after "+prior+" last year; the smaller portion has repeated often enough to notice.",
       "The early table has "+who+" at "+avg+" a game versus "+prior+" last season. One thin course is manners; two starts to look like a pattern.",
       "Across both weeks, "+who+" sits at "+avg+" after a "+prior+" baseline, enough repeated shrinkage to make the next serving matter."
     ],
     "mack-hollis":[
       "Two weeks at "+avg+" per game after "+prior+" last season have turned "+who+" from one quiet Sunday into a real early signal.",
-      who+" is averaging "+avg+" across both games after "+prior+" last year; the volume has stayed low long enough to put Week 3 under the spotlight.",
+      w2Sentence(who)+" is averaging "+avg+" across both games after "+prior+" last year; the volume has stayed low long enough to put Week 3 under the spotlight.",
       "The two-week number is "+avg+" for "+who+" versus "+prior+" last season, and repeated silence is harder to blame on one busted afternoon.",
       "Both Sundays have "+who+" at "+avg+" per game after "+prior+" last year, enough of a repeated drop to keep the alarm on low."
     ],
     "nora-voss":[
       "Two weeks at "+avg+" per game after "+prior+" last season give rivals an actual slow-start trend on "+who+", not one cherry-picked bad Sunday.",
-      who+" is sitting at "+avg+" across both games after "+prior+" last year; the dip has repeated enough that supporters need a better answer than 'small sample.'",
+      w2Sentence(who)+" is sitting at "+avg+" across both games after "+prior+" last year; the dip has repeated enough that supporters need a better answer than 'small sample.'",
       "The early average is "+avg+" for "+who+" versus "+prior+" last season. One bad screenshot is cheap; two in the same direction are harder to wave away.",
       "Across both Sundays, "+who+" has averaged "+avg+" after "+prior+" last year, enough of a repeated drop to make the next game matter."
     ]

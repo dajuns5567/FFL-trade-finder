@@ -294,7 +294,7 @@ export function restoreForwardArticleDepth(t,week){
  if(management&&deskSize('management')<25&&missed.starter?.name&&missed.reserve?.name&&Number.isFinite(benchGap)&&benchGap>0&&Number.isFinite(margin)){
   const verdict=matchupWon?'did not change a winning result':benchGap>margin?'was large enough to have changed the losing result':'would not alone have erased the losing margin';
   const contexts=[
-   team+' won or lost by '+one(margin)+' points; the documented '+one(benchGap)+'-point reserve advantage '+verdict+'. The choice still has a next-week cost if that gap persists.',
+   team+' finished '+(matchupWon?'ahead':'behind')+' by '+one(margin)+' points. '+missed.reserve.name+' offered '+one(benchGap)+' more points than '+missed.starter.name+' in the documented lineup alternative; '+(matchupWon?'that choice was not required for victory.':benchGap>margin?'the available points exceeded the defeat margin.':'the available points did not cover the full deficit.'),
    'For '+team+', the '+one(benchGap)+'-point alternative '+verdict+' against a '+one(margin)+'-point final margin. That is the precise size of the decision, not a license to blame every starter.',
    'The documented bench advantage was '+one(benchGap)+' points. '+(matchupWon?'The team still won by '+one(margin)+'; the '+one(benchGap)+' points left unused warrant a selection review.':benchGap>margin?'That '+one(benchGap)+'-point difference exceeded the '+one(margin)+'-point defeat, making the choice pivotal.':'The '+one(benchGap)+' points left unused were fewer than the '+one(margin)+'-point defeat, so this decision alone cannot explain it.') ,
    team+' left '+one(benchGap)+' possible points in this documented swap while the final spread measured '+one(margin)+'. The difference '+verdict+'; the manager now has a concrete selection question.'
@@ -322,7 +322,7 @@ export function restoreForwardArticleDepth(t,week){
      ?leader.name+' carried a large share while '+second.name+' supplied '+one(second.points)+'. The staff must decide whether that gap leaves the lineup too dependent on one starter.'
      :second.name+' scored '+one(second.points)+' while '+leader.name+' scored '+one(leader.points)+'. '+(Number(second.points)>0?leader.name+' finished at '+one(leader.points)+' compared with '+second.name+' at '+one(second.points)+'. The '+one(Number(leader.points)-Number(second.points))+'-point gap is the documented difference between those two performances.':'The '+one(Number(leader.points)-Number(second.points))+'-point spread left the top scorer with almost no support.'))
    :leader.name+' is the only starter with a verified scoring figure here; the available record does not establish broader lineup support.';
-  players.paragraphs.push(leader.name+' accounted for '+share+'% of '+(/s$/i.test(team)?team+'’':team+'\'s')+' '+one(t.points)+' fantasy points this week. '+reading);
+  players.paragraphs.push(reading);
  }
  const vdesk=desk('value'),v=t.value_history_week||{};
  if(vdesk&&deskSize('value')<25&&v.value!=null&&v.delta!=null&&Number.isFinite(Number(v.value))&&Number.isFinite(Number(v.delta))){

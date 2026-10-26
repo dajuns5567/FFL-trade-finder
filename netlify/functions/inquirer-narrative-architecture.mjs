@@ -296,7 +296,7 @@ export function restoreForwardArticleDepth(t,week){
   const contexts=[
    team+' won or lost by '+one(margin)+' points; the documented '+one(benchGap)+'-point reserve advantage '+verdict+'. The choice still has a next-week cost if that gap persists.',
    'For '+team+', the '+one(benchGap)+'-point alternative '+verdict+' against a '+one(margin)+'-point final margin. That is the precise size of the decision, not a license to blame every starter.',
-   'The scoreboard margin was '+one(margin)+' for '+team+'. On those numbers, the unused '+one(benchGap)+'-point advantage '+verdict+'; the selection deserves scrutiny independent of hindsight theater.',
+   'The documented reserve swap offered '+one(benchGap)+' against a '+one(margin)+'-point matchup spread for '+team+'. Its effect on the outcome '+(matchupWon?'was nil because the team won':'depends on whether the scoring swing exceeded the loss')+'.',
    team+' left '+one(benchGap)+' possible points in this documented swap while the final spread measured '+one(margin)+'. The difference '+verdict+'; the manager now has a concrete selection question.'
   ];
   const commentary=contexts[rosterSlot%contexts.length].replace(' won or lost by ',' finished with a margin of ');
@@ -320,7 +320,7 @@ export function restoreForwardArticleDepth(t,week){
   const reading=second
    ?(share>=40
      ?leader.name+' carried a large share while '+second.name+' supplied '+one(second.points)+'. The staff must decide whether that gap leaves the lineup too dependent on one starter.'
-     :second.name+' provided '+one(second.points)+' alongside '+leader.name+'\'s '+one(leader.points)+'. Those two actual totals, rather than a generic claim about balance, define the production the manager must evaluate.')
+     :second.name+' posted '+one(second.points)+' against '+leader.name+'\'s '+one(leader.points)+'. Their scoring difference was '+one(Number(leader.points)-Number(second.points))+'; the next lineup decision depends on whether the second scorer can sustain that contribution.')
    :leader.name+' is the only starter with a verified scoring figure here; the available record does not establish broader lineup support.';
   players.paragraphs.push(leader.name+' accounted for '+share+'% of '+(/s$/i.test(team)?team+'’':team+'\'s')+' '+one(t.points)+' fantasy points this week. '+reading);
  }

@@ -342,13 +342,10 @@ export function restoreForwardArticleDepth(t,week){
   const current=Math.round(Number(v.value)).toLocaleString('en-US');
   const delta=Number(v.delta),absolute=Math.round(Math.abs(delta)).toLocaleString('en-US');
   const relative=delta>0?'higher':delta<0?'lower':'unchanged';
-  const valueReads=[
-   'The verified asset inventory is '+current+' points after a '+absolute+'-point move '+relative+' in the recorded interval. For '+team+', that is a market observation, not evidence that the '+one(t.points)+'-point lineup was managed well.',
-   team+' carries a recorded valuation of '+current+' points, '+absolute+' points '+relative+' than the prior mark. The club '+(matchupWon?'won':'lost')+' its fantasy matchup by '+one(margin)+' points; that result alone cannot explain how the roster market moved.',
-   'In the current valuation record, '+team+' carries '+current+' points, a shift of '+absolute+' points '+relative+'. Compare that long-horizon market reading with the '+one(t.points)+' points actually scored: they answer different questions about the same roster.',
-   'A confirmed '+absolute+'-point '+relative+' valuation places '+team+' at '+current+' on the market scale. That cannot substitute for explaining this week’s '+one(t.points)+'-point fantasy performance; player-level causes require verified movement data.'
-  ];
-  vdesk.paragraphs.push(valueReads[rosterSlot%valueReads.length]);
+  const prefixes=['Current market total','Roster ledger','Recorded portfolio value','League valuation balance'];
+  const movements=['The interval moved','The difference from baseline is','The market changed by','Recorded movement is','Compared with the prior snapshot, the shift is','The ledger shows a movement of','The change over this period is','The book records a swing of'];
+  const analysis=prefixes[rosterSlot%4]+': '+team+' at '+current+' points. '+movements[Math.floor(rosterSlot/4)%8]+' '+absolute+' points '+relative+'. The same roster recorded '+one(t.points)+' fantasy points this week; those scores measure game output, not valuation.';
+  vdesk.paragraphs.push(analysis);
  }
  // Preserve the original roster-specific comic fan scenes. Rotating five
  // generic fallback sketches across 32 teams created cross-reporter clones.

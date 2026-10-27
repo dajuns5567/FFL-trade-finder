@@ -312,10 +312,35 @@ export function restoreForwardArticleDepth(t,week){
    String(p).includes(starter)&&String(p).includes(reserve));
   // Do not recite the exact same start/sit pair a second time when the
   // authored management paragraph has already identified the decision.
-  const followThrough=matchupWon
-   ?'That '+one(margin)+'-point victory survives the '+one(benchGap)+'-point alternate score.'
-   :benchGap>margin?'The '+one(benchGap)+'-point unused edge exceeded the '+one(margin)+'-point defeat.'
-   :'The '+one(margin)+'-point deficit was larger than the available '+one(benchGap)+'-point swing.';
+  const followThroughOptions=matchupWon?[
+   'The win margin measured '+one(margin)+'; the recorded reserve advantage was '+one(benchGap)+'.',
+   'The final score still favors '+team+', regardless of the '+one(benchGap)+' points left on the bench.',
+   'A '+one(benchGap)+'-point replacement would have changed the total, not the winning club.',
+   'The lineup won despite a documented '+one(benchGap)+'-point alternative.',
+   'Its '+one(margin)+'-point winning spread remains intact in the alternate calculation.',
+   'A reserve gained '+one(benchGap)+' over a selected starter; the result stays a victory.',
+   'The scorecard lists a '+one(margin)+'-point win and an unused '+one(benchGap)+'-point edge.',
+   'Management can revisit the '+one(benchGap)+'-point choice without pretending it cost a win.'
+  ]:benchGap>margin?[
+   'The reserve gap of '+one(benchGap)+' exceeded the '+one(margin)+'-point losing margin.',
+   'An available '+one(benchGap)+' points would have been larger than the deficit of '+one(margin)+'.',
+   'The club lost by '+one(margin)+' while its alternative scored '+one(benchGap)+' more.',
+   'The comparison matters: '+one(benchGap)+' left unused against a '+one(margin)+'-point loss.',
+   'Its reserve advantage overtopped the actual '+one(margin)+'-point defeat.',
+   'The lineup fell short by '+one(margin)+'; the identified replacement offered '+one(benchGap)+'.',
+   'That '+one(margin)+'-point loss had a documented reserve differential of '+one(benchGap)+'.',
+   'Management has one quantifiable question: a '+one(benchGap)+'-point bench edge in a '+one(margin)+'-point loss.'
+  ]:[
+   'The '+one(benchGap)+'-point substitute could not cover the '+one(margin)+'-point defeat.',
+   'Even the better reserve left a gap between '+one(benchGap)+' available and '+one(margin)+' needed.',
+   'The losing margin was '+one(margin)+'; the documented alternate offered only '+one(benchGap)+'.',
+   'A replacement adds '+one(benchGap)+' but does not erase a '+one(margin)+'-point shortfall.',
+   'The reserve edge was smaller than the score difference: '+one(benchGap)+' versus '+one(margin)+'.',
+   'A '+one(benchGap)+'-point alternate keeps the loss in the standings.',
+   'There were '+one(benchGap)+' unused points in a defeat decided by '+one(margin)+'.',
+   'Management cannot explain a '+one(margin)+'-point loss using only a '+one(benchGap)+'-point swap.'
+  ];
+  const followThrough=followThroughOptions[rosterSlot%followThroughOptions.length];
   const commentary=alreadyDocumented?followThrough:
    contexts[rosterSlot%contexts.length].replace(' won or lost by ',' finished with a margin of ');
   const last=management.paragraphs.length-1;

@@ -380,7 +380,7 @@ export function restoreForwardArticleDepth(t,week){
    'Against '+opponent+', '+lead?.name+' paced the club on '+one(lead?.points)+' fantasy points.',
    'The remaining lineup supplied '+one(Number(t.points)-Number(lead?.points))+' beyond '+lead?.name+' and '+one(lead?.points)+'.',
    lead?.name+' contributed '+one(lead?.points)+' points in the '+team+' matchup with '+opponent+'.',
-   'The top-scoring starter was '+lead?.name+' ('+one(lead?.points))+') in a '+one(t.points)+'-point week.',
+   'The top-scoring starter was '+lead?.name+' ('+one(lead?.points)+') in a '+one(t.points)+'-point week.',
    'Team production reached '+one(t.points)+'; '+lead?.name+' made up '+one(lead?.points)+' of the total.',
    'Against '+opponent+' the standout individual figure belonged to '+lead?.name+': '+one(lead?.points)+'.',
    one(lead?.points)+' points came from '+lead?.name+', with '+one(Number(t.points)-Number(lead?.points))+' recorded elsewhere.',

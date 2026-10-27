@@ -4821,13 +4821,22 @@ function assertWeek2Originality(result,previousEdition){
             opponent+' is next for '+t.team_name+'. Its latest '+score+'-point lineup depended on '+star+' from '+rosterLead.name+'.',
             'Week '+week+' gave '+t.team_name+' '+score+' points, including '+star+' by '+rosterLead.name+'. Next on the schedule: '+opponent+'.',
             rosterLead.name+' headed the '+t.team_name+' scoresheet with '+star+'. The next assignment against '+opponent+' follows a '+score+'-point week.',
-            'Upcoming: '+opponent+'. '+rosterLead.name+' contributed '+star+' to the most recent '+score+'-point showing for '+t.team_name+'.'
+            'Next on '+t.team_name+'’s schedule: '+opponent+'. The previous game’s leading scorer was '+rosterLead.name+' with '+star+' fantasy points.'
           ];
           outlook.paragraphs[index]=finishGrammar(evidence[(rid+variationSalt)%evidence.length]);
           article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);
         }
       }else seenOutlooks.set(key,t.team_name);
     }
+  }
+  // The last outlook rewrite must not bypass team-name subject agreement.
+  // Apply the same finishing grammar to the complete final newspaper copy.
+  if(week>=5)for(const t of teams){
+    const article=t.inquirer_article;
+    if(!article?.sections)continue;
+    for(const section of article.sections)
+      section.paragraphs=(section.paragraphs||[]).map(finishGrammar);
+    article.paragraphs=article.sections.flatMap(section=>section.paragraphs||[]);
   }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }

@@ -4723,6 +4723,17 @@ function assertWeek2Originality(result,previousEdition){
   // league analysis as two thin paragraphs. Complete those beats with
   // additional independent, verified roster and league evidence.
   if(week>=5){
+    const gamesByMargin=w2Games(teams).slice().sort((a,b)=>b.margin-a.margin);
+    const widest=gamesByMargin[0],closest=gamesByMargin.at(-1);
+    // The source's reusable 'gets its own newspaper' deck was nearly the
+    // same in Week 4 and Week 5. Lead with this week's verified contrast.
+    if(widest&&closest){
+      overview.deck='Week '+week+' ranged from '+w2DisplayTeam(widest.winner.team_name)+
+       ' beating '+w2DisplayTeam(widest.loser.team_name)+' by '+w2One(widest.margin)+
+       ' to '+w2DisplayTeam(closest.winner.team_name)+
+       ' surviving '+w2DisplayTeam(closest.loser.team_name)+' by '+w2One(closest.margin)+
+       '. Both results count once in the standings; the questions they leave are entirely different.';
+    }
     const feature=(overview.sections||[]).find(s=>(s.blocks||[]).some(b=>b.kind==='lead'));
     const target=kind=>(feature?.blocks||[]).find(b=>b.kind===kind);
     const decisions=target('decisions'),league=target('league'),standings=target('standings');

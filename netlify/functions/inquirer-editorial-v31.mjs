@@ -4811,13 +4811,19 @@ function assertWeek2Originality(result,previousEdition){
         if(rosterLead){
           const opponent=String(t.next_opponent_name||'the next opponent');
           const score=Number(t.points||0).toFixed(1),star=Number(rosterLead.points).toFixed(1);
+          const rest=(Number(t.points||0)-Number(rosterLead.points)).toFixed(1);
+          const rid=Number(t.roster_id)||1;
           const evidence=[
-            rosterLead.name+' delivered '+star+' points for '+t.team_name+'. The next assignment is '+opponent+'; the rest of the starters combined for '+(Number(t.points||0)-Number(rosterLead.points)).toFixed(1)+'.',
-            'Before facing '+opponent+', '+t.team_name+' can point to '+rosterLead.name+' and '+star+' verified points. Its complete Week '+week+' score was '+score+'.',
-            'The '+score+'-point Week '+week+' total included '+star+' from '+rosterLead.name+'. '+opponent+' now gets the next chance to test '+t.team_name+'.',
-            'A '+star+'-point performance by '+rosterLead.name+' anchored '+t.team_name+' this week. The club carries a '+score+'-point result into its meeting with '+opponent+'.'
+            rosterLead.name+' produced '+star+' points; the other starters accounted for '+rest+'. The next opponent for '+t.team_name+' is '+opponent+'.',
+            t.team_name+' totaled '+score+' with '+rosterLead.name+' contributing '+star+'. The upcoming fixture puts '+opponent+' on the other sideline.',
+            'From '+rosterLead.name+': '+star+' fantasy points in a '+score+'-point team result. '+t.team_name+' meets '+opponent+' next.',
+            'The leading starter was '+rosterLead.name+' ('+star+' points). '+t.team_name+' recorded '+score+' overall and now faces '+opponent+'.',
+            opponent+' is next for '+t.team_name+'. Its latest '+score+'-point lineup depended on '+star+' from '+rosterLead.name+'.',
+            'Week '+week+' gave '+t.team_name+' '+score+' points, including '+star+' by '+rosterLead.name+'. Next on the schedule: '+opponent+'.',
+            rosterLead.name+' headed the '+t.team_name+' scoresheet with '+star+'. The next assignment against '+opponent+' follows a '+score+'-point week.',
+            'Against '+opponent+' next week, '+t.team_name+' brings the evidence of a '+score+'-point result; '+rosterLead.name+' supplied '+star+' of those points.'
           ];
-          outlook.paragraphs[index]=evidence[(Number(t.roster_id)||1)%evidence.length];
+          outlook.paragraphs[index]=evidence[(rid+variationSalt)%evidence.length];
           article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);
         }
       }else seenOutlooks.set(key,t.team_name);

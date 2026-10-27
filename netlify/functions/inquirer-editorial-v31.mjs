@@ -2917,7 +2917,7 @@ function w2ProjectionOutlookRead(t,r,next){
         "mack-hollis":fav+" owns the "+edge+"-point projection megaphone",
         "nora-voss":"Rivals see a "+edge+"-point forecast advantage for "+fav
        }[rid]||fav+" has a "+edge+"-point forecast edge")+", enough to set an expectation without settling the argument.":"There is no projection favorite; the numbers have declined to pick a side.")+" For "+team+", the "+Number(t.points||0).toFixed(1)+"-point previous result is a better measure than the forecast alone.",
-      "The Week 3 board has "+team+" at "+ownPts+" and "+foe+" at "+oppPts+". "+(fav?fav+" carries the projection edge of "+edge+", which is useful context rather than a permission slip.":"That leaves no projection favorite and no numerical excuse for confidence.")+" Sunday gets the final word.",
+      "The Week 3 board has "+team+" at "+ownPts+" and "+foe+" at "+oppPts+". "+(fav?fav+" carries the projection edge of "+edge+", which is useful context rather than a permission slip.":"That leaves no projection favorite and no numerical excuse for confidence.")+ "",
       ownPts+" for "+team+" and "+oppPts+" for "+foe+" is the current projection. "+(fav?fav+" enters as "+label+" with a "+edge+"-point edge.":"The projection favorite is nobody; the line is even.")+" Treat that as the starting expectation, not a verdict with shoulder pads.",
       "Projection-wise, "+team+" brings "+ownPts+" to "+foe+"’s "+oppPts+". "+(fav?fav+" owns the "+edge+"-point edge and therefore the favorite label for now.":"Neither side owns a projection edge.")+" The actual lineup remains inconveniently necessary."
     ],

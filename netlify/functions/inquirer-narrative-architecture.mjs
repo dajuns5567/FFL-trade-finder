@@ -342,10 +342,31 @@ export function restoreForwardArticleDepth(t,week){
   const current=Math.round(Number(v.value)).toLocaleString('en-US');
   const delta=Number(v.delta),absolute=Math.round(Math.abs(delta)).toLocaleString('en-US');
   const relative=delta>0?'higher':delta<0?'lower':'unchanged';
-  const prefixes=['Current market total','Roster ledger','Recorded portfolio value','League valuation balance'];
-  const movements=['The interval moved','The difference from baseline is','The market changed by','Recorded movement is','Compared with the prior snapshot, the shift is','The ledger shows a movement of','The change over this period is','The book records a swing of'];
-  const analysis=prefixes[rosterSlot%4]+': '+team+' at '+current+' points. '+movements[Math.floor(rosterSlot/4)%8]+' '+absolute+' points '+relative+'. Sunday scoreboard: '+one(t.points)+' fantasy points.';
-  vdesk.paragraphs.push(analysis);
+  // The depth-recovery desk must report valuation AND an independently
+  // verified roster fact, not repeat a boilerplate market/box-score essay.
+  const lead=(t.starter_details||[]).filter(p=>p?.name&&Number.isFinite(Number(p.points)))
+   .sort((a,b)=>Number(b.points)-Number(a.points))[0];
+  const prior=(Number(v.value)-Number(v.delta)).toLocaleString('en-US');
+  const marketReads=[
+   'The '+team+' ledger closes at '+current+' points; the earlier valuation was '+prior+'.',
+   'A '+absolute+'-point '+relative+' adjustment brings '+team+' to '+current+' on the recorded book.',
+   team+' is priced at '+current+' points after moving '+absolute+' '+relative+' since the last snapshot.',
+   'The tracked market shifts '+absolute+' points '+relative+' for '+team+', setting its valuation at '+current+'.',
+   'For '+team+', the prior mark of '+prior+' has become '+current+' in the latest record.',
+   'The '+team+' asset sheet now reads '+current+' points, a '+absolute+'-point '+relative+' change.',
+   team+' posts '+current+' in measured roster value; the change against its previous mark is '+absolute+' '+relative+'.',
+   'The latest '+team+' valuation of '+current+' differs from the earlier '+prior+' by '+absolute+' points.'
+  ];
+  const groundedReads=[
+   lead?.name+' supplied '+one(lead?.points)+' of the '+one(t.points)+' lineup points against '+opponent+'.',
+   'Against '+opponent+', '+lead?.name+' paced the club on '+one(lead?.points)+' fantasy points.',
+   'The documented '+one(t.points)+'-point team output included '+one(lead?.points)+' from '+lead?.name+'.',
+   lead?.name+' contributed '+one(lead?.points)+' points in the '+team+' matchup with '+opponent+'.'
+  ];
+  const marketRead=marketReads[rosterSlot%marketReads.length];
+  const performanceRead=lead?.name?groundedReads[Math.floor(rosterSlot/8)%4]:
+   team+' scored '+one(t.points)+' fantasy points against '+opponent+'.';
+  vdesk.paragraphs.push(marketRead+' '+performanceRead);
  }
  // Preserve the original roster-specific comic fan scenes. Rotating five
  // generic fallback sketches across 32 teams created cross-reporter clones.

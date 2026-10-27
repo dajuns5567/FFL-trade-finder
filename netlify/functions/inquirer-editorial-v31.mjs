@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=58;
+export const FORWARD_EDITORIAL_REVISION=59;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -4840,13 +4840,13 @@ function assertWeek2Originality(result,previousEdition){
   // opponent, score and roster-leader reporting.
   if(week>=5){
     const seenOutlooks=new Map();
+    const entities=forwardEntities({teams});
+    const endingKey=value=>forwardNormSentence(value,entities).replace(/\[(?:entity|#)\]/gi,'#').replace(/[^a-z#]+/g,' ').trim().split(/\s+/).slice(-11).join(' ');
     for(const t of teams){
       const article=t.inquirer_article,outlook=article?.sections?.find(s=>s.kind==='outlook');
       if(!outlook?.paragraphs?.length)continue;
       const index=outlook.paragraphs.length-1,closing=String(outlook.paragraphs[index]||'');
-      const entities=forwardEntities({teams});
-      const words=forwardNormSentence(closing,entities).replace(/\[(?:entity|#)\]/gi,'#').replace(/[^a-z#]+/g,' ').trim().split(/\s+/);
-      const key=words.slice(-11).join(' ');
+      const key=endingKey(closing);
       if(key.split(' ').length<9)continue;
       if(seenOutlooks.has(key)){
         const rosterLead=(t.starter_details||[]).filter(p=>p?.name&&Number.isFinite(Number(p.points)))
@@ -4866,8 +4866,14 @@ function assertWeek2Originality(result,previousEdition){
             rosterLead.name+' headed the '+t.team_name+' scoresheet with '+star+'. The next assignment against '+opponent+' follows a '+score+'-point week.',
             'Schedule check for '+t.team_name+': '+opponent+' awaits. '+rosterLead.name+' delivered '+star+' of the latest '+score+' team points.'
           ];
-          outlook.paragraphs[index]=finishGrammar(evidence[(rid+Math.floor((rid-1)/8)+variationSalt)%evidence.length]);
-          article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);
+          const seed=(rid+Math.floor((rid-1)/8)+variationSalt)%evidence.length;
+          const candidates=[...evidence.slice(seed),...evidence.slice(0,seed)].map(finishGrammar);
+          const fresh=candidates.find(candidate=>!seenOutlooks.has(endingKey(candidate)));
+          if(fresh){
+            outlook.paragraphs[index]=fresh;
+            seenOutlooks.set(endingKey(fresh),t.team_name);
+            article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);
+          }
         }
       }else seenOutlooks.set(key,t.team_name);
     }

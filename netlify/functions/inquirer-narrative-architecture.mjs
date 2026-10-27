@@ -376,6 +376,21 @@ export function restoreForwardArticleDepth(t,week){
  for(const section of a.sections||[])section.paragraphs=(section.paragraphs||[]).map(line=>String(line).replace(
   /receiving\s*\/\s*receptions:\s*(\d+)\/(\d+)\s+rec(?:,\s*(\d+)\s+yds)?(?:,\s*(\d+)\s+TDs?)?/gi,
   (_,c,tg,y,td)=>c+' receptions on '+tg+' targets'+(y==null?'':' for '+y+' yards')+(td==null?'':' and '+td+' receiving '+(Number(td)===1?'touchdown':'touchdowns'))));
+ // A naked stat fragment reads like a data feed, not reporting. Attribute
+ // it only when the exact recorded rushing line uniquely identifies a
+ // starter; never guess a player from similar fantasy totals.
+ for(const section of a.sections||[]){
+  if(section.kind!=='players')continue;
+  section.paragraphs=(section.paragraphs||[]).map(paragraph=>{
+   const line=String(paragraph||'');
+   const match=/^(\\d+) carries for (\\d+) yards,?\\b/.exec(line);
+   if(!match)return line;
+   const owners=(t.starter_details||[]).filter(p=>p?.name&&
+     Number(p?.real_stats?.rush_att)===Number(match[1])&&
+     Number(p?.real_stats?.rush_yd)===Number(match[2]));
+   return owners.length===1?owners[0].name+' recorded '+line[0].toLowerCase()+line.slice(1):line;
+  });
+ }
  // A word-count shortage is a substantive editorial hold, not permission to
  // pad the article with repetitive box-score rows until it reaches 300.
  a.paragraphs=a.sections.flatMap(s=>s.paragraphs||[]);

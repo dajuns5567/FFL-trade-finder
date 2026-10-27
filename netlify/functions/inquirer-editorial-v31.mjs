@@ -4732,7 +4732,12 @@ function assertWeek2Originality(result,previousEdition){
        ' beating '+w2DisplayTeam(widest.loser.team_name)+' by '+w2One(widest.margin)+
        ' to '+w2DisplayTeam(closest.winner.team_name)+
        ' surviving '+w2DisplayTeam(closest.loser.team_name)+' by '+w2One(closest.margin)+
-       '. Both results count once in the standings; the questions they leave are entirely different.';
+       '. '+[
+         'A double-digit romp does not make the one-possession escape any less expensive to the losing manager.',
+         'One manager could stop checking the scoreboard early; the other probably checked the bench twice.',
+         'A league table awards them the same win, which is a poor guide to the stress involved.',
+         'The gap between those experiences is where this week’s real coaching argument begins.'
+       ][week%4];
     }
     const feature=(overview.sections||[]).find(s=>(s.blocks||[]).some(b=>b.kind==='lead'));
     const target=kind=>(feature?.blocks||[]).find(b=>b.kind===kind);

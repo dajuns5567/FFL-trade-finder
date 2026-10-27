@@ -4870,6 +4870,33 @@ export function evaluateInquirerEditionQuality(current,previous=null){
     const pset=new Set(forwardRecapSentences(previous).map(s=>forwardNormSentence(s,entities))),curr=forwardRecapSentences(current).map(s=>forwardNormSentence(s,entities)),overlap=curr.filter(n=>pset.has(n));
     if(overlap.length>=4)issues.push({id:'recap-copy-forward',overlap:overlap.length,examples:overlap.slice(0,8)});
   }
+  // The recap is a newspaper article, not an optional appendix to 32
+  // passing team columns. Validate its original blocks as well as the
+  // reader-facing flattened mirror, and check every narrative desk.
+  if(Number(current?.week)>=5){
+    const overview=current?.league_overview||{},sections=overview.sections||[];
+    const feature=sections.find(s=>(s.blocks||[]).some(b=>b.kind==='lead'));
+    const mandatory=['lead','standings','players','decisions','league','outlook'];
+    if(!feature)issues.push({id:'recap-no-feature-column'});
+    for(const beat of mandatory){
+      const block=(feature?.blocks||[]).find(b=>b.kind===beat);
+      const prose=(block?.paragraphs||[]).filter(p=>String(p||'').trim());
+      if(!block||prose.length<2||prose.join(' ').trim().split(/\\s+/).length<30)
+        issues.push({id:'recap-thin-required-beat',beat,paragraphs:prose.length});
+    }
+    for(const section of sections){
+      if(!section?.blocks?.length)continue;
+      const expected=section.blocks.flatMap(b=>b.paragraphs||[]);
+      const actual=section.paragraphs||[];
+      if(expected.length!==actual.length||expected.some((p,i)=>p!==actual[i]))
+        issues.push({id:'recap-block-paragraph-mirror-drift',heading:section.heading});
+    }
+    const allRecap=[...sections.flatMap(s=>s.paragraphs||[]),...(overview.hot_takes||[]).map(h=>h.take||'')];
+    for(const line of allRecap){
+      if(/\\b(?:In a league this competitive|At the end of the day|Only time will tell|The numbers tell the story)\\b/i.test(String(line)))
+        issues.push({id:'recap-generic-non-reporting-filler',excerpt:String(line).slice(0,150)});
+    }
+  }
   const mattered=(current?.league_overview?.sections||[]).find(s=>String(s?.heading||'')==='What Actually Mattered This Week');
   const matteredCopy=(mattered?.paragraphs||[]).join(' ');
   if(Number(current?.week)>=3){

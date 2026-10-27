@@ -4823,7 +4823,7 @@ function assertWeek2Originality(result,previousEdition){
             rosterLead.name+' headed the '+t.team_name+' scoresheet with '+star+'. The next assignment against '+opponent+' follows a '+score+'-point week.',
             'Schedule check for '+t.team_name+': '+opponent+' awaits. '+rosterLead.name+' delivered '+star+' of the latest '+score+' team points.'
           ];
-          outlook.paragraphs[index]=finishGrammar(evidence[(rid+variationSalt)%evidence.length]);
+          outlook.paragraphs[index]=finishGrammar(evidence[(rid+Math.floor((rid-1)/8)+variationSalt)%evidence.length]);
           article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);
         }
       }else seenOutlooks.set(key,t.team_name);

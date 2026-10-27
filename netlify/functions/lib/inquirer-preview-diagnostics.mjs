@@ -35,7 +35,12 @@ export async function resolvePreviewIdentity(url=''){
  const state=await response.json(),season=Number(state?.season),current=Number(state?.week);
  if(!Number.isInteger(season)||season<2026||!Number.isInteger(current)||current<1)
   throw Error('Sleeper season/week clock invalid; preview held.');
- const week=value===null?Math.min(17,Math.max(1,current-1)):Number(value);
+ // The isolated PR #402 is auditing the earliest missing edition, Week 5.
+ // A bare preview URL must not silently select Week 6 and display a false
+ // prerequisite failure when the user is trying to review unpublished Week 5.
+ const host=query.hostname.toLowerCase();
+ const week=value===null&&host==='deploy-preview-402--transcendent-manatee-2f0123.netlify.app'
+  ?5:value===null?Math.min(17,Math.max(1,current-1)):Number(value);
  // Each forward editorial revision gets an independent create-only draft key.
  // An older manuscript remains intact and readable from its original Blob
  // key; never overwrite it to test a new generator.

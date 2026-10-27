@@ -383,7 +383,7 @@ export function restoreForwardArticleDepth(t,week){
   if(section.kind!=='players')continue;
   section.paragraphs=(section.paragraphs||[]).map(paragraph=>{
    const line=String(paragraph||'');
-   const match=/^(\\d+) carries for (\\d+) yards(?=[,. ]|$)/.exec(line);
+   const match=/^(\d+) carries for (\d+) yards(?=[,. ]|$)/.exec(line);
    if(!match)return line;
    const owners=(t.starter_details||[]).filter(p=>p?.name&&
      Number(p?.real_stats?.rush_att)===Number(match[1])&&

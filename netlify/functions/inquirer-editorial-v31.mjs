@@ -4748,6 +4748,7 @@ function assertWeek2Originality(result,previousEdition){
          'The gap between those experiences is where this week’s real coaching argument begins.'
        ][week%4];
     }
+    if(week===5){
     const feature=(overview.sections||[]).find(s=>(s.blocks||[]).some(b=>b.kind==='lead'));
     const target=kind=>(feature?.blocks||[]).find(b=>b.kind===kind);
     const decisions=target('decisions'),league=target('league'),standings=target('standings');
@@ -4799,6 +4800,7 @@ function assertWeek2Originality(result,previousEdition){
       }
     }
     if(feature?.blocks?.length)feature.paragraphs=feature.blocks.flatMap(b=>b.paragraphs||[]);
+    }
   }
   // Last writer wins: future-week prose is sometimes reintroduced after
   // cross-team collision repair. Compare the actual closing paragraphs

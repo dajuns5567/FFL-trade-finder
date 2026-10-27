@@ -4800,6 +4800,38 @@ function assertWeek2Originality(result,previousEdition){
       }
     }
     if(feature?.blocks?.length)feature.paragraphs=feature.blocks.flatMap(b=>b.paragraphs||[]);
+    }else if(week>5){
+      // Unlike the Week 5 transition, later recaps need only repair an
+      // actually thin desk. Do not replay Week 5 supplemental arguments.
+      const section=(overview.sections||[]).find(s=>(s.blocks||[]).some(b=>b.kind==='decisions'));
+      const decisions=(section?.blocks||[]).find(b=>b.kind==='decisions');
+      if(decisions&&(decisions.paragraphs||[]).filter(Boolean).length<2){
+        const missed=teams.filter(t=>t.best_lineup_miss?.starter?.name&&t.best_lineup_miss?.reserve?.name&&
+          Number(t.best_lineup_miss.gap)>0).sort((a,b)=>Number(b.best_lineup_miss.gap)-Number(a.best_lineup_miss.gap));
+        const previousLines=new Set(forwardRecapSentences(previousEdition||{}).map(sentence=>
+          forwardNormSentence(sentence,[...forwardEntities({teams}),...forwardEntities(previousEdition)])));
+        for(const team of missed){
+          if(decisions.paragraphs.some(p=>p.includes(team.team_name)))continue;
+          const miss=team.best_lineup_miss,gap=w2One(miss.gap),scored=w2One(team.points);
+          const candidate=[
+            'The front office in '+team.team_name+' has a precise selection ledger: '+miss.starter.name+
+              ' started, '+miss.reserve.name+' stayed available, and the documented gap was '+gap+
+              ' fantasy points. The full lineup finished at '+scored+'.',
+            'The managerial margin at '+team.team_name+' is measurable without hindsight theater. '+miss.reserve.name+
+              ' exceeded '+miss.starter.name+' by '+gap+' fantasy points in the recorded comparison, against '+scored+
+              ' total points from the actual lineup.',
+            team.team_name+' received '+scored+' points from its selected starters. The clearest alternative was '+miss.reserve.name+
+              ' over '+miss.starter.name+' by '+gap+' points; the newspaper can report the differential without inventing advance certainty.',
+            'At '+team.team_name+', the choice between '+miss.starter.name+' and '+miss.reserve.name+
+              ' accounts for '+gap+' potential fantasy points. That is a defined management opportunity, not a different recorded '+scored+'-point result.'
+          ][(week+Number(team.roster_id||0))%4];
+          const entities=[...forwardEntities({teams}),...forwardEntities(previousEdition)];
+          if(forwardSentenceParts(candidate).some(sentence=>previousLines.has(forwardNormSentence(sentence,entities))))continue;
+          decisions.paragraphs.push(candidate);
+          break;
+        }
+        if(section?.blocks?.length)section.paragraphs=section.blocks.flatMap(b=>b.paragraphs||[]);
+      }
     }
   }
   // Last writer wins: future-week prose is sometimes reintroduced after

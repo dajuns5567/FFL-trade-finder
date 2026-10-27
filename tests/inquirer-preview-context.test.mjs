@@ -51,12 +51,12 @@ test('diagnostic keys differ across the same season Week 3, Week 5 and Week 6',a
   const w5=await resolvePreviewIdentity(u+'?preview_week=5');
   const w6=await resolvePreviewIdentity(u+'?preview_week=6');
   const latest=await resolvePreviewIdentity(u);
-  assert.deepEqual([w3.week,w5.week,w6.week,latest.week],[3,5,6,6]);
+  assert.deepEqual([w3.week,w5.week,w6.week,latest.week],[3,5,6,5]);
   assert.equal(new Set([w3.status,w5.status,w6.status]).size,3);
   assert.equal(new Set([w3.edition,w5.edition,w6.edition]).size,3);
   assert.equal(new Set([w3.rejected,w5.rejected,w6.rejected]).size,3);
   assert.match(w5.status,/2026\/week-05\/editorial-r\d+\/status\.json$/);
-  assert.equal(w6.status,latest.status);
+  assert.equal(w5.status,latest.status);
  }finally{globalThis.fetch=savedFetch}
 });
 

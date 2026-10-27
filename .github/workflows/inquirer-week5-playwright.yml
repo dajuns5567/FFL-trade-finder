@@ -63,3 +63,9 @@ jobs:
         run: npm install --no-save --package-lock=false playwright
       - name: Verify actual reader in Chromium using synthetic Week 5 fixtures
         run: node scripts/inquirer-reader-browser-regression.mjs
+      - name: Declare scope of PR-triggered browser checks
+        if: github.event_name == 'pull_request'
+        run: |
+          echo '::warning title=Protected manuscript NOT audited::This PR check exercises synthetic reader fixtures only. The authenticated Week 5 manuscript job is workflow_dispatch-only and was skipped. Do not interpret this green workflow as a real manuscript editorial pass.'
+          echo '### Synthetic reader regression only' >> "$GITHUB_STEP_SUMMARY"
+          echo 'The actual protected Week 5 newspaper was **not** inspected on this pull request. Run the authenticated workflow_dispatch job and inspect its artifacts before publication.' >> "$GITHUB_STEP_SUMMARY"

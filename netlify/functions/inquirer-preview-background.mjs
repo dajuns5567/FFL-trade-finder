@@ -92,6 +92,13 @@ export default async function generateInquirerPreview(req){
   const message=String(error?.message||error);
   await store.setJSON(identity.status,{state:'error',started_at,finished_at:new Date().toISOString(),season:identity.season,week:identity.week,preview_only:true,error:message,summary:error?.rejected_summary||null})
    .catch(statusError=>console.error('inquirer-preview-background-status',statusError));
+  // Emit issue identifiers and affected teams for private operator diagnostics;
+  // never log manuscript prose, excerpts, or full player/manager data.
+  const summaries=[error?.rejected_summary?.editorial_audit,error?.rejected_summary?.generation_quality];
+  const failures=summaries.flatMap(group=>(group?.issues||[]).map(issue=>({
+   id:String(issue?.id||'unknown'),teams:Array.isArray(issue?.teams)?issue.teams.map(String).slice(0,32):issue?.team?[String(issue.team)]:[]
+  })));
+  if(failures.length)console.error('inquirer-preview-rejected-issue-ids',JSON.stringify({season:identity.season,week:identity.week,revision:FORWARD_EDITORIAL_REVISION,issues:failures}));
   console.error('inquirer-preview-background-failed',error);
  }
 }

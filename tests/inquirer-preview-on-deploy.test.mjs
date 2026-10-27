@@ -81,3 +81,15 @@ test('archive continuity moves private generation forward only after Week 5 is l
  assert.equal(await findFirstMissingInquirerWeek(new URL(url),read),6);
  assert.equal(urls.length,3);
 });
+
+test('canonical PR hostname wins over the immutable deploy permalink',async()=>{
+ const stable='https://deploy-preview-402--transcendent-manatee-2f0123.netlify.app';
+ const id='6ad56e4f9821461e4876bac6';
+ let target='';
+ const started=await startPreviewDraftForDeploy({
+  deploy:{context:'deploy-preview',id,permalinkUrl:'https://'+id+'--transcendent-manatee-2f0123.netlify.app',sslUrl:stable},
+  site:{name:'transcendent-manatee-2f0123'}
+ },async req=>{target=req.url;return new Response(null,{status:202})},async()=>5);
+ assert.equal(started,true);
+ assert.equal(target,stable+'/.netlify/functions/inquirer-preview-background?start=1&preview_week=5');
+});

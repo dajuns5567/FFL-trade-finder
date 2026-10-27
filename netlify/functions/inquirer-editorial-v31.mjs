@@ -4766,13 +4766,12 @@ function assertWeek2Originality(result,previousEdition){
           String(low.team_name)+' at '+w2One(low.points)+
           '. The '+w2One(Number(high.points)-Number(low.points))+
           '-point spread is why the same week can look like a breakthrough in one locker room and an emergency in another.');
-      const close=w2Games(teams).slice().sort((a,b)=>a.margin-b.margin)[0];
-      if(close&&league.paragraphs.length<4){
-        league.paragraphs.push('At the other end of the suspense scale, '+
-          String(close.winner.team_name)+' edged '+String(close.loser.team_name)+
-          ' by '+w2One(close.margin)+
-          '. That is a narrower decision than the league-wide scoring extremes, and the two standings results count equally.');
-      }
+      const settled=w2Games(teams),photoFinishes=settled.filter(g=>g.margin<=5).length,
+        routs=settled.filter(g=>g.margin>=30).length;
+      if(settled.length&&league.paragraphs.length<4)
+        league.paragraphs.push('Across '+settled.length+' recorded matchups, '+
+          photoFinishes+' ended within five fantasy points and '+routs+
+          ' were decided by thirty or more. The standings give both kinds of victory one mark, but no manager lives through them with the same pulse.');
     }
     if(standings&&standings.paragraphs?.length<3){
       const ranked=teams.filter(t=>Number.isFinite(Number(t.league_context?.standings_rank)))

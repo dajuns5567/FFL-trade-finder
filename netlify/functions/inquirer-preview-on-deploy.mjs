@@ -27,11 +27,14 @@ export async function findFirstMissingInquirerWeek(preview,read=fetch){
 export async function startPreviewDraftForDeploy(event,generate,resolveMissingWeek=findFirstMissingInquirerWeek){
  if(event?.deploy?.context!=='deploy-preview')return false;
  const candidates=[event.deploy.permalinkUrl,event.deploy.sslUrl,event.deploy.url];
- const preview=candidates.map(value=>{
+ const eligible=candidates.map(value=>{
   try{return new URL(value)}catch{return null}
- }).find(url=>url?.protocol==='https:'&&(previewHost.test(url.hostname)||
+ }).filter(url=>url?.protocol==='https:'&&(previewHost.test(url.hostname)||
   (deployIdHost.test(url.hostname)&&url.hostname.startsWith(String(event.deploy.id||'')+'--')&&
    url.hostname.endsWith('--'+String(event.site?.name||'')+'.netlify.app'))));
+ // Prefer the actual PR host. An immutable deploy permalink cannot pass the
+ // preview-background function's strict preview hostname isolation check.
+ const preview=eligible.find(url=>previewHost.test(url.hostname))||eligible[0];
  if(!preview)return false;
  const target=new URL('/.netlify/functions/inquirer-preview-background?start=1',preview);
  // This PR is an isolated editorial preview; never let the background job

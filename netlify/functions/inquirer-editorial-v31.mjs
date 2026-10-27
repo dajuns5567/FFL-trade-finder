@@ -4729,7 +4729,7 @@ function assertWeek2Originality(result,previousEdition){
       if(!outlook?.paragraphs?.length)continue;
       const index=outlook.paragraphs.length-1,closing=String(outlook.paragraphs[index]||'');
       const entities=forwardEntities({teams});
-      const words=forwardNormSentence(closing,entities).replace(/\\[(?:entity|#)\\]/gi,'#').replace(/[^a-z#]+/g,' ').trim().split(/\\s+/);
+      const words=forwardNormSentence(closing,entities).replace(/\[(?:entity|#)\]/gi,'#').replace(/[^a-z#]+/g,' ').trim().split(/\s+/);
       const key=words.slice(-11).join(' ');
       if(key.split(' ').length<9)continue;
       if(seenOutlooks.has(key)){
@@ -4908,7 +4908,7 @@ export function evaluateInquirerEditionQuality(current,previous=null){
     for(const beat of mandatory){
       const block=(feature?.blocks||[]).find(b=>b.kind===beat);
       const prose=(block?.paragraphs||[]).filter(p=>String(p||'').trim());
-      if(!block||prose.length<2||prose.join(' ').trim().split(/\\s+/).length<30)
+      if(!block||prose.length<2||prose.join(' ').trim().split(/\s+/).length<30)
         issues.push({id:'recap-thin-required-beat',beat,paragraphs:prose.length});
     }
     for(const section of sections){
@@ -4920,7 +4920,7 @@ export function evaluateInquirerEditionQuality(current,previous=null){
     }
     const allRecap=[...sections.flatMap(s=>s.paragraphs||[]),...(overview.hot_takes||[]).map(h=>h.take||'')];
     for(const line of allRecap){
-      if(/\\b(?:In a league this competitive|At the end of the day|Only time will tell|The numbers tell the story)\\b/i.test(String(line)))
+      if(/\b(?:In a league this competitive|At the end of the day|Only time will tell|The numbers tell the story)\b/i.test(String(line)))
         issues.push({id:'recap-generic-non-reporting-filler',excerpt:String(line).slice(0,150)});
     }
   }

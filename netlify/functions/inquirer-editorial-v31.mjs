@@ -4519,9 +4519,18 @@ function assertWeek2Originality(result,previousEdition){
       const leader=starters[0];
       if(Number.isFinite(score)&&Number.isFinite(against)&&leader){
         const margin=w2One(Math.abs(score-against));
-        const addition=w2DisplayTeam(t.team_name)+' '+(score>against?'won':'lost')+' by '+margin+
-          ' fantasy points. '+leader.name+' supplied '+w2One(leader.points)+
-          ' of the recorded '+w2One(score)+'. The remaining starters need closer scrutiny.';
+        const rest=w2One(score-Number(leader.points)),lead=w2One(leader.points),club=w2DisplayTeam(t.team_name);
+        const rows=[
+          leader.name+' led '+club+' with '+lead+' points. The other starters contributed '+rest+' against '+w2DisplayTeam(t.opponent_name||'the opposition')+'.',
+          'The '+club+' result was decided by '+margin+' points; the starting group beyond '+leader.name+' produced '+rest+'.',
+          'Of '+club+'’s '+w2One(score)+' total, '+lead+' came from '+leader.name+'. The rest of the roster supplied '+rest+'.',
+          'Against '+w2DisplayTeam(t.opponent_name||'the opposition')+', '+leader.name+' registered '+lead+' while his teammates combined for '+rest+'.',
+          club+' recorded '+w2One(score)+' overall. '+leader.name+' led at '+lead+', leaving '+rest+' among the other starters.',
+          'The scoreboard margin was '+margin+'. '+leader.name+' provided '+lead+' of '+club+'’s '+w2One(score)+' points.',
+          'One starter carried '+lead+' points for '+club+': '+leader.name+'. Everyone else accounted for '+rest+'.',
+          'The club’s leading line belongs to '+leader.name+' ('+lead+'). '+club+' finished '+margin+' points '+(score>against?'ahead':'behind')+'.'
+        ];
+        const addition=rows[(Number(t.roster_id||1)-1)%rows.length];
         if(!(management.paragraphs||[]).some(p=>String(p).includes(addition))){
           if(management.paragraphs.length>=2)management.paragraphs[management.paragraphs.length-1]+=' '+addition;
           else management.paragraphs.push(addition);

@@ -4810,9 +4810,14 @@ function assertWeek2Originality(result,previousEdition){
           .sort((a,b)=>Number(b.points)-Number(a.points))[0];
         if(rosterLead){
           const opponent=String(t.next_opponent_name||'the next opponent');
-          outlook.paragraphs[index]=rosterLead.name+' scored '+Number(rosterLead.points).toFixed(1)+
-            ' for '+t.team_name+' this week. Against '+opponent+', the relevant question is whether '+
-            rosterLead.name+' has enough help after the '+Number(t.points||0).toFixed(1)+'-point lineup result.';
+          const score=Number(t.points||0).toFixed(1),star=Number(rosterLead.points).toFixed(1);
+          const evidence=[
+            rosterLead.name+' delivered '+star+' points for '+t.team_name+'. The next assignment is '+opponent+'; the rest of the starters combined for '+(Number(t.points||0)-Number(rosterLead.points)).toFixed(1)+'.',
+            'Before facing '+opponent+', '+t.team_name+' can point to '+rosterLead.name+' and '+star+' verified points. Its complete Week '+week+' score was '+score+'.',
+            'The '+score+'-point Week '+week+' total included '+star+' from '+rosterLead.name+'. '+opponent+' now gets the next chance to test '+t.team_name+'.',
+            'A '+star+'-point performance by '+rosterLead.name+' anchored '+t.team_name+' this week. The club carries a '+score+'-point result into its meeting with '+opponent+'.'
+          ];
+          outlook.paragraphs[index]=evidence[(Number(t.roster_id)||1)%evidence.length];
           article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);
         }
       }else seenOutlooks.set(key,t.team_name);

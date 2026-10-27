@@ -386,6 +386,19 @@ export function restoreForwardArticleDepth(t,week){
    team+' scored '+one(t.points)+' fantasy points against '+opponent+'.';
   vdesk.paragraphs.push(marketRead+' '+performanceRead);
  }
+ // Other editorial passes can already have split the same manager decision
+ // across two paragraphs. Keep the first sourced comparison and preserve
+ // other independent commentary rather than printing the pair twice.
+ if(management&&missed.starter?.name&&missed.reserve?.name){
+  const start=String(missed.starter.name),reserve=String(missed.reserve.name);
+  let seenComparison=false;
+  management.paragraphs=(management.paragraphs||[]).map(p=>clauseParts(p)
+   .filter(sentence=>{
+    if(!(sentence.includes(start)&&sentence.includes(reserve)))return true;
+    if(seenComparison)return false;
+    seenComparison=true;return true;
+   }).join(' ')).filter(Boolean);
+ }
  // Preserve the original roster-specific comic fan scenes. Rotating five
  // generic fallback sketches across 32 teams created cross-reporter clones.
  // Short scenes remain editorial failures until the upstream writer supplies

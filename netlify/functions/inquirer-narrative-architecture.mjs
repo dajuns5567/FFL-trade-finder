@@ -308,7 +308,16 @@ export function restoreForwardArticleDepth(t,week){
    'The lineup included '+starter+' rather than '+reserve+'. '+one(benchGap)+' potential points did not enter the total, compared with a '+one(margin)+'-point matchup decision.',
    'The alternate '+reserve+' offered '+one(benchGap)+' over '+starter+'. After a '+one(margin)+'-point '+(matchupWon?'win':'loss')+', that is the actual size of the coaching question.'
   ];
-  const commentary=contexts[rosterSlot%contexts.length].replace(' won or lost by ',' finished with a margin of ');
+  const alreadyDocumented=(management.paragraphs||[]).some(p=>
+   String(p).includes(starter)&&String(p).includes(reserve));
+  // Do not recite the exact same start/sit pair a second time when the
+  // authored management paragraph has already identified the decision.
+  const followThrough=matchupWon
+   ?'That '+one(margin)+'-point victory survives the '+one(benchGap)+'-point alternate score.'
+   :benchGap>margin?'The '+one(benchGap)+'-point unused edge exceeded the '+one(margin)+'-point defeat.'
+   :'The '+one(margin)+'-point deficit was larger than the available '+one(benchGap)+'-point swing.';
+  const commentary=alreadyDocumented?followThrough:
+   contexts[rosterSlot%contexts.length].replace(' won or lost by ',' finished with a margin of ');
   const last=management.paragraphs.length-1;
   if(last>=0)management.paragraphs[last]+=' '+commentary;
   else management.paragraphs=[commentary];

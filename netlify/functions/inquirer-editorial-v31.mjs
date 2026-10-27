@@ -4718,6 +4718,33 @@ function assertWeek2Originality(result,previousEdition){
     overview.hot_takes=(overview.hot_takes||[]).map(h=>
       /division board/i.test(String(h.title||''))?h:{...h,take:strip(h.take||'')});
   }
+  // Last writer wins: future-week prose is sometimes reintroduced after
+  // cross-team collision repair. Compare the actual closing paragraphs
+  // after every other pass and replace a duplicate only with verified
+  // opponent, score and roster-leader reporting.
+  if(week>=5){
+    const seenOutlooks=new Map();
+    for(const t of teams){
+      const article=t.inquirer_article,outlook=article?.sections?.find(s=>s.kind==='outlook');
+      if(!outlook?.paragraphs?.length)continue;
+      const index=outlook.paragraphs.length-1,closing=String(outlook.paragraphs[index]||'');
+      const entities=forwardEntities({teams});
+      const words=forwardNormSentence(closing,entities).replace(/\\[(?:entity|#)\\]/gi,'#').replace(/[^a-z#]+/g,' ').trim().split(/\\s+/);
+      const key=words.slice(-11).join(' ');
+      if(key.split(' ').length<9)continue;
+      if(seenOutlooks.has(key)){
+        const rosterLead=(t.starter_details||[]).filter(p=>p?.name&&Number.isFinite(Number(p.points)))
+          .sort((a,b)=>Number(b.points)-Number(a.points))[0];
+        if(rosterLead){
+          const opponent=String(t.next_opponent_name||'the next opponent');
+          outlook.paragraphs[index]=rosterLead.name+' scored '+Number(rosterLead.points).toFixed(1)+
+            ' for '+t.team_name+' this week. Against '+opponent+', the relevant question is whether '+
+            rosterLead.name+' has enough help after the '+Number(t.points||0).toFixed(1)+'-point lineup result.';
+          article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);
+        }
+      }else seenOutlooks.set(key,t.team_name);
+    }
+  }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 

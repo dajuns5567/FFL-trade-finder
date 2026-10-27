@@ -257,3 +257,28 @@ test('fan sentiment uses performance-based absurd fan behavior instead of index 
  assert.match(copy,/points/);
  assert.doesNotMatch(copy,/index sits at|sentiment reading|sentiment scale|modeled points against the prior index/i);
 });
+
+test('final depth recovery attributes orphan running lines only to a matching verified starter',()=>{
+ const t=makeStory(1);
+ const players=t.inquirer_article.sections.find(s=>s.kind==='players');
+ players.paragraphs=['16 carries for 92 yards, 1 rushing touchdown, 4 catches on 5 targets for 33 yards.'];
+ restoreForwardArticleDepth(t,5);
+ assert.match(players.paragraphs.join(' '),/Top Runner recorded 16 carries for 92 yards/);
+ assert.deepEqual(t.inquirer_article.paragraphs,t.inquirer_article.sections.flatMap(s=>s.paragraphs));
+ const unknown=makeStory(2);
+ unknown.inquirer_article.sections.find(s=>s.kind==='players').paragraphs=['29 carries for 77 yards.'];
+ restoreForwardArticleDepth(unknown,5);
+ assert.match(unknown.inquirer_article.sections.find(s=>s.kind==='players').paragraphs.join(' '),/29 carries for 77 yards/);
+ assert.doesNotMatch(unknown.inquirer_article.sections.find(s=>s.kind==='players').paragraphs.join(' '),/Top Runner recorded 29/);
+});
+
+test('late valuation recovery incorporates verified previous mark and player evidence',()=>{
+ const t=makeStory(3);
+ t.value_history_week={value:50555,delta:6};
+ t.inquirer_article.sections.find(s=>s.kind==='value').paragraphs=[];
+ restoreForwardArticleDepth(t,5);
+ const value=t.inquirer_article.sections.find(s=>s.kind==='value').paragraphs.join(' ');
+ assert.match(value,/50,555/);
+ assert.match(value,/Top Runner|Away Club 3/);
+ assert.doesNotMatch(value,/market observation, not evidence|answer different questions about the same roster/i);
+});

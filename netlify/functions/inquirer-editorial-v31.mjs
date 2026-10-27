@@ -4831,12 +4831,31 @@ function assertWeek2Originality(result,previousEdition){
   }
   // The last outlook rewrite must not bypass team-name subject agreement.
   // Apply the same finishing grammar to the complete final newspaper copy.
-  if(week>=5)for(const t of teams){
-    const article=t.inquirer_article;
-    if(!article?.sections)continue;
-    for(const section of article.sections)
-      section.paragraphs=(section.paragraphs||[]).map(finishGrammar);
-    article.paragraphs=article.sections.flatMap(section=>section.paragraphs||[]);
+  if(week>=5){
+    for(const t of teams){
+      const article=t.inquirer_article;
+      if(!article?.sections)continue;
+      article.headline=finishGrammar(article.headline);
+      for(const section of article.sections){
+        section.heading=finishGrammar(section.heading);
+        section.paragraphs=(section.paragraphs||[]).map(finishGrammar);
+      }
+      article.paragraphs=article.sections.flatMap(section=>section.paragraphs||[]);
+    }
+    for(const section of overview.sections||[]){
+      section.heading=finishGrammar(section.heading);
+      if(section.blocks?.length){
+        for(const block of section.blocks){
+          block.heading=finishGrammar(block.heading);
+          block.paragraphs=(block.paragraphs||[]).map(finishGrammar);
+        }
+        section.paragraphs=section.blocks.flatMap(block=>block.paragraphs||[]);
+      }else section.paragraphs=(section.paragraphs||[]).map(finishGrammar);
+    }
+    for(const take of overview.hot_takes||[]){
+      take.title=finishGrammar(take.title);
+      take.take=finishGrammar(take.take);
+    }
   }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }

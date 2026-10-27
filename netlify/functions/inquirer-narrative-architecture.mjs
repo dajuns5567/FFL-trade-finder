@@ -315,7 +315,7 @@ export function restoreForwardArticleDepth(t,week){
   const followThroughOptions=matchupWon?[
    'The win margin measured '+one(margin)+'; the recorded reserve advantage was '+one(benchGap)+'.',
    'The final score still favors '+team+', regardless of the '+one(benchGap)+' points left on the bench.',
-   'A '+one(benchGap)+'-point replacement would have changed the total, not the winning club.',
+   'Reserve math: '+one(benchGap)+' additional points; the winner remains '+team+'.',
    'The lineup won despite a documented '+one(benchGap)+'-point alternative.',
    'Its '+one(margin)+'-point winning spread remains intact in the alternate calculation.',
    'A reserve gained '+one(benchGap)+' over a selected starter; the result stays a victory.',

@@ -293,11 +293,20 @@ export function restoreForwardArticleDepth(t,week){
  const management=desk('management');
  if(management&&deskSize('management')<25&&missed.starter?.name&&missed.reserve?.name&&Number.isFinite(benchGap)&&benchGap>0&&Number.isFinite(margin)){
   const verdict=matchupWon?'did not change a winning result':benchGap>margin?'was large enough to have changed the losing result':'would not alone have erased the losing margin';
+  const starter=String(missed.starter.name),reserve=String(missed.reserve.name);
+  const outcome=matchupWon?'the win stands regardless':benchGap>margin?
+   'that gap was larger than the losing spread':'that gap was too small to turn the loss into a victory';
+  // Facts are shared, but this desk should examine a specific selection,
+  // rather than inject the same bench-result sermon in eight franchises.
   const contexts=[
-   team+' finished '+(matchupWon?'ahead':'behind')+' by '+one(margin)+' points. The unused '+one(benchGap)+'-point reserve advantage '+(matchupWon?'did not affect the recorded win.':benchGap>margin?'exceeded the loss margin.':'fell short of the losing margin.'),
-   'For '+team+', the '+one(benchGap)+'-point alternative '+verdict+' against a '+one(margin)+'-point final margin. That is the precise size of the decision, not a license to blame every starter.',
-   (matchupWon?team+' still won '+one(t.points)+' to '+one(t.opponent_points)+'. The bench choice did not decide it.':benchGap>margin?team+' lost by '+one(margin)+' despite leaving '+one(benchGap)+' points available from the documented reserve choice. That swing was larger than the defeat.':team+' lost by '+one(margin)+'; the reserve swap offered '+one(benchGap)+' additional points against a '+one(margin)+'-point deficit, insufficient to change the winner.') ,
-   team+' left '+one(benchGap)+' possible points in this documented swap while the final spread measured '+one(margin)+'. The difference '+verdict+'; the manager now has a concrete selection question.'
+   starter+' started while '+reserve+' offered '+one(benchGap)+' more points. With a '+one(margin)+'-point margin, '+outcome+'.',
+   'The actionable decision concerns '+starter+' and '+reserve+': their recorded scoring difference was '+one(benchGap)+'. '+team+' finished '+one(margin)+' points '+(matchupWon?'ahead':'behind')+'.',
+   'A swap from '+starter+' to '+reserve+' changes the documented total by '+one(benchGap)+'. For '+team+', '+outcome+'.',
+   team+' had '+reserve+' available behind '+starter+'. The '+one(benchGap)+'-point advantage matters against a '+one(margin)+'-point final spread, even without inventing the manager’s reasoning.',
+   'The reserve option '+reserve+' outscored '+starter+' by '+one(benchGap)+'. The scoreboard margin was '+one(margin)+'; '+outcome+'.',
+   'Selection audit for '+team+': '+starter+' played, '+reserve+' was available, and the gap measured '+one(benchGap)+'. The game ended '+one(margin)+' points apart.',
+   'The lineup included '+starter+' rather than '+reserve+'. '+one(benchGap)+' potential points did not enter the total, compared with a '+one(margin)+'-point matchup decision.',
+   'The alternate '+reserve+' offered '+one(benchGap)+' over '+starter+'. After a '+one(margin)+'-point '+(matchupWon?'win':'loss')+', that is the actual size of the coaching question.'
   ];
   const commentary=contexts[rosterSlot%contexts.length].replace(' won or lost by ',' finished with a margin of ');
   const last=management.paragraphs.length-1;

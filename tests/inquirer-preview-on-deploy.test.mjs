@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {startPreviewDraftForDeploy} from '../netlify/functions/inquirer-preview-on-deploy.mjs';
+import {startPreviewDraftForDeploy,findFirstMissingInquirerWeek} from '../netlify/functions/inquirer-preview-on-deploy.mjs';
 
 const previewUrl='https://deploy-preview-402--brilliant-faun-c5b649.netlify.app';
 
@@ -54,4 +54,30 @@ test('a permanent background enqueue failure cannot silently claim success',asyn
   startPreviewDraftForDeploy({deploy:{context:'deploy-preview',sslUrl:previewUrl}},async()=>new Response('Unavailable',{status:403})),
   /Could not enqueue isolated Inquirer preview background job: HTTP 403/
  );
+});
+
+test('PR 402 deploy worker targets the earliest missing archived Week 5',async()=>{
+ const url='https://deploy-preview-402--transcendent-manatee-2f0123.netlify.app';
+ const calls=[];
+ const started=await startPreviewDraftForDeploy({deploy:{context:'deploy-preview',sslUrl:url}},async req=>{
+  calls.push(req.url);return new Response(null,{status:202});
+ },async()=>5);
+ assert.equal(started,true);
+ assert.deepEqual(calls,[url+'/.netlify/functions/inquirer-preview-background?start=1&preview_week=5']);
+});
+
+test('archive continuity moves private generation forward only after Week 5 is locked',async()=>{
+ const url='https://deploy-preview-402--transcendent-manatee-2f0123.netlify.app';
+ const urls=[];
+ const read=async input=>{
+  const u=String(input);urls.push(u);
+  if(u.includes('/state/nfl'))return new Response(JSON.stringify({season:2026,week:7}),{status:200});
+  if(u.includes('broadcast_week=5'))return new Response(JSON.stringify({
+   available:true,published_locked:true,season:2026,week:5
+  }),{status:200});
+  if(u.includes('broadcast_week=6'))return new Response(JSON.stringify({error:'broadcast not found'}),{status:200});
+  throw Error('Unexpected archive URL: '+u);
+ };
+ assert.equal(await findFirstMissingInquirerWeek(new URL(url),read),6);
+ assert.equal(urls.length,3);
 });

@@ -4821,7 +4821,7 @@ function assertWeek2Originality(result,previousEdition){
             opponent+' is next for '+t.team_name+'. Its latest '+score+'-point lineup depended on '+star+' from '+rosterLead.name+'.',
             'Week '+week+' gave '+t.team_name+' '+score+' points, including '+star+' by '+rosterLead.name+'. Next on the schedule: '+opponent+'.',
             rosterLead.name+' headed the '+t.team_name+' scoresheet with '+star+'. The next assignment against '+opponent+' follows a '+score+'-point week.',
-            'Next on '+t.team_name+'’s schedule: '+opponent+'. The previous game’s leading scorer was '+rosterLead.name+' with '+star+' fantasy points.'
+            'Schedule check for '+t.team_name+': '+opponent+' awaits. '+rosterLead.name+' delivered '+star+' of the latest '+score+' team points.'
           ];
           outlook.paragraphs[index]=finishGrammar(evidence[(rid+variationSalt)%evidence.length]);
           article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);

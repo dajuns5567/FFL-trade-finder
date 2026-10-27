@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=57;
+export const FORWARD_EDITORIAL_REVISION=58;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -4878,6 +4878,13 @@ function assertWeek2Originality(result,previousEdition){
     for(const t of teams){
       const article=t.inquirer_article;
       if(!article?.sections)continue;
+      // Week 2's anonymous "second scorer" shorthand has no place in a
+      // sourced forward edition; drop the orphan clause, not its real stats.
+      for(const section of article.sections){
+        section.paragraphs=(section.paragraphs||[]).map(paragraph=>
+          forwardSentenceParts(paragraph).filter(sentence=>!/(?:made this Sunday harder to mock|the top rival target|the second scorer)/i.test(sentence)).join(' ')
+        ).filter(Boolean);
+      }
       article.headline=finishGrammar(article.headline);
       for(const section of article.sections){
         section.heading=finishGrammar(section.heading);

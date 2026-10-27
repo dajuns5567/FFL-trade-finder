@@ -282,3 +282,12 @@ test('late valuation recovery incorporates verified previous mark and player evi
  assert.match(value,/Top Runner|Away Club 3/);
  assert.doesNotMatch(value,/market observation, not evidence|answer different questions about the same roster/i);
 });
+
+test('unattributed source-stat fragments cannot be published as analysis',()=>{
+ const teams=Array.from({length:32},(_,i)=>makeStory(i+1));
+ teams[0].inquirer_article.sections.find(s=>s.kind==='players').paragraphs=
+  ['16 carries for 92 yards, 1 rushing touchdown.'];
+ teams[0].inquirer_article.paragraphs=teams[0].inquirer_article.sections.flatMap(s=>s.paragraphs);
+ const found=inspectNarrativeArchitecture({season:2026,week:5,teams});
+ assert(found.some(i=>i.id==='unattributed-player-stat-fragment'&&i.team===teams[0].team_name));
+});

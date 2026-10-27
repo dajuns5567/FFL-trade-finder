@@ -378,7 +378,7 @@ export function restoreForwardArticleDepth(t,week){
   const groundedReads=[
    lead?.name+' supplied '+one(lead?.points)+' of the '+one(t.points)+' lineup points against '+opponent+'.',
    'Against '+opponent+', '+lead?.name+' paced the club on '+one(lead?.points)+' fantasy points.',
-   'In the '+team+' matchup with '+opponent+', '+lead?.name+' had '+one(lead?.points)+' points. The other starters contributed '+one(Number(t.points)-Number(lead?.points))+'.',
+   'On the scoring card: '+lead?.name+', '+one(lead?.points)+'; remaining lineup, '+one(Number(t.points)-Number(lead?.points))+'; team total, '+one(t.points)+'.',
    lead?.name+' contributed '+one(lead?.points)+' points in the '+team+' matchup with '+opponent+'.'
   ];
   const marketRead=marketReads[rosterSlot%marketReads.length];

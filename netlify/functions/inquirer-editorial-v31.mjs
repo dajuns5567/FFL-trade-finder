@@ -4962,6 +4962,17 @@ export function evaluateInquirerEditionQuality(current,previous=null){
   for(const [phrase,owners] of forwardCrossTeamClauseOffenders(teams,entities))issues.push({id:'cross-team-clause-scaffold',phrase,teams:owners});
   for(const [phrase,owners] of forwardPairedNarrativeOffenders(teams,entities))issues.push({id:'paired-editorial-clause-scaffold',phrase,teams:owners});
 
+  if(Number(current?.week)>=5){
+    const deck=String(current?.league_overview?.deck||'');
+    if(/gets its own newspaper: new games/i.test(deck))
+      issues.push({id:'recap-recycled-general-purpose-deck'});
+    if(previous?.league_overview?.deck){
+      const prior=forwardNormSentence(previous.league_overview.deck,entities);
+      const now=forwardNormSentence(deck,entities);
+      const tail=value=>value.split(/\s+/).slice(-12).join(' ');
+      if(tail(prior)===tail(now))issues.push({id:'recap-cross-week-deck-reuse'});
+    }
+  }
   if(previous){
     const pset=new Set(forwardRecapSentences(previous).map(s=>forwardNormSentence(s,entities))),curr=forwardRecapSentences(current).map(s=>forwardNormSentence(s,entities)),overlap=curr.filter(n=>pset.has(n));
     if(overlap.length>=4)issues.push({id:'recap-copy-forward',overlap:overlap.length,examples:overlap.slice(0,8)});

@@ -382,7 +382,7 @@ export function restoreForwardArticleDepth(t,week){
    lead?.name+' contributed '+one(lead?.points)+' points in the '+team+' matchup with '+opponent+'.'
   ];
   const marketRead=marketReads[rosterSlot%marketReads.length];
-  const performanceRead=lead?.name?groundedReads[Math.floor(rosterSlot/8)%4]:
+  const performanceRead=lead?.name?groundedReads[rosterSlot%groundedReads.length]:
    team+' scored '+one(t.points)+' fantasy points against '+opponent+'.';
   vdesk.paragraphs.push(marketRead+' '+performanceRead);
  }

@@ -378,8 +378,20 @@ export function restoreForwardArticleDepth(t,week){
   const groundedReads=[
    lead?.name+' supplied '+one(lead?.points)+' of the '+one(t.points)+' lineup points against '+opponent+'.',
    'Against '+opponent+', '+lead?.name+' paced the club on '+one(lead?.points)+' fantasy points.',
-   'On the scoring card: '+lead?.name+', '+one(lead?.points)+'; remaining lineup, '+one(Number(t.points)-Number(lead?.points))+'; team total, '+one(t.points)+'.',
-   lead?.name+' contributed '+one(lead?.points)+' points in the '+team+' matchup with '+opponent+'.'
+   'The remaining lineup supplied '+one(Number(t.points)-Number(lead?.points))+' beyond '+lead?.name+' and '+one(lead?.points)+'.',
+   lead?.name+' contributed '+one(lead?.points)+' points in the '+team+' matchup with '+opponent+'.',
+   'The top-scoring starter was '+lead?.name+' ('+one(lead?.points))+') in a '+one(t.points)+'-point week.',
+   'Team production reached '+one(t.points)+'; '+lead?.name+' made up '+one(lead?.points)+' of the total.',
+   'Against '+opponent+' the standout individual figure belonged to '+lead?.name+': '+one(lead?.points)+'.',
+   one(lead?.points)+' points came from '+lead?.name+', with '+one(Number(t.points)-Number(lead?.points))+' recorded elsewhere.',
+   'Among documented starters, '+lead?.name+' led the '+team+' totals at '+one(lead?.points)+'.',
+   'The '+one(t.points)+' total reflects '+one(lead?.points)+' from leading starter '+lead?.name+'.',
+   'Top contributor '+lead?.name+' registered '+one(lead?.points)+' versus '+opponent+' in this edition.',
+   'Measured against the '+one(t.points)+' club score, '+lead?.name+' added '+one(lead?.points)+'.',
+   'Individual leader: '+lead?.name+' at '+one(lead?.points)+'; recorded opponent: '+opponent+'.',
+   'Of the '+one(t.points)+' overall points, '+one(lead?.points)+' belonged to '+lead?.name+'.',
+   'Highest verified starter production: '+lead?.name+', '+one(lead?.points)+' points for '+team+'.',
+   'The weekly scoring leader '+lead?.name+' finished at '+one(lead?.points)+' against '+opponent+'.'
   ];
   const marketRead=marketReads[rosterSlot%marketReads.length];
   const performanceRead=lead?.name?groundedReads[rosterSlot%groundedReads.length]:

@@ -4962,6 +4962,21 @@ export function evaluateInquirerEditionQuality(current,previous=null){
   for(const [phrase,owners] of forwardCrossTeamClauseOffenders(teams,entities))issues.push({id:'cross-team-clause-scaffold',phrase,teams:owners});
   for(const [phrase,owners] of forwardPairedNarrativeOffenders(teams,entities))issues.push({id:'paired-editorial-clause-scaffold',phrase,teams:owners});
 
+  // A two-team shared ending is still a copied ending, even when the
+  // general clause detector intentionally requires three teams.
+  if(Number(current?.week)>=5){
+    const endings=new Map();
+    for(const team of teams){
+      const last=(team.inquirer_article?.sections||[]).find(sec=>sec.kind==='outlook')?.paragraphs?.at(-1);
+      if(!last)continue;
+      const key=forwardNormSentence(last,entities).replace(/\[(?:entity|#)\]/gi,'#')
+        .replace(/[^a-z#]+/g,' ').trim().split(/\s+/).slice(-11).join(' ');
+      if(key.split(' ').length<9)continue;
+      const owners=endings.get(key)||[];owners.push(team.team_name);endings.set(key,owners);
+    }
+    for(const [ending,owners] of endings)if(owners.length>1)
+      issues.push({id:'repeated-outlook-endings',teams:owners,ending});
+  }
   if(Number(current?.week)>=5){
     const deck=String(current?.league_overview?.deck||'');
     if(/gets its own newspaper: new games/i.test(deck))

@@ -428,6 +428,13 @@ export function inspectNarrativeArchitecture(edition){
   const lede=kind('lede')?.paragraphs||[],mgmt=kind('management')?.paragraphs||[];
   for(const desk of ['hot-seat','cool-throne'])if(!(kind(desk)?.paragraphs||[]).length)
     issues.push({id:'week4-essential-desk-empty',team,desk});
+  // A numerical fragment with no player attribution is not an article.
+  // The factual repair can label a line only from a unique raw stat match;
+  // if it cannot, publication must hold rather than invent a name.
+  for(const line of kind('players')?.paragraphs||[]){
+    if(/^\d+ carries for \d+ yards(?=[,. ]|$)/.test(String(line||'')))
+      issues.push({id:'unattributed-player-stat-fragment',team,excerpt:String(line).slice(0,150)});
+  }
   const headline=text(a.headline),all=(a.paragraphs||[]).join(' ');
   if(/s$/i.test(team)&&all.includes(team+"'s"))
     issues.push({id:'plural-team-possessive',team});

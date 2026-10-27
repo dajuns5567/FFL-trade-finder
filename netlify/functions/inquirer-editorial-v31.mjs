@@ -4718,6 +4718,64 @@ function assertWeek2Originality(result,previousEdition){
     overview.hot_takes=(overview.hot_takes||[]).map(h=>
       /division board/i.test(String(h.title||''))?h:{...h,take:strip(h.take||'')});
   }
+  // The six recap beats must have Week-4-caliber reporting depth. The
+  // preceding rewrite selects lead games, but it can leave decisions and
+  // league analysis as two thin paragraphs. Complete those beats with
+  // additional independent, verified roster and league evidence.
+  if(week>=5){
+    const feature=(overview.sections||[]).find(s=>(s.blocks||[]).some(b=>b.kind==='lead'));
+    const target=kind=>(feature?.blocks||[]).find(b=>b.kind===kind);
+    const decisions=target('decisions'),league=target('league'),standings=target('standings');
+    if(decisions&&decisions.paragraphs?.length<4){
+      const already=decisions.paragraphs.join(' ');
+      const misses=teams.filter(t=>t.best_lineup_miss?.starter?.name&&t.best_lineup_miss?.reserve?.name&&
+        Number.isFinite(Number(t.best_lineup_miss.gap))&&Number(t.best_lineup_miss.gap)>0)
+        .sort((a,b)=>Number(b.best_lineup_miss.gap)-Number(a.best_lineup_miss.gap));
+      for(const t of misses){
+        if(decisions.paragraphs.length>=4)break;
+        const m=t.best_lineup_miss;
+        if(already.includes(t.team_name)||decisions.paragraphs.some(p=>p.includes(t.team_name)))continue;
+        const gap=Number(m.gap),margin=Math.abs(Number(t.points)-Number(t.opponent_points));
+        if(!Number.isFinite(margin))continue;
+        const outcome=Number(t.points)>Number(t.opponent_points)?'won':'lost';
+        decisions.paragraphs.push(t.team_name+' '+outcome+' by '+w2One(margin)+
+          ' against '+String(t.opponent_name||'its opponent')+'. '+m.reserve.name+
+          ' outscored the selected '+m.starter.name+' by '+w2One(gap)+
+          ' on the documented lineup comparison; '+(outcome==='lost'&&gap>margin?
+            'the gap exceeded the losing margin.':'that is the measurable selection cost, not a claim that the manager could predict it.'));
+      }
+    }
+    if(league&&league.paragraphs?.length<4){
+      const scored=teams.filter(t=>Number.isFinite(Number(t.points))&&Number(t.points)>=0)
+        .slice().sort((a,b)=>Number(b.points)-Number(a.points));
+      const high=scored[0],low=scored.at(-1);
+      if(high&&low&&high.roster_id!==low.roster_id)
+        league.paragraphs.push('The range across recorded lineups ran from '+
+          String(high.team_name)+' at '+w2One(high.points)+' to '+
+          String(low.team_name)+' at '+w2One(low.points)+
+          '. The '+w2One(Number(high.points)-Number(low.points))+
+          '-point spread is why the same week can look like a breakthrough in one locker room and an emergency in another.');
+      const close=w2Games(teams).slice().sort((a,b)=>a.margin-b.margin)[0];
+      if(close&&league.paragraphs.length<4){
+        league.paragraphs.push('At the other end of the suspense scale, '+
+          String(close.winner.team_name)+' edged '+String(close.loser.team_name)+
+          ' by '+w2One(close.margin)+
+          '. That is a narrower decision than the league-wide scoring extremes, and the two standings results count equally.');
+      }
+    }
+    if(standings&&standings.paragraphs?.length<3){
+      const ranked=teams.filter(t=>Number.isFinite(Number(t.league_context?.standings_rank)))
+        .sort((a,b)=>Number(a.league_context.standings_rank)-Number(b.league_context.standings_rank));
+      if(ranked.length>=18){
+        const a=ranked[15],b=ranked[16];
+        standings.paragraphs.push('The middle of the table is hardly settled: '+
+          a.team_name+' holds No. '+a.league_context.standings_rank+
+          ', while '+b.team_name+' sits No. '+b.league_context.standings_rank+
+          '. Neither club can borrow the leaders’ cushion for the next matchup.');
+      }
+    }
+    if(feature?.blocks?.length)feature.paragraphs=feature.blocks.flatMap(b=>b.paragraphs||[]);
+  }
   // Last writer wins: future-week prose is sometimes reintroduced after
   // cross-team collision repair. Compare the actual closing paragraphs
   // after every other pass and replace a duplicate only with verified

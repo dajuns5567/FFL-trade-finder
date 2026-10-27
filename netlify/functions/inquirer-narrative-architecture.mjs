@@ -296,7 +296,7 @@ export function restoreForwardArticleDepth(t,week){
   const contexts=[
    team+' finished '+(matchupWon?'ahead':'behind')+' by '+one(margin)+' points. The unused '+one(benchGap)+'-point reserve advantage '+(matchupWon?'did not affect the recorded win.':benchGap>margin?'exceeded the loss margin.':'fell short of the losing margin.'),
    'For '+team+', the '+one(benchGap)+'-point alternative '+verdict+' against a '+one(margin)+'-point final margin. That is the precise size of the decision, not a license to blame every starter.',
-   (matchupWon?team+' still won '+one(t.points)+' to '+one(t.opponent_points)+'. The bench choice did not decide it.':benchGap>margin?team+' lost by '+one(margin)+' despite leaving '+one(benchGap)+' points available from the documented reserve choice. That swing was larger than the defeat.':team+' lost by '+one(margin)+'; the '+one(benchGap)+'-point reserve edge would have narrowed the deficit but could not by itself have reversed the result.') ,
+   (matchupWon?team+' still won '+one(t.points)+' to '+one(t.opponent_points)+'. The bench choice did not decide it.':benchGap>margin?team+' lost by '+one(margin)+' despite leaving '+one(benchGap)+' points available from the documented reserve choice. That swing was larger than the defeat.':team+' lost by '+one(margin)+'; the reserve swap offered '+one(benchGap)+' additional points against a '+one(margin)+'-point deficit, insufficient to change the winner.') ,
    team+' left '+one(benchGap)+' possible points in this documented swap while the final spread measured '+one(margin)+'. The difference '+verdict+'; the manager now has a concrete selection question.'
   ];
   const commentary=contexts[rosterSlot%contexts.length].replace(' won or lost by ',' finished with a margin of ');

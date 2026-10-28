@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=63;
+export const FORWARD_EDITORIAL_REVISION=64;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -3085,7 +3085,7 @@ function w2PreviousWeekBridge(t,r,prev,prevWon,won,prevOpp,prevScore){
       "The previous result against "+foe+" was "+score+" for "+team+". "+playerLead+" gives this week's score a fresh point of comparison.",
       team+" left the opener with a "+score+" "+(prevWon?"win over ":"loss to ")+foe+". Another Sunday means another piece of evidence and, thankfully, a different argument.",
       "A week earlier "+team+" posted "+score+" against "+foe+". "+playerLead+" gives the new angle.",
-      "Against "+foe+", "+team+" previously posted "+score+". "+playerLead+" puts the previous score in perspective without repeating it."
+      "Against "+foe+", "+team+" previously posted "+score+". "+playerLead+" now gives "+team+" a different score to explain."
     ],
     "nora-voss":[
       "Rivals already had "+team+"'s "+score+" result against "+foe+" in the chat. "+((t.starter_details||[])[0]?.name||team)+" gets the fresh headline.",

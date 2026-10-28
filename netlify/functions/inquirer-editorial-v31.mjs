@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=60;
+export const FORWARD_EDITORIAL_REVISION=61;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -4916,7 +4916,7 @@ function assertWeek2Originality(result,previousEdition){
   // Final outlook uniqueness is checked after the last grammar rewrite.
   if(week>=5){
     const entities=forwardEntities({teams}),seen=new Set();
-    const keyOf=x=>forwardNormSentence(x,entities).replace(/\\[(?:entity|#)\\]/gi,'#').replace(/[^a-z#]+/g,' ').trim().split(/\\s+/).slice(-11).join(' ');
+    const keyOf=x=>forwardNormSentence(x,entities).replace(/\[(?:entity|#)\]/gi,'#').replace(/[^a-z#]+/g,' ').trim().split(/\s+/).slice(-11).join(' ');
     for(const team of teams){
       const article=team.inquirer_article;
       const section=article?.sections?.find(x=>x.kind==='outlook');
@@ -4930,7 +4930,7 @@ function assertWeek2Originality(result,previousEdition){
       const endings=['The coming matchup will test that performance.','The next lineup will be measured against this result.','That production is the current standard.','The schedule supplies the next comparison.'];
       let replacement;
       for(const ending of endings)for(let j=0;j<facts.length;j++){
-        const candidate=finishGrammar([facts[j],ending,...facts.filter((_,k)=>k!==j)].join(' '));
+        const candidate=finishGrammar([facts[j],...facts.filter((_,k)=>k!==j),ending].join(' '));
         if(!seen.has(keyOf(candidate))){replacement=candidate;break;}
       }
       if(replacement){section.paragraphs[at]=replacement;seen.add(keyOf(replacement));article.paragraphs=article.sections.flatMap(x=>x.paragraphs||[]);}

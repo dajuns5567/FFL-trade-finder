@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=67;
+export const FORWARD_EDITORIAL_REVISION=68;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -1667,7 +1667,7 @@ function w2DivisionRead(t,r,divisionPeerLine,selfLead,otherLeaders){
     (lead?t.team_name+" is tied atop "+div+" with "+w2Natural(otherLeaders.map(x=>x.team_name))+". ":"The "+div+" race around "+t.team_name+" is already compressed. ")+(peers?"The rivals are "+peers+"; one Sunday can reorder the whole group.":"One Sunday can reorder the group."),
     (lead?"At the top of "+div+", "+leadNames+" are tied. ":"The "+a.mascot+" enter Week 3 with division leverage still available. ")+(peers?"Behind and around them are "+peers+", so every clean result carries immediate value.":"Every clean result carries immediate value."),
     (lead?leadNames+" are tied for first in "+div+". ":"Nobody around "+t.team_name+" has made "+div+" comfortable yet. ")+(peers?a.mascot+" share "+div+" with "+peers+". Next comes the test.":"Week 3 gets first crack at breaking the cluster."),
-    (lead?"First place in "+div+" has "+leadNames+" tied. ":"The "+div+" table gives "+a.mascot+" no reason to coast. ")+(peers?"For the "+a.mascot+", the other division names are "+peers+"; the "+div+" next divisional game offers no guarantees.":"The next result is part of the race."),
+    (lead?"First place in "+div+" has "+leadNames+" tied. ":"The "+div+" table gives "+a.mascot+" no reason to coast. ")+(peers?"For the "+a.mascot+", division picture still includes "+peers+".":"The next result is part of the race."),
     (lead?t.team_name+" enters Week 3 level for the "+div+" lead with "+w2Natural(otherLeaders.map(x=>x.team_name))+". ":"The "+div+" picture has "+t.team_name+" in the middle of a live race. ")+(peers?"The division includes "+peers+". "+a.mascot+" need this one.":"That is enough context to make Week 3 matter immediately.")
   ];
   return rows[k];
@@ -3083,7 +3083,7 @@ function w2PreviousWeekBridge(t,r,prev,prevWon,won,prevOpp,prevScore){
     ],
     "mack-hollis":[
       team+" left the opener with a "+score+" "+(prevWon?"win over ":"loss to ")+foe+". Another Sunday means another piece of evidence and, thankfully, a different argument.",
-      "A week earlier "+team+" posted "+score+" against "+foe+". "+playerLead+" gives the new angle."
+      team+" entered this matchup carrying the "+score+" result against "+foe+"."
     ],
     "nora-voss":[
       "Rivals already had "+team+"'s "+score+" result against "+foe+" in the chat. "+((t.starter_details||[])[0]?.name||team)+" gets the fresh headline.",
@@ -4479,6 +4479,7 @@ function assertWeek2Originality(result,previousEdition){
     ?String(s).replace(/\b(?:The margin asks more|The box score settles this|Back-page material|Follow the scoring|Spare me the excuses|Sunday left a clue|Look at the personnel|No fine print):\s*/gi,'')
     :String(s))
     .replace(/\bThe margin asks more:\s*/gi,'')
+    .replace(/\b1 receptions on 1 targets\b/gi,'1 reception on 1 target')
     .replace(/\ban (?=9(?:\.\d+)?-point\b)/gi,'a ')
     .replace(/\ba (?=8(?:\.\d+)?-point\b)/gi,'an '))
     .replace(/(?:this round of games|these games|games)\u2019s/gi,'this week\u2019s')

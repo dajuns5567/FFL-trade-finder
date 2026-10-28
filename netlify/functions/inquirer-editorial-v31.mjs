@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=65;
+export const FORWARD_EDITORIAL_REVISION=66;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -3104,7 +3104,7 @@ function w2PreviousWeekBridge(t,r,prev,prevWon,won,prevOpp,prevScore){
       "Rivals already saw "+team+"'s "+score+" against "+foe+". "+((t.starter_details||[])[0]?.name||team)+" now gives them a different argument."
     ]
   };
-  const bank=banks[rid]||banks["walter-mercer"],chosen=bank[v],cut=chosen.indexOf(". ");
+  const bank=banks[rid]||banks["walter-mercer"],chosen=bank[v%bank.length],cut=chosen.indexOf(". ");
   return cut>=0?chosen.slice(0,cut)+"; "+chosen.slice(cut+2,cut+3).toLowerCase()+chosen.slice(cut+3):chosen
 }
 

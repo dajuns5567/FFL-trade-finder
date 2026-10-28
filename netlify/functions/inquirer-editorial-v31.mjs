@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=62;
+export const FORWARD_EDITORIAL_REVISION=63;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -4025,7 +4025,9 @@ function assertWeek2Originality(result,previousEdition){
       return copy.replace(/\bthis round of games['’]s\b/gi,"this week's")
         .replace(/\ba ([89](?:\.\d+)?-point)\b/gi,'an $1')
         .replace(/\bthis round of games’s\b/gi,'this week’s')
-        .replace(/\b(The radio station covering [^.?!]{4,85}?) have declared\b/gi,'$1 has declared')
+        .replace(/\b1 receptions on 1 targets\b/gi,'1 reception on 1 target')
+    .replace(/\bThe task against ([A-Za-z][^.?!]{3,85}?) are to\b/g,'The task against $1 is to')
+    .replace(/\b(The radio station covering [^.?!]{4,85}?) have declared\b/gi,'$1 has declared')
         .replace(/\b(The (?:AFC|NFC) (?:EAST|WEST|NORTH|SOUTH) race around [^.?!]{4,85}?) are already compressed\b/gi,'$1 is already compressed');
     };
     for(const s of overview.sections||[]){

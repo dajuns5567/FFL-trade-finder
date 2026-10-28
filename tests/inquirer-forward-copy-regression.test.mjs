@@ -9,7 +9,7 @@ test('revision 62 keeps reviewed Week 5 recycled prose out of source templates',
   'be read aloud before the mock hearing begins',
   'needing a specific plan for ',
   'schedule offers no free results',
-  'The task against '+String.fromCharCode(39)+'+next+''+' is to make that contribution less lonely'
+  'is to make that contribution less lonely'
  ])assert.equal(source.includes(phrase),false,'recycled narrative scaffold: '+phrase);
 });
 test('a modest projected gap is not called heavily favored',()=>{

@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=59;
+export const FORWARD_EDITORIAL_REVISION=60;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -4911,6 +4911,29 @@ function assertWeek2Originality(result,previousEdition){
     for(const take of overview.hot_takes||[]){
       take.title=finishGrammar(take.title);
       take.take=finishGrammar(take.take);
+    }
+  }
+  // Final outlook uniqueness is checked after the last grammar rewrite.
+  if(week>=5){
+    const entities=forwardEntities({teams}),seen=new Set();
+    const keyOf=x=>forwardNormSentence(x,entities).replace(/\\[(?:entity|#)\\]/gi,'#').replace(/[^a-z#]+/g,' ').trim().split(/\\s+/).slice(-11).join(' ');
+    for(const team of teams){
+      const article=team.inquirer_article;
+      const section=article?.sections?.find(x=>x.kind==='outlook');
+      if(!section?.paragraphs?.length)continue;
+      const at=section.paragraphs.length-1,initial=keyOf(section.paragraphs[at]);
+      if(initial.split(' ').length<9)continue;
+      if(!seen.has(initial)){seen.add(initial);continue;}
+      const lead=(team.starter_details||[]).filter(x=>x?.name&&Number.isFinite(Number(x.points))).sort((a,b)=>Number(b.points)-Number(a.points))[0];
+      const score=Number(team.points);
+      const facts=[Number.isFinite(score)?team.team_name+' scored '+score.toFixed(1)+' points.':null,lead?lead.name+' supplied '+Number(lead.points).toFixed(1)+' starter points.':null,team.next_opponent_name?'The next opponent is '+team.next_opponent_name+'.':null].filter(Boolean);
+      const endings=['The coming matchup will test that performance.','The next lineup will be measured against this result.','That production is the current standard.','The schedule supplies the next comparison.'];
+      let replacement;
+      for(const ending of endings)for(let j=0;j<facts.length;j++){
+        const candidate=finishGrammar([facts[j],ending,...facts.filter((_,k)=>k!==j)].join(' '));
+        if(!seen.has(keyOf(candidate))){replacement=candidate;break;}
+      }
+      if(replacement){section.paragraphs[at]=replacement;seen.add(keyOf(replacement));article.paragraphs=article.sections.flatMap(x=>x.paragraphs||[]);}
     }
   }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};

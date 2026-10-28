@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=61;
+export const FORWARD_EDITORIAL_REVISION=62;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -1627,7 +1627,7 @@ function w2HotTrend(t,r,weak,weakPrev){
     "The arrow for "+weak.name+" points up from "+w2One(old)+" to "+w2One(cur)+". This time the change is large enough to deserve the arrow."
   ];
   const rowsDown=[
-    weak.name+" fell from "+w2One(old)+" in Week 1 to "+w2One(cur)+" in Week 2. The "+w2One(Math.abs(delta))+"-point reduction leaves "+t.team_name+" needing a specific plan for "+weak.name+" next Sunday.",
+    weak.name+" fell from "+w2One(old)+" in Week 1 to "+w2One(cur)+" in Week 2. The "+w2One(Math.abs(delta))+"-point reduction leaves "+t.team_name+" looking for a measurable response from "+weak.name+" next Sunday.",
     "The two-week line for "+weak.name+" went the wrong way: "+w2One(old)+" to "+w2One(cur)+". The rest of the lineup cannot keep absorbing that drop.",
     weak.name+" followed "+w2One(old)+" in the opener with "+w2One(cur)+" this week; the "+a.mascot+" now have a real downward trend to watch.",
     "For "+a.mascot+", Week 2 made the "+weak.name+" problem harder to dismiss after a better opener; panic is unnecessary, but "+w2One(cur)+" cannot be the answer again.",
@@ -1667,7 +1667,7 @@ function w2DivisionRead(t,r,divisionPeerLine,selfLead,otherLeaders){
     (lead?t.team_name+" is tied atop "+div+" with "+w2Natural(otherLeaders.map(x=>x.team_name))+". ":"The "+div+" race around "+t.team_name+" is already compressed. ")+(peers?"The rivals are "+peers+"; one Sunday can reorder the whole group.":"One Sunday can reorder the group."),
     (lead?"At the top of "+div+", "+leadNames+" are tied. ":"The "+a.mascot+" enter Week 3 with division leverage still available. ")+(peers?"Behind and around them are "+peers+", so every clean result carries immediate value.":"Every clean result carries immediate value."),
     (lead?leadNames+" are tied for first in "+div+". ":"Nobody around "+t.team_name+" has made "+div+" comfortable yet. ")+(peers?a.mascot+" share "+div+" with "+peers+". Next comes the test.":"Week 3 gets first crack at breaking the cluster."),
-    (lead?"First place in "+div+" has "+leadNames+" tied. ":"The "+div+" table gives "+a.mascot+" no reason to coast. ")+(peers?"For the "+a.mascot+", the other division names are "+peers+"; the "+div+" schedule offers no free results.":"The next result is part of the race."),
+    (lead?"First place in "+div+" has "+leadNames+" tied. ":"The "+div+" table gives "+a.mascot+" no reason to coast. ")+(peers?"For the "+a.mascot+", the other division names are "+peers+"; the "+div+" next divisional game offers no guarantees.":"The next result is part of the race."),
     (lead?t.team_name+" enters Week 3 level for the "+div+" lead with "+w2Natural(otherLeaders.map(x=>x.team_name))+". ":"The "+div+" picture has "+t.team_name+" in the middle of a live race. ")+(peers?"The division includes "+peers+". "+a.mascot+" need this one.":"That is enough context to make Week 3 matter immediately.")
   ];
   return rows[k];
@@ -2329,7 +2329,7 @@ function forwardFanScenes(t,won,week,variationSalt){
    ['At '+record+', '+name+' has a league position rather than a personality test. The scoreboard shows '+points+'.','The '+dangerPts+' from '+danger+' gives '+name+' a specific lineup question to resolve against '+next+'; '+danger+' needs a different answer than the scoreboard supplied.'],
    [star+' came through with '+starPts+' fantasy points for '+name+'. Compliments are free, but the number is earned.','The rest of the debate starts with '+danger+' at '+dangerPts+'. '+next+' is unlikely to hand out partial credit for good intentions.'],
    ['The line on '+name+' this week is '+points+' points against '+opponent+'. There is no appeals court for fantasy scores.','Supporters can debate the lineup all week; against '+next+' the only persuasive rebuttal will arrive in the scoring column.'],
-   ['There is a difference between being optimistic about '+name+' and ignoring '+danger+' at '+dangerPts+'. The latter is an expensive hobby.',star+' did bring '+starPts+' to the argument. The task against '+next+' is to make that contribution less lonely.'],
+   ['There is a difference between being optimistic about '+name+' and ignoring '+danger+' at '+dangerPts+'. The latter is an expensive hobby.',star+' did bring '+starPts+' to the argument. Against '+next+', the lineup needs another scorer to carry actual weight.'],
    ['For '+name+', the record reads '+record+' and the latest total reads '+points+'. Those figures have never responded to a motivational speech.','If the same starting decisions travel to '+next+', the manager had better be prepared to defend them with a new result.'],
    [star+' supplied '+starPts+' on a '+points+'-point Sunday for '+name+'. That is the sort of labor a headline can fairly reward.',danger+' added '+dangerPts+'. There is a reason '+next+' will study both parts of the lineup, not only the flattering one.'],
    ['The optimism around '+name+' is understandable only to the extent that '+points+' and '+record+' support it.','A skeptic can cite '+danger+' at '+dangerPts+'; a believer can cite '+star+' at '+starPts+'. Next week provides the referee.'],
@@ -2908,7 +2908,7 @@ function w2ProjectionOutlookRead(t,r,next){
   const team=w2DisplayTeam(t.team_name),foe=w2DisplayTeam(next||t.next_opponent_name||"the opponent"),
     rid=String(r?.id||""),gap=Math.abs(own-opp),fav=own===opp?null:(own>opp?team:foe),v=w2Cohort(t)%4,
     ownPts=w2One(own),oppPts=w2One(opp),edge=w2One(gap),
-    label=!fav?"no projection favorite":gap<3?"barely favored":gap<8?"modestly favored":"heavily favored";
+    label=!fav?"no projection favorite":gap<3?"barely favored":gap<12?"favored":"strongly favored";
   const rows={
     "walter-mercer":[
       team+" is projected at "+ownPts+" against "+foe+" at "+oppPts+". "+(fav?({
@@ -3085,7 +3085,7 @@ function w2PreviousWeekBridge(t,r,prev,prevWon,won,prevOpp,prevScore){
       "The previous result against "+foe+" was "+score+" for "+team+". "+playerLead+" gives this week's score a fresh point of comparison.",
       team+" left the opener with a "+score+" "+(prevWon?"win over ":"loss to ")+foe+". Another Sunday means another piece of evidence and, thankfully, a different argument.",
       "A week earlier "+team+" posted "+score+" against "+foe+". "+playerLead+" gives the new angle.",
-      "Against "+foe+", "+team+" previously posted "+score+". "+playerLead+" supplies the new reference point this week."
+      "Against "+foe+", "+team+" previously posted "+score+". "+playerLead+" puts the previous score in perspective without repeating it."
     ],
     "nora-voss":[
       "Rivals already had "+team+"'s "+score+" result against "+foe+" in the chat. "+((t.starter_details||[])[0]?.name||team)+" gets the fresh headline.",
@@ -4498,7 +4498,7 @@ function assertWeek2Originality(result,previousEdition){
         const top=(t.starter_details||[]).slice().sort((p,q)=>Number(q.points||0)-Number(p.points||0))[0];
         const low=(t.starter_details||[]).slice().sort((p,q)=>Number(p.points||0)-Number(q.points||0))[0];
         const performances=[
-          ()=> 'A supporter has proposed '+(won?'a mock coronation':'a mock tribunal')+' for the '+w2One(t.points)+'-point result; the crowd insists '+(top?.name||'the top scorer')+'\'s '+w2One(top?.points||0)+'-point performance be read aloud before the mock hearing begins.',
+          ()=> 'A supporter has proposed '+(won?'a mock coronation':'a mock tribunal')+' for the '+w2One(t.points)+'-point result; the crowd insists '+(top?.name||'the top scorer')+'\'s '+w2One(top?.points||0)+'-point performance be considered before anybody claims the week was ordinary.',
           ()=> 'At the unofficial fan-club meeting, '+(won?'the celebratory confetti':'the protest placards')+' came with a receipt: '+(low?.name||'the quietest starter')+' supplied '+w2One(low?.points||0)+' points, and the room demanded a lineup explanation rather than another inspirational speech.',
           ()=> 'Supporters have drafted '+(won?'an absurdly premature victory proclamation':'an absurdly detailed grievance scroll')+' after scoring '+w2One(t.points)+' against '+w2DisplayTeam(t.opponent_name||'the opposition')+'. Even their imaginary officials know the scoreboard is real and the next lineup must answer for it.',
           ()=> 'The fan club is staging '+(won?'a trophy-polishing rehearsal':'a mock funeral for abandoned optimism')+' while '+(top?.name||'the leading scorer')+'\'s '+w2One(top?.points||0)+'-point contribution remains the one exhibit that nobody in the room can dispute.'

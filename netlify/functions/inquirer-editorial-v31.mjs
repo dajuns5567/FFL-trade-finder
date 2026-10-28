@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=66;
+export const FORWARD_EDITORIAL_REVISION=67;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -3082,7 +3082,6 @@ function w2PreviousWeekBridge(t,r,prev,prevWon,won,prevOpp,prevScore){
       team+" opened at "+score+" against "+foe+" and left with "+(prevWon?"a win":"a loss")+". The current result gets compared with that beginning without being forced to imitate it."
     ],
     "mack-hollis":[
-      "The previous result against "+foe+" was "+score+" for "+team+". "+playerLead+" gives this week's score a fresh point of comparison.",
       team+" left the opener with a "+score+" "+(prevWon?"win over ":"loss to ")+foe+". Another Sunday means another piece of evidence and, thankfully, a different argument.",
       "A week earlier "+team+" posted "+score+" against "+foe+". "+playerLead+" gives the new angle."
     ],

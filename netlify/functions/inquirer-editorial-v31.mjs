@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=70;
+export const FORWARD_EDITORIAL_REVISION=71;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -2611,7 +2611,7 @@ function w2InjuryOutlookRead(t,r,x,next){
     "tess-delaney":hard?[name+" arrives at Week 3 listed "+d+", which may force the "+w2Alias(t).mascot+" to reset a place before "+foe+" enters the room.",name+" is "+d+" for the next appointment. The "+w2Alias(t).mascot+" may need a different place setting against "+foe+"."]
       :[name+" has a "+d+" tag for Week 3, so the "+w2Alias(t).mascot+" cannot finish the seating chart for "+foe+" just yet.",name+" reaches the "+foe+" appointment as "+d+". The room should care because one starting chair remains unsettled."],
     "mack-hollis":hard?[name+" is "+d+" for Week 3. If he cannot go, the "+w2Alias(t).mascot+" need a replacement before "+foe+" and that is a bigger story than another depth percentage.",name+" has "+d+" next to his name for the "+foe+" game, which could change the actual starting card before anybody starts yelling about trends."]
-      :[name+" is carrying a "+d+" tag into Week 3, so the "+w2Alias(t).mascot+" have a real availability question before "+foe+".",name+" is "+d+" ahead of "+foe+". Put that on the Week 3 board because it may change the lineup, not just the pregame chatter."],
+      :[name+" has a "+d+" availability designation before facing "+foe+".",name+" is "+d+" ahead of "+foe+". Put that on the Week 3 board because it may change the lineup, not just the pregame chatter."],
     "nora-voss":hard?[name+" is "+d+" heading toward "+foe+", giving rivals a concrete lineup uncertainty to watch before Week 3.",name+" carries "+d+" status into the "+foe+" matchup. If "+name+" needs relief, the "+w2Alias(t).mascot+" must reshape the depth chart before "+foe+" gets to write the punchline."]
       :[name+" is "+d+" for the "+foe+" game, and rivals will notice whether that tag changes the "+w2Alias(t).mascot+" starting lineup.",name+" takes a "+d+" designation into Week 3 against "+foe+". The designation matters because it may force the "+w2Alias(t).mascot+" to change starters before kickoff."]
   };

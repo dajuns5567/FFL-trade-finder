@@ -435,7 +435,7 @@ export function polishForwardTeamCopy(teams,week,salt){
    let s=String(value||'');
    // Numeric adjective starts with a consonant sound for nine (e.g. a 9.5-point week).
    // Apply before other copy transformations so all forward weeks share the repair.
-   s=s.replace(/\ban (?=9(?:\.\d+)?-point\b)/gi,'a ').replace(/\ba (?=8(?:\.\d+)?-point\b)/gi,'an ');
+   s=s.replace(/\ban (?=9(?:\.\d+)?-point\b)/gi,'a ').replace(/\ba (?=8\d*(?:\.\d+)?-point\b)/gi,'an ');
    if(kind==='outlook'&&partial.length&&/\b(?:projection|forecast|pregame screenshot|favorite|Week \d+ board|model)\b/i.test(s)){
     const gaps=partial.map(x=>x.name+' ('+x.coverage+' projected starters)').join(' and ');
     // Rotate short factual clauses by roster identity. Shared notices must not
@@ -4481,7 +4481,7 @@ function assertWeek2Originality(result,previousEdition){
     .replace(/\bThe margin asks more:\s*/gi,'')
     .replace(/\b1 receptions on 1 targets\b/gi,'1 reception on 1 target')
     .replace(/\ban (?=9(?:\.\d+)?-point\b)/gi,'a ')
-    .replace(/\ba (?=8(?:\.\d+)?-point\b)/gi,'an '))
+    .replace(/\ba (?=8\d*(?:\.\d+)?-point\b)/gi,'an '))
     .replace(/(?:this round of games|these games|games)\u2019s/gi,'this week\u2019s')
     .replace(/\b(The radio station covering [^.?!\n]{4,85}?) have declared\b/gi,'$1 has declared')
     .replace(/\b(The (?:AFC|NFC) (?:EAST|WEST|NORTH|SOUTH) race around [^.?!\n]{4,85}?) are already compressed\b/gi,'$1 is already compressed');

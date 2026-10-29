@@ -952,6 +952,7 @@ function w2LedeShape(t,r,won,margin,opp,top){
   }
   if(!won&&Number(top?.[0]?.points||0)===0&&Number(t.points||0)===0)
     return team+" scored exactly 0.0, including 0.0 from "+star+". It takes commitment to submit a whole starting lineup and bring home absolutely nothing; "+foe+" only needed to show up on the scoreboard.";
+  if(won&&total<10)return team+" won "+w2One(total)+"–"+w2One(Number(t.opponent_points)||0)+" against "+foe+", but this was survival rather than a functioning offense. "+star+" led with "+w2One(starPoints)+"; the other starters combined for "+w2One(total-starPoints)+". The result counts in the standings. The scoring problem remains.";
   if(won){
     const rows=[
       close?star+" supplied the biggest "+a.mascot+" score, and a "+w2One(margin)+"-point finish means the supporting points behind him were every bit as important.":star+" set the pace, while "+team+" got enough additional scoring to finish ahead of "+foe+" without relying on one line alone.",

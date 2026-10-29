@@ -397,7 +397,7 @@ export function restoreForwardArticleDepth(t,week){
    'The tracked market shifts '+absolute+' points '+relative+' for '+team+', setting its valuation at '+current+'.',
    'For '+team+', the prior mark of '+prior+' has become '+current+' in the latest record.',
    'The '+team+' asset sheet now reads '+current+' points, a '+absolute+'-point '+relative+' change.',
-   'Valuation comparison for '+team+': previously '+prior+', now '+current+'; movement '+absolute+' points '+relative+'.',
+   'Recorded valuation: '+current+' points; change '+absolute+' '+relative+' for '+team+'.',
    'Market mark: '+current+' for '+team+'.'
   ];
   const groundedReads=[

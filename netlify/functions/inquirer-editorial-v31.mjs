@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=71;
+export const FORWARD_EDITORIAL_REVISION=72;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);

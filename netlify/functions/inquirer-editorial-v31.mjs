@@ -4858,7 +4858,7 @@ function assertWeek2Originality(result,previousEdition){
           const evidence=[
             rosterLead.name+' produced '+star+' points; the other starters accounted for '+rest+'. The next opponent for '+t.team_name+' is '+opponent+'.',
             t.team_name+' totaled '+score+' with '+rosterLead.name+' contributing '+star+'. The upcoming fixture puts '+opponent+' on the other sideline.',
-            'From '+rosterLead.name+': '+star+' fantasy points in a '+score+'-point team result. '+'Next opponent for '+t.team_name+': '+opponent+'.'',
+            'From '+rosterLead.name+': '+star+' fantasy points in a '+score+'-point team result. '+'Next opponent for '+t.team_name+': '+opponent+'.',
             'The leading starter was '+rosterLead.name+' ('+star+' points). '+t.team_name+' recorded '+score+' overall and now faces '+opponent+'.',
             opponent+' is next for '+t.team_name+'. Its latest '+score+'-point lineup depended on '+star+' from '+rosterLead.name+'.',
             'Week '+week+' gave '+t.team_name+' '+score+' points, including '+star+' by '+rosterLead.name+'. Next on the schedule: '+opponent+'.',

@@ -3409,9 +3409,9 @@ function w2UpsetCallRead(under,fav,r){
       ?uTop.name+" just gave "+team+" "+w2One(uTop.points)+" at the top of the lineup, while "+fWeak.name+" left "+foe+" only "+w2One(fWeak.points)+" at the soft end."
       :team+" showed enough Week 2 scoring to make the favorite defend something real.";
   const rows={
-    "walter-mercer":team+" over "+foe+" is the Week 3 upset call. "+mida+football+" The favorite has the cleaner forecast; the underdog has a clearer place to apply pressure, and forecasts have never tackled anybody. If the favorite badge is the whole argument, the joke is already halfway written.",
-    "tess-delaney":team+" over "+foe+" is the Week 3 upset. "+mida+football+" If "+foe+" insists on wearing the favorite label, it should probably stop leaving that chair wobbling in public.",
-    "mack-hollis":team+" over "+foe+" is the upset call. "+mida+football+" "+foe+" can keep the favorite badge; "+team+" has already found the loose floorboard and brought a crowbar.",
+    "walter-mercer":"The upset pick is "+team+" over "+foe+". "+mida+football+" The favorite has the cleaner forecast; the underdog has a clearer place to apply pressure, and forecasts have never tackled anybody. If the favorite badge is the whole argument, the joke is already halfway written.",
+    "tess-delaney":"The upset pick is "+team+" over "+foe+". "+mida+football+" If "+foe+" insists on wearing the favorite label, it should probably stop leaving that chair wobbling in public.",
+    "mack-hollis":"The upset pick is "+team+" over "+foe+". "+mida+football+" "+foe+" can keep the favorite badge; "+team+" has already found the loose floorboard and brought a crowbar.",
     "nora-voss":team+" over "+foe+" gets the Week 3 nod. "+mida+football+" Rival managers can frame the projection if they want. I would rather frame the weak spot the underdog gets to attack."
   };
   return rows[rid]||rows["walter-mercer"]
@@ -3661,7 +3661,7 @@ function rewriteWeek2Overview(overview,teams,previousEdition,week=2){
         "nora-voss":riser.p.name+" has now ruined the easy rival joke twice. That is irritatingly close to becoming something opponents actually have to plan around."
       }[rid]||riser.p.name+" has put together two Sundays worth taking seriously.";
     hot.push({kind:"future-player",reporter:rr,title:"Breakout Player to Watch: "+riser.p.name,
-      take:w2S(riser.t,rr,"hot-future-player",lead+" "+(ctx?ctx+" ":"")+team+" now has a reason to treat "+short+" as part of the weekly plan rather than a one-Sunday surprise.")});
+      take:w2S(riser.t,rr,"hot-future-player",lead+" "+(ctx?ctx+" ":"")+team+" now have a reason to treat "+short+" as part of the weekly plan rather than a one-Sunday surprise.")});
   }
   const pressure=(teams||[]).filter(t=>t?.best_lineup_miss?.reserve&&t?.best_lineup_miss?.starter&&Number(t.best_lineup_miss.gap)>0)
     .slice().sort((a,b)=>Number(b.best_lineup_miss.gap)-Number(a.best_lineup_miss.gap))[0];

@@ -398,7 +398,7 @@ export function restoreForwardArticleDepth(t,week){
    'For '+team+', the prior mark of '+prior+' has become '+current+' in the latest record.',
    'The '+team+' asset sheet now reads '+current+' points, a '+absolute+'-point '+relative+' change.',
    'Valuation comparison for '+team+': previously '+prior+', now '+current+'; movement '+absolute+' points '+relative+'.',
-   'The latest '+team+' valuation of '+current+' differs from the earlier '+prior+' by '+absolute+' points.'
+   'Market mark: '+current+' for '+team+'.'
   ];
   const groundedReads=[
    lead?.name+' supplied '+one(lead?.points)+' of the '+one(t.points)+' lineup points against '+opponent+'.',

@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=74;
+export const FORWARD_EDITORIAL_REVISION=75;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -4858,11 +4858,11 @@ function assertWeek2Originality(result,previousEdition){
           const evidence=[
             rosterLead.name+' produced '+star+' points; the other starters accounted for '+rest+'. The next opponent for '+t.team_name+' is '+opponent+'.',
             t.team_name+' totaled '+score+' with '+rosterLead.name+' contributing '+star+'. The upcoming fixture puts '+opponent+' on the other sideline.',
-            'From '+rosterLead.name+': '+star+' fantasy points in a '+score+'-point team result. '+t.team_name+' meets '+opponent+' next.',
+            'From '+rosterLead.name+': '+star+' fantasy points in a '+score+'-point team result. '+'Next opponent for '+t.team_name+': '+opponent+'.'',
             'The leading starter was '+rosterLead.name+' ('+star+' points). '+t.team_name+' recorded '+score+' overall and now faces '+opponent+'.',
             opponent+' is next for '+t.team_name+'. Its latest '+score+'-point lineup depended on '+star+' from '+rosterLead.name+'.',
             'Week '+week+' gave '+t.team_name+' '+score+' points, including '+star+' by '+rosterLead.name+'. Next on the schedule: '+opponent+'.',
-            rosterLead.name+' headed the '+t.team_name+' scoresheet with '+star+'. The next assignment against '+opponent+' follows a '+score+'-point week.',
+            rosterLead.name+' headed the '+t.team_name+' scoresheet with '+star+'. The next assignment against '+opponent+' follows the '+score+'-point result.',
             'Schedule check for '+t.team_name+': '+opponent+' awaits. '+rosterLead.name+' delivered '+star+' of the latest '+score+' team points.'
           ];
           const seed=(rid+Math.floor((rid-1)/8)+variationSalt)%evidence.length;
@@ -4926,7 +4926,7 @@ function assertWeek2Originality(result,previousEdition){
       const lead=(team.starter_details||[]).filter(x=>x?.name&&Number.isFinite(Number(x.points))).sort((a,b)=>Number(b.points)-Number(a.points))[0];
       const score=Number(team.points);
       const facts=[Number.isFinite(score)?team.team_name+' scored '+score.toFixed(1)+' points.':null,lead?lead.name+' supplied '+Number(lead.points).toFixed(1)+' starter points.':null,team.next_opponent_name?'The next opponent is '+team.next_opponent_name+'.':null].filter(Boolean);
-      const endings=['The coming matchup will test that performance.','The next lineup will be measured against this result.','That production is the current standard.','The schedule supplies the next comparison.'];
+      const endings=['The coming matchup will test that performance.','The next lineup will be measured against this result.','That production is the current standard.','That '+score.toFixed(1)+'-point output sets a measurable target for the next opponent.'];
       let replacement;
       for(const ending of endings)for(let j=0;j<facts.length;j++){
         const candidate=finishGrammar([facts[j],...facts.filter((_,k)=>k!==j),ending].join(' '));

@@ -390,16 +390,9 @@ export function restoreForwardArticleDepth(t,week){
   const lead=(t.starter_details||[]).filter(p=>p?.name&&Number.isFinite(Number(p.points)))
    .sort((a,b)=>Number(b.points)-Number(a.points))[0];
   const prior=(Number(v.value)-Number(v.delta)).toLocaleString('en-US');
-  const marketReads=[
-   'The '+team+' ledger closes at '+current+' points; the earlier valuation was '+prior+'.',
-   'A '+absolute+'-point '+relative+' adjustment brings '+team+' to '+current+' on the recorded book.',
-   team+' is priced at '+current+' points after moving '+absolute+' '+relative+' since the last snapshot.',
-   'The tracked market shifts '+absolute+' points '+relative+' for '+team+', setting its valuation at '+current+'.',
-   'For '+team+', the prior mark of '+prior+' has become '+current+' in the latest record.',
-   'The '+team+' asset sheet now reads '+current+' points, a '+absolute+'-point '+relative+' change.',
-   'Recorded valuation: '+current+' points; change '+absolute+' '+relative+' for '+team+'.',
-   'Market mark: '+current+' for '+team+'.'
-  ];
+  // Keep financial figures in a compact data line; cycling eight full-sentence
+  // market templates across 32 teams duplicates editorial rhetoric.
+  const marketRead=team+': '+prior+' to '+current+' ('+absolute+' '+relative+').';
   const groundedReads=[
    lead?.name+' supplied '+one(lead?.points)+' of the '+one(t.points)+' lineup points against '+opponent+'.',
    'Against '+opponent+', '+lead?.name+' paced the club on '+one(lead?.points)+' fantasy points.',
@@ -418,7 +411,6 @@ export function restoreForwardArticleDepth(t,week){
    'Highest verified starter production: '+lead?.name+', '+one(lead?.points)+' points for '+team+'.',
    'The weekly scoring leader '+lead?.name+' finished at '+one(lead?.points)+' against '+opponent+'.'
   ];
-  const marketRead=marketReads[rosterSlot%marketReads.length];
   const performanceRead=lead?.name?groundedReads[rosterSlot%groundedReads.length]:
    team+' scored '+one(t.points)+' fantasy points against '+opponent+'.';
   vdesk.paragraphs.push(marketRead+' '+performanceRead);

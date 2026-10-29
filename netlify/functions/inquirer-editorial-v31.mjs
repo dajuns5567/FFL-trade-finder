@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=73;
+export const FORWARD_EDITORIAL_REVISION=74;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -964,7 +964,7 @@ function w2LedeShape(t,r,won,margin,opp,top){
         "The "+a.mascot+" got the star turn from "+star+" and enough production elsewhere to turn that performance into a win.",
         star+" led the "+a.mascot+" scoring, while the rest of the lineup supplied enough points to keep the result from depending on one name."
       ])[w2Hash(team+"|lede-depth")%4],
-      star+" led "+team+", with "+(second?.name||"another starter")+" adding what "+team+" needed against "+foe+"."
+      team+" defeated "+foe+" with contributions from "+star+" and "+(second?.name||"another starter")+"."
     ];return rows[k];
   }
   const rows=[
@@ -4121,7 +4121,7 @@ function assertWeek2Originality(result,previousEdition){
         const before=validBaseline?Math.round(baseline).toLocaleString('en-US'):null;
         const observed=validDelta?[
           team+' recorded a Week '+week+' roster-value change of '+signed+' points.',
-          'The Week '+week+' market ledger shows '+team+' at '+signed+' points of movement.',
+          'Value change: '+signed+' points ('+team+', Week '+week+').',
           'For '+team+', the verified Week '+week+' valuation change was '+signed+' points.',
           team+' closed the Week '+week+' valuation window '+(delta>0?'higher by ':delta<0?'lower by ':'unchanged at ')+magnitude+' points.',
           'The Week '+week+' value sheet records '+signed+' points for '+team+'.',
@@ -4131,7 +4131,7 @@ function assertWeek2Originality(result,previousEdition){
         ][slot]:team+' has no verified market movement for Week '+week+'; no change is claimed.';
         const context=validCurrent&&validBaseline?[
           'The recorded endpoints were '+before+' and '+now+' valuation points. That is not itself proof of better lineup decisions.',
-          'The market shifted from '+before+' to '+now+' valuation points; actual fantasy scoring remains separate evidence.',
+          'Recorded values: '+before+' before, '+now+' now.',
           'The verifiable comparison is '+before+' previously and '+now+' valuation points now, not a claim about a particular player.',
           'Market snapshots: '+before+' then '+now+' points. Result causation remains unproven.',
           'The baseline was '+before+' and the current reading '+now+' valuation points; the football verdict belongs to the starters.',

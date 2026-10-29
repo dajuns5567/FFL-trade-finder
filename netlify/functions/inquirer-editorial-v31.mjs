@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=76;
+export const FORWARD_EDITORIAL_REVISION=77;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -4858,7 +4858,7 @@ function assertWeek2Originality(result,previousEdition){
           const rest=(Number(t.points||0)-Number(rosterLead.points)).toFixed(1);
           const rid=Number(t.roster_id)||1;
           const evidence=[
-            rosterLead.name+' produced '+star+' points; the other starters accounted for '+rest+'. The next opponent for '+t.team_name+' is '+opponent+'.',
+            rosterLead.name+' produced '+star+' points; the other starters accounted for '+rest+'. Next opponent for '+t.team_name+': '+opponent+'.',
             t.team_name+' totaled '+score+' with '+rosterLead.name+' contributing '+star+'. The upcoming fixture puts '+opponent+' on the other sideline.',
             'From '+rosterLead.name+': '+star+' fantasy points in a '+score+'-point team result. Next opponent for '+t.team_name+': '+opponent+'.',
             'The leading starter was '+rosterLead.name+' ('+star+' points). '+t.team_name+' recorded '+score+' overall and now faces '+opponent+'.',

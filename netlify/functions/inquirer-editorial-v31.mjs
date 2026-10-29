@@ -4468,9 +4468,10 @@ function assertWeek2Originality(result,previousEdition){
     let copy=String(value);
     for(const name of pluralClubNames){
       const escaped=forwardEscRe(name);
-      copy=copy.replace(new RegExp('\\b'+escaped+' (has|is|does|gets|sits|needs|keeps|projects|faces)\\b','g'),
-        (_,verb)=>name+' '+({has:'have',is:'are',does:'do',gets:'get',sits:'sit',needs:'need',keeps:'keep',projects:'project',faces:'face'}[verb]||verb));
+      copy=copy.replace(new RegExp('\\b'+escaped+' (has|is|does|gets|sits|needs|keeps|projects|faces|meets)\\b','g'),
+        (_,verb)=>name+' '+({has:'have',is:'are',does:'do',gets:'get',sits:'sit',needs:'need',keeps:'keep',projects:'project',faces:'face',meets:'meet'}[verb]||verb));
     }
+    copy=copy.replace(/\\b(The next opponent for [^.?!\\n]{4,100}?) are (?=[A-Z])/g,'$1 is ');
     return copy;
   };
   // Correct singular subjects AFTER plural-team rewriting, including fan scenes.

@@ -5023,9 +5023,18 @@ function assertWeek2Originality(result,previousEdition){
         const history=t.value_history_week||{},delta=Number(history.delta),base=Number(history.baseline_value),now=Number(history.value);
         if(history.delta!=null&&Number.isFinite(delta)&&Number.isFinite(base)&&Number.isFinite(now)){
           const compare=delta>0?'rose':delta<0?'fell':'held steady';
-          valueDesk.paragraphs.push(name+' '+compare+' from '+Math.round(base).toLocaleString('en-US')+
-            ' to '+Math.round(now).toLocaleString('en-US')+' valuation points this week, while the team scored '+
-            w2One(score)+' fantasy points against '+opp+'. Those are two different scoreboards.');
+          const before=Math.round(base).toLocaleString('en-US'),after=Math.round(now).toLocaleString('en-US');
+          const marketAngles=[
+            name+' '+compare+' from '+before+' to '+after+' valuation points. Its '+w2One(score)+'-point Sunday against '+opp+' was a separate contest.',
+            'From '+before+' to '+after+': that was '+name+'\'s market move. '+opp+' saw '+w2One(score)+' fantasy points on the actual board.',
+            'Value before: '+before+'. Value after: '+after+'. '+name+' still had to play '+opp+' and scored '+w2One(score)+'.',
+            name+' entered the comparison at '+before+' and finished at '+after+' valuation points. The matchup with '+opp+' ended on '+w2One(score)+' scored.',
+            'The market put '+name+' at '+after+', compared with '+before+' earlier. '+opp+' was dealing with '+w2One(score)+' fantasy points instead.',
+            'A '+(delta>=0?'gain':'drop')+' from '+before+' to '+after+' belongs on '+name+'\'s ledger. The football column reads '+w2One(score)+' against '+opp+'.',
+            name+' recorded '+after+' valuation points after starting at '+before+'. The fantasy team delivered '+w2One(score)+' against '+opp+'.',
+            'At '+after+' instead of '+before+' market points, '+name+' changed price. Its next opponent can examine the '+w2One(score)+'-point score against '+opp+'.'
+          ];
+          valueDesk.paragraphs.push(marketAngles[(Number(t.roster_id)+Number(week))%marketAngles.length]);
         }
       }
       article.paragraphs=(article.sections||[]).flatMap(sec=>sec.paragraphs||[]);

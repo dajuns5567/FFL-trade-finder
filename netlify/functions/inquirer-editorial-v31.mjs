@@ -5071,6 +5071,25 @@ function assertWeek2Originality(result,previousEdition){
       }else sec.paragraphs=(sec.paragraphs||[]).map(repairMeta);
     }
     for(const take of overview.hot_takes||[])take.take=repairMeta(take.take);
+    // Historical feature headings and evergreen remarks can survive a
+    // paragraph-only evolution pass. Rewrite their reader-facing arguments
+    // instead of recycling the prior issue's analysis.
+    if(previousEdition?.league_overview){
+      const replacements=[
+        [/gave ([^.]+) points and still had to watch a huge team total lose\./gi,'contributed $1 points, but the final team total still fell short.'],
+        [/brought the favorite’s badge; ([^.]+) brought the better sunday\./gi,'had the projection; $1 had the better result.'],
+        [/the market has pushed this roster closer to contender territory; sunday still decides whether that optimism survives contact\./gi,'The roster price has climbed; winning remains a separate assignment.'],
+        [/i am not calling two games a season, but opponents have already lost the luxury of treating him like background noise\./gi,'Two Sundays do not make a season, but the recent production demands a defender.']
+      ];
+      const rewriteCopy=value=>replacements.reduce((x,[pattern,change])=>String(x||'').replace(pattern,change),String(value||''));
+      for(const section of overview.sections||[]){
+        if(section.blocks?.length){
+          for(const block of section.blocks)block.paragraphs=(block.paragraphs||[]).map(rewriteCopy);
+          section.paragraphs=section.blocks.flatMap(block=>block.paragraphs||[]);
+        }else section.paragraphs=(section.paragraphs||[]).map(rewriteCopy);
+      }
+      for(const take of overview.hot_takes||[])take.take=rewriteCopy(take.take);
+    }
   }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }

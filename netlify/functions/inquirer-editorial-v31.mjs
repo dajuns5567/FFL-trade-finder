@@ -5145,6 +5145,24 @@ function assertWeek2Originality(result,previousEdition){
           playerDesk.paragraphs.unshift(facts[(Number(t.roster_id)+Number(week))%facts.length]);
         }
       }
+      // Every player desk must open with a quantified fantasy fact,
+      // even if its existing prose is already long enough.
+      if(playerDesk&&!(playerDesk.paragraphs?.[0]||'').includes('fantasy points')){
+        const scorer=(t.starter_details||[]).filter(p=>p?.name&&p.points!=null&&Number.isFinite(Number(p.points)))
+          .sort((a,b)=>Number(b.points)-Number(a.points))[0];
+        if(scorer)playerDesk.paragraphs.unshift(scorer.name+' supplied '+w2One(scorer.points)+
+          ' fantasy points for '+w2DisplayTeam(t.team_name)+' in Week '+week+
+          ' against '+w2DisplayTeam(t.opponent_name||'the opponent')+'.');
+      }
+      const managementDesk=article.sections?.find(x=>x.kind==='management');
+      if(managementDesk&&forwardWordCount(managementDesk.paragraphs.join(' '))<25){
+        const scorer=(t.starter_details||[]).filter(p=>p?.name&&p.points!=null&&Number.isFinite(Number(p.points)))
+          .sort((a,b)=>Number(b.points)-Number(a.points))[0];
+        if(scorer)managementDesk.paragraphs.push(
+          'The Week '+week+' lineup brought '+w2One(t.points)+' points against '+
+          w2DisplayTeam(t.opponent_name||'the opposition')+'. '+scorer.name+
+          ' delivered '+w2One(scorer.points)+' of them, leaving management to account for the remainder before the next match.');
+      }
       article.paragraphs=article.sections.flatMap(x=>x.paragraphs||[]);
     }
   }

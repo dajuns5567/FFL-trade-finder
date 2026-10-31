@@ -5024,9 +5024,10 @@ function assertWeek2Originality(result,previousEdition){
         if(history.delta!=null&&Number.isFinite(delta)&&Number.isFinite(base)&&Number.isFinite(now)){
           const compare=delta>0?'rose':delta<0?'fell':'held steady';
           const before=Math.round(base).toLocaleString('en-US'),after=Math.round(now).toLocaleString('en-US');
+          const teamPossessive=/s$/i.test(name)?name+"'":name+"'s";
           const marketAngles=[
             name+' '+compare+' from '+before+' to '+after+' valuation points. Its '+w2One(score)+'-point Sunday against '+opp+' was a separate contest.',
-            'From '+before+' to '+after+': that was '+name+'\'s market move. '+opp+' saw '+w2One(score)+' fantasy points on the actual board.',
+            'From '+before+' to '+after+': that was '+teamPossessive+' market move. '+opp+' saw '+w2One(score)+' fantasy points on the actual board.',
             'Value before: '+before+'. Value after: '+after+'. '+name+' still had to play '+opp+' and scored '+w2One(score)+'.',
             name+' entered the comparison at '+before+' and finished at '+after+' valuation points. The matchup with '+opp+' ended on '+w2One(score)+' scored.',
             'The market put '+name+' at '+after+', compared with '+before+' earlier. '+opp+' was dealing with '+w2One(score)+' fantasy points instead.',

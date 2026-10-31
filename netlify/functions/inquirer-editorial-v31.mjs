@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=77;
+export const FORWARD_EDITORIAL_REVISION=78;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -4936,6 +4936,74 @@ function assertWeek2Originality(result,previousEdition){
       }
       if(replacement){section.paragraphs[at]=replacement;seen.add(keyOf(replacement));article.paragraphs=article.sections.flatMap(x=>x.paragraphs||[]);}
     }
+  }
+
+  // Give the Week 5 forward newspaper a football-first final editorial pass.
+  // Specific facts survive; self-referential writing about "the argument",
+  // "the box score" and "the reporting" does not get the last word.
+  if(Number(week)>=5){
+    const repairMeta=line=>String(line||'')
+      .replace(/\bThe box score settles this:\s*/gi,'')
+      .replace(/\bSunday left a clue:\s*/gi,'')
+      .replace(/\bThe numbers resist spin:\s*/gi,'')
+      .replace(/\bThe lineup still answers:\s*/gi,'')
+      .replace(/\bThe unromantic version:\s*/gi,'')
+      .replace(/\bThat is a specific lineup choice, not an inspirational lesson about trying harder\./gi,'The bench is entitled to be smug about that one.')
+      .replace(/\bthat is the measurable selection cost, not a claim that the manager could predict it\./gi,'Hindsight gets its own victory lap; the manager gets the loss on the lineup card.')
+      .replace(/\bThe next lineup will be measured against this result\./gi,'The next opponent will not give out points for explanations.')
+      .replace(/\bThat production is the current standard\./gi,'The opposing sideline has been warned.')
+      .replace(/\bThe coming matchup will test that performance\./gi,'Next Sunday has a fresh chance to spoil the party.')
+      .trim();
+    for(const t of teams){
+      const article=t.inquirer_article;if(!article)continue;
+      const sentiment=article.sections?.find(x=>x.kind==='sentiment');
+      const name=w2DisplayTeam(t.team_name),opp=w2DisplayTeam(t.opponent_name||'the opponent');
+      const score=Number(t.points),against=Number(t.opponent_points);
+      const lead=(t.starter_details||[]).filter(x=>x?.name&&Number.isFinite(Number(x.points)))
+        .sort((a,b)=>Number(b.points)-Number(a.points))[0];
+      if(sentiment&&lead&&Number.isFinite(score)&&Number.isFinite(against)){
+        const won=score>against,margin=w2One(Math.abs(score-against));
+        const id=String(article.reporter?.id||'');
+        const joke={
+          'walter-mercer':won
+            ?name+' beat '+opp+' by '+margin+'. '+lead.name+' provided '+w2One(lead.points)+' points; the town can postpone its usual Monday emergency meeting.'
+            :name+' lost to '+opp+' by '+margin+'. '+lead.name+' provided '+w2One(lead.points)+' points, so the usual Monday emergency meeting has at least one witness for the defense.',
+          'tess-delaney':won
+            ?opp+' traveled all this way to lose by '+margin+' to '+name+'. '+lead.name+' contributed '+w2One(lead.points)+' points; an expensive lesson in the etiquette of getting beaten.'
+            :name+' paid '+opp+' a '+margin+'-point tribute. '+lead.name+' supplied '+w2One(lead.points)+' points, and one suspects the rest of the invoice will be discussed at some length.',
+          'mack-hollis':won
+            ?name+' beat '+opp+' by '+margin+'. '+lead.name+' scored '+w2One(lead.points)+'. Somebody tell the rivals to stop sending congratulations through gritted teeth.'
+            :name+' lost to '+opp+' by '+margin+'. '+lead.name+' scored '+w2One(lead.points)+'. The team bus can skip the victory parade and head straight to the film room.',
+          'nora-voss':won
+            ?name+' put '+margin+' points between itself and '+opp+'. '+lead.name+' filed '+w2One(lead.points)+' of the evidence. The opposing manager has declined to comment, presumably while staring at the score.'
+            :name+' finished '+margin+' behind '+opp+'. '+lead.name+' accounted for '+w2One(lead.points)+' points; a useful alibi, though not enough to acquit the lineup.'
+        }[id];
+        if(joke&&!sentiment.paragraphs.some(x=>x.includes(joke)))sentiment.paragraphs.push(joke);
+      }
+      for(const sec of article.sections||[])sec.paragraphs=(sec.paragraphs||[]).map(repairMeta);
+      article.paragraphs=(article.sections||[]).flatMap(sec=>sec.paragraphs||[]);
+    }
+    const first=overview.sections?.[0],decisions=first?.blocks?.find(x=>x.kind==='decisions');
+    const league=first?.blocks?.find(x=>x.kind==='league');
+    if(decisions?.paragraphs?.length>1){
+      const removed=decisions.paragraphs.length-1;
+      decisions.paragraphs=decisions.paragraphs.slice(0,1);
+      const top=teams.filter(t=>Number.isFinite(Number(t.points))).sort((a,b)=>Number(b.points)-Number(a.points));
+      const highest=top[0],lowest=top.at(-1);
+      if(league&&highest&&lowest){
+        league.paragraphs.push(w2DisplayTeam(highest.team_name)+' scored '+w2One(highest.points)+
+          ' while '+w2DisplayTeam(lowest.team_name)+' managed '+w2One(lowest.points)+
+          '. That is not a competitive balance problem; that is two entirely different sports sharing the same league login.');
+      }
+      if(first)first.paragraphs=first.blocks.flatMap(b=>b.paragraphs||[]);
+    }
+    for(const sec of overview.sections||[]){
+      if(sec.blocks?.length){
+        for(const block of sec.blocks)block.paragraphs=(block.paragraphs||[]).map(repairMeta);
+        sec.paragraphs=sec.blocks.flatMap(b=>b.paragraphs||[]);
+      }else sec.paragraphs=(sec.paragraphs||[]).map(repairMeta);
+    }
+    for(const take of overview.hot_takes||[])take.take=repairMeta(take.take);
   }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }

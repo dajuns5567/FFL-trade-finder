@@ -5022,7 +5022,7 @@ function assertWeek2Originality(result,previousEdition){
             'A '+margin+'-point '+(won?'win':'defeat')+' against '+opp+' included '+starterPoints+' from '+lead.name+' for '+name+'.'
           ];
           const factual=factualAngles[(Number(t.roster_id)+Number(week))%factualAngles.length];
-          sentiment.paragraphs.push(factual+' Around '+name+', '+kicker[0].toLowerCase()+kicker.slice(1));
+          sentiment.paragraphs.push(factual.replace(/\.$/,';')+' around '+name+', '+kicker[0].toLowerCase()+kicker.slice(1));
         }
       }
       for(const sec of article.sections||[])sec.paragraphs=(sec.paragraphs||[]).map(repairMeta);

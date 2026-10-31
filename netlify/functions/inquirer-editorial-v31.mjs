@@ -5079,7 +5079,11 @@ function assertWeek2Originality(result,previousEdition){
         [/gave ([^.]+) points and still had to watch a huge team total lose\./gi,'contributed $1 points, but the final team total still fell short.'],
         [/brought the favorite’s badge; ([^.]+) brought the better sunday\./gi,'had the projection; $1 had the better result.'],
         [/the market has pushed this roster closer to contender territory; sunday still decides whether that optimism survives contact\./gi,'The roster price has climbed; winning remains a separate assignment.'],
-        [/i am not calling two games a season, but opponents have already lost the luxury of treating him like background noise\./gi,'Two Sundays do not make a season, but the recent production demands a defender.']
+        [/i am not calling two games a season, but opponents have already lost the luxury of treating him like background noise\./gi,'Two Sundays do not make a season, but the recent production demands a defender.'],
+        [/The biggest positive value mover is ([^,]+), up ([\d,]+) points \(([\d.]+)%\)\./gi,'The largest roster-value gain belongs to $1: $2 points ($3%) in the tracked period.'],
+        [/gave us the week’s most impolite close game at ([\d.]+) points apart; one side gets relief, the other gets seven days to discover how many tiny choices suddenly feel enormous\./gi,'finished only $1 points apart. The losing sideline may still be adding it up on a napkin.'],
+        [/\bis the Week \d+ Player of the Week after\b/gi,'earned the weekly player honor with'],
+        [/has spent two straight Sundays looking like a breakout instead of a one-week stunt\./gi,'has now delivered in consecutive games, which gives the opposing defenses a fresh and irritating problem.']
       ];
       const rewriteCopy=value=>replacements.reduce((x,[pattern,change])=>String(x||'').replace(pattern,change),String(value||''));
       for(const section of overview.sections||[]){

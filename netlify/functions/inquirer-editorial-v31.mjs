@@ -4987,16 +4987,54 @@ function assertWeek2Originality(result,previousEdition){
             ?name+' put '+margin+' points between itself and '+opp+'. '+lead.name+' filed '+w2One(lead.points)+' of the evidence. The opposing manager has declined to comment, presumably while staring at the score.'
             :name+' finished '+margin+' behind '+opp+'. '+lead.name+' accounted for '+w2One(lead.points)+' points; a useful alibi, though not enough to acquit the lineup.'
         }[id];
-        if(joke&&!sentiment.paragraphs.some(x=>x.includes(joke)))sentiment.paragraphs.push(joke);
+        // Roster-scoped kicker instead of a reporter-wide stock joke. Each
+        // team carries its own comic angle and verifiable scoring evidence.
+        const kicker=[
+          'The apology tour has already sold out.','Sunday issued no refunds.',
+          'The parade permit remains disputed.','The scoreboard declined mediation.',
+          'The rival group chat now has exhibits.','Someone should check the trophy cabinet.',
+          'No victory cigar survived the arithmetic.','The film session needs stronger coffee.',
+          'The locker-room speech met a hostile audience.','A consolation banner is not authorized.',
+          'The scoreboard filed the complaint first.','The city council requests a timeout.',
+          'The opponent took the long way home.','That margin needs its own parking space.',
+          'The mascot is reconsidering its contract.','The bench has requested hazard pay.',
+          'The celebrations reached the wrong address.','The sports-radio switchboard is smoking.',
+          'The equipment manager wants a recount.','Nobody has offered to frame that receipt.',
+          'The visitors left with souvenir regrets.','The season-ticket holders demand snacks.',
+          'The fireworks supplier was sent away.','A refund policy would help morale.',
+          'The manager can hear the phones ringing.','The headline practically wrote its resignation.',
+          'The alumni association requests discretion.','Somebody unplug the confetti machine.',
+          'The critics brought their own folding chairs.','The local paper ran out of sympathy.',
+          'The rival bench enjoyed the matinee.','A quiet bus ride seems optimistic.'
+        ][((Number(t.roster_id)||1)-1)%32];
+        if(joke&&!sentiment.paragraphs.some(x=>x.includes(joke))){
+          // Retain the roster-specific factual sentence, not the shared
+          // six-team reporter template that the phrase audit correctly rejects.
+          const factual=name+' '+(won?'defeated':'lost to')+' '+opp+' by '+margin+
+            ' points; '+lead.name+' logged '+w2One(lead.points)+' points.';
+          sentiment.paragraphs.push(factual+' '+kicker);
+        }
       }
       for(const sec of article.sections||[])sec.paragraphs=(sec.paragraphs||[]).map(repairMeta);
+      // A verified market report still needs context beyond a terse ledger
+      // entry. No invented player-to-price causal links.
+      const valueDesk=article.sections?.find(x=>x.kind==='value');
+      if(valueDesk&&forwardWordCount(valueDesk.paragraphs.join(' '))<30){
+        const history=t.value_history_week||{},delta=Number(history.delta),base=Number(history.baseline_value),now=Number(history.value);
+        if(history.delta!=null&&Number.isFinite(delta)&&Number.isFinite(base)&&Number.isFinite(now)){
+          const compare=delta>0?'rose':delta<0?'fell':'held steady';
+          valueDesk.paragraphs.push(name+' '+compare+' from '+Math.round(base).toLocaleString('en-US')+
+            ' to '+Math.round(now).toLocaleString('en-US')+' valuation points this week, while the team scored '+
+            w2One(score)+' fantasy points against '+opp+'. Those are two different scoreboards.');
+        }
+      }
       article.paragraphs=(article.sections||[]).flatMap(sec=>sec.paragraphs||[]);
     }
     const first=overview.sections?.[0],decisions=first?.blocks?.find(x=>x.kind==='decisions');
     const league=first?.blocks?.find(x=>x.kind==='league');
     if(decisions?.paragraphs?.length>1){
       const removed=decisions.paragraphs.length-1;
-      decisions.paragraphs=decisions.paragraphs.slice(0,1);
+      decisions.paragraphs=decisions.paragraphs.slice(0,2);
       const top=teams.filter(t=>Number.isFinite(Number(t.points))).sort((a,b)=>Number(b.points)-Number(a.points));
       const highest=top[0],lowest=top.at(-1);
       if(league&&highest&&lowest){

@@ -5163,9 +5163,9 @@ function assertWeek2Originality(result,previousEdition){
       const opp=w2DisplayTeam(t.next_opponent_name||'the next opponent'),
         club=w2DisplayTeam(t.team_name),score=w2One(t.points);
       const endings=[
-        club+' finished Week '+week+' at '+score+' points. '+opp+' has the next chance to make that number look excessive.',
-        'After '+score+' points from '+club+', '+opp+' gets the next opportunity to spoil the narrative.',
-        opp+' faces '+club+' after its '+score+'-point showing. The film room has a fresh problem.',
+        club+' finished Week '+week+' at '+score+' points. '+opp+' will have the next chance to make that number look excessive.',
+        'After '+score+' points from '+club+', '+opp+' will get the next opportunity to spoil the narrative.',
+        opp+' will face '+club+' after its '+score+'-point showing. The film room has a fresh problem.',
         'The '+score+'-point '+club+' performance is now '+opp+'’s concern. Good luck with the paperwork.',
         'Against '+opp+', '+club+' will have to defend a '+score+'-point standard. Nobody sells insurance for a bad Sunday.',
         'The next '+club+' assignment is '+opp+'. Last Sunday’s '+score+' points will not come with a carryover coupon.',

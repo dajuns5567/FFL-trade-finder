@@ -5012,7 +5012,7 @@ function assertWeek2Originality(result,previousEdition){
           // six-team reporter template that the phrase audit correctly rejects.
           const factual=name+' '+(won?'defeated':'lost to')+' '+opp+' by '+margin+
             ' points; '+lead.name+' logged '+w2One(lead.points)+' points.';
-          sentiment.paragraphs.push(factual+' '+kicker);
+          sentiment.paragraphs.push(factual+' Around '+name+', '+kicker[0].toLowerCase()+kicker.slice(1));
         }
       }
       for(const sec of article.sections||[])sec.paragraphs=(sec.paragraphs||[]).map(repairMeta);

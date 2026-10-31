@@ -5126,7 +5126,15 @@ function assertWeek2Originality(result,previousEdition){
           const p=w2One(lead.points),q=w2One(second.points),total=w2One(score);
           const facts=[
             lead.name+' carried '+p+' fantasy points for '+club+' in Week '+week+', while '+second.name+' supplied '+q+'. Against '+opp+', that pairing explains '+w2One(Number(lead.points)+Number(second.points))+' of the '+total+' scored.',
-            'Against '+opp+', '+club+' had '+lead.name+' leading the starters at '+p+' fantasy points; '+second.name+' followed with '+q+'. The total reached '+total+', with the rest of the lineup responsible for the gap.',
+            'Against '+opp+', '+club+' had '+lead.name+' leading the starters at '+p+' fantasy points; '+second.name+' followed with '+q+'. '+[
+              'The back half of the lineup had plenty of work left.',
+              'There was no shortcut in the other starting spots.',
+              'The remaining starters made the margin possible.',
+              'That put the supporting cast on the clock.',
+              'The quieter slots shaped the final tally.',
+              'Everyone else had to build on that opening.',
+              'The remaining names supplied the rest of the arithmetic.'
+            ][(Number(t.roster_id)+Math.floor(Number(t.roster_id)/3)+Number(week))%7],
             'The Week '+week+' starters for '+club+' featured '+lead.name+' at '+p+' fantasy points and '+second.name+' at '+q+'. The team finished with '+total+' against '+opp+', a result the leaders could not produce alone.',
             lead.name+' supplied '+p+' fantasy points against '+opp+' for '+club+'. '+second.name+' added '+q+'; together they represented '+w2One(Number(lead.points)+Number(second.points))+' of the '+total+' final score.',
             'The '+club+' box against '+opp+' puts '+lead.name+' on '+p+' fantasy points, followed by '+second.name+' on '+q+'. That pair accounts for a clear share of the '+total+'-point finish.',

@@ -5148,6 +5148,38 @@ function assertWeek2Originality(result,previousEdition){
       article.paragraphs=article.sections.flatMap(x=>x.paragraphs||[]);
     }
   }
+
+  // Outlook endings are checked against all 32 final articles after every
+  // preceding curation pass, including the archive-deduplication pass.
+  if(Number(week)>=5){
+    const entities=forwardEntities({teams}),endingOwners=new Set();
+    const normEnd=x=>forwardNormSentence(x,entities).replace(/[^a-z#\[\] ]/g,' ')
+      .replace(/\[(?:entity|#)\]/g,'#').trim().split(/\s+/).slice(-11).join(' ');
+    for(const t of teams){
+      const article=t.inquirer_article,outlook=article?.sections?.find(x=>x.kind==='outlook');
+      if(!outlook?.paragraphs?.length)continue;
+      const at=outlook.paragraphs.length-1,key=normEnd(outlook.paragraphs[at]);
+      if(!endingOwners.has(key)){endingOwners.add(key);continue}
+      const opp=w2DisplayTeam(t.next_opponent_name||'the next opponent'),
+        club=w2DisplayTeam(t.team_name),score=w2One(t.points);
+      const endings=[
+        club+' finished Week '+week+' at '+score+' points. '+opp+' has the next chance to make that number look excessive.',
+        'After '+score+' points from '+club+', '+opp+' gets the next opportunity to spoil the narrative.',
+        opp+' faces '+club+' after its '+score+'-point showing. The film room has a fresh problem.',
+        'The '+score+'-point '+club+' performance is now '+opp+'’s concern. Good luck with the paperwork.',
+        'Against '+opp+', '+club+' will have to defend a '+score+'-point standard. Nobody sells insurance for a bad Sunday.',
+        'The next '+club+' assignment is '+opp+'. Last Sunday’s '+score+' points will not come with a carryover coupon.',
+        club+' now draws '+opp+' after scoring '+score+'. The previous scoreboard offers no free points.',
+        'The '+score+'-point result follows '+club+' into the meeting with '+opp+'. That is where the excuses expire.'
+      ];
+      for(let j=0;j<endings.length;j++){
+        const candidate=endings[(Number(t.roster_id)+Number(week)+j)%endings.length],nextKey=normEnd(candidate);
+        if(endingOwners.has(nextKey))continue;
+        outlook.paragraphs[at]=candidate;endingOwners.add(nextKey);break;
+      }
+      article.paragraphs=article.sections.flatMap(x=>x.paragraphs||[]);
+    }
+  }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 

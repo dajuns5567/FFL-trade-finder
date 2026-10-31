@@ -1,6 +1,6 @@
 import valueHistoryHandler from './value-history.mjs';
 // Forward drafts must be reviewed as written; synthetic scoreboard sentence repair is retired.
-import {inspectEditionBeforePublication,editorialApprovalMatches,deterministicInquirerAdmission,isReadOnlyEditorialPreview} from './inquirer-publication-guard.mjs';
+import {inspectEditionBeforePublication,editorialApprovalMatches,deterministicInquirerAdmission,isReadOnlyEditorialPreview,inspectPreviousWeekEditorialReuse} from './inquirer-publication-guard.mjs';
 import { getStore } from '@netlify/blobs';
 import {loadMida,attachMida} from './inquirer-context-v22.mjs';
 import {INQUIRER_VERSION,publicReporters,buildInquirerWeek,buildLeagueOverview,inquirerWeekClassification,INQUIRER_PLAYOFF_START_WEEK,INQUIRER_FINAL_WEEK} from './inquirer-reporters.mjs';
@@ -507,6 +507,17 @@ export async function weeklyReport(req){
  const rawInquirer=buildInquirerWeek({season,week,playerValues:Object.fromEntries((playerMarket?.marketRows||[]).map(p=>[String(p.id),p.value])),teams:enrichedTeams,players,weeklyStats,weeklyStatHistory,historicalSeasonStats:historicalSeason?.stats||{},historicalSeasonYear,scoringSettings:league?.scoring_settings||{},scoreFn:score,weekClassification});
  const rawOverview=buildLeagueOverview({season,week,teams:rawInquirer.teams,players,transactions,canonicalTrades:currentWeekTrades,weekClassification,valueHistoryMeta:{period:teamValueHistory?.period||null,baseline:teamValueHistory?.baseline||null,latest:teamValueHistory?.latest||null,source:teamValueHistory?.source||null}});
  let inquirer=rawInquirer,leagueOverview=rawOverview,quality={ok:true,issues:[],metrics:{}},variationSalt=0;
+ // Read-only multi-issue originality memory. Checking just last week's
+ // manuscript lets a reusable joke recur every other Sunday. Search the
+ // preceding four LOCKED editions, but do not rewrite any of them.
+ const historicalEditorialMemory=[];
+ if(week>=6){
+  for(let oldWeek=Math.max(1,week-4);oldWeek<=week-2;oldWeek++){
+   const archived=await broadcastStored(season,oldWeek).catch(()=>null);
+   if(archived&&isLockedInquirerEdition(archived,season,oldWeek))
+    historicalEditorialMemory.push(archived);
+  }
+ }
  if(week>=3){
   let accepted=null,best=null,bestSalt=0,bestQuality=null,bestScore=Infinity;
   // A deep-quality pass is not sufficient if the independent admission audit
@@ -518,6 +529,9 @@ export async function weeklyReport(req){
    const drafted=applyInquirerEditorialV31({season,week,rawInquirer,rawOverview,previousEdition:previousBroadcast,weekClassification,variationSalt:salt});
    const candidate={season,week,teams:drafted.inquirer.teams,league_overview:drafted.leagueOverview};
    const q=evaluateInquirerEditionQuality(candidate,previousBroadcast);
+   const archivalReuse=historicalEditorialMemory.flatMap(old=>
+    inspectPreviousWeekEditorialReuse(candidate,old).map(issue=>({...issue,source_week:Number(old.week)})));
+   if(archivalReuse.length){q.issues.push(...archivalReuse);q.ok=false}
    const a=inspectEditionBeforePublication(candidate);
    const score=q.issues.length*4+a.issues.length;
    if(!best||score<bestScore){best=drafted;bestQuality=q;bestSalt=salt;bestScore=score}

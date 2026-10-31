@@ -5004,14 +5004,24 @@ function assertWeek2Originality(result,previousEdition){
           'The fireworks supplier was sent away.','A refund policy would help morale.',
           'The manager can hear the phones ringing.','The headline practically wrote its resignation.',
           'The alumni association requests discretion.','Somebody unplug the confetti machine.',
-          'The critics brought their own folding chairs.','The local paper ran out of sympathy.',
+          'The critics arrived with laminated complaints.','The local paper ran out of sympathy.',
           'The rival bench enjoyed the matinee.','A quiet bus ride seems optimistic.'
         ][((Number(t.roster_id)||1)+Number(week)-6+32)%32];
         if(joke&&!sentiment.paragraphs.some(x=>x.includes(joke))){
           // Retain the roster-specific factual sentence, not the shared
           // six-team reporter template that the phrase audit correctly rejects.
-          const factual=name+' '+(won?'defeated':'lost to')+' '+opp+' by '+margin+
-            ' points; '+lead.name+' logged '+w2One(lead.points)+' points.';
+          const starterPoints=w2One(lead.points);
+          const factualAngles=[
+            name+' put up '+w2One(score)+' against '+opp+'; '+lead.name+' accounted for '+starterPoints+'.',
+            'For '+name+', '+lead.name+' scored '+starterPoints+' during the '+w2One(score)+'-point matchup with '+opp+'.',
+            opp+' saw '+starterPoints+' from '+lead.name+' and '+w2One(score)+' overall from '+name+'.',
+            name+' finished '+margin+' points '+(won?'ahead of ':'behind ')+opp+' after '+lead.name+' contributed '+starterPoints+'.',
+            'The matchup with '+opp+' ended '+w2One(score)+' for '+name+', including '+starterPoints+' from '+lead.name+'.',
+            lead.name+' posted '+starterPoints+' for '+name+'; '+opp+' was on the other side of a '+margin+'-point margin.',
+            'At '+w2One(score)+' points against '+opp+', '+name+' got '+starterPoints+' from '+lead.name+'.',
+            'A '+margin+'-point '+(won?'win':'defeat')+' against '+opp+' included '+starterPoints+' from '+lead.name+' for '+name+'.'
+          ];
+          const factual=factualAngles[(Number(t.roster_id)+Number(week))%factualAngles.length];
           sentiment.paragraphs.push(factual+' Around '+name+', '+kicker[0].toLowerCase()+kicker.slice(1));
         }
       }

@@ -5202,6 +5202,40 @@ function assertWeek2Originality(result,previousEdition){
       article.paragraphs=article.sections.flatMap(x=>x.paragraphs||[]);
     }
   }
+
+  // Final cross-edition recap sweep: the league page and hot takes must not
+  // reintroduce prior-issue sentences after the evolving newsroom passes.
+  // Only long identical commentary is discarded; preserve verified facts and
+  // every section/beat as a distinct editorial record.
+  if(Number(week)>=5&&previousEdition?.league_overview){
+    const entities=[...forwardEntities({teams}),...forwardEntities(previousEdition)];
+    const oldSentences=new Set(forwardRecapSentences(previousEdition)
+      .map(line=>forwardNormSentence(line,entities)));
+    const cleanParagraph=p=>{
+      const sentences=forwardSentenceParts(p);
+      const fresh=sentences.filter(line=>forwardWordCount(line)<10||
+        !oldSentences.has(forwardNormSentence(line,entities)));
+      return fresh.join(' ').trim();
+    };
+    for(const section of overview.sections||[]){
+      if(section.blocks?.length){
+        for(const block of section.blocks)
+          block.paragraphs=(block.paragraphs||[]).map(cleanParagraph).filter(Boolean);
+        section.paragraphs=section.blocks.flatMap(block=>block.paragraphs||[]);
+      }else section.paragraphs=(section.paragraphs||[]).map(cleanParagraph).filter(Boolean);
+    }
+    for(const take of overview.hot_takes||[]){
+      // Hot-take titles are part of the copy-forward comparison, even when
+      // no full stop separates them from the first sentence of the take.
+      const joined=String(take.title||'')+' '+String(take.take||'');
+      const match=forwardSentenceParts(joined)[0];
+      if(match&&oldSentences.has(forwardNormSentence(match,entities))){
+        take.take=String(take.take||'')
+          .replace(/^(?:Next week remembers:|Spare me the excuses:|Carry this into Monday:|No fine print:)\s*/i,'')
+          .trim();
+      }
+    }
+  }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 

@@ -5031,7 +5031,7 @@ function assertWeek2Originality(result,previousEdition){
             'Value before: '+before+'. Value after: '+after+'. '+name+' still had to play '+opp+' and scored '+w2One(score)+'.',
             name+' entered the comparison at '+before+' and finished at '+after+' valuation points. The matchup with '+opp+' ended on '+w2One(score)+' scored.',
             'The market put '+name+' at '+after+', compared with '+before+' earlier. '+opp+' was dealing with '+w2One(score)+' fantasy points instead.',
-            'A '+(delta>=0?'gain':'drop')+' from '+before+' to '+after+' belongs on '+name+'\'s ledger. The football column reads '+w2One(score)+' against '+opp+'.',
+            'A '+(delta>=0?'gain':'drop')+' from '+before+' to '+after+' belongs on '+teamPossessive+' ledger. The football column reads '+w2One(score)+' against '+opp+'.',
             name+' recorded '+after+' valuation points after starting at '+before+'. The fantasy team delivered '+w2One(score)+' against '+opp+'.',
             'At '+after+' instead of '+before+' market points, '+name+' changed price. Its next opponent can examine the '+w2One(score)+'-point score against '+opp+'.'
           ];

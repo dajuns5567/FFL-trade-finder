@@ -5134,7 +5134,7 @@ function assertWeek2Originality(result,previousEdition){
             'In the meeting with '+opp+', '+club+' received '+p+' fantasy points from '+lead.name+' and '+q+' from '+second.name+'. The sum of those performances must be read against the team total of '+total+'.',
             'With '+p+' fantasy points from '+lead.name+' and '+q+' from '+second.name+', '+club+' produced '+total+' against '+opp+'. That is the central scoring relationship of this particular Week '+week+' matchup.'
           ];
-          playerDesk.paragraphs.push(facts[(Number(t.roster_id)+Number(week))%facts.length]);
+          playerDesk.paragraphs.unshift(facts[(Number(t.roster_id)+Number(week))%facts.length]);
         }
       }
       article.paragraphs=article.sections.flatMap(x=>x.paragraphs||[]);

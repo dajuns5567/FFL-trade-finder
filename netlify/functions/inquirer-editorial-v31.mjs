@@ -5006,7 +5006,7 @@ function assertWeek2Originality(result,previousEdition){
           'The alumni association requests discretion.','Somebody unplug the confetti machine.',
           'The critics brought their own folding chairs.','The local paper ran out of sympathy.',
           'The rival bench enjoyed the matinee.','A quiet bus ride seems optimistic.'
-        ][((Number(t.roster_id)||1)-1)%32];
+        ][((Number(t.roster_id)||1)+Number(week)-6+32)%32];
         if(joke&&!sentiment.paragraphs.some(x=>x.includes(joke))){
           // Retain the roster-specific factual sentence, not the shared
           // six-team reporter template that the phrase audit correctly rejects.

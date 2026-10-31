@@ -5091,6 +5091,31 @@ function assertWeek2Originality(result,previousEdition){
       for(const take of overview.hot_takes||[])take.take=rewriteCopy(take.take);
     }
   }
+
+  // Last-writer archive audit: late humor, market and depth passes must not
+  // reintroduce old column sentences after earlier copy-forward cleanup.
+  if(Number(week)>=5&&previousEdition?.teams?.length){
+    const entities=[...forwardEntities({teams}),...forwardEntities(previousEdition)];
+    const prior=new Map(previousEdition.teams.map(t=>[String(t.roster_id),new Set(
+      forwardArticleSentences(t).map(x=>forwardNormSentence(x,entities))
+    )]));
+    for(const t of teams){
+      const article=t.inquirer_article,old=prior.get(String(t.roster_id));if(!article||!old)continue;
+      for(const section of article.sections||[]){
+        const rows=section.paragraphs||[];
+        section.paragraphs=rows.map(p=>{
+          const parts=forwardSentenceParts(p);
+          const keep=parts.filter(sentence=>forwardWordCount(sentence)<10||
+            !old.has(forwardNormSentence(sentence,entities)));
+          // Keep a short section intact if removing historical phrasing would
+          // erase the only factual report; the admission audit can hold it.
+          if(!keep.length)return '';
+          return keep.join(' ');
+        }).filter(Boolean);
+      }
+      article.paragraphs=article.sections.flatMap(x=>x.paragraphs||[]);
+    }
+  }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 

@@ -5113,6 +5113,30 @@ function assertWeek2Originality(result,previousEdition){
           return keep.join(' ');
         }).filter(Boolean);
       }
+      // If the archived issue shared its player prose, replace it with
+      // verified, week-specific scoring analysis rather than leaving a
+      // tabular stat feed or restoring last week's sentences.
+      const playerDesk=article.sections?.find(x=>x.kind==='players');
+      if(playerDesk&&forwardWordCount(playerDesk.paragraphs.join(' '))<26){
+        const roster=(t.starter_details||[]).filter(p=>p?.name&&p.points!=null&&Number.isFinite(Number(p.points)))
+          .sort((a,b)=>Number(b.points)-Number(a.points));
+        const lead=roster[0],second=roster[1],score=Number(t.points);
+        if(lead&&second&&Number.isFinite(score)){
+          const club=w2DisplayTeam(t.team_name),opp=w2DisplayTeam(t.opponent_name||'the opponent');
+          const p=w2One(lead.points),q=w2One(second.points),total=w2One(score);
+          const facts=[
+            lead.name+' carried '+p+' fantasy points for '+club+' in Week '+week+', while '+second.name+' supplied '+q+'. Against '+opp+', that pairing explains '+w2One(Number(lead.points)+Number(second.points))+' of the '+total+' scored.',
+            'Against '+opp+', '+club+' had '+lead.name+' leading the starters at '+p+' fantasy points; '+second.name+' followed with '+q+'. The total reached '+total+', with the rest of the lineup responsible for the gap.',
+            'The Week '+week+' starters for '+club+' featured '+lead.name+' at '+p+' fantasy points and '+second.name+' at '+q+'. The team finished with '+total+' against '+opp+', a result the leaders could not produce alone.',
+            lead.name+' supplied '+p+' fantasy points against '+opp+' for '+club+'. '+second.name+' added '+q+'; together they represented '+w2One(Number(lead.points)+Number(second.points))+' of the '+total+' final score.',
+            'The '+club+' box against '+opp+' puts '+lead.name+' on '+p+' fantasy points, followed by '+second.name+' on '+q+'. That pair accounts for a clear share of the '+total+'-point finish.',
+            'For '+club+', '+lead.name+' scored '+p+' fantasy points and '+second.name+' added '+q+' in Week '+week+'. The other starters had to supply the remainder of the '+total+' registered against '+opp+'.',
+            'In the meeting with '+opp+', '+club+' received '+p+' fantasy points from '+lead.name+' and '+q+' from '+second.name+'. The sum of those performances must be read against the team total of '+total+'.',
+            'With '+p+' fantasy points from '+lead.name+' and '+q+' from '+second.name+', '+club+' produced '+total+' against '+opp+'. That is the central scoring relationship of this particular Week '+week+' matchup.'
+          ];
+          playerDesk.paragraphs.push(facts[(Number(t.roster_id)+Number(week))%facts.length]);
+        }
+      }
       article.paragraphs=article.sections.flatMap(x=>x.paragraphs||[]);
     }
   }

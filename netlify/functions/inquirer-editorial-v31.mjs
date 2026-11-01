@@ -9,7 +9,7 @@ import {attributeForwardPlayerStatFragments,curateForwardTeamNarrative,inspectNa
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=88;
+export const FORWARD_EDITORIAL_REVISION=89;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -3221,7 +3221,7 @@ function w2BuildSections(t,prev){
         "This Sunday "+weak.name+" provided "+w2One(weak.points)+". Across 2025 the average stood at "+w2One(weak.prior_season_avg)+" in "+Number(weak.prior_season_games)+" appearances.",
         "Last season: "+weak.name+", "+Number(weak.prior_season_games)+" appearances and "+w2One(weak.prior_season_avg)+" per game. Now: "+w2One(weak.points)+".",
         "Compare "+weak.name+"'s "+w2One(weak.points)+" with a previous-season average of "+w2One(weak.prior_season_avg)+" over "+Number(weak.prior_season_games)+" outings.",
-        "The old baseline for "+weak.name+" is "+w2One(weak.prior_season_avg)+" per game. The Week "+week+" box shows "+w2One(weak.points)+".",
+        "In 2025, "+weak.name+" averaged "+w2One(weak.prior_season_avg)+" points per game. Against "+w2DisplayTeam(t.opponent_name||"the opponent")+", "+weak.name+" produced "+w2One(weak.points)+" in Week "+week+"; that is the specific decline "+w2DisplayTeam(t.team_name)+" must account for.",
         "There is a comparison for "+weak.name+": "+w2One(weak.points)+" today against "+w2One(weak.prior_season_avg)+" per game through "+Number(weak.prior_season_games)+" appearances in 2025."
       ][w2Hash(String(t.roster_id)+"|hot-context|"+String(week)+"|"+String(r?.id||""))%8])
     ]:[])

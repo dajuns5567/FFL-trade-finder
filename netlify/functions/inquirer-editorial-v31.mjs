@@ -9,7 +9,7 @@ import {attributeForwardPlayerStatFragments,curateForwardTeamNarrative,inspectNa
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=87;
+export const FORWARD_EDITORIAL_REVISION=88;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -5662,6 +5662,8 @@ function assertWeek2Originality(result,previousEdition){
   // Correct singular grammatical subjects after all prose rewriting layers.
   // Normalize every reader-facing nested article/overview field, including blocks.
   const repairInterveningSubjects=value=>String(value||'')
+    .replace(/\b1 carries\b/gi,'1 carry')
+    .replace(/\b1 rush yds\b/gi,'1 rush yd')
     .replace(/The radio station covering ([^.!?\n]+?) have declared\b/gi,'The radio station covering $1 has declared')
     .replace(/The ((?:AFC|NFC) (?:EAST|WEST|NORTH|SOUTH)) race around ([^.!?\n]+?) are already compressed\b/gi,'The $1 race around $2 is already compressed');
   for(const t of teams){

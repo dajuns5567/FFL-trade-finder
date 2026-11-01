@@ -3202,7 +3202,10 @@ function w2BuildSections(t,prev){
     ...moverReads
   ]:["n/a"];
   const weak=(t.starter_details||[]).slice().sort((x,y)=>Number(x.points)-Number(y.points))[0],weakPrev=weak?w2PrevPlayer(prev,weak.id):null,hot=[
-    w2S(t,r,"hot-one",weak&&weakPrev?w2HotTrend(t,r,weak,weakPrev):w2WeakSpotRead(t,r,weak,won,margin))
+    w2S(t,r,"hot-one",weak&&weakPrev?w2HotTrend(t,r,weak,weakPrev):w2WeakSpotRead(t,r,weak,won,margin)),
+    ...(weak&&Number(weak.prior_season_games)>0&&Number(weak.prior_season_avg)>0?[
+      w2S(t,r,"hot-season-context",weak.name+" averaged "+w2One(weak.prior_season_avg)+" fantasy points over "+Number(weak.prior_season_games)+" appearances last season; this week\u2019s "+w2One(weak.points)+" gives "+w2DisplayTeam(t.team_name)+" a specific production gap to examine before "+w2DisplayTeam(t.next_opponent_name||"the next opponent")+".")
+    ]:[])
   ];
   const eligibleCredit=w2EligibleCool(t),topIds=new Set(top.filter(Boolean).map(p=>String(p.id))),supportCredit=(t.starter_details||[]).filter(p=>!topIds.has(String(p.id))&&Number(p.points)>=10).sort((a,b)=>Number(b.points)-Number(a.points)).slice(0,2);
   const cool=eligibleCredit.length<2&&supportCredit.length?[

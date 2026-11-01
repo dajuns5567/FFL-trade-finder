@@ -128,7 +128,7 @@ const adjacentFive={season:2026,week:5,published_locked:true,teams:adjacentFiveD
 // Pipeline-level fail-closed controls must catch defects surviving late copy polishing.
 const chronologyFixture=clone(adjacentFive);
 chronologyFixture.teams[0].trade_acquisitions=[{player_id:'999999',player_name:'Test Acquisition',season:2026,week:3}];
-chronologyFixture.teams[0].inquirer_article.sections.find(s=>s.kind==='value').paragraphs.push('Test Acquisition came over in Week 6 of 2026.');
+chronologyFixture.teams[0].inquirer_article.sections.find(s=>s.kind==='value').paragraphs.push('The roster marker moved since Test Acquisition came over in Week 6 of 2026.');
 chronologyFixture.teams[0].inquirer_article.paragraphs=chronologyFixture.teams[0].inquirer_article.sections.flatMap(s=>s.paragraphs||[]);
 assert.ok(inspectNarrativeArchitecture(chronologyFixture).some(x=>x.id==='historical-acquisition-date-mismatch'),
  'The final pipeline must detect contradictory acquisition dates against Sleeper history');

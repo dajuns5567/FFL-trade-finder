@@ -5626,6 +5626,39 @@ function assertWeek2Originality(result,previousEdition){
     desk.paragraphs=retained;
     article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);
   }
+  // Last-writer agreement enforcement: every earlier rewrite, including desk
+  // recovery and recap synthesis, must honor plural fantasy club names.
+  if(week>=3){
+    const plurals=[...new Set(teams.map(t=>String(t.team_name||'').trim()).filter(n=>/s$/i.test(n.split(/\\s+/).at(-1)||'')))];
+    const fixes={does:'do',gets:'get',has:'have',is:'are',needs:'need',sits:'sit',keeps:'keep',projects:'project',faces:'face'};
+    const correct=body=>{
+      let copy=String(body||'');
+      for(const name of plurals){
+        const rule=new RegExp('\\\\b'+forwardEscRe(name)+' (does|gets|has|is|needs|sits|keeps|projects|faces)\\\\b','gi');
+        copy=copy.replace(rule,(match,verb,offset)=>{
+          if(/\\b(?:against|around|covering|for|from|of|to|with|before|after)\\s$/i.test(copy.slice(0,offset)))return match;
+          return match.slice(0,-verb.length)+fixes[verb.toLowerCase()];
+        });
+      }
+      return copy;
+    };
+    for(const team of teams){
+      const article=team.inquirer_article;if(!article)continue;
+      article.headline=correct(article.headline);
+      for(const section of article.sections||[]){
+        section.heading=correct(section.heading);
+        section.paragraphs=(section.paragraphs||[]).map(correct);
+      }
+      article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);
+    }
+    for(const section of overview?.sections||[]){
+      section.heading=correct(section.heading);
+      section.paragraphs=(section.paragraphs||[]).map(correct);
+      for(const block of section.blocks||[])block.paragraphs=(block.paragraphs||[]).map(correct);
+    }
+    for(const take of overview?.hot_takes||[]){take.title=correct(take.title);take.take=correct(take.take)}
+    if(overview?.sections)overview.paragraphs=overview.sections.flatMap(s=>s.paragraphs||[]);
+  }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 

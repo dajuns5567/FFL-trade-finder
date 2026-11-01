@@ -3204,7 +3204,16 @@ function w2BuildSections(t,prev){
   const weak=(t.starter_details||[]).slice().sort((x,y)=>Number(x.points)-Number(y.points))[0],weakPrev=weak?w2PrevPlayer(prev,weak.id):null,hot=[
     w2S(t,r,"hot-one",weak&&weakPrev?w2HotTrend(t,r,weak,weakPrev):w2WeakSpotRead(t,r,weak,won,margin)),
     ...(weak&&Number(weak.prior_season_games)>0&&Number(weak.prior_season_avg)>0?[
-      w2S(t,r,"hot-season-context",weak.name+" averaged "+w2One(weak.prior_season_avg)+" fantasy points over "+Number(weak.prior_season_games)+" appearances last season; this week\u2019s "+w2One(weak.points)+" gives "+w2DisplayTeam(t.team_name)+" a specific production gap to examine before "+w2DisplayTeam(t.next_opponent_name||"the next opponent")+".")
+      w2S(t,r,"hot-season-context",[
+        weak.name+": "+w2One(weak.points)+" this week; 2025 average "+w2One(weak.prior_season_avg)+" across "+Number(weak.prior_season_games)+" games.",
+        "For "+weak.name+", the 2025 benchmark was "+w2One(weak.prior_season_avg)+". Week "+week+" delivered "+w2One(weak.points)+".",
+        "A "+Number(weak.prior_season_games)+"-game sample from 2025 put "+weak.name+" at "+w2One(weak.prior_season_avg)+" per outing; the present return is "+w2One(weak.points)+".",
+        "This Sunday "+weak.name+" provided "+w2One(weak.points)+". Across 2025 the average stood at "+w2One(weak.prior_season_avg)+" in "+Number(weak.prior_season_games)+" appearances.",
+        "Last season: "+weak.name+", "+Number(weak.prior_season_games)+" appearances and "+w2One(weak.prior_season_avg)+" per game. Now: "+w2One(weak.points)+".",
+        "Compare "+weak.name+"'s "+w2One(weak.points)+" with a previous-season average of "+w2One(weak.prior_season_avg)+" over "+Number(weak.prior_season_games)+" outings.",
+        "The old baseline for "+weak.name+" is "+w2One(weak.prior_season_avg)+" per game. The Week "+week+" box shows "+w2One(weak.points)+".",
+        "There is a comparison for "+weak.name+": "+w2One(weak.points)+" today against "+w2One(weak.prior_season_avg)+" per game through "+Number(weak.prior_season_games)+" appearances in 2025."
+      ][w2Hash(String(t.roster_id)+"|hot-context|"+String(week)+"|"+String(r?.id||""))%8])
     ]:[])
   ];
   const eligibleCredit=w2EligibleCool(t),topIds=new Set(top.filter(Boolean).map(p=>String(p.id))),supportCredit=(t.starter_details||[]).filter(p=>!topIds.has(String(p.id))&&Number(p.points)>=10).sort((a,b)=>Number(b.points)-Number(a.points)).slice(0,2);

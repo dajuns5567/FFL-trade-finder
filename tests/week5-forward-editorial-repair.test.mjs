@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
 import {repairNewEditionCopy} from '../netlify/functions/inquirer-editorial-collision-repair.mjs';
-import {adaptWeekLanguage,evaluateInquirerEditionQuality} from '../netlify/functions/inquirer-editorial-v31.mjs';
+import {adaptWeekLanguage,evaluateInquirerEditionQuality,trimFinalCrossTeamClauseCollisions} from '../netlify/functions/inquirer-editorial-v31.mjs';
 test('future-week duplicate copy is replaced with scoreboard facts without disabling the strict editorial gate',()=>{
  const sentence='The next Sunday can improve the wording if it objects, but the team still has to answer the same stale argument every week without any individual matchup evidence.';
  const teams=Array.from({length:4},(_,i)=>({
@@ -137,4 +137,44 @@ test('week adaptation cannot replay the Week 2 first-impression and third-oppone
  assert.match(copy,/Week 4 supplied the comparison; Week 5 is where/);
  assert.match(copy,/survive the next opponent/);
  assert.doesNotMatch(copy,/first impression|third opponent/);
+});
+
+test('final editorial sweep removes copied paired and triple commentary but retains fact sentences',()=>{
+ const triple='The entire crowd has mistaken another Sunday for an extension of the same tired argument.';
+ const pair='The fan base now believes that every quiet Sunday must be followed by a public apology from the scoreboard committee before anybody can reasonably discuss the next game.';
+ assert(triple.split(/\s+/).length>=12&&triple.split(/\s+/).length<16);
+ assert(pair.split(/\s+/).length>=16);
+ const names=['Club Alpha','Club Bravo','Club Charlie','Club Delta','Club Echo'],shared=[triple,triple,triple,pair,pair];
+ const teams=names.map((team,i)=>{
+   const fact=team+' recorded '+(80+i*3)+' fantasy points against '+(100+i*2)+' in Week 5.';
+   const paragraphs=[shared[i]+' '+fact];
+   return{roster_id:String(i+1),team_name:team,points:80+i*3,opponent_points:100+i*2,
+     starter_details:[],inquirer_article:{reporter:{id:'mack-hollis'},
+       sections:[{kind:'outlook',paragraphs}],paragraphs:[...paragraphs]}};
+ });
+ const ids=()=>evaluateInquirerEditionQuality({week:5,teams,league_overview:{sections:[]}})
+   .issues.map(issue=>issue.id);
+ assert(ids().includes('cross-team-clause-scaffold'),'fixture must reproduce triple collision');
+ assert(ids().includes('paired-editorial-clause-scaffold'),'fixture must reproduce paired collision');
+ trimFinalCrossTeamClauseCollisions(teams);
+ const after=ids();
+ assert(!after.includes('cross-team-clause-scaffold'),after.join(','));
+ assert(!after.includes('paired-editorial-clause-scaffold'),after.join(','));
+ for(const [i,team] of teams.entries()){
+   const fact=team.team_name+' recorded '+(80+i*3)+' fantasy points against '+(100+i*2)+' in Week 5.';
+   assert(team.inquirer_article.paragraphs.join(' ').includes(fact),'source fact must survive');
+   assert.deepEqual(team.inquirer_article.paragraphs,team.inquirer_article.sections.flatMap(x=>x.paragraphs));
+ }
+});
+
+test('a sole copied sentence is preserved for fail-closed editorial rejection',()=>{
+ const repeat='The entire crowd has mistaken another Sunday for an extension of the same tired argument.';
+ const teams=['Club Alpha','Club Bravo','Club Charlie'].map((name,i)=>({
+   roster_id:String(i+1),team_name:name,inquirer_article:{
+     sections:[{kind:'outlook',paragraphs:[repeat]}],paragraphs:[repeat]}
+ }));
+ trimFinalCrossTeamClauseCollisions(teams);
+ assert(teams.every(t=>t.inquirer_article.paragraphs[0]===repeat));
+ const issues=evaluateInquirerEditionQuality({week:5,teams,league_overview:{sections:[]}}).issues;
+ assert(issues.some(issue=>issue.id==='cross-team-clause-scaffold'));
 });

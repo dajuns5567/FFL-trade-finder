@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=79;
+export const FORWARD_EDITORIAL_REVISION=80;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -289,6 +289,42 @@ function forwardCrossTeamClauseOffenders(teams,entities,{width=12,minOwners=3,ma
   return new Map([...placement].filter(([,owners])=>owners.length>=minOwners));
 }
 const forwardPairedNarrativeOffenders=(teams,entities)=>forwardCrossTeamClauseOffenders(teams,entities,{width:16,minOwners:2,maxPlaceholders:0});
+
+/**
+ * After every narrative rewrite, check both 3-team and 2-team repetition.
+ * Do not erase a paragraph's sole sentence or its essential reporting:
+ * unresolved duplicates remain blocked by the strict editorial guard.
+ */
+export function trimFinalCrossTeamClauseCollisions(teams){
+  const entities=forwardEntities({teams}),removeByTeam=new Map();
+  const checks=[
+    {width:12,retained:2,offenders:forwardCrossTeamClauseOffenders(teams,entities)},
+    {width:16,retained:1,offenders:forwardPairedNarrativeOffenders(teams,entities)}
+  ];
+  for(const {width,retained,offenders} of checks){
+    for(const [phrase,owners] of offenders)for(const team of owners.slice(retained)){
+      const byWidth=removeByTeam.get(team)||new Map();
+      const phrases=byWidth.get(width)||new Set();
+      phrases.add(phrase);byWidth.set(width,phrases);removeByTeam.set(team,byWidth);
+    }
+  }
+  for(const t of teams){
+    const byWidth=removeByTeam.get(String(t.team_name||''));
+    if(!byWidth?.size)continue;
+    const article=t.inquirer_article;if(!article)continue;
+    for(const section of article.sections||[]){
+      section.paragraphs=(section.paragraphs||[]).map(paragraph=>{
+        const sentences=forwardSentenceParts(paragraph);
+        const kept=sentences.filter(sentence=>![...byWidth].some(([width,phrases])=>
+          forwardEditorialPhraseKeys(sentence,entities,width,false).some(phrase=>phrases.has(phrase))));
+        return kept.length?kept.join(' '):paragraph;
+      });
+    }
+    article.paragraphs=(article.sections||[]).flatMap(sec=>sec.paragraphs||[]);
+  }
+  return teams;
+}
+
 function evolveForwardTeams(teams,previousEdition,week,salt){
   const currentEntities=forwardEntities({teams}),previousEntities=forwardEntities(previousEdition),entities=[...currentEntities,...previousEntities],
     priorByRoster=new Map((previousEdition?.teams||[]).map(t=>[String(t.roster_id),new Set(forwardArticleSentences(t).map(s=>forwardNormSentence(s,entities)))])),
@@ -5258,32 +5294,9 @@ function assertWeek2Originality(result,previousEdition){
     }
   }
 
-  // The production-derived Week 5 draft exposed a clause collision not seen
-  // in offline fixtures. Inspect the FINAL article text, after all late
-  // narrative repairs, and strip only the surplus repeated sentence.
-  if(Number(week)>=5){
-    const entities=forwardEntities({teams}),offenders=forwardCrossTeamClauseOffenders(teams,entities);
-    if(offenders.size){
-      const removeByTeam=new Map();
-      for(const [phrase,owners] of offenders)for(const team of owners.slice(2)){
-        const a=removeByTeam.get(team)||new Set();a.add(phrase);removeByTeam.set(team,a);
-      }
-      for(const t of teams){
-        const phrases=removeByTeam.get(String(t.team_name||''));if(!phrases?.size)continue;
-        const article=t.inquirer_article;if(!article)continue;
-        for(const section of article.sections||[]){
-          // Do not erase an essential section's only reported fact; those
-          // drafts must instead fail closed at the publication audit.
-          section.paragraphs=(section.paragraphs||[]).map(paragraph=>{
-            const sentences=forwardSentenceParts(paragraph);
-            const kept=sentences.filter(sentence=>!forwardEditorialPhraseKeys(sentence,entities,12,false).some(x=>phrases.has(x)));
-            return kept.length?kept.join(' '):paragraph;
-          });
-        }
-        article.paragraphs=article.sections.flatMap(sec=>sec.paragraphs||[]);
-      }
-    }
-  }
+  // The final sweep must handle paired 16-word clauses as well as clauses
+  // repeated by three or more teams, after all late narrative repairs.
+  if(Number(week)>=5)trimFinalCrossTeamClauseCollisions(teams);
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 

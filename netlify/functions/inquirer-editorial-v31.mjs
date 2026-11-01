@@ -5523,17 +5523,32 @@ function assertWeek2Originality(result,previousEdition){
       const narrow=matched,leader=strongest;
       const leadStar=(leader.starter_details||[]).filter(p=>p?.name&&Number.isFinite(Number(p.points)))
         .sort((a,b)=>Number(b.points)-Number(a.points))[0];
+      const closeGap=forwardOne(Number(narrow.points)-Number(narrow.opponent_points));
+      const n=w2DisplayTeam(narrow.team_name),foe=w2DisplayTeam(narrow.opponent_name||'the opposition');
+      const high=w2DisplayTeam(leader.team_name),highPts=forwardOne(leader.points);
+      const star=leadStar?leadStar.name+' ('+forwardOne(leadStar.points)+')':'the recorded starters';
+      const nNext=w2DisplayTeam(narrow.next_opponent_name||'the next opponent');
+      const highNext=w2DisplayTeam(leader.next_opponent_name||'the next opponent');
+      const variant=(week+variationSalt)%4;
       last.paragraphs=[
-        w2DisplayTeam(narrow.team_name)+' survived '+w2DisplayTeam(narrow.opponent_name||'the opposition')+
-          ' by '+forwardOne(Number(narrow.points)-Number(narrow.opponent_points))+' in Week '+week+
-          '. A verdict that close belongs in the official record, not in anyone’s premature victory speech.',
-        w2DisplayTeam(leader.team_name)+' supplied the other end of the evidence at '+forwardOne(leader.points)+
-          ' points'+(leadStar?', with '+leadStar.name+' contributing '+forwardOne(leadStar.points):'')+
-          '. One narrow escape and one commanding total: managers who explain both with the same excuse are interviewing for a different job.',
-        'Next comes '+w2DisplayTeam(narrow.next_opponent_name||'the next opponent')+' for '+
-          w2DisplayTeam(narrow.team_name)+' and '+w2DisplayTeam(leader.next_opponent_name||'the next opponent')+
-          ' for '+w2DisplayTeam(leader.team_name)+'. Their Week '+week+
-          ' returns are evidence, not a lifetime exemption from criticism.'
+        [
+          n+' survived '+foe+' by '+closeGap+' in Week '+week+'. The appeal process consists of checking the score again.',
+          'The closest winning margin belonged to '+n+': '+closeGap+' against '+foe+'. No amount of confident postgame rhetoric adds another decimal.',
+          foe+' came within '+closeGap+' of '+n+'. That is what the Week '+week+' evidence says; anyone reporting a comfortable win has interviewed the wrong scoreboard.',
+          'A margin of '+closeGap+' settled '+n+' versus '+foe+'. It took one final whistle to settle the result and apparently several more to settle the arguments.'
+        ][variant],
+        [
+          high+' supplied the week’s opposite extreme: '+highPts+' points, with '+star+' among the contributors. The comparison is a warning against giving every win the same tidy explanation.',
+          'Elsewhere '+high+' put up '+highPts+', led in part by '+star+'. The headline is not that all victories are alike; it is that the evidence stubbornly refuses to cooperate.',
+          'For scale, '+high+' posted '+highPts+' while '+star+' carried a share of the production. One league, two wildly different ways to make a manager sweat.',
+          high+' ended on '+highPts+' and counted '+star+' in the box score. That is the other side of the week’s ledger, and it deserves its own line of questioning.'
+        ][variant],
+        [
+          'The next docket sends '+n+' against '+nNext+' and '+high+' against '+highNext+'. Week '+week+' bought a result, not immunity.',
+          n+' meets '+nNext+' next; '+high+' draws '+highNext+'. Both must explain themselves with another lineup, not another slogan.',
+          'Now '+nNext+' gets '+n+', while '+highNext+' awaits '+high+'. The next score will be entered without regard for this column’s compliments.',
+          'Week '+(week+1)+' puts '+n+' opposite '+nNext+' and '+high+' opposite '+highNext+'. The investigation does not recognize a lifetime waiver for past scoring.'
+        ][variant]
       ];
     }
     overview.paragraphs=overview.sections.flatMap(s=>s.paragraphs||[]);

@@ -5417,7 +5417,7 @@ export function evaluateInquirerEditionQuality(current,previous=null){
       // Count reproduced editorial *arguments*, not verbatim evidence from
       // an unchanged synthetic fixture. Transactions, stat lines, measured
       // values and numeric matchup projections remain separately fact-checked.
-      const factualSentence=s=>/\b(?:fantasy points;|(?:added|dropped|claimed|waived|traded)\s+[A-Z]|roster value\s*\(|value\s*\(|\d+(?:\.\d+)?\s*(?:fantasy points|rush yds|rec yds)|\d+(?:\.\d+)?\s+on the forecast|projects?\s+\d+(?:\.\d+)?\s+for)\b/i.test(s);
+      const factualSentence=s=>/fantasy points;|\b(?:added|dropped|claimed|waived|traded)\s+[A-Z]|\broster value\s*\(|\bvalue\s*\(|\b\d+(?:\.\d+)?\s*(?:fantasy points|rush yds|rec yds)\b|\b\d+(?:\.\d+)?\s+on the forecast\b|\bprojects?\s+\d+(?:\.\d+)?\s+for\b/i.test(s);
       const priorEditorial=new Set(forwardArticleSentences(prior).filter(s=>!factualSentence(s)).map(s=>forwardNormSentence(s,entities)));
       const editorial=sentences.filter(s=>!factualSentence(s));
       const repeatedEditorial=editorial.filter(s=>priorEditorial.has(forwardNormSentence(s,entities)));

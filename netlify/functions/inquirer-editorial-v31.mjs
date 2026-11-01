@@ -5489,22 +5489,44 @@ function assertWeek2Originality(result,previousEdition){
       const hasHistory=games>0&&Number.isFinite(last)&&last>0;
       const recent=(player.recent_form?.series||[]).filter(row=>Number(row.week)<week&&Number.isFinite(Number(row.points))).slice(-1)[0];
       const fact=String(player.real_stat_line||'').trim();
-      const history=hasHistory?(' The '+games+'-game 2025 record for '+player.name+' averaged '+forwardOne(last)+' per game.'):'';
-      const before=recent?(' Week '+recent.week+' produced '+forwardOne(recent.points)+' for '+player.name+'.'):'';
-      const versions=kind==='hot-seat'?[
-        player.name+' recorded '+points+' in the '+club+' lineup against '+other+'.'+before+history,
-        'A hard number for '+club+': '+player.name+' supplied '+points+' against '+other+'.'+history+before,
-        'The '+points+'-point return from '+player.name+' is part of the '+club+' result against '+other+'.'+before+history,
-        club+' can locate one shortfall without guessing: '+player.name+' posted '+points+'.'+history+before
-      ]:[
-        player.name+' supplied '+points+' of '+forwardOne(score)+' for '+club+' against '+other+'.'+before+history,
-        'Credit the actual scorer: '+player.name+' delivered '+points+' in the '+club+' matchup with '+other+'.'+history+before,
-        'The individual contribution from '+player.name+' was '+points+'; '+club+' finished on '+forwardOne(score)+'.'+before+history,
-        club+' got a recorded '+points+' from '+player.name+' against '+other+'.'+history+before
-      ];
-      const pick=w2Hash(String(team.roster_id)+'|desk-repair|'+kind+'|'+week)%versions.length;
-      const detail=fact&&forwardWordCount(existing+' '+versions[pick])<32?' The recorded stat line: '+fact+'.':'';
-      const addition=versions[pick]+detail;
+      const rosterIndex=Math.max(0,(Number(team.roster_id)||1)-1);
+      const variant=(rosterIndex+week)%8,detailVariant=(Math.floor(rosterIndex/8)+week)%4;
+      const dataLead=kind==='hot-seat'?[
+        player.name+': '+points+' for '+club+'.',
+        'Shortfall: '+player.name+' returned '+points+'.',
+        club+' got '+points+' from '+player.name+'.',
+        'The weak return belonged to '+player.name+': '+points+'.',
+        'Against '+other+', '+player.name+' posted '+points+'.',
+        'At issue: '+player.name+', '+points+' points.',
+        player.name+' ended on '+points+' for '+club+'.',
+        'The starting return: '+player.name+' at '+points+'.'
+      ][variant]:[
+        'Credit '+player.name+' for '+points+'.',
+        player.name+' supplied '+points+' for '+club+'.',
+        club+' counted '+points+' from '+player.name+'.',
+        'Among the starters: '+player.name+', '+points+'.',
+        'An earned mention goes to '+player.name+': '+points+'.',
+        'Against '+other+', '+player.name+' contributed '+points+'.',
+        player.name+' finished with '+points+' for '+club+'.',
+        'The scorebook credits '+player.name+' with '+points+'.'
+      ][variant];
+      const trend=recent?[
+        ' Previous outing: '+forwardOne(recent.points)+' (Week '+recent.week+').',
+        ' Previous week on record: '+forwardOne(recent.points)+'.',
+        ' Earlier result: '+forwardOne(recent.points)+' in Week '+recent.week+'.',
+        ' Prior recorded return: '+forwardOne(recent.points)+'.'
+      ][detailVariant]:'';
+      const history=hasHistory?[
+        ' 2025 baseline: '+forwardOne(last)+' per game.',
+        ' Historical average: '+forwardOne(last)+' across '+games+' outings.',
+        ' Last season: '+games+' games at '+forwardOne(last)+'.',
+        ' Previous-season mean: '+forwardOne(last)+' ('+games+' games).'
+      ][(detailVariant+2)%4]:'';
+      const line=fact&&forwardWordCount(existing+' '+dataLead+trend+history)<32?
+        ' On-field production: '+fact+'.':'';
+      const game=' Matchup: '+club+' '+forwardOne(score)+'; '+other+' '+forwardOne(opponent)+'.';
+      let addition=dataLead+trend+history+line;
+      if(forwardWordCount(existing+' '+addition)<28)addition+=game;
       if(!existing.includes(addition))section.paragraphs.push(addition);
     }
     article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);

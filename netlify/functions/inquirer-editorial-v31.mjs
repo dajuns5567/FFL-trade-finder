@@ -5414,9 +5414,16 @@ export function evaluateInquirerEditionQuality(current,previous=null){
     for(const n of new Set(norms)){if(!articleScaffold.has(n))articleScaffold.set(n,new Set());articleScaffold.get(n).add(String(t.roster_id))}
     const prior=(previous?.teams||[]).find(x=>String(x.roster_id)===String(t.roster_id));
     if(prior){
-      const pset=new Set(forwardArticleSentences(prior).map(s=>forwardNormSentence(s,entities))),overlap=norms.filter(n=>pset.has(n));
-      const ratio=norms.length?overlap.length/norms.length:0;
-      if(overlap.length>=5||ratio>.16)issues.push({id:'same-team-copy-forward',team:t.team_name,overlap:overlap.length,ratio:Number(ratio.toFixed(3)),examples:sentences.filter((sentence,i)=>pset.has(norms[i])).slice(0,6)});
+      // Count reproduced editorial *arguments*, not verbatim evidence from
+      // an unchanged synthetic fixture. Transactions, stat lines, measured
+      // values and numeric matchup projections remain separately fact-checked.
+      const factualSentence=s=>/\b(?:fantasy points;|(?:added|dropped|claimed|waived|traded)\s+[A-Z]|roster value\s*\(|value\s*\(|\d+(?:\.\d+)?\s*(?:fantasy points|rush yds|rec yds)|\d+(?:\.\d+)?\s+on the forecast|projects?\s+\d+(?:\.\d+)?\s+for)\b/i.test(s);
+      const priorEditorial=new Set(forwardArticleSentences(prior).filter(s=>!factualSentence(s)).map(s=>forwardNormSentence(s,entities)));
+      const editorial=sentences.filter(s=>!factualSentence(s));
+      const repeatedEditorial=editorial.filter(s=>priorEditorial.has(forwardNormSentence(s,entities)));
+      const overlap=repeatedEditorial.length;
+      const ratio=editorial.length?overlap/editorial.length:0;
+      if(overlap>=5||ratio>.16)issues.push({id:'same-team-copy-forward',team:t.team_name,overlap,ratio:Number(ratio.toFixed(3)),examples:repeatedEditorial.slice(0,6)});
     }
     const rid=String(t?.inquirer_article?.reporter?.id||''),copy=(t?.inquirer_article?.paragraphs||[]).join(' '),
       valueCopy=(t?.inquirer_article?.sections||[]).filter(s=>String(s?.kind||'')==='value').flatMap(s=>s?.paragraphs||[]).join(' ');

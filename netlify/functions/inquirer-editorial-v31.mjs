@@ -63,7 +63,7 @@ export function adaptWeekLanguage(value,week,classification){
       'Good starts have to survive the next opponent');
   if(classification?.playoffs)s=s.replace(/Week \d+ • Regular Season/g,String(classification.label||('Week '+week+' • Playoffs')));
   // Restore dated facts only after all week-language substitutions.
-  s=s.replace(/__FLEECED_DATED_WEEK_FACT_(\\d+)__/g,(_,index)=>datedWeekFacts[Number(index)]||'');
+  s=s.replace(/__FLEECED_DATED_WEEK_FACT_(\d+)__/g,(_,index)=>datedWeekFacts[Number(index)]||'');
   return s;
 }
 

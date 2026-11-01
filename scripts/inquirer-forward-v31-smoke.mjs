@@ -31,6 +31,13 @@ const rawForWeek=(week)=>{
   return{rawInquirer:{reporters:clone(week2.reporters),teams},rawOverview:overview};
 };
 
+// Historical acquisition dates must never be transformed by legacy Week 2 copy adaptation.
+assert.equal(adaptWeekLanguage('Bryce Young arrived in Week 3 of 2026.',5),
+  'Bryce Young arrived in Week 3 of 2026.');
+assert.equal(adaptWeekLanguage('Trade for Jaylen Waddle in Week 1 of 2026; Week 2 changed the outlook.',5),
+  'Trade for Jaylen Waddle in Week 1 of 2026; Week 5 changed the outlook.');
+assert.equal(adaptWeekLanguage('Week 1 of 2025 and Week 2 of 2026 are different acquisitions.',8),
+  'Week 1 of 2025 and Week 2 of 2026 are different acquisitions.');
 const week3raw=rawForWeek(3),w3class=inquirerWeekClassification(3,2026);
 let week3=null,quality=null,lastQuality=null,lastCandidate=null;
 for(let salt=0;salt<(process.env.INQUIRER_DEBUG_SINGLE_SALT?1:8);salt++){

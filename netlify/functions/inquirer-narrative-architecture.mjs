@@ -497,6 +497,16 @@ export function inspectNarrativeArchitecture(edition){
   if(/\b(?:A this Sunday|their this Sunday|[’'] this Sunday|It The last two Sundays|this Sunday's)\b/i.test(headline)
     ||/\b(?:the last two Sundays|this Sunday) Worth Talking About\b/i.test(headline))
     issues.push({id:'malformed-week-adapted-headline',team,headline});
+  // The historical Sleeper acquisition ledger is authoritative. Detect
+  // dated trade claims that accidentally passed through a week-rewrite pass.
+  for(const move of t.trade_acquisitions||[]){
+   const name=text(move.player_name),season=Number(move.season),weekNo=Number(move.week);
+   if(!name||!Number.isInteger(season)||!Number.isInteger(weekNo))continue;
+   const escaped=name.replace(/[.*+?^${}()|[\]\\]/g,'\\  const words=all.split(/\s+/).filter(Boolean).length;');
+   const pattern=new RegExp('(?:since\\s+(?:the trade for\\s+)?'+escaped+'\\s+(?:came over\\s+)?in\\s+Week\\s+)(\\d{1,2})\\s+of\\s+(20\\d{2})','gi');
+   for(const match of all.matchAll(pattern))if(Number(match[1])!==weekNo||Number(match[2])!==season)
+    issues.push({id:'historical-acquisition-date-mismatch',team,player:name,expected:season+'-W'+weekNo,reported:match[2]+'-W'+match[1]});
+  }
   const words=all.split(/\s+/).filter(Boolean).length;
   // The user's approved 2026 Week 4 corpus contains 32 articles of 331-437
   // words each. The rejected October 17 Week 5 snapshot ballooned to 683-905
@@ -506,6 +516,10 @@ export function inspectNarrativeArchitecture(edition){
   // These are independent of the historical Week 4 archive, which is never rewritten.
   const deskWords=k=>(kind(k)?.paragraphs||[]).join(' ').split(/\s+/).filter(Boolean).length;
   const deskText=k=>(kind(k)?.paragraphs||[]).join(' ');
+  // Publication must reject undeveloped essential desks even when the
+  // overall article reaches 300 words through unrelated valuation copy.
+  for(const desk of ['hot-seat','cool-throne'])if(deskWords(desk)<25)
+   issues.push({id:'thin-essential-editorial-desk',team,desk,words:deskWords(desk)});
   if(deskWords('management')<25)issues.push({id:'thin-management-analysis',team,words:deskWords('management')});
   if(deskWords('value')<25)issues.push({id:'ledger-only-value-reporting',team,words:deskWords('value')});
   if(deskWords('sentiment')<45)issues.push({id:'thin-fan-psychology',team,words:deskWords('sentiment')});

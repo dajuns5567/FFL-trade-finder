@@ -5553,6 +5553,24 @@ function assertWeek2Originality(result,previousEdition){
     }
     overview.paragraphs=overview.sections.flatMap(s=>s.paragraphs||[]);
   }
+  // Postseason uses advancement/elimination evidence rather than the
+  // regular-season closest-game narrative. Preserve the round-specific recap.
+  if(week>=5&&weekClassification?.playoffs&&Array.isArray(overview?.sections)){
+    const last=overview.sections.find(s=>s?.reporter?.id==='nora-voss');
+    const advanced=teams.filter(t=>t?.playoff_context?.advanced_this_week&&Number.isFinite(Number(t.points)))[0];
+    const eliminated=teams.filter(t=>t?.playoff_context?.eliminated_this_week&&Number.isFinite(Number(t.points)))[0];
+    if(last&&advanced&&eliminated){
+      const a=w2DisplayTeam(advanced.team_name),e=w2DisplayTeam(eliminated.team_name);
+      const round=String(advanced.playoff_context?.current_round||weekClassification.label||'the postseason');
+      const next=String(advanced.playoff_context?.next_round||'the next playoff round');
+      last.paragraphs=[
+        a+' advanced from '+round+' with '+forwardOne(advanced.points)+' points. The win is in the archive; the ticket to '+next+' is not a hypothetical.',
+        e+' exited with '+forwardOne(eliminated.points)+'. Postseason elimination is a final ruling, not a debate the group chat can appeal.',
+        'The case file now separates '+a+' moving into '+next+' from '+e+' going home. That is a tougher distinction than the regular-season standings ever offered.'
+      ];
+      overview.paragraphs=overview.sections.flatMap(s=>s.paragraphs||[]);
+    }
+  }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 

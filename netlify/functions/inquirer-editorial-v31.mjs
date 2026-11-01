@@ -26,7 +26,7 @@ export function adaptWeekLanguage(value,week,classification){
   // Preserve them before adapting old newsroom copy for the target week.
   const datedWeekFacts=[];
   s=s.replace(/\\bWeek\\s+\\d{1,2}\\s+of\\s+20\\d{2}\\b/g,match=>{
-    const token='__FLEECED_DATED_WEEK_FACT_'+String.fromCharCode(65+datedWeekFacts.length)+'__';
+    const token='__FLEECED_DATED_WEEK_FACT_'+datedWeekFacts.length+'__';
     datedWeekFacts.push(match);
     return token;
   });
@@ -63,13 +63,7 @@ export function adaptWeekLanguage(value,week,classification){
       'Good starts have to survive the next opponent');
   if(classification?.playoffs)s=s.replace(/Week \d+ • Regular Season/g,String(classification.label||('Week '+week+' • Playoffs')));
   // Restore dated facts only after all week-language substitutions.
-  s=s.replace(/__FLEECED_DATED_WEEK_FACT_([A-Z]+)__/g,match=>{
-    const at=datedWeekFacts.findIndex((_,i)=>{
-      let n=i,key='';do{key=String.fromCharCode(65+n%26)+key;n=Math.floor(n/26)-1}while(n>=0);
-      return match==='__FLEECED_DATED_WEEK_FACT_'+key+'__';
-    });
-    return at>=0?datedWeekFacts[at]:match;
-  });
+  s=s.replace(/__FLEECED_DATED_WEEK_FACT_(\\d+)__/g,(_,index)=>datedWeekFacts[Number(index)]||'');
   return s;
 }
 

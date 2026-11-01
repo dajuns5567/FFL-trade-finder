@@ -5409,11 +5409,23 @@ function assertWeek2Originality(result,previousEdition){
     const margin=w2One(Math.abs(score-against)),won=score>against;
     const fan=article.sections.find(s=>s.kind==='sentiment');
     if(fan&&forwardWordCount((fan.paragraphs||[]).join(' '))<45){
-      const mood=won?'an overconfident victory committee':'an emergency accountability committee';
-      fan.paragraphs.push('Outside '+club+' headquarters, supporters convened '+mood+
-        ' after the '+w2One(score)+' to '+w2One(against)+' decision against '+foe+
-        '. The '+margin+'-point '+(won?'advantage':'deficit')+
-        ' provided the evidence; the crowd supplied the theater. The next opponent will determine whether that public verdict survives another Sunday.');
+      // Distinct scenes and distinct sentence structures, keyed to this roster.
+      // Facts come only from the recorded matchup and starter ledger.
+      const top=(team.starter_details||[]).filter(p=>p?.name&&p.points!=null&&Number.isFinite(Number(p.points)))
+        .sort((a,b)=>Number(b.points)-Number(a.points))[0];
+      const lead=top?top.name+' ('+w2One(top.points)+' points)':'the starting group';
+      const scenes=[
+        'A hand-lettered scoreboard appeared in the '+club+' supporters section after the meeting with '+foe+'. Its '+w2One(score)+' to '+w2One(against)+' figures were accurate; the enormous '+(won?'championship':'rebuilding')+' banner underneath was considerably less restrained. '+lead+' became the subject of a spirited argument about what one matchup can actually prove.',
+        'The '+club+' fan hotline spent the night debating '+lead+' instead of its usual trade rumors. Against '+foe+', the final score was '+w2One(score)+' to '+w2One(against)+'. Somebody proposed a parade; somebody else asked whether the '+margin+'-point '+(won?'win':'loss')+' really justified buying confetti. Both calls made it onto the station.',
+        'At a '+club+' watch party, the closing '+margin+'-point '+(won?'edge':'shortfall')+' against '+foe+' turned a quiet table into a noisy film-review committee. The argument kept returning to '+lead+', whose recorded contribution mattered more than the homemade awards circulating around the room. No one could vote the '+w2One(score)+' to '+w2One(against)+' score out of existence.',
+        'A local '+club+' supporter pinned the '+w2One(score)+' to '+w2One(against)+' result against '+foe+' beside a calendar of upcoming games. That prompted a debate over '+lead+' and whether the '+margin+'-point '+(won?'victory':'defeat')+' should change expectations. The calendar survived; the first draft of the victory speech did not.',
+        'After '+club+' faced '+foe+', an improvised fan tribunal spent more time on '+lead+' than on its own ridiculous costumes. The official return was '+w2One(score)+' to '+w2One(against)+', with '+margin+' points separating the clubs. The verdict was loud, conditional, and unlikely to survive the next inconvenient box score.',
+        'The neighborhood '+club+' chalkboard showed '+foe+' opposite '+w2One(score)+' to '+w2One(against)+'. Supporters argued over how much credit or blame belonged to '+lead+' while a volunteer tried to turn the '+margin+'-point '+(won?'lead':'gap')+' into a slogan. The chalk washed off before the arguments did.',
+        'A '+club+' radio caller insisted the entire season had turned on the '+margin+'-point '+(won?'win':'loss')+' against '+foe+'. The host countered with the actual '+w2One(score)+' to '+w2One(against)+' result and asked about '+lead+'. The ensuing silence lasted barely long enough for another caller to propose a trophy.',
+        'The '+club+' fan club opened a suggestion box after the '+w2One(score)+' to '+w2One(against)+' result versus '+foe+'. Half the notes praised or criticized '+lead+'; the other half proposed increasingly absurd ways to commemorate a '+margin+'-point '+(won?'advantage':'deficit')+'. Management may prefer the first half, even if it dislikes the handwriting.'
+      ];
+      const index=((Math.abs(Number(team.roster_id)||0)*7)+Math.abs(Number(week)||0)+(Number(variationSalt)||0))%scenes.length;
+      fan.paragraphs.push(scenes[index]);
     }
     const value=article.sections.find(s=>s.kind==='value');
     const market=team.value_history_week||{};

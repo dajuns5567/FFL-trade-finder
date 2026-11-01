@@ -502,7 +502,7 @@ export function inspectNarrativeArchitecture(edition){
   for(const move of t.trade_acquisitions||[]){
    const name=text(move.player_name),season=Number(move.season),weekNo=Number(move.week);
    if(!name||!Number.isInteger(season)||!Number.isInteger(weekNo))continue;
-   const escaped=name.replace(/[.*+?^${}()|[\]\\]/g,'\\  const words=all.split(/\s+/).filter(Boolean).length;');
+   const escaped=[...name].map(ch=>'.*+?^$(){}|[]\\'.includes(ch)?'\\'+ch:ch).join('');
    const pattern=new RegExp('(?:since\\s+(?:the trade for\\s+)?'+escaped+'\\s+(?:came over\\s+)?in\\s+Week\\s+)(\\d{1,2})\\s+of\\s+(20\\d{2})','gi');
    for(const match of all.matchAll(pattern))if(Number(match[1])!==weekNo||Number(match[2])!==season)
     issues.push({id:'historical-acquisition-date-mismatch',team,player:name,expected:season+'-W'+weekNo,reported:match[2]+'-W'+match[1]});

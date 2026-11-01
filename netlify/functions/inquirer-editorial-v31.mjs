@@ -25,7 +25,7 @@ export function adaptWeekLanguage(value,week,classification){
   // Historical transaction dates are facts, not Week-2 editorial language.
   // Preserve them before adapting old newsroom copy for the target week.
   const datedWeekFacts=[];
-  s=s.replace(/\\bWeek\\s+\\d{1,2}\\s+of\\s+20\\d{2}\\b/g,match=>{
+  s=s.replace(/\bWeek\s+\d{1,2}\s+of\s+20\d{2}\b/g,match=>{
     const token='__FLEECED_DATED_WEEK_FACT_'+datedWeekFacts.length+'__';
     datedWeekFacts.push(match);
     return token;

@@ -5398,6 +5398,35 @@ function assertWeek2Originality(result,previousEdition){
       String(p).replace(/(The first result on [^.?!]*?) were ([-+]?\d)/gi,'$1 was $2'));
     article.paragraphs=article.sections.flatMap(section=>section.paragraphs||[]);
   }
+  // After every originality and grammar pass, preserve the essential desks.
+  // Append only grounded matchup and starting-lineup context when short.
+  if(week>=5)for(const team of teams){
+    const article=team.inquirer_article;
+    if(!article)continue;
+    const score=Number(team.points),against=Number(team.opponent_points);
+    if(!Number.isFinite(score)||!Number.isFinite(against))continue;
+    const club=w2DisplayTeam(team.team_name),foe=w2DisplayTeam(team.opponent_name||'the opposition');
+    const margin=w2One(Math.abs(score-against)),won=score>against;
+    const fan=article.sections.find(s=>s.kind==='sentiment');
+    if(fan&&forwardWordCount((fan.paragraphs||[]).join(' '))<45){
+      const mood=won?'an overconfident victory committee':'an emergency accountability committee';
+      fan.paragraphs.push('Outside '+club+' headquarters, supporters convened '+mood+
+        ' after the '+w2One(score)+' to '+w2One(against)+' decision against '+foe+
+        '. The '+margin+'-point '+(won?'advantage':'deficit')+
+        ' provided the evidence; the crowd supplied the theater. The next opponent will determine whether that public verdict survives another Sunday.');
+    }
+    const value=article.sections.find(s=>s.kind==='value');
+    const market=team.value_history_week||{};
+    if(value&&forwardWordCount((value.paragraphs||[]).join(' '))<25&&
+      market.value!=null&&market.delta!=null&&Number.isFinite(Number(market.value))&&Number.isFinite(Number(market.delta))){
+      const delta=Number(market.delta),price=Number(market.value);
+      value.paragraphs.push('The recorded roster valuation stands at '+price.toLocaleString('en-US')+
+        ', a '+(delta>=0?'gain':'loss')+' of '+Math.abs(delta).toLocaleString('en-US')+
+        ' over the recorded interval. '+club+' '+(won?'won':'lost')+' by '+margin+
+        ' fantasy points, a separate scoreboard fact that cannot be inferred from the market movement.');
+    }
+    article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);
+  }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 

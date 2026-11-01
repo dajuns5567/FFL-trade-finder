@@ -55,6 +55,8 @@ test('archive originality starts at Week 5 and the final sweep sees every suppli
 test('club agreement respects the actual subject and removes late newsroom prefixes',()=>{
  const names=['New York Jets','Washington Commanders','Seattle Seahawks'];
  assert.equal(polishReviewedGrammar('New York Jets does need help.',names),'New York Jets do need help.');
+ assert.equal(polishReviewedGrammar('New York Jets still needs help.',names),'New York Jets still need help.');
+ assert.equal(polishReviewedGrammar('87.5 points against Seattle Seahawks are the one detail.',names),'87.5 points against Seattle Seahawks is the one detail.');
  assert.equal(polishReviewedGrammar('The final score against New York Jets do not erase the work.',names),'The final score against New York Jets does not erase the work.');
  assert.equal(polishReviewedGrammar('The optimism around Washington Commanders are understandable.',names),'The optimism around Washington Commanders is understandable.');
  assert.equal(polishReviewedGrammar('The next test against Seattle Seahawks are difficult.',names),'The next test against Seattle Seahawks is difficult.');
@@ -90,4 +92,19 @@ test('preview manager provenance uses only completed issue-week games and cannot
 test('current injury tags cannot masquerade as a historical next-week designation',()=>{
  const current={schedule_verified:true,bye_players:[{id:'bye'}],injury_players:[{id:'new-injury'}],injury_current_starters:[{id:'new-injury'}]};
  const old=editionAvailability(current,5,8);assert.deepEqual(old.injury_players,[]);assert.deepEqual(old.bye_players,current.bye_players);assert.equal(old.historical_injury_status_unavailable,true);assert.equal(current.injury_players.length,1);assert.equal(editionAvailability(current,7,8),current);
+});
+
+test('archive cleanup preserves recorded player evidence while still removing old commentary',async()=>{
+ const {isRecordedPlayerStatSentence}=await import('../netlify/functions/inquirer-reviewed-copy.mjs');
+ const stats='Verified Receiver recorded 7 catches on 11 targets for 118 yards, 1 receiving touchdown.';
+ assert.equal(isRecordedPlayerStatSentence(stats),true);assert.equal(isRecordedPlayerStatSentence(stats.slice(0,-1)+' and the manager should resign.'),false);
+ const lead='Against South Cats, Verified Receiver led the Birds with 18.8 fantasy points; receiving: 7/11 rec, 118 yds, 1 TD.';
+ const t={roster_id:1,team_name:'North Birds',opponent_name:'South Cats',starter_details:[{name:'Verified Receiver',points:18.8}],inquirer_article:{sections:[{kind:'players',paragraphs:[lead,stats]}]}};
+ finishReviewedForwardCopy({week:5,teams:[t]},[{week:2,teams:[structuredClone(t)]}]);
+ assert.deepEqual(t.inquirer_article.sections[0].paragraphs,[lead,stats]);
+});
+
+test('a thin no-swap management desk receives genuine scoring concentration instead of a fabricated bench option',()=>{
+ const t={roster_id:1,team_name:'North Birds',opponent_name:'South Cats',points:100,opponent_points:80,best_lineup_miss:null,starter_details:[{name:'Verified Receiver',points:40}],inquirer_article:{sections:[{kind:'management',paragraphs:['The recorded starters won this matchup.']}]}};
+ finishReviewedForwardCopy({week:5,teams:[t]});const copy=t.inquirer_article.paragraphs.join(' ');assert.match(copy,/40.0%/);assert.match(copy,/other starters supplied 60.0 points/);assert.match(copy,/20.0-point winning margin/);assert.doesNotMatch(copy,/substitution|reserve/);
 });

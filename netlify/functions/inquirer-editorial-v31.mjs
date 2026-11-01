@@ -4951,29 +4951,6 @@ function assertWeek2Originality(result,previousEdition){
       take.take=finishGrammar(take.take);
     }
   }
-  // Final outlook uniqueness is checked after the last grammar rewrite.
-  if(week>=5){
-    const entities=forwardEntities({teams}),seen=new Set();
-    const keyOf=x=>forwardNormSentence(x,entities).replace(/\[(?:entity|#)\]/gi,'#').replace(/[^a-z#]+/g,' ').trim().split(/\s+/).slice(-11).join(' ');
-    for(const team of teams){
-      const article=team.inquirer_article;
-      const section=article?.sections?.find(x=>x.kind==='outlook');
-      if(!section?.paragraphs?.length)continue;
-      const at=section.paragraphs.length-1,initial=keyOf(section.paragraphs[at]);
-      if(initial.split(' ').length<9)continue;
-      if(!seen.has(initial)){seen.add(initial);continue;}
-      const lead=(team.starter_details||[]).filter(x=>x?.name&&Number.isFinite(Number(x.points))).sort((a,b)=>Number(b.points)-Number(a.points))[0];
-      const score=Number(team.points);
-      const facts=[Number.isFinite(score)?team.team_name+' scored '+score.toFixed(1)+' points.':null,lead?lead.name+' supplied '+Number(lead.points).toFixed(1)+' starter points.':null,team.next_opponent_name?'Next opponent: '+team.next_opponent_name+'.':null].filter(Boolean);
-      const endings=['The coming matchup will test that performance.','The next lineup will be measured against this result.','That production is the current standard.','That '+score.toFixed(1)+'-point output sets a measurable target for the next opponent.'];
-      let replacement;
-      for(const ending of endings)for(let j=0;j<facts.length;j++){
-        const candidate=finishGrammar([facts[j],...facts.filter((_,k)=>k!==j),ending].join(' '));
-        if(!seen.has(keyOf(candidate))){replacement=candidate;break;}
-      }
-      if(replacement){section.paragraphs[at]=replacement;seen.add(keyOf(replacement));article.paragraphs=article.sections.flatMap(x=>x.paragraphs||[]);}
-    }
-  }
 
   // Give the Week 5 forward newspaper a football-first final editorial pass.
   // Specific facts survive; self-referential writing about "the argument",
@@ -5244,9 +5221,10 @@ function assertWeek2Originality(result,previousEdition){
   // reintroduce prior-issue sentences after the evolving newsroom passes.
   // Only long identical commentary is discarded; preserve verified facts and
   // every section/beat as a distinct editorial record.
-  if(Number(week)>=5&&previousEdition?.league_overview){
-    const entities=[...forwardEntities({teams}),...forwardEntities(previousEdition)];
-    const oldSentences=new Set(forwardRecapSentences(previousEdition)
+  if(Number(week)>=5&&[previousEdition,...previousEditions].some(e=>e?.league_overview)){
+    const history=[previousEdition,...previousEditions].filter(e=>e?.league_overview);
+    const entities=[...forwardEntities({teams}),...history.flatMap(forwardEntities)];
+    const oldSentences=new Set(history.flatMap(forwardRecapSentences)
       .map(line=>forwardNormSentence(line,entities)));
     const cleanParagraph=p=>{
       const sentences=forwardSentenceParts(p);
@@ -5300,6 +5278,39 @@ function assertWeek2Originality(result,previousEdition){
   if(Number(week)>=5){
     finishReviewedForwardCopy({season,week,teams,league_overview:overview},[previousEdition,...previousEditions].filter(Boolean));
     for(const team of teams)attributeForwardPlayerStatFragments(team);
+  // Final outlook uniqueness is checked after the last grammar rewrite.
+  if(week>=5){
+    const entities=forwardEntities({teams}),seen=new Set();
+    const keyOf=x=>forwardNormSentence(x,entities).replace(/\[(?:entity|#)\]/gi,'#').replace(/[^a-z#]+/g,' ').trim().split(/\s+/).slice(-11).join(' ');
+    for(const team of teams){
+      const article=team.inquirer_article;
+      const section=article?.sections?.find(x=>x.kind==='outlook');
+      if(!section?.paragraphs?.length)continue;
+      const at=section.paragraphs.length-1,initial=keyOf(section.paragraphs[at]);
+      if(initial.split(' ').length<9)continue;
+      if(!seen.has(initial)){seen.add(initial);continue;}
+      const lead=(team.starter_details||[]).filter(x=>x?.name&&Number.isFinite(Number(x.points))).sort((a,b)=>Number(b.points)-Number(a.points))[0];
+      const score=Number(team.points);
+      const facts=[Number.isFinite(score)?team.team_name+' scored '+score.toFixed(1)+' points.':null,lead?lead.name+' supplied '+Number(lead.points).toFixed(1)+' starter points.':null,team.next_opponent_name?'Next opponent: '+team.next_opponent_name+'.':null].filter(Boolean);
+      const missed=team.best_lineup_miss,weak=team.worst_starter;
+      const endings=missed?.reserve?.name&&missed?.starter?.name?[
+        'For '+team.next_opponent_name+', the '+String(missed.slot||'lineup')+' choice is '+missed.starter.name+' or '+missed.reserve.name+' after a '+w2One(missed.gap)+'-point reserve advantage.',
+        'The next '+String(missed.slot||'lineup')+' selection puts '+missed.reserve.name+' and '+missed.starter.name+' under review; their Week '+week+' difference was '+w2One(missed.gap)+'.',
+        missed.reserve.name+' outscored '+missed.starter.name+' by '+w2One(missed.gap)+', which makes that compatible spot worth reopening before '+team.next_opponent_name+'.',
+        'Against '+team.next_opponent_name+', does '+missed.reserve.name+' replace '+missed.starter.name+' at '+String(missed.slot||'the recorded spot')+'?'
+      ]:[
+        'The selection to revisit before '+team.next_opponent_name+' is '+String(weak?.name||lead?.name)+' after '+w2One(weak?.points??lead?.points)+' points in Week '+week+'.',
+        'Next opponent '+team.next_opponent_name+' gets a lineup whose recorded low return was '+String(weak?.name||lead?.name)+' at '+w2One(weak?.points??lead?.points)+'.'
+      ];
+      let replacement;
+      for(const ending of endings)for(let j=0;j<facts.length;j++){
+        const candidate=finishGrammar([facts[j],...facts.filter((_,k)=>k!==j),ending].join(' '));
+        if(!seen.has(keyOf(candidate))){replacement=candidate;break;}
+      }
+      if(replacement){section.paragraphs[at]=replacement;seen.add(keyOf(replacement));article.paragraphs=article.sections.flatMap(x=>x.paragraphs||[]);}
+    }
+  }
+
     trimFinalCrossTeamClauseCollisions(teams);
   }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};

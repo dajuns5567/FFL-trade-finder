@@ -1,3 +1,4 @@
+import {isRecordedPlayerStatSentence} from './inquirer-reviewed-copy.mjs';
 // Fail-closed editorial admission: every public edition requires substantive
 // checks AND a review approval bound to the exact copy digest. No public HTTP
 // route may approve a draft. Historical locked editions are never rewritten.
@@ -214,7 +215,8 @@ export function inspectPreviousWeekEditorialReuse(edition,previousEdition){
  const previous=new Map((previousEdition?.teams||[]).map(t=>[String(t.roster_id),t]));
  const issues=[];
  const sentences=a=>(a?.sections||[]).flatMap(s=>s.paragraphs||[])
-  .flatMap(p=>String(p).split(/(?<=[.!?])\s+/))
+  .flatMap(p=>String(p).replace(/\b(?:Jr|Sr|St|Dr|No)\./g,m=>m.replace('.','§')).split(/(?<=[.!?])\s+/).map(s=>s.replaceAll('§','.')))
+  .filter(s=>!isRecordedPlayerStatSentence(s))
   .map(s=>normalized(s).replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim())
   .filter(s=>s.split(' ').length>=14);
  for(const team of edition?.teams||[]){
@@ -249,3 +251,4 @@ export function isReadOnlyEditorialPreview(url,context=''){
    (host.endsWith('--transcendent-manatee-2f0123.netlify.app')&&host!=='transcendent-manatee-2f0123.netlify.app')||
    ['deploy-preview','branch-deploy'].includes(String(context));
 }
+

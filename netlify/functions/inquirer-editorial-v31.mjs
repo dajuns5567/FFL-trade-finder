@@ -5331,7 +5331,7 @@ function assertWeek2Originality(result,previousEdition){
           // Keep source-backed facts; remove only recycled editorial claims.
           // A preloaded fixture can legitimately reproduce player numbers and
           // transactions, but it cannot justify reprinting last week's jokes.
-          const factual=/\\b(?:fantasy points|\\d+(?:\\.\\d+)?\\s*(?:points|yds|carries|rec|sacks?|solo|assist|td)|added |dropped |roster value|valuation|forecast|projects?\\s+\\d|Week \\d+|\\d+-\\d+)\\b/i;
+          const factual=/\b(?:fantasy points|\d+(?:\.\d+)?\s*(?:points|yds|carries|rec|sacks?|solo|assist|td)|added |dropped |roster value|valuation|forecast|projects?\s+\d|Week \d+|\d+-\d+)\b/i;
           const minWords={players:24,management:25,sentiment:45};
           const original=(section.paragraphs||[]).flatMap(forwardSentenceParts);
           const retained=original.filter(sentence=>

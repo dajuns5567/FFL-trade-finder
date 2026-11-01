@@ -3223,7 +3223,7 @@ function w2BuildSections(t,prev){
         "Compare "+weak.name+"'s "+w2One(weak.points)+" with a previous-season average of "+w2One(weak.prior_season_avg)+" over "+Number(weak.prior_season_games)+" outings.",
         "In 2025, "+weak.name+" averaged "+w2One(weak.prior_season_avg)+" points per game. Against "+w2DisplayTeam(t.opponent_name||"the opponent")+", "+weak.name+" produced "+w2One(weak.points)+" in Week "+week+"; that is the specific decline "+w2DisplayTeam(t.team_name)+" must account for.",
         "A 2025 sample of "+Number(weak.prior_season_games)+" appearances gave "+weak.name+" a "+w2One(weak.prior_season_avg)+"-point average. Week "+week+" against "+w2DisplayTeam(t.opponent_name||"the opponent")+" yielded "+w2One(weak.points)+" for "+w2DisplayTeam(t.team_name)+"."
-      ][w2Hash(String(t.roster_id)+"|hot-context|"+String(week)+"|"+String(r?.id||""))%8])
+      ][((Number(t.roster_id)||w2Hash(String(t.team_name||"")))+Number(week||0))%8])
     ]:[])
   ];
   const eligibleCredit=w2EligibleCool(t),topIds=new Set(top.filter(Boolean).map(p=>String(p.id))),supportCredit=(t.starter_details||[]).filter(p=>!topIds.has(String(p.id))&&Number(p.points)>=10).sort((a,b)=>Number(b.points)-Number(a.points)).slice(0,2);

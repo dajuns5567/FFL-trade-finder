@@ -5571,6 +5571,32 @@ function assertWeek2Originality(result,previousEdition){
       overview.paragraphs=overview.sections.flatMap(s=>s.paragraphs||[]);
     }
   }
+  // Value reporting must not repeat the same opening/closing prices in
+  // several paragraphs without adding a player-specific fact. Keep the
+  // underlying valuation intact; deduplicate presentation only.
+  if(week>=5)for(const team of teams){
+    const article=team.inquirer_article,market=team.value_history_week;
+    const desk=article?.sections?.find(s=>s.kind==='value');
+    if(!desk||!market||!Number.isFinite(Number(market.baseline_value))||!Number.isFinite(Number(market.value)))continue;
+    const oldValue=String(Number(market.baseline_value)),newValue=String(Number(market.value));
+    const movers=[...(team.value_history_player_movers?.risers||[]),...(team.value_history_player_movers?.fallers||[])]
+      .map(p=>String(p.player_name||'')).filter(Boolean);
+    const rows=desk.paragraphs||[];
+    const hasBoth=p=>{const compact=String(p).replace(/,/g,'');return compact.includes(oldValue)&&compact.includes(newValue)};
+    let encountered=false;
+    const retained=[];
+    for(let i=0;i<rows.length;i++){
+      const paragraph=String(rows[i]),both=hasBoth(paragraph);
+      const newPlayerEvidence=movers.some(name=>paragraph.includes(name)&&!retained.join(' ').includes(name));
+      const remaining=rows.slice(i+1).join(' ');
+      if(both&&encountered&&!newPlayerEvidence&&
+        forwardWordCount(retained.join(' ')+' '+remaining)>=25)continue;
+      retained.push(paragraph);
+      if(both)encountered=true;
+    }
+    desk.paragraphs=retained;
+    article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);
+  }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 

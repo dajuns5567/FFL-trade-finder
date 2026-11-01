@@ -4334,8 +4334,8 @@ function assertWeek2Originality(result,previousEdition){
     const clean=s=>{
       let x=String(s||'');
       for(const name of plural){
-        const re=new RegExp('\\b'+w2EscRe(name)+' (faces|does|gets|has|is|needs|sits|keeps|projects)\\b','gi');
-        const verbs={faces:'face',does:'do',gets:'get',has:'have',is:'are',needs:'need',sits:'sit',keeps:'keep',projects:'project'};
+        const re=new RegExp('\\b'+w2EscRe(name)+' (faces|does|gets|has|is|needs|sits|keeps|projects|awaits)\\b','gi');
+        const verbs={faces:'face',does:'do',gets:'get',has:'have',is:'are',needs:'need',sits:'sit',keeps:'keep',projects:'project',awaits:'await'};
         x=x.replace(re,(_,v)=>name+' '+verbs[v.toLowerCase()]);
       }
       return x.replace(/\bThe margin asks more:\s*/gi,'')

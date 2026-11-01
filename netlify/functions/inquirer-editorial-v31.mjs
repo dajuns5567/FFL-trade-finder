@@ -5366,6 +5366,28 @@ function assertWeek2Originality(result,previousEdition){
       }
     }
   }
+  // Last-writer structural safeguard: the archive filter may begin with an
+  // already-short source article. Restore a verified, team-specific scoring
+  // comparison rather than passing an underlength manuscript to publication.
+  // Never fabricate starter totals or soften the strict originality gate.
+  if(week>=5)for(const team of teams){
+    const article=team.inquirer_article;
+    if(!article||forwardWordCount((article.paragraphs||[]).join(' '))>=300)continue;
+    const starters=(team.starter_details||[]).filter(p=>p?.name&&p.points!=null&&Number.isFinite(Number(p.points)))
+      .sort((a,b)=>Number(b.points)-Number(a.points));
+    const top=starters[0],second=starters[1],players=article.sections?.find(s=>s.kind==='players');
+    if(!top||!second||!players||!Number.isFinite(Number(team.points)))continue;
+    const total=Number(team.points),combined=Number(top.points)+Number(second.points);
+    const evidence=top.name+' and '+second.name+' combined for '+forwardOne(combined)+
+      ' of '+forwardOne(total)+' recorded fantasy points for '+w2DisplayTeam(team.team_name)+
+      ' in Week '+week+'. Their individual returns were '+forwardOne(top.points)+' and '+
+      forwardOne(second.points)+'; the remainder of the starting group accounted for '+
+      forwardOne(total-combined)+'.';
+    if(!(article.paragraphs||[]).some(p=>p.includes(evidence))){
+      players.paragraphs.push(evidence);
+      article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);
+    }
+  }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 

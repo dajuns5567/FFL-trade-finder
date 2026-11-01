@@ -9,7 +9,7 @@ import {attributeForwardPlayerStatFragments,curateForwardTeamNarrative,inspectNa
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=84;
+export const FORWARD_EDITORIAL_REVISION=85;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -5773,7 +5773,7 @@ export function evaluateInquirerEditionQuality(current,previous=null){
     if(/:\s*this Sunday\b|; The season record is\b/.test(allReaderText))
       issues.push({id:'reader-facing-case-and-punctuation'});
     if(/\bThe radio station covering [^.?!]{4,85}? have declared\b|\bThe (?:AFC|NFC) (?:EAST|WEST|NORTH|SOUTH) race around [^.?!]{4,85}? are already compressed\b/i.test(allReaderText))
-      issues.push({id:'intervening-team-subject-agreement'});
+      issues.push({id:'intervening-team-subject-agreement',examples:(allReaderText.match(/(?:The radio station covering|The (?:AFC|NFC) (?:EAST|WEST|NORTH|SOUTH) race around)[^.?!]{4,180}?(?:have declared|are already compressed)/gi)||[]).slice(0,5)});
     for(const player of [...new Set(teams.flatMap(t=>(t.starter_details||[]).map(p=>String(p.name||'').trim())).filter(Boolean))]){
       const matches=allReaderText.match(new RegExp('\\b'+forwardEscRe(player)+'\\b','gi'))||[];
       if(matches.some(m=>m!==player))issues.push({id:'player-name-capitalization',player});

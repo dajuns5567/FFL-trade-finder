@@ -5490,7 +5490,9 @@ function assertWeek2Originality(result,previousEdition){
       const recent=(player.recent_form?.series||[]).filter(row=>Number(row.week)<week&&Number.isFinite(Number(row.points))).slice(-1)[0];
       const fact=String(player.real_stat_line||'').trim();
       const rosterIndex=Math.max(0,(Number(team.roster_id)||1)-1);
-      const variant=(rosterIndex+week)%8,detailVariant=(Math.floor(rosterIndex/8)+week)%4;
+      const variant=(rosterIndex+week)%8;
+      const trendVariant=(rosterIndex+week)%4;
+      const historyVariant=(Math.floor(rosterIndex/4)+week)%4;
       const dataLead=kind==='hot-seat'?[
         player.name+': '+points+' for '+club+'.',
         'Shortfall: '+player.name+' returned '+points+'.',
@@ -5515,13 +5517,13 @@ function assertWeek2Originality(result,previousEdition){
         ' Previous week on record: '+forwardOne(recent.points)+'.',
         ' Earlier result: '+forwardOne(recent.points)+' in Week '+recent.week+'.',
         ' Prior recorded return: '+forwardOne(recent.points)+'.'
-      ][detailVariant]:'';
+      ][trendVariant]:'';
       const history=hasHistory?[
         ' 2025 baseline: '+forwardOne(last)+' per game.',
         ' Historical average: '+forwardOne(last)+' across '+games+' outings.',
         ' Last season: '+games+' games at '+forwardOne(last)+'.',
         ' Previous-season mean: '+forwardOne(last)+' ('+games+' games).'
-      ][(detailVariant+2)%4]:'';
+      ][historyVariant]:'';
       const line=fact&&forwardWordCount(existing+' '+dataLead+trend+history)<32?
         ' On-field production: '+fact+'.':'';
       const game=' Matchup: '+club+' '+forwardOne(score)+'; '+other+' '+forwardOne(opponent)+'.';

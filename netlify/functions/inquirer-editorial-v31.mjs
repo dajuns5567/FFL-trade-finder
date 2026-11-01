@@ -5325,6 +5325,9 @@ function assertWeek2Originality(result,previousEdition){
           sentence=>forwardNormSentence(sentence,entities)))]));
       for(const team of teams){
         const article=team.inquirer_article;
+        // Preserve the pre-prune manuscript so optional originality cleanup
+        // cannot silently violate the locked article-length requirement.
+        const beforePrune=article?.sections?.map(section=>[...(section.paragraphs||[])]);
         const archived=previousByRoster.get(String(team.roster_id));
         if(!article||!archived?.size)continue;
         for(const section of article.sections||[]){
@@ -5356,6 +5359,10 @@ function assertWeek2Originality(result,previousEdition){
           ).filter(Boolean);
         }
         article.paragraphs=article.sections.flatMap(section=>section.paragraphs||[]);
+        if(forwardWordCount(article.paragraphs.join(' '))<300&&beforePrune){
+          article.sections.forEach((section,i)=>{section.paragraphs=beforePrune[i]});
+          article.paragraphs=article.sections.flatMap(section=>section.paragraphs||[]);
+        }
       }
     }
   }

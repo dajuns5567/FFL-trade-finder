@@ -3785,7 +3785,10 @@ function assertWeek2Originality(result,previousEdition){
   }
 
   let overview=rewriteWeek2Overview(rawOverview||{},rewritten,previousEdition||{teams:[]},week);
-  let teams=deepStrings(rewritten,s=>adaptWeekLanguage(s,week,weekClassification));
+  // Only reader-facing article copy is legacy Week-2 prose. Source ledgers,
+  // transaction timestamps, injury/status records and player identities are
+  // immutable facts and must not pass through editorial language adaptation.
+  let teams=rewritten.map(t=>({...t,inquirer_article:deepStrings(t.inquirer_article,s=>adaptWeekLanguage(s,week,weekClassification))}));
   overview=deepStrings(overview,s=>adaptWeekLanguage(s,week,weekClassification));
   if(week>=3)teams=evolveForwardTeams(teams,previousEdition,week,variationSalt);
   if(week>=3)teams=polishForwardTeamCopy(teams,week,variationSalt);

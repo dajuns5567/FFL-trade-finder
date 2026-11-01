@@ -3222,7 +3222,7 @@ function w2BuildSections(t,prev){
         "Last season: "+weak.name+", "+Number(weak.prior_season_games)+" appearances and "+w2One(weak.prior_season_avg)+" per game. Now: "+w2One(weak.points)+".",
         "Compare "+weak.name+"'s "+w2One(weak.points)+" with a previous-season average of "+w2One(weak.prior_season_avg)+" over "+Number(weak.prior_season_games)+" outings.",
         "In 2025, "+weak.name+" averaged "+w2One(weak.prior_season_avg)+" points per game. Against "+w2DisplayTeam(t.opponent_name||"the opponent")+", "+weak.name+" produced "+w2One(weak.points)+" in Week "+week+"; that is the specific decline "+w2DisplayTeam(t.team_name)+" must account for.",
-        "The concern is not hypothetical: "+weak.name+" scored "+w2One(weak.points)+" against "+w2DisplayTeam(t.opponent_name||"the opponent")+", compared with "+w2One(weak.prior_season_avg)+" per game over "+Number(weak.prior_season_games)+" games in 2025."
+        "A 2025 sample of "+Number(weak.prior_season_games)+" appearances gave "+weak.name+" a "+w2One(weak.prior_season_avg)+"-point average. Week "+week+" against "+w2DisplayTeam(t.opponent_name||"the opponent")+" yielded "+w2One(weak.points)+" for "+w2DisplayTeam(t.team_name)+"."
       ][w2Hash(String(t.roster_id)+"|hot-context|"+String(week)+"|"+String(r?.id||""))%8])
     ]:[])
   ];

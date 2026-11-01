@@ -5634,7 +5634,7 @@ function assertWeek2Originality(result,previousEdition){
     const correct=body=>{
       let copy=String(body||'');
       for(const name of plurals){
-        const rule=new RegExp('\\\\b'+forwardEscRe(name)+' (does|gets|has|is|needs|sits|keeps|projects|faces)\\\\b','gi');
+        const rule=new RegExp('\\b'+forwardEscRe(name)+' (does|gets|has|is|needs|sits|keeps|projects|faces)\\b','gi');
         copy=copy.replace(rule,(match,verb,offset)=>{
           if(/\\b(?:against|around|covering|for|from|of|to|with|before|after)\\s$/i.test(copy.slice(0,offset)))return match;
           return match.slice(0,-verb.length)+fixes[verb.toLowerCase()];

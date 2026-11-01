@@ -5312,6 +5312,32 @@ function assertWeek2Originality(result,previousEdition){
   }
 
     trimFinalCrossTeamClauseCollisions(teams);
+    // The composed newspaper is authoritative. Depth repair and the final
+    // factual restoration can reinsert archived sentences *after* earlier
+    // freshness passes. Remove only identical, same-roster complete sentences,
+    // and never fabricate or paraphrase a statistic to beat an originality test.
+    // A section with no independently reportable copy stays fail-closed for
+    // the editorial gate rather than being padded with a generic joke.
+    if(previousEdition?.teams?.length){
+      const entities=[...forwardEntities({teams}),...forwardEntities(previousEdition)];
+      const previousByRoster=new Map(previousEdition.teams.map(row=>[
+        String(row.roster_id),new Set(forwardArticleSentences(row).map(
+          sentence=>forwardNormSentence(sentence,entities)))]));
+      for(const team of teams){
+        const article=team.inquirer_article;
+        const archived=previousByRoster.get(String(team.roster_id));
+        if(!article||!archived?.size)continue;
+        for(const section of article.sections||[]){
+          section.paragraphs=(section.paragraphs||[]).map(paragraph=>
+            forwardSentenceParts(paragraph).filter(sentence=>
+              forwardWordCount(sentence)<10||
+              !archived.has(forwardNormSentence(sentence,entities))
+            ).join(' ').trim()
+          ).filter(Boolean);
+        }
+        article.paragraphs=article.sections.flatMap(section=>section.paragraphs||[]);
+      }
+    }
   }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }

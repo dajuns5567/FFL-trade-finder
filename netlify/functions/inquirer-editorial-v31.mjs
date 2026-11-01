@@ -5583,14 +5583,19 @@ function assertWeek2Originality(result,previousEdition){
       .map(p=>String(p.player_name||'')).filter(Boolean);
     const rows=desk.paragraphs||[];
     const hasBoth=p=>{const compact=String(p).replace(/,/g,'');return compact.includes(oldValue)&&compact.includes(newValue)};
-    let encountered=false;
+    let encountered=false,removedWords=0;
+    const originalArticleWords=forwardWordCount((article.paragraphs||[]).join(' '));
     const retained=[];
     for(let i=0;i<rows.length;i++){
       const paragraph=String(rows[i]),both=hasBoth(paragraph);
       const newPlayerEvidence=movers.some(name=>paragraph.includes(name)&&!retained.join(' ').includes(name));
       const remaining=rows.slice(i+1).join(' ');
       if(both&&encountered&&!newPlayerEvidence&&
-        forwardWordCount(retained.join(' ')+' '+remaining)>=25)continue;
+        forwardWordCount(retained.join(' ')+' '+remaining)>=25&&
+        originalArticleWords-removedWords-forwardWordCount(paragraph)>=300){
+        removedWords+=forwardWordCount(paragraph);
+        continue;
+      }
       retained.push(paragraph);
       if(both)encountered=true;
     }

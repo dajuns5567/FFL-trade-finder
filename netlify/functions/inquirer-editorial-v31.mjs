@@ -9,7 +9,7 @@ import {attributeForwardPlayerStatFragments,curateForwardTeamNarrative,inspectNa
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=86;
+export const FORWARD_EDITORIAL_REVISION=87;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -5659,30 +5659,22 @@ function assertWeek2Originality(result,previousEdition){
     for(const take of overview?.hot_takes||[]){take.title=correct(take.title);take.take=correct(take.take)}
     if(overview?.sections)overview.paragraphs=overview.sections.flatMap(s=>s.paragraphs||[]);
   }
-  // Final grammar normalization operates on published copy after every rewrite pass.
-  // Intervening team names are objects of "covering"/"around", not subjects.
+  // Correct singular grammatical subjects after all prose rewriting layers.
+  // Normalize every reader-facing nested article/overview field, including blocks.
   const repairInterveningSubjects=value=>String(value||'')
-    .replace(/\b(The radio station covering [^.?!\\n]{4,180}?) have declared\b/gi,'$1 has declared')
-    .replace(/\b(The (?:AFC|NFC) (?:EAST|WEST|NORTH|SOUTH) race around [^.?!\\n]{4,180}?) are already compressed\b/gi,'$1 is already compressed');
+    .replace(/The radio station covering ([^.!?\n]+?) have declared\b/gi,'The radio station covering $1 has declared')
+    .replace(/The ((?:AFC|NFC) (?:EAST|WEST|NORTH|SOUTH)) race around ([^.!?\n]+?) are already compressed\b/gi,'The $1 race around $2 is already compressed');
   for(const t of teams){
-    const a=t.inquirer_article;if(!a)continue;
-    a.headline=repairInterveningSubjects(a.headline);
-    for(const section of a.sections||[]){
-      section.heading=repairInterveningSubjects(section.heading);
-      section.paragraphs=(section.paragraphs||[]).map(repairInterveningSubjects);
-    }
-    a.paragraphs=(a.sections||[]).flatMap(section=>section.paragraphs||[]);
+    if(!t.inquirer_article)continue;
+    t.inquirer_article=deepStrings(t.inquirer_article,repairInterveningSubjects);
+    if(Array.isArray(t.inquirer_article.sections))
+      t.inquirer_article.paragraphs=t.inquirer_article.sections.flatMap(sec=>sec.paragraphs||[]);
   }
-  for(const section of overview?.sections||[]){
-    section.heading=repairInterveningSubjects(section.heading);
-    section.paragraphs=(section.paragraphs||[]).map(repairInterveningSubjects);
-    for(const block of section.blocks||[])block.paragraphs=(block.paragraphs||[]).map(repairInterveningSubjects);
+  if(overview){
+    overview=deepStrings(overview,repairInterveningSubjects);
+    if(Array.isArray(overview.sections))
+      overview.paragraphs=overview.sections.flatMap(sec=>sec.paragraphs||[]);
   }
-  for(const take of overview?.hot_takes||[]){
-    take.title=repairInterveningSubjects(take.title);
-    take.take=repairInterveningSubjects(take.take);
-  }
-  if(overview?.sections)overview.paragraphs=overview.sections.flatMap(section=>section.paragraphs||[]);
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 

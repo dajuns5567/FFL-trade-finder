@@ -9,7 +9,7 @@ import {attributeForwardPlayerStatFragments,curateForwardTeamNarrative,inspectNa
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=83;
+export const FORWARD_EDITORIAL_REVISION=84;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -580,7 +580,7 @@ export function polishForwardTeamCopy(teams,week,salt){
     'There is no comfortable lane for '+team+' in '+division+' at '+record+'.'
    ]));
    s=s.replace(/The division includes /g,pick(t,'division-list',[
-    'The other clubs in that division are ','The teams across the table are ',
+    'Among the division rivals are ','The divisional standings also include ', 
     'That race also features ','The direct competition includes ',
     'Sharing the same division are ','Its nearby rivals on the standings page are '
    ]));
@@ -4551,7 +4551,7 @@ function assertWeek2Originality(result,previousEdition){
     .replace(/\ba (?=8\d*(?:\.\d+)?-point\b)/gi,'an '))
     .replace(/(?:this round of games|these games|games)\u2019s/gi,'this week\u2019s')
     .replace(/\b(The radio station covering [^.?!\n]{4,85}?) have declared\b/gi,'$1 has declared')
-    .replace(/\b(The (?:AFC|NFC) (?:EAST|WEST|NORTH|SOUTH) race around [^.?!\n]{4,85}?) are already compressed\b/gi,'$1 is already compressed');
+    .replace(/\b(The (?:AFC|NFC) (?:EAST|WEST|NORTH|SOUTH) race around [^.?!\n]{4,180}?) are already compressed\b/gi,'$1 is already compressed');
   teams=teams.map(t=>{
     const a=t?.inquirer_article;
     if(!a)return t;

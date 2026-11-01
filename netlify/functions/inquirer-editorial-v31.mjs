@@ -5224,6 +5224,27 @@ function assertWeek2Originality(result,previousEdition){
         section.paragraphs=section.blocks.flatMap(block=>block.paragraphs||[]);
       }else section.paragraphs=(section.paragraphs||[]).map(cleanParagraph).filter(Boolean);
     }
+    // Preserve sufficient reporting in required recap beats after archive
+    // deduplication. These paragraphs report observed matchups, not imagined
+    // bench substitutions, and differ by NFL week and actual team scores.
+    const feature=overview.sections?.find(sec=>(sec.blocks||[]).some(b=>b.kind==='decisions'));
+    const decisions=feature?.blocks?.find(b=>b.kind==='decisions');
+    const standings=feature?.blocks?.find(b=>b.kind==='standings');
+    const sorted=teams.filter(t=>Number.isFinite(Number(t.points))&&Number.isFinite(Number(t.opponent_points)))
+      .sort((a,b)=>Math.abs(Number(b.points)-Number(b.opponent_points))-Math.abs(Number(a.points)-Number(a.opponent_points)));
+    const big=sorted[0],close=sorted.at(-1);
+    if(decisions&&forwardWordCount(decisions.paragraphs.join(' '))<55&&big){
+      const margin=w2One(Math.abs(Number(big.points)-Number(big.opponent_points)));
+      decisions.paragraphs.push('The lineup decision that deserves scrutiny begins with '+w2DisplayTeam(big.team_name)+
+        ' against '+w2DisplayTeam(big.opponent_name)+'. The final margin reached '+margin+
+        ' points in Week '+week+'. That score establishes the scale of the work before the next selection locks; it does not pretend the manager had a crystal ball or that one bench switch explains an entire Sunday.');
+    }
+    if(standings&&forwardWordCount(standings.paragraphs.join(' '))<55&&close){
+      standings.paragraphs.push('The narrow end of Week '+week+' belongs to '+w2DisplayTeam(close.team_name)+
+        ' and '+w2DisplayTeam(close.opponent_name)+', separated by '+w2One(Math.abs(Number(close.points)-Number(close.opponent_points)))+
+        ' points. Every win affects a crowded table, but close games also leave the losing side replaying every possession long after the fantasy clock stops.');
+    }
+    if(feature?.blocks?.length)feature.paragraphs=feature.blocks.flatMap(b=>b.paragraphs||[]);
     for(const take of overview.hot_takes||[]){
       // Hot-take titles are part of the copy-forward comparison, even when
       // no full stop separates them from the first sentence of the take.

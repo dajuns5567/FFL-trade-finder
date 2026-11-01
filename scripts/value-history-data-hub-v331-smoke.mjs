@@ -4,7 +4,7 @@ import { extractKtcSuperflexRankings } from '../netlify/functions/ktc-adapter.mj
 import { emptyMonthBundle, parseMonthBundleText } from './value-history-archive-utils.mjs';
 
 const backendSource=fs.readFileSync('netlify/functions/value-history.mjs','utf8');
-const pureSource=backendSource.replace(/^import .*$/m,'').replace(/export \{[^}]+\};/,'').split('export default async')[0];
+const pureSource=backendSource.replace(/^import .*$/gm,'').replace(/export \{[^}]+\};/,'').split('export default async')[0];
 const context={console,Response,URL,setTimeout,clearTimeout};context.globalThis=context;vm.createContext(context);
 vm.runInContext(pureSource+`;globalThis.__vh={marketFromSnapshots,monthKey,baselineFor,leagueScore,weeklyPlayerRow,normalizeCompletedTrade};`,context,{filename:'value-history-pure.mjs'});
 const {marketFromSnapshots,monthKey,baselineFor,leagueScore,weeklyPlayerRow,normalizeCompletedTrade}=context.__vh;

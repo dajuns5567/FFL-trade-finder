@@ -5472,6 +5472,46 @@ function assertWeek2Originality(result,previousEdition){
     }
     article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);
   }
+  // Final editorial desk audit. Earlier polish passes can prune a whole desk
+  // to one throwaway line, even though the total article meets its word floor.
+  // Restore only verifiable team/player facts, never anonymous generic padding.
+  if(week>=5)for(const team of teams){
+    const article=team.inquirer_article;
+    if(!article)continue;
+    const starters=(team.starter_details||[]).filter(p=>p?.name&&Number.isFinite(Number(p.points)));
+    const weak=starters.slice().sort((a,b)=>Number(a.points)-Number(b.points))[0];
+    const strong=starters.slice().sort((a,b)=>Number(b.points)-Number(a.points))[0];
+    const score=Number(team.points),opponent=Number(team.opponent_points);
+    for(const [kind,player] of [['hot-seat',weak],['cool-throne',strong]]){
+      const section=(article.sections||[]).find(s=>s.kind===kind);
+      if(!section||!player||!Number.isFinite(score)||!Number.isFinite(opponent))continue;
+      const existing=(section.paragraphs||[]).join(' ');
+      if(forwardWordCount(existing)>=32)continue;
+      const points=forwardOne(player.points),club=w2DisplayTeam(team.team_name),other=w2DisplayTeam(team.opponent_name||'the opponent');
+      const last=Number(player.prior_season_avg),games=Number(player.prior_season_games);
+      const hasHistory=games>0&&Number.isFinite(last)&&last>0;
+      const recent=(player.recent_form?.series||[]).filter(row=>Number(row.week)<week&&Number.isFinite(Number(row.points))).slice(-1)[0];
+      const fact=String(player.real_stat_line||'').trim();
+      const history=hasHistory?(' The '+games+'-game 2025 record for '+player.name+' averaged '+forwardOne(last)+' per game.'):'';
+      const before=recent?(' Week '+recent.week+' produced '+forwardOne(recent.points)+' for '+player.name+'.'):'';
+      const versions=kind==='hot-seat'?[
+        player.name+' recorded '+points+' in the '+club+' lineup against '+other+'.'+before+history,
+        'A hard number for '+club+': '+player.name+' supplied '+points+' against '+other+'.'+history+before,
+        'The '+points+'-point return from '+player.name+' is part of the '+club+' result against '+other+'.'+before+history,
+        club+' can locate one shortfall without guessing: '+player.name+' posted '+points+'.'+history+before
+      ]:[
+        player.name+' supplied '+points+' of '+forwardOne(score)+' for '+club+' against '+other+'.'+before+history,
+        'Credit the actual scorer: '+player.name+' delivered '+points+' in the '+club+' matchup with '+other+'.'+history+before,
+        'The individual contribution from '+player.name+' was '+points+'; '+club+' finished on '+forwardOne(score)+'.'+before+history,
+        club+' got a recorded '+points+' from '+player.name+' against '+other+'.'+history+before
+      ];
+      const pick=w2Hash(String(team.roster_id)+'|desk-repair|'+kind+'|'+week)%versions.length;
+      const detail=fact&&forwardWordCount(existing+' '+versions[pick])<32?' The recorded stat line: '+fact+'.':'';
+      const addition=versions[pick]+detail;
+      if(!existing.includes(addition))section.paragraphs.push(addition);
+    }
+    article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);
+  }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 

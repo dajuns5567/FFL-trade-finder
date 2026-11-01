@@ -2,13 +2,14 @@
 // Derived from the locked Week 2 V31 newsroom logic.
 // Week 1/2 preloads remain immutable; Week 3+ runs this layer with week-aware
 // variation, prior-edition continuity, playoff-race context and postseason rounds.
+import {finishReviewedForwardCopy} from './inquirer-reviewed-copy.mjs';
 import {inspectInquirerFormatContract} from './inquirer-format-contract.mjs';
-import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPlayerFact,restoreForwardArticleDepth} from './inquirer-narrative-architecture.mjs';
+import {attributeForwardPlayerStatFragments,curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPlayerFact,restoreForwardArticleDepth} from './inquirer-narrative-architecture.mjs';
 
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=80;
+export const FORWARD_EDITORIAL_REVISION=81;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -620,7 +621,7 @@ export function polishForwardTeamCopy(teams,week,salt){
   return {...t,inquirer_article:{...article,headline,sections,paragraphs:sections.flatMap(s=>s.paragraphs||[])}};
  });
 }
-export function applyInquirerEditorialV31({season,week,rawInquirer,rawOverview,previousEdition=null,weekClassification=null,variationSalt=0}={}){
+export function applyInquirerEditorialV31({season,week,rawInquirer,rawOverview,previousEdition=null,previousEditions=[],weekClassification=null,variationSalt=0}={}){
   season=Number(season);week=Number(week);variationSalt=Number(variationSalt)||0;
   if(!rawInquirer||!Array.isArray(rawInquirer.teams))throw new Error('V31 forward editorial layer requires raw team articles');
   const historicalSeasonYear=season-1;
@@ -1172,7 +1173,7 @@ function w2PlayerStatusProfile(p,slot=0,pp=null){
 }
 function w2PlayerNameParts(p){
   const full=String(p?.name||"this player").trim(),bits=full.split(/\s+/).filter(Boolean);
-  return{full,first:bits[0]||full,last:bits.length>1?bits.at(-1):full}
+  return{full,first:bits[0]||full,last:bits.length>1?(/^(?:Jr\.?|Sr\.?|II|III|IV)$/i.test(bits.at(-1))?bits.slice(-2).join(" "):bits.at(-1)):full}
 }
 function w2PlayerPositionNoun(p){
   const pos=String(p?.position||"").toUpperCase();
@@ -1613,7 +1614,7 @@ function w2DivisionBoardTake(flags,reporter,subject){
           :leadOne+" "+w2TeamVerb(leadOne,"has","have")+" the cleanest record at "+y.record+", but "+chasePair+" "+chaseVerb+" this from becoming a solo act."+midaNote+titleNote;
         break;
       case "AFC SOUTH":
-        context=leadSubject+" "+leadVerb("sits","sit")+" on "+y.record+" while "+chasePair+" "+(chasePlural?"form":"forms")+" the first chase pack. The cushion is one result, not a moat, so the leader is ahead without being gone."+midaNote+titleNote;
+        context=leadSubject+" "+leadVerb("sits","sit")+" on "+y.record+" while "+chasePair+" "+(chasePlural?"form":"forms")+" the first chase pack. The chasing teams still need to close the record gap; the standings are an advantage, not a moat."+midaNote+titleNote;
         break;
       case "AFC WEST":
         context=leadSubject+" "+leadVerb("has","have")+" the best record at "+y.record+"; "+chasePair+" "+chaseBe+" the immediate chase, and the bottom of the division is already trying not to let two losses become a season-long tax."+midaNote+titleNote;
@@ -3621,7 +3622,7 @@ function rewriteWeek2Overview(overview,teams,previousEdition,week=2){
   const undefeated=forwardRecentGroup(teams,week,'W'),winless=forwardRecentGroup(teams,week,'L'),upValue=(teams||[]).filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))&&Number(t.value_history_week.delta)>0).slice().sort((a,b)=>Number(b.value_history_week.delta)-Number(a.value_history_week.delta))[0],downValue=(teams||[]).filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))&&Number(t.value_history_week.delta)<0).slice().sort((a,b)=>Number(a.value_history_week.delta)-Number(b.value_history_week.delta))[0];
   const moverSummary=(team,key,label)=>{
     const rows=(team?.value_history_player_movers?.[key]||[]).filter(x=>Number.isFinite(Number(x?.delta))).slice(0,3);
-    if(!rows.length)return" No current-roster player registered a "+(key==="risers"?"positive":"negative")+" value move over that same tracked window.";
+    if(!rows.length)return" No verified player-level "+(key==="risers"?"gain":"decline")+" is available for attribution within that same snapshot window.";
     const items=rows.map(x=>String(x.player_name||x.player_id)+" ("+(Number(x.delta)>0?"+":"")+Math.round(Number(x.delta)).toLocaleString("en-US")+")");
     return" The roster’s biggest "+label+" over that same window: "+w2Natural(items)+".";
   };
@@ -5043,7 +5044,7 @@ function assertWeek2Originality(result,previousEdition){
           'The critics arrived with laminated complaints.','The local paper ran out of sympathy.',
           'The rival bench enjoyed the matinee.','A quiet bus ride seems optimistic.'
         ][((Number(t.roster_id)||1)+Number(week)-6+32)%32];
-        if(joke&&!sentiment.paragraphs.some(x=>x.includes(joke))){
+        if(joke&&forwardWordCount(sentiment.paragraphs.join(" "))<45&&!sentiment.paragraphs.some(x=>x.includes(joke))){
           // Retain the roster-specific factual sentence, not the shared
           // six-team reporter template that the phrase audit correctly rejects.
           const starterPoints=w2One(lead.points);
@@ -5296,7 +5297,11 @@ function assertWeek2Originality(result,previousEdition){
 
   // The final sweep must handle paired 16-word clauses as well as clauses
   // repeated by three or more teams, after all late narrative repairs.
-  if(Number(week)>=5)trimFinalCrossTeamClauseCollisions(teams);
+  if(Number(week)>=5){
+    finishReviewedForwardCopy({season,week,teams,league_overview:overview},[previousEdition,...previousEditions].filter(Boolean));
+    for(const team of teams)attributeForwardPlayerStatFragments(team);
+    trimFinalCrossTeamClauseCollisions(teams);
+  }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 
@@ -5398,7 +5403,7 @@ export function evaluateInquirerEditionQuality(current,previous=null){
       .replace(/\bThe (?:AFC|NFC) (?:EAST|WEST|NORTH|SOUTH) race around [^.?!\n]{4,85}? is already compressed\b/gi,'The division race is already compressed')
       .replace(/\bThe road after [^.?!\n]{4,85}? is mixed\b/gi,'The road is mixed');
     for(const name of [...new Set(teams.map(t=>String(t.team_name||'').trim()).filter(n=>/s$/i.test(n.split(/\s+/).at(-1)||'')))]){
-      if(new RegExp('\\b'+forwardEscRe(name)+' (?:does|gets|has|is|needs|sits|keeps|projects|faces)\\b','i').test(agreementReaderText))
+      if([...agreementReaderText.matchAll(new RegExp('\\b'+forwardEscRe(name)+' (?:does|gets|has|is|needs|sits|keeps|projects|faces)\\b','gi'))].some(match=>! /\b(?:against|around|covering|for|from|of|to|with|before|after)\s$/i.test(agreementReaderText.slice(0,match.index))))
         issues.push({id:'plural-team-agreement',team:name});
     }
     if(/:\s*this Sunday\b|; The season record is\b/.test(allReaderText))
@@ -5437,7 +5442,7 @@ export function evaluateInquirerEditionQuality(current,previous=null){
     // Independent football statistics often have identical *syntax* when all
     // the player names and numbers are deliberately normalized. That is not
     // the same as reusing an editorial joke or analysis sentence.
-    const pureStatLine=/^\[#\]\s+(?:carries|catches|completions|solo|assisted|sacks?|receiving|rushing|passing|yards?)/.test(sentence)
+    const pureStatLine=/^(?:\[entity\] recorded )?\[#\]\s+(?:carr(?:y|ies)|catch(?:es)?|completions|solo|assisted|sacks?|receiving|rushing|passing|yards?)/.test(sentence)
       &&(sentence.match(/\[#\]/g)||[]).length>=3;
     if(ids.size>=4&&!pureStatLine)issues.push({id:'cross-team-copy-scaffold',teams:ids.size,sentence});
   }
@@ -5536,3 +5541,4 @@ export function evaluateInquirerEditionQuality(current,previous=null){
   const seen=new Set();for(const s of blockSentences){const n=forwardNormSentence(s,entities);if(seen.has(n))issues.push({id:'recap-repeated-developed-sentence',sentence:n});seen.add(n)}
   return{ok:issues.length===0,issues,metrics:{team_articles:teams.length,cross_team_scaffolds:[...articleScaffold.values()].filter(ids=>ids.size>=4).length}};
 }
+

@@ -1,3 +1,4 @@
+import {inquirerMarketCutoff,editionAvailability} from './lib/inquirer-market-window.mjs';
 import valueHistoryHandler from './value-history.mjs';
 // Forward drafts must be reviewed as written; synthetic scoreboard sentence repair is retired.
 import {inspectEditionBeforePublication,editorialApprovalMatches,deterministicInquirerAdmission,isReadOnlyEditorialPreview,inspectPreviousWeekEditorialReuse} from './inquirer-publication-guard.mjs';
@@ -74,7 +75,7 @@ async function nflWeekSchedule(season,week){
  try{
   const url=`https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=${season}&seasontype=2&week=${w}`,raw=await fetch(url,{headers:{accept:'application/json','user-agent':'Fleeced-Inquirer-Schedule/1.0'},cache:'no-store'});if(!raw.ok)throw Error('schedule '+raw.status);
   const payload=await raw.json(),events=Array.isArray(payload?.events)?payload.events:[],teams=[...new Set(events.flatMap(e=>(e?.competitions?.[0]?.competitors||[]).map(x=>normalizeTeamCode(x?.team?.abbreviation)).filter(Boolean)))];
-  return{ok:events.length>0,week:w,teams,games:events.length,source:'ESPN NFL scoreboard schedule'};
+  return{ok:events.length>0,week:w,teams,games:events.length,game_starts:events.map(e=>e.date).filter(Boolean),source:'ESPN NFL scoreboard schedule'};
  }catch(e){return{ok:false,week:w,teams:[],games:0,source:'unavailable',error:String(e?.message||e)}}
 }
 // Calling the handler inside the same Netlify function avoids SSO's external HTTP 401 gate.
@@ -430,12 +431,15 @@ export async function weeklyReport(req){
  // preserving the established scheduled-publication admission behavior.
  const historicalSeasonYear=season-1,nextNflWeek=week<INQUIRER_FINAL_WEEK?week+1:null;
  const loadHistorical=()=>fetchBestSeason(historicalSeasonYear).catch(()=>({stats:null,source:null,errors:['unavailable']}));
- const loadEnrichment=()=>Promise.all([
-  internalHistory(origin,'team_net_all=1',previewReadOnly),
-  internalHistory(origin,'trades=1',previewReadOnly),
-  nflWeekSchedule(season,nextNflWeek),
-  internalHistory(origin,'market=1',previewReadOnly)
- ]);
+ const loadEnrichment=async()=>{
+  const cutoff=week>=5?inquirerMarketCutoff(await nflWeekSchedule(season,week)):null;
+  return Promise.all([
+   week>=5&&!cutoff?Promise.resolve({teams:[],source:'edition market dates unavailable'}):internalHistory(origin,'team_net_all=1'+(cutoff?'&inquirer_as_of='+encodeURIComponent(cutoff):''),previewReadOnly),
+   internalHistory(origin,'trades=1',previewReadOnly),
+   nflWeekSchedule(season,nextNflWeek),
+   internalHistory(origin,'market=1',previewReadOnly)
+  ]);
+ };
  const previewTasks=previewReadOnly?{historical:loadHistorical(),enrichment:loadEnrichment()}:null;
  const completion=await completedPublicationWeek(week);
  if(!completion.complete)return{available:false,season,week,waiting_for_week:week,reason:'The Fleeced! Inquirer is waiting for Sleeper to finalize Week '+week+': '+completion.reason+'.'};
@@ -451,9 +455,13 @@ export async function weeklyReport(req){
  if(week>1&&!isLockedInquirerEdition(previousBroadcast,season,week-1))
   return{available:false,published_locked:false,season,week,reason:'Previous Week '+(week-1)+' is not a verified locked Inquirer edition. Historical newsroom continuity required.'};
  let managerHistoryData=await s.get('managers/history-cache.json',{type:'json'}).catch(()=>null);
- if(!managerHistoryData?.career?.length){
-  // managerHistory() rebuilds two shared Blob keys. A preview must never call
-  // it, even when production has no cached manager history.
+ if(previewReadOnly&&week>=5){
+  // Reconstruct this edition's provenance in memory. No shared cache backfill,
+  // and no later-week wins or scoring records may leak into a historic issue.
+  const exact=Number(managerHistoryData?.scoring_history?.through_season)===season&&Number(managerHistoryData?.scoring_history?.through_week)===week;
+  if(!exact||!managerHistoryData?.career?.length)
+   managerHistoryData=await managerHistory({persist:false,snapshotSeason:season,snapshotWeek:week});
+ }else if(!managerHistoryData?.career?.length){
   managerHistoryData=previewReadOnly?{career:[],current:[],assignments:[]}:await managerHistory().catch(()=>({career:[],current:[],assignments:[]}));
  }
  const [matchups,transactions,rosters,users,proj,players,nextMatchups,nextProj,weeklyStats,winnersBracket]=await Promise.all([
@@ -486,9 +494,11 @@ export async function weeklyReport(req){
   const bestBench=bench.slice().sort((a,b)=>b.points-a.points)[0]||null,worstStarter=starterDetailsUnsorted.slice().sort((a,b)=>a.points-b.points)[0]||null;
   const starter_details=starterDetailsUnsorted.slice().sort((a,b)=>b.points-a.points),bestLineupMiss=bestEligibleLineupMiss(starterDetailsUnsorted,bench);
   const managerUserId=String(r?.owner_id||''),division=r?.settings?.division??null,divisionName=sleeperDivisionName(league,division),conference=sleeperConference(league,division),recentTrades=(canonicalTrades?.trades||[]).filter(tr=>Number(tr?.season)===season&&Number(tr?.week)<=week&&Number(tr?.week)>=Math.max(1,week-3)&&(tr?.roster_ids||[]).map(String).includes(id)),applicableTradeHistory=(canonicalTrades?.trades||[]).filter(tr=>Number(tr?.season)===season&&Number(tr?.week)===week&&(tr?.roster_ids||[]).map(String).includes(id)),previousTeam=previousByRoster.get(id),previousSentiment=previousTeam?.inquirer_article?.fan_sentiment||previousTeam?.inquirer_article?.facts?.fan_sentiment||null,tradeAcquisitions=tradeAcquisitionHistory(canonicalTrades?.trades||[],id,rosterPlayers,pname);
+  const rosterSet=new Set(rosterPlayers),playerMoves=(teamValueHistory?.player_deltas||[]).filter(x=>rosterSet.has(String(x.player_id))).map(x=>({...x,player_name:pname(String(x.player_id))}));
+  const value_history_player_movers={risers:playerMoves.filter(x=>Number(x.delta)>0).sort((a,b)=>Number(b.delta)-Number(a.delta)),fallers:playerMoves.filter(x=>Number(x.delta)<0).sort((a,b)=>Number(a.delta)-Number(b.delta))};
   const acquisitionByPlayer=new Map(tradeAcquisitions.map(x=>[String(x.player_id),x]));
   for(const p of starter_details){const a=acquisitionByPlayer.get(String(p.id));if(a)p.acquisition=a}
-  return{roster_id:id,manager_user_id:managerUserId,manager_name:String(u?.display_name||u?.username||`Roster ${id}`),manager_career:careerByUser.get(managerUserId)||null,team_name:String(u?.metadata?.team_name||u?.display_name||`Roster ${id}`).trim(),division,division_name:divisionName,conference,opponent_roster_id:oid||null,next_opponent_roster_id:nextOpp[id]||null,points:Number(m.points)||0,opponent_points:Number(o?.points)||0,won:o?Number(m.points)>Number(o.points):null,projected:Number(projected.toFixed(2)),projection_coverage:projectedKnown,next_projected:Number.isFinite(nextProjected)?Number(nextProjected.toFixed(2)):null,next_projection_coverage:nextProjectedKnown,starter_count:starters.length,best_bench:bestBench,worst_starter:worstStarter,best_lineup_miss:bestLineupMiss,starter_details,roster_player_ids:rosterPlayers,transactions:tx[id]||[],trade_acquisitions:tradeAcquisitions,trade_history:applicableTradeHistory,recent_trade_count:recentTrades.length,current_week_trade_count:recentTrades.filter(tr=>Number(tr?.week)===week).length,previous_fan_sentiment:previousSentiment,current_season_champion:!!(currentChampionRoster&&currentChampionRoster===id),value_history_week:valueMoveByTeam.get(id)||null,next_week_availability:week>=INQUIRER_FINAL_WEEK?{fantasy_season_complete:true,schedule_verified:false,next_nfl_week:null,bye_players:[],bye_current_starters:[],injury_players:[],injury_current_starters:[]}:rosterAvailability(rosterPlayers,starters,players,nextSchedule)};
+  return{roster_id:id,manager_user_id:managerUserId,manager_name:String(u?.display_name||u?.username||`Roster ${id}`),manager_career:careerByUser.get(managerUserId)||null,team_name:String(u?.metadata?.team_name||u?.display_name||`Roster ${id}`).trim(),division,division_name:divisionName,conference,opponent_roster_id:oid||null,next_opponent_roster_id:nextOpp[id]||null,points:Number(m.points)||0,opponent_points:Number(o?.points)||0,won:o?Number(m.points)>Number(o.points):null,projected:Number(projected.toFixed(2)),projection_coverage:projectedKnown,next_projected:Number.isFinite(nextProjected)?Number(nextProjected.toFixed(2)):null,next_projection_coverage:nextProjectedKnown,starter_count:starters.length,best_bench:bestBench,worst_starter:worstStarter,best_lineup_miss:bestLineupMiss,starter_details,roster_player_ids:rosterPlayers,transactions:tx[id]||[],trade_acquisitions:tradeAcquisitions,trade_history:applicableTradeHistory,recent_trade_count:recentTrades.length,current_week_trade_count:recentTrades.filter(tr=>Number(tr?.week)===week).length,previous_fan_sentiment:previousSentiment,current_season_champion:!!(currentChampionRoster&&currentChampionRoster===id),value_history_player_movers,value_history_week:valueMoveByTeam.get(id)||null,next_week_availability:week>=INQUIRER_FINAL_WEEK?{fantasy_season_complete:true,schedule_verified:false,next_nfl_week:null,bye_players:[],bye_current_starters:[],injury_players:[],injury_current_starters:[]}:editionAvailability(rosterAvailability(rosterPlayers,starters,players,nextSchedule),week,currentWeek)};
  });
  annotateConferencePlayoffRace(teams,seasonContext,league);
  const playoffContexts=week>=INQUIRER_PLAYOFF_START_WEEK?buildPlayoffContexts(teams,matchupsByWeek,winnersBracket,week):{};
@@ -511,7 +521,7 @@ export async function weeklyReport(req){
  // manuscript lets a reusable joke recur every other Sunday. Search the
  // preceding four LOCKED editions, but do not rewrite any of them.
  const historicalEditorialMemory=[];
- if(week>=6){
+ if(week>=5){
   for(let oldWeek=Math.max(1,week-4);oldWeek<=week-2;oldWeek++){
    const archived=await broadcastStored(season,oldWeek).catch(()=>null);
    if(archived&&isLockedInquirerEdition(archived,season,oldWeek))
@@ -526,7 +536,7 @@ export async function weeklyReport(req){
   // Preview and publication must execute the identical candidate search.
   // Otherwise a passing preview can conceal a different final manuscript.
   for(const salt of [5,0,1,2,3,4]){
-   const drafted=applyInquirerEditorialV31({season,week,rawInquirer,rawOverview,previousEdition:previousBroadcast,weekClassification,variationSalt:salt});
+   const drafted=applyInquirerEditorialV31({season,week,rawInquirer,rawOverview,previousEdition:previousBroadcast,previousEditions:historicalEditorialMemory,weekClassification,variationSalt:salt});
    const candidate={season,week,teams:drafted.inquirer.teams,league_overview:drafted.leagueOverview};
    const q=evaluateInquirerEditionQuality(candidate,previousBroadcast);
    const archivalReuse=historicalEditorialMemory.flatMap(old=>
@@ -549,7 +559,7 @@ export async function weeklyReport(req){
  // never publication authority. No future draft can mutate locked editions.
  const audit=inspectEditionBeforePublication(result);
  if(previewReadOnly)return{...result,available:true,published_locked:false,preview_only:true,
-  preview_editorial_audit:audit,preview_generation_quality:quality,
+  manager_history_snapshot:managerHistoryData,preview_editorial_audit:audit,preview_generation_quality:quality,
   preview_warning:'Unpublished draft. No shared data was written.'};
  const stageKey='inquirer/editorial-staging/'+season+'/week-'+String(week).padStart(2,'0')+'.json';
  const approvalKey='inquirer/editorial-approvals/'+season+'/week-'+String(week).padStart(2,'0')+'.json';
@@ -771,8 +781,8 @@ function managerScoringSummary(scoringGames,career,currentSeason,currentWeek){
  const currentRows=rows.filter(g=>Number(g.season)===Number(currentSeason));
  return{since_season:2024,through_season:Number(currentSeason)||null,through_week:Math.max(0,Math.min(17,(Number(currentWeek)||1)-1)),games:rows.map(decorate),season_extremes,record_history,all_time:{highest:highest||null,lowest:lowest||null},leaderboards:{all_time_highest:ranked(rows,true).slice(0,50),all_time_lowest:ranked(rows,false).slice(0,50),year_highest:ranked(currentRows,true).slice(0,50),year_lowest:ranked(currentRows,false).slice(0,50)}};
 }
-async function managerHistory(){
- const s=store(),nfl=await fetchJson(`${API}/state/nfl`).catch(()=>({})),currentSeason=Number(nfl?.season)||new Date().getFullYear(),currentWeek=Number(nfl?.week)||1;
+async function managerHistory({persist=true,snapshotSeason=null,snapshotWeek=null}={}){
+ const s=persist?store():null,nfl=await fetchJson(`${API}/state/nfl`).catch(()=>({})),currentSeason=Number(snapshotSeason)||Number(nfl?.season)||new Date().getFullYear(),currentWeek=snapshotWeek==null?(Number(nfl?.week)||1):Number(snapshotWeek)+1;
  let league=await fetchJson(`${API}/league/${LEAGUE}`),chain=[];for(let guard=0;league&&guard<12;guard++){chain.push(league);if(!league.previous_league_id)break;league=await fetchJson(`${API}/league/${league.previous_league_id}`).catch(()=>null)}chain.sort((a,b)=>Number(a.season)-Number(b.season));
  const career={},assignments=[],current=[],games=[],scoringGames=[],assignmentKeys=new Set();
  const ensure=(uid,u={})=>career[uid]||(career[uid]={user_id:uid,sleeper_id:String(u.display_name||u.username||uid),wins:0,losses:0,playoff_wins:0,playoff_appearances:0,championships:0,division_wins:0,division_championships:0,regular_season_titles:0,seasons:[]});
@@ -786,6 +796,7 @@ async function managerHistory(){
    fetchJson(`${API}/league/${lid}/winners_bracket`).catch(()=>[]),
    Promise.all(weekNums.map(w=>fetchJson(`${API}/league/${lid}/matchups/${w}`).catch(()=>[])))
   ]);
+  if(!persist&&(rosters.length!==32||!users.length||weekRows.some(rows=>rows.length!==32)))throw Error("Manager history source incomplete; private preview held.");
   const ub=new Map(users.map(u=>[String(u.user_id),u])),rb=new Map(rosters.map(r=>[String(r.roster_id),r])),ownerByRoster={};
   for(const r of rosters){
    const rid=String(r.roster_id),primaryUid=String(r.owner_id||''),verified=!primaryUid?verifiedHistoricalAssignment(season,rid):null,uid=primaryUid||String(verified?.user_id||'');
@@ -794,7 +805,7 @@ async function managerHistory(){
    if(primaryUid&&String(lg.league_id)===String(LEAGUE))current.push({roster_id:rid,user_id:primaryUid,sleeper_id:career[primaryUid].sleeper_id})
   }
   const seasonWins={},seasonPoints={};
-  for(const r of rosters){const uid=ownerByRoster[String(r.roster_id)];if(!uid)continue;const rw=Number(r?.settings?.wins)||0,rl=Number(r?.settings?.losses)||0;career[uid].wins+=rw;career[uid].losses+=rl;seasonWins[uid]=rw}
+  for(const r of rosters){const uid=ownerByRoster[String(r.roster_id)];if(!uid)continue;let rw=Number(r?.settings?.wins)||0,rl=Number(r?.settings?.losses)||0;if(!persist){rw=0;rl=0;for(const rows of weekRows){const m=rows.find(x=>String(x.roster_id)===String(r.roster_id)),o=m&&rows.find(x=>x.matchup_id===m.matchup_id&&String(x.roster_id)!==String(r.roster_id));if(!m||!o)throw Error('Manager history matchup incomplete');if(Number(m.points)>Number(o.points))rw++;else if(Number(m.points)<Number(o.points))rl++}}career[uid].wins+=rw;career[uid].losses+=rl;seasonWins[uid]=rw}
   for(let wi=0;wi<weekRows.length;wi++){const w=weekNums[wi],ms=weekRows[wi]||[],groups={};for(const m of ms){const k=String(m.matchup_id??'');if(k)(groups[k]||(groups[k]=[])).push(m)}for(const pair of Object.values(groups)){if(pair.length!==2)continue;const [a,b]=pair;for(const [m,o] of [[a,b],[b,a]]){const uid=ownerByRoster[String(m.roster_id)];if(!uid)continue;const pts=Number(m.points)||0,opt=Number(o.points)||0,won=pts>opt;seasonPoints[uid]=(seasonPoints[uid]||0)+pts;const rd=rb.get(String(m.roster_id))?.settings?.division,od=rb.get(String(o.roster_id))?.settings?.division;if(won&&rd!=null&&od!=null&&String(rd)===String(od))career[uid].division_wins++;const division=rb.get(String(m.roster_id))?.settings?.division,conference=sleeperConference(lg,division),game={season,week:w,user_id:uid,roster_id:String(m.roster_id),opponent_roster_id:String(o.roster_id),points:pts,opponent_points:opt,won,playoff:false,conference,round_label:''};games.push(game);if(season>=2024)scoringGames.push(game)}}}
   if(regularMax>=regularEnd){let top=null;const divTop={};for(const r of rosters){const uid=ownerByRoster[String(r.roster_id)];if(!uid)continue;const score=(seasonWins[uid]||0)*1e9+(seasonPoints[uid]||0),d=r.settings?.division;if(!top||score>top.score)top={uid,score};if(d!=null&&(!divTop[d]||score>divTop[d].score))divTop[d]={uid,score}}if(top)career[top.uid].regular_season_titles++;for(const x of Object.values(divTop))career[x.uid].division_championships++}
   if(season<currentSeason){const playoffEnd=Math.max(playoffStart-1,Math.min(17,Number(lg?.settings?.last_scored_leg)||17)),playoffNums=Array.from({length:Math.max(0,playoffEnd-playoffStart+1)},(_,i)=>playoffStart+i),playoffWeeks=await Promise.all(playoffNums.map(w=>fetchJson(`${API}/league/${lid}/matchups/${w}`).catch(()=>[]))),bracketRosters=playoffBracketRosters(bracket),appearanceRosters=new Set(bracketRosters);for(let i=0;i<playoffWeeks.length;i++){const w=playoffNums[i],roundRosters=playoffRoundRosters(bracket,w,playoffStart),roundPairs=playoffRoundPairs(bracket,w,playoffStart),groups={};for(const m of playoffWeeks[i]){const k=String(m.matchup_id??'');if(k)(groups[k]||(groups[k]=[])).push(m)}for(const pair of Object.values(groups)){if(pair.length!==2||!matchupComplete(pair))continue;const [a,b]=pair,pairKey=playoffPairKey(a.roster_id,b.roster_id);if(!roundPairs.has(pairKey))continue;const ap=Number(a.points),bp=Number(b.points);if(!Number.isFinite(ap)||!Number.isFinite(bp))continue;if(season>=2024)for(const [m,o] of [[a,b],[b,a]]){const rid=String(m.roster_id);if(!roundRosters.has(rid))continue;const uid=ownerByRoster[rid];if(!uid)continue;const division=rb.get(rid)?.settings?.division,conference=sleeperConference(lg,division),round_label=managerPlayoffRoundLabel(w,conference);scoringGames.push({season,week:w,user_id:uid,roster_id:rid,opponent_roster_id:String(o.roster_id),points:Number(m.points),opponent_points:Number(o.points),won:Number(m.points)>Number(o.points),playoff:true,conference,round_label})}if(ap===bp)continue;const win=ap>bp?a:b,lose=ap>bp?b:a;for(const [m,o,won] of [[win,lose,true],[lose,win,false]]){const rid=String(m.roster_id);if(!roundRosters.has(rid))continue;const uid=ownerByRoster[rid];if(!uid)continue;const division=rb.get(rid)?.settings?.division,conference=sleeperConference(lg,division),round_label=managerPlayoffRoundLabel(w,conference);if(won)career[uid].playoff_wins++;games.push({season,week:w,user_id:uid,roster_id:rid,opponent_roster_id:String(o.roster_id),points:Number(m.points)||0,opponent_points:Number(o.points)||0,won,playoff:true,conference,round_label})}}}for(const rid of appearanceRosters){const uid=ownerByRoster[rid];if(uid)career[uid].playoff_appearances++}
@@ -805,7 +816,7 @@ async function managerHistory(){
   }
  }
  const currentUsers=new Set(current.map(x=>x.user_id)),scoring_history=managerScoringSummary(scoringGames,career,currentSeason,currentWeek),graveyard=Object.values(career).filter(x=>!currentUsers.has(x.user_id)).map(x=>{const as=assignments.filter(a=>a.user_id===x.user_id).sort((a,b)=>Number(a.season)-Number(b.season)),last=as[as.length-1],seasonRosterKeys=new Set(as.map(a=>Number(a.season)+'|'+String(a.roster_id))),scoring=(scoring_history.games||[]).filter(g=>seasonRosterKeys.has(Number(g.season)+'|'+String(g.roster_id))).sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));return{user_id:x.user_id,sleeper_id:x.sleeper_id,roster_id:last?.roster_id||'',retired_at:last?.season?String(last.season):'',seasons:[...new Set(as.map(a=>Number(a.season)).filter(Boolean))],played_2025:as.some(a=>Number(a.season)===2025),assignments:as,scoring_games:scoring,career:{wins:x.wins,losses:x.losses,playoff_wins:x.playoff_wins,playoff_appearances:x.playoff_appearances,championships:x.championships,division_wins:x.division_wins,division_championships:x.division_championships,regular_season_titles:x.regular_season_titles}}});
- const now=new Date().toISOString(),cache_version=MANAGER_CACHE_VERSION,registry={current:Object.fromEntries(current.map(x=>[x.roster_id,{user_id:x.user_id,sleeper_id:x.sleeper_id,since:now}])),graveyard},result={current,graveyard,career:Object.values(career),assignments,games,scoring_history,generated_at:now,cache_version};await Promise.all([s.setJSON('managers/registry.json',registry),s.setJSON('managers/history-cache.json',{...result,cached_at:now})]);return result;
+ const now=new Date().toISOString(),cache_version=MANAGER_CACHE_VERSION,registry={current:Object.fromEntries(current.map(x=>[x.roster_id,{user_id:x.user_id,sleeper_id:x.sleeper_id,since:now}])),graveyard},result={current,graveyard,career:Object.values(career),assignments,games,scoring_history,generated_at:now,cache_version};if(persist)await Promise.all([s.setJSON('managers/registry.json',registry),s.setJSON('managers/history-cache.json',{...result,cached_at:now})]);return persist?result:{...result,preview_read_only:true};
 }
 async function awardHighs(req){
  const s=store(),key='awards/highs.json',old=await s.get(key,{type:'json'}).catch(()=>null),highs=Array.isArray(old)?old:[];
@@ -836,3 +847,4 @@ export default async req=>{try{const u=new URL(req.url);
   }
  }
 if(u.searchParams.get('weekly')==='1')return json(await weeklyReport(req));if(u.searchParams.get('reporters')==='1')return json(await reporterDirectory());if(u.searchParams.get('reporter_archive'))return json(await reporterArchive(u.searchParams.get('reporter_archive')));if(u.searchParams.get('broadcast_archive')==='1')return json(await broadcastArchive());if(u.searchParams.get('broadcast_season')&&u.searchParams.get('broadcast_week'))return json(await broadcastStored(u.searchParams.get('broadcast_season'),u.searchParams.get('broadcast_week')));if(u.searchParams.get('weekly_awards')==='1')return json(await weeklyAwards());if(u.searchParams.get('managers')==='1'){const s=store(),cached=await s.get('managers/history-cache.json',{type:'json'}).catch(()=>null),valid=cached?.cache_version===MANAGER_CACHE_VERSION&&cached?.career?.length&&cached.career.some(x=>(Number(x.wins)||0)+(Number(x.losses)||0)>0);if(valid){const nfl=await fetchJson(`${API}/state/nfl`).catch(()=>({})),season=Number(nfl?.season)||0,through=Math.max(0,Math.min(17,(Number(nfl?.week)||1)-1)),fresh=Number(cached?.scoring_history?.through_season)===season&&Number(cached?.scoring_history?.through_week)>=through;if(fresh)return json({...cached,cache_hit:true,stale:false})}return json(await managerHistory())}if(u.searchParams.get('drafts')==='1')return json(await draftAwards());if(u.searchParams.get('draft_records')==='1')return draftRecords(req);if(u.searchParams.get('award_highs')==='1')return awardHighs(req);if(u.searchParams.get('awards')==='1')return awards(req);return json({error:'query required'},400)}catch(e){console.error('league-hub',e);return json({error:'league hub unavailable'},503)}};
+

@@ -19,9 +19,9 @@ function storyStat(p,opponent,index,variant=0){
   if(ints!=null&&ints>0)bits.push(`${ints} ${ints===1?'interception':'interceptions'}`);
  }else if(['RB','WR','TE'].includes(pos)){
   const carries=num('rush_att'),rush=num('rush_yd'),rushTd=num('rush_td'),rec=num('rec'),targets=num('rec_tgt'),yards=num('rec_yd'),recTd=num('rec_td');
-  if(carries!=null&&carries>0)bits.push(`${carries} carries for ${rush??0} yards`);
+  if(carries!=null&&carries>0)bits.push(`${carries} ${carries===1?'carry':'carries'} for ${rush??0} yards`);
   if(rushTd!=null&&rushTd>0)bits.push(`${rushTd} rushing ${rushTd===1?'touchdown':'touchdowns'}`);
-  if(rec!=null&&targets!=null)bits.push(`${rec} catches on ${targets} targets${yards!=null?` for ${yards} yards`:''}`);
+  if(rec!=null&&targets!=null)bits.push(`${rec} ${rec===1?'catch':'catches'} on ${targets} ${targets===1?'target':'targets'}${yards!=null?` for ${yards} yards`:''}`);
   if(recTd!=null&&recTd>0)bits.push(`${recTd} receiving ${recTd===1?'touchdown':'touchdowns'}`);
  }else{
   const solo=num('tkl_solo'),assists=num('tkl_ast'),sacks=num('sack','sacks'),tfl=num('tkl_loss'),hits=num('qb_hit');
@@ -55,7 +55,7 @@ function storyStat(p,opponent,index,variant=0){
  // A fixed transition after "fantasy points" was normalized into the
  // same nine-word scaffold in four or more columns. Give the verified stat
  // line directly, without manufacturing a reusable newsroom segue.
- return detail?`${lead} ${detail.charAt(0).toUpperCase()+detail.slice(1)}.`:lead;
+ return detail?`${lead} ${n} recorded ${detail}.`:lead;
 }
 
 function cullRecycledMetaphors(s){
@@ -436,24 +436,29 @@ export function restoreForwardArticleDepth(t,week){
  for(const section of a.sections||[])section.paragraphs=(section.paragraphs||[]).map(line=>String(line).replace(
   /receiving\s*\/\s*receptions:\s*(\d+)\/(\d+)\s+rec(?:,\s*(\d+)\s+yds)?(?:,\s*(\d+)\s+TDs?)?/gi,
   (_,c,tg,y,td)=>c+' receptions on '+tg+' targets'+(y==null?'':' for '+y+' yards')+(td==null?'':' and '+td+' receiving '+(Number(td)===1?'touchdown':'touchdowns'))));
- // A naked stat fragment reads like a data feed, not reporting. Attribute
- // it only when the exact recorded rushing line uniquely identifies a
- // starter; never guess a player from similar fantasy totals.
- for(const section of a.sections||[]){
-  if(section.kind!=='players')continue;
-  section.paragraphs=(section.paragraphs||[]).map(paragraph=>{
-   const line=String(paragraph||'');
-   const match=/^(\d+) carries for (\d+) yards(?=[,. ]|$)/.exec(line);
-   if(!match)return line;
-   const owners=(t.starter_details||[]).filter(p=>p?.name&&
-     Number(p?.real_stats?.rush_att)===Number(match[1])&&
-     Number(p?.real_stats?.rush_yd)===Number(match[2]));
-   return owners.length===1?owners[0].name+' recorded '+line[0].toLowerCase()+line.slice(1):line;
-  });
- }
+ attributeForwardPlayerStatFragments(t);
  // A word-count shortage is a substantive editorial hold, not permission to
  // pad the article with repetitive box-score rows until it reaches 300.
  a.paragraphs=a.sections.flatMap(s=>s.paragraphs||[]);
+}
+
+export function attributeForwardPlayerStatFragments(t){
+ const a=t?.inquirer_article;if(!a)return;
+ for(const section of a.sections||[]){
+  if(section.kind!=='players')continue;
+  section.paragraphs=(section.paragraphs||[]).map(paragraph=>{
+   return clauseParts(paragraph).map(line=>{
+    const rush=/^(\d+) carr(?:y|ies) for (-?\d+) yards(?=[,. ]|$)/.exec(line);
+    const receiving=/^(\d+) catch(?:es)? on (\d+) targets? for (-?\d+) yards(?=[,. ]|$)/.exec(line);
+    if(!rush&&!receiving)return line;
+    const owners=(t.starter_details||[]).filter(p=>p?.name&&(rush
+      ?Number(p?.real_stats?.rush_att)===Number(rush[1])&&Number(p?.real_stats?.rush_yd)===Number(rush[2])
+      :Number(p?.real_stats?.rec)===Number(receiving[1])&&Number(p?.real_stats?.rec_tgt)===Number(receiving[2])&&Number(p?.real_stats?.rec_yd)===Number(receiving[3])));
+    return owners.length===1?owners[0].name+' recorded '+line[0].toLowerCase()+line.slice(1):line;
+   }).join(' ');
+  });
+ }
+ a.paragraphs=(a.sections||[]).flatMap(s=>s.paragraphs||[]);
 }
 
 export function restoreForwardPlayerFact(t){
@@ -483,7 +488,7 @@ export function inspectNarrativeArchitecture(edition){
   // The factual repair can label a line only from a unique raw stat match;
   // if it cannot, publication must hold rather than invent a name.
   for(const line of kind('players')?.paragraphs||[]){
-    if(/^\d+ carries for \d+ yards(?=[,. ]|$)/.test(String(line||'')))
+    if(clauseParts(line).some(part=>/^\d+ (?:carr(?:y|ies) for -?\d+ yards|catch(?:es)? on \d+ targets? for -?\d+ yards)(?=[,. ]|$)/.test(part)))
       issues.push({id:'unattributed-player-stat-fragment',team,excerpt:String(line).slice(0,150)});
   }
   const headline=text(a.headline),all=(a.paragraphs||[]).join(' ');
@@ -568,3 +573,4 @@ export function inspectNarrativeArchitecture(edition){
  }
  return issues;
 }
+

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import week2 from '../netlify/functions/inquirer-week2-2026-preload.mjs';
 import {applyInquirerEditorialV31,evaluateInquirerEditionQuality,adaptWeekLanguage,polishForwardTeamCopy,FORWARD_INQUIRER_VERSION,FORWARD_EDITORIAL_REVISION} from '../netlify/functions/inquirer-editorial-v31.mjs';
-import {restoreForwardArticleDepth} from '../netlify/functions/inquirer-narrative-architecture.mjs';
+import {restoreForwardArticleDepth,inspectNarrativeArchitecture} from '../netlify/functions/inquirer-narrative-architecture.mjs';
 import {inquirerWeekClassification} from '../netlify/functions/inquirer-reporters.mjs';
 import {inspectEditionBeforePublication} from '../netlify/functions/inquirer-publication-guard.mjs';
 
@@ -125,6 +125,22 @@ const adjacentFiveDraft=applyInquirerEditorialV31({season:2026,week:5,...adjacen
  previousEdition:week2,weekClassification:inquirerWeekClassification(5,2026),variationSalt:5});
 const adjacentFive={season:2026,week:5,published_locked:true,teams:adjacentFiveDraft.inquirer.teams,
  league_overview:adjacentFiveDraft.leagueOverview};
+// Pipeline-level fail-closed controls must catch defects surviving late copy polishing.
+const chronologyFixture=clone(adjacentFive);
+chronologyFixture.teams[0].trade_acquisitions=[{player_id:'999999',player_name:'Test Acquisition',season:2026,week:3}];
+chronologyFixture.teams[0].inquirer_article.sections.find(s=>s.kind==='value').paragraphs.push('Test Acquisition came over in Week 6 of 2026.');
+chronologyFixture.teams[0].inquirer_article.paragraphs=chronologyFixture.teams[0].inquirer_article.sections.flatMap(s=>s.paragraphs||[]);
+assert.ok(inspectNarrativeArchitecture(chronologyFixture).some(x=>x.id==='historical-acquisition-date-mismatch'),
+ 'The final pipeline must detect contradictory acquisition dates against Sleeper history');
+const thinDeskFixture=clone(adjacentFive);
+thinDeskFixture.teams[0].inquirer_article.sections.find(s=>s.kind==='hot-seat').paragraphs=['Not good.'];
+assert.ok(inspectNarrativeArchitecture(thinDeskFixture).some(x=>x.id==='thin-essential-editorial-desk'),
+ 'The final pipeline must reject one-line essential sections');
+const weakRecapFixture=clone(adjacentFive);
+const filch=weakRecapFixture.league_overview.sections.find(s=>s.reporter?.id==='nora-voss');
+if(filch){filch.paragraphs=['Everybody saw it.'];
+ assert.ok(inspectNarrativeArchitecture(weakRecapFixture).some(x=>x.id==='weekly-recap-generic-final-column'),
+  'The final pipeline must reject anonymous recap conclusions');}
 const adjacentSixRaw=realisticForwardRaw(6);
 let adjacentSix=null,adjacentFailures=[];
 for(const salt of [5,0,1]){

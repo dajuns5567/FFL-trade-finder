@@ -192,7 +192,11 @@ test('production candidate evaluator enforces original Week5 anti-scaffold findi
  assert.match(editorial,/zero-point-production-praise/);
  assert.match(editorial,/scored exactly 0\.0, including 0\.0/);
  assert.match(narrative,/const lead=leads\[variant%leads.length\]/);
- assert.match(narrative,/detail\.charAt\(0\)\.toUpperCase\(\)/);
+ const statSource=narrative.slice(narrative.indexOf('function storyStat('),narrative.indexOf('function cullRecycledMetaphors('));
+ const storyStat=new Function('text','one',statSource+';return storyStat;')(x=>String(x||'').trim(),x=>Number(x||0).toFixed(1));
+ const copy=storyStat({name:'Named Receiver',position:'WR',points:18.8,real_stats:{rec:7,rec_tgt:11,rec_yd:118}},'Opponent',1,0);
+ assert.match(copy,/Named Receiver recorded 7 catches on 11 targets for 118 yards/);
+ assert.doesNotMatch(copy,/(?<=[.!?]) \\d+ catches/);
  assert.doesNotMatch(narrative.slice(narrative.indexOf('function storyStat('),narrative.indexOf('function cullRecycledMetaphors(')),/The play-by-play records/);
 });
 

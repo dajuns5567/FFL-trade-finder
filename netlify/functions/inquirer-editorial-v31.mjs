@@ -5511,7 +5511,7 @@ function assertWeek2Originality(result,previousEdition){
   }
   // Replace inherited Week-2 closing slogans with a specific, independently
   // sourced league-wide final column. Never manufacture a trade or lineup call.
-  if(week>=5&&Array.isArray(overview?.sections)){
+  if(week>=5&&!weekClassification?.playoffs&&Array.isArray(overview?.sections)){
     const last=overview.sections.find(s=>String(s?.reporter?.id)==='nora-voss');
     const matched=teams.filter(t=>Number.isFinite(Number(t.points))&&Number.isFinite(Number(t.opponent_points))&&
       Number(t.points)>Number(t.opponent_points))

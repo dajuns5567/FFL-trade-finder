@@ -2444,7 +2444,7 @@ function w2ValueMoverMethod(t,row){
   const verified=(t.trade_acquisitions||[]).find(a=>String(a?.player_id||"")===id);
   if(verified&&Number(verified.week)>0&&Number(verified.season)>0){
     const when="Week "+Number(verified.week)+" of "+Number(verified.season);
-    return{key:"verified-trade-"+when,one:"since the trade in "+when,many:"since that trade in "+when};
+    return{key:"verified-trade-"+when,one:"since "+String(pmeta(id)?.name||id)+" came over in "+when,many:"since the trade for "+String(pmeta(id)?.name||id)+" in "+when};
   }
   for(const tx of txs){
     const adds=(tx.adds||[]).map(String),drops=(tx.drops||[]).map(String),added=adds.includes(id),dropped=drops.includes(id);

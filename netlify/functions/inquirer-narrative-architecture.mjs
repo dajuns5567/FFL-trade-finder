@@ -583,8 +583,8 @@ export function inspectNarrativeArchitecture(edition){
  if(closing){
   const copy=(closing.paragraphs||[]).join(' ');
   const namedTeams=(edition?.teams||[]).filter(t=>t?.team_name&&copy.includes(t.team_name));
-  if(namedTeams.length<2||!/(?:\\d+\\.\\d+|\\d+-\\d+)/.test(copy)||
-    /^(?:Everybody saw it\\.|The free trial is over\\.)/i.test(text(closing.paragraphs?.[0])))
+  if(namedTeams.length<2||!/(?:\d+\.\d+|\d+-\d+)/.test(copy)||
+    /^(?:Everybody saw it\.|The free trial is over\.)/i.test(text(closing.paragraphs?.[0])))
    issues.push({id:'weekly-recap-generic-final-column',named_teams:namedTeams.length});
  }
  for(const p of (edition?.league_overview?.sections||[]).flatMap(s=>s.blocks?.length?s.blocks.flatMap(b=>b.paragraphs||[]):s.paragraphs||[])){

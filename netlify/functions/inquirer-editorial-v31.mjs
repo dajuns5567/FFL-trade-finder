@@ -5372,7 +5372,8 @@ function assertWeek2Originality(result,previousEdition){
   // Never fabricate starter totals or soften the strict originality gate.
   if(week>=5)for(const team of teams){
     const article=team.inquirer_article;
-    if(!article||forwardWordCount((article.paragraphs||[]).join(' '))>=300)continue;
+    const playersDesk=article?.sections?.find(section=>section.kind==='players');
+    if(!article||(forwardWordCount((article.paragraphs||[]).join(' '))>=300&&forwardWordCount((playersDesk?.paragraphs||[]).join(' '))>=24))continue;
     const starters=(team.starter_details||[]).filter(p=>p?.name&&p.points!=null&&Number.isFinite(Number(p.points)))
       .sort((a,b)=>Number(b.points)-Number(a.points));
     const top=starters[0],second=starters[1],players=article.sections?.find(s=>s.kind==='players');
@@ -5387,6 +5388,15 @@ function assertWeek2Originality(result,previousEdition){
       players.paragraphs.push(evidence);
       article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);
     }
+  }
+  // Repair a known malformed synthetic fixture idiom without inventing a
+  // new score: the displayed values remain exactly source-provided.
+  if(week>=5)for(const team of teams){
+    const article=team.inquirer_article;
+    if(!article)continue;
+    for(const section of article.sections||[])section.paragraphs=(section.paragraphs||[]).map(p=>
+      String(p).replace(/(The first result on [^.?!]*?) were ([-+]?\d)/gi,'$1 was $2'));
+    article.paragraphs=article.sections.flatMap(section=>section.paragraphs||[]);
   }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }

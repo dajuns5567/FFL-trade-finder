@@ -2441,6 +2441,11 @@ function w2TransactionMoveDetails(t){
 
 function w2ValueMoverMethod(t,row){
   const id=String(row?.player_id||""),txs=(t.transactions||[]).filter(tx=>!tx?.status||String(tx.status).toLowerCase()==="complete");
+  const verified=(t.trade_acquisitions||[]).find(a=>String(a?.player_id||"")===id);
+  if(verified&&Number(verified.week)>0&&Number(verified.season)>0){
+    const when="Week "+Number(verified.week)+" of "+Number(verified.season);
+    return{key:"verified-trade-"+when,one:"since the trade in "+when,many:"since that trade in "+when};
+  }
   for(const tx of txs){
     const adds=(tx.adds||[]).map(String),drops=(tx.drops||[]).map(String),added=adds.includes(id),dropped=drops.includes(id);
     if(!added&&!dropped)continue;

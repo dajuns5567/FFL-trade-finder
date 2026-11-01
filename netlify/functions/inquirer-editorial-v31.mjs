@@ -5328,19 +5328,25 @@ function assertWeek2Originality(result,previousEdition){
         const archived=previousByRoster.get(String(team.roster_id));
         if(!article||!archived?.size)continue;
         for(const section of article.sections||[]){
-          // Factual player and management desks cannot be gutted merely
-          // because the synthetic forward fixture reuses last week's stats.
-          // Let the strict acceptance gate reject unresolved factual reuse.
-          if(['players','management','cool-throne','value'].includes(section.kind))continue;
-          section.paragraphs=(section.paragraphs||[]).map(paragraph=>{
-            const sentences=forwardSentenceParts(paragraph);
-            const fresh=sentences.filter(sentence=>
-              forwardWordCount(sentence)<10||
-              !archived.has(forwardNormSentence(sentence,entities)));
-            // Never erase the sole substantive paragraph of a desk: a failed
-            // freshness check is preferable to a hollow newspaper article.
-            return fresh.length?fresh.join(' ').trim():paragraph;
-          }).filter(Boolean);
+          // Keep source-backed facts; remove only recycled editorial claims.
+          // A preloaded fixture can legitimately reproduce player numbers and
+          // transactions, but it cannot justify reprinting last week's jokes.
+          const factual=/\\b(?:fantasy points|\\d+(?:\\.\\d+)?\\s*(?:points|yds|carries|rec|sacks?|solo|assist|td)|added |dropped |roster value|valuation|forecast|projects?\\s+\\d|Week \\d+|\\d+-\\d+)\\b/i;
+          const minWords={players:24,management:25,sentiment:45};
+          const original=(section.paragraphs||[]).flatMap(forwardSentenceParts);
+          const retained=original.filter(sentence=>
+            !archived.has(forwardNormSentence(sentence,entities))||
+            factual.test(sentence)||
+            forwardWordCount(sentence)<10);
+          const floor=minWords[section.kind]||15;
+          if(forwardWordCount(retained.join(' '))<floor)continue;
+          section.paragraphs=(section.paragraphs||[]).map(paragraph=>
+            forwardSentenceParts(paragraph).filter(sentence=>
+              !archived.has(forwardNormSentence(sentence,entities))||
+              factual.test(sentence)||
+              forwardWordCount(sentence)<10
+            ).join(' ').trim()
+          ).filter(Boolean);
         }
         article.paragraphs=article.sections.flatMap(section=>section.paragraphs||[]);
       }

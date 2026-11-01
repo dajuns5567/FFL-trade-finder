@@ -8,7 +8,7 @@ import {curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPl
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=78;
+export const FORWARD_EDITORIAL_REVISION=79;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -5254,6 +5254,33 @@ function assertWeek2Originality(result,previousEdition){
         take.take=String(take.take||'')
           .replace(/^(?:Next week remembers:|Spare me the excuses:|Carry this into Monday:|No fine print:)\s*/i,'')
           .trim();
+      }
+    }
+  }
+
+  // The production-derived Week 5 draft exposed a clause collision not seen
+  // in offline fixtures. Inspect the FINAL article text, after all late
+  // narrative repairs, and strip only the surplus repeated sentence.
+  if(Number(week)>=5){
+    const entities=forwardEntities({teams}),offenders=forwardCrossTeamClauseOffenders(teams,entities);
+    if(offenders.size){
+      const removeByTeam=new Map();
+      for(const [phrase,owners] of offenders)for(const team of owners.slice(2)){
+        const a=removeByTeam.get(team)||new Set();a.add(phrase);removeByTeam.set(team,a);
+      }
+      for(const t of teams){
+        const phrases=removeByTeam.get(String(t.team_name||''));if(!phrases?.size)continue;
+        const article=t.inquirer_article;if(!article)continue;
+        for(const section of article.sections||[]){
+          // Do not erase an essential section's only reported fact; those
+          // drafts must instead fail closed at the publication audit.
+          section.paragraphs=(section.paragraphs||[]).map(paragraph=>{
+            const sentences=forwardSentenceParts(paragraph);
+            const kept=sentences.filter(sentence=>!forwardEditorialPhraseKeys(sentence,entities,12,false).some(x=>phrases.has(x)));
+            return kept.length?kept.join(' '):paragraph;
+          });
+        }
+        article.paragraphs=article.sections.flatMap(sec=>sec.paragraphs||[]);
       }
     }
   }

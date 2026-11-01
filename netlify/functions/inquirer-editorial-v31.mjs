@@ -5512,6 +5512,35 @@ function assertWeek2Originality(result,previousEdition){
     }
     article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);
   }
+  // Replace inherited Week-2 closing slogans with a specific, independently
+  // sourced league-wide final column. Never manufacture a trade or lineup call.
+  if(week>=5&&Array.isArray(overview?.sections)){
+    const last=overview.sections.find(s=>String(s?.reporter?.id)==='nora-voss');
+    const matched=teams.filter(t=>Number.isFinite(Number(t.points))&&Number.isFinite(Number(t.opponent_points))&&
+      Number(t.points)>Number(t.opponent_points))
+      .sort((a,b)=>Math.abs(Number(a.points)-Number(a.opponent_points))-
+        Math.abs(Number(b.points)-Number(b.opponent_points)))[0];
+    const strongest=teams.filter(t=>Number.isFinite(Number(t.points)))
+      .sort((a,b)=>Number(b.points)-Number(a.points))[0];
+    if(last&&matched&&strongest){
+      const narrow=matched,leader=strongest;
+      const leadStar=(leader.starter_details||[]).filter(p=>p?.name&&Number.isFinite(Number(p.points)))
+        .sort((a,b)=>Number(b.points)-Number(a.points))[0];
+      last.paragraphs=[
+        w2DisplayTeam(narrow.team_name)+' survived '+w2DisplayTeam(narrow.opponent_name||'the opposition')+
+          ' by '+forwardOne(Number(narrow.points)-Number(narrow.opponent_points))+' in Week '+week+
+          '. A verdict that close belongs in the official record, not in anyone’s premature victory speech.',
+        w2DisplayTeam(leader.team_name)+' supplied the other end of the evidence at '+forwardOne(leader.points)+
+          ' points'+(leadStar?', with '+leadStar.name+' contributing '+forwardOne(leadStar.points):'')+
+          '. One narrow escape and one commanding total: managers who explain both with the same excuse are interviewing for a different job.',
+        'Next comes '+w2DisplayTeam(narrow.next_opponent_name||'the next opponent')+' for '+
+          w2DisplayTeam(narrow.team_name)+' and '+w2DisplayTeam(leader.next_opponent_name||'the next opponent')+
+          ' for '+w2DisplayTeam(leader.team_name)+'. Their Week '+week+
+          ' returns are evidence, not a lifetime exemption from criticism.'
+      ];
+    }
+    overview.paragraphs=overview.sections.flatMap(s=>s.paragraphs||[]);
+  }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 

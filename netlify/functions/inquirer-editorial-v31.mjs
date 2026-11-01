@@ -5340,6 +5340,13 @@ function assertWeek2Originality(result,previousEdition){
             forwardWordCount(sentence)<10);
           const floor=minWords[section.kind]||15;
           if(forwardWordCount(retained.join(' '))<floor)continue;
+          // An optional de-duplication must never violate the publication
+          // guard's 300-word article floor. Retain the original copy and
+          // allow the originality gate to reject it instead of publishing
+          // an underlength article.
+          const articleWords=forwardWordCount((article.sections||[]).flatMap(s=>s.paragraphs||[]).join(' '));
+          const removedWords=forwardWordCount(original.join(' '))-forwardWordCount(retained.join(' '));
+          if(articleWords-removedWords<300)continue;
           section.paragraphs=(section.paragraphs||[]).map(paragraph=>
             forwardSentenceParts(paragraph).filter(sentence=>
               !archived.has(forwardNormSentence(sentence,entities))||

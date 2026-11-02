@@ -5,7 +5,29 @@ on:
     paths:
       - 'netlify/functions/inquirer-*.mjs'
       - 'netlify/functions/league-hub.mjs'
+      - 'netlify/functions/value-history.mjs'
+      - 'netlify/functions/lib/inquirer-schedule-decision.mjs'
+      - 'tests/inquirer-schedule-decision.test.mjs'
+      - 'tests/inquirer-replacement-bootstrap.test.mjs'
+      - 'netlify/functions/lib/inquirer-replacement-archive-gate.mjs'
+      - 'netlify/functions/lib/inquirer-legacy-history.mjs'
+      - 'tests/inquirer-legacy-history.test.mjs'
+      - 'tests/inquirer-preview-context.test.mjs'
+      - 'tests/inquirer-archive-lineage.test.mjs'
+      - 'tests/inquirer-archive-reconciliation.test.mjs'
+      - 'tests/inquirer-weekly-publication-consistency.test.mjs'
+      - 'netlify/functions/lib/inquirer-preview-diagnostics.mjs'
+      - 'tests/inquirer-private-edition-audit.test.mjs'
+      - 'league-hub-v451.js'
+      - 'tests/inquirer-narrative-architecture.test.mjs'
+      - 'tests/week5-forward-editorial-repair.test.mjs'
+      - 'tests/inquirer-forward-copy-regression.test.mjs'
+      - 'docs/INQUIRER-EDITORIAL-GENERATION-CONTRACT.md'
       - 'scripts/inquirer-*.mjs'
+      - 'scripts/migrate-fleeced-blobs.mjs'
+      - 'scripts/inquirer-preview-browser-audit.js'
+      - 'scripts/one-time-fleeced-archive-recovery.sh'
+      - 'tests/fleeced-blob-migration.test.mjs'
       - 'scripts/one-time-generate-inquirer-week1.mjs'
       - 'scripts/one-time-generate-inquirer-week2.mjs'
       - 'docs/FLEECED-INQUIRER-VOICE-AND-REPORTERS.md'
@@ -28,6 +50,8 @@ jobs:
 
       - name: Install generator dependency
         run: npm install --no-save --package-lock=false @netlify/blobs
+      - name: Audit machine-readable private manuscript contract
+        run: node --test tests/inquirer-private-edition-audit.test.mjs
       - name: Syntax check active Inquirer
         run: |
           node --check netlify/functions/inquirer-reporting-v25.mjs
@@ -35,15 +59,29 @@ jobs:
           node --check netlify/functions/inquirer-reporters.mjs
           node --check netlify/functions/league-hub.mjs
           node --check netlify/functions/inquirer-editorial-v31.mjs
+          node --check netlify/functions/inquirer-format-contract.mjs
+          node --check netlify/functions/inquirer-narrative-architecture.mjs
           node --check netlify/functions/inquirer-publish-scheduled.mjs
           node --check scripts/one-time-generate-inquirer-week1.mjs
           node --check scripts/one-time-generate-inquirer-week2.mjs
           node --check scripts/inquirer-v25-audit.mjs
           node --check scripts/inquirer-v25-generated-audit.mjs
           node --check scripts/inquirer-forward-v31-smoke.mjs
+          node --check scripts/migrate-fleeced-blobs.mjs
+          node --check netlify/functions/lib/inquirer-legacy-history.mjs
+          node --check scripts/inquirer-preview-browser-audit.js
+
+      - name: Validate one-time private recovery wrapper syntax
+        run: bash -n scripts/one-time-fleeced-archive-recovery.sh
+      - name: Offline migration safety regression tests
+        run: node --test tests/fleeced-blob-migration.test.mjs
 
       - name: Run source contract
         run: node scripts/inquirer-v25-audit.mjs
+      - name: Verify access-aware preview CI contract
+        run: node --test tests/inquirer-private-preview-ci.test.mjs
+      - name: Enforce Week 4 format regression contract
+        run: node --test tests/inquirer-forward-copy-regression.test.mjs tests/inquirer-publication-guard.test.mjs tests/week5-forward-editorial-repair.test.mjs tests/inquirer-narrative-architecture.test.mjs tests/inquirer-schedule-decision.test.mjs tests/inquirer-replacement-bootstrap.test.mjs tests/inquirer-preview-context.test.mjs tests/inquirer-archive-lineage.test.mjs tests/inquirer-weekly-publication-consistency.test.mjs tests/inquirer-archive-reconciliation.test.mjs tests/inquirer-legacy-history.test.mjs
 
       - name: Capture forward V31 season smoke
         run: |
@@ -123,4 +161,43 @@ jobs:
           retention-days: 2
       - name: Audit frozen Week 2 prose
         run: node scripts/inquirer-v25-generated-audit.mjs /tmp/week2-inquirer-r6.json
+
+  seed-private-preview:
+    needs: inquirer-r6
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Enqueue draft through Netlify background function after preview deploy
+        id: enqueue
+        env:
+          PREVIEW_NUMBER: ${{ github.event.pull_request.number }}
+          PREVIEW_SITE: ${{ vars.INQUIRER_PREVIEW_SITE || 'transcendent-manatee-2f0123.netlify.app' }}
+        run: |
+          set -eu
+          url="https://deploy-preview-${PREVIEW_NUMBER}--${PREVIEW_SITE}/.netlify/functions/inquirer-preview-background?start=1"
+          for attempt in $(seq 1 36); do
+            status=$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' --max-time 12 "$url" || true)
+            if [ "$status" = '202' ]; then
+              echo "Private Inquirer background generation queued (HTTP 202)."
+              echo 'result=queued' >> "$GITHUB_OUTPUT"
+              echo '### Private preview: background draft queued' >> "$GITHUB_STEP_SUMMARY"
+              echo 'The protected Deploy Preview accepted the generation request. The edition must still pass its own publication and editorial gates.' >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            if [ "$status" = '401' ] || [ "$status" = '403' ]; then
+              echo 'result=requires-authenticated-reviewer' >> "$GITHUB_OUTPUT"
+              echo '::warning title=Protected Netlify preview::Automatic draft enqueue needs a signed-in Netlify reviewer (HTTP 401/403). This is an access-control outcome, not an editorial pass or failure.'
+              echo '### Private preview: authenticated reviewer required' >> "$GITHUB_STEP_SUMMARY"
+              echo 'Netlify team-login protection rejected the unauthenticated CI request (HTTP 401/403). The private draft was **not automatically generated** by this job. An authorized reviewer must open the preview and start the background diagnostic; do not mistake this neutral CI result for a completed editorial audit.' >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            echo "Preview background enqueue attempt ${attempt}: HTTP ${status:-unavailable}"
+            sleep 10
+          done
+          echo 'Preview generation was not enqueued; keep the edition unpublished.' >&2
+          exit 1
+      - name: Protected preview requires signed-in reviewer
+        if: steps.enqueue.outputs.result == 'requires-authenticated-reviewer'
+        run: echo 'Netlify visitor access stays private. Use the authenticated preview diagnostic to generate and review this draft; publication remains gated separately.'
 

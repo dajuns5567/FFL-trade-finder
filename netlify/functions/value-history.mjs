@@ -1,3 +1,4 @@
+import {snapshotsThroughEdition} from './lib/inquirer-market-window.mjs';
 import { getStore } from '@netlify/blobs';
 
 const LEAGUE='1316867686394769408';
@@ -515,11 +516,11 @@ async function getTeamNetHistory(s,playerIds,teamId=''){
   const source=archiveSnaps.length?(localSnaps.length?'github-archive+netlify-live':'github-archive'):'netlify-live';
   return{points,playerCount:points.length?Number(points[points.length-1]?.playerCount)||ids.length:ids.length,source,snapshotCount:snaps.length,partial:indexed.source==='unavailable'&&archiveSnaps.length>0};
 }
-async function getAllTeamWeekMovement(s){
+async function getAllTeamWeekMovement(s,asOf=null){
   const archiveSnaps=await archiveAllSnapshots();
   let indexed={items:[],source:s?'empty':'unavailable'},localSnaps=[];
   if(s){try{indexed=await allItems(s);localSnaps=indexed.items.length?await readSnapshotsBounded(s,indexed.items,25):[]}catch(e){indexed={items:[],source:'unavailable',error:String(e?.message||e)}}}
-  const snaps=mergeSnapshots(archiveSnaps,localSnaps).filter(x=>x?.t&&Array.isArray(x?.teams)&&x.teams.length);
+  const snaps=snapshotsThroughEdition(mergeSnapshots(archiveSnaps,localSnaps).filter(x=>x?.t&&Array.isArray(x?.teams)&&x.teams.length),asOf);
   if(!snaps.length)return{teams:[],player_deltas:[],source:indexed.source,snapshotCount:0,trackingSince:null,latest:null};
   const latest=snaps[snaps.length-1],latestMs=new Date(latest.t).getTime(),targetMs=latestMs-7*86400000;
   let base=snaps[0];for(const snap of snaps){const ms=new Date(snap.t).getTime();if(Number.isFinite(ms)&&ms<=targetMs)base=snap;else if(Number.isFinite(ms)&&ms>targetMs)break}
@@ -957,7 +958,10 @@ export { monthKey, marketFromSnapshots, baselineFor };
 export default async (req)=>{
   try{
     const url=new URL(req.url),s=safeStore();
-    if(s){
+    // Internal editorial previews must be read-only even when the handler's
+    // ordinary GET path performs one-time legacy cleanup writes.
+    const readonlyPreview=req.method==='GET'&&url.searchParams.get('readonly_preview')==='1';
+    if(s&&!readonlyPreview){
       try{await scrubV346KtcContamination(s)}catch(e){console.warn('v346-history-scrub',e)}
       try{await scrubV348ConsensusContamination(s)}catch(e){console.warn('v348-history-scrub',e)}
       try{await scrubV380PartialWeekSnapshot(s)}catch(e){console.warn('v380-history-scrub',e)}
@@ -1007,7 +1011,7 @@ export default async (req)=>{
         return json({player_id:playerId,scoring_milestones:milestones});
       }
       if(url.searchParams.get('team_net_all')==='1'){
-        const result=await retry(()=>getAllTeamWeekMovement(s),180);
+        const result=await retry(()=>getAllTeamWeekMovement(s,url.searchParams.get('inquirer_as_of')),180);
         return json({team_net_all:true,...result});
       }
       if(url.searchParams.get('team_net')==='1'){
@@ -1039,3 +1043,4 @@ export default async (req)=>{
     return json({error:'history unavailable'},503);
   }
 };
+

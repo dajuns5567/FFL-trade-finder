@@ -39,7 +39,7 @@ const openings=[
  'Whatever happens next, these points already belong to the record'
 ];
 const valid=n=>Number.isFinite(Number(n));
-function groundedSentence(t,week,iteration,position){
+export function groundedSentence(t,week,iteration,position){
  const id=Math.max(1,Number(t.roster_id)||1),idx=(id*7+iteration*11+position*13)%openings.length;
  const team=String(t.team_name||'This team'),opp=String(t.opponent_name||'its opponent');
  const p=Number(t.points),op=Number(t.opponent_points);
@@ -70,7 +70,7 @@ export function repairNewEditionCopy(edited,previous,week,evaluate,maxPasses=8){
  for(;passes<maxPasses;passes++){
   const verdict=evaluate({teams:edited.inquirer.teams,league_overview:edited.leagueOverview},previous);
   if(verdict.ok)return{edited,verdict,replacements,passes};
-  const offenders=verdict.issues.filter(i=>i.id==='cross-team-copy-scaffold'||i.id==='cross-reporter-phrase-scaffold');
+  const offenders=verdict.issues.filter(i=>['cross-team-copy-scaffold','cross-reporter-phrase-scaffold','cross-team-clause-scaffold'].includes(i.id));
   if(!offenders.length)return{edited,verdict,replacements,passes};
   let changed=0;
   edited.inquirer.teams=edited.inquirer.teams.map(t=>{

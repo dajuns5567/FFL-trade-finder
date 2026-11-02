@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {inspectEditionBeforePublication,editorialCopyDigest,editorialApprovalMatches,deterministicInquirerAdmission,isReadOnlyEditorialPreview}
+import {inspectEditionBeforePublication,editorialCopyDigest,editorialApprovalMatches,deterministicInquirerAdmission,inspectPreviousWeekEditorialReuse,isReadOnlyEditorialPreview}
  from '../netlify/functions/inquirer-publication-guard.mjs';
 
 const makeEdition=()=>{
@@ -12,30 +12,59 @@ const makeEdition=()=>{
   const distinct='lexeme'+String.fromCharCode(97+i%26)+String.fromCharCode(97+Math.floor(i/26));
   const prose=Array.from({length:6},(_,j)=>
    'Editorial evidence '+distinct+' for '+name+' in '+distinct+' chapter '+j+': '+
-   Array(i+5).fill('distinctive football detail '+distinct).join(' ')+
+   Array(Math.min(i+6,13)).fill('distinctive football detail '+distinct).join(' ')+
    ' as the scoring and strategic choices develop.');
   const sections=[
-   {kind:'lede',paragraphs:prose},
-   {kind:'sentiment',paragraphs:[
-    'Supporters '+distinct+' of '+name+' are '+distinct+' reacting to '+Array(i+4).fill('distinctly local evidence '+distinct).join(' ')+' as the '+distinct+' roster assesses the matchup.',
-    'The '+distinct+' group chat for '+name+' has '+distinct+' '+Array(i+5).fill('a separate observation '+distinct).join(' ')+' before the manager responds.'
-   ]}
+   {kind:'lede',heading:'Week 5 account',paragraphs:prose.slice(0,2)},
+   {kind:'players',heading:'Player story',paragraphs:[distinct+' delivered 20 fantasy points. '+prose[2]]},
+   {kind:'management',heading:'Management judgment',paragraphs:[prose[3]]},
+   {kind:'hot-seat',heading:'The problem to solve',paragraphs:[prose[4]]},
+   {kind:'cool-throne',heading:'The bright spot',paragraphs:[prose[5]]},
+   {kind:'value',heading:'Market movement report',paragraphs:[name+' '+distinct+' recorded a verified '+id+'-point market movement; '+distinct+' '+Array(12).fill('independent roster evidence '+distinct).join(' ')+' supports an independent market reading.']},
+   {kind:'sentiment',heading:'Fan reaction',paragraphs:[
+    'Supporters '+distinct+' of '+name+' are '+distinct+' reacting to '+Array(Math.min(i+4,13)).fill('distinctly local evidence '+distinct).join(' ')+' as the '+distinct+' roster assesses the matchup.',
+    'The '+distinct+' group chat for '+name+' has '+distinct+' '+Array(Math.min(i+5,13)).fill('a separate observation '+distinct).join(' ')+' before the manager responds.'
+   ]},
+   {kind:'outlook',heading:'The Week Ahead',paragraphs:['The team has a verifiable next matchup.']}
   ];
+  if(i%4===1){const c=sections.splice(4,1)[0];sections.splice(2,0,c)}
+  if(i%4===2){const c=sections.splice(4,1)[0];sections.splice(1,0,c)}
+  if(i%4===3){const c=sections.splice(2,1)[0];sections.splice(1,0,c)}
   return{roster_id:String(id),team_name:name,opponent_name,
    opponent_roster_id:String(opp),points,opponent_points,
    league_context:{record:{wins:3,losses:2}},
    inquirer_article:{headline:name+' Week 5 analysis',byline:'Editorial desk',reporter:{id:'writer-'+(i%4)},
     sections,paragraphs:sections.flatMap(s=>s.paragraphs)}};
  });
+ const recapKinds=['lead','standings','players','decisions','league','outlook'];
+ const blocks=recapKinds.map((kind,i)=>{
+  const covered=teams.slice(i*3,i*3+10).map(t=>t.team_name+' scored '+t.points+' against '+t.opponent_name+' on '+t.opponent_points+'').join('; ');
+  return {kind,heading:kind,paragraphs:[
+   'The '+kind+' report develops distinct verified Week 5 league evidence rather than a generic closing thought. '+covered+'. ' + 'The '+kind+' desk must account for its own named evidence: '+teams[(i*3)%32].team_name+' recorded '+teams[(i*3)%32].points+' points, while '+teams[(i*3)%32].opponent_name+' had '+teams[(i*3)%32].opponent_points+'. Each beat draws a different documented consequence from those numbers.' + '',
+   ...(['league','outlook'].includes(kind)?['Another independent '+kind+' perspective studies the next contest using these named participants and their recorded scoring totals.']:[])
+  ]};
+ });
  return{season:2026,week:5,teams,
-  league_overview:{headline:'Week 5 recap',sections:[{heading:'Review',paragraphs:[
-   'The final outcomes were confirmed, and the recap reports what happened without pretending an algorithm approved style.'
-  ]}]}};
+  league_overview:{headline:'Week 5 recap',sections:[
+   {heading:'Review',blocks,paragraphs:blocks.flatMap(b=>b.paragraphs)},
+   ...['Second reporter','Third reporter','Fourth reporter'].map(heading=>({heading,paragraphs:['Independent commentary.']}))]}};
 };
 
 test('complete original reporting candidate can pass structural and prose checks',()=>{
  const result=inspectEditionBeforePublication(makeEdition());
  assert.equal(result.ok,true,JSON.stringify(result.issues.slice(0,5)));
+});
+
+test('Week 5 cannot regress from the locked Week 4 newspaper format',()=>{
+ const e=makeEdition();
+ e.teams[0].inquirer_article.sections=e.teams[0].inquirer_article.sections.filter(s=>!['cool-throne','value'].includes(s.kind));
+ e.teams[1].inquirer_article.sections.find(s=>s.kind==='outlook').paragraphs=Array(7).fill('Extra future-week paragraph.');
+ e.teams[2].inquirer_article.sections.find(s=>s.kind==='cool-throne').heading='cool-throne';
+ e.league_overview.sections[0].blocks=e.league_overview.sections[0].blocks.slice(0,5);
+ e.league_overview.sections[0].blocks.find(b=>b.kind==='league').paragraphs=['Only a single thin league paragraph.'];
+ const found=new Set(inspectEditionBeforePublication(e).issues.map(x=>x.id));
+ for(const id of ['week4-team-section-contract','week4-overstuffed-outlook','week4-missing-section-heading','week4-recap-six-beat-contract','week4-thin-recap-beat'])
+  assert(found.has(id),'missing independent format gate: '+id);
 });
 
 test('the exact real Week 5 regression patterns block publication',()=>{
@@ -45,8 +74,9 @@ test('the exact real Week 5 regression patterns block publication',()=>{
  article.sections[0].paragraphs.push('The useful weakness-or-strength note is this: the lineup requires improvement.');
  article.sections[1].paragraphs.push('At 1-1, supporters can cherry-pick the season.');
  e.league_overview.sections[0].paragraphs.push('The football read is straightforward: the result was a result.');
+ e.league_overview.sections[1].paragraphs.push('The useful lesson is not to ask the obvious question.');
  const ids=new Set(inspectEditionBeforePublication(e).issues.map(i=>i.id));
- for(const id of ['grammatical-regression','mechanical-draft-language','misleading-record','recap-mechanical-draft-language'])
+ for(const id of ['grammatical-regression','mechanical-draft-language','misleading-record','recap-mechanical-draft-language','recap-mechanical-lesson-scaffold'])
   assert(ids.has(id),'missing regression detection '+id);
 });
 
@@ -89,7 +119,11 @@ test('deep copy-forward quality must pass independently of manual approval',()=>
  assert(hub.includes('if(!audit.ok||!deepQualityOk||!admission.approved)'));
  assert(hub.includes('generation_quality:quality'));
  assert(hub.includes('deterministicInquirerAdmission(result'));
- assert(hub.includes('Preview is read-only. Editorial publication is disabled here.'));
+ assert(hub.includes("if(previewReadOnly&&!new URL(req.url).searchParams.has('preview_editorial'))"));
+ const previewReturn=hub.indexOf('if(previewReadOnly)return{...result');
+ const firstStageWrite=hub.indexOf('await s.setJSON(stageKey');
+ assert(previewReturn>0&&firstStageWrite>previewReturn,'Preview must return an in-memory draft before any shared Blob publication write');
+ assert(hub.includes('preview_only:true'),'Preview draft must be explicitly marked unpublished');
  assert(approval.includes('stage.generation_quality?.ok===true'));
 });
 
@@ -103,9 +137,7 @@ test('recycled editorial eight-word phrases are blocked across teams',()=>{
 
 test('audited original V31 newsroom auto-admits only Week 5+ after locked Week 4',()=>{
  const edition=makeEdition();
- edition.league_overview.sections=Array.from({length:4},(_,i)=>({heading:'Section '+i,paragraphs:[
-  'Independently verified football analysis for section '+i+'.'
- ]}));
+ // Keep the canonical Week 4 six-beat recap fixture intact for admission.
  edition.inquirer_version=31;
  edition.editorial_generation={engine:'v31-forward',variation_salt:5};
  const prev={season:2026,week:4,published_locked:true};
@@ -129,4 +161,132 @@ test('deploy previews are read-only before shared-Blob publication can run',()=>
  assert.equal(isReadOnlyEditorialPreview('https://some-site.netlify.app/.netlify/functions/league-hub','deploy-preview'),true);
  assert.equal(isReadOnlyEditorialPreview('https://some-site.netlify.app/.netlify/functions/league-hub','branch-deploy'),true);
  assert.equal(isReadOnlyEditorialPreview('https://some-site.netlify.app/.netlify/functions/league-hub','production'),false);
+});
+
+test('a manufactured emergency scoreboard paragraph cannot be admitted as fresh commentary',()=>{
+ const e=makeEdition();
+ e.league_overview.sections[2].paragraphs=['Forget the old division-board shorthand for a moment. Week 5 produced 102 points from Team 2 and 101 from Team 1.'];
+ e.league_overview.hot_takes=[{title:'Week 5: A Scoreboard Receipts Check',take:'Here is what the Week 5 ledger can actually prove: Team 2 finished with 102.'}];
+ const ids=new Set(inspectEditionBeforePublication(e).issues.map(x=>x.id));
+ assert(ids.has('emergency-recap-filler'));
+});
+test('empty recap desks and hot takes block publication instead of silently disappearing',()=>{
+ const e=makeEdition();
+ e.league_overview.sections[2].paragraphs=[];
+ e.league_overview.hot_takes=[{title:'Division Board',take:''}];
+ const ids=new Set(inspectEditionBeforePublication(e).issues.map(x=>x.id));
+ assert(ids.has('empty-recap-desk'));
+ assert(ids.has('empty-recap-hot-take'));
+});
+
+test('publication gate rejects every blank or placeholder forward valuation desk even without market adapter fields',()=>{
+ const e=makeEdition();
+ delete e.teams[0].value_history_week;
+ e.teams[0].inquirer_article.sections.find(s=>s.kind==='value').paragraphs=[];
+ assert.ok(inspectEditionBeforePublication(e).issues.some(i=>i.id==='empty-value-desk'));
+ e.teams[0].inquirer_article.sections.find(s=>s.kind==='value').paragraphs=['n/a'];
+ assert.ok(inspectEditionBeforePublication(e).issues.some(i=>i.id==='empty-value-desk'));
+});
+
+test('successive weeks cannot recycle a fourteen-word editorial sentence from the prior edition',()=>{
+ const earlier=makeEdition(),current=makeEdition();
+ earlier.week=4; earlier.published_locked=true;
+ const priorSentence='This entirely distinct long editorial sentence describes how a roster management decision became the source of fan frustration after a narrow defeat.';
+ for(const team of earlier.teams)team.inquirer_article.sections=[];
+ earlier.teams[0].inquirer_article.sections=[{kind:'lede',paragraphs:[priorSentence]}];
+ current.teams[0].inquirer_article.sections[0].paragraphs.push(priorSentence);
+ assert.ok(inspectPreviousWeekEditorialReuse(current,earlier).some(i=>i.id==='prior-week-prose-reuse'));
+ current.teams[0].inquirer_article.sections[0].paragraphs.pop();
+ assert.equal(inspectPreviousWeekEditorialReuse(current,earlier).length,0);
+});
+
+test('an article cannot reuse a long substantive sentence in two different desks',()=>{
+ const e=makeEdition(),article=e.teams[0].inquirer_article;
+ const sentence='This roster failed to capitalize on its verified bench advantage despite a narrow fantasy loss that will have consequences next week.';
+ article.sections.find(s=>s.kind==='lede').paragraphs.push(sentence);
+ article.sections.find(s=>s.kind==='management').paragraphs.push(sentence);
+ assert.ok(inspectEditionBeforePublication(e).issues.some(i=>i.id==='within-article-prose-reuse'));
+});
+
+test('publication holds a synthetic market desk when real roster valuation is unavailable',()=>{
+ const e=makeEdition();
+ const value=e.teams[0].inquirer_article.sections.find(s=>s.kind==='value');
+ value.paragraphs=['Team 1 has no verified market movement for Week 5; Team 1 gets no imaginary rise or fall. Team 1 lacks a verified current price; Team 1 gets a data caveat instead.'];
+ assert.ok(inspectEditionBeforePublication(e).issues.some(i=>i.id==='unverified-value-desk'&&i.team==='Team 1'));
+});
+
+test('recycled Week 5 valuation punchline from preserved manuscript blocks publication',()=>{
+ const e=makeEdition();
+ e.teams[0].inquirer_article.sections.find(s=>s.kind==='value').paragraphs=[
+  "Buffalo Billiards finished the recorded Week 5 valuation window down 100 market points. From 50,614 to 50,514, Buffalo Billiards' recorded price tag moved; Buffalo Billiards' scoreboard remains another debate."
+ ];
+ assert.ok(inspectEditionBeforePublication(e).issues.some(i=>i.id==='stock-market-punchline'));
+});
+
+test('zero-point starters cannot receive fictional Cool Throne credit',()=>{
+ const e=makeEdition();
+ e.teams[0].starter_details=[{name:'Zero Runner',points:0},{name:'Zero Defender',points:0}];
+ e.teams[0].inquirer_article.sections.find(s=>s.kind==='cool-throne').paragraphs=[
+  'Zero Runner earned his own credit despite the entire recorded lineup scoring no points.'
+ ];
+ assert.ok(inspectEditionBeforePublication(e).issues.some(i=>i.id==='zero-point-false-credit'&&i.team==='Team 1'));
+});
+
+test('tiny but genuine victory cannot be praised as a dominant performance',()=>{
+ const e=makeEdition(),team=e.teams[0],opponent=e.teams[1];
+ team.points=1.4;team.opponent_points=0;opponent.points=0;opponent.opponent_points=1.4;
+ team.inquirer_article.sections.find(s=>s.kind==='lede').paragraphs.push('A dominant performance settled the contest.');
+ assert.ok(inspectEditionBeforePublication(e).issues.some(i=>i.id==='low-score-unearned-triumphalism'&&i.team==='Team 1'));
+});
+
+test('even two teams recycling a stock newspaper kicker must be held',()=>{
+ const e=makeEdition();
+ for(const team of e.teams.slice(0,2))team.inquirer_article.sections.find(s=>s.kind==='outlook').paragraphs.push('No need to romanticize it: next Sunday will examine the facts.');
+ assert.ok(inspectEditionBeforePublication(e).issues.some(i=>i.id==='recycled-stock-kicker'&&i.teams.length===2));
+});
+
+test('zero-point player false praise is rejected even outside Cool Throne',()=>{
+ const e=makeEdition();
+ e.teams[0].starter_details=[{name:'Zero Runner',points:0},{name:'Zero Defender',points:0}];
+ e.teams[0].inquirer_article.sections.find(s=>s.kind==='lede').paragraphs.push('Team 1 got something from Zero Runner, a statement unsupported by his zero points.');
+ assert.ok(inspectEditionBeforePublication(e).issues.some(i=>i.id==='zero-point-player-praise'));
+});
+
+test('missing starter points are not silently converted into zero-point evidence',()=>{
+ const e=makeEdition();
+ e.teams[0].starter_details=[{name:'Unknown Runner',points:null},{name:'Unknown Defender',points:''}];
+ e.teams[0].inquirer_article.sections.find(s=>s.kind==='cool-throne').paragraphs=['Unknown Runner earned his own credit, but no verified score was supplied.'];
+ assert.equal(inspectEditionBeforePublication(e).issues.some(i=>i.id==='zero-point-false-credit'||i.id==='zero-point-player-praise'),false);
+});
+
+test('partially unknown lineup cannot support a whole-lineup zero-point verdict',()=>{
+ const e=makeEdition();
+ e.teams[0].starter_details=[{name:'Known Zero',points:0},{name:'Unknown Runner',points:null}];
+ e.teams[0].inquirer_article.sections.find(s=>s.kind==='cool-throne').paragraphs=['Unknown Runner earned his own credit; there is no verified scoring record for him.'];
+ assert.equal(inspectEditionBeforePublication(e).issues.some(i=>i.id==='zero-point-false-credit'),false);
+});
+
+test('new season Week 1 still rejects cross-team recycled newspaper kickers',()=>{
+ const e=makeEdition();e.season=2027;e.week=1;
+ for(const team of e.teams.slice(0,2))team.inquirer_article.sections.find(s=>s.kind==='outlook').paragraphs.push('Monday will have questions when the same story comes around again.');
+ assert.ok(inspectEditionBeforePublication(e).issues.some(i=>i.id==='recycled-stock-kicker'));
+});
+
+test('real Netlify branch deploy URLs are always read-only editorial previews',()=>{
+ assert.equal(isReadOnlyEditorialPreview('https://editorial-review--transcendent-manatee-2f0123.netlify.app/?preview_week=5'),true);
+ assert.equal(isReadOnlyEditorialPreview('https://deploy-preview-402--transcendent-manatee-2f0123.netlify.app/'),true);
+ assert.equal(isReadOnlyEditorialPreview('https://transcendent-manatee-2f0123.netlify.app/'),false);
+ assert.equal(isReadOnlyEditorialPreview('https://example.com/','branch-deploy'),true);
+});
+
+test('pairwise repetition of a stock Week 5 joke is not publication-safe',()=>{
+ const e=makeEdition();
+ for(const t of e.teams.slice(0,2))t.inquirer_article.sections.find(s=>s.kind==='lede').paragraphs.push('Week 5 gave '+t.team_name+' the kind of headline that usually gets folded underneath the newspaper.');
+ assert.ok(inspectEditionBeforePublication(e).issues.some(i=>i.id==='duplicated-rhetorical-punchline'));
+});
+
+test('week-numbered repeated outlook joke is rejected with actual week digits',()=>{
+ const e=makeEdition();
+ for(const t of e.teams.slice(0,2))t.inquirer_article.sections.find(s=>s.kind==='outlook').paragraphs.push('Rivals can keep the Week 5 joke only if the same flaw survives into the next lineup.');
+ assert.ok(inspectEditionBeforePublication(e).issues.some(i=>i.id==='duplicated-rhetorical-punchline'));
 });

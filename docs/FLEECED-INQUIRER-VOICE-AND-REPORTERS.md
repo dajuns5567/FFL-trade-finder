@@ -744,3 +744,26 @@ Bartholomew is explicitly protected from regression into a dry analytics role. H
 - Losing teams with established bad records invite pessimism and sarcasm from every desk. Keep the joke tied to the verified record and the football evidence.
 - Avoid name-swapped templates across team articles. Different teams should produce different angles based on their score shape, player roles, record, opponent and next-week stakes.
 - Tilly Fleecer never uses all-caps typography as emphasis. His voice stays loud through sentence construction, not capitalization.
+
+## Forward editorial revision 33 — semantic composition admission
+
+The Week 5 draft exposed a flaw that paragraph-count and cross-team copy
+checks cannot diagnose: **the same team result, player or legal lineup decision
+can be narrated repeatedly in different words inside one article.** A second
+flaw forced the eight coverage beats into one shared order despite V26's
+explicit prohibition on a league-wide article template. A third flaw let the
+final recap composition bypass earlier grammar/voice passes.
+
+The active forward-week implementation now uses the source-controlled
+`inquirer-narrative-architecture.mjs` to select final story material, with the
+independent format and semantic contracts checked at both generation and
+publication admission. The exact behavior, regression cases and one-fact-
+one-home rules are recorded in
+[`INQUIRER-EDITORIAL-GENERATION-CONTRACT.md`](INQUIRER-EDITORIAL-GENERATION-CONTRACT.md).
+
+Never “fix” a failed edition by replacing a repetitive sentence with four
+name-swapped template variants, dropping its quality gate, or forcing every
+team back into one reading order. Preserve the verified football facts, let
+the specific events determine the story, and treat the **rendered finished
+edition** as the acceptance target. A newer week and a successful API response
+are not editorial proof.

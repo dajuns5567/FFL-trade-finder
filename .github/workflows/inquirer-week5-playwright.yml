@@ -1,0 +1,71 @@
+name: Fleeced private Week 5 browser audit
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/inquirer-week5-playwright.yml'
+      - 'scripts/inquirer-authenticated-browser-audit.mjs'
+      - 'scripts/inquirer-reader-browser-regression.mjs'
+permissions:
+  contents: read
+jobs:
+  browser:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PREVIEW_URL: https://deploy-preview-402--transcendent-manatee-2f0123.netlify.app/?inquirer_preview=1&preview_week=5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Require valid private audit credentials (do not report a skipped audit as passed)
+        env:
+          STATE_B64: ${{ secrets.FLEECED_PLAYWRIGHT_STORAGE_STATE_B64 }}
+        shell: bash
+        run: |
+          if [ -z "$STATE_B64" ]; then
+            echo "::error::Private browser audit BLOCKED: authenticated SSO state unavailable."
+            exit 1
+          fi
+          umask 077
+          printf '%s' "$STATE_B64" | base64 --decode | gzip -dc > "$RUNNER_TEMP/netlify-playwright-state.json"
+          node -e "const s=require(process.argv[1]);if(!Array.isArray(s.cookies)||!Array.isArray(s.origins))process.exit(1)" "$RUNNER_TEMP/netlify-playwright-state.json"
+      - name: Install Playwright
+        run: |
+          npm install --no-save --package-lock=false playwright
+          npx playwright install --with-deps chromium
+      - name: Inspect actual protected Week 5 newspaper
+        env:
+          PLAYWRIGHT_STATE_FILE: ${{ runner.temp }}/netlify-playwright-state.json
+        run: node scripts/inquirer-authenticated-browser-audit.mjs
+      - name: Upload truthful browser diagnostic (never credentials)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: week5-protected-browser-audit
+          path: playwright-audit-result.json
+          if-no-files-found: ignore
+      - name: Destroy ephemeral browser authentication
+        if: always()
+        run: rm -f "$RUNNER_TEMP/netlify-playwright-state.json"
+
+  reader-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright library (use preinstalled Chrome)
+        run: npm install --no-save --package-lock=false playwright
+      - name: Verify actual reader in Chromium using synthetic Week 5 fixtures
+        run: node scripts/inquirer-reader-browser-regression.mjs
+      - name: Declare scope of PR-triggered browser checks
+        if: github.event_name == 'pull_request'
+        run: |
+          echo '::warning title=Protected manuscript NOT audited::This PR check exercises synthetic reader fixtures only. The authenticated Week 5 manuscript job is workflow_dispatch-only and was skipped. Do not interpret this green workflow as a real manuscript editorial pass.'
+          echo '### Synthetic reader regression only' >> "$GITHUB_STEP_SUMMARY"
+          echo 'The actual protected Week 5 newspaper was **not** inspected on this pull request. Run the authenticated workflow_dispatch job and inspect its artifacts before publication.' >> "$GITHUB_STEP_SUMMARY"

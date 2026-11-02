@@ -4,7 +4,7 @@ import { extractKtcSuperflexRankings } from '../netlify/functions/ktc-adapter.mj
 import { emptyMonthBundle, parseMonthBundleText } from './value-history-archive-utils.mjs';
 
 const backendSource=fs.readFileSync('netlify/functions/value-history.mjs','utf8');
-const pureSource=backendSource.replace(/^import .*$/m,'').replace(/export \{[^}]+\};/,'').split('export default async')[0];
+const pureSource=backendSource.replace(/^import .*$/gm,'').replace(/export \{[^}]+\};/,'').split('export default async')[0];
 const context={console,Response,URL,setTimeout,clearTimeout};context.globalThis=context;vm.createContext(context);
 vm.runInContext(pureSource+`;globalThis.__vh={marketFromSnapshots,monthKey,baselineFor,leagueScore,weeklyPlayerRow,normalizeCompletedTrade};`,context,{filename:'value-history-pure.mjs'});
 const {marketFromSnapshots,monthKey,baselineFor,leagueScore,weeklyPlayerRow,normalizeCompletedTrade}=context.__vh;
@@ -509,7 +509,7 @@ assert(backend.includes('scrubV498InvalidScheduledSnapshot(s)'),'live Value Hist
 assert(archiveWriter.includes("SCHEDULED_VALUATION_CONTRACT='precision-idp-runtime-20260919'"),'scheduled durable snapshots must require the current valuation contract');
 assert(archiveWriter.includes("String(s.valuation_contract||'')===SCHEDULED_VALUATION_CONTRACT"),'scheduled archive validation must reject snapshots produced by stale valuation runtimes');
 assert(backend.includes("V496_BASELINE_T='2026-09-19T22:01:38.323Z'"),'active Value History reads must begin at the verified 2026-09-19 18:01:38 EDT baseline');
-assert(backend.includes('getAllTeamWeekMovement(s)'),'Value History must expose canonical all-team weekly movement for Inquirer reuse');
+assert(/getAllTeamWeekMovement\s*\(s(?:\s*,|\s*\))/.test(backend),'Value History must expose canonical all-team weekly movement for Inquirer reuse');
 assert(backend.includes("url.searchParams.get('team_net_all')==='1'"),'Value History must retain the all-team movement endpoint');
 assert(backend.includes("period:exactSeven?'7D':'AVAILABLE'"),'Team weekly movement must label partial tracking as AVAILABLE instead of falsely claiming seven days');
 assert(backend.includes("scrubV496BaselineReset(s)"),'live Value History buffer must scrub every pre-baseline snapshot');

@@ -9,7 +9,7 @@ export const PREVIEW_DIAGNOSTIC_REJECTED = 'current-rejected-review.json';
 export function privatePreviewStoreName(url='') {
  let host='';
  try { host=new URL(url).hostname.toLowerCase(); } catch { return null; }
- const match=host.match(/^deploy-preview-(\\d+)--transcendent-manatee-2f0123\\.netlify\\.app$/);
+ const match=host.match(/^deploy-preview-(\d+)--transcendent-manatee-2f0123\.netlify\.app$/);
  return match ? 'fleeced-inquirer-private-pr'+match[1]+'-persistent' : null;
 }
 

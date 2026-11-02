@@ -4368,7 +4368,7 @@ function assertWeek2Originality(result,previousEdition){
       if(!desk||!Number.isFinite(from)||!Number.isFinite(to)||to<from)continue;
       const date=t=>new Date(t).toLocaleDateString('en-US',{month:'long',day:'numeric',timeZone:'UTC'});
       const window='during the '+date(from)+'–'+date(to)+' valuation window';
-      const valueWeek=new RegExp('\\\\b(?:in|during) Week '+week+'\\\\b','gi');
+      const valueWeek=new RegExp('\\b(?:in|during) Week '+week+'\\b','gi');
       desk.paragraphs=(desk.paragraphs||[]).map(p=>String(p).replace(valueWeek,window));
       team.inquirer_article.paragraphs=team.inquirer_article.sections.flatMap(s=>s.paragraphs||[]);
     }

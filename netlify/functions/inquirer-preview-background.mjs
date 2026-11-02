@@ -2,7 +2,7 @@ import {createHash} from 'node:crypto';
 import {getStore,getDeployStore} from '@netlify/blobs';
 import {weeklyReport} from './league-hub.mjs';
 import {FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
-import {isPreviewDiagnosticContext,resolvePreviewIdentity,previewStatusMatchesIdentity,PREVIEW_DIAGNOSTIC_STORE,summarizePreviewDiagnostic,auditPrivateEdition} from './lib/inquirer-preview-diagnostics.mjs';
+import {isPreviewDiagnosticContext,resolvePreviewIdentity,previewStatusMatchesIdentity,PREVIEW_DIAGNOSTIC_STORE,privatePreviewStoreName,summarizePreviewDiagnostic,auditPrivateEdition} from './lib/inquirer-preview-diagnostics.mjs';
 
 // Explicit preview-only diagnostic invocation. Never publishes or stages an edition.
 // A background function is not constrained by the normal 30-second HTTP response timeout.
@@ -14,11 +14,10 @@ export default async function generateInquirerPreview(req){
  }
  // getDeployStore is scoped to this single Deploy Preview, never production's shared Blob store.
  const identity=await resolvePreviewIdentity(req.url);
- // The persistent store is site-wide; never expose PR #402 drafts to other
- // deploy previews even if their functions share the same Netlify site ID.
- if(new URL(req.url).hostname!=='deploy-preview-402--transcendent-manatee-2f0123.netlify.app')
-  return new Response('Forbidden',{status:403});
- const store=getStore({name:'fleeced-inquirer-private-pr402-persistent',consistency:'strong'});
+ // Never share a manuscript across PRs or accept a production invocation.
+ const privateStoreName=privatePreviewStoreName(req.url);
+ if(!privateStoreName)return new Response('Forbidden',{status:403});
+ const store=getStore({name:privateStoreName,consistency:'strong'});
  const legacy=getDeployStore({name:PREVIEW_DIAGNOSTIC_STORE,consistency:'strong'});
  // A transient store outage is not evidence that no draft exists.
  // Fail closed rather than launching overlapping 32-column jobs.

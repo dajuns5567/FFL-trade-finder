@@ -4390,7 +4390,7 @@ function assertWeek2Originality(result,previousEdition){
     }
     // This recap is assembled independently of individual team desks.
     // Fix known plural-name agreement in both section copy and its flat cache.
-    const fixRecap=paragraph=>String(paragraph).replace(/Kansas City Chiefs awaits\\b/g,'Kansas City Chiefs await');
+    const fixRecap=paragraph=>String(paragraph).replace(/Kansas City Chiefs awaits\b/g,'Kansas City Chiefs await');
     for(const section of overview.sections||[]){
       if(section.blocks?.length){for(const block of section.blocks)block.paragraphs=(block.paragraphs||[]).map(fixRecap);
         section.paragraphs=section.blocks.flatMap(block=>block.paragraphs||[])}

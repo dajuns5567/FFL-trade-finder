@@ -9,7 +9,7 @@ import {attributeForwardPlayerStatFragments,curateForwardTeamNarrative,inspectNa
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=93;
+export const FORWARD_EDITORIAL_REVISION=94;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -5704,13 +5704,18 @@ function assertWeek2Originality(result,previousEdition){
   }
   // Correct singular grammatical subjects after all prose rewriting layers.
   // Normalize every reader-facing nested article/overview field, including blocks.
-  const repairInterveningSubjects=value=>String(value||'')
+  const pluralTeamNames=teams.map(t=>String(t.team_name||'')).filter(name=>/s$/i.test(name));
+  const repairInterveningSubjects=value=>{
+    let line=String(value||'');
+    for(const name of pluralTeamNames)line=line.replaceAll(name+' awaits',name+' await');
+    return line
     .replace(/\b1 carries\b/gi,'1 carry')
     .replace(/\b1 rush yds\b/gi,'1 rush yd')
     .replace(/\ba (Oct(?:ober)?\s+\d)/gi,'an $1')
     .replace(/\bKansas City Chiefs awaits\b/gi,'Kansas City Chiefs await')
     .replace(/The radio station covering ([^.!?\n]+?) have declared\b/gi,'The radio station covering $1 has declared')
     .replace(/The ((?:AFC|NFC) (?:EAST|WEST|NORTH|SOUTH)) race around ([^.!?\n]+?) are already compressed\b/gi,'The $1 race around $2 is already compressed');
+  };
   for(const t of teams){
     if(!t.inquirer_article)continue;
     t.inquirer_article=deepStrings(t.inquirer_article,repairInterveningSubjects);

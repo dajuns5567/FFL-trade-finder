@@ -9,7 +9,7 @@ import {attributeForwardPlayerStatFragments,curateForwardTeamNarrative,inspectNa
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=91;
+export const FORWARD_EDITORIAL_REVISION=92;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -4372,6 +4372,31 @@ function assertWeek2Originality(result,previousEdition){
       desk.paragraphs=(desk.paragraphs||[]).map(p=>String(p).replace(valueWeek,window));
       team.inquirer_article.paragraphs=team.inquirer_article.sections.flatMap(s=>s.paragraphs||[]);
     }
+  }
+  // Final newsroom copy is the source of truth: normalize valuation reporting
+  // against its dated observations, never the matchup week. Avoid touching
+  // score/lineup discussion elsewhere in the desk.
+  if(week>=5){
+    for(const team of teams){
+      const history=team.value_history_week;
+      const desk=team.inquirer_article?.sections?.find(section=>section.kind==='value');
+      const from=Date.parse(history?.baseline_t||''),to=Date.parse(history?.latest_t||'');
+      if(!desk||!Number.isFinite(from)||!Number.isFinite(to)||to<from)continue;
+      const fmt=t=>new Date(t).toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'UTC'});
+      const period=fmt(from)+'–'+fmt(to);
+      const changed=(desk.paragraphs||[]).map((p,i)=>i===0?String(p).replace(new RegExp('Week '+week,'gi'),period+' valuation period'):p);
+      desk.paragraphs=changed;
+      team.inquirer_article.paragraphs=team.inquirer_article.sections.flatMap(section=>section.paragraphs||[]);
+    }
+    // This recap is assembled independently of individual team desks.
+    // Fix known plural-name agreement in both section copy and its flat cache.
+    const fixRecap=paragraph=>String(paragraph).replace(/Kansas City Chiefs awaits\\b/g,'Kansas City Chiefs await');
+    for(const section of overview.sections||[]){
+      if(section.blocks?.length){for(const block of section.blocks)block.paragraphs=(block.paragraphs||[]).map(fixRecap);
+        section.paragraphs=section.blocks.flatMap(block=>block.paragraphs||[])}
+      else section.paragraphs=(section.paragraphs||[]).map(fixRecap);
+    }
+    overview.paragraphs=(overview.sections||[]).flatMap(section=>section.paragraphs||[]);
   }
   // The editor shortens each article AFTER the legacy collision checks. A
   // sentence that was only 1/18 of the old article can become 1/11 of the

@@ -168,20 +168,22 @@ test('exact saved manuscript digest is required before any week is marked comple
  assert.ok(write>=0&&digest>write&&complete>digest);
 });
 
-test('private weekly manuscripts survive preview rebuilds in a PR-isolated store',()=>{
- assert.match(previewJobSource,/getStore\(\{name:'fleeced-inquirer-private-pr402-persistent',consistency:'strong'/);
+test('private manuscripts survive rebuilds in their owning PR namespace',()=>{
+ assert.match(previewJobSource,/privatePreviewStoreName\(req\.url\)/);
+ assert.match(previewDiagnosticSource,/privatePreviewStoreName\(req\.url\)/);
+ assert.match(previewJobSource,/getStore\(\{name:privateStoreName,consistency:'strong'\}/);
+ assert.match(previewDiagnosticSource,/getStore\(\{name:privateStoreName,consistency:'strong'\}/);
  assert.match(previewJobSource,/getDeployStore/);
- assert.match(previewDiagnosticSource,/getStore\(\{name:'fleeced-inquirer-private-pr402-persistent',consistency:'strong'/);
  assert.match(previewDiagnosticSource,/legacy\.get\(identity\.edition/);
  assert.match(previewJobSource,/get\(identity\.status/);
 });
 
-test('sitewide persistent draft is visible only on the originating protected PR402 host',()=>{
- const expected='deploy-preview-402--transcendent-manatee-2f0123.netlify.app';
- assert.ok(previewJobSource.includes(expected));
- assert.ok(previewDiagnosticSource.includes(expected));
- assert.match(previewJobSource,/new Response\('Forbidden',\{status:403\}\)/);
- assert.match(previewDiagnosticSource,/Private editorial store reserved for PR 402/);
+test('private previews reject non-preview hosts and isolate each PR from other drafts',()=>{
+ const helper=readFileSync(new URL('../netlify/functions/lib/inquirer-preview-diagnostics.mjs',import.meta.url),'utf8');
+ assert.match(helper,/deploy-preview-.*transcendent-manatee-2f0123/);
+ assert.match(helper,/fleeced-inquirer-private-pr/);
+ assert.match(previewJobSource,/if\(!privateStoreName\)return new Response\('Forbidden',\{status:403\}\)/);
+ assert.match(previewDiagnosticSource,/if\(!privateStoreName\)return json\(\{error:/);
 });
 
 test('production candidate evaluator enforces original Week5 anti-scaffold findings for every future week',()=>{

@@ -9,7 +9,7 @@ import {attributeForwardPlayerStatFragments,curateForwardTeamNarrative,inspectNa
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=90;
+export const FORWARD_EDITORIAL_REVISION=91;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -4353,7 +4353,25 @@ function assertWeek2Originality(result,previousEdition){
       if(s.blocks?.length){for(const b of s.blocks){b.heading=clean(b.heading);b.paragraphs=(b.paragraphs||[]).map(clean)}s.paragraphs=s.blocks.flatMap(b=>b.paragraphs||[])}
       else s.paragraphs=(s.paragraphs||[]).map(clean);
     }
+    // The recap has a second flattened paragraph cache. Keep it synchronized
+    // with the edited sections or the reader will show stale uncorrected prose.
+    overview.paragraphs=(overview.sections||[]).flatMap(section=>section.paragraphs||[]);
     overview.hot_takes=(overview.hot_takes||[]).map(h=>({...h,title:clean(h.title),take:clean(h.take)}));
+  }
+  // Value History snapshots describe their actual dated observation window,
+  // never the fantasy matchup week. Keep this scoped to the value desk so
+  // matchup recaps retain their correct Week N references.
+  if(week>=3){
+    for(const team of teams){
+      const history=team.value_history_week,desk=team.inquirer_article?.sections?.find(s=>s.kind==='value');
+      const from=Date.parse(history?.baseline_t||''),to=Date.parse(history?.latest_t||'');
+      if(!desk||!Number.isFinite(from)||!Number.isFinite(to)||to<from)continue;
+      const date=t=>new Date(t).toLocaleDateString('en-US',{month:'long',day:'numeric',timeZone:'UTC'});
+      const window='during the '+date(from)+'–'+date(to)+' valuation window';
+      const valueWeek=new RegExp('\\\\b(?:in|during) Week '+week+'\\\\b','gi');
+      desk.paragraphs=(desk.paragraphs||[]).map(p=>String(p).replace(valueWeek,window));
+      team.inquirer_article.paragraphs=team.inquirer_article.sections.flatMap(s=>s.paragraphs||[]);
+    }
   }
   // The editor shortens each article AFTER the legacy collision checks. A
   // sentence that was only 1/18 of the old article can become 1/11 of the

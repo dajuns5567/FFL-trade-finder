@@ -86,3 +86,35 @@ test('scheduler cannot silently bypass review digest or replacement-site cutover
  assert.match(gate,/editorialCopyDigest/);
  assert.match(gate,/approval/);
 });
+
+
+test('an exact approved staged hold resumes scheduling without changing the editorial revision',()=>{
+ const status={state:'editorial-hold',season:2026,week:5,editorial_revision:29};
+ const current={season:2026,week:8};
+ assert.equal(inquirerScheduleDecision({status,nfl:current,revision:29}).queue,false);
+ const resumed=inquirerScheduleDecision({status,nfl:current,revision:29,approvedHeldEdition:true});
+ assert.equal(resumed.queue,true);
+ assert.equal(resumed.finishedWeek,7);
+ assert.equal(inquirerScheduleDecision({status,nfl:current,revision:29,approvedHeldEdition:false}).queue,false);
+});
+
+test('the reviewed edition is approved on the actual replacement site and published unchanged',()=>{
+ const script=readFileSync(new URL('../scripts/approve-staged-inquirer.mjs',import.meta.url),'utf8');
+ const workflow=readFileSync(new URL('../.github/workflows/fleeced-editorial-approve-reviewed-week.yml',import.meta.url),'utf8');
+ const scheduler=readFileSync(new URL('../netlify/functions/inquirer-publish-scheduled.mjs',import.meta.url),'utf8');
+ const hub=readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
+ const siteId='8776d155-bc7b-4dcd-bafc-3d70d3d51800';
+ assert.ok(script.includes(siteId),'approval writer targets replacement production site');
+ assert.ok(workflow.includes(siteId),'approval workflow targets replacement production site');
+ assert.doesNotMatch(script,/2e556797-6f35-4037-aa5a-1338724eb71d/);
+ assert.doesNotMatch(workflow,/2e556797-6f35-4037-aa5a-1338724eb71d/);
+ assert.match(scheduler,/editorialApprovalMatches\(staged\.edition,approval\)\.approved===true/);
+ assert.match(scheduler,/approvedHeldEdition/);
+ assert.match(hub,/staged\.digest===editorialCopyDigest\(reviewed\)/);
+ assert.match(hub,/editorialApprovalMatches\(reviewed,approval\)\.approved===true/);
+ assert.match(hub,/inspectEditionBeforePublication\(reviewed\)\.ok/);
+ assert.match(hub,/evaluateInquirerEditionQuality\(reviewed,previousBroadcast\)\.ok/);
+ assert.match(hub,/s\.setJSON\(key,locked,\{onlyIfNew:true\}\)/);
+ assert.match(hub,/ensureLockedEditionIndexed\(s,locked,key\)/);
+ assert.match(hub,/broadcasts\/index\.json/);
+});

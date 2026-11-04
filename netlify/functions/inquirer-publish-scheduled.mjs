@@ -2,6 +2,7 @@ import {getStore} from '@netlify/blobs';
 import {FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
 import {inquirerScheduleDecision} from './lib/inquirer-schedule-decision.mjs';
 import {verifiedReplacementHistory} from './lib/inquirer-replacement-archive-gate.mjs';
+import {editorialApprovalMatches} from './inquirer-publication-guard.mjs';
 // Queue a long-running background job. Netlify scheduled functions have a
 // hard 30-second limit, while the full Inquirer edition takes longer.
 export default async function inquirerPublishScheduled(req){
@@ -41,7 +42,25 @@ export default async function inquirerPublishScheduled(req){
   }
   if(!status||typeof status!=='object')return skip('Publication history not restored or unreadable');
   const current=await fetch('https://api.sleeper.app/v1/state/nfl',{signal:AbortSignal.timeout(6000)}).then(r=>r.ok?r.json():null);
-  const decision=inquirerScheduleDecision({status,nfl:current,revision:FORWARD_EDITORIAL_REVISION});
+  // A digest-bound human approval can release an earlier editorial hold.
+  // Reading the exact staged copy prevents approval for an unrelated draft
+  // or a later NFL week from triggering an unreviewed publication attempt.
+  let approvedHeldEdition=false;
+  if(status.state==='editorial-hold'&&Number(status.editorial_revision)===FORWARD_EDITORIAL_REVISION){
+   const heldSeason=Number(status.season),heldWeek=Number(status.week);
+   if(Number.isInteger(heldSeason)&&heldSeason>=2026&&Number.isInteger(heldWeek)&&heldWeek>=5&&heldWeek<=18){
+    const prefix=heldSeason+'/week-'+String(heldWeek).padStart(2,'0')+'.json';
+    const [staged,approval]=await Promise.all([
+     store.get('inquirer/editorial-staging/'+prefix,{type:'json'}),
+     store.get('inquirer/editorial-approvals/'+prefix,{type:'json'})
+    ]);
+    approvedHeldEdition=Number(staged?.season)===heldSeason&&Number(staged?.week)===heldWeek&&
+     staged?.generation_quality?.ok===true&&staged?.edition?.teams?.length===32&&
+     staged.digest===editorialApprovalMatches(staged.edition,approval).digest&&
+     editorialApprovalMatches(staged.edition,approval).approved===true;
+   }
+  }
+  const decision=inquirerScheduleDecision({status,nfl:current,revision:FORWARD_EDITORIAL_REVISION,approvedHeldEdition});
   if(!decision.queue)return skip(decision.reason);
  }catch(error){
   console.error('inquirer-schedule-status-check',String(error?.message||error));

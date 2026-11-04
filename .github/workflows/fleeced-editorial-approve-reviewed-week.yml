@@ -35,7 +35,7 @@ jobs:
       - run: npm ci --ignore-scripts
       - name: Verify manuscript and approve only exact reviewed digest
         env:
-          FLEECED_NEW_TEAM_SITE_ID: '2e556797-6f35-4037-aa5a-1338724eb71d'
+          FLEECED_NEW_TEAM_SITE_ID: '8776d155-bc7b-4dcd-bafc-3d70d3d51800'
           NETLIFY_SANDBOX_DEPLOY_TOKEN: ${{ secrets.NETLIFY_SANDBOX_DEPLOY_TOKEN }}
           REVIEW_SEASON: ${{ inputs.season }}
           REVIEW_WEEK: ${{ inputs.week }}

@@ -1,7 +1,7 @@
 // Pure decision boundary for the scheduled Inquirer poll. It deliberately
 // makes no publication decision: the background job performs the authoritative
 // matchup, roster-record and editorial checks.
-export function inquirerScheduleDecision({status,nfl,revision,now=Date.now()}={}){
+export function inquirerScheduleDecision({status,nfl,revision,approvedHeldEdition=false,now=Date.now()}={}){
  const stateWeek=Number(nfl?.week),season=Number(nfl?.season);
  if(!Number.isInteger(stateWeek)||stateWeek<2||!Number.isInteger(season)||season<2026)
   return{queue:false,reason:'No prior NFL week has been completed for this season'};
@@ -15,7 +15,7 @@ export function inquirerScheduleDecision({status,nfl,revision,now=Date.now()}={}
  const unchanged=Number(status?.editorial_revision)===Number(revision);
  const blockingWeek=Number(status?.week);
  if(status?.state==='editorial-hold'&&unchanged&&Number(status?.season)===season&&
-    Number.isInteger(blockingWeek)&&blockingWeek>=1&&blockingWeek<=finishedWeek)
+    Number.isInteger(blockingWeek)&&blockingWeek>=1&&blockingWeek<=finishedWeek&&!approvedHeldEdition)
   return{queue:false,reason:'Unchanged earlier-week editorial hold; revise newsroom before retrying'};
  if(same&&unchanged&&status?.state==='completed'&&status?.available===true)
   return{queue:false,reason:'Current completed week is already published'};

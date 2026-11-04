@@ -234,7 +234,8 @@ test('automatic release keeps the replacement publisher held until verified hist
  assert.match(config,/schedule = "0 \*\/2 \* \* \*"/);
  assert.match(scheduled,/verifiedReplacementHistory\(week3,week4\)/);
  assert.match(scheduled,/publishingEnabled!=='true'/);
- assert.match(scheduled,/inquirerScheduleDecision\(\{status,nfl:current,revision:FORWARD_EDITORIAL_REVISION\}\)/);
+ assert.match(scheduled,/inquirerScheduleDecision\(\{status,nfl:current,revision:FORWARD_EDITORIAL_REVISION,approvedHeldEdition\}\)/);
+ assert.match(scheduled,/editorialApprovalMatches\(staged\.edition,approval\)\.approved===true/);
  assert.match(schedule,/const finishedWeek=stateWeek-1/);
  assert.match(schedule,/Unchanged earlier-week editorial hold/);
 });

@@ -5,22 +5,41 @@ import {inspectEditionBeforePublication,editorialCopyDigest} from '../netlify/fu
 
 const season=2026,week=5,siteID=process.env.FLEECED_NEW_TEAM_SITE_ID;
 assert.equal(siteID,'8776d155-bc7b-4dcd-bafc-3d70d3d51800','Incorrect production site');
-const token=process.env.NETLIFY_SANDBOX_DEPLOY_TOKEN;
-assert(token,'Missing Netlify production site-scoped credential');
-const store=getStore({name:'fleeced-league-hub',siteID,token,consistency:'strong'});
+// Try only credentials already configured in this repository, never log their values.
+const candidateTokens=[
+ ['NETLIFY_SANDBOX_DEPLOY_TOKEN',process.env.NETLIFY_SANDBOX_DEPLOY_TOKEN],
+ ['NETLIFY_BLOBS_TOKEN',process.env.NETLIFY_BLOBS_TOKEN],
+ ['NETLIFY_AUTH_TOKEN',process.env.NETLIFY_AUTH_TOKEN]
+].filter(([,value])=>!!value);
+assert(candidateTokens.length,'No configured Netlify credential is available to this workflow');
 const suffix=season+'/week-'+String(week).padStart(2,'0')+'.json';
-const [stage,approval,published,index]=await Promise.all([
- store.get('inquirer/editorial-staging/'+suffix,{type:'json'}),
- store.get('inquirer/editorial-approvals/'+suffix,{type:'json'}),
- store.get('broadcasts/'+suffix,{type:'json'}),
- store.get('broadcasts/index.json',{type:'json'})
-]);
+let stage,approval,published,index,accessCredential=null;
+for(const [credentialName,token] of candidateTokens){
+ try{
+  const store=getStore({name:'fleeced-league-hub',siteID,token,consistency:'strong'});
+  [stage,approval,published,index]=await Promise.all([
+   store.get('inquirer/editorial-staging/'+suffix,{type:'json'}),
+   store.get('inquirer/editorial-approvals/'+suffix,{type:'json'}),
+   store.get('broadcasts/'+suffix,{type:'json'}),
+   store.get('broadcasts/index.json',{type:'json'})
+  ]);
+  accessCredential=credentialName;
+  break;
+ }catch(error){
+  if(/401|403/.test(String(error?.message||error))){
+   console.warn('Stage read unavailable to existing credential '+credentialName+' (permission denied)');
+   continue;
+  }
+  throw error;
+ }
+}
+assert(accessCredential,'Existing GitHub credentials lack permission to read replacement-site Blobs; configure a site-authorized read credential');
 assert(stage?.edition?.teams?.length===32,'Missing completed Week 5 production staging manuscript');
 assert.equal(Number(stage.season),season);
 assert.equal(Number(stage.week),week);
 const digest=editorialCopyDigest(stage.edition),audit=inspectEditionBeforePublication(stage.edition);
 const result={
- site_id:siteID,season,week,staged:true,sha256:digest,
+ site_id:siteID,season,week,staged:true,sha256:digest,credential_name:accessCredential,
  digest_matches_stage:digest===stage.digest,
  editorial_revision:stage.edition.editorial_revision,
  generation_quality_ok:stage.generation_quality?.ok===true,

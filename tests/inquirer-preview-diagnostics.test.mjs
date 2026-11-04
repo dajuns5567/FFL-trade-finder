@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {isPreviewDiagnosticContext,summarizePreviewDiagnostic,detectStalledPreview} from '../netlify/functions/lib/inquirer-preview-diagnostics.mjs';
+import {isPreviewDiagnosticContext,privatePreviewStoreName,summarizePreviewDiagnostic,detectStalledPreview} from '../netlify/functions/lib/inquirer-preview-diagnostics.mjs';
 
 test('diagnostics are permitted only in Deploy Preview',()=>{
  const original=process.env.CONTEXT;
@@ -43,4 +43,20 @@ test('stalled private jobs are reported as timed out, without changing a complet
  assert.match(stale.error,/retry window/);
  assert.equal(detectStalledPreview({state:'completed',started_at},now+30*60*1000).state,'completed');
  assert.equal(detectStalledPreview({state:'running',started_at:'bad'},now).state,'error');
+});
+
+
+test('private diagnostic store is distinct per PR and rejects non-preview hosts',()=>{
+ const host=n=>'https://deploy-preview-'+n+'--transcendent-manatee-2f0123.netlify.app/.netlify/functions/inquirer-preview-diagnostic';
+ assert.equal(privatePreviewStoreName(host(402)),'fleeced-inquirer-private-pr402-persistent');
+ assert.equal(privatePreviewStoreName(host(403)),'fleeced-inquirer-private-pr403-persistent');
+ assert.equal(privatePreviewStoreName(host(404)),'fleeced-inquirer-private-pr404-persistent');
+ assert.notEqual(privatePreviewStoreName(host(403)),privatePreviewStoreName(host(404)));
+ for(const url of [
+  'https://transcendent-manatee-2f0123.netlify.app/',
+  'https://main--transcendent-manatee-2f0123.netlify.app/',
+  'https://deploy-preview-403--brilliant-faun-c5b649.netlify.app/',
+  'https://deploy-preview-403--transcendent-manatee-2f0123.netlify.app.attacker.com/',
+  'not-a-url'
+ ])assert.equal(privatePreviewStoreName(url),null,url);
 });

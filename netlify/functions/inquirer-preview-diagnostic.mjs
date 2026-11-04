@@ -1,6 +1,6 @@
 import {getStore,getDeployStore} from '@netlify/blobs';
 import {FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
-import {isPreviewDiagnosticContext,resolvePreviewIdentity,previewStatusMatchesIdentity,PREVIEW_DIAGNOSTIC_STORE,auditPrivateEdition,detectStalledPreview} from './lib/inquirer-preview-diagnostics.mjs';
+import {isPreviewDiagnosticContext,resolvePreviewIdentity,previewStatusMatchesIdentity,PREVIEW_DIAGNOSTIC_STORE,privatePreviewStoreName,auditPrivateEdition,detectStalledPreview} from './lib/inquirer-preview-diagnostics.mjs';
 
 const json=(value,status=200)=>new Response(JSON.stringify(value),{
  status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-robots-tag':'noindex'}
@@ -19,11 +19,11 @@ export default async function inquirerPreviewDiagnostic(req){
  if(!isPreviewDiagnosticContext(req.url)||req.method!=='GET')return json({error:'Preview-only diagnostic'},403);
  let identity;
  try{identity=await resolvePreviewIdentity(req.url)}catch(error){return json({error:String(error?.message||error),status:{state:'error'}},503)}
- // The persistent store is site-wide; never expose PR #402 drafts to other
- // deploy previews even if their functions share the same Netlify site ID.
- if(new URL(req.url).hostname!=='deploy-preview-402--transcendent-manatee-2f0123.netlify.app')
-  return json({error:'Private editorial store reserved for PR 402'},403);
- const store=getStore({name:'fleeced-inquirer-private-pr402-persistent',consistency:'strong'});
+ // Each numbered PR preview has an isolated private manuscript namespace.
+ // Reject production, branch deploys, and preview hosts on other sites.
+ const privateStoreName=privatePreviewStoreName(req.url);
+ if(!privateStoreName)return json({error:'Private diagnostics require a numbered replacement-site deploy preview'},403);
+ const store=getStore({name:privateStoreName,consistency:'strong'});
  const legacy=getDeployStore({name:PREVIEW_DIAGNOSTIC_STORE,consistency:'strong'});
  let status;
  try{status=await store.get(identity.status,{type:'json'})||await legacy.get(identity.status,{type:'json'})}

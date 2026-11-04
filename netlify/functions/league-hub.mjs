@@ -1,7 +1,7 @@
 import {inquirerMarketCutoff,editionAvailability} from './lib/inquirer-market-window.mjs';
 import valueHistoryHandler from './value-history.mjs';
 // Forward drafts must be reviewed as written; synthetic scoreboard sentence repair is retired.
-import {inspectEditionBeforePublication,editorialApprovalMatches,deterministicInquirerAdmission,isReadOnlyEditorialPreview,inspectPreviousWeekEditorialReuse} from './inquirer-publication-guard.mjs';
+import {inspectEditionBeforePublication,editorialApprovalMatches,editorialCopyDigest,deterministicInquirerAdmission,isReadOnlyEditorialPreview,inspectPreviousWeekEditorialReuse} from './inquirer-publication-guard.mjs';
 import { getStore } from '@netlify/blobs';
 import {loadMida,attachMida} from './inquirer-context-v22.mjs';
 import {INQUIRER_VERSION,publicReporters,buildInquirerWeek,buildLeagueOverview,inquirerWeekClassification,INQUIRER_PLAYOFF_START_WEEK,INQUIRER_FINAL_WEEK} from './inquirer-reporters.mjs';
@@ -454,6 +454,40 @@ export async function weeklyReport(req){
  const previousBroadcast=previousStored||preloadedBroadcast(season,week-1);
  if(week>1&&!isLockedInquirerEdition(previousBroadcast,season,week-1))
   return{available:false,published_locked:false,season,week,reason:'Previous Week '+(week-1)+' is not a verified locked Inquirer edition. Historical newsroom continuity required.'};
+ // An exact-copy approval is for the previously staged manuscript, not a
+ // newly generated draft whose prose and digest may have changed. Only the
+ // replacement site's first forward release needs this recovery path.
+ const replacementSite=(globalThis.Netlify?.env?.get?.('SITE_ID')||process.env.SITE_ID||'')===
+  '8776d155-bc7b-4dcd-bafc-3d70d3d51800'||
+  new URL(req.url).hostname==='transcendent-manatee-2f0123.netlify.app';
+ if(!previewReadOnly&&replacementSite&&season>=2026&&week>=5){
+  const suffix=season+'/week-'+String(week).padStart(2,'0')+'.json';
+  const approval=await s.get('inquirer/editorial-approvals/'+suffix,{type:'json'}).catch(()=>null);
+  if(approval){
+   const staged=await s.get('inquirer/editorial-staging/'+suffix,{type:'json'}).catch(()=>null);
+   const reviewed=staged?.edition;
+   const exact=reviewed&&Number(staged.season)===season&&Number(staged.week)===week&&
+    reviewed.available===true&&reviewed?.teams?.length===32&&
+    Number(reviewed.editorial_revision)===FORWARD_EDITORIAL_REVISION&&
+    reviewed.editorial_generation?.engine==='v31-forward'&&
+    staged.generation_quality?.ok===true&&
+    staged.digest===editorialCopyDigest(reviewed)&&
+    editorialApprovalMatches(reviewed,approval).approved===true;
+   // A reviewed manuscript cannot change after approval. Recheck the
+   // independent editorial and previous-week quality gates before writing.
+   if(!exact||!inspectEditionBeforePublication(reviewed).ok||
+      !evaluateInquirerEditionQuality(reviewed,previousBroadcast).ok)
+    return{available:false,published_locked:false,season,week,review_required:true,
+     reason:'Approved staged Inquirer edition failed exact-copy or editorial revalidation; publication held.'};
+   const locked={...reviewed,published_locked:true,available:true};
+   const created=await s.setJSON(key,locked,{onlyIfNew:true});
+   if(!created?.modified)
+    return{available:false,published_locked:false,season,week,
+     reason:'Concurrent publication detected; refusing to replace an existing edition.'};
+   await ensureLockedEditionIndexed(s,locked,key);
+   return locked;
+  }
+ }
  let managerHistoryData=await s.get('managers/history-cache.json',{type:'json'}).catch(()=>null);
  if(previewReadOnly&&week>=5){
   // Reconstruct this edition's provenance in memory. No shared cache backfill,

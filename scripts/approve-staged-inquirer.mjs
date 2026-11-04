@@ -14,7 +14,7 @@ assert(typeof reviewer==='string'&&reviewer.trim().length>=2,'Reviewer required'
 assert(typeof reviewNote==='string'&&reviewNote.trim().length>=30,'Substantive review note required');
 const siteID=process.env.FLEECED_NEW_TEAM_SITE_ID;
 const token=process.env.NETLIFY_SANDBOX_DEPLOY_TOKEN;
-assert.equal(siteID,'2e556797-6f35-4037-aa5a-1338724eb71d','Wrong Netlify site');
+assert.equal(siteID,'8776d155-bc7b-4dcd-bafc-3d70d3d51800','Wrong Netlify site');
 assert(token,'Missing scoped Netlify credential');
 const s=getStore({name:'fleeced-league-hub',siteID,token,consistency:'strong'});
 const pad=String(week).padStart(2,'0');

@@ -25,7 +25,7 @@ test('automatic poll does not schedule an incomplete opening-week edition',()=>{
 });
 test('Netlify schedules the publication poll within two hours, not once daily',()=>{
  const config=readFileSync(new URL('../netlify.toml',import.meta.url),'utf8');
- assert.match(config,/\[functions\."inquirer-publish-scheduled"\]\s*(?:#[^\n]*\n\s*)*schedule\s*=\s*"0 \*\/2 \* \* \*"/);
+ assert.match(config,/\[functions\."inquirer-publish-scheduled"\]\s*(?:#[^\n]*\n\s*)*schedule\s*=\s*"(?:0 \*\/2|\*) \* \* \* \*"/);
 });
 
 test('scheduled publisher fails closed on replacement sites and missing history',()=>{

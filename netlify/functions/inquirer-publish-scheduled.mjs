@@ -7,9 +7,9 @@ import {approvedWeek5Record} from './lib/inquirer-week5-owner-signoff.mjs';
 // Queue a long-running background job. Netlify scheduled functions have a
 // hard 30-second limit, while the full Inquirer edition takes longer.
 export default async function inquirerPublishScheduled(req){
- const skip=reason=>new Response(JSON.stringify({queued:false,reason}),{
+ const skip=reason=>{console.info('inquirer-schedule-not-queued',{reason});return new Response(JSON.stringify({queued:false,reason}),{
   headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}
- });
+ });};
  // No newly created site can publish until historical state is restored and
  // an explicit, site-scoped cutover flag is enabled. Previews never publish.
  const site=process.env.SITE_NAME||globalThis.Netlify?.env?.get?.('SITE_NAME')||'';
@@ -81,6 +81,7 @@ export default async function inquirerPublishScheduled(req){
      editorialApprovalMatches(staged.edition,approval).approved===true;
    }
   }
+  console.info('inquirer-scheduler-approval-state',{state:status.state,season:status.season,week:status.week,revision:status.editorial_revision,approvedHeldEdition,nflSeason:current?.season,nflWeek:current?.week});
   const decision=inquirerScheduleDecision({status,nfl:current,revision:FORWARD_EDITORIAL_REVISION,approvedHeldEdition});
   if(!decision.queue)return skip(decision.reason);
  }catch(error){

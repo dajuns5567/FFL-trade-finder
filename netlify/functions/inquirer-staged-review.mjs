@@ -7,14 +7,24 @@ import {editorialCopyDigest,inspectEditionBeforePublication} from './inquirer-pu
 const headers={'cache-control':'private, no-store, max-age=0','content-type':'application/json; charset=utf-8','x-robots-tag':'noindex, nofollow','x-content-type-options':'nosniff'};
 const reply=(data,status=200)=>new Response(JSON.stringify(data),{status,headers});
 export default async function inquirerStagedReview(req,context){
- const url=new URL(req.url),siteId=globalThis.Netlify?.env?.get?.('SITE_ID')||process.env.SITE_ID||'';
- const deployment=globalThis.Netlify?.env?.get?.('CONTEXT')||process.env.CONTEXT||'';
+ const url=new URL(req.url);
+ // Netlify's request context is authoritative for the site and deploy type.
+ // Function environment variables may be absent or production-scoped on previews.
+ const siteId=context?.site?.id||globalThis.Netlify?.env?.get?.('SITE_ID')||process.env.SITE_ID||'';
+ const deployment=context?.deploy?.context||globalThis.Netlify?.env?.get?.('CONTEXT')||process.env.CONTEXT||'';
  const hostname=url.hostname;
  const expected='8776d155-bc7b-4dcd-bafc-3d70d3d51800';
- const previewHost=/^deploy-preview-[0-9]+--transcendent-manatee-2f0123\.netlify\.app$/i.test(hostname);
- if(req.method!=='GET'||siteId!==expected||deployment!=='deploy-preview'||!previewHost)
+ const previewHost=hostname==='deploy-preview-408--transcendent-manatee-2f0123.netlify.app';
+ const verifiedSite=siteId===expected,verifiedDeploy=deployment==='deploy-preview';
+ if(req.method!=='GET'||!verifiedSite||!verifiedDeploy||!previewHost){
+  // Diagnostic booleans contain no credentials, user IDs or manuscript data.
+  console.warn('inquirer-staged-review-context-denied',{method:req.method,verifiedSite,verifiedDeploy,previewHost});
   return reply({error:'Private deploy-preview review only'},403);
- if(!context?.user?.id)return reply({error:'Authenticated Netlify team reviewer required'},401);
+ }
+ if(!context?.user?.id){
+  console.warn('inquirer-staged-review-auth-denied',{verifiedSite,verifiedDeploy,previewHost});
+  return reply({error:'Authenticated Netlify team reviewer required'},401);
+ }
  const season=2026,week=5,key='inquirer/editorial-staging/2026/week-05.json';
  const store=getStore('fleeced-league-hub',{consistency:'strong'});
  let stage;

@@ -5,9 +5,12 @@ let installed=false,tradeCache=null,weeklyCache=null,spotlightWeeklyCache=null,w
 // through the same League Hub rendering path as the published archive.
 const onNetlifyDeployPreview=/^deploy-preview-\d+--[^.]+\.netlify\.app$/i.test(location.hostname);
 const inquirerPreviewMode=onNetlifyDeployPreview&&new URLSearchParams(location.search).get('inquirer_preview')==='1';
-const inquirerPreviewRequestedWeek=Number(new URLSearchParams(location.search).get('preview_week'))||0;
-const productionStagedReview=inquirerPreviewMode&&new URLSearchParams(location.search).get('review_staged')==='1';
-const inquirerPreviewEntryUrl='/?inquirer_preview=1'+(inquirerPreviewRequestedWeek?'&preview_week='+inquirerPreviewRequestedWeek:'');
+// PR 408 reviews the existing production-staged copy, not a new isolated draft.
+// SSO return URLs can drop secondary query parameters; the preview host is the
+// authority for this private read-only mode, while normal previews stay unchanged.
+const productionStagedReview=inquirerPreviewMode&&location.hostname==='deploy-preview-408--transcendent-manatee-2f0123.netlify.app';
+const inquirerPreviewRequestedWeek=Number(new URLSearchParams(location.search).get('preview_week'))||(productionStagedReview?5:0);
+const inquirerPreviewEntryUrl='/?inquirer_preview=1'+(inquirerPreviewRequestedWeek?'&preview_week='+inquirerPreviewRequestedWeek:'')+(productionStagedReview?'&review_staged=1':'');
 let inquirerPreviewEdition=null;
 let inquirerPreviewRequest=null;
 let inquirerPreviewPollAttempts=0;

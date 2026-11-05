@@ -81,6 +81,23 @@ export default async function inquirerPublishScheduled(req){
      editorialApprovalMatches(staged.edition,approval).approved===true;
    }
   }
+  // A held revision is not requeued. Surface its *existing* staged issue IDs
+  // so a rejected Week 6 cannot become an undiagnosable permanent backlog.
+  if(status.state==='editorial-hold'&&Number(status.editorial_revision)===FORWARD_EDITORIAL_REVISION){
+   const season=Number(status.season),week=Number(status.week);
+   if(Number.isInteger(season)&&season>=2026&&Number.isInteger(week)&&week>=5&&week<=18){
+    const held=await store.get('inquirer/editorial-staging/'+season+'/week-'+String(week).padStart(2,'0')+'.json',{type:'json'}).catch(()=>null);
+    const compact=issue=>({id:String(issue?.id||issue?.code||'unknown').slice(0,90),
+     team:String(issue?.team||'').slice(0,90),count:Number(issue?.count)||undefined,
+     overlap:Number(issue?.overlap)||undefined,ratio:Number(issue?.ratio)||undefined,
+     phrase:String(issue?.phrase||'').slice(0,110)||undefined,
+     examples:Array.isArray(issue?.examples)?issue.examples.slice(0,2).map(e=>
+      typeof e==='string'?e.slice(0,110):{phrase:String(e?.phrase||'').slice(0,110),team_count:e?.team_count}):undefined});
+    console.info('inquirer-scheduler-held-editorial-evidence',JSON.stringify({season,week,
+     deepIssues:(held?.generation_quality?.issues||[]).slice(0,16).map(compact),
+     auditIssues:(held?.audit?.issues||[]).slice(0,16).map(compact)}));
+   }
+  }
   console.info('inquirer-scheduler-approval-state',{state:status.state,season:status.season,week:status.week,revision:status.editorial_revision,approvedHeldEdition,nflSeason:current?.season,nflWeek:current?.week});
   const decision=inquirerScheduleDecision({status,nfl:current,revision:FORWARD_EDITORIAL_REVISION,approvedHeldEdition});
   if(!decision.queue)return skip(decision.reason);

@@ -23,9 +23,9 @@ test('automatic poll does not schedule an incomplete opening-week edition',()=>{
  assert.equal(inquirerScheduleDecision({nfl:{season:2026,week:1},revision}).queue,false);
  assert.equal(inquirerScheduleDecision({nfl:null,revision}).queue,false);
 });
-test('Netlify schedules the publication poll within two hours, not once daily',()=>{
+test('Netlify automatically catches up completed Inquirer weeks on a five-minute cadence',()=>{
  const config=readFileSync(new URL('../netlify.toml',import.meta.url),'utf8');
- assert.match(config,/\[functions\."inquirer-publish-scheduled"\]\s*(?:#[^\n]*\n\s*)*schedule\s*=\s*"(?:0 \*\/2|\*) \* \* \* \*"/);
+ assert.match(config,/\[functions\."inquirer-publish-scheduled"\]\s*(?:#[^\n]*\n\s*)*schedule\s*=\s*"\*\/5 \* \* \* \*"/);
 });
 
 test('scheduled publisher fails closed on replacement sites and missing history',()=>{
@@ -58,7 +58,7 @@ test('an unchanged earlier-week editorial hold blocks later weeks without repeat
 });
 
 
-test('two-hour scheduler progresses to next completed week but never republishes the same edition',()=>{
+test('scheduler progresses to next completed week but never republishes the same edition',()=>{
  const week6={season:2026,week:7};
  const previouslyLocked={state:'completed',available:true,season:2026,week:5,editorial_revision:78};
  const ready=inquirerScheduleDecision({nfl:week6,revision:78,status:previouslyLocked});
@@ -117,4 +117,17 @@ test('the reviewed edition is approved on the actual replacement site and publis
  assert.match(hub,/s\.setJSON\(key,locked,\{onlyIfNew:true\}\)/);
  assert.match(hub,/ensureLockedEditionIndexed\(s,locked,key\)/);
  assert.match(hub,/broadcasts\/index\.json/);
+});
+
+test('backlogged Weeks 6, 7 and 8 each enqueue after the preceding week is committed',()=>{
+ const nfl={season:2026,week:9};
+ const make=(week,state='completed')=>({season:2026,week,editorial_revision:revision,state,available:state==='completed'});
+ for(const week of [5,6,7]){
+  const next=inquirerScheduleDecision({status:make(week),nfl,revision});
+  assert.equal(next.queue,true,'completed Week '+week+' should allow next backlog item');
+  assert.equal(next.finishedWeek,8);
+ }
+ assert.equal(inquirerScheduleDecision({status:make(8),nfl,revision}).queue,false);
+ assert.equal(inquirerScheduleDecision({status:make(6,'editorial-hold'),nfl,revision}).queue,false);
+ assert.equal(inquirerScheduleDecision({status:{...make(6,'running'),started_at:'2026-11-05T03:00:00Z'},nfl,revision,now:Date.parse('2026-11-05T03:05:00Z')}).queue,false);
 });

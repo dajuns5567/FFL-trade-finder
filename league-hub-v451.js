@@ -6,6 +6,7 @@ let installed=false,tradeCache=null,weeklyCache=null,spotlightWeeklyCache=null,w
 const onNetlifyDeployPreview=/^deploy-preview-\d+--[^.]+\.netlify\.app$/i.test(location.hostname);
 const inquirerPreviewMode=onNetlifyDeployPreview&&new URLSearchParams(location.search).get('inquirer_preview')==='1';
 const inquirerPreviewRequestedWeek=Number(new URLSearchParams(location.search).get('preview_week'))||0;
+const productionStagedReview=inquirerPreviewMode&&new URLSearchParams(location.search).get('review_staged')==='1';
 const inquirerPreviewEntryUrl='/?inquirer_preview=1'+(inquirerPreviewRequestedWeek?'&preview_week='+inquirerPreviewRequestedWeek:'');
 let inquirerPreviewEdition=null;
 let inquirerPreviewRequest=null;
@@ -63,6 +64,19 @@ async function loadInquirerPreview(){
  try{return await inquirerPreviewRequest}finally{inquirerPreviewRequest=null}
 }
 async function fetchInquirerPreview(){
+ if(productionStagedReview){
+  if(inquirerPreviewRequestedWeek!==5)throw Error('Production staging review is limited to Week 5.');
+  const response=await fetch('/.netlify/functions/inquirer-staged-review?edition=1',{cache:'no-store'});
+  if(!response.ok)throw Error('Protected production-staged review unavailable (HTTP '+response.status+'). Netlify team login is required.');
+  const review=await response.json(),edition=review.edition;
+  if(review.ready!==true||review.digest_matches_stage!==true||review.audit_ok!==true||review.quality_ok!==true||
+     Number(review.season)!==2026||Number(review.week)!==5||Number(edition?.week)!==5||
+     edition?.preview_only!==true||edition?.published_locked!==false||
+     edition?.teams?.length!==32||!edition?.league_overview?.headline)
+   throw Error('Production staged Week 5 manuscript failed independent preview integrity checks.');
+  inquirerPreviewEdition=edition;
+  return edition;
+ }
  const scope=inquirerPreviewRequestedWeek?'&preview_week='+inquirerPreviewRequestedWeek:'';
  const response=await fetch('/.netlify/functions/inquirer-preview-diagnostic?draft=1'+scope,{cache:'no-store'});
  if(!response.ok){

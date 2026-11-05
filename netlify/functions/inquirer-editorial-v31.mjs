@@ -9,7 +9,7 @@ import {attributeForwardPlayerStatFragments,curateForwardTeamNarrative,inspectNa
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=97;
+export const FORWARD_EDITORIAL_REVISION=98;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -5733,26 +5733,15 @@ function assertWeek2Originality(result,previousEdition){
   // Make source-backed repairs only after all article/recap transformations.
   // Never pad a missing desk with anonymous editorial maxims.
   if(week>=6){
+    // Retire the inherited transaction sentence. Replacing one universal
+    // slogan with another creates fresh cross-team plagiarism. A source-free
+    // sentence is removed, never padded with an invented lineup claim.
     for(const team of teams){
       const article=team.inquirer_article;
-      if(!article?.sections?.length)continue;
-      const club=w2DisplayTeam(team.team_name),foe=w2DisplayTeam(team.opponent_name||'the opponent');
-      const score=team.points==null?null:Number(team.points),against=team.opponent_points==null?null:Number(team.opponent_points);
-      // A missing opponent-score field must not bypass this editorial repair.
-      // The historical template itself records a non-starting transaction;
-      // when a matchup score is absent, remove that redundant sentence rather
-      // than invent a numerical score or preserve syndicated copy.
-      const hasScore=Number.isFinite(score)&&Number.isFinite(against);
-      const factual=[
-        club+' kept those additions out of its Week '+week+' starting lineup; the starters actually used posted '+forwardOne(score)+' against '+foe+' at '+forwardOne(against)+'.',
-        'The Week '+week+' transaction arrivals did not start for '+club+'. Its recorded matchup with '+foe+' finished '+forwardOne(score)+' to '+forwardOne(against)+'.',
-        'None of those newcomers appeared on '+club+'’s Week '+week+' starting card. The selected lineup scored '+forwardOne(score)+' against '+foe+'.',
-        club+' logged the moves without starting those arrivals in Week '+week+'. The starters, not the transaction wire, supplied '+forwardOne(score)+' against '+foe+'.'
-      ];
-      const replacement=hasScore?factual[(Number(team.roster_id||0)+variationSalt+week)%factual.length]:'';
-      const repeated=/The new names stayed outside the Week \d+ starters\.(?:\s*That keeps the move jokes on hold until somebody actually enters the lineup\.)?/gi;
+      if(!article?.sections)continue;
+      const repeated=/The new names stayed outside the Week \\d+ starters\\.(?:\\s*That keeps the move jokes on hold until somebody actually enters the lineup\\.)?/gi;
       for(const section of article.sections)
-        section.paragraphs=(section.paragraphs||[]).map(p=>String(p).replace(repeated,replacement));
+        section.paragraphs=(section.paragraphs||[]).map(p=>String(p).replace(repeated,'').replace(/\\s{2,}/g,' ').trim()).filter(Boolean);
       article.paragraphs=article.sections.flatMap(section=>section.paragraphs||[]);
     }
     const feature=(overview?.sections||[]).find(section=>(section.blocks||[]).some(block=>block.kind==='lead'));
@@ -5830,6 +5819,11 @@ function assertWeek2Originality(result,previousEdition){
       overview.paragraphs=overview.sections.flatMap(section=>section.paragraphs||[]);
     }
   }
+  // The last writer owns the final originality pass. Earlier historical
+  // cleanup deliberately retains short desks; a later editorial transform
+  // can still reintroduce a verbatim same-team paragraph. Prune it only if
+  // the newspaper retains its independently checked word/desk minimums.
+  if(week>=6)pruneForwardInheritedEchoes(teams,previousEdition);
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 
@@ -5839,6 +5833,47 @@ function forwardEscRe(s){return [...String(s||'')].map(ch=>'.*+?^$(){}|[]'.inclu
 function forwardEntities(edition){return[...(edition?.teams||[])].flatMap(t=>[t.team_name,t.manager_name,t.opponent_name,t.next_opponent_name,...(t.starter_details||[]).map(p=>p.name)]).filter(Boolean).map(String).sort((a,b)=>b.length-a.length)}
 function forwardNormSentence(s,entities=[]){let x=String(s||'');for(const e of entities)x=x.replace(new RegExp(forwardEscRe(e),'gi'),'[ENTITY]');return x.toLowerCase().replace(/\b\d+(?:\.\d+)?%?\b/g,'[#]').replace(/\s+/g,' ').trim()}
 function forwardArticleSentences(t){return forwardSentenceParts((t?.inquirer_article?.paragraphs||[]).join(' ')).filter(x=>forwardWordCount(x)>=10)}
+
+// Conservative, source-faithful originality cleanup, performed after every
+// newsroom transformation. Never fabricate production or prune underneath the
+// publication guard's essential word counts. Historical editions are read-only.
+export function pruneForwardInheritedEchoes(teams,previousEdition){
+ const historical=new Map((previousEdition?.teams||[]).map(t=>[String(t.roster_id),t]));
+ const entities=forwardEntities({teams:[...(teams||[]),...(previousEdition?.teams||[])]});
+ for(const team of teams||[]){
+  const article=team.inquirer_article,prior=historical.get(String(team.roster_id));
+  if(!article?.sections?.length||!prior?.inquirer_article)continue;
+  const archived=new Set(forwardArticleSentences(prior).map(line=>forwardNormSentence(line,entities)));
+  let total=forwardWordCount((article.sections||[]).flatMap(x=>x.paragraphs||[]).join(' '));
+  const mins={management:25,players:24,sentiment:45,'hot-seat':32,'cool-throne':32,value:25};
+  for(const section of article.sections){
+   const floor=mins[section.kind]??18;
+   const paragraphs=section.paragraphs||[];
+   let sectionWords=forwardWordCount(paragraphs.join(' '));
+   const updated=[];
+   for(const paragraph of paragraphs){
+    const kept=[];
+    for(const sentence of forwardSentenceParts(paragraph)){
+     const words=forwardWordCount(sentence);
+     const echo=words>=10&&archived.has(forwardNormSentence(sentence,entities));
+     if(echo&&total-words>=300&&sectionWords-words>=floor){
+      // The same editorial sentence already appeared in the previous
+      // newspaper for this exact roster. Its source facts remain in the
+      // original ledger and other independent reporting.
+      total-=words;sectionWords-=words;continue;
+     }
+     kept.push(sentence);
+    }
+    const next=kept.join(' ').trim();
+    if(next)updated.push(next);
+   }
+   if(updated.length)section.paragraphs=updated;
+  }
+  article.paragraphs=article.sections.flatMap(x=>x.paragraphs||[]);
+ }
+ return teams;
+}
+
 function forwardRecapSentences(e){return forwardSentenceParts([...(e?.league_overview?.sections||[]).flatMap(s=>s.paragraphs||[]),...(e?.league_overview?.hot_takes||[]).filter(x=>!/division board/i.test(String(x?.title||''))).flatMap(x=>[x?.title,x?.take])].filter(Boolean).join(' ')).filter(x=>forwardWordCount(x)>=10)}
 
 export function evaluateInquirerEditionQuality(current,previous=null){

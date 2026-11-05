@@ -4,8 +4,10 @@ import {readFileSync} from 'node:fs';
 
 test('staged Week 5 review requires authenticated SSO on replacement deploy preview',()=>{
  const source=readFileSync(new URL('../netlify/functions/inquirer-staged-review.mjs',import.meta.url),'utf8');
- assert.match(source,/siteId!==expected/);
- assert.match(source,/deployment!=='deploy-preview'/);
+ assert.match(source,/context\?\.site\?\.id/);
+ assert.match(source,/verifiedSite=siteId===expected/);
+ assert.match(source,/context\?\.deploy\?\.context/);
+ assert.match(source,/verifiedDeploy=deployment==='deploy-preview'/);
  assert.match(source,/previewHost/);
  assert.match(source,/!context\?\.user\?\.id/);
  assert.match(source,/reply\(\{error:'Private deploy-preview review only'\},403\)/);

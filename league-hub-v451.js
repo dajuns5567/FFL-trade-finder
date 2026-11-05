@@ -70,7 +70,7 @@ async function fetchInquirerPreview(){
  if(productionStagedReview){
   if(inquirerPreviewRequestedWeek!==5)throw Error('Production staging review is limited to Week 5.');
   const response=await fetch('/.netlify/functions/inquirer-staged-review?edition=1',{cache:'no-store'});
-  if(!response.ok)throw Error('Protected production-staged review unavailable (HTTP '+response.status+'). Netlify team login is required.');
+  if(!response.ok)throw Error(response.status===403?'Production-staged review rejected its preview-site or deployment identity (HTTP 403).':response.status===401?'Private review requires an authenticated Netlify team session (HTTP 401).':'Protected production-staged review unavailable (HTTP '+response.status+').');
   const review=await response.json(),edition=review.edition;
   if(review.ready!==true||review.digest_matches_stage!==true||review.audit_ok!==true||review.quality_ok!==true||
      Number(review.season)!==2026||Number(review.week)!==5||Number(edition?.week)!==5||

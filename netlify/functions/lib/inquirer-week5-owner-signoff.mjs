@@ -38,7 +38,7 @@ export function approvedWeek5Record({status,stage,existingApproval,published,now
  return{
   schema_version:1,season:2026,week:5,sha256,approved:true,
   reviewed_by:REVIEWED_BY,reviewed_at:new Date(now).toISOString(),
-  review_note:'League owner explicitly approved the exact production-staged Week 5 newspaper preview after viewing all 32 available articles and Weekly Recap on 2026-11-04. No generation or prose changes authorized.',
+  review_note:'League owner viewed the production-staged Week 5 newspaper preview and stated it is good enough on 2026-11-04. Approve only the unchanged staged SHA-256 copy; no regeneration, prose edits, or other week authorized.',
   approval_source:'explicit-owner-chat-signoff-2026-11-04',
   reviewed_before:REVIEWED_AT_CUTOFF
  };

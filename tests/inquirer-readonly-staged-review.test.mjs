@@ -49,3 +49,12 @@ test('PR 408 stage view survives SSO dropping preview_week and review_staged URL
  assert.match(source,/if\(inquirerPreviewRequestedWeek!==5\)/);
  assert.match(source,/inquirer-staged-review\?edition=1/);
 });
+
+test('staged Week 5 page presents a reviewed exact-copy digest without any approval action',()=>{
+ const source=readFileSync(new URL('../league-hub-v451.js',import.meta.url),'utf8');
+ assert.match(source,/stagedReviewMetadata=\{sha256:review\.sha256/);
+ assert.match(source,/PRODUCTION-STAGED WEEK 5 • EXACT-COPY REVIEW • NOT PUBLISHED/);
+ assert.match(source,/stagedReviewMetadata\.sha256/);
+ assert.match(source,/Review all 32 articles and Weekly Recap/);
+ assert.doesNotMatch(source,/fetch\(['"]\/\.netlify\/functions\/inquirer-staged-review[^'"]*['"],\{\s*method:\s*['"]POST/);
+});

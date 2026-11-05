@@ -58,6 +58,32 @@ export default async function publishInquirerInBackground(req){
    editorial_findings:report?.editorial_findings,reason:report?.reason||null
   }));
  }catch(error){reportError=String(error?.message||error);console.error('inquirer-background-report-failed',error)}
+ // Log only the editorial audit's compact findings, never full unpublished copy.
+ // A held week suppresses identical retries, so the first failed job must
+ // expose enough evidence for a targeted generator fix without weakening gates.
+ if(report?.review_required&&Number.isInteger(Number(report?.season))&&Number.isInteger(Number(report?.week))){
+  try{
+   const suffix=String(Number(report.season))+'/week-'+String(Number(report.week)).padStart(2,'0')+'.json';
+   const held=await statusStore.get('inquirer/editorial-staging/'+suffix,{type:'json'});
+   const compact=issue=>({
+    id:String(issue?.id||issue?.code||'unknown').slice(0,90),
+    team:String(issue?.team||'').slice(0,90),
+    overlap:Number(issue?.overlap)||undefined,
+    ratio:Number(issue?.ratio)||undefined,
+    count:Number(issue?.count)||undefined,
+    phrase:String(issue?.phrase||'').slice(0,110)||undefined,
+    examples:Array.isArray(issue?.examples)?issue.examples.slice(0,2).map(e=>
+     typeof e==='string'?e.slice(0,110):{phrase:String(e?.phrase||'').slice(0,110),team_count:e?.team_count}):undefined
+   });
+   console.info('inquirer-background-editorial-diagnostics',JSON.stringify({
+    season:Number(report.season),week:Number(report.week),
+    deepQualityOk:held?.generation_quality?.ok??null,
+    basicAuditOk:held?.audit?.ok??null,
+    deepIssues:(held?.generation_quality?.issues||[]).slice(0,16).map(compact),
+    auditIssues:(held?.audit?.issues||[]).slice(0,16).map(compact)
+   }));
+  }catch(error){console.warn('inquirer-background-editorial-diagnostics-unavailable',String(error?.message||error))}
+ }
  // Award snapshots are downstream of a locked, fully indexed edition.
  // Never write Week N awards when Week N's newsroom copy is held or incomplete.
  if(report?.available===true&&report?.published_locked===true){

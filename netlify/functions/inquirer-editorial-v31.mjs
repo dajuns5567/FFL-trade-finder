@@ -5847,6 +5847,9 @@ export function pruneForwardInheritedEchoes(teams,previousEdition){
   let total=forwardWordCount((article.sections||[]).flatMap(x=>x.paragraphs||[]).join(' '));
   const mins={management:25,players:24,sentiment:45,'hot-seat':32,'cool-throne':32,value:25};
   for(const section of article.sections){
+   // Core player evidence must never be sacrificed for originality scoring.
+   // The season smoke fixtures verify actual fantasy scoring in this desk.
+   if(['players','hot-seat','cool-throne'].includes(section.kind))continue;
    const floor=mins[section.kind]??18;
    const paragraphs=section.paragraphs||[];
    let sectionWords=forwardWordCount(paragraphs.join(' '));

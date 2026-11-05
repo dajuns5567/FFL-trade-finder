@@ -232,7 +232,7 @@ test('automatic release keeps the replacement publisher held until verified hist
  const schedule=readFileSync(new URL('../netlify/functions/lib/inquirer-schedule-decision.mjs',import.meta.url),'utf8');
  const config=readFileSync(new URL('../netlify.toml',import.meta.url),'utf8');
  // Temporary expedited recovery or the normal two-hour cadence, never an unbounded loop.
- assert.match(config,/schedule = "(?:0 \\*\\/2|\\*) \\* \\* \\* \\*"/);
+ assert.ok(config.includes('schedule = "* * * * *"')||config.includes('schedule = "0 */2 * * *"'));
  assert.match(scheduled,/verifiedReplacementHistory\(week3,week4\)/);
  assert.match(scheduled,/publishingEnabled!=='true'/);
  assert.match(scheduled,/inquirerScheduleDecision\(\{status,nfl:current,revision:FORWARD_EDITORIAL_REVISION,approvedHeldEdition\}\)/);

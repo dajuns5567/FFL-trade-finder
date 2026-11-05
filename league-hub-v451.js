@@ -12,6 +12,7 @@ const productionStagedReview=inquirerPreviewMode&&location.hostname==='deploy-pr
 const inquirerPreviewRequestedWeek=Number(new URLSearchParams(location.search).get('preview_week'))||(productionStagedReview?5:0);
 const inquirerPreviewEntryUrl='/?inquirer_preview=1'+(inquirerPreviewRequestedWeek?'&preview_week='+inquirerPreviewRequestedWeek:'')+(productionStagedReview?'&review_staged=1':'');
 let inquirerPreviewEdition=null;
+let stagedReviewMetadata=null;
 let inquirerPreviewRequest=null;
 let inquirerPreviewPollAttempts=0;
 let inquirerPreviewLaunchAttempted=false;
@@ -77,6 +78,7 @@ async function fetchInquirerPreview(){
      edition?.preview_only!==true||edition?.published_locked!==false||
      edition?.teams?.length!==32||!edition?.league_overview?.headline)
    throw Error('Production staged Week 5 manuscript failed independent preview integrity checks.');
+  stagedReviewMetadata={sha256:review.sha256,article_count:review.article_count,reporters:review.reporters,quality_ok:review.quality_ok,audit_ok:review.audit_ok,audit_findings:review.audit_findings,generated_at:review.generated_at};
   inquirerPreviewEdition=edition;
   return edition;
  }
@@ -550,6 +552,7 @@ function dailyHTML(all,stats,w,md,spotlightW=w){
 
   report='<div class="lh-card lh-wide lh-report">'+
    (inquirerPreviewMode&&w.preview_only?'<div class="lh-sub" role="status" style="padding:8px 0;color:#f0c85c;font-weight:900">PRIVATE EDITORIAL PREVIEW • UNPUBLISHED WEEK '+esc(w.week)+' • Not live on the site</div>':'')+
+   (productionStagedReview&&stagedReviewMetadata?'<div class="lh-sub" role="status" style="margin:9px 0 15px;padding:12px;border:1px solid #e4b53f;border-radius:10px;overflow-wrap:anywhere"><b>PRODUCTION-STAGED WEEK 5 • EXACT-COPY REVIEW • NOT PUBLISHED</b><div>SHA-256: <code>'+esc(stagedReviewMetadata.sha256)+'</code></div><div>32 articles: '+esc(stagedReviewMetadata.article_count)+' • Reporters: '+esc(stagedReviewMetadata.reporters?.length)+' • Editorial audit: '+(stagedReviewMetadata.audit_ok?'PASS':'HOLD')+' ('+esc(stagedReviewMetadata.audit_findings)+' findings) • Generation quality: '+(stagedReviewMetadata.quality_ok?'PASS':'HOLD')+'</div><div>Review all 32 articles and Weekly Recap before separately approving the exact SHA-256 digest.</div></div>':'')+
    '<div class="lh-broadcast-summary" data-lh-broadcast-toggle="__league__"><div><h3 class="lh-report-title">🎙️ '+esc(w.week_classification?.label||('Week '+w.week))+' Fleeced! Inquirer</h3>'+
    '<div class="lh-sub">'+w.season+' • full team beat columns + Weekly Recap • Week 14 begins the archived Playoffs classification</div></div>'+
    '<button type="button" class="lh-brand-button"'+(articleOpen?' data-lh-inquirer-back':'')+'>'+(articleOpen?'← Back to League Hub':'Open Full Inquirer ▾')+'</button></div>'+

@@ -12,9 +12,10 @@
   included_files = ["index.html", "trade-section1-core-v100.js", "trade-section1-v100.css", "trade-section1-v106.css"]
 
 [functions."inquirer-publish-scheduled"]
-  # Poll every two hours; the function skips previously published/held weeks.
-  # Actual publication still waits for final Sleeper roster records.
-  schedule = "0 */2 * * *"
+  # TEMPORARY Week 5 post-approval recovery check. Return to two-hour cadence
+  # once exact-copy publication and archive indexing are confirmed.
+  # Scheduler remains fail-closed on historical archive, quality, and approval.
+  schedule = "* * * * *"
 
 [build.processing.html]
   pretty_urls = false

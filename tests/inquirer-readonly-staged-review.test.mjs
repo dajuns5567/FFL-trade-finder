@@ -37,3 +37,13 @@ test('canonical Inquirer renderer displays staged copy only inside the authentic
  assert.match(review,/return reply\(\{\.\.\.metadata,edition:\{/);
  assert.doesNotMatch(review,/\.setJSON\(|approvalKey|publishedKey/);
 });
+
+test('PR 408 stage view survives SSO dropping preview_week and review_staged URL parameters',()=>{
+ const source=readFileSync(new URL('../league-hub-v451.js',import.meta.url),'utf8');
+ assert.match(source,/productionStagedReview=inquirerPreviewMode&&location\.hostname==='deploy-preview-408--transcendent-manatee-2f0123\.netlify\.app'/);
+ assert.match(source,/inquirerPreviewRequestedWeek=Number\(new URLSearchParams\(location\.search\)\.get\('preview_week'\)\)\|\|\(productionStagedReview\?5:0\)/);
+ assert.match(source,/inquirerPreviewMode&&/);
+ assert.match(source,/if\(productionStagedReview\)/);
+ assert.match(source,/if\(inquirerPreviewRequestedWeek!==5\)/);
+ assert.match(source,/inquirer-staged-review\?edition=1/);
+});

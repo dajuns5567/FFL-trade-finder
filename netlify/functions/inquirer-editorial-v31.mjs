@@ -5739,9 +5739,9 @@ function assertWeek2Originality(result,previousEdition){
     for(const team of teams){
       const article=team.inquirer_article;
       if(!article?.sections)continue;
-      const repeated=/The new names stayed outside the Week \\d+ starters\\.(?:\\s*That keeps the move jokes on hold until somebody actually enters the lineup\\.)?/gi;
+      const repeated=/The new names stayed outside the Week \d+ starters\.(?:\s*That keeps the move jokes on hold until somebody actually enters the lineup\.)?/gi;
       for(const section of article.sections)
-        section.paragraphs=(section.paragraphs||[]).map(p=>String(p).replace(repeated,'').replace(/\\s{2,}/g,' ').trim()).filter(Boolean);
+        section.paragraphs=(section.paragraphs||[]).map(p=>String(p).replace(repeated,'').replace(/\s{2,}/g,' ').trim()).filter(Boolean);
       article.paragraphs=article.sections.flatMap(section=>section.paragraphs||[]);
     }
     const feature=(overview?.sections||[]).find(section=>(section.blocks||[]).some(block=>block.kind==='lead'));

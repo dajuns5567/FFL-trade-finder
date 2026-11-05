@@ -29,6 +29,15 @@ export default async function inquirerStagedReview(req,context){
   quality_ok:stage.generation_quality?.ok===true,audit_ok:audit.ok,audit_findings:audit.issues.length,
   generated_at:stage.generated_at||null,
   manuscript_note:'Unpublished production-staged copy; private read-only review. Does not approve or publish.'};
+ if(url.searchParams.get('edition')==='1'){
+  if(!metadata.digest_matches_stage||!metadata.audit_ok||!metadata.quality_ok||
+     metadata.article_count!==32||!edition.league_overview?.headline)
+   return reply({error:'Production stage fails private review integrity checks',...metadata},409);
+  // Return exact original article and recap fields to the existing League Hub
+  // renderer. Only ephemeral preview annotations are added outside the digest.
+  return reply({...metadata,edition:{...edition,published_locked:false,preview_only:true,
+   preview_editorial_audit:{ok:true},preview_generation_quality:{ok:true}}});
+ }
  const teamId=url.searchParams.get('team');
  if(teamId!==null){
   if(!/^\d{1,2}$/.test(teamId))return reply({error:'Invalid roster id'},400);

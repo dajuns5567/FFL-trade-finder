@@ -5,9 +5,14 @@ let installed=false,tradeCache=null,weeklyCache=null,spotlightWeeklyCache=null,w
 // through the same League Hub rendering path as the published archive.
 const onNetlifyDeployPreview=/^deploy-preview-\d+--[^.]+\.netlify\.app$/i.test(location.hostname);
 const inquirerPreviewMode=onNetlifyDeployPreview&&new URLSearchParams(location.search).get('inquirer_preview')==='1';
-const inquirerPreviewRequestedWeek=Number(new URLSearchParams(location.search).get('preview_week'))||0;
-const inquirerPreviewEntryUrl='/?inquirer_preview=1'+(inquirerPreviewRequestedWeek?'&preview_week='+inquirerPreviewRequestedWeek:'');
+// PR 408 reviews the existing production-staged copy, not a new isolated draft.
+// SSO return URLs can drop secondary query parameters; the preview host is the
+// authority for this private read-only mode, while normal previews stay unchanged.
+const productionStagedReview=inquirerPreviewMode&&location.hostname==='deploy-preview-408--transcendent-manatee-2f0123.netlify.app';
+const inquirerPreviewRequestedWeek=Number(new URLSearchParams(location.search).get('preview_week'))||(productionStagedReview?5:0);
+const inquirerPreviewEntryUrl='/?inquirer_preview=1'+(inquirerPreviewRequestedWeek?'&preview_week='+inquirerPreviewRequestedWeek:'')+(productionStagedReview?'&review_staged=1':'');
 let inquirerPreviewEdition=null;
+let stagedReviewMetadata=null;
 let inquirerPreviewRequest=null;
 let inquirerPreviewPollAttempts=0;
 let inquirerPreviewLaunchAttempted=false;
@@ -63,6 +68,20 @@ async function loadInquirerPreview(){
  try{return await inquirerPreviewRequest}finally{inquirerPreviewRequest=null}
 }
 async function fetchInquirerPreview(){
+ if(productionStagedReview){
+  if(inquirerPreviewRequestedWeek!==5)throw Error('Production staging review is limited to Week 5.');
+  const response=await fetch('/.netlify/functions/inquirer-staged-review?edition=1',{cache:'no-store'});
+  if(!response.ok)throw Error(response.status===403?'Production-staged review rejected its preview-site or deployment identity (HTTP 403).':response.status===401?'Private review requires an authenticated Netlify team session (HTTP 401).':'Protected production-staged review unavailable (HTTP '+response.status+').');
+  const review=await response.json(),edition=review.edition;
+  if(review.ready!==true||review.digest_matches_stage!==true||review.audit_ok!==true||review.quality_ok!==true||
+     Number(review.season)!==2026||Number(review.week)!==5||Number(edition?.week)!==5||
+     edition?.preview_only!==true||edition?.published_locked!==false||
+     edition?.teams?.length!==32||!edition?.league_overview?.headline)
+   throw Error('Production staged Week 5 manuscript failed independent preview integrity checks.');
+  stagedReviewMetadata={sha256:review.sha256,article_count:review.article_count,reporters:review.reporters,quality_ok:review.quality_ok,audit_ok:review.audit_ok,audit_findings:review.audit_findings,generated_at:review.generated_at};
+  inquirerPreviewEdition=edition;
+  return edition;
+ }
  const scope=inquirerPreviewRequestedWeek?'&preview_week='+inquirerPreviewRequestedWeek:'';
  const response=await fetch('/.netlify/functions/inquirer-preview-diagnostic?draft=1'+scope,{cache:'no-store'});
  if(!response.ok){
@@ -533,6 +552,7 @@ function dailyHTML(all,stats,w,md,spotlightW=w){
 
   report='<div class="lh-card lh-wide lh-report">'+
    (inquirerPreviewMode&&w.preview_only?'<div class="lh-sub" role="status" style="padding:8px 0;color:#f0c85c;font-weight:900">PRIVATE EDITORIAL PREVIEW • UNPUBLISHED WEEK '+esc(w.week)+' • Not live on the site</div>':'')+
+   (productionStagedReview&&stagedReviewMetadata?'<div class="lh-sub" role="status" style="margin:9px 0 15px;padding:12px;border:1px solid #e4b53f;border-radius:10px;overflow-wrap:anywhere"><b>PRODUCTION-STAGED WEEK 5 • EXACT-COPY REVIEW • NOT PUBLISHED</b><div>SHA-256: <code>'+esc(stagedReviewMetadata.sha256)+'</code></div><div>32 articles: '+esc(stagedReviewMetadata.article_count)+' • Reporters: '+esc(stagedReviewMetadata.reporters?.length)+' • Editorial audit: '+(stagedReviewMetadata.audit_ok?'PASS':'HOLD')+' ('+esc(stagedReviewMetadata.audit_findings)+' findings) • Generation quality: '+(stagedReviewMetadata.quality_ok?'PASS':'HOLD')+'</div><div>Review all 32 articles and Weekly Recap before separately approving the exact SHA-256 digest.</div></div>':'')+
    '<div class="lh-broadcast-summary" data-lh-broadcast-toggle="__league__"><div><h3 class="lh-report-title">🎙️ '+esc(w.week_classification?.label||('Week '+w.week))+' Fleeced! Inquirer</h3>'+
    '<div class="lh-sub">'+w.season+' • full team beat columns + Weekly Recap • Week 14 begins the archived Playoffs classification</div></div>'+
    '<button type="button" class="lh-brand-button"'+(articleOpen?' data-lh-inquirer-back':'')+'>'+(articleOpen?'← Back to League Hub':'Open Full Inquirer ▾')+'</button></div>'+

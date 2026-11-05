@@ -9,7 +9,7 @@ import {attributeForwardPlayerStatFragments,curateForwardTeamNarrative,inspectNa
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=95;
+export const FORWARD_EDITORIAL_REVISION=96;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -5746,7 +5746,7 @@ function assertWeek2Originality(result,previousEdition){
         club+' logged the moves without starting those arrivals in Week '+week+'. The starters, not the transaction wire, supplied '+forwardOne(score)+' against '+foe+'.'
       ];
       const replacement=factual[(Number(team.roster_id||0)+variationSalt+week)%factual.length];
-      const repeated=/The new names stayed outside the Week \d+ starters\. That keeps the move jokes on hold until somebody actually enters the lineup\./gi;
+      const repeated=/The new names stayed outside the Week \d+ starters\.(?:\s*That keeps the move jokes on hold until somebody actually enters the lineup\.)?/gi;
       for(const section of article.sections)
         section.paragraphs=(section.paragraphs||[]).map(p=>String(p).replace(repeated,replacement));
       article.paragraphs=article.sections.flatMap(section=>section.paragraphs||[]);

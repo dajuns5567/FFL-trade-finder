@@ -22,3 +22,18 @@ test('private staged review reads production shared Blob and never approves or p
  assert.match(source,/league_overview/);
  assert.match(source,/private, no-store/);
 });
+
+test('canonical Inquirer renderer displays staged copy only inside the authenticated deploy preview',()=>{
+ const source=readFileSync(new URL('../league-hub-v451.js',import.meta.url),'utf8');
+ const review=readFileSync(new URL('../netlify/functions/inquirer-staged-review.mjs',import.meta.url),'utf8');
+ assert.match(source,/productionStagedReview=inquirerPreviewMode/);
+ assert.match(source,/inquirer-staged-review\?edition=1/);
+ assert.match(source,/review\.digest_matches_stage!==true/);
+ assert.match(source,/inquirerPreviewEdition=edition/);
+ assert.match(review,/url\.searchParams\.get\('edition'\)==='1'/);
+ assert.match(review,/metadata\.digest_matches_stage/);
+ assert.match(review,/metadata\.audit_ok/);
+ assert.match(review,/metadata\.quality_ok/);
+ assert.match(review,/return reply\(\{\.\.\.metadata,edition:\{/);
+ assert.doesNotMatch(review,/\.setJSON\(|approvalKey|publishedKey/);
+});

@@ -3,6 +3,7 @@ import {FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
 import {inquirerScheduleDecision} from './lib/inquirer-schedule-decision.mjs';
 import {verifiedReplacementHistory} from './lib/inquirer-replacement-archive-gate.mjs';
 import {editorialApprovalMatches} from './inquirer-publication-guard.mjs';
+import {approvedWeek5Record} from './lib/inquirer-week5-owner-signoff.mjs';
 // Queue a long-running background job. Netlify scheduled functions have a
 // hard 30-second limit, while the full Inquirer edition takes longer.
 export default async function inquirerPublishScheduled(req){
@@ -42,6 +43,26 @@ export default async function inquirerPublishScheduled(req){
   }
   if(!status||typeof status!=='object')return skip('Publication history not restored or unreadable');
   const current=await fetch('https://api.sleeper.app/v1/state/nfl',{signal:AbortSignal.timeout(6000)}).then(r=>r.ok?r.json():null);
+  // One-time, user-authorized exact-copy Week 5 sign-off.
+  // Do not create new drafts or overwrite approved/published records. This only
+  // applies to the already-reviewed pre-signoff staging snapshot, before expiry.
+  if(isReplacement&&context!=='deploy-preview'&&context!=='branch-deploy'&&
+     status.state==='editorial-hold'&&Number(status.season)===2026&&Number(status.week)===5){
+   const suffix='2026/week-05.json';
+   const [stage,existingApproval,published]=await Promise.all([
+    store.get('inquirer/editorial-staging/'+suffix,{type:'json'}),
+    store.get('inquirer/editorial-approvals/'+suffix,{type:'json'}),
+    store.get('broadcasts/'+suffix,{type:'json'})
+   ]);
+   const approved=approvedWeek5Record({status,stage,existingApproval,published});
+   if(approved){
+    const written=await store.setJSON('inquirer/editorial-approvals/'+suffix,approved,{onlyIfNew:true});
+    if(written?.modified)console.info('inquirer-week5-owner-exact-copy-approved',{
+     season:2026,week:5,sha256:approved.sha256,source:approved.approval_source
+    });
+    else console.warn('inquirer-week5-owner-approval-existing-record');
+   }
+  }
   // A digest-bound human approval can release an earlier editorial hold.
   // Reading the exact staged copy prevents approval for an unrelated draft
   // or a later NFL week from triggering an unreviewed publication attempt.

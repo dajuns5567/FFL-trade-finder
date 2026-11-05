@@ -10,6 +10,8 @@ on:
       - 'tests/week5-forward-editorial-repair.test.mjs'
       - 'netlify/functions/league-hub.mjs'
       - 'netlify/functions/inquirer-publish-scheduled.mjs'
+      - 'netlify/functions/lib/inquirer-week5-owner-signoff.mjs'
+      - 'tests/inquirer-week5-owner-signoff.test.mjs'
       - 'tests/inquirer-publication-guard.test.mjs'
       - 'tests/forward-week-prose-source.test.mjs'
       - 'netlify/functions/inquirer-editorial-v31.mjs'
@@ -26,6 +28,8 @@ on:
       - 'tests/week5-forward-editorial-repair.test.mjs'
       - 'netlify/functions/league-hub.mjs'
       - 'netlify/functions/inquirer-publish-scheduled.mjs'
+      - 'netlify/functions/lib/inquirer-week5-owner-signoff.mjs'
+      - 'tests/inquirer-week5-owner-signoff.test.mjs'
       - 'tests/inquirer-publication-guard.test.mjs'
       - 'tests/forward-week-prose-source.test.mjs'
       - 'netlify/functions/inquirer-editorial-v31.mjs'
@@ -47,13 +51,14 @@ jobs:
         with:
           node-version: '22'
       - name: Fail-closed editorial regression and approval tests
-        run: node --test tests/inquirer-publication-guard.test.mjs tests/inquirer-narrative-architecture.test.mjs tests/forward-week-prose-source.test.mjs
+        run: node --test tests/inquirer-publication-guard.test.mjs tests/inquirer-narrative-architecture.test.mjs tests/forward-week-prose-source.test.mjs tests/inquirer-week5-owner-signoff.test.mjs
       - name: Parse production entrypoints
         run: |
           node --check netlify/functions/inquirer-publication-guard.mjs
           node --check netlify/functions/inquirer-format-contract.mjs
           node --check netlify/functions/inquirer-narrative-architecture.mjs
           node --check netlify/functions/inquirer-publish-scheduled.mjs
+          node --check netlify/functions/lib/inquirer-week5-owner-signoff.mjs
           node --check netlify/functions/league-hub.mjs
           node --check scripts/approve-staged-inquirer.mjs
           node --check netlify/functions/inquirer-editorial-v31.mjs

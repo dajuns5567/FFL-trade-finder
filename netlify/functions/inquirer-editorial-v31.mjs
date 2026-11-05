@@ -9,7 +9,7 @@ import {attributeForwardPlayerStatFragments,curateForwardTeamNarrative,inspectNa
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=94;
+export const FORWARD_EDITORIAL_REVISION=95;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -5726,6 +5726,105 @@ function assertWeek2Originality(result,previousEdition){
     overview=deepStrings(overview,repairInterveningSubjects);
     if(Array.isArray(overview.sections))
       overview.paragraphs=overview.sections.flatMap(sec=>sec.paragraphs||[]);
+  }
+  // The Week 6 backlog exposed two last-writer failures after the original
+  // candidate selection: a Week-2 transaction slogan copied into four teams,
+  // and a recap desk pruned beneath the independent 2-paragraph/30-word gate.
+  // Make source-backed repairs only after all article/recap transformations.
+  // Never pad a missing desk with anonymous editorial maxims.
+  if(week>=6){
+    for(const team of teams){
+      const article=team.inquirer_article;
+      if(!article?.sections?.length)continue;
+      const club=w2DisplayTeam(team.team_name),foe=w2DisplayTeam(team.opponent_name||'the opponent');
+      const score=team.points==null?null:Number(team.points),against=team.opponent_points==null?null:Number(team.opponent_points);
+      if(!Number.isFinite(score)||!Number.isFinite(against))continue;
+      const factual=[
+        club+' kept those additions out of its Week '+week+' starting lineup; the starters actually used posted '+forwardOne(score)+' against '+foe+' at '+forwardOne(against)+'.',
+        'The Week '+week+' transaction arrivals did not start for '+club+'. Its recorded matchup with '+foe+' finished '+forwardOne(score)+' to '+forwardOne(against)+'.',
+        'None of those newcomers appeared on '+club+'’s Week '+week+' starting card. The selected lineup scored '+forwardOne(score)+' against '+foe+'.',
+        club+' logged the moves without starting those arrivals in Week '+week+'. The starters, not the transaction wire, supplied '+forwardOne(score)+' against '+foe+'.'
+      ];
+      const replacement=factual[(Number(team.roster_id||0)+variationSalt+week)%factual.length];
+      const repeated=/The new names stayed outside the Week \d+ starters\. That keeps the move jokes on hold until somebody actually enters the lineup\./gi;
+      for(const section of article.sections)
+        section.paragraphs=(section.paragraphs||[]).map(p=>String(p).replace(repeated,replacement));
+      article.paragraphs=article.sections.flatMap(section=>section.paragraphs||[]);
+    }
+    const feature=(overview?.sections||[]).find(section=>(section.blocks||[]).some(block=>block.kind==='lead'));
+    if(feature){
+      const scored=teams.filter(t=>t.points!=null&&t.opponent_points!=null&&Number.isFinite(Number(t.points))&&Number.isFinite(Number(t.opponent_points)))
+        .slice().sort((a,b)=>Number(b.points)-Number(a.points));
+      const high=scored[0],second=scored.find(t=>t.roster_id!==high?.roster_id),low=scored.at(-1);
+      const ranked=teams.filter(t=>Number.isFinite(Number(t.league_context?.standings_rank))&&Number(t.league_context.standings_rank)>0)
+        .slice().sort((a,b)=>Number(a.league_context.standings_rank)-Number(b.league_context.standings_rank));
+      const starters=t=>(t?.starter_details||[]).filter(p=>p?.name&&p.points!=null&&Number.isFinite(Number(p.points)))
+        .slice().sort((a,b)=>Number(b.points)-Number(a.points));
+      const summary=t=>t? w2DisplayTeam(t.team_name)+' recorded '+forwardOne(t.points)+' against '+w2DisplayTeam(t.opponent_name||'the opponent')+' at '+forwardOne(t.opponent_points):'';
+      const scoreParagraph=(t,angle)=>t?(
+        angle+' '+summary(t)+'. The '+forwardOne(Math.abs(Number(t.points)-Number(t.opponent_points)))+
+        '-point margin belongs to the verified Week '+week+' matchup, not an estimated projection or a hypothetical substitute.'):null;
+      const leadStar=starters(high)[0],otherStar=starters(second)[0];
+      const rankLine=t=>t?(
+        w2DisplayTeam(t.team_name)+' holds position No. '+Number(t.league_context.standings_rank)+
+        ' in the recorded table after Week '+week+'. The same club finished its latest matchup on '+
+        forwardOne(t.points)+' points against '+w2DisplayTeam(t.opponent_name||'the opponent')+
+        ', which anchors that standings discussion in a result rather than a forecast.'):null;
+      const playerLine=(t,p)=>t&&p?(
+        p.name+' contributed '+forwardOne(p.points)+' fantasy points to '+w2DisplayTeam(t.team_name)+
+        ' in Week '+week+'. That contribution was part of a '+forwardOne(t.points)+
+        '-point starting result against '+w2DisplayTeam(t.opponent_name||'the opponent')+
+        '; the player figure and the team total are distinct entries in the recorded box score.'):null;
+      const decisionLine=t=>{
+        if(!t)return null;
+        const miss=t.best_lineup_miss,star=starters(t)[0];
+        if(miss?.starter?.name&&miss?.reserve?.name&&Number(miss.gap)>0)
+          return w2DisplayTeam(t.team_name)+' started '+miss.starter.name+' while '+miss.reserve.name+
+            ' remained available in a compatible slot. The recorded '+forwardOne(miss.gap)+
+            '-point reserve advantage is a measurable Week '+week+
+            ' selection opportunity, not a claim that the manager knew the result before kickoff.';
+        return star? w2DisplayTeam(t.team_name)+' selected a lineup led by '+star.name+
+          ' at '+forwardOne(star.points)+' fantasy points. That choice was part of a recorded '+
+          forwardOne(t.points)+'-point showing against '+w2DisplayTeam(t.opponent_name||'the opponent')+
+          '; the evidence supports describing the selected starters, not inventing a bench alternative.':null;
+      };
+      const nextLine=t=>t?.next_opponent_name?(
+        'The next scheduled opponent for '+w2DisplayTeam(t.team_name)+' is '+w2DisplayTeam(t.next_opponent_name)+
+        '. Its Week '+week+' baseline was '+forwardOne(t.points)+' points against '+
+        w2DisplayTeam(t.opponent_name||'the opponent')+
+        ', so the next preview has a measured starting point without treating this score as a prediction.'):null;
+      const games=w2Games(teams),tight=games.filter(g=>Number(g.margin)<=5).length;
+      const leagueLine=high&&low?(
+        'From '+w2DisplayTeam(high.team_name)+' at '+forwardOne(high.points)+' to '+
+        w2DisplayTeam(low.team_name)+' at '+forwardOne(low.points)+
+        ', the recorded Week '+week+' lineup range spanned '+
+        forwardOne(Number(high.points)-Number(low.points))+
+        ' fantasy points. Those are two actual team returns, not a claim about their dynasty market prices.'):null;
+      const gameLine=games.length?(
+        'The completed Week '+week+' scoreboard contains '+games.length+' matchups, of which '+
+        tight+' were decided within five fantasy points. That distribution gives the league a concrete measure of how many results came down to a narrow margin.'):null;
+      const evidence={
+        lead:[scoreParagraph(high,'At the top of the weekly scoreboard,'),scoreParagraph(second,'Another completed result came from')],
+        standings:[rankLine(ranked[0]),rankLine(ranked[1])],
+        players:[playerLine(high,leadStar),playerLine(second,otherStar)],
+        decisions:[decisionLine(high),decisionLine(second)],
+        league:[leagueLine,gameLine],
+        outlook:[nextLine(high),nextLine(second)]
+      };
+      for(const kind of ['lead','standings','players','decisions','league','outlook']){
+        const block=(feature.blocks||[]).find(b=>b.kind===kind);
+        if(!block)continue; // Missing sources remain blocked by the deep gate.
+        const paragraphs=(block.paragraphs||[]).filter(p=>String(p||'').trim());
+        for(const addition of evidence[kind]||[]){
+          if(paragraphs.length>=2&&forwardWordCount(paragraphs.join(' '))>=30)break;
+          if(!addition||paragraphs.some(p=>p===addition))continue;
+          paragraphs.push(addition);
+        }
+        block.paragraphs=paragraphs;
+      }
+      feature.paragraphs=feature.blocks.flatMap(b=>b.paragraphs||[]);
+      overview.paragraphs=overview.sections.flatMap(section=>section.paragraphs||[]);
+    }
   }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }

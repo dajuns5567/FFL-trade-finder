@@ -9,7 +9,7 @@ import {attributeForwardPlayerStatFragments,curateForwardTeamNarrative,inspectNa
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=96;
+export const FORWARD_EDITORIAL_REVISION=97;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -5738,14 +5738,18 @@ function assertWeek2Originality(result,previousEdition){
       if(!article?.sections?.length)continue;
       const club=w2DisplayTeam(team.team_name),foe=w2DisplayTeam(team.opponent_name||'the opponent');
       const score=team.points==null?null:Number(team.points),against=team.opponent_points==null?null:Number(team.opponent_points);
-      if(!Number.isFinite(score)||!Number.isFinite(against))continue;
+      // A missing opponent-score field must not bypass this editorial repair.
+      // The historical template itself records a non-starting transaction;
+      // when a matchup score is absent, remove that redundant sentence rather
+      // than invent a numerical score or preserve syndicated copy.
+      const hasScore=Number.isFinite(score)&&Number.isFinite(against);
       const factual=[
         club+' kept those additions out of its Week '+week+' starting lineup; the starters actually used posted '+forwardOne(score)+' against '+foe+' at '+forwardOne(against)+'.',
         'The Week '+week+' transaction arrivals did not start for '+club+'. Its recorded matchup with '+foe+' finished '+forwardOne(score)+' to '+forwardOne(against)+'.',
         'None of those newcomers appeared on '+club+'’s Week '+week+' starting card. The selected lineup scored '+forwardOne(score)+' against '+foe+'.',
         club+' logged the moves without starting those arrivals in Week '+week+'. The starters, not the transaction wire, supplied '+forwardOne(score)+' against '+foe+'.'
       ];
-      const replacement=factual[(Number(team.roster_id||0)+variationSalt+week)%factual.length];
+      const replacement=hasScore?factual[(Number(team.roster_id||0)+variationSalt+week)%factual.length]:'';
       const repeated=/The new names stayed outside the Week \d+ starters\.(?:\s*That keeps the move jokes on hold until somebody actually enters the lineup\.)?/gi;
       for(const section of article.sections)
         section.paragraphs=(section.paragraphs||[]).map(p=>String(p).replace(repeated,replacement));

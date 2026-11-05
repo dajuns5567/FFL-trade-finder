@@ -2,17 +2,23 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 
-test('staged production review is read-only and never exports unpublished copy',()=>{
- const s=readFileSync(new URL('../scripts/audit-staged-inquirer-readonly.mjs',import.meta.url),'utf8');
- const workflow=readFileSync(new URL('../.github/workflows/inquirer-readonly-staged-preflight.yml',import.meta.url),'utf8');
- assert.match(s,/8776d155-bc7b-4dcd-bafc-3d70d3d51800/);
- assert.match(s,/editorialCopyDigest\(stage\.edition\)/);
- assert.match(s,/inspectEditionBeforePublication\(stage\.edition\)/);
- assert.match(s,/generation_quality_ok/);
- assert.match(s,/digest_matches_stage/);
- assert.match(s,/index_contains_week/);
- assert.doesNotMatch(s,/\.setJSON\(|\.set\(|writeFileSync\(|writeFile\(/);
- assert.doesNotMatch(s,/JSON\.stringify\(stage\.edition\)/);
- assert.match(workflow,/NETLIFY_SANDBOX_DEPLOY_TOKEN/);
- assert.doesNotMatch(workflow,/upload-artifact|approve-staged-inquirer\.mjs/);
+test('staged Week 5 review requires authenticated SSO on replacement deploy preview',()=>{
+ const source=readFileSync(new URL('../netlify/functions/inquirer-staged-review.mjs',import.meta.url),'utf8');
+ assert.match(source,/siteId!==expected/);
+ assert.match(source,/deployment!=='deploy-preview'/);
+ assert.match(source,/previewHost/);
+ assert.match(source,/!context\?\.user\?\.id/);
+ assert.match(source,/reply\(\{error:'Private deploy-preview review only'\},403\)/);
+ assert.match(source,/reply\(\{error:'Authenticated Netlify team reviewer required'\},401\)/);
+});
+test('private staged review reads production shared Blob and never approves or publishes',()=>{
+ const source=readFileSync(new URL('../netlify/functions/inquirer-staged-review.mjs',import.meta.url),'utf8');
+ assert.match(source,/getStore\('fleeced-league-hub',\{consistency:'strong'\}\)/);
+ assert.match(source,/store\.get\(key,\{type:'json'\}\)/);
+ assert.match(source,/editorialCopyDigest\(edition\)/);
+ assert.match(source,/inspectEditionBeforePublication\(edition\)/);
+ assert.doesNotMatch(source,/\.setJSON\(|\.set\(|writeFileSync\(|writeFile\(|approvalKey/);
+ assert.match(source,/inquirer_article/);
+ assert.match(source,/league_overview/);
+ assert.match(source,/private, no-store/);
 });

@@ -240,3 +240,13 @@ test('automatic release keeps the replacement publisher held until verified hist
  assert.match(schedule,/const finishedWeek=stateWeek-1/);
  assert.match(schedule,/Unchanged earlier-week editorial hold/);
 });
+
+test('expedited postapproval run emits safe skip reasons and maintains editorial admission checks',()=>{
+ const scheduled=readFileSync(new URL('../netlify/functions/inquirer-publish-scheduled.mjs',import.meta.url),'utf8');
+ assert.match(scheduled,/inquirer-schedule-not-queued/);
+ assert.match(scheduled,/inquirer-scheduler-approval-state/);
+ assert.match(scheduled,/approvedHeldEdition/);
+ assert.match(scheduled,/editorialApprovalMatches\(staged\.edition,approval\)\.approved===true/);
+ assert.match(scheduled,/verifiedReplacementHistory\(week3,week4\)/);
+ assert.match(scheduled,/if\(result\.status!==202\)throw/);
+});

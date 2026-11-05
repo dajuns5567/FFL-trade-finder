@@ -5839,10 +5839,11 @@ function forwardArticleSentences(t){return forwardSentenceParts((t?.inquirer_art
 // publication guard's essential word counts. Historical editions are read-only.
 export function pruneForwardInheritedEchoes(teams,previousEdition){
  const historical=new Map((previousEdition?.teams||[]).map(t=>[String(t.roster_id),t]));
- const entities=forwardEntities({teams:[...(teams||[]),...(previousEdition?.teams||[])]});
+
  for(const team of teams||[]){
   const article=team.inquirer_article,prior=historical.get(String(team.roster_id));
   if(!article?.sections?.length||!prior?.inquirer_article)continue;
+  const entities=forwardEntities({teams:[team,prior]});
   const archived=new Set(forwardArticleSentences(prior).map(line=>forwardNormSentence(line,entities)));
   let total=forwardWordCount((article.sections||[]).flatMap(x=>x.paragraphs||[]).join(' '));
   const mins={management:25,players:24,sentiment:45,'hot-seat':32,'cool-throne':32,value:25};

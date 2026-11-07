@@ -10,6 +10,7 @@ import week2Preload2026 from './inquirer-week2-2026-preload.mjs';
 import {fetchBestSeason} from './history-fetch.mjs';
 import {applyInquirerEditorialV31,evaluateInquirerEditionQuality,FORWARD_INQUIRER_VERSION,FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
 import {inspectCanonicalArchive} from './lib/inquirer-legacy-history.mjs';
+import {privatePreviewStoreName,isVerifiedPrivatePreviewPredecessor} from './lib/inquirer-preview-diagnostics.mjs';
 
 const LEAGUE='1316867686394769408';
 const API='https://api.sleeper.app/v1';
@@ -386,6 +387,26 @@ export async function weeklyReport(req){
  // Publish sequentially. A missing older edition is generated before a newer one so every article has the immediately
  // previous locked edition available for continuity and copy-forward checks. Preloaded Week 1/2 editions count as published.
  let week=null,latestPublished=null;
+ // Only a numbered, protected Deploy Preview may read its own verified
+ // manuscript as the immediately preceding week's editorial reference.
+ // These reads never promote anything to a public locked archive.
+ const query=new URL(req.url),requestedRaw=query.searchParams.get('preview_week'),
+   requested=Number(requestedRaw),privateStoreName=previewReadOnly?privatePreviewStoreName(req.url):null;
+ let privatePredecessor;
+ const getPrivatePredecessor=async w=>{
+  if(privatePredecessor!==undefined)return privatePredecessor;
+  privatePredecessor=null;
+  if(!privateStoreName||requestedRaw===null||!Number.isInteger(requested)||
+     requested!==w+1||w<7)return null;
+  try{
+   const key=season+'/week-'+String(w).padStart(2,'0')+
+     '/editorial-r'+FORWARD_EDITORIAL_REVISION+'/edition.json';
+   const draft=await getStore({name:privateStoreName,consistency:'strong'}).get(key,{type:'json'});
+   if(isVerifiedPrivatePreviewPredecessor(draft,season,w))
+    privatePredecessor=draft;
+  }catch(error){console.warn('private-preview-predecessor-unavailable',w,String(error?.message||error))}
+  return privatePredecessor;
+ };
  for(let w=1;w<=cappedWeek;w++){
   const preload=preloadedBroadcast(season,w);
   if(preload){latestPublished=preload;continue}
@@ -410,6 +431,11 @@ export async function weeklyReport(req){
    }
    latestPublished=stored;continue;
   }
+  // Permit only the exact audited private draft immediately before the
+  // requested week. Do not skip an older unpublished or corrupt edition.
+  if(previewReadOnly&&await getPrivatePredecessor(w)){
+   latestPublished=privatePredecessor;continue;
+  }
   week=w;break;
  }
  if(!week)return latestPublished||{available:false,season,week:null,reason:'No completed Fleeced! Inquirer edition is available yet.'};
@@ -418,8 +444,6 @@ export async function weeklyReport(req){
  // silently label a Week 3 backfill as the Week 5 (or later) manuscript.
  // Production retains its sequential historical publication path unchanged.
  if(previewReadOnly){
-  const requestedRaw=new URL(req.url).searchParams.get('preview_week');
-  const requested=Number(requestedRaw);
   if(requestedRaw!==null&&(!Number.isInteger(requested)||requested<1||requested>INQUIRER_FINAL_WEEK))
    return{available:false,season,week,preview_only:true,published_locked:false,reason:'Invalid editorial preview week'};
   const targetWeek=requestedRaw!==null?requested:Math.max(1,cappedWeek-1);
@@ -451,9 +475,15 @@ export async function weeklyReport(req){
   try{previousStored=await s.get(`broadcasts/${season}/week-${String(week-1).padStart(2,'0')}.json`,{type:'json'})}
   catch(error){return{available:false,published_locked:false,season,week,reason:'Previous locked edition cannot be read. Generation held.'}}
  }
- const previousBroadcast=previousStored||preloadedBroadcast(season,week-1);
- if(week>1&&!isLockedInquirerEdition(previousBroadcast,season,week-1))
-  return{available:false,published_locked:false,season,week,reason:'Previous Week '+(week-1)+' is not a verified locked Inquirer edition. Historical newsroom continuity required.'};
+ const previousBroadcast=previousStored||
+  (previewReadOnly?await getPrivatePredecessor(week-1):null)||
+  preloadedBroadcast(season,week-1);
+ const previousTrusted=previousBroadcast&&(
+  isLockedInquirerEdition(previousBroadcast,season,week-1)||
+  (previewReadOnly&&previousBroadcast===privatePredecessor&&
+   isVerifiedPrivatePreviewPredecessor(previousBroadcast,season,week-1)));
+ if(week>1&&!previousTrusted)
+  return{available:false,published_locked:false,season,week,reason:'Previous Week '+(week-1)+' is not a verified locked Inquirer edition or exact audited private preview predecessor. Historical newsroom continuity required.'};
  // An exact-copy approval is for the previously staged manuscript, not a
  // newly generated draft whose prose and digest may have changed. Only the
  // replacement site's first forward release needs this recovery path.

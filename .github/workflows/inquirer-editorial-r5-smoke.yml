@@ -25,6 +25,8 @@ on:
       - 'docs/INQUIRER-EDITORIAL-GENERATION-CONTRACT.md'
       - 'scripts/inquirer-*.mjs'
       - 'scripts/migrate-fleeced-blobs.mjs'
+      - 'scripts/migrate-fleeced-new-account.mjs'
+      - 'tests/inquirer-new-account-migration.test.mjs'
       - 'scripts/inquirer-preview-browser-audit.js'
       - 'scripts/one-time-fleeced-archive-recovery.sh'
       - 'tests/fleeced-blob-migration.test.mjs'
@@ -74,7 +76,7 @@ jobs:
       - name: Validate one-time private recovery wrapper syntax
         run: bash -n scripts/one-time-fleeced-archive-recovery.sh
       - name: Offline migration safety regression tests
-        run: node --test tests/fleeced-blob-migration.test.mjs
+        run: node --test tests/fleeced-blob-migration.test.mjs tests/inquirer-new-account-migration.test.mjs
 
       - name: Run source contract
         run: node scripts/inquirer-v25-audit.mjs

@@ -61,7 +61,7 @@ test('a failed editorial gate retains only a deploy-local rejected review copy',
 });
 
 test('preview seeding targets the active Netlify account by default',()=>{
- assert.match(queueJob,/vars\.INQUIRER_PREVIEW_SITE \|\| 'gleaming-dodol-8dbc4a\.netlify\.app'/);
+ assert.match(queueJob,/PREVIEW_SITE: precious-dango-fb4633\.netlify\.app/);
  assert.doesNotMatch(queueJob,/vars\.INQUIRER_PREVIEW_SITE \|\| 'brilliant-faun-c5b649\.netlify\.app'/);
 });
 

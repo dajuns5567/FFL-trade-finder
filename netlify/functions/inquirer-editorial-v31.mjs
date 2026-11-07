@@ -5905,6 +5905,7 @@ function assertWeek2Originality(result,previousEdition){
   // Final authoring can reintroduce Week-2 newsroom slogans *after* the
   // earlier originality pass. Retire the actual offending management prose,
   // not the recorded starter, matchup or transaction data beside it.
+  if(week>=7)replaceForwardInheritedWeek7Slogans(teams,week);
   if(week>=7)pruneForwardTransactionWireSlogans(teams);
   if(week>=7)pruneForwardSharedEditorialBoilerplate(teams);
   // Depth repair for the recap also runs after its initial freshness pass.
@@ -5972,6 +5973,58 @@ export function pruneForwardInheritedEchoes(teams,previousEdition){
    if(updated.length)section.paragraphs=updated;
   }
   article.paragraphs=article.sections.flatMap(x=>x.paragraphs||[]);
+ }
+ return teams;
+}
+
+// Early-week newsroom templates may survive all late copy filters when the
+// affected desk sits at its minimum word floor. At Week 7+, replace only two
+// verified inherited slogans with the issue-week's measured facts. Never
+// synthesize a matchup, starter return, ranking or transaction.
+export function replaceForwardInheritedWeek7Slogans(teams,week){
+ if(Number(week)<7)return teams;
+ for(const team of teams||[]){
+  const article=team?.inquirer_article;
+  if(!article?.sections?.length)continue;
+  const score=Number(team.points),opponentScore=Number(team.opponent_points),
+    validScore=Number.isFinite(score)&&Number.isFinite(opponentScore);
+  const club=String(team.team_name||''),opponent=String(team.opponent_name||'');
+  const rank=Number(team.league_context?.standings_rank),
+    division=String(team.division_context?.division_name||'');
+  const starters=(team.starter_details||[]).filter(p=>p?.name&&Number.isFinite(Number(p.points)));
+  const least=starters.slice().sort((a,b)=>Number(a.points)-Number(b.points))[0];
+  const id=Math.abs(Number(team.roster_id)||0);
+  const wireEvidence=validScore&&club&&opponent&&least?[
+   least.name+' registered '+forwardOne(least.points)+' points in '+club+'’s '+forwardOne(score)+'-point result against '+opponent+'. That starting-card return, rather than an invented personnel move, belongs under review.',
+   'Against '+opponent+', '+club+' finished with '+forwardOne(score)+' points while '+least.name+' supplied '+forwardOne(least.points)+'. The lineup is the evidence management actually has to answer for.',
+   'The '+club+' selection produced '+forwardOne(score)+' points against '+opponent+'; '+least.name+' contributed '+forwardOne(least.points)+'. That is a documented lineup question, not a fictional transaction.'
+  ][id%3]:null;
+  const divisionEvidence=validScore&&club&&opponent&&division&&
+   Number.isInteger(rank)&&rank>0?[
+    club+' are '+String(rank)+' in the standings after scoring '+forwardOne(score)+' against '+opponent+'. The '+division+' race has a measurable result to weigh, not a free postseason promise.',
+    'The '+division+' standings list '+club+' at No. '+rank+'. Their '+forwardOne(score)+'-point performance against '+opponent+' is evidence for the next race discussion, not a guaranteed berth.',
+    club+' sit '+String(rank)+' in the current table. Against '+opponent+', '+forwardOne(score)+' fantasy points supplied a recorded argument in the '+division+' chase.'
+   ][id%3]:null;
+  for(const section of article.sections){
+   section.paragraphs=(section.paragraphs||[]).map(p=>{
+    const parts=forwardSentenceParts(p),updated=[];
+    for(let i=0;i<parts.length;i++){
+     const sentence=parts[i];
+     if(section.kind==='management'&&wireEvidence&&
+        /\bstayed off the Week \d+ transaction wire\b/i.test(sentence)){
+      updated.push(wireEvidence);
+      if(/^That means\b/i.test(parts[i+1]||''))i++;
+      continue;
+     }
+     if(divisionEvidence&&/\benter Week \d+ with division leverage still available\b/i.test(sentence)){
+      updated.push(divisionEvidence);continue;
+     }
+     updated.push(sentence);
+    }
+    return updated.join(' ').trim();
+   });
+  }
+  article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);
  }
  return teams;
 }

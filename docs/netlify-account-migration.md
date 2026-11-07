@@ -91,7 +91,6 @@ TinyFish browser inspection of the **new** project PR #402 (strict Fleeced!-only
 
 Security: `AGENTS.md` and `.github/copilot-instructions.md` on this PR branch record project-only external-tool limits. TinyFish browser inspection accessed only the relevant Fleeced! deployment endpoints; no unrelated pages or credentials.
 
-
 ## November 2026: third Netlify account cutover (current)
 
 This section replaces the **destination** in the older migration instructions;

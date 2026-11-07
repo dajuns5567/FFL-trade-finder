@@ -131,3 +131,19 @@ test('backlogged Weeks 6, 7 and 8 each enqueue after the preceding week is commi
  assert.equal(inquirerScheduleDecision({status:make(6,'editorial-hold'),nfl,revision}).queue,false);
  assert.equal(inquirerScheduleDecision({status:{...make(6,'running'),started_at:'2026-11-05T03:00:00Z'},nfl,revision,now:Date.parse('2026-11-05T03:05:00Z')}).queue,false);
 });
+
+
+test('Netlify build ignore runs only on the newly connected owner account',async()=>{
+ const {spawnSync}=await import('node:child_process');
+ const config=readFileSync(new URL('../netlify.toml',import.meta.url),'utf8');
+ const script=config.match(/process\.exit\(process\.env\.SITE_ID[^"\n]+\? 1 : 0\)/)?.[0];
+ assert.ok(script,'new site-name build filter must be a valid node expression');
+ const code=(SITE_ID,SITE_NAME)=>spawnSync(process.execPath,['-e',script],{
+  env:{...process.env,SITE_ID,SITE_NAME},encoding:'utf8'}).status;
+ assert.equal(code('3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f',''),1,'build new account by site ID');
+ assert.equal(code('','gleaming-dodol-8dbc4a'),1,'build new account by site name');
+ assert.equal(code('8776d155-bc7b-4dcd-bafc-3d70d3d51800','transcendent-manatee-2f0123'),0,'old published archive source must not auto-deploy');
+ assert.equal(code('','unrelated-project'),0,'do not deploy unrelated clones');
+ const workflow=readFileSync(new URL('../.github/workflows/inquirer-editorial-r5-smoke.yml',import.meta.url),'utf8');
+ assert.match(workflow,/gleaming-dodol-8dbc4a\.netlify\.app/,'preview CI should select new site');
+});

@@ -129,8 +129,8 @@ test('Week 7 final writer removes the inherited transaction-wire joke only when 
  assert.match(short.inquirer_article.sections[0].paragraphs.join(' '),/transaction wire/,'underlength manuscript remains held, not silently shortened');
 });
 
-test('revision 100 fixes final recap originality without relaxing the independent deep quality checks',()=>{
- assert.match(source,/FORWARD_EDITORIAL_REVISION=100/);
+test('revision 101 fixes final recap originality without relaxing the independent deep quality checks',()=>{
+ assert.match(source,/FORWARD_EDITORIAL_REVISION=101/);
  assert.match(source,/if\(week>=7&&week%2===1\)/);
  assert.match(source,/previousNorm=new Set\(forwardRecapSentences\(previousEdition\)/);
  assert.match(source,/if\(collisions\.length\)/);
@@ -212,4 +212,11 @@ test('Week 7 slogan repair never guesses absent scoreboard or standings facts',a
  withFacts.league_context={standings_rank:8};
  replaceForwardInheritedWeek7Slogans([withFacts],6);
  assert.deepEqual(withFacts.inquirer_article.sections.map(s=>s.paragraphs[0]),[wire,division]);
+});
+
+test('market value repairs do not reuse the rejected next-opponent price scaffold',()=>{
+ assert.doesNotMatch(source,/changed price\. Its next opponent can examine/i);
+ assert.match(source,/Math\.floor\(\(Number\(t\.roster_id\)\|\|1\)\/8\)%4/);
+ assert.match(source,/Separately, its lineup scored/);
+ assert.match(source,/Two measurements belong in separate columns/);
 });

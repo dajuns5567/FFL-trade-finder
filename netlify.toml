@@ -2,10 +2,10 @@
 [build]
   publish = "."
   functions = "netlify/functions"
-  # Build only the owner's NEW Netlify account. The previous published
-  # project remains a read-only historical source and no longer builds.
-  # Netlify ignore-command exit 0 skips; exit 1 builds.
-  ignore = "node -e \"process.exit(process.env.SITE_ID === '3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f' || process.env.SITE_NAME === 'gleaming-dodol-8dbc4a' ? 1 : 0)\""
+  # The new lebrunski6 account may build pull-request Deploy Previews only.
+  # Always skip production, branch deploys, and all old Netlify accounts.
+  # Netlify ignore-command exit 0 skips; exit 1 allows the preview build.
+  ignore = "node -e \"const site=process.env.SITE_ID==='fa33dfe4-8293-441e-8da0-25cc66fc984c'||process.env.SITE_NAME==='precious-dango-fb4633';process.exit(site&&process.env.CONTEXT==='deploy-preview'?1:0)\""
 
 [functions]
   node_bundler = "esbuild"

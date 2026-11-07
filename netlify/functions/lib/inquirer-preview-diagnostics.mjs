@@ -4,12 +4,12 @@ export const PREVIEW_DIAGNOSTIC_STORE = 'fleeced-inquirer-editorial-diagnostics'
 export const PREVIEW_DIAGNOSTIC_STATUS = 'current-status.json';
 export const PREVIEW_DIAGNOSTIC_EDITION = 'current-edition.json';
 export const PREVIEW_DIAGNOSTIC_REJECTED = 'current-rejected-review.json';
-// Only the named replacement site's numbered PR preview hosts receive private
-// diagnostic storage. The canonical PR 402 namespace is unchanged.
+// Only explicitly allowlisted historical and new-account PR preview hosts
+// receive private diagnostic storage; production hosts never qualify.
 export function privatePreviewStoreName(url='') {
  let host='';
  try { host=new URL(url).hostname.toLowerCase(); } catch { return null; }
- const match=host.match(/^deploy-preview-(\d+)--transcendent-manatee-2f0123\.netlify\.app$/);
+ const match=host.match(/^deploy-preview-(\d+)--(?:transcendent-manatee-2f0123|gleaming-dodol-8dbc4a)\.netlify\.app$/);
  return match ? 'fleeced-inquirer-private-pr'+match[1]+'-persistent' : null;
 }
 
@@ -17,7 +17,7 @@ export function privatePreviewStoreName(url='') {
 export function isPreviewDiagnosticContext(url='') {
  const context=String(globalThis.Netlify?.env?.get?.('CONTEXT')||process.env.CONTEXT||'');
  const host=url?new URL(url).hostname:'';
- return context==='deploy-preview'||/^deploy-preview-\d+--(?:brilliant-faun-c5b649|transcendent-manatee-2f0123)\.netlify\.app$/i.test(host);
+ return context==='deploy-preview'||/^deploy-preview-\d+--(?:brilliant-faun-c5b649|transcendent-manatee-2f0123|gleaming-dodol-8dbc4a)\.netlify\.app$/i.test(host);
 }
 
 

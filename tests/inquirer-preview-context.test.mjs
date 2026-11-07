@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {isPreviewDiagnosticContext,resolvePreviewIdentity,previewStatusMatchesIdentity,PREVIEW_DIAGNOSTIC_STATUS,PREVIEW_DIAGNOSTIC_EDITION,PREVIEW_DIAGNOSTIC_REJECTED} from '../netlify/functions/lib/inquirer-preview-diagnostics.mjs';
+import {isPreviewDiagnosticContext,resolvePreviewIdentity,previewStatusMatchesIdentity,privatePreviewStoreName,PREVIEW_DIAGNOSTIC_STATUS,PREVIEW_DIAGNOSTIC_EDITION,PREVIEW_DIAGNOSTIC_REJECTED} from '../netlify/functions/lib/inquirer-preview-diagnostics.mjs';
 
 const preview=(site,n=402)=>'https://deploy-preview-'+n+'--'+site+'.netlify.app/.netlify/functions/inquirer-preview-diagnostic';
 
@@ -11,6 +11,7 @@ test('old and new project previews are accepted without a runtime CONTEXT variab
   assert.equal(isPreviewDiagnosticContext(preview('brilliant-faun-c5b649')),true);
   assert.equal(isPreviewDiagnosticContext(preview('transcendent-manatee-2f0123')),true);
   assert.equal(isPreviewDiagnosticContext(preview('transcendent-manatee-2f0123',1002)),true);
+  assert.equal(isPreviewDiagnosticContext(preview('gleaming-dodol-8dbc4a',421)),true);
  }finally{if(prior===undefined)delete process.env.CONTEXT;else process.env.CONTEXT=prior}
 });
 
@@ -86,4 +87,18 @@ test('stored preview status must match the requested exact week and error label'
  assert.equal(previewStatusMatchesIdentity({state:'running',started_at:new Date().toISOString()},target),false,
   'Legacy unscoped status cannot be trusted or treated as an existing Week 5 generation');
  assert.equal(previewStatusMatchesIdentity({state:'error',season:2027,week:5},target),false);
+});
+
+
+test('new account private diagnostics isolate PRs and reject production and unrelated hosts',()=>{
+ const first=privatePreviewStoreName(preview('gleaming-dodol-8dbc4a',421));
+ const second=privatePreviewStoreName(preview('gleaming-dodol-8dbc4a',422));
+ assert.equal(first,'fleeced-inquirer-private-pr421-persistent');
+ assert.notEqual(first,second);
+ assert.equal(privatePreviewStoreName('https://gleaming-dodol-8dbc4a.netlify.app/.netlify/functions/inquirer-preview-diagnostic'),null);
+ assert.equal(privatePreviewStoreName(preview('unrelated-project',421)),null);
+ assert.equal(privatePreviewStoreName('not-a-url'),null);
+ assert.equal(privatePreviewStoreName(preview('transcendent-manatee-2f0123',402)),'fleeced-inquirer-private-pr402-persistent');
+ assert.equal(privatePreviewStoreName(preview('gleaming-dodol-8dbc4a',402)),'fleeced-inquirer-private-pr402-persistent');
+ assert.equal(privatePreviewStoreName('https://deploy-preview-421--gleaming-dodol-8dbc4a.netlify.app.evil.example/'),null);
 });

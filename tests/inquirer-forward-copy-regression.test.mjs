@@ -129,11 +129,11 @@ test('Week 7 final writer removes the inherited transaction-wire joke only when 
  assert.match(short.inquirer_article.sections[0].paragraphs.join(' '),/transaction wire/,'underlength manuscript remains held, not silently shortened');
 });
 
-test('revision 99 rotates recap factual repairs without relaxing the independent deep quality checks',()=>{
- assert.match(source,/FORWARD_EDITORIAL_REVISION=99/);
+test('revision 100 fixes final recap originality without relaxing the independent deep quality checks',()=>{
+ assert.match(source,/FORWARD_EDITORIAL_REVISION=100/);
  assert.match(source,/if\(week>=7&&week%2===1\)/);
  assert.match(source,/previousNorm=new Set\(forwardRecapSentences\(previousEdition\)/);
- assert.match(source,/collisions\.length>=4/);
+ assert.match(source,/if\(collisions\.length\)/);
 });
 
 
@@ -157,4 +157,19 @@ test('shared Week 7 newsroom boilerplate can be pruned without losing scoring fa
   inquirer_article:{sections:[{kind:'management',paragraphs:[stock,managers]}]}}));
  pruneForwardSharedEditorialBoilerplate(short);
  assert.match(short[0].inquirer_article.sections[0].paragraphs.join(' '),/Someone announced/);
+});
+
+test('final Week 7 recap removes copied rhetoric only when substantive reporting remains',async()=>{
+ const {pruneFinalRecapCopyForward}=await import('../netlify/functions/inquirer-editorial-v31.mjs');
+ const recurring='The season standings still owe this club an explanation before the next whistle blows.';
+ const evidence='North Birds finished Week 7 on 115.3 points against South Cats at 108.2, a 7.1-point outcome from a completed matchup. The club remains in the title race because its accumulated results, rather than last week\'s rhetoric, place it among the leaders.';
+ const old={league_overview:{sections:[{blocks:[{kind:'lead',paragraphs:[recurring]}],paragraphs:[recurring]}]}};
+ const current={sections:[{blocks:[{kind:'lead',paragraphs:[recurring,evidence]}],paragraphs:[recurring,evidence]}]};
+ const frozen=structuredClone(old);
+ const clean=pruneFinalRecapCopyForward(current,old,[]);
+ assert.deepEqual(clean.sections[0].blocks[0].paragraphs,[evidence]);
+ assert.deepEqual(old,frozen,'locked prior week remains immutable');
+ const thin={sections:[{blocks:[{kind:'lead',paragraphs:[recurring]}],paragraphs:[recurring]}]};
+ const held=pruneFinalRecapCopyForward(thin,old,[]);
+ assert.deepEqual(held.sections[0].blocks[0].paragraphs,[recurring],'thin beat stays blocked, not silently erased');
 });

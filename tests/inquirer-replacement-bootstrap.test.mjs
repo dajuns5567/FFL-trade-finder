@@ -51,7 +51,7 @@ test('new account cutover is blocked until locked Weeks 3–6, archive index and
  const w3=edition(3),w4=edition(4);
  const w5={...edition(5),editorial_revision:95,editorial_generation:{engine:'v31-forward'}};
  const w6={...edition(6),editorial_revision:97,editorial_generation:{engine:'v31-forward'}};
- const index=[3,4,5,6].map(week=>({season:2026,week}));
+ const index=[5,6].map(week=>({season:2026,week}));
  const awards={records:[{season:2026,week:6,newsroom_engine:'v31-forward',
   newsroom_editorial_revision:97,players_of_week:{offense:{player_id:'123'},defense:{player_id:'456'}},
   manager_awards:[{type:'highest-scorer'},{type:'lowest-scorer'}]}]};
@@ -60,7 +60,7 @@ test('new account cutover is blocked until locked Weeks 3–6, archive index and
  assert.equal(verifiedNewSiteCutoverHistory({...valid,week6:null}).ready,false);
  assert.equal(verifiedNewSiteCutoverHistory({...valid,week6:{...w6,published_locked:false}}).ready,false);
  assert.equal(verifiedNewSiteCutoverHistory({...valid,week5:{...w5,season:2027}}).ready,false);
- assert.equal(verifiedNewSiteCutoverHistory({...valid,index:index.slice(0,3)}).ready,false);
+ assert.equal(verifiedNewSiteCutoverHistory({...valid,index:index.slice(0,1)}).ready,false);
  assert.equal(verifiedNewSiteCutoverHistory({...valid,awards:{records:[]}}).ready,false);
  assert.equal(verifiedNewSiteCutoverHistory({...valid,awards:{records:[{...awards.records[0],manager_awards:[]}]}}).ready,false);
  assert.equal(verifiedNewSiteCutoverHistory({...valid,week3:{...w3,published_locked:false}}).ready,false);

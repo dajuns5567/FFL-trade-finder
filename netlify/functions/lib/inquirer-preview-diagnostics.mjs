@@ -63,6 +63,20 @@ export async function resolvePreviewIdentity(url=''){
  };
 }
 
+// A read-only preview may use its own rigorously audited preceding draft as
+// historical editorial context. This is NOT publication or a locked archive.
+// Never admit a different PR, week, editorial revision, rejected or thin draft.
+export function isVerifiedPrivatePreviewPredecessor(edition,season,week){
+ return Number.isInteger(Number(season))&&Number.isInteger(Number(week))&&
+  Number(week)>=7&&Number(edition?.season)===Number(season)&&
+  Number(edition?.week)===Number(week)&&
+  edition?.preview_only===true&&edition?.published_locked===false&&
+  Number(edition?.editorial_revision)===FORWARD_EDITORIAL_REVISION&&
+  edition?.preview_generation_quality?.ok===true&&
+  edition?.preview_editorial_audit?.ok===true&&
+  auditPrivateEdition(edition).passed;
+}
+
 // Old or cross-week deploy-local status can never be authoritative. In
 // particular, a Week 6 error may not be displayed on the requested Week 5
 // page just because both drafts share the same Netlify deploy.

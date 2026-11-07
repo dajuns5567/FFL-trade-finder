@@ -135,3 +135,26 @@ test('revision 99 rotates recap factual repairs without relaxing the independent
  assert.match(source,/previousNorm=new Set\(forwardRecapSentences\(previousEdition\)/);
  assert.match(source,/collisions\.length>=4/);
 });
+
+
+test('shared Week 7 newsroom boilerplate can be pruned without losing scoring facts or shrinking under publication floors',async()=>{
+ const {pruneForwardSharedEditorialBoilerplate}=await import('../netlify/functions/inquirer-editorial-v31.mjs');
+ const stock='Someone announced the season was over before bothering to read the actual box score.';
+ const managers='The owner selected Player Alpha and recorded the result instead of pretending to forecast it. Verified Reporter credited 18.6 fantasy points to Player Alpha. The starting team completed its contest against Opponent Bears.';
+ const filler='This roster has a verifiable week with a completed lineup and an independently counted set of selected player performances. The game was contested against the scheduled opponent, rather than a fictional rival. '.repeat(15);
+ const teams=Array.from({length:5},(_,i)=>({roster_id:i+1,team_name:'Club '+String.fromCharCode(65+i),
+  opponent_name:'Opponent Bears',inquirer_article:{sections:[
+   {kind:'management',paragraphs:[stock,managers]},
+   {kind:'players',paragraphs:[filler]}]}}));
+ pruneForwardSharedEditorialBoilerplate(teams);
+ for(const team of teams){
+  const prose=team.inquirer_article.paragraphs.join(' ');
+  assert.doesNotMatch(prose,/Someone announced the season was over/);
+  assert.match(prose,/18.6 fantasy points/);
+  assert.ok(prose.trim().split(/\s+/).length>=300);
+ }
+ const short=Array.from({length:5},(_,i)=>({roster_id:i+1,team_name:'Short Club '+i,
+  inquirer_article:{sections:[{kind:'management',paragraphs:[stock,managers]}]}}));
+ pruneForwardSharedEditorialBoilerplate(short);
+ assert.match(short[0].inquirer_article.sections[0].paragraphs.join(' '),/Someone announced/);
+});

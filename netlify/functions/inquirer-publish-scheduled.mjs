@@ -1,7 +1,7 @@
 import {getStore} from '@netlify/blobs';
 import {FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
 import {inquirerScheduleDecision} from './lib/inquirer-schedule-decision.mjs';
-import {verifiedReplacementHistory} from './lib/inquirer-replacement-archive-gate.mjs';
+import {verifiedReplacementHistory,verifiedNewSiteCutoverHistory} from './lib/inquirer-replacement-archive-gate.mjs';
 import {editorialApprovalMatches} from './inquirer-publication-guard.mjs';
 import {approvedWeek5Record} from './lib/inquirer-week5-owner-signoff.mjs';
 // Queue a long-running background job. Netlify scheduled functions have a
@@ -16,7 +16,9 @@ export default async function inquirerPublishScheduled(req){
  const siteId=process.env.SITE_ID||globalThis.Netlify?.env?.get?.('SITE_ID')||'';
  const host=new URL(req.url).hostname,context=globalThis.Netlify?.env?.get?.('CONTEXT')||process.env.CONTEXT||'';
  if(context==='deploy-preview'||context==='branch-deploy')return skip('Non-production deployment');
- const isReplacement=site==='transcendent-manatee-2f0123'||
+ const isNewestSite=site==='gleaming-dodol-8dbc4a'||
+  siteId==='3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f'||host==='gleaming-dodol-8dbc4a.netlify.app';
+ const isReplacement=isNewestSite||site==='transcendent-manatee-2f0123'||
   siteId==='8776d155-bc7b-4dcd-bafc-3d70d3d51800'||host==='transcendent-manatee-2f0123.netlify.app';
  const publishingEnabled=globalThis.Netlify?.env?.get?.('FLEECED_ENABLE_NEW_SITE_PUBLISHER')||process.env.FLEECED_ENABLE_NEW_SITE_PUBLISHER||'';
  if(isReplacement&&publishingEnabled!=='true')
@@ -39,7 +41,21 @@ export default async function inquirerPublishScheduled(req){
    ]);
    const checked=verifiedReplacementHistory(week3,week4);
    if(!checked.ready)return skip(checked.reason);
-   if(status===null)status={state:'waiting',season:2026,week:4,editorial_revision:0};
+   if(isNewestSite){
+    const [week5,week6,index,awards]=await Promise.all([
+     store.get('broadcasts/2026/week-05.json',{type:'json'}),
+     store.get('broadcasts/2026/week-06.json',{type:'json'}),
+     store.get('broadcasts/index.json',{type:'json'}),
+     store.get('awards/weekly.json',{type:'json'})
+    ]);
+    const cutover=verifiedNewSiteCutoverHistory({week3,week4,week5,week6,index,awards});
+    if(!cutover.ready)return skip(cutover.reason);
+    if(status&&Number(status.season)===2026&&Number(status.week)<6)
+     return skip('New site publication cursor predates already locked Week 6');
+    // Full archive verified, so an empty destination state resumes from the
+    // last published week rather than regenerating previously approved copy.
+    if(status===null)status={state:'completed',available:true,season:2026,week:6,editorial_revision:FORWARD_EDITORIAL_REVISION};
+   }else if(status===null)status={state:'waiting',season:2026,week:4,editorial_revision:0};
   }
   if(!status||typeof status!=='object')return skip('Publication history not restored or unreadable');
   const current=await fetch('https://api.sleeper.app/v1/state/nfl',{signal:AbortSignal.timeout(6000)}).then(r=>r.ok?r.json():null);

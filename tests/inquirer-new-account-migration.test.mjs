@@ -7,7 +7,7 @@ const make=(entries={})=>({stores:Object.fromEntries(NEW_STORES.map(name=>
  [name,(entries[name]||[]).map(([key,sha256])=>({key,sha256}))]))});
 test('new account migration binds exact source and destination Netlify site IDs',()=>{
  assert.equal(NEW_SOURCE_SITE,'8776d155-bc7b-4dcd-bafc-3d70d3d51800');
- assert.equal(NEW_DEST_SITE,'3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f');
+ assert.equal(NEW_DEST_SITE,'fa33dfe4-8293-441e-8da0-25cc66fc984c');
  assert.equal(NEW_REGION,'us-east-2');
  assert.deepEqual(NEW_STORES,['fleeced-league-hub','fleeced-consensus-lkg','fll-value-history-v2']);
  assert.notEqual(NEW_SOURCE_SITE,NEW_DEST_SITE);
@@ -45,6 +45,8 @@ test('migration has no overwrite/delete operation and checks all source bytes be
  assert.match(s,/validateSourceCutover\(base,source\)/);
  assert.match(s,/EXPECTED_ORIGINAL_SHA256\[key\]/);
  assert.match(s,/FLEECED_NEW_SITE_PUBLISHER_DISABLED_CONFIRMED/);
+ assert.match(s,/FLEECED_NEW_SITE_QUEUE_CREDENTIAL_ABSENT_CONFIRMED/);
+ assert.match(s,/if\(!gateDeployed&&\!queueUnconfigured\)/);
  assert.match(s,/if\(drift.length\|\|conflicts.length\)throw/);
  assert.match(s,/getWithMetadata\(key,\{type:'arrayBuffer',consistency:'strong'\}\)/);
  assert.match(s,/if\(!checked\|\|digest\(checked.data\)!==row.sha256\)/);

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Non-destructive Netlify site-wide Blob cutover: approved Fleeced! site
- * transcendent-manatee -> owner's newer gleaming-dodol account.
+ * transcendent-manatee -> owner's replacement precious-dango account.
  *
  * Only local env tokens. NEVER commit private backups, tokens or Blob bytes.
  * Source is read-only. Destination is create-only after two independent
@@ -16,7 +16,7 @@ import {digest,blobName,validateBackupDir,EXPECTED_ORIGINAL_SHA256} from './migr
 import {verifiedNewSiteCutoverHistory} from '../netlify/functions/lib/inquirer-replacement-archive-gate.mjs';
 
 export const NEW_SOURCE_SITE='8776d155-bc7b-4dcd-bafc-3d70d3d51800';
-export const NEW_DEST_SITE='3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f';
+export const NEW_DEST_SITE='fa33dfe4-8293-441e-8da0-25cc66fc984c';
 export const NEW_REGION='us-east-2';
 export const NEW_STORES=Object.freeze(['fleeced-league-hub','fleeced-consensus-lkg','fll-value-history-v2']);
 export const SKIP_RUNTIME=Object.freeze(['inquirer/publication-status.json']);
@@ -159,8 +159,15 @@ async function compareLive(base,apply){
   JSON.stringify({drift,conflicts}));
  const created=[];
  if(apply){
-  if(process.env.FLEECED_NEW_SITE_PUBLISHER_DISABLED_CONFIRMED!=='YES')
-   throw Error('NO WRITES: first verify new-site publisher cutover gate is deployed and both concurrent publishers are disabled; set local FLEECED_NEW_SITE_PUBLISHER_DISABLED_CONFIRMED=YES only after independent verification.');
+  // Before the new production code gate is approved for deployment, an empty
+  // destination with no publication queue credential is independently held:
+  // scheduler skips and the worker rejects requests. Do not misrepresent this
+  // as the third-site safety gate already being deployed.
+  // Both paths require explicit acknowledgement and remain create-only.
+  const gateDeployed=process.env.FLEECED_NEW_SITE_PUBLISHER_DISABLED_CONFIRMED==='YES';
+  const queueUnconfigured=process.env.FLEECED_NEW_SITE_QUEUE_CREDENTIAL_ABSENT_CONFIRMED==='YES';
+  if(!gateDeployed&&!queueUnconfigured)
+   throw Error('NO WRITES: verify either the deployed publisher safety gate or absence of site/team publication queue credentials. For independently verified credentialless destination only, set FLEECED_NEW_SITE_QUEUE_CREDENTIAL_ABSENT_CONFIRMED=YES. Never configure the queue key until gate deployment and archive verification.');
   for(const {name,row} of pending){
    const store=open(NEW_DEST_SITE,dstToken,name),bytes=await readFile(join(base,'source','objects',row.file));
    if(digest(bytes)!==row.sha256)throw Error('Backup changed before restore: '+name+'/'+row.key);

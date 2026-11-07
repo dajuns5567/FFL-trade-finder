@@ -9,7 +9,7 @@ import {attributeForwardPlayerStatFragments,curateForwardTeamNarrative,inspectNa
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=99;
+export const FORWARD_EDITORIAL_REVISION=100;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -416,6 +416,33 @@ function enforceRecapEvolution(overview,previousOverview,week,salt,entities=[]){
     return{...take,take:evolvedBody};
   });
   return{...overview,sections,hot_takes};
+}
+// Final recap originality pass. Earlier transforms can put last week's prose
+// back into the feature blocks after the first collision cleanup. Remove only
+// genuinely redundant sentences, never scores, and only while the remaining
+// article retains required beat depth. Unresolved collisions stay on hold.
+export function pruneFinalRecapCopyForward(overview,previousEdition,currentTeams=[]){
+ if(!overview||!previousEdition?.league_overview)return overview;
+ const entities=[...forwardEntities({teams:currentTeams}),...forwardEntities(previousEdition)];
+ const old=new Set(forwardRecapSentences(previousEdition).map(s=>forwardNormSentence(s,entities)));
+ const fresh=p=>forwardSentenceParts(String(p||'')).filter(sentence=>
+  forwardWordCount(sentence)<10||!old.has(forwardNormSentence(sentence,entities)));
+ const sections=(overview.sections||[]).map(section=>{
+  if(section.blocks?.length){
+   const blocks=section.blocks.map(block=>{
+    const before=block.paragraphs||[],after=before.map(p=>fresh(p).join(' ').trim()).filter(Boolean);
+    const min=['league','outlook'].includes(block.kind)?2:1;
+    // Never turn a complete factual desk into an empty or too-thin one just
+    // to satisfy the repetition test. The original editorial guard will hold.
+    return{...block,paragraphs:after.length>=min&&
+      after.join(' ').trim().split(/\\s+/).length>=30?after:before};
+   });
+   return{...section,blocks,paragraphs:blocks.flatMap(b=>b.paragraphs||[])};
+  }
+  const before=section.paragraphs||[],after=before.map(p=>fresh(p).join(' ').trim()).filter(Boolean);
+  return{...section,paragraphs:after.length&&after.join(' ').trim().split(/\\s+/).length>=60?after:before};
+ });
+ return{...overview,sections,paragraphs:sections.flatMap(s=>s.paragraphs||[])};
 }
 function rejectRecapCopyForward(overview,previousOverview,week,entities){
   if(!previousOverview)return overview;
@@ -5888,9 +5915,11 @@ function assertWeek2Originality(result,previousEdition){
     const previousNorm=new Set(forwardRecapSentences(previousEdition).map(x=>forwardNormSentence(x,priorEntities)));
     const collisions=forwardRecapSentences({league_overview:overview})
       .filter(x=>previousNorm.has(forwardNormSentence(x,priorEntities)));
-    if(collisions.length>=4){
+    if(collisions.length){
       overview=enforceRecapEvolution(overview,previousEdition.league_overview,week,variationSalt,priorEntities);
-      overview.paragraphs=(overview.sections||[]).flatMap(sec=>sec.paragraphs||[]);
+      // Rewrite the final blocks, not only their intermediate cached prose.
+      // Drop remaining verbatim echoes only when a full factual beat survives.
+      overview=pruneFinalRecapCopyForward(overview,previousEdition,teams);
     }
   }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};

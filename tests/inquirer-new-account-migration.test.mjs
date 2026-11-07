@@ -45,6 +45,8 @@ test('migration has no overwrite/delete operation and checks all source bytes be
  assert.match(s,/validateSourceCutover\(base,source\)/);
  assert.match(s,/EXPECTED_ORIGINAL_SHA256\[key\]/);
  assert.match(s,/FLEECED_NEW_SITE_PUBLISHER_DISABLED_CONFIRMED/);
+ assert.match(s,/FLEECED_NEW_SITE_QUEUE_CREDENTIAL_ABSENT_CONFIRMED/);
+ assert.match(s,/if\(!gateDeployed&&\!queueUnconfigured\)/);
  assert.match(s,/if\(drift.length\|\|conflicts.length\)throw/);
  assert.match(s,/getWithMetadata\(key,\{type:'arrayBuffer',consistency:'strong'\}\)/);
  assert.match(s,/if\(!checked\|\|digest\(checked.data\)!==row.sha256\)/);

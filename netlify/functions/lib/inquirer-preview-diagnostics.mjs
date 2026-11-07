@@ -9,7 +9,7 @@ export const PREVIEW_DIAGNOSTIC_REJECTED = 'current-rejected-review.json';
 export function privatePreviewStoreName(url='') {
  let host='';
  try { host=new URL(url).hostname.toLowerCase(); } catch { return null; }
- const match=host.match(/^deploy-preview-(\d+)--(?:transcendent-manatee-2f0123|gleaming-dodol-8dbc4a)\.netlify\.app$/);
+ const match=host.match(/^deploy-preview-(\d+)--(?:transcendent-manatee-2f0123|gleaming-dodol-8dbc4a|precious-dango-fb4633)\.netlify\.app$/);
  return match ? 'fleeced-inquirer-private-pr'+match[1]+'-persistent' : null;
 }
 
@@ -17,7 +17,7 @@ export function privatePreviewStoreName(url='') {
 export function isPreviewDiagnosticContext(url='') {
  const context=String(globalThis.Netlify?.env?.get?.('CONTEXT')||process.env.CONTEXT||'');
  const host=url?new URL(url).hostname:'';
- return context==='deploy-preview'||/^deploy-preview-\d+--(?:brilliant-faun-c5b649|transcendent-manatee-2f0123|gleaming-dodol-8dbc4a)\.netlify\.app$/i.test(host);
+ return context==='deploy-preview'||/^deploy-preview-\d+--(?:brilliant-faun-c5b649|transcendent-manatee-2f0123|gleaming-dodol-8dbc4a|precious-dango-fb4633)\.netlify\.app$/i.test(host);
 }
 
 

@@ -108,3 +108,30 @@ test('a thin no-swap management desk receives genuine scoring concentration inst
  const t={roster_id:1,team_name:'North Birds',opponent_name:'South Cats',points:100,opponent_points:80,best_lineup_miss:null,starter_details:[{name:'Verified Receiver',points:40}],inquirer_article:{sections:[{kind:'management',paragraphs:['The recorded starters won this matchup.']}]}};
  finishReviewedForwardCopy({week:5,teams:[t]});const copy=t.inquirer_article.paragraphs.join(' ');assert.match(copy,/40.0%/);assert.match(copy,/other starters supplied 60.0 points/);assert.match(copy,/20.0-point winning margin/);assert.doesNotMatch(copy,/substitution|reserve/);
 });
+
+
+test('Week 7 final writer removes the inherited transaction-wire joke only when reporting depth survives',async()=>{
+ const {pruneForwardTransactionWireSlogans}=await import('../netlify/functions/inquirer-editorial-v31.mjs');
+ const wire='Example Manager stayed off the Week 7 transaction wire. That means Example Player at 7.5 points is the management headline, not a move count.';
+ const actual='Example Player recorded 7.5 fantasy points for the chosen lineup. The verified team score was 104.2 against Opponent Club, whose final total was 102.1. The manager must assess this recorded output before the next game.';
+ const extra='The certified Week 7 results contain a specific lineup, individual player returns, opponents and a completed scoreboard. The manuscript retains independently sourced football analysis and does not need the inherited newspaper joke to describe the selected team. '.repeat(15);
+ const team={roster_id:9,inquirer_article:{sections:[
+  {kind:'management',paragraphs:[wire,actual]},
+  {kind:'players',paragraphs:[extra]}
+ ]}};
+ const locked=structuredClone(team);
+ pruneForwardTransactionWireSlogans([team]);
+ assert.doesNotMatch(team.inquirer_article.paragraphs.join(' '),/stayed off the Week 7 transaction wire/);
+ assert.match(team.inquirer_article.paragraphs.join(' '),/Example Player recorded 7.5 fantasy points/);
+ assert.deepEqual(locked.inquirer_article.sections[0].paragraphs,[wire,actual]);
+ const short={roster_id:10,inquirer_article:{sections:[{kind:'management',paragraphs:[wire,actual]}]}};
+ pruneForwardTransactionWireSlogans([short]);
+ assert.match(short.inquirer_article.sections[0].paragraphs.join(' '),/transaction wire/,'underlength manuscript remains held, not silently shortened');
+});
+
+test('revision 99 rotates recap factual repairs without relaxing the independent deep quality checks',()=>{
+ assert.match(source,/FORWARD_EDITORIAL_REVISION=99/);
+ assert.match(source,/if\(week>=7&&week%2===1\)/);
+ assert.match(source,/previousNorm=new Set\(forwardRecapSentences\(previousEdition\)/);
+ assert.match(source,/collisions\.length>=4/);
+});

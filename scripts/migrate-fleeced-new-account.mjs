@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Non-destructive Netlify site-wide Blob cutover: approved Fleeced! site
- * transcendent-manatee -> owner's newer gleaming-dodol account.
+ * transcendent-manatee -> owner's replacement precious-dango account.
  *
  * Only local env tokens. NEVER commit private backups, tokens or Blob bytes.
  * Source is read-only. Destination is create-only after two independent
@@ -16,7 +16,7 @@ import {digest,blobName,validateBackupDir,EXPECTED_ORIGINAL_SHA256} from './migr
 import {verifiedNewSiteCutoverHistory} from '../netlify/functions/lib/inquirer-replacement-archive-gate.mjs';
 
 export const NEW_SOURCE_SITE='8776d155-bc7b-4dcd-bafc-3d70d3d51800';
-export const NEW_DEST_SITE='3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f';
+export const NEW_DEST_SITE='fa33dfe4-8293-441e-8da0-25cc66fc984c';
 export const NEW_REGION='us-east-2';
 export const NEW_STORES=Object.freeze(['fleeced-league-hub','fleeced-consensus-lkg','fll-value-history-v2']);
 export const SKIP_RUNTIME=Object.freeze(['inquirer/publication-status.json']);

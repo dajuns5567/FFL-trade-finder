@@ -5,7 +5,7 @@
   # Build only the approved replacement project; keep the paused original and unrelated clones untouched.
   # Netlify ignore-command exit 0 skips, exit 1 builds normally.
   # Preview-only cutover verification: retain production guards and unchanged editorial revision.
-  ignore = "node -e \"process.exit(process.env.SITE_ID === '8776d155-bc7b-4dcd-bafc-3d70d3d51800' || process.env.SITE_NAME === 'transcendent-manatee-2f0123' ? 1 : 0)\""
+  ignore = "node -e \"process.exit(process.env.SITE_ID === '3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f' || process.env.SITE_NAME === 'gleaming-dodol-8dbc4a' ? 1 : 0)\""
 
 [functions]
   node_bundler = "esbuild"

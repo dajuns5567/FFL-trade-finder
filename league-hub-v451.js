@@ -77,7 +77,9 @@ async function fetchInquirerPreview(){
   // Queue once only on the PR 402 preview; background code is create-only,
   // idempotent, deploy-isolated and cannot publish public archives.
   if(status.state==='not-started'){
-   if(!inquirerPreviewLaunchAttempted&&location.hostname==='deploy-preview-402--transcendent-manatee-2f0123.netlify.app'){
+   const authorizedOwnerPreview=location.hostname==='deploy-preview-402--transcendent-manatee-2f0123.netlify.app'||
+    /^deploy-preview-\d+--gleaming-dodol-8dbc4a\.netlify\.app$/i.test(location.hostname);
+   if(!inquirerPreviewLaunchAttempted&&authorizedOwnerPreview){
     inquirerPreviewLaunchAttempted=true;
     const launch=await fetch('/.netlify/functions/inquirer-preview-background?start=1'+scope,{cache:'no-store'});
     if(launch.ok||launch.status===202)throw Error('Private preview generation started.');

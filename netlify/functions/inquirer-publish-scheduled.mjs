@@ -16,7 +16,9 @@ export default async function inquirerPublishScheduled(req){
  const siteId=process.env.SITE_ID||globalThis.Netlify?.env?.get?.('SITE_ID')||'';
  const host=new URL(req.url).hostname,context=globalThis.Netlify?.env?.get?.('CONTEXT')||process.env.CONTEXT||'';
  if(context==='deploy-preview'||context==='branch-deploy')return skip('Non-production deployment');
- const isNewestSite=site==='gleaming-dodol-8dbc4a'||
+ const isNewestSite=site==='precious-dango-fb4633'||
+  siteId==='fa33dfe4-8293-441e-8da0-25cc66fc984c'||host==='precious-dango-fb4633.netlify.app'||
+  site==='gleaming-dodol-8dbc4a'||
   siteId==='3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f'||host==='gleaming-dodol-8dbc4a.netlify.app';
  const isReplacement=isNewestSite||site==='transcendent-manatee-2f0123'||
   siteId==='8776d155-bc7b-4dcd-bafc-3d70d3d51800'||host==='transcendent-manatee-2f0123.netlify.app';

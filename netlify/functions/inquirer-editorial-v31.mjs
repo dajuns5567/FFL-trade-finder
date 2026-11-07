@@ -9,7 +9,7 @@ import {attributeForwardPlayerStatFragments,curateForwardTeamNarrative,inspectNa
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=98;
+export const FORWARD_EDITORIAL_REVISION=99;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -5804,6 +5804,57 @@ function assertWeek2Originality(result,previousEdition){
         league:[leagueLine,gameLine],
         outlook:[nextLine(high),nextLine(second)]
       };
+      // The same Week-6 emergency recap prose cannot be inserted into Week 7
+      // with only names, numbers and a week label changed. Rotate the entire
+      // evidence construction, not just the first clause. Every figure below
+      // is taken from the issue-week lineup, score or standings ledger.
+      if(week>=7&&week%2===1){
+        const club=t=>w2DisplayTeam(t.team_name);
+        const rival=t=>w2DisplayTeam(t.opponent_name||'the opponent');
+        const margin=t=>forwardOne(Math.abs(Number(t.points)-Number(t.opponent_points)));
+        const points=t=>forwardOne(t.points);
+        const alternateScore=t=>t?
+          'The '+club(t)+' scorebook closes on '+points(t)+' for the starters and '+
+          forwardOne(t.opponent_points)+' for '+rival(t)+'. A '+margin(t)+
+          '-point separation is enough to decide the matchup, regardless of how loudly the losing side appeals.':null;
+        const alternateRank=t=>t?
+          'The standings currently put '+club(t)+' in place '+Number(t.league_context.standings_rank)+
+          '. Its '+points(t)+'-point outing against '+rival(t)+' is one recorded result behind that ranking, not a certificate for the next game.':null;
+        const alternatePlayer=(t,p)=>t&&p?
+          'One of '+club(t)+'’s counted starters was '+p.name+', credited with '+forwardOne(p.points)+
+          ' fantasy points. The complete selected lineup finished on '+points(t)+
+          ' against '+rival(t)+'; the supporting cast, not a postgame invention, supplied the balance.':null;
+        const alternateDecision=t=>{
+          if(!t)return null;
+          const missed=t.best_lineup_miss,star=starters(t)[0];
+          if(missed?.reserve?.name&&missed?.starter?.name&&Number(missed.gap)>0)
+            return missed.reserve.name+' finished '+forwardOne(missed.gap)+
+              ' points ahead of '+missed.starter.name+' in a compatible lineup position for '+
+              club(t)+'. The bench comparison is an actual Week '+week+
+              ' scoring opportunity; it is not evidence that a manager could have foreseen kickoff.';
+          return star?
+            'The '+club(t)+' starting card included '+star.name+' and '+forwardOne(star.points)+
+            ' fantasy points. With '+points(t)+' on the club scoreboard against '+rival(t)+
+            ', the selection can be evaluated from the chosen players without inventing a reserve swap.':null;
+        };
+        const alternateNext=t=>t?.next_opponent_name?
+          'On the upcoming fixture list, '+club(t)+' draws '+w2DisplayTeam(t.next_opponent_name)+
+          '. The latest measured result was '+points(t)+' against '+rival(t)+
+          '; opponents have that evidence, but no guarantee that next Sunday will copy it.':null;
+        evidence.lead=[alternateScore(high),alternateScore(second)];
+        evidence.standings=[alternateRank(ranked[0]),alternateRank(ranked[1])];
+        evidence.players=[alternatePlayer(high,leadStar),alternatePlayer(second,otherStar)];
+        evidence.decisions=[alternateDecision(high),alternateDecision(second)];
+        evidence.league=[high&&low?
+          'The scoring ceiling for Week '+week+' belonged to '+club(high)+' at '+points(high)+
+          ', while '+club(low)+' registered '+points(low)+'. Subtracting those completed returns gives '+
+          forwardOne(Number(high.points)-Number(low.points))+
+          ' points of separation across the selected league lineups.':null,
+          games.length?
+          'A count of '+games.length+' finished matchups yielded '+tight+
+          ' decisions within five fantasy points. One narrow win invites a victory speech; several narrow games suggest the league should keep the confetti receipts.':null];
+        evidence.outlook=[alternateNext(high),alternateNext(second)];
+      }
       for(const kind of ['lead','standings','players','decisions','league','outlook']){
         const block=(feature.blocks||[]).find(b=>b.kind===kind);
         if(!block)continue; // Missing sources remain blocked by the deep gate.
@@ -5824,6 +5875,23 @@ function assertWeek2Originality(result,previousEdition){
   // can still reintroduce a verbatim same-team paragraph. Prune it only if
   // the newspaper retains its independently checked word/desk minimums.
   if(week>=6)pruneForwardInheritedEchoes(teams,previousEdition);
+  // Final authoring can reintroduce Week-2 newsroom slogans *after* the
+  // earlier originality pass. Retire the actual offending management prose,
+  // not the recorded starter, matchup or transaction data beside it.
+  if(week>=7)pruneForwardTransactionWireSlogans(teams);
+  // Depth repair for the recap also runs after its initial freshness pass.
+  // Recheck the exact final feature blocks against the last locked edition.
+  // Rewriting only an actual collision avoids gratuitous changes to good copy.
+  if(week>=7&&previousEdition?.league_overview&&overview){
+    const priorEntities=[...forwardEntities({teams}),...forwardEntities(previousEdition)];
+    const previousNorm=new Set(forwardRecapSentences(previousEdition).map(x=>forwardNormSentence(x,priorEntities)));
+    const collisions=forwardRecapSentences({league_overview:overview})
+      .filter(x=>previousNorm.has(forwardNormSentence(x,priorEntities)));
+    if(collisions.length>=4){
+      overview=enforceRecapEvolution(overview,previousEdition.league_overview,week,variationSalt,priorEntities);
+      overview.paragraphs=(overview.sections||[]).flatMap(sec=>sec.paragraphs||[]);
+    }
+  }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 
@@ -5874,6 +5942,36 @@ export function pruneForwardInheritedEchoes(teams,previousEdition){
    if(updated.length)section.paragraphs=updated;
   }
   article.paragraphs=article.sections.flatMap(x=>x.paragraphs||[]);
+ }
+ return teams;
+}
+
+// Only remove unsupported inherited wire commentary when the article and
+// management desk retain their publication minimums. Missing source facts
+// remain a legitimate editorial hold rather than a license for padding.
+export function pruneForwardTransactionWireSlogans(teams){
+ for(const team of teams||[]){
+  const article=team?.inquirer_article,section=(article?.sections||[]).find(s=>s.kind==='management');
+  if(!section?.paragraphs?.length)continue;
+  const original=section.paragraphs;
+  const updated=original.map(paragraph=>{
+   const parts=forwardSentenceParts(paragraph),kept=[];
+   for(let i=0;i<parts.length;i++){
+    if(/\bstayed off the Week \d+ transaction wire\b/i.test(parts[i])){
+     if(/^That means\b/i.test(parts[i+1]||''))i++;
+     continue;
+    }
+    kept.push(parts[i]);
+   }
+   return kept.join(' ').trim();
+  }).filter(Boolean);
+  if(!updated.length)continue;
+  const total=forwardWordCount(article.sections.flatMap(s=>s===section?updated:(s.paragraphs||[])).join(' '));
+  const management=forwardWordCount(updated.join(' '));
+  if(total>=300&&management>=25){
+   section.paragraphs=updated;
+   article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);
+  }
  }
  return teams;
 }

@@ -173,3 +173,43 @@ test('final Week 7 recap removes copied rhetoric only when substantive reporting
  const held=pruneFinalRecapCopyForward(thin,old,[]);
  assert.deepEqual(held.sections[0].blocks[0].paragraphs,[recurring],'thin beat stays blocked, not silently erased');
 });
+
+test('Week 7 inherited slogans are replaced with verified lineup and division evidence',async()=>{
+ const {replaceForwardInheritedWeek7Slogans}=await import('../netlify/functions/inquirer-editorial-v31.mjs');
+ const team={roster_id:11,team_name:'South Bears',opponent_name:'North Hawks',points:115.3,
+  opponent_points:109.2,division_context:{division_name:'AFC West'},
+  league_context:{standings_rank:8},
+  starter_details:[{name:'Player A',points:7.5},{name:'Player B',points:21}],
+  inquirer_article:{sections:[
+   {kind:'management',paragraphs:['Manager A stayed off the Week 7 transaction wire. That means Player A at 7.5 is the management headline, not a move count.']},
+   {kind:'outlook',paragraphs:['The Bears enter Week 7 with division leverage still available. The season has a lot left to decide.']}
+  ]}};
+ const old=structuredClone(team);
+ replaceForwardInheritedWeek7Slogans([team],7);
+ const text=team.inquirer_article.paragraphs.join(' ');
+ assert.doesNotMatch(text,/transaction wire|division leverage still available/i);
+ assert.match(text,/Player A/);
+ assert.match(text,/7\.5/);
+ assert.match(text,/115\.3/);
+ assert.match(text,/North Hawks/);
+ assert.match(text,/AFC West/);
+ assert.match(text,/8/);
+ assert.match(text,/The season has a lot left to decide/);
+ assert.match(old.inquirer_article.paragraphs?.join(' ')||old.inquirer_article.sections[0].paragraphs[0],/transaction wire/);
+});
+test('Week 7 slogan repair never guesses absent scoreboard or standings facts',async()=>{
+ const {replaceForwardInheritedWeek7Slogans}=await import('../netlify/functions/inquirer-editorial-v31.mjs');
+ const wire='Manager A stayed off the Week 7 transaction wire. That means an old lineup is the management headline, not a move count.';
+ const division='The Bears enter Week 7 with division leverage still available.';
+ const team={roster_id:12,team_name:'South Bears',inquirer_article:{sections:[
+  {kind:'management',paragraphs:[wire]},{kind:'outlook',paragraphs:[division]}
+ ]}};
+ replaceForwardInheritedWeek7Slogans([team],7);
+ assert.deepEqual(team.inquirer_article.sections.map(s=>s.paragraphs[0]),[wire,division]);
+ const withFacts=structuredClone(team);
+ withFacts.points=115.3;withFacts.opponent_points=109.2;withFacts.starter_details=[{name:'Player A',points:7.5}];
+ withFacts.opponent_name='North Hawks';withFacts.division_context={division_name:'AFC West'};
+ withFacts.league_context={standings_rank:8};
+ replaceForwardInheritedWeek7Slogans([withFacts],6);
+ assert.deepEqual(withFacts.inquirer_article.sections.map(s=>s.paragraphs[0]),[wire,division]);
+});

@@ -35,7 +35,9 @@ export default async function publishInquirerInBackground(req){
   console.warn('inquirer-background-preview-write-held');
   return new Response('Preview deployment cannot publish',{status:403});
  }
- const isNewestSite=siteId==='3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f'||
+ const isNewestSite=siteId==='fa33dfe4-8293-441e-8da0-25cc66fc984c'||
+   host==='precious-dango-fb4633.netlify.app'||
+   siteId==='3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f'||
   host==='gleaming-dodol-8dbc4a.netlify.app';
  const replacement=isNewestSite||siteId==='8776d155-bc7b-4dcd-bafc-3d70d3d51800'||
   host==='transcendent-manatee-2f0123.netlify.app';

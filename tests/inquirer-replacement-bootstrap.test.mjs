@@ -65,6 +65,17 @@ test('new account cutover is blocked until locked Weeks 3–6, archive index and
  assert.equal(verifiedNewSiteCutoverHistory({...valid,awards:{records:[{...awards.records[0],manager_awards:[]}]}}).ready,false);
  assert.equal(verifiedNewSiteCutoverHistory({...valid,week3:{...w3,published_locked:false}}).ready,false);
 });
+test('third Netlify account is held at scheduler and worker before credentials or historical archives exist',()=>{
+ const scheduler=readFileSync(new URL('../netlify/functions/inquirer-publish-scheduled.mjs',import.meta.url),'utf8');
+ const worker=readFileSync(new URL('../netlify/functions/inquirer-publish-background.mjs',import.meta.url),'utf8');
+ for(const code of [scheduler,worker]){
+  assert.match(code,/fa33dfe4-8293-441e-8da0-25cc66fc984c/);
+  assert.match(code,/precious-dango-fb4633\.netlify\.app/);
+  assert.match(code,/FLEECED_ENABLE_NEW_SITE_PUBLISHER/);
+  assert.match(code,/verifiedNewSiteCutoverHistory/);
+ }
+});
+
 test('new-account scheduler and worker both enforce owner enable flag and post-Week-6 continuity',()=>{
  const scheduled=readFileSync(new URL('../netlify/functions/inquirer-publish-scheduled.mjs',import.meta.url),'utf8');
  const worker=readFileSync(new URL('../netlify/functions/inquirer-publish-background.mjs',import.meta.url),'utf8');

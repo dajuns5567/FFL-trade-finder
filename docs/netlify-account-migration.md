@@ -90,3 +90,76 @@ TinyFish browser inspection of the **new** project PR #402 (strict Fleeced!-only
 **Do not attempt to manufacture a new Week 4 manuscript, delete old archived editions, authorize a second production publisher, bypass the diagnostic, or merge/publish just to make Week 5 visible.** The next necessary dependency is the exact **locked Weeks 3–4 editions** from the original site's `fleeced-league-hub` Blob store, ideally with the full archival stores and checksums verified through a separately authorized recovery/cutover procedure. GitHub repository source code and passing simulation fixtures cannot substitute for these production historical records.
 
 Security: `AGENTS.md` and `.github/copilot-instructions.md` on this PR branch record project-only external-tool limits. TinyFish browser inspection accessed only the relevant Fleeced! deployment endpoints; no unrelated pages or credentials.
+
+
+## November 2026: third Netlify account cutover (current)
+
+This section replaces the **destination** in the older migration instructions;
+the older records remain for historical traceability.
+
+- Source of published data: transcendent-manatee-2f0123, Netlify Site ID
+  8776d155-bc7b-4dcd-bafc-3d70d3d51800. Published/locked 2026 Week 6
+  and its awards belong to this source.
+- Destination: gleaming-dodol-8dbc4a, Netlify Site ID
+  3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f, team lebrunski5567.
+  Its initial production deploy runs GitHub editorial revision 99 at
+  commit d916a99aff2bd52b84b6451cefcda61268d54b72.
+- Site-wide Netlify Blobs are isolated by Site ID. A ready deployment proves
+  **code only**, not archived newspaper/awards/data migration.
+- Publisher gate PR #418 adds the third Site ID to BOTH publisher kill
+  switches. Before publication it requires the locked 2026 Weeks 3–6,
+  a compatible Week 5–6 broadcast index, and complete Week 6 offensive,
+  IDP and manager awards. The new site currently has no queue secret.
+  Do not enable its publisher until records and old-site retirement verify.
+- New site presently has team-login protection on all contexts. Review
+  production visibility separately; do not remove draft privacy as part
+  of a storage transfer.
+
+### Verified, non-destructive local backup and migration
+
+The repository utility scripts/migrate-fleeced-new-account.mjs extends the
+existing approved create-only recovery procedure to the third site. It
+backs up three site-wide Netlify Blob stores in us-east-2:
+
+- fleeced-league-hub (locked editions, broadcast index, awards, managers)
+- fleeced-consensus-lkg (consensus cache)
+- fll-value-history-v2 (dynasty/history data)
+
+It intentionally does NOT restore the old publication-status cursor or
+rejected unpublished editorial-staging drafts. Original Week 3–4 bytes
+are cross-checked against independent approved SHA-256 checksums. Weeks 5–6
+must be independently validated as locked forward editions; Week 6 awards
+and Weeks 5–6 index must be valid. The utility verifies local file bytes,
+rechecks every live source object before any write, detects conflicting
+destination objects, writes only absent keys with onlyIfNew, and hashes
+each restored object. No source Blob can ever be modified by this script.
+
+**Simpler alternative:** Netlify's native Transfer project feature may
+be preferable if both teams can transfer the existing production Site ID
+with its Blobs and environment settings intact. Independently verify
+that outcome; do not assume a dashboard move preserves everything.
+
+When a cross-site copy is necessary, only the owner should use a trusted
+local computer with Node 22 and the existing GitHub repository. Keep BOTH
+tokens out of chat, GitHub, screenshots and logs. Set masked/local
+environment variables FLEECED_SOURCE_NETLIFY_TOKEN and
+FLEECED_DEST_NETLIFY_TOKEN, then run:
+
+    node scripts/migrate-fleeced-new-account.mjs backup --dir "$HOME/fleeced-private-cutover-2026"
+    node scripts/migrate-fleeced-new-account.mjs verify --dir "$HOME/fleeced-private-cutover-2026"
+    node scripts/migrate-fleeced-new-account.mjs plan --dir "$HOME/fleeced-private-cutover-2026"
+
+Before restoring, independently confirm: the new-site publisher guard PR
+#418 is deployed; both publishers are durably held; the plan reports no
+conflicts; all locked weeks and Week 6 awards are present. Only with
+the owner's explicit authorization and after this review, run:
+
+    export FLEECED_NEW_SITE_PUBLISHER_DISABLED_CONFIRMED=YES
+    node scripts/migrate-fleeced-new-account.mjs restore --dir "$HOME/fleeced-private-cutover-2026" --apply
+    unset FLEECED_SOURCE_NETLIFY_TOKEN FLEECED_DEST_NETLIFY_TOKEN FLEECED_NEW_SITE_PUBLISHER_DISABLED_CONFIRMED
+
+Do not enable any new automatic publisher just because migration returned
+success. Confirm the destination reader displays locked Weeks 1–6, awards
+and manager data; confirm source and destination checksums. Then enable
+exactly one publisher and allow Week 7 revision 99 to pass its separate
+editorial guards before Week 8 runs.

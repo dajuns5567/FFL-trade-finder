@@ -9,7 +9,7 @@ import {attributeForwardPlayerStatFragments,curateForwardTeamNarrative,inspectNa
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=100;
+export const FORWARD_EDITORIAL_REVISION=101;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -5157,7 +5157,12 @@ function assertWeek2Originality(result,previousEdition){
             'The market put '+name+' at '+after+', compared with '+before+' earlier. '+opp+' was dealing with '+w2One(score)+' fantasy points instead.',
             'A '+(delta>=0?'gain':'drop')+' from '+before+' to '+after+' belongs on '+teamPossessive+' ledger. The football column reads '+w2One(score)+' against '+opp+'.',
             name+' recorded '+after+' valuation points after starting at '+before+'. The fantasy team delivered '+w2One(score)+' against '+opp+'.',
-            'At '+after+' instead of '+before+' market points, '+name+' changed price. Its next opponent can examine the '+w2One(score)+'-point score against '+opp+'.'
+            [
+              'The market now lists '+name+' at '+after+' rather than '+before+'. Separately, its lineup scored '+w2One(score)+' against '+opp+'.',
+              'For '+name+', the valuation ledger moved from '+before+' to '+after+'. The recorded contest against '+opp+' finished with '+w2One(score)+' fantasy points.',
+              name+' have a '+after+'-point valuation against an earlier '+before+'. Their completed matchup with '+opp+' produced '+w2One(score)+' fantasy points.',
+              'Two measurements belong in separate columns for '+name+': a market change from '+before+' to '+after+', and a '+w2One(score)+'-point scoreboard result against '+opp+'.'
+            ][Math.floor((Number(t.roster_id)||1)/8)%4]
           ];
           valueDesk.paragraphs.push(marketAngles[(Number(t.roster_id)+Number(week))%marketAngles.length]);
         }

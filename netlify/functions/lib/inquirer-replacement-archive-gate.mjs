@@ -24,7 +24,9 @@ export function verifiedNewSiteCutoverHistory({week3,week4,week5,week6,index,awa
    week+': '+checked.issues.join('; ')};
  }
  const rows=Array.isArray(index)?index:[];
- const missing=[3,4,5,6].filter(week=>!rows.some(row=>
+ // The original 2026 Weeks 3–4 predate the archive index and are intentionally
+ // discovered from verified blobs at read time. Weeks 5–6 must be indexed.
+ const missing=[5,6].filter(week=>!rows.some(row=>
   Number(row?.season)===2026&&Number(row?.week)===week));
  if(missing.length)return{ready:false,reason:'New site archive index missing published 2026 weeks: '+missing.join(', ')};
  const awardRows=Array.isArray(awards?.records)?awards.records:[];

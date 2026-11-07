@@ -5879,6 +5879,7 @@ function assertWeek2Originality(result,previousEdition){
   // earlier originality pass. Retire the actual offending management prose,
   // not the recorded starter, matchup or transaction data beside it.
   if(week>=7)pruneForwardTransactionWireSlogans(teams);
+  if(week>=7)pruneForwardSharedEditorialBoilerplate(teams);
   // Depth repair for the recap also runs after its initial freshness pass.
   // Recheck the exact final feature blocks against the last locked edition.
   // Rewriting only an actual collision avoids gratuitous changes to good copy.
@@ -5972,6 +5973,75 @@ export function pruneForwardTransactionWireSlogans(teams){
    section.paragraphs=updated;
    article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);
   }
+ }
+ return teams;
+}
+
+// The independent publication guard also catches an eight-word phrase shared
+// by five rosters, including sentences whose introductions differ. Remove only
+// *non-statistical editorial repetition* when the article, desk and substantive
+// paragraph minimums still hold. The real box score must win every tie.
+export function pruneForwardSharedEditorialBoilerplate(teams){
+ const rows=(teams||[]).filter(t=>t?.inquirer_article?.sections?.length);
+ const names=[...new Set(rows.flatMap(t=>[t.team_name,t.opponent_name]).filter(Boolean).map(String))]
+   .sort((a,b)=>b.length-a.length);
+ const tokens=value=>{
+  let line=String(value||'').toLowerCase();
+  for(const name of names)line=line.replace(new RegExp(forwardEscRe(name),'gi'),' entity ');
+  return line.replace(/\b\d+(?:\.\d+)?\b/g,' # ').replace(/[^a-z# ]/g,' ')
+   .split(/\s+/).filter(Boolean);
+ };
+ const windows=value=>{
+  const words=tokens(value),result=new Set();
+  for(let i=0;i+8<=words.length;i++){
+   const slice=words.slice(i,i+8);
+   if(slice.filter(word=>word==='#').length<=1)result.add(slice.join(' '));
+  }
+  return result;
+ };
+ const owners=new Map();
+ for(const team of rows){
+  const id=String(team.roster_id),found=new Set();
+  for(const section of team.inquirer_article.sections)
+   for(const paragraph of section.paragraphs||[])
+    for(const phrase of windows(paragraph))found.add(phrase);
+  for(const phrase of found){
+   const registered=owners.get(phrase)||new Set();
+   registered.add(id);owners.set(phrase,registered);
+  }
+ }
+ const repeated=new Set([...owners].filter(([,owners])=>owners.size>=5).map(([phrase])=>phrase));
+ if(!repeated.size)return teams;
+ const deskFloor={management:25,sentiment:45,outlook:22,standings:20,lead:20};
+ for(const team of rows){
+  const article=team.inquirer_article;
+  let total=forwardWordCount(article.sections.flatMap(s=>s.paragraphs||[]).join(' '));
+  for(const section of article.sections){
+   if(['players','hot-seat','cool-throne','value'].includes(section.kind))continue;
+   let deskWords=forwardWordCount((section.paragraphs||[]).join(' '));
+   const floor=deskFloor[section.kind]??18;
+   const next=[];
+   for(const paragraph of section.paragraphs||[]){
+    const original=forwardSentenceParts(paragraph),kept=[];
+    for(const sentence of original){
+     const count=forwardWordCount(sentence);
+     // Player and matchup score evidence is not an interchangeable joke.
+     const fact=/\b\d+(?:\.\d+)?\s*(?:fantasy\s*)?(?:points?|yds?|yards?|tackles?|sacks?|touchdowns?|receptions?|catches)\b/i.test(sentence);
+     const hasRepeat=[...windows(sentence)].some(phrase=>repeated.has(phrase));
+     const articleDepth=total-count>=300;
+     const deskDepth=deskWords-count>=floor;
+     const otherProse=section.kind!=='sentiment'||(section.paragraphs||[]).filter(p=>p!==paragraph&&String(p).length>=50).length>=2;
+     if(hasRepeat&&!fact&&articleDepth&&deskDepth&&otherProse){
+      total-=count;deskWords-=count;continue;
+     }
+     kept.push(sentence);
+    }
+    const cleaned=kept.join(' ').trim();
+    if(cleaned)next.push(cleaned);
+   }
+   if(next.length)section.paragraphs=next;
+  }
+  article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);
  }
  return teams;
 }

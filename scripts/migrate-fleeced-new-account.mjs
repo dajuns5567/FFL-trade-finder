@@ -160,7 +160,7 @@ async function compareLive(base,apply){
  const created=[];
  if(apply){
   if(process.env.FLEECED_NEW_SITE_PUBLISHER_DISABLED_CONFIRMED!=='YES')
-   throw Error('NO WRITES: first verify new-site revision 100 cutover guard and disable both concurrent publishers; set local FLEECED_NEW_SITE_PUBLISHER_DISABLED_CONFIRMED=YES only after independent verification.');
+   throw Error('NO WRITES: first verify new-site publisher cutover gate is deployed and both concurrent publishers are disabled; set local FLEECED_NEW_SITE_PUBLISHER_DISABLED_CONFIRMED=YES only after independent verification.');
   for(const {name,row} of pending){
    const store=open(NEW_DEST_SITE,dstToken,name),bytes=await readFile(join(base,'source','objects',row.file));
    if(digest(bytes)!==row.sha256)throw Error('Backup changed before restore: '+name+'/'+row.key);

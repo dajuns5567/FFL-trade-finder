@@ -172,7 +172,7 @@ jobs:
         id: enqueue
         env:
           PREVIEW_NUMBER: ${{ github.event.pull_request.number }}
-          PREVIEW_SITE: ${{ vars.INQUIRER_PREVIEW_SITE || 'transcendent-manatee-2f0123.netlify.app' }}
+          PREVIEW_SITE: ${{ vars.INQUIRER_PREVIEW_SITE || 'gleaming-dodol-8dbc4a.netlify.app' }}
         run: |
           set -eu
           url="https://deploy-preview-${PREVIEW_NUMBER}--${PREVIEW_SITE}/.netlify/functions/inquirer-preview-background?start=1"

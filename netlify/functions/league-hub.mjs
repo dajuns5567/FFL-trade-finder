@@ -394,10 +394,10 @@ export async function weeklyReport(req){
    requested=Number(requestedRaw),privateStoreName=previewReadOnly?privatePreviewStoreName(req.url):null;
  let privatePredecessor;
  const getPrivatePredecessor=async w=>{
-  if(privatePredecessor!==undefined)return privatePredecessor;
-  privatePredecessor=null;
   if(!privateStoreName||requestedRaw===null||!Number.isInteger(requested)||
      requested!==w+1||w<7)return null;
+  if(privatePredecessor!==undefined)return privatePredecessor;
+  privatePredecessor=null;
   try{
    const key=season+'/week-'+String(w).padStart(2,'0')+
      '/editorial-r'+FORWARD_EDITORIAL_REVISION+'/edition.json';

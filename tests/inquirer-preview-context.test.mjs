@@ -98,4 +98,7 @@ test('new account private diagnostics isolate PRs and reject production and unre
  assert.equal(privatePreviewStoreName('https://gleaming-dodol-8dbc4a.netlify.app/.netlify/functions/inquirer-preview-diagnostic'),null);
  assert.equal(privatePreviewStoreName(preview('unrelated-project',421)),null);
  assert.equal(privatePreviewStoreName('not-a-url'),null);
+ assert.equal(privatePreviewStoreName(preview('transcendent-manatee-2f0123',402)),'fleeced-inquirer-private-pr402-persistent');
+ assert.equal(privatePreviewStoreName(preview('gleaming-dodol-8dbc4a',402)),'fleeced-inquirer-private-pr402-persistent');
+ assert.equal(privatePreviewStoreName('https://deploy-preview-421--gleaming-dodol-8dbc4a.netlify.app.evil.example/'),null);
 });

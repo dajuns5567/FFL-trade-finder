@@ -9,7 +9,7 @@ import {attributeForwardPlayerStatFragments,curateForwardTeamNarrative,inspectNa
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=99;
+export const FORWARD_EDITORIAL_REVISION=100;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -416,6 +416,33 @@ function enforceRecapEvolution(overview,previousOverview,week,salt,entities=[]){
     return{...take,take:evolvedBody};
   });
   return{...overview,sections,hot_takes};
+}
+// Final recap originality pass. Earlier transforms can put last week's prose
+// back into the feature blocks after the first collision cleanup. Remove only
+// genuinely redundant sentences, never scores, and only while the remaining
+// article retains required beat depth. Unresolved collisions stay on hold.
+export function pruneFinalRecapCopyForward(overview,previousEdition,currentTeams=[]){
+ if(!overview||!previousEdition?.league_overview)return overview;
+ const entities=[...forwardEntities({teams:currentTeams}),...forwardEntities(previousEdition)];
+ const old=new Set(forwardRecapSentences(previousEdition).map(s=>forwardNormSentence(s,entities)));
+ const fresh=p=>forwardSentenceParts(String(p||'')).filter(sentence=>
+  forwardWordCount(sentence)<10||!old.has(forwardNormSentence(sentence,entities)));
+ const sections=(overview.sections||[]).map(section=>{
+  if(section.blocks?.length){
+   const blocks=section.blocks.map(block=>{
+    const before=block.paragraphs||[],after=before.map(p=>fresh(p).join(' ').trim()).filter(Boolean);
+    const min=['league','outlook'].includes(block.kind)?2:1;
+    // Never turn a complete factual desk into an empty or too-thin one just
+    // to satisfy the repetition test. The original editorial guard will hold.
+    return{...block,paragraphs:after.length>=min&&
+      after.join(' ').trim().split(/\s+/).length>=30?after:before};
+   });
+   return{...section,blocks,paragraphs:blocks.flatMap(b=>b.paragraphs||[])};
+  }
+  const before=section.paragraphs||[],after=before.map(p=>fresh(p).join(' ').trim()).filter(Boolean);
+  return{...section,paragraphs:after.length&&after.join(' ').trim().split(/\s+/).length>=60?after:before};
+ });
+ return{...overview,sections,paragraphs:sections.flatMap(s=>s.paragraphs||[])};
 }
 function rejectRecapCopyForward(overview,previousOverview,week,entities){
   if(!previousOverview)return overview;
@@ -5878,6 +5905,7 @@ function assertWeek2Originality(result,previousEdition){
   // Final authoring can reintroduce Week-2 newsroom slogans *after* the
   // earlier originality pass. Retire the actual offending management prose,
   // not the recorded starter, matchup or transaction data beside it.
+  if(week>=7)replaceForwardInheritedWeek7Slogans(teams,week);
   if(week>=7)pruneForwardTransactionWireSlogans(teams);
   if(week>=7)pruneForwardSharedEditorialBoilerplate(teams);
   // Depth repair for the recap also runs after its initial freshness pass.
@@ -5888,9 +5916,11 @@ function assertWeek2Originality(result,previousEdition){
     const previousNorm=new Set(forwardRecapSentences(previousEdition).map(x=>forwardNormSentence(x,priorEntities)));
     const collisions=forwardRecapSentences({league_overview:overview})
       .filter(x=>previousNorm.has(forwardNormSentence(x,priorEntities)));
-    if(collisions.length>=4){
+    if(collisions.length){
       overview=enforceRecapEvolution(overview,previousEdition.league_overview,week,variationSalt,priorEntities);
-      overview.paragraphs=(overview.sections||[]).flatMap(sec=>sec.paragraphs||[]);
+      // Rewrite the final blocks, not only their intermediate cached prose.
+      // Drop remaining verbatim echoes only when a full factual beat survives.
+      overview=pruneFinalRecapCopyForward(overview,previousEdition,teams);
     }
   }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
@@ -5943,6 +5973,58 @@ export function pruneForwardInheritedEchoes(teams,previousEdition){
    if(updated.length)section.paragraphs=updated;
   }
   article.paragraphs=article.sections.flatMap(x=>x.paragraphs||[]);
+ }
+ return teams;
+}
+
+// Early-week newsroom templates may survive all late copy filters when the
+// affected desk sits at its minimum word floor. At Week 7+, replace only two
+// verified inherited slogans with the issue-week's measured facts. Never
+// synthesize a matchup, starter return, ranking or transaction.
+export function replaceForwardInheritedWeek7Slogans(teams,week){
+ if(Number(week)<7)return teams;
+ for(const team of teams||[]){
+  const article=team?.inquirer_article;
+  if(!article?.sections?.length)continue;
+  const score=Number(team.points),opponentScore=Number(team.opponent_points),
+    validScore=Number.isFinite(score)&&Number.isFinite(opponentScore);
+  const club=String(team.team_name||''),opponent=String(team.opponent_name||'');
+  const rank=Number(team.league_context?.standings_rank),
+    division=String(team.division_context?.division_name||'');
+  const starters=(team.starter_details||[]).filter(p=>p?.name&&Number.isFinite(Number(p.points)));
+  const least=starters.slice().sort((a,b)=>Number(a.points)-Number(b.points))[0];
+  const id=Math.abs(Number(team.roster_id)||0);
+  const wireEvidence=validScore&&club&&opponent&&least?[
+   least.name+' registered '+forwardOne(least.points)+' points in '+club+'’s '+forwardOne(score)+'-point result against '+opponent+'. That starting-card return, rather than an invented personnel move, belongs under review.',
+   'Against '+opponent+', '+club+' finished with '+forwardOne(score)+' points while '+least.name+' supplied '+forwardOne(least.points)+'. The lineup is the evidence management actually has to answer for.',
+   'The '+club+' selection produced '+forwardOne(score)+' points against '+opponent+'; '+least.name+' contributed '+forwardOne(least.points)+'. That is a documented lineup question, not a fictional transaction.'
+  ][id%3]:null;
+  const divisionEvidence=validScore&&club&&opponent&&division&&
+   Number.isInteger(rank)&&rank>0?[
+    club+' are '+String(rank)+' in the standings after scoring '+forwardOne(score)+' against '+opponent+'. The '+division+' race has a measurable result to weigh, not a free postseason promise.',
+    'The '+division+' standings list '+club+' at No. '+rank+'. Their '+forwardOne(score)+'-point performance against '+opponent+' is evidence for the next race discussion, not a guaranteed berth.',
+    club+' sit '+String(rank)+' in the current table. Against '+opponent+', '+forwardOne(score)+' fantasy points supplied a recorded argument in the '+division+' chase.'
+   ][id%3]:null;
+  for(const section of article.sections){
+   section.paragraphs=(section.paragraphs||[]).map(p=>{
+    const parts=forwardSentenceParts(p),updated=[];
+    for(let i=0;i<parts.length;i++){
+     const sentence=parts[i];
+     if(section.kind==='management'&&wireEvidence&&
+        /\bstayed off the Week \d+ transaction wire\b/i.test(sentence)){
+      updated.push(wireEvidence);
+      if(/^That means\b/i.test(parts[i+1]||''))i++;
+      continue;
+     }
+     if(divisionEvidence&&/\benter Week \d+ with division leverage still available\b/i.test(sentence)){
+      updated.push(divisionEvidence);continue;
+     }
+     updated.push(sentence);
+    }
+    return updated.join(' ').trim();
+   });
+  }
+  article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);
  }
  return teams;
 }

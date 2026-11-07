@@ -435,12 +435,12 @@ export function pruneFinalRecapCopyForward(overview,previousEdition,currentTeams
     // Never turn a complete factual desk into an empty or too-thin one just
     // to satisfy the repetition test. The original editorial guard will hold.
     return{...block,paragraphs:after.length>=min&&
-      after.join(' ').trim().split(/\\s+/).length>=30?after:before};
+      after.join(' ').trim().split(/\s+/).length>=30?after:before};
    });
    return{...section,blocks,paragraphs:blocks.flatMap(b=>b.paragraphs||[])};
   }
   const before=section.paragraphs||[],after=before.map(p=>fresh(p).join(' ').trim()).filter(Boolean);
-  return{...section,paragraphs:after.length&&after.join(' ').trim().split(/\\s+/).length>=60?after:before};
+  return{...section,paragraphs:after.length&&after.join(' ').trim().split(/\s+/).length>=60?after:before};
  });
  return{...overview,sections,paragraphs:sections.flatMap(s=>s.paragraphs||[])};
 }

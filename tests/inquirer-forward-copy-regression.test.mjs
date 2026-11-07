@@ -129,11 +129,11 @@ test('Week 7 final writer removes the inherited transaction-wire joke only when 
  assert.match(short.inquirer_article.sections[0].paragraphs.join(' '),/transaction wire/,'underlength manuscript remains held, not silently shortened');
 });
 
-test('revision 99 rotates recap factual repairs without relaxing the independent deep quality checks',()=>{
- assert.match(source,/FORWARD_EDITORIAL_REVISION=99/);
+test('revision 101 fixes final recap originality without relaxing the independent deep quality checks',()=>{
+ assert.match(source,/FORWARD_EDITORIAL_REVISION=101/);
  assert.match(source,/if\(week>=7&&week%2===1\)/);
  assert.match(source,/previousNorm=new Set\(forwardRecapSentences\(previousEdition\)/);
- assert.match(source,/collisions\.length>=4/);
+ assert.match(source,/if\(collisions\.length\)/);
 });
 
 
@@ -157,4 +157,66 @@ test('shared Week 7 newsroom boilerplate can be pruned without losing scoring fa
   inquirer_article:{sections:[{kind:'management',paragraphs:[stock,managers]}]}}));
  pruneForwardSharedEditorialBoilerplate(short);
  assert.match(short[0].inquirer_article.sections[0].paragraphs.join(' '),/Someone announced/);
+});
+
+test('final Week 7 recap removes copied rhetoric only when substantive reporting remains',async()=>{
+ const {pruneFinalRecapCopyForward}=await import('../netlify/functions/inquirer-editorial-v31.mjs');
+ const recurring='The season standings still owe this club an explanation before the next whistle blows.';
+ const evidence='North Birds finished Week 7 on 115.3 points against South Cats at 108.2, a 7.1-point outcome from a completed matchup. The club remains in the title race because its accumulated results, rather than last week\'s rhetoric, place it among the leaders.';
+ const old={league_overview:{sections:[{blocks:[{kind:'lead',paragraphs:[recurring]}],paragraphs:[recurring]}]}};
+ const current={sections:[{blocks:[{kind:'lead',paragraphs:[recurring,evidence]}],paragraphs:[recurring,evidence]}]};
+ const frozen=structuredClone(old);
+ const clean=pruneFinalRecapCopyForward(current,old,[]);
+ assert.deepEqual(clean.sections[0].blocks[0].paragraphs,[evidence]);
+ assert.deepEqual(old,frozen,'locked prior week remains immutable');
+ const thin={sections:[{blocks:[{kind:'lead',paragraphs:[recurring]}],paragraphs:[recurring]}]};
+ const held=pruneFinalRecapCopyForward(thin,old,[]);
+ assert.deepEqual(held.sections[0].blocks[0].paragraphs,[recurring],'thin beat stays blocked, not silently erased');
+});
+
+test('Week 7 inherited slogans are replaced with verified lineup and division evidence',async()=>{
+ const {replaceForwardInheritedWeek7Slogans}=await import('../netlify/functions/inquirer-editorial-v31.mjs');
+ const team={roster_id:11,team_name:'South Bears',opponent_name:'North Hawks',points:115.3,
+  opponent_points:109.2,division_context:{division_name:'AFC West'},
+  league_context:{standings_rank:8},
+  starter_details:[{name:'Player A',points:7.5},{name:'Player B',points:21}],
+  inquirer_article:{sections:[
+   {kind:'management',paragraphs:['Manager A stayed off the Week 7 transaction wire. That means Player A at 7.5 is the management headline, not a move count.']},
+   {kind:'outlook',paragraphs:['The Bears enter Week 7 with division leverage still available. The season has a lot left to decide.']}
+  ]}};
+ const old=structuredClone(team);
+ replaceForwardInheritedWeek7Slogans([team],7);
+ const text=team.inquirer_article.paragraphs.join(' ');
+ assert.doesNotMatch(text,/transaction wire|division leverage still available/i);
+ assert.match(text,/Player A/);
+ assert.match(text,/7\.5/);
+ assert.match(text,/115\.3/);
+ assert.match(text,/North Hawks/);
+ assert.match(text,/AFC West/);
+ assert.match(text,/8/);
+ assert.match(text,/The season has a lot left to decide/);
+ assert.match(old.inquirer_article.paragraphs?.join(' ')||old.inquirer_article.sections[0].paragraphs[0],/transaction wire/);
+});
+test('Week 7 slogan repair never guesses absent scoreboard or standings facts',async()=>{
+ const {replaceForwardInheritedWeek7Slogans}=await import('../netlify/functions/inquirer-editorial-v31.mjs');
+ const wire='Manager A stayed off the Week 7 transaction wire. That means an old lineup is the management headline, not a move count.';
+ const division='The Bears enter Week 7 with division leverage still available.';
+ const team={roster_id:12,team_name:'South Bears',inquirer_article:{sections:[
+  {kind:'management',paragraphs:[wire]},{kind:'outlook',paragraphs:[division]}
+ ]}};
+ replaceForwardInheritedWeek7Slogans([team],7);
+ assert.deepEqual(team.inquirer_article.sections.map(s=>s.paragraphs[0]),[wire,division]);
+ const withFacts=structuredClone(team);
+ withFacts.points=115.3;withFacts.opponent_points=109.2;withFacts.starter_details=[{name:'Player A',points:7.5}];
+ withFacts.opponent_name='North Hawks';withFacts.division_context={division_name:'AFC West'};
+ withFacts.league_context={standings_rank:8};
+ replaceForwardInheritedWeek7Slogans([withFacts],6);
+ assert.deepEqual(withFacts.inquirer_article.sections.map(s=>s.paragraphs[0]),[wire,division]);
+});
+
+test('market value repairs do not reuse the rejected next-opponent price scaffold',()=>{
+ assert.doesNotMatch(source,/changed price\. Its next opponent can examine/i);
+ assert.match(source,/Math\.floor\(\(Number\(t\.roster_id\)\|\|1\)\/8\)%4/);
+ assert.match(source,/Separately, its lineup scored/);
+ assert.match(source,/Two measurements belong in separate columns/);
 });

@@ -5,9 +5,10 @@
   # Build only the owner's NEW Netlify account. The previous published
   # project remains a read-only historical source and no longer builds.
   # Netlify ignore-command exit 0 skips; exit 1 builds.
-  # One-time owner-authorized production cutover. Only the CURRENT site can
-  # build production; previews, old accounts and branch deploys remain skipped.
-  ignore = "node -e \"const site=process.env.SITE_ID==='fa33dfe4-8293-441e-8da0-25cc66fc984c'||process.env.SITE_NAME==='precious-dango-fb4633';process.exit(site&&process.env.CONTEXT==='production'?1:0)\""
+  # TEST-ONLY BRANCH: build Deploy Previews on the current site, never production.
+  # Never merge this preview-only override into main.
+  # PR #434: staging-only execution and function bundle verification; no public archive writes.
+  ignore = "node -e \"const site=process.env.SITE_ID==='fa33dfe4-8293-441e-8da0-25cc66fc984c'||process.env.SITE_NAME==='precious-dango-fb4633';process.exit(site&&process.env.CONTEXT==='deploy-preview'?1:0)\""
 
 [functions]
   node_bundler = "esbuild"

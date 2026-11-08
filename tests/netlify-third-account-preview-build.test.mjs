@@ -17,10 +17,10 @@ function exitCode({siteId,siteName,context}){
  return result.status;
 }
 
-test('only the approved current Netlify site builds production cutover',()=>{
+test('test branch permits only current-site Deploy Previews',()=>{
  const dest='fa33dfe4-8293-441e-8da0-25cc66fc984c';
- assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'deploy-preview'}),0);
- assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'production'}),1);
+ assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'deploy-preview'}),1);
+ assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'production'}),0);
  assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'branch-deploy'}),0);
  assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:''}),0);
 });
@@ -33,7 +33,7 @@ test('previous accounts skip builds even for deploy-preview context',()=>{
  }
 });
 
-test('production cutover never spends deploy preview credits',()=>{
- assert.match(config,/CONTEXT==='production'/);
- assert.doesNotMatch(config,/site&&process\.env\.CONTEXT==='deploy-preview'\?1:0/);
+test('preview branch never builds production',()=>{
+ assert.match(config,/CONTEXT==='deploy-preview'/);
+ assert.doesNotMatch(config,/site&&process\.env\.CONTEXT==='production'\?1:0/);
 });

@@ -129,8 +129,8 @@ test('Week 7 final writer removes the inherited transaction-wire joke only when 
  assert.match(short.inquirer_article.sections[0].paragraphs.join(' '),/transaction wire/,'underlength manuscript remains held, not silently shortened');
 });
 
-test('revision 101 fixes final recap originality without relaxing the independent deep quality checks',()=>{
- assert.match(source,/FORWARD_EDITORIAL_REVISION=101/);
+test('revision 102 keeps final recap originality without relaxing the independent deep quality checks',()=>{
+ assert.match(source,/FORWARD_EDITORIAL_REVISION=102/);
  assert.match(source,/if\(week>=7&&week%2===1\)/);
  assert.match(source,/previousNorm=new Set\(forwardRecapSentences\(previousEdition\)/);
  assert.match(source,/if\(collisions\.length\)/);
@@ -241,7 +241,7 @@ test('editorial revision 102 replaces shared jokes from any previous team, not o
  assert.equal(JSON.stringify(previous),frozen,'previous edition must remain immutable');
  for(const team of teams){
   const text=team.inquirer_article.paragraphs.join(' ');
-  assert.doesNotMatch(text,/The hosts disagree about almost everything/);
+  assert.doesNotMatch(text,/Even they know the next opponent will care more/);
   assert.match(text,/Rival Tigers/);
   assert.match(text,/Star Runner|Quiet Runner/);
   assert.match(text,/\d/);

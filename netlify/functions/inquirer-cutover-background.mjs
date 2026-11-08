@@ -82,7 +82,7 @@ export default async function cutoverApprovedInquirerWeeks(req){
   }
   // Compute full offensive/IDP player and manager awards from Sleeper
   // BEFORE making either newspaper visible in the public archive index.
-  const packagePreview=await weeklyAwards({additionalLockedEditions:locked,persist:false});
+  const packagePreview=await weeklyAwards({additionalLockedEditions:locked,persist:false,onlyAdditional:true});
   const records=packagePreview?.records||[];
   for(const week of [7,8]){
    const record=records.find(x=>Number(x.season)===2026&&Number(x.week)===week);

@@ -29,7 +29,7 @@ test('private copies must pass cross-week audit before ANY create-only publicati
  assert.match(worker,/if\(!independent\.ok\)/);
  assert.match(worker,/if\(!isLockedInquirerEdition/);
  assert.match(worker,/if\(!completeFeature\(record\)\)/);
- assert.match(worker,/additionalLockedEditions:locked,persist:false/);
+ assert.match(worker,/additionalLockedEditions:locked,persist:false,onlyAdditional:true/);
  assert.match(worker,/onlyIfNew:true/);
  assert.match(worker,/if\(!jsonEqual\(await store\.get\(path/);
 });
@@ -43,7 +43,7 @@ test('historical archives remain unmodified and index commit is LAST',()=>{
  assert.ok(awards>=0&&index>awards&&status>index);
  assert.match(worker,/onlyIfMatch:awardsMeta\.etag/);
  assert.match(worker,/onlyIfMatch:metadata\.etag/);
- assert.match(hub,/weeklyAwards\(\{additionalLockedEditions=\[\],persist=true\}=\{\}\)/);
+ assert.match(hub,/weeklyAwards\(\{additionalLockedEditions=\[\],persist=true,onlyAdditional=false\}=\{\}\)/);
  assert.match(hub,/if\(persist&&\(missing\.length/);
  assert.match(hub,/ensureLockedEditionIndexed\(s,edition,key,\{commitIndex=true\}=\{\}\)/);
  assert.match(hub,/if\(!committed&&commitIndex\)/);
@@ -56,4 +56,10 @@ test('no manually called production endpoint can bypass unattended publication h
  assert.match(worker,/priorStatus\?\.state==='completed'/);
  assert.match(worker,/inquirer\/publication-status\.json/);
  assert.doesNotMatch(worker,/weeklyReport\(/);
+});
+
+test('staged awards only compute approved Week 7–8 and preserve all prior award entries',()=>{
+ assert.match(hub,/onlyAdditional\?\{reports:\[\]\}:await broadcastArchive\(\)/);
+ assert.match(hub,/onlyAdditional\?\[\.\.\.records/);
+ assert.match(worker,/onlyAdditional:true/);
 });

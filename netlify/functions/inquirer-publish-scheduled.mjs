@@ -35,10 +35,6 @@ export default async function inquirerPublishScheduled(req){
    const history=getStore('fleeced-league-hub',{consistency:'strong'});
    const marker=await history.get('inquirer/cutover/2026-weeks07-08-status.json',{type:'json'});
    if(marker?.state!=='completed'){
-    if(marker?.state==='running'&&Date.now()-Date.parse(marker.started_at||0)<16*60*1000)
-     return skip('Approved archive promotion is already running');
-    if(marker?.state==='error'&&Number(marker.revision)===FORWARD_EDITORIAL_REVISION)
-     return skip('Owner-approved archive promotion held: '+String(marker.reason||'unknown'));
     const [week3,week4,week5,week6,index,awards,week7,week8]=await Promise.all([
      ...[3,4,5,6,7,8].map(week=>history.get('broadcasts/2026/week-0'+week+'.json',{type:'json'})),
      history.get('broadcasts/index.json',{type:'json'}),
@@ -50,6 +46,10 @@ export default async function inquirerPublishScheduled(req){
     if(!baseline.ready)return skip('Approved archive baseline unavailable: '+baseline.reason);
     const ready=verifiedWeekNineAutopublishCutoverHistory({week7,week8,index,awards});
     if(!ready.ready){
+     if(marker?.state==='running'&&Date.now()-Date.parse(marker.started_at||0)<16*60*1000)
+      return skip('Approved archive promotion is already running');
+     if(marker?.state==='error'&&Number(marker.revision)===FORWARD_EDITORIAL_REVISION)
+      return skip('Owner-approved archive promotion held: '+String(marker.reason||'unknown'));
      const key=await resolveInquirerQueueCredential({
       store:history,configured:configuredKey,bootstrap:true
      });

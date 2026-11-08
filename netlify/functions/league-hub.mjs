@@ -755,8 +755,8 @@ export function isTrustedWeeklyAwardCache(rec,season,week){
   return Number(rec?.newsroom_editorial_revision)>=39&&rec?.newsroom_engine==='v31-forward';
  return true;
 }
-export async function weeklyAwards({additionalLockedEditions=[],persist=true}={}){
- const s=store(),archive=await broadcastArchive(),pairs=[],seen=new Set();
+export async function weeklyAwards({additionalLockedEditions=[],persist=true,onlyAdditional=false}={}){
+ const s=store(),archive=onlyAdditional?{reports:[]}:await broadcastArchive(),pairs=[],seen=new Set();
  const cutoverEditions=new Map();
  for(const edition of additionalLockedEditions){
   const season=Number(edition?.season),week=Number(edition?.week);
@@ -810,7 +810,9 @@ export async function weeklyAwards({additionalLockedEditions=[],persist=true}={}
     byKey.set(rec.season+'|'+rec.week,rec);
   }
  }
- const next=[...byKey.values()].sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));
+ const next=(onlyAdditional?[...records,...[...byKey.values()].filter(rec=>
+  !records.some(old=>Number(old.season)===Number(rec.season)&&Number(old.week)===Number(rec.week)))]:
+  [...byKey.values()]).sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));
  if(persist&&(missing.length||records.length!==next.length))
   await s.setJSON('awards/weekly.json',{schema_version:1,records:next});
  return{schema_version:1,records:next};

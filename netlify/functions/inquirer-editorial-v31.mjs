@@ -5937,7 +5937,7 @@ function assertWeek2Originality(result,previousEdition){
   // The supplemental hot-take layer must not print two stacked reporter cues.
   for(const take of overview?.hot_takes||[]){
     if(/Next week remembers:/i.test(take.take||''))
-      take.take=String(take.take).replace(/next Sunday remembers:\\s*/gi,'');
+      take.take=String(take.take).replace(/next Sunday remembers:\s*/gi,'');
   }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }

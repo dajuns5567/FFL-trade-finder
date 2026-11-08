@@ -1,7 +1,7 @@
 import {weeklyReport,weeklyAwards} from './league-hub.mjs';
 import {getStore} from '@netlify/blobs';
 import {FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
-import {verifiedNewSiteCutoverHistory} from './lib/inquirer-replacement-archive-gate.mjs';
+import {verifiedNewSiteCutoverHistory,verifiedWeekNineAutopublishCutoverHistory} from './lib/inquirer-replacement-archive-gate.mjs';
 
 // Netlify background functions run for up to 15 minutes. The hourly scheduler
 // queues this private job instead of trying to generate 32 articles in 30 seconds.
@@ -31,11 +31,13 @@ export default async function publishInquirerInBackground(req){
  if(context==='deploy-preview'||context==='branch-deploy'||
     /^deploy-preview-/.test(host)||
     (host.endsWith('--transcendent-manatee-2f0123.netlify.app')&&host!=='transcendent-manatee-2f0123.netlify.app')||
-    (host.endsWith('--gleaming-dodol-8dbc4a.netlify.app')&&host!=='gleaming-dodol-8dbc4a.netlify.app')){
+    (host.endsWith('--gleaming-dodol-8dbc4a.netlify.app')&&host!=='gleaming-dodol-8dbc4a.netlify.app')||
+    (host.endsWith('--precious-dango-fb4633.netlify.app')&&host!=='precious-dango-fb4633.netlify.app')){
   console.warn('inquirer-background-preview-write-held');
   return new Response('Preview deployment cannot publish',{status:403});
  }
- const isNewestSite=siteId==='3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f'||
+ const isCurrentSite=siteId==='fa33dfe4-8293-441e-8da0-25cc66fc984c'||host==='precious-dango-fb4633.netlify.app';
+ const isNewestSite=isCurrentSite||siteId==='3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f'||
   host==='gleaming-dodol-8dbc4a.netlify.app';
  const replacement=isNewestSite||siteId==='8776d155-bc7b-4dcd-bafc-3d70d3d51800'||
   host==='transcendent-manatee-2f0123.netlify.app';
@@ -55,17 +57,22 @@ export default async function publishInquirerInBackground(req){
  // complete, locked continuity BEFORE writing even publication-status.json.
  if(isNewestSite){
   try{
-   const [week3,week4,week5,week6,index,awards]=await Promise.all([
+   const [week3,week4,week5,week6,index,awards,...recent]=await Promise.all([
     statusStore.get('broadcasts/2026/week-03.json',{type:'json'}),
     statusStore.get('broadcasts/2026/week-04.json',{type:'json'}),
     statusStore.get('broadcasts/2026/week-05.json',{type:'json'}),
     statusStore.get('broadcasts/2026/week-06.json',{type:'json'}),
     statusStore.get('broadcasts/index.json',{type:'json'}),
-    statusStore.get('awards/weekly.json',{type:'json'})
+    statusStore.get('awards/weekly.json',{type:'json'}),
+    ...(isCurrentSite?[
+     statusStore.get('broadcasts/2026/week-07.json',{type:'json'}),
+     statusStore.get('broadcasts/2026/week-08.json',{type:'json'})]:[])
    ]);
    const checked=verifiedNewSiteCutoverHistory({week3,week4,week5,week6,index,awards});
-   if(!checked.ready){
-    console.warn('inquirer-new-site-archive-hold',checked.reason);
+   const autoCutover=isCurrentSite&&checked.ready?
+    verifiedWeekNineAutopublishCutoverHistory({week7:recent[0],week8:recent[1],index,awards}):{ready:true};
+   if(!checked.ready||!autoCutover.ready){
+    console.warn('inquirer-new-site-archive-hold',checked.ready?autoCutover.reason:checked.reason);
     return new Response('New-site archive cutover not verified',{status:403});
    }
   }catch(error){

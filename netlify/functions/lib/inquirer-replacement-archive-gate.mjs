@@ -40,3 +40,21 @@ export function verifiedNewSiteCutoverHistory({week3,week4,week5,week6,index,awa
   return{ready:false,reason:'New site missing verified published Week 6 offensive/IDP and manager awards'};
  return{ready:true,reason:'New site has locked 2026 Weeks 3-6, a complete indexed archive, and verified Week 6 awards'};
 }
+
+
+export function verifiedWeekNineAutopublishCutoverHistory({week7,week8,index,awards}={}){
+ for(const [week,edition] of [[7,week7],[8,week8]]){
+  const checked=inspectCanonicalArchive(edition,2026,week);
+  if(!checked.ok)return{ready:false,reason:'Week 9+ unattended cutover requires approved locked Week '+week+': '+checked.issues.join('; ')};
+ }
+ const rows=Array.isArray(index)?index:[];
+ if(![7,8].every(week=>rows.some(row=>Number(row?.season)===2026&&Number(row?.week)===week)))
+  return{ready:false,reason:'Week 9+ unattended cutover requires indexed Weeks 7 and 8'};
+ const record=(Array.isArray(awards?.records)?awards.records:[]).find(r=>Number(r?.season)===2026&&Number(r?.week)===8);
+ if(!record?.players_of_week?.offense?.player_id||!record?.players_of_week?.defense?.player_id||
+    !Array.isArray(record?.manager_awards)||
+    !['highest-scorer','lowest-scorer'].every(type=>record.manager_awards.some(x=>x?.type===type))||
+    record.newsroom_engine!=='v31-forward')
+  return{ready:false,reason:'Week 9+ unattended cutover requires complete Week 8 awards'};
+ return{ready:true,reason:'Approved locked Weeks 7 and 8 and Week 8 awards verified'};
+}

@@ -17,10 +17,10 @@ function exitCode({siteId,siteName,context}){
  return result.status;
 }
 
-test('only the approved current Netlify site builds production cutover',()=>{
+test('only the selected current Netlify site builds deploy previews only',()=>{
  const dest='fa33dfe4-8293-441e-8da0-25cc66fc984c';
- assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'deploy-preview'}),0);
- assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'production'}),1);
+ assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'deploy-preview'}),1);
+ assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'production'}),0);
  assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'branch-deploy'}),0);
  assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:''}),0);
 });

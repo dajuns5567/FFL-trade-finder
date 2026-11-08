@@ -129,8 +129,8 @@ test('Week 7 final writer removes the inherited transaction-wire joke only when 
  assert.match(short.inquirer_article.sections[0].paragraphs.join(' '),/transaction wire/,'underlength manuscript remains held, not silently shortened');
 });
 
-test('revision 102 keeps final recap originality without relaxing the independent deep quality checks',()=>{
- assert.match(source,/FORWARD_EDITORIAL_REVISION=102/);
+test('revision 103 keeps final recap originality without relaxing the independent deep quality checks',()=>{
+ assert.match(source,/FORWARD_EDITORIAL_REVISION=103/);
  assert.match(source,/if\(week>=7&&week%2===1\)/);
  assert.match(source,/previousNorm=new Set\(forwardRecapSentences\(previousEdition\)/);
  assert.match(source,/if\(collisions\.length\)/);
@@ -223,8 +223,8 @@ test('market value repairs do not reuse the rejected next-opponent price scaffol
 
 import {polishForwardAcrossWeeks,FORWARD_EDITORIAL_REVISION} from '../netlify/functions/inquirer-editorial-v31.mjs';
 
-test('editorial revision 102 replaces shared jokes from any previous team, not only its own',()=>{
- assert.equal(FORWARD_EDITORIAL_REVISION,102);
+test('editorial revision 103 replaces shared jokes from any previous team, not only its own',()=>{
+ assert.equal(FORWARD_EDITORIAL_REVISION,103);
  const recycled='The hosts disagree about almost everything. Even they know the next opponent will care more about the starting lineup than the episode title.';
  const previous={week:7,teams:[{roster_id:1,team_name:'North Dogs',inquirer_article:{paragraphs:[recycled]}}]};
  const make=(roster_id,team_name)=>({
@@ -247,7 +247,7 @@ test('editorial revision 102 replaces shared jokes from any previous team, not o
  }
 });
 
-test('editorial revision 102 forbids unattributed market movement and self-referential fallback',()=>{
+test('editorial revision 103 forbids unattributed market movement and self-referential fallback',()=>{
  assert.doesNotMatch(source,/return" The roster’s biggest "/);
  assert.doesNotMatch(source,/That is a documented lineup question, not a fictional transaction/);
  assert.match(source,/For '\+w2DisplayTeam\(team\.team_name\)/);

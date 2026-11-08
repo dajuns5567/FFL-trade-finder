@@ -2,6 +2,7 @@ import {createHash} from 'node:crypto';
 import {getStore,getDeployStore} from '@netlify/blobs';
 import {weeklyReport} from './league-hub.mjs';
 import {FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
+import {auditIndependentInquirerCopy} from './lib/inquirer-independent-copy-audit.mjs';
 import {isPreviewDiagnosticContext,resolvePreviewIdentity,previewStatusMatchesIdentity,PREVIEW_DIAGNOSTIC_STORE,privatePreviewStoreName,summarizePreviewDiagnostic,auditPrivateEdition} from './lib/inquirer-preview-diagnostics.mjs';
 
 // Explicit preview-only diagnostic invocation. Never publishes or stages an edition.
@@ -68,6 +69,26 @@ export default async function generateInquirerPreview(req){
    const failure=Error('Private draft failed weekly structural quality audit; refusing to mark complete.');
    failure.rejected_summary={...summarizePreviewDiagnostic(edition),structural};
    throw failure;
+  }
+  // A clean automatic generator audit missed repeated reader-facing meta
+  // caveats in revision 106. Independently inspect the *exact* saved Week 7
+  // predecessor and Week 8 draft before marking Week 8 complete. The
+  // underlying published archive is never read or modified here.
+  if(identity.season===2026&&identity.week===8){
+   const previousKey=identity.season+'/week-07/editorial-r'+FORWARD_EDITORIAL_REVISION+'/edition.json';
+   const previous=await store.get(previousKey,{type:'json'});
+   if(!previous){
+    throw Error('Week 8 private independent audit requires completed same-revision Week 7 preview. No publication occurred.');
+   }
+   const independent=auditIndependentInquirerCopy([previous,edition],{revision:FORWARD_EDITORIAL_REVISION});
+   if(!independent.ok){
+    await store.setJSON(identity.rejected,{started_at,edition});
+    const failure=Error('Week 8 private independent copy audit rejected '+independent.issue_count+' reader-facing defects.');
+    failure.rejected_summary={...summarizePreviewDiagnostic(edition),
+     independent_audit:{issue_count:independent.issue_count,issues:independent.issues}};
+    throw failure;
+   }
+   console.info('inquirer-preview-independent-copy-audit-passed',JSON.stringify({season:identity.season,week:identity.week,revision:FORWARD_EDITORIAL_REVISION}));
   }
   const write=await store.setJSON(identity.edition,edition,{onlyIfNew:true});
   if(write?.modified!==true)

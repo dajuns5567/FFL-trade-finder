@@ -46,3 +46,13 @@ test('live weekly writer checks independent copy before persistent archive write
  assert.match(source,/!independentCopy\.ok/);
  assert.match(source,/currentPublisherSite&&week>=9/);
 });
+
+
+test('private Week 8 checks the independently approved same-revision Week 7 before saving completion',()=>{
+ const source=readFileSync(new URL('../netlify/functions/inquirer-preview-background.mjs',import.meta.url),'utf8');
+ const gate=source.indexOf('auditIndependentInquirerCopy([previous,edition],{revision:FORWARD_EDITORIAL_REVISION})');
+ const write=source.indexOf('const write=await store.setJSON(identity.edition,edition');
+ assert.ok(gate>0&&write>gate,'independent copy gate must reject before saved completion');
+ assert.match(source,/if\(!independent\.ok\)/);
+ assert.match(source,/identity\.season===2026&&identity\.week===8/);
+});

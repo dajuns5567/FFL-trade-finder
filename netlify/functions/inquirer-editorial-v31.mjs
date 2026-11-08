@@ -9,7 +9,7 @@ import {attributeForwardPlayerStatFragments,curateForwardTeamNarrative,inspectNa
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=105;
+export const FORWARD_EDITORIAL_REVISION=106;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -6008,10 +6008,67 @@ function assertWeek2Originality(result,previousEdition){
   // final pass removes confirmed stock sentences only when the remaining
   // source-backed paragraphs still form a substantive editorial beat.
   // Otherwise the independent publication guard rejects the candidate.
-  if(week>=5)overview=pruneForwardRecapLessonScaffold(overview,teams,week);
+  if(week>=5){
+    overview=pruneForwardRecapLessonScaffold(overview,teams,week);
+    overview=polishForwardReaderCopy(teams,overview,week);
+  }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 
+
+/**
+ * Final reader-facing copy integrity, applied only to new private editions.
+ * Fixes observed Week 7/8 grammar and whitespace after all editorial passes.
+ * Never changes completed scores, player claims, standings or transaction facts.
+ * All article and recap paragraph mirrors remain in sync with canonical desks.
+ */
+export function polishForwardReaderCopy(teams,overview,week=0){
+ const repair=raw=>String(raw??'').trim()
+   .replace(/\bthe final score against ([^.!?;]{2,90}?) do not erase that work\b/gi,
+     (_m,opponent)=>'the final score against '+opponent+' does not erase that work')
+   .replace(/\bThe next test against ([^.!?;]{2,70}?) are better suited\b/gi,
+     (_m,opponent)=>'The next test against '+opponent+' is better suited')
+   .replace(/\bbeating ([^.!?;]{2,70}?) take a swing\b/gi,
+     (_m,opponent)=>'beating '+opponent+' takes a swing')
+   .replace(/\b(of which|where) 1 were decided\b/gi,'$1 1 was decided')
+   .replace(/\b(\d+(?:\.\d+)?) at the first names on the scoring sheet card\b/gi,'$1 fantasy points')
+   .replace(/\b1 carries\b/gi,'1 carry')
+   .replace(/\b1 rush yds\b/gi,'1 rush yd')
+   .replace(/\bThat lead score shift scored more than in Week (\d+)\b/gi,'That was an increase from Week $1')
+   .replace(/\bThat lead score shift finished below Week (\d+)\b/gi,'That was a decrease from Week $1');
+ for(const team of teams||[]){
+   const article=team?.inquirer_article;
+   if(!article?.sections?.length)continue;
+   const games=team?.league_context?.recent_games||[];
+   const previous=games.find(g=>Number(g?.week)===Number(week)-1);
+   if(/\bWin Again\b/i.test(String(article.headline||''))&&previous?.result!=='W')
+     article.headline=String(article.headline).replace(/\bWin Again\b/i,'Win Week '+Number(week));
+   for(const desk of article.sections)
+     desk.paragraphs=(desk.paragraphs||[]).map(repair).filter(Boolean);
+   article.paragraphs=article.sections.flatMap(d=>d.paragraphs||[]);
+ }
+ if(overview?.sections?.length){
+   for(const section of overview.sections){
+     if(section.blocks?.length){
+       for(const block of section.blocks)
+         block.paragraphs=(block.paragraphs||[]).map(repair).filter(Boolean);
+       section.paragraphs=section.blocks.flatMap(block=>block.paragraphs||[]);
+     }else section.paragraphs=(section.paragraphs||[]).map(repair).filter(Boolean);
+   }
+   overview.paragraphs=overview.sections.flatMap(section=>section.paragraphs||[]);
+ }
+ for(const take of overview?.hot_takes||[]){
+   const seen=new Set();
+   take.take=repair(String(take.take||'').replace(
+     /\b(Forget the preamble|What Sunday exposed|On the starter card):\s*/gi,
+     (whole,prefix)=>{
+       const key=prefix.toLowerCase();
+       if(seen.has(key))return '';
+       seen.add(key);return whole;
+     }));
+ }
+ return overview;
+}
 
 /** Remove repeated recap lesson scaffolds without inventing a new conclusion.
  * Keeps section, feature-block and flattened reader caches synchronized.

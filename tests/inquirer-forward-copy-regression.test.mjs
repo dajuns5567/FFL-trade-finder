@@ -308,3 +308,42 @@ test('final recap cannot invent evidence when the source roster is missing',()=>
  pruneForwardRecapLessonScaffold(overview,[],8);
  assert.equal(overview.sections[0].blocks[0].paragraphs[0],canned);
 });
+
+
+test('revision 106 repairs actual Week 7 and 8 publication-copy defects without altering facts',async()=>{
+ const {polishForwardReaderCopy}=await import('../netlify/functions/inquirer-editorial-v31.mjs');
+ const team=(week,result,headline,copy)=>({
+   team_name:'Los Angeles Rams',points:121.62,opponent_points:92.4,
+   league_context:{recent_games:[{week:week-1,result},{week,result:'W'}]},
+   inquirer_article:{headline,sections:[{kind:'cool-throne',paragraphs:[copy,' ']},
+     {kind:'outlook',paragraphs:['  The next test against Miami Dolphins are better suited to the lineup. '] }],paragraphs:[]}
+ });
+ const first=team(8,'L','Los Angeles Rams Win Again, Which Is How Expectations Get Expensive',
+  'The final score against Buffalo Billiards do not erase that work.');
+ const saved=team(7,'W','Los Angeles Rams Win Again, Which Is How Expectations Get Expensive',
+  'The final score against Seattle Seahawks do not erase that work.');
+ const overview={sections:[{blocks:[{kind:'league',paragraphs:[
+  'Of 16 matchups, of which 1 were decided within five fantasy points.',' '
+ ]}],paragraphs:[]}],hot_takes:[{take:'Forget the preamble: The upset pick uses the scores. Forget the preamble: The underdog needs a win. Forget the preamble: Forecasts are not final results.'}]};
+ polishForwardReaderCopy([first],overview,8);
+ assert.match(first.inquirer_article.headline,/Win Week 8/);
+ assert.equal(first.points,121.62);
+ assert.deepEqual(first.inquirer_article.sections[0].paragraphs,
+  ['The final score against Buffalo Billiards does not erase that work.']);
+ assert.match(first.inquirer_article.sections[1].paragraphs[0],/test against Miami Dolphins is better suited/);
+ assert.deepEqual(first.inquirer_article.paragraphs,
+  first.inquirer_article.sections.flatMap(s=>s.paragraphs));
+ assert.match(overview.sections[0].paragraphs[0],/of which 1 was decided/);
+ assert.deepEqual(overview.paragraphs,overview.sections[0].paragraphs);
+ assert.equal((overview.hot_takes[0].take.match(/Forget the preamble:/g)||[]).length,1);
+ polishForwardReaderCopy([saved],{sections:[],hot_takes:[]},7);
+ assert.match(saved.inquirer_article.headline,/Win Again/);
+});
+test('revision 106 normalizes final stat grammar and malformed hot-take insertions',async()=>{
+ const {polishForwardReaderCopy}=await import('../netlify/functions/inquirer-editorial-v31.mjs');
+ const overview={sections:[{paragraphs:['1 carries, 1 rush yds; a return.']}],
+  hot_takes:[{take:'Cam Ward just gave Jacksonville Jags 24.5 at the first names on the scoring sheet card.'}]};
+ polishForwardReaderCopy([],overview,8);
+ assert.match(overview.paragraphs[0],/1 carry, 1 rush yd/);
+ assert.match(overview.hot_takes[0].take,/24.5 fantasy points/);
+});

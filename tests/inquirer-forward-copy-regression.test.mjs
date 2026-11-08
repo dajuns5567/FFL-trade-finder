@@ -220,3 +220,39 @@ test('market value repairs do not reuse the rejected next-opponent price scaffol
  assert.match(source,/Separately, its lineup scored/);
  assert.match(source,/Two measurements belong in separate columns/);
 });
+
+import {polishForwardAcrossWeeks,FORWARD_EDITORIAL_REVISION} from '../netlify/functions/inquirer-editorial-v31.mjs';
+
+test('editorial revision 102 replaces shared jokes from any previous team, not only its own',()=>{
+ assert.equal(FORWARD_EDITORIAL_REVISION,102);
+ const recycled='The hosts disagree about almost everything. Even they know the next opponent will care more about the starting lineup than the episode title.';
+ const previous={week:7,teams:[{roster_id:1,team_name:'North Dogs',inquirer_article:{paragraphs:[recycled]}}]};
+ const make=(roster_id,team_name)=>({
+  roster_id,team_name,opponent_name:'Rival Tigers',points:81+roster_id,
+  opponent_points:95,won:false,starter_details:[
+   {name:'Star Runner '+roster_id,points:21},
+   {name:'Quiet Runner '+roster_id,points:2}
+  ],inquirer_article:{sections:[{kind:'sentiment',paragraphs:[
+   'Listeners will have questions after this Sunday. '+recycled
+  ]}]}
+ });
+ const teams=[make(2,'East Birds'),make(3,'West Bears')],frozen=JSON.stringify(previous);
+ polishForwardAcrossWeeks(teams,previous,8);
+ assert.equal(JSON.stringify(previous),frozen,'previous edition must remain immutable');
+ for(const team of teams){
+  const text=team.inquirer_article.paragraphs.join(' ');
+  assert.doesNotMatch(text,/The hosts disagree about almost everything/);
+  assert.match(text,/Rival Tigers/);
+  assert.match(text,/Star Runner|Quiet Runner/);
+  assert.match(text,/\d/);
+ }
+});
+
+test('editorial revision 102 forbids unattributed market movement and self-referential fallback',()=>{
+ assert.doesNotMatch(source,/return" The roster’s biggest "/);
+ assert.doesNotMatch(source,/That is a documented lineup question, not a fictional transaction/);
+ assert.match(source,/For '\+w2DisplayTeam\(team\.team_name\)/);
+ assert.match(source,/window\.baseline_t/);
+ assert.match(source,/spills:'spill',hands:'hand'/);
+ assert.doesNotMatch(source,/One narrow win invites a victory speech; several narrow games suggest/);
+});

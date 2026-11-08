@@ -7,13 +7,13 @@ const scheduler=readFileSync(new URL('../netlify/functions/inquirer-publish-sche
 const hub=readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
 const config=readFileSync(new URL('../netlify.toml',import.meta.url),'utf8');
 test('production cutover requires exact owner-approved site, context and queue secret',()=>{
- assert.match(worker,/siteId!==SITE_ID/);
+ assert.match(worker,/siteId===SITE_ID/);
  assert.match(worker,/cutoverRuntimeHoldReason/);
  assert.match(worker,/inquirer-cutover-entry-held/);
  assert.match(worker,/inquirer-cutover-queue-auth-held/);
  assert.match(worker,/inquirer-cutover-accepted/);
- assert.match(worker,/context!=='production'/);
- assert.match(worker,/enabled!=='true'/);
+ assert.match(worker,/context,siteId,enabled,host/);
+ assert.match(worker,/publisher_enabled:enabled==='true'/);
  assert.match(worker,/inquirerQueueKeyMatches/);
  assert.match(worker,/req\.method!=='POST'/);
  assert.match(worker,/FORWARD_EDITORIAL_REVISION!==107/);

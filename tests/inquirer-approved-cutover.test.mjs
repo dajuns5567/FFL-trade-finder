@@ -7,7 +7,11 @@ const hub=readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta
 const config=readFileSync(new URL('../netlify.toml',import.meta.url),'utf8');
 test('production cutover requires exact owner-approved site, context and queue secret',()=>{
  assert.match(worker,/siteId!==SITE_ID/);
- assert.match(worker,/host!==SITE_HOST/);
+ assert.match(worker,/host===SITE_HOST/);
+ assert.match(worker,/host===SITE_ID\+'\.netlify\.app'/);
+ assert.match(worker,/!authorizedHost/);
+ // Netlify's scheduler uses a site-id origin; the worker must accept it.
+ assert.match(scheduler,/new URL\('\/\.netlify\/functions\/inquirer-cutover-background',req\.url\)/);
  assert.match(worker,/context!=='production'/);
  assert.match(worker,/enabled!=='true'/);
  assert.match(worker,/inquirerQueueKeyMatches/);

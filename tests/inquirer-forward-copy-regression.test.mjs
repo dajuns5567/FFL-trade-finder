@@ -129,8 +129,8 @@ test('Week 7 final writer removes the inherited transaction-wire joke only when 
  assert.match(short.inquirer_article.sections[0].paragraphs.join(' '),/transaction wire/,'underlength manuscript remains held, not silently shortened');
 });
 
-test('revision 104 keeps final recap originality without relaxing the independent deep quality checks',()=>{
- assert.match(source,/FORWARD_EDITORIAL_REVISION=104/);
+test('revision 105 keeps final recap originality without relaxing the independent deep quality checks',()=>{
+ assert.match(source,/FORWARD_EDITORIAL_REVISION=105/);
  assert.match(source,/if\(week>=7&&week%2===1\)/);
  assert.match(source,/previousNorm=new Set\(forwardRecapSentences\(previousEdition\)/);
  assert.match(source,/if\(collisions\.length\)/);
@@ -223,8 +223,8 @@ test('market value repairs do not reuse the rejected next-opponent price scaffol
 
 import {polishForwardAcrossWeeks,FORWARD_EDITORIAL_REVISION} from '../netlify/functions/inquirer-editorial-v31.mjs';
 
-test('editorial revision 104 replaces shared jokes from any previous team, not only its own',()=>{
- assert.equal(FORWARD_EDITORIAL_REVISION,104);
+test('editorial revision 105 replaces shared jokes from any previous team, not only its own',()=>{
+ assert.equal(FORWARD_EDITORIAL_REVISION,105);
  const recycled='The hosts disagree about almost everything. Even they know the next opponent will care more about the starting lineup than the episode title.';
  const previous={week:7,teams:[{roster_id:1,team_name:'North Dogs',inquirer_article:{paragraphs:[recycled]}}]};
  const make=(roster_id,team_name)=>({
@@ -247,7 +247,7 @@ test('editorial revision 104 replaces shared jokes from any previous team, not o
  }
 });
 
-test('editorial revision 104 forbids unattributed market movement and self-referential fallback',()=>{
+test('editorial revision 105 forbids unattributed market movement and self-referential fallback',()=>{
  assert.doesNotMatch(source,/return" The roster’s biggest "/);
  assert.doesNotMatch(source,/That is a documented lineup question, not a fictional transaction/);
  assert.match(source,/For '\+w2DisplayTeam\(team\.team_name\)/);
@@ -279,4 +279,32 @@ test('final recap leaves an under-depth beat unmodified for the independent edit
  const overview={sections:[{blocks:[{kind:'league',paragraphs:[only]}],paragraphs:[only]}]};
  pruneForwardRecapLessonScaffold(overview);
  assert.equal(overview.sections[0].blocks[0].paragraphs[0],only);
+});
+
+test('final recap repairs under-depth mechanical beats from recorded matchup evidence',()=>{
+ const canned='The useful lesson is not that every victory guarantees a championship.';
+ const teams=[
+ {team_name:'North Bears',opponent_name:'South Lions',points:140.5,opponent_points:105.2,next_opponent_name:'East Wolves',starter_details:[{name:'A Receiver',points:31.8}]},
+ {team_name:'West Foxes',opponent_name:'East Wolves',points:132.1,opponent_points:134.8,next_opponent_name:'North Bears',starter_details:[{name:'A Running Back',points:25.4}]}
+ ];
+ const overview={sections:[{blocks:[
+  {kind:'league',paragraphs:[canned]},
+  {kind:'outlook',paragraphs:[canned]},
+  {kind:'players',paragraphs:[canned]}
+ ],paragraphs:[]}],hot_takes:[{take:'The standings still need another completed game.'}]};
+ pruneForwardRecapLessonScaffold(overview,teams,8);
+ for(const block of overview.sections[0].blocks){
+  assert.doesNotMatch(block.paragraphs.join(' '),/the useful lesson is not|the margin asks more:/i);
+  assert.ok(block.paragraphs.join(' ').split(/\s+/).length>=30);
+  if(['league','outlook'].includes(block.kind))assert.ok(block.paragraphs.length>=2);
+  assert.match(block.paragraphs.join(' '),/140.5/);
+ }
+ assert.match(overview.paragraphs.join(' '),/A Receiver/);
+ assert.deepEqual(overview.sections[0].paragraphs,overview.paragraphs);
+});
+test('final recap cannot invent evidence when the source roster is missing',()=>{
+ const canned='The useful lesson is not that luck can win games.';
+ const overview={sections:[{blocks:[{kind:'league',paragraphs:[canned]}],paragraphs:[canned]}]};
+ pruneForwardRecapLessonScaffold(overview,[],8);
+ assert.equal(overview.sections[0].blocks[0].paragraphs[0],canned);
 });

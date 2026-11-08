@@ -9,7 +9,7 @@ import {attributeForwardPlayerStatFragments,curateForwardTeamNarrative,inspectNa
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=104;
+export const FORWARD_EDITORIAL_REVISION=105;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -6008,7 +6008,7 @@ function assertWeek2Originality(result,previousEdition){
   // final pass removes confirmed stock sentences only when the remaining
   // source-backed paragraphs still form a substantive editorial beat.
   // Otherwise the independent publication guard rejects the candidate.
-  if(week>=5)overview=pruneForwardRecapLessonScaffold(overview);
+  if(week>=5)overview=pruneForwardRecapLessonScaffold(overview,teams,week);
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 
@@ -6017,24 +6017,72 @@ function assertWeek2Originality(result,previousEdition){
  * Keeps section, feature-block and flattened reader caches synchronized.
  * Does not replace a required beat with a score summary or weaken admission.
  */
-export function pruneForwardRecapLessonScaffold(overview){
+export function pruneForwardRecapLessonScaffold(overview,teams=[],week=0){
  if(!overview?.sections?.length)return overview;
  const mechanical=/\bthe useful lesson is not\b|\bthe margin asks more\s*:/i;
  const count=text=>String(text||'').trim().split(/\s+/).filter(Boolean).length;
  const clean=paragraph=>forwardSentenceParts(paragraph)
    .filter(sentence=>!mechanical.test(sentence)).join(' ').trim();
- const safe=(paragraphs,floor)=>{
+ // Real completed scores and recorded starters, never an invented transaction,
+ // upcoming result or generic philosophical conclusion. Different feature
+ // desks draw different reporting details instead of recycling a catchphrase.
+ const scored=(teams||[]).filter(t=>Number.isFinite(Number(t?.points))&&
+   Number.isFinite(Number(t?.opponent_points))&&t.team_name&&t.opponent_name)
+   .slice().sort((a,b)=>Number(b.points)-Number(a.points));
+ const display=t=>w2DisplayTeam(t.team_name),opponent=t=>w2DisplayTeam(t.opponent_name);
+ const receipt=(t,kind)=>{
+   if(!t)return null;
+   const name=display(t),other=opponent(t),points=forwardOne(t.points),
+     against=forwardOne(t.opponent_points),won=Number(t.points)>Number(t.opponent_points);
+   const star=(t.starter_details||[]).filter(p=>p?.name&&Number.isFinite(Number(p.points)))
+     .slice().sort((a,b)=>Number(b.points)-Number(a.points))[0];
+   if(kind==='outlook'&&t.next_opponent_name)
+     return 'The next game sends '+name+' against '+w2DisplayTeam(t.next_opponent_name)+
+       '. Its latest verified reference is '+points+' fantasy points against '+other+
+       ' in Week '+week+'; the next opponent will get a fresh lineup, not a prewritten final score.';
+   if(kind==='players'&&star)
+     return 'On '+name+'’s Week '+week+' starter card, '+star.name+' delivered '+
+       forwardOne(star.points)+' fantasy points. The club finished at '+points+
+       ' against '+other+'; that individual contribution belongs in the report even if the wider result still needs explaining.';
+   if(kind==='decisions'&&star)
+     return name+' counted '+forwardOne(star.points)+' points from starter '+star.name+
+       ' in Week '+week+'. The selected lineup totaled '+points+' against '+other+
+       ', so any argument about the manager’s choices has to begin with the players actually started, not an imagined substitution.';
+   if(kind==='standings')
+     return name+' '+(won?'outscored':'was outscored by')+' '+other+' in Week '+week+
+       ', '+points+' to '+against+'. That completed result belongs in the standings conversation; however loudly supporters argue the table, this one is already written in the scoring ledger.';
+   if(kind==='league')
+     return name+' posted '+points+' fantasy points against '+other+'’s '+against+
+       ' in Week '+week+'. The league-wide picture starts with completed scores like these, not another coronation speech before the next set of matchups has been played.';
+   return name+' finished Week '+week+' with '+points+' fantasy points against '+
+     other+' and '+against+'. The '+(won?'victory':'defeat')+
+     ' is an actual result to report, and the scoring margin gives the rest of the newsroom something concrete to argue about.';
+ };
+ const safe=(paragraphs,kind,floor)=>{
    const old=Array.isArray(paragraphs)?paragraphs:[];
+   if(!old.some(p=>mechanical.test(String(p))))return old;
    const replacement=old.map(clean).filter(Boolean);
+   if(replacement.length>=floor&&count(replacement.join(' '))>=30)return replacement;
+   // Earlier revision 104 kept forbidden copy when pruning shortened a
+   // two-paragraph desk. Repair from distinct recorded matchups instead of
+   // restoring the banned line. If evidence is missing, fail closed.
+   const seen=new Set(replacement);
+   for(const t of scored){
+     if(replacement.length>=floor&&count(replacement.join(' '))>=30)break;
+     const text=receipt(t,kind);
+     if(!text||seen.has(text)||mechanical.test(text))continue;
+     replacement.push(text);seen.add(text);
+   }
    return replacement.length>=floor&&count(replacement.join(' '))>=30
      ?replacement:old;
  };
  for(const section of overview.sections){
    if(section.blocks?.length){
      for(const block of section.blocks)
-       block.paragraphs=safe(block.paragraphs,['league','outlook'].includes(block.kind)?2:1);
+       block.paragraphs=safe(block.paragraphs,block.kind,
+         ['league','outlook'].includes(block.kind)?2:1);
      section.paragraphs=section.blocks.flatMap(b=>b.paragraphs||[]);
-   }else section.paragraphs=safe(section.paragraphs,1);
+   }else section.paragraphs=safe(section.paragraphs,section.kind,1);
  }
  // The hot takes have an independent reader-facing cache. If a take would
  // become blank, retain it and allow the publication guard to reject it.
@@ -6045,6 +6093,7 @@ export function pruneForwardRecapLessonScaffold(overview){
  overview.paragraphs=overview.sections.flatMap(s=>s.paragraphs||[]);
  return overview;
 }
+
 
 // Audit the *whole preceding edition*, not just the same roster. Prior
 // newsroom filters only compared each team against its own previous column;

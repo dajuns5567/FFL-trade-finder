@@ -1,15 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {cutoverRuntimeHoldReason,CUTOVER_SITE_ID} from '../netlify/functions/lib/inquirer-cutover-runtime.mjs';
 const worker=readFileSync(new URL('../netlify/functions/inquirer-cutover-background.mjs',import.meta.url),'utf8');
 const scheduler=readFileSync(new URL('../netlify/functions/inquirer-publish-scheduled.mjs',import.meta.url),'utf8');
 const hub=readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
 const config=readFileSync(new URL('../netlify.toml',import.meta.url),'utf8');
 test('production cutover requires exact owner-approved site, context and queue secret',()=>{
  assert.match(worker,/siteId!==SITE_ID/);
- assert.match(worker,/host===SITE_HOST/);
- assert.match(worker,/host===SITE_ID\+'\.netlify\.app'/);
- assert.match(worker,/!authorizedHost/);
+ assert.match(worker,/cutoverRuntimeHoldReason/);
+ assert.match(worker,/inquirer-cutover-entry-held/);
+ assert.match(worker,/inquirer-cutover-queue-auth-held/);
+ assert.match(worker,/inquirer-cutover-accepted/);
  assert.match(worker,/context!=='production'/);
  assert.match(worker,/enabled!=='true'/);
  assert.match(worker,/inquirerQueueKeyMatches/);
@@ -22,6 +24,18 @@ test('production cutover requires exact owner-approved site, context and queue s
  assert.match(scheduler,/publishingEnabled!=='true'/);
  assert.match(config,/CONTEXT==='production'/);
 });
+test('background cutover accepts authenticated internal production origins, but never preview or foreign sites',()=>{
+ const base={context:'production',siteId:CUTOVER_SITE_ID,enabled:'true'};
+ assert.equal(cutoverRuntimeHoldReason({...base,host:'precious-dango-fb4633.netlify.app'}),null);
+ assert.equal(cutoverRuntimeHoldReason({...base,host:CUTOVER_SITE_ID+'.netlify.app'}),null);
+ assert.equal(cutoverRuntimeHoldReason({...base,host:'internal-functions.netlify.app'}),null);
+ assert.equal(cutoverRuntimeHoldReason({...base,host:'deploy-preview-431--precious-dango-fb4633.netlify.app'}),'preview-host');
+ assert.equal(cutoverRuntimeHoldReason({...base,context:'deploy-preview',host:CUTOVER_SITE_ID+'.netlify.app'}),'not-production');
+ assert.equal(cutoverRuntimeHoldReason({...base,siteId:'different-site-id',host:CUTOVER_SITE_ID+'.netlify.app'}),'wrong-site');
+ assert.equal(cutoverRuntimeHoldReason({...base,enabled:'false',host:CUTOVER_SITE_ID+'.netlify.app'}),'publisher-disabled');
+ assert.equal(cutoverRuntimeHoldReason({...base,host:''}),'missing-host');
+});
+
 test('private copies must pass cross-week audit before ANY create-only publication write',()=>{
  const copies=worker.indexOf('const [draft7,draft8]');
  const check=worker.indexOf('const independent=auditIndependentInquirerCopy');

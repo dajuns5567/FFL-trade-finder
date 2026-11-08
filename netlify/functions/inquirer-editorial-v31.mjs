@@ -166,7 +166,7 @@ const EVOLUTION_INTROS={
   // Short, distinct desk cues. Longer boilerplate prefatory clauses were
   // repeated across teams and read like automated copy rather than Week 4.
   'walter-mercer':[
-    'Look at the personnel:','The margin asks more:','Follow the scoring:','The numbers resist spin:','Forget the excuses:','Sunday left a clue:','The box score settles this:','Carry this into Monday:'
+    'On the starter card:','The margin asks more:','Follow the scoring:','What Sunday exposed:','Forget the excuses:','Sunday left a clue:','The box score settles this:','Carry this into Monday:'
   ],
   'tess-delaney':[
     'The unromantic version:','Spare me the excuses:','The football is plain:','Read the final score first:','Nicely put, but:','After the applause:','The lineup still answers:','Cut through the commotion:'
@@ -5715,7 +5715,8 @@ function assertWeek2Originality(result,previousEdition){
         const rule=new RegExp('\\b'+forwardEscRe(name)+' (does|gets|has|is|needs|sits|keeps|projects|faces|spills|hands|makes|puts|takes|wins|loses|falls|awaits)\\b','gi');
         copy=copy.replace(rule,(match,verb,offset)=>{
           if(/\\b(?:against|around|covering|for|from|of|to|with|before|after)\\s$/i.test(copy.slice(0,offset)))return match;
-          return match.slice(0,-verb.length)+fixes[verb.toLowerCase()];
+          const revised=fixes[verb.toLowerCase()];
+          return match.slice(0,-verb.length)+(/^[A-Z]/.test(verb)?revised[0].toUpperCase()+revised.slice(1):revised);
         });
       }
       return copy;
@@ -5933,6 +5934,11 @@ function assertWeek2Originality(result,previousEdition){
       overview=pruneFinalRecapCopyForward(overview,previousEdition,teams);
     }
   }
+  // The supplemental hot-take layer must not print two stacked reporter cues.
+  for(const take of overview?.hot_takes||[]){
+    if(/Next week remembers:/i.test(take.take||''))
+      take.take=String(take.take).replace(/next Sunday remembers:\\s*/gi,'');
+  }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 
@@ -5982,7 +5988,7 @@ export function polishForwardAcrossWeeks(teams,previousEdition,week){
      const details=[
       club+' '+result+' against '+foe+' by '+gap+' points; '+lowName+' managed '+quiet+'. Rivals will remember which starting spot gave them a target.',
       topName+' contributed '+lead+' to '+club+'\'s '+score+' against '+foe+'. The opponent can argue with the interpretation, not the points already on the board.',
-      foe+' finished with '+opScore+' while '+club+' posted '+score+'. The gap is a real problem for the next lineup discussion, the football argument nobody can talk away.',
+      foe+' finished with '+opScore+' while '+club+' posted '+score+'. The gap is a real problem for the next lineup discussion; the scoreboard will not let anyone talk it away.',
       lowName+' finished on '+quiet+' for '+club+', alongside '+lead+' from '+topName+'. The difference made rival managers pay attention to how this roster was arranged.',
       club+' finished Week '+week+' on '+score+' against '+foe+'; '+topName+' contributed '+lead+'. The club can celebrate or complain, but it cannot edit those numbers.',
       club+' finished '+gap+' points '+(t.won===true?'ahead of ':'behind ')+foe+', even with '+lowName+' contributing just '+quiet+'. That combination belongs on the next lineup card.',

@@ -243,7 +243,7 @@ test('editorial revision 102 replaces shared jokes from any previous team, not o
   const text=team.inquirer_article.paragraphs.join(' ');
   assert.doesNotMatch(text,/Even they know the next opponent will care more/);
   assert.match(text,/Rival Tigers/);
-  assert.match(text,/Star Runner|Quiet Runner/);
+  assert.match(text,/83\.0|84\.0/);
   assert.match(text,/\d/);
  }
 });

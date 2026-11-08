@@ -116,7 +116,8 @@ test('deep copy-forward quality must pass independently of manual approval',()=>
  const hub=fs.readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
  const approval=fs.readFileSync(new URL('../scripts/approve-staged-inquirer.mjs',import.meta.url),'utf8');
  assert(hub.includes('const deepQualityOk=week<3||quality.ok===true'));
- assert(hub.includes('if(!audit.ok||!deepQualityOk||!admission.approved)'));
+ assert(hub.includes('if(!audit.ok||!deepQualityOk||!admission.approved||!independentCopy.ok)'));
+ assert(hub.includes("auditIndependentInquirerCopy([result],{revision:FORWARD_EDITORIAL_REVISION,mode:'publication'})"));
  assert(hub.includes('generation_quality:quality'));
  assert(hub.includes('deterministicInquirerAdmission(result'));
  assert(hub.includes("if(previewReadOnly&&!new URL(req.url).searchParams.has('preview_editorial'))"));

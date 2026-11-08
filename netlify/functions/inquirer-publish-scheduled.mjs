@@ -1,9 +1,10 @@
 import {getStore} from '@netlify/blobs';
 import {FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
 import {inquirerScheduleDecision} from './lib/inquirer-schedule-decision.mjs';
-import {verifiedReplacementHistory,verifiedNewSiteCutoverHistory} from './lib/inquirer-replacement-archive-gate.mjs';
+import {verifiedReplacementHistory,verifiedNewSiteCutoverHistory,verifiedWeekNineAutopublishCutoverHistory} from './lib/inquirer-replacement-archive-gate.mjs';
 import {editorialApprovalMatches} from './inquirer-publication-guard.mjs';
 import {approvedWeek5Record} from './lib/inquirer-week5-owner-signoff.mjs';
+import {resolveInquirerQueueCredential} from './lib/inquirer-queue-credential.mjs';
 // Queue a long-running background job. Netlify scheduled functions have a
 // hard 30-second limit, while the full Inquirer edition takes longer.
 export default async function inquirerPublishScheduled(req){
@@ -15,16 +16,18 @@ export default async function inquirerPublishScheduled(req){
  const site=process.env.SITE_NAME||globalThis.Netlify?.env?.get?.('SITE_NAME')||'';
  const siteId=process.env.SITE_ID||globalThis.Netlify?.env?.get?.('SITE_ID')||'';
  const host=new URL(req.url).hostname,context=globalThis.Netlify?.env?.get?.('CONTEXT')||process.env.CONTEXT||'';
- if(context==='deploy-preview'||context==='branch-deploy')return skip('Non-production deployment');
- const isNewestSite=site==='gleaming-dodol-8dbc4a'||
+ if(context==='deploy-preview'||context==='branch-deploy'||host.startsWith('deploy-preview-')||host.includes('--'))return skip('Non-production deployment');
+ const isCurrentSite=site==='precious-dango-fb4633'||
+  siteId==='fa33dfe4-8293-441e-8da0-25cc66fc984c'||host==='precious-dango-fb4633.netlify.app';
+ const isNewestSite=isCurrentSite||site==='gleaming-dodol-8dbc4a'||
   siteId==='3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f'||host==='gleaming-dodol-8dbc4a.netlify.app';
  const isReplacement=isNewestSite||site==='transcendent-manatee-2f0123'||
   siteId==='8776d155-bc7b-4dcd-bafc-3d70d3d51800'||host==='transcendent-manatee-2f0123.netlify.app';
  const publishingEnabled=globalThis.Netlify?.env?.get?.('FLEECED_ENABLE_NEW_SITE_PUBLISHER')||process.env.FLEECED_ENABLE_NEW_SITE_PUBLISHER||'';
  if(isReplacement&&publishingEnabled!=='true')
   return skip('Replacement site is preview-only pending verified archive migration');
- const key=globalThis.Netlify?.env?.get('FLEECED_INQUIRER_QUEUE_KEY')||process.env.FLEECED_INQUIRER_QUEUE_KEY||'';
- if(!key)return skip('Publication queue credential not configured');
+ const configuredKey=globalThis.Netlify?.env?.get?.('FLEECED_INQUIRER_QUEUE_KEY')||process.env.FLEECED_INQUIRER_QUEUE_KEY||'';
+ if(!configuredKey&&!isCurrentSite)return skip('Publication queue credential not configured');
  // Do not spend another generation on identical copy that already failed the
  // editorial gate. A new newsroom revision or new completed NFL week unblocks it.
  try{
@@ -50,11 +53,24 @@ export default async function inquirerPublishScheduled(req){
     ]);
     const cutover=verifiedNewSiteCutoverHistory({week3,week4,week5,week6,index,awards});
     if(!cutover.ready)return skip(cutover.reason);
-    if(status&&Number(status.season)===2026&&Number(status.week)<6)
-     return skip('New site publication cursor predates already locked Week 6');
+    if(isCurrentSite){
+     const [week7,week8]=await Promise.all([
+      store.get('broadcasts/2026/week-07.json',{type:'json'}),
+      store.get('broadcasts/2026/week-08.json',{type:'json'})
+     ]);
+     const automation=verifiedWeekNineAutopublishCutoverHistory({week7,week8,index,awards});
+     if(!automation.ready)return skip(automation.reason);
+    }
+    if(status&&Number(status.season)===2026&&Number(status.week)<(isCurrentSite?8:6)){
+     // Verified locked Weeks 7–8 authorize advancing a *stale completed* cursor.
+     // Never conceal an editorial hold or an active background worker.
+     if(isCurrentSite&&status.state==='completed'&&status.available===true)
+      status={...status,week:8,editorial_revision:FORWARD_EDITORIAL_REVISION};
+     else return skip('New site publication cursor predates approved locked cutover archive');
+    }
     // Full archive verified, so an empty destination state resumes from the
     // last published week rather than regenerating previously approved copy.
-    if(status===null)status={state:'completed',available:true,season:2026,week:6,editorial_revision:FORWARD_EDITORIAL_REVISION};
+    if(status===null)status={state:'completed',available:true,season:2026,week:isCurrentSite?8:6,editorial_revision:FORWARD_EDITORIAL_REVISION};
    }else if(status===null)status={state:'waiting',season:2026,week:4,editorial_revision:0};
   }
   if(!status||typeof status!=='object')return skip('Publication history not restored or unreadable');
@@ -121,6 +137,17 @@ export default async function inquirerPublishScheduled(req){
   console.error('inquirer-schedule-status-check',String(error?.message||error));
   return skip('Publication state or NFL clock unavailable; holding publication');
  }
+ // Bootstrap an unguessable internal secret only after history and publication
+ // authorization checks pass. It never appears in public status or logs.
+ let key;
+ try{
+  key=await resolveInquirerQueueCredential({store:getStore('fleeced-league-hub',{consistency:'strong'}),
+   configured:configuredKey,bootstrap:isCurrentSite});
+ }catch(error){
+  console.error('inquirer-schedule-queue-credential',String(error?.message||error));
+  return skip('Internal queue credential unavailable; publication held');
+ }
+ if(!key)return skip('Internal queue credential not configured');
  const url=new URL('/.netlify/functions/inquirer-publish-background',req.url);
  const result=await fetch(url,{
   method:'POST',

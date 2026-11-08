@@ -5939,6 +5939,26 @@ function assertWeek2Originality(result,previousEdition){
     if(/Next week remembers:/i.test(take.take||''))
       take.take=String(take.take).replace(/next Sunday remembers:\s*/gi,'');
   }
+  // Last-writer consistency: adjacent hot takes must not make the exact same
+  // developed argument twice. Keep the earliest instance and all independent
+  // sentences; never invent a replacement or silently weaken the quality gate.
+  // If a take becomes empty, preserve it so the publication audit rejects
+  // that candidate rather than printing fabricated commentary.
+  if(week>=5&&overview?.hot_takes?.length){
+    const entities=[...forwardEntities({teams}),...forwardEntities(previousEdition)];
+    const seen=new Set();
+    overview.hot_takes=overview.hot_takes.map(take=>{
+      const sentences=forwardSentenceParts(take.take||'');
+      const fresh=sentences.filter(sentence=>{
+        if(forwardWordCount(sentence)<10)return true;
+        const key=forwardNormSentence(sentence,entities);
+        if(seen.has(key))return false;
+        seen.add(key);
+        return true;
+      });
+      return fresh.length?{...take,take:fresh.join(' ')}:take;
+    });
+  }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 

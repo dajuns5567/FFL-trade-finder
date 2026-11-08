@@ -19,7 +19,20 @@ export default {
    const key=week=>'2026/week-'+String(week).padStart(2,'0')+'/editorial-r'+FORWARD_EDITORIAL_REVISION+'/edition.json';
    const [week7,week8]=await Promise.all([7,8].map(week=>store.get(key(week),{type:'json'})));
    if(!week7||!week8){
-    console.info('inquirer-independent-copy-audit-pending',JSON.stringify({revision:FORWARD_EDITORIAL_REVISION,week7:!!week7,week8:!!week8}));
+    // Inspect a rejected private draft without generating it again.
+    // Log only structured issue codes and team labels, never manuscript text.
+    const rejectedKey='2026/week-08/editorial-r'+FORWARD_EDITORIAL_REVISION+'/rejected-review.json';
+    const rejected=await store.get(rejectedKey,{type:'json'});
+    if(week7&&rejected?.edition?.preview_only===true&&Number(rejected.edition.week)===8){
+     const failed=auditIndependentInquirerCopy([week7,rejected.edition],{revision:FORWARD_EDITORIAL_REVISION});
+     console.info('inquirer-independent-copy-rejection-details',JSON.stringify({
+      revision:FORWARD_EDITORIAL_REVISION,issue_count:failed.issue_count,issues:failed.issues
+     }));
+    }else{
+     console.info('inquirer-independent-copy-audit-pending',JSON.stringify({
+      revision:FORWARD_EDITORIAL_REVISION,week7:!!week7,week8:!!week8,rejected:!!rejected
+     }));
+    }
     return;
    }
    const result=auditIndependentInquirerCopy([week7,week8],{revision:FORWARD_EDITORIAL_REVISION});

@@ -6029,7 +6029,8 @@ export function pruneForwardRecapLessonScaffold(overview,teams=[],week=0){
  const scored=(teams||[]).filter(t=>Number.isFinite(Number(t?.points))&&
    Number.isFinite(Number(t?.opponent_points))&&t.team_name&&t.opponent_name)
    .slice().sort((a,b)=>Number(b.points)-Number(a.points));
- const display=t=>w2DisplayTeam(t.team_name),opponent=t=>w2DisplayTeam(t.opponent_name);
+ const label=name=>String(name||'').trim();
+ const display=t=>label(t.team_name),opponent=t=>label(t.opponent_name);
  const receipt=(t,kind)=>{
    if(!t)return null;
    const name=display(t),other=opponent(t),points=forwardOne(t.points),
@@ -6037,7 +6038,7 @@ export function pruneForwardRecapLessonScaffold(overview,teams=[],week=0){
    const star=(t.starter_details||[]).filter(p=>p?.name&&Number.isFinite(Number(p.points)))
      .slice().sort((a,b)=>Number(b.points)-Number(a.points))[0];
    if(kind==='outlook'&&t.next_opponent_name)
-     return 'The next game sends '+name+' against '+w2DisplayTeam(t.next_opponent_name)+
+     return 'The next game sends '+name+' against '+label(t.next_opponent_name)+
        '. Its latest verified reference is '+points+' fantasy points against '+other+
        ' in Week '+week+'; the next opponent will get a fresh lineup, not a prewritten final score.';
    if(kind==='players'&&star)

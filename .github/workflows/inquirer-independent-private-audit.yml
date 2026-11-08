@@ -1,0 +1,50 @@
+name: Inquirer private manuscript independent audit
+on:
+  push:
+    branches:
+      - test/inquirer-week7-r100-preview
+    paths:
+      - '.github/workflows/inquirer-independent-private-audit.yml'
+      - 'scripts/inquirer-independent-weekly-audit.mjs'
+      - 'netlify/functions/inquirer-editorial-v31.mjs'
+      - 'netlify/functions/inquirer-preview-*.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: inquirer-private-audit-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  inspect-existing-private-manuscripts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Read existing private manuscripts and independently check reader copy
+        env:
+          INQUIRER_PREVIEW_BASE: https://deploy-preview-427--precious-dango-fb4633.netlify.app
+          INQUIRER_AUDIT_REVISION: '106'
+          INQUIRER_AUDIT_OUTPUT: inquirer-private-audit-summary.json
+        run: |
+          # Reads only. Never start a preview background job or publish.
+          for attempt in 1 2 3 4 5; do
+            if node scripts/inquirer-independent-weekly-audit.mjs; then
+              exit 0
+            else
+              code=$?
+              # Copy-quality failures are decisive; retry only transport errors.
+              if [ "$code" -ne 2 ]; then exit "$code"; fi
+            fi
+            if [ "$attempt" -lt 5 ]; then sleep 20; fi
+          done
+          exit 1
+      - name: Save summary only, never unpublished article text
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: inquirer-independent-audit-summary
+          path: inquirer-private-audit-summary.json
+          if-no-files-found: warn

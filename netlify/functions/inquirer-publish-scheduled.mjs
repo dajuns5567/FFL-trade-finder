@@ -60,8 +60,13 @@ export default async function inquirerPublishScheduled(req){
      const automation=verifiedWeekNineAutopublishCutoverHistory({week7,week8,index,awards});
      if(!automation.ready)return skip(automation.reason);
     }
-    if(status&&Number(status.season)===2026&&Number(status.week)<(isCurrentSite?8:6))
-     return skip('New site publication cursor predates already locked Week 6');
+    if(status&&Number(status.season)===2026&&Number(status.week)<(isCurrentSite?8:6)){
+     // Verified locked Weeks 7–8 authorize advancing a *stale completed* cursor.
+     // Never conceal an editorial hold or an active background worker.
+     if(isCurrentSite&&status.state==='completed'&&status.available===true)
+      status={...status,week:8,editorial_revision:FORWARD_EDITORIAL_REVISION};
+     else return skip('New site publication cursor predates approved locked cutover archive');
+    }
     // Full archive verified, so an empty destination state resumes from the
     // last published week rather than regenerating previously approved copy.
     if(status===null)status={state:'completed',available:true,season:2026,week:isCurrentSite?8:6,editorial_revision:FORWARD_EDITORIAL_REVISION};

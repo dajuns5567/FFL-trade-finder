@@ -33,7 +33,7 @@ test('previous accounts skip builds even for deploy-preview context',()=>{
  }
 });
 
-test('production cutover never spends deploy preview credits',()=>{
- assert.match(config,/CONTEXT==='production'/);
- assert.doesNotMatch(config,/site&&process\.env\.CONTEXT==='deploy-preview'\?1:0/);
+test('only deploy previews are eligible to build on the current site',()=>{
+ assert.match(config,/CONTEXT==='deploy-preview'/);
+ assert.doesNotMatch(config,/CONTEXT==='production'\?1:0/);
 });

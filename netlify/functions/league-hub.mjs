@@ -309,7 +309,7 @@ async function syncReporterArchives(s,result,broadcastKey){
 // The broadcast index alone does not prove all reporter/recap records survived.
 // Scan only the four small reporter indexes and one recap for existing editions;
 // never rewrite a locked broadcast just to repair a derived record.
-export async function ensureLockedEditionIndexed(s,edition,key){
+export async function ensureLockedEditionIndexed(s,edition,key,{commitIndex=true}={}){
  const idx=await s.get('broadcasts/index.json',{type:'json'});
  if(idx!==null&&!Array.isArray(idx))throw Error('Invalid broadcast index; refusing to overwrite it');
  const rows=idx||[],season=Number(edition.season),week=Number(edition.week);
@@ -336,7 +336,7 @@ export async function ensureLockedEditionIndexed(s,edition,key){
   const old=await s.get(overviewKey,{type:'json'});
   if(!old?.headline)await s.setJSON(overviewKey,{...edition.league_overview,editorial_revision:edition.editorial_revision,captured_at:edition.generated_at,published_locked:true});
  }
- if(!committed){
+ if(!committed&&commitIndex){
   const next=[...rows,{type:'week',season,week,key,captured_at:edition.generated_at}]
    .sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));
   await s.setJSON('broadcasts/index.json',next);
@@ -755,11 +755,26 @@ export function isTrustedWeeklyAwardCache(rec,season,week){
   return Number(rec?.newsroom_editorial_revision)>=39&&rec?.newsroom_engine==='v31-forward';
  return true;
 }
-export async function weeklyAwards(){
+export async function weeklyAwards({additionalLockedEditions=[],persist=true}={}){
  const s=store(),archive=await broadcastArchive(),pairs=[],seen=new Set();
+ const cutoverEditions=new Map();
+ for(const edition of additionalLockedEditions){
+  const season=Number(edition?.season),week=Number(edition?.week);
+  if(!isLockedInquirerEdition(edition,season,week))
+   throw Error('Unverified staged newspaper cannot generate weekly awards');
+  const key=season+'|'+week;
+  if(cutoverEditions.has(key))throw Error('Duplicate staged weekly awards week');
+  cutoverEditions.set(key,edition);
+ }
  for(const row of archive.reports||[]){
   const season=Number(row?.season),week=Number(row?.week),key=season+'|'+week;
   if(season&&week&&!seen.has(key)){seen.add(key);pairs.push({season,week,captured_at:String(row?.captured_at||'')})}
+ }
+ for(const [key,edition] of cutoverEditions){
+  if(!seen.has(key)){
+   seen.add(key);
+   pairs.push({season:Number(edition.season),week:Number(edition.week),captured_at:String(edition.generated_at||'')});
+  }
  }
  const old=await s.get('awards/weekly.json',{type:'json'});
  const records=Array.isArray(old?.records)?old.records.slice():Array.isArray(old)?old.slice():[];
@@ -773,7 +788,7 @@ export async function weeklyAwards(){
  const missing=pairs.filter(p=>!byKey.has(p.season+'|'+p.week));
  if(missing.length){
   const verified=await Promise.all(missing.map(async p=>{
-   const edition=await broadcastStored(p.season,p.week);
+   const edition=cutoverEditions.get(p.season+'|'+p.week)||await broadcastStored(p.season,p.week);
    return isLockedInquirerEdition(edition,p.season,p.week)?{...p,edition}:null;
   }));
   const validPairs=verified.filter(Boolean);
@@ -796,7 +811,7 @@ export async function weeklyAwards(){
   }
  }
  const next=[...byKey.values()].sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));
- if(missing.length||records.length!==next.length)
+ if(persist&&(missing.length||records.length!==next.length))
   await s.setJSON('awards/weekly.json',{schema_version:1,records:next});
  return{schema_version:1,records:next};
 }

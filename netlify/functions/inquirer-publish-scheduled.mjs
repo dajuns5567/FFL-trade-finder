@@ -28,6 +28,49 @@ export default async function inquirerPublishScheduled(req){
   return skip('Replacement site is preview-only pending verified archive migration');
  const configuredKey=globalThis.Netlify?.env?.get?.('FLEECED_INQUIRER_QUEUE_KEY')||process.env.FLEECED_INQUIRER_QUEUE_KEY||'';
  if(!configuredKey&&!isCurrentSite)return skip('Publication queue credential not configured');
+ // One-time owner-approved restore of accepted private Weeks 7–8 happens
+ // BEFORE normal unattended Week 9+. No live generator can skip this gate.
+ if(isCurrentSite){
+  try{
+   const history=getStore('fleeced-league-hub',{consistency:'strong'});
+   const marker=await history.get('inquirer/cutover/2026-weeks07-08-status.json',{type:'json'});
+   if(marker?.state!=='completed'){
+    if(marker?.state==='running'&&Date.now()-Date.parse(marker.started_at||0)<16*60*1000)
+     return skip('Approved archive promotion is already running');
+    if(marker?.state==='error'&&Number(marker.revision)===FORWARD_EDITORIAL_REVISION)
+     return skip('Owner-approved archive promotion held: '+String(marker.reason||'unknown'));
+    const [week3,week4,week5,week6,index,awards,week7,week8]=await Promise.all([
+     ...[3,4,5,6,7,8].map(week=>history.get('broadcasts/2026/week-0'+week+'.json',{type:'json'})),
+     history.get('broadcasts/index.json',{type:'json'}),
+     history.get('awards/weekly.json',{type:'json'})
+    ]).then(values=>[
+     values[0],values[1],values[2],values[3],values[6],values[7],values[4],values[5]
+    ]);
+    const baseline=verifiedNewSiteCutoverHistory({week3,week4,week5,week6,index,awards});
+    if(!baseline.ready)return skip('Approved archive baseline unavailable: '+baseline.reason);
+    const ready=verifiedWeekNineAutopublishCutoverHistory({week7,week8,index,awards});
+    if(!ready.ready){
+     const key=await resolveInquirerQueueCredential({
+      store:history,configured:configuredKey,bootstrap:true
+     });
+     if(!key)return skip('Archive promotion queue credential unavailable');
+     const target=new URL('/.netlify/functions/inquirer-cutover-background',req.url);
+     const resp=await fetch(target,{
+      method:'POST',headers:{'x-fleeced-queue-key':key,'content-type':'application/json'},
+      body:'{}',signal:AbortSignal.timeout(20000)
+     });
+     if(resp.status!==202)return skip('Protected archive promotion enqueue held: HTTP '+resp.status);
+     console.info('inquirer-approved-cutover-queued',{season:2026,weeks:[7,8]});
+     return new Response(JSON.stringify({queued:true,kind:'approved-archive-cutover'}),{
+      headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}
+     });
+    }
+   }
+  }catch(error){
+   console.error('inquirer-owner-approved-cutover-preflight',String(error?.message||error));
+   return skip('Approved archive preflight unavailable; all publishing held');
+  }
+ }
  // Do not spend another generation on identical copy that already failed the
  // editorial gate. A new newsroom revision or new completed NFL week unblocks it.
  try{

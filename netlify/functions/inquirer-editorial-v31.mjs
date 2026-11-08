@@ -5987,7 +5987,7 @@ export function polishForwardAcrossWeeks(teams,previousEdition,week){
      // Retire a circulating joke instead of manufacturing another score recap.
      // Preserve each required desk and its substantive reporting minimums.
      const count=forwardWordCount(sentence);
-     const canDrop=(pieces.length>1||(section.paragraphs||[]).length>2)&&
+     const canDrop=((pieces.length>1&&ji<pieces.length-1)||(section.paragraphs||[]).length>2)&&
        words-count>=345&&deskWords-count>=45;
      if(canDrop){words-=count;deskWords-=count;return ''}
      const possessive=/s$/i.test(club)?club+'\'':club+'\'s';

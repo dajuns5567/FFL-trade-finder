@@ -3522,7 +3522,7 @@ function w2RecapContext(w,prev,i){
     if(diff>0)return team+" also won the opener over "+opp+", "+w2One(prev.points)+"–"+w2One(prev.opponent_points)+". Week 2 added "+w2One(diff)+" more points, so the start got louder instead of merely longer.";
     return[
       team+" beat "+opp+" "+w2One(prev.points)+"–"+w2One(prev.opponent_points)+" in Week 1 and won again despite scoring "+w2One(Math.abs(diff))+" fewer points. The second win came by a different route.",
-      team+" had more scoring in the Week 1 win over "+opp+", then still found enough to win again after dropping "+w2One(Math.abs(diff))+" points. That is useful flexibility, not repetition.",
+      team+" had more scoring in the Week 1 win over "+opp+", then still found enough to win again after dropping "+w2One(Math.abs(diff))+" points. The box score got quieter; the victory speech somehow did not.",
       "The opener against "+opp+" produced "+w2One(prev.points)+" points and a win. Week 2 produced fewer points and the same result, which tells us the lineup can survive a quieter total.",
       team+" did not need to match the "+w2One(prev.points)+" from its Week 1 win over "+opp+" to get to 2-0. The record survived a different scoring shape.",
       "Week 1 against "+opp+" was louder by "+w2One(Math.abs(diff))+" points, but Week 2 still ended in a win. That is two successful Sundays without one mandatory script."

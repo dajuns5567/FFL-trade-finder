@@ -56,3 +56,23 @@ test('private Week 8 checks the independently approved same-revision Week 7 befo
  assert.match(source,/if\(!independent\.ok\)/);
  assert.match(source,/identity\.season===2026&&identity\.week===8/);
 });
+
+test('mirrored recap beat and flat paragraphs count as one editorial occurrence',()=>{
+ const copy=edition(8),first=copy.league_overview.sections[0];
+ first.blocks[0].paragraphs=['The next opponent will get a fresh lineup, not a prewritten final score.'];
+ first.paragraphs=first.blocks.flatMap(block=>block.paragraphs);
+ const issues=auditIndependentInquirerCopy([copy]).issues.filter(x=>x.id==='meta-editorial-caveat');
+ assert.equal(issues.length,1);
+});
+test('recap source and one-time private retry address the actual rejected Week 8 phrase without production writes',()=>{
+ const editorial=readFileSync(new URL('../netlify/functions/inquirer-editorial-v31.mjs',import.meta.url),'utf8');
+ assert.doesNotMatch(editorial,/That is useful flexibility, not repetition/);
+ const retry=readFileSync(new URL('../netlify/functions/inquirer-private-audit-on-deploy.mjs',import.meta.url),'utf8');
+ assert.match(retry,/FORWARD_EDITORIAL_REVISION===107/);
+ assert.match(retry,/isVerifiedPrivatePreviewPredecessor\(week7,2026,7\)/);
+ assert.match(retry,/failed\.issue_count===1/);
+ assert.match(retry,/onlyIfNew:true/);
+ assert.match(retry,/generateInquirerPreview\(new Request\(url\)\)/);
+ assert.match(retry,/event\?\.deploy\?\.context!=='deploy-preview'/);
+ assert.match(retry,/precious-dango-fb4633\.netlify\.app/);
+});

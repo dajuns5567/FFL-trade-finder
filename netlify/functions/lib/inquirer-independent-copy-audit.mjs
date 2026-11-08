@@ -40,8 +40,16 @@ export function auditIndependentInquirerCopy(editions,{revision=107,mode='previe
   const recap=edition.league_overview||{};
   if((recap.sections?.[0]?.blocks||[]).length!==6)issue(week,'recap-six-beat-contract','Weekly Recap');
   for(const section of recap.sections||[]){
-   for(const paragraph of section.paragraphs||[])all.push({team:'Weekly Recap',paragraph});
-   for(const block of section.blocks||[])for(const paragraph of block.paragraphs||[])all.push({team:'Weekly Recap',paragraph});
+   const blockParagraphs=(section.blocks||[]).flatMap(block=>block.paragraphs||[]);
+   const sectionParagraphs=section.paragraphs||[];
+   // The six-beat recap deliberately mirrors block paragraphs in the first
+   // section's flat paragraph array for reader compatibility. This is one
+   // editorial occurrence, not two independent defects.
+   const mirrored=blockParagraphs.length>0&&
+    blockParagraphs.length===sectionParagraphs.length&&
+    blockParagraphs.every((paragraph,i)=>paragraph===sectionParagraphs[i]);
+   if(!mirrored)for(const paragraph of sectionParagraphs)all.push({team:'Weekly Recap',paragraph});
+   for(const paragraph of blockParagraphs)all.push({team:'Weekly Recap',paragraph});
   }
   for(const take of recap.hot_takes||[]){
    const paragraph=String(take.take||'');all.push({team:'Weekly Recap',paragraph});

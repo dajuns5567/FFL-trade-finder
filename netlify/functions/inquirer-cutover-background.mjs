@@ -29,9 +29,12 @@ export default async function cutoverApprovedInquirerWeeks(req){
  const context=globalThis.Netlify?.env?.get?.('CONTEXT')||process.env.CONTEXT||'';
  const siteId=globalThis.Netlify?.env?.get?.('SITE_ID')||process.env.SITE_ID||'';
  const host=new URL(req.url).hostname;
+ // Netlify's scheduler invokes functions on the exact site-ID hostname.
+ // Accept both that internal origin and the canonical public site hostname.
+ const authorizedHost=host===SITE_HOST||host===SITE_ID+'.netlify.app';
  const enabled=globalThis.Netlify?.env?.get?.('FLEECED_ENABLE_NEW_SITE_PUBLISHER')||
   process.env.FLEECED_ENABLE_NEW_SITE_PUBLISHER||'';
- if(context!=='production'||siteId!==SITE_ID||host!==SITE_HOST||enabled!=='true')
+ if(context!=='production'||siteId!==SITE_ID||!authorizedHost||enabled!=='true')
   return new Response('Production-only owner-approved cutover disabled',{status:403});
  const store=getStore({name:'fleeced-league-hub',consistency:'strong'});
  const configured=globalThis.Netlify?.env?.get?.('FLEECED_INQUIRER_QUEUE_KEY')||

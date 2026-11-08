@@ -65,7 +65,7 @@ test('never certify old locked Week5 awards or incomplete player/scorer badges',
  assert.match(pub,/record\.newsroom_engine==='v31-forward'/);
 });
 test('awards cache never forces reading every published multi-megabyte manuscript on every visit',()=>{
- const start=hub.indexOf('export async function weeklyAwards()');
+ const start=hub.indexOf('export async function weeklyAwards({additionalLockedEditions=[]');
  const end=hub.indexOf('async function draftAwards()',start);
  assert.ok(start>0&&end>start);
  const code=hub.slice(start,end);

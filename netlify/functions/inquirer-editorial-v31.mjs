@@ -5945,10 +5945,10 @@ export function polishForwardAcrossWeeks(teams,previousEdition,week){
  if(Number(week)<7)return teams;
  const entities=forwardEntities({teams}).concat(forwardEntities(previousEdition));
  const norm=sentence=>forwardNormSentence(sentence,entities);
- const tail=sentence=>norm(sentence).split(/\\s+/).filter(Boolean).slice(-11).join(' ');
+ const tail=sentence=>norm(sentence).split(/\s+/).filter(Boolean).slice(-11).join(' ');
  const narrative=sentence=>forwardWordCount(sentence)>=10&&
-   !/\\d/.test(sentence)&&
-   !/\\b(?:traded|acquired|added|dropped|waived|claimed|signed|released|injured|questionable|out for)\\b/i.test(sentence);
+   !/\d/.test(sentence)&&
+   !/\b(?:traded|acquired|added|dropped|waived|claimed|signed|released|injured|questionable|out for)\b/i.test(sentence);
  const used=new Set(),usedTails=new Set();
  const historical=(previousEdition?.teams||[]).flatMap(t=>forwardArticleSentences(t));
  for(const sentence of historical){
@@ -5973,7 +5973,7 @@ export function polishForwardAcrossWeeks(teams,previousEdition,week){
      if(!narrative(sentence))return sentence;
      const key=norm(sentence),ending=tail(sentence);
      const reused=used.has(key)||usedTails.has(ending)||
-       /\\b(?:documented lineup question|not a fictional transaction)\\b/i.test(sentence);
+       /\b(?:documented lineup question|not a fictional transaction)\b/i.test(sentence);
      if(!reused){used.add(key);usedTails.add(ending);return sentence}
      if(!accurate)return sentence; // Absent source data: fail closed in the quality audit.
      const score=forwardOne(scored),opScore=forwardOne(allowed),
@@ -5981,15 +5981,14 @@ export function polishForwardAcrossWeeks(teams,previousEdition,week){
        gap=forwardOne(margin),lowName=low.name,topName=top.name;
      const details=[
       club+' '+result+' against '+foe+' by '+gap+' points; '+lowName+' managed '+quiet+'. Rivals will remember which starting spot gave them a target.',
-      topName+' contributed '+lead+' to '+club+'\'s '+score+' against '+foe+'. That is actual scoring evidence, and a much better argument than another invented fan ceremony.',
-      foe+' finished with '+opScore+' while '+club+' posted '+score+'. The gap is a real problem for the next lineup discussion, not a rehearsal for the next recycled joke.',
+      topName+' contributed '+lead+' to '+club+'\'s '+score+' against '+foe+'. The opponent can argue with the interpretation, not the points already on the board.',
+      foe+' finished with '+opScore+' while '+club+' posted '+score+'. The gap is a real problem for the next lineup discussion, the football argument nobody can talk away.',
       lowName+' finished on '+quiet+' for '+club+', alongside '+lead+' from '+topName+'. The difference made rival managers pay attention to how this roster was arranged.',
       club+' finished Week '+week+' on '+score+' against '+foe+'; '+topName+' contributed '+lead+'. The club can celebrate or complain, but it cannot edit those numbers.',
-      '',
+      club+' finished '+gap+' points '+(t.won===true?'ahead of ':'behind ')+foe+', even with '+lowName+' contributing just '+quiet+'. That combination belongs on the next lineup card.',
       topName+' gave '+club+' '+lead+' points; '+lowName+' supplied '+quiet+'. That is the kind of imbalance '+foe+' could actually exploit, regardless of the final result.',
       'The '+gap+'-point margin between '+club+' and '+foe+' leaves a specific question about '+lowName+' at '+quiet+'. The answer belongs in the next starting lineup.'
      ];
-     details[5]=club+' faced '+foe+' and '+result+' despite '+topName+' recording '+lead+' points. The final '+score+'–'+opScore+' score is enough to explain why the rival chat noticed.';
      const seed=evolutionHash([week,t.roster_id,section.kind,si,pi,ji,sentence].join('|'));
      let replacement=details[seed%details.length];
      for(let attempt=1;attempt<details.length&&(used.has(norm(replacement))||usedTails.has(tail(replacement)));attempt++)

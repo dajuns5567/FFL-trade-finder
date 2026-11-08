@@ -9,7 +9,7 @@ import {attributeForwardPlayerStatFragments,curateForwardTeamNarrative,inspectNa
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=103;
+export const FORWARD_EDITORIAL_REVISION=104;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -6004,7 +6004,46 @@ function assertWeek2Originality(result,previousEdition){
       // publication guard rejects the edition. No synthetic padding.
     }
   }
+  // Mechanical recap slogans are never a substitute for reporting. The
+  // final pass removes confirmed stock sentences only when the remaining
+  // source-backed paragraphs still form a substantive editorial beat.
+  // Otherwise the independent publication guard rejects the candidate.
+  if(week>=5)overview=pruneForwardRecapLessonScaffold(overview);
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
+}
+
+
+/** Remove repeated recap lesson scaffolds without inventing a new conclusion.
+ * Keeps section, feature-block and flattened reader caches synchronized.
+ * Does not replace a required beat with a score summary or weaken admission.
+ */
+export function pruneForwardRecapLessonScaffold(overview){
+ if(!overview?.sections?.length)return overview;
+ const mechanical=/\bthe useful lesson is not\b|\bthe margin asks more\s*:/i;
+ const count=text=>String(text||'').trim().split(/\s+/).filter(Boolean).length;
+ const clean=paragraph=>forwardSentenceParts(paragraph)
+   .filter(sentence=>!mechanical.test(sentence)).join(' ').trim();
+ const safe=(paragraphs,floor)=>{
+   const old=Array.isArray(paragraphs)?paragraphs:[];
+   const replacement=old.map(clean).filter(Boolean);
+   return replacement.length>=floor&&count(replacement.join(' '))>=30
+     ?replacement:old;
+ };
+ for(const section of overview.sections){
+   if(section.blocks?.length){
+     for(const block of section.blocks)
+       block.paragraphs=safe(block.paragraphs,['league','outlook'].includes(block.kind)?2:1);
+     section.paragraphs=section.blocks.flatMap(b=>b.paragraphs||[]);
+   }else section.paragraphs=safe(section.paragraphs,1);
+ }
+ // The hot takes have an independent reader-facing cache. If a take would
+ // become blank, retain it and allow the publication guard to reject it.
+ for(const take of overview.hot_takes||[]){
+   const candidate=clean(take.take||'');
+   if(candidate)take.take=candidate;
+ }
+ overview.paragraphs=overview.sections.flatMap(s=>s.paragraphs||[]);
+ return overview;
 }
 
 // Audit the *whole preceding edition*, not just the same roster. Prior

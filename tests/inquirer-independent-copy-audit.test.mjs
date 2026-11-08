@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {auditIndependentInquirerCopy} from '../netlify/functions/lib/inquirer-independent-copy-audit.mjs';
 const kinds=['lede','players','management','hot-seat','cool-throne','value','sentiment','outlook'];
 const beats=['lead','standings','players','decisions','league','outlook'];
-function edition(week){return {week,season:2026,editorial_revision:106,preview_only:true,published_locked:false,
+function edition(week){return {week,season:2026,editorial_revision:107,preview_only:true,published_locked:false,
  preview_editorial_audit:{ok:true},preview_generation_quality:{ok:true},
  teams:Array.from({length:32},(_,i)=>({roster_id:i+1,team_name:'Team '+(i+1),league_context:{recent_games:[{week:week-1,result:'L'}]},
  inquirer_article:{headline:'Team '+(i+1)+' Week '+week,reporter:{id:'r'+Math.floor(i/8)},

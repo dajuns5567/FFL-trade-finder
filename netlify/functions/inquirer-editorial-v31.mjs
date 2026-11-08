@@ -9,7 +9,7 @@ import {attributeForwardPlayerStatFragments,curateForwardTeamNarrative,inspectNa
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=106;
+export const FORWARD_EDITORIAL_REVISION=107;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -5828,7 +5828,7 @@ function assertWeek2Originality(result,previousEdition){
         w2DisplayTeam(low.team_name)+' at '+forwardOne(low.points)+
         ', the recorded Week '+week+' lineup range spanned '+
         forwardOne(Number(high.points)-Number(low.points))+
-        ' fantasy points. Those are two actual team returns, not a claim about their dynasty market prices.'):null;
+        ' fantasy points. For the managers at either end, that gap was the difference between a victory lap and an aggressively silent group chat.'):null;
       const gameLine=games.length?(
         'The completed Week '+week+' scoreboard contains '+games.length+' matchups, of which '+
         tight+' were decided within five fantasy points. That distribution gives the league a concrete measure of how many results came down to a narrow margin.'):null;
@@ -6096,8 +6096,9 @@ export function pruneForwardRecapLessonScaffold(overview,teams=[],week=0){
      .slice().sort((a,b)=>Number(b.points)-Number(a.points))[0];
    if(kind==='outlook'&&t.next_opponent_name)
      return 'The next game sends '+name+' against '+label(t.next_opponent_name)+
-       '. Its latest verified reference is '+points+' fantasy points against '+other+
-       ' in Week '+week+'; the next opponent will get a fresh lineup, not a prewritten final score.';
+       '. The '+points+'-point showing against '+other+' in Week '+week+
+       (won?' gave this club one useful receipt. Now it needs another against ':' left the manager with work to do before facing ')+
+       label(t.next_opponent_name)+'.';
    if(kind==='players'&&star)
      return 'On '+name+'’s Week '+week+' starter card, '+star.name+' delivered '+
        forwardOne(star.points)+' fantasy points. The club finished at '+points+

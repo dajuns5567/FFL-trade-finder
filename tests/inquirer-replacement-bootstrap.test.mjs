@@ -96,8 +96,8 @@ test('new Netlify account is recognized but gated behind owner activation and We
  assert.match(config,/CONTEXT==='deploy-preview'/);
 });
 test('Week 9 unattended cutover never substitutes private drafts for locked Weeks 7 and 8',()=>{
- const week7={...edition(7),editorial_revision:106,editorial_generation:{engine:'v31-forward'}};
- const week8={...edition(8),editorial_revision:106,editorial_generation:{engine:'v31-forward'}};
+ const week7={...edition(7),editorial_revision:107,editorial_generation:{engine:'v31-forward'}};
+ const week8={...edition(8),editorial_revision:107,editorial_generation:{engine:'v31-forward'}};
  const index=[{season:2026,week:7},{season:2026,week:8}];
  const awards={records:[{season:2026,week:8,newsroom_engine:'v31-forward',
   players_of_week:{offense:{player_id:'A'},defense:{player_id:'B'}},

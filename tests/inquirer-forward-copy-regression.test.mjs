@@ -130,7 +130,7 @@ test('Week 7 final writer removes the inherited transaction-wire joke only when 
 });
 
 test('revision 105 keeps final recap originality without relaxing the independent deep quality checks',()=>{
- assert.match(source,/FORWARD_EDITORIAL_REVISION=106/);
+ assert.match(source,/FORWARD_EDITORIAL_REVISION=107/);
  assert.match(source,/if\(week>=7&&week%2===1\)/);
  assert.match(source,/previousNorm=new Set\(forwardRecapSentences\(previousEdition\)/);
  assert.match(source,/if\(collisions\.length\)/);
@@ -224,7 +224,7 @@ test('market value repairs do not reuse the rejected next-opponent price scaffol
 import {polishForwardAcrossWeeks,FORWARD_EDITORIAL_REVISION} from '../netlify/functions/inquirer-editorial-v31.mjs';
 
 test('editorial revision 105 replaces shared jokes from any previous team, not only its own',()=>{
- assert.equal(FORWARD_EDITORIAL_REVISION,106);
+ assert.equal(FORWARD_EDITORIAL_REVISION,107);
  const recycled='The hosts disagree about almost everything. Even they know the next opponent will care more about the starting lineup than the episode title.';
  const previous={week:7,teams:[{roster_id:1,team_name:'North Dogs',inquirer_article:{paragraphs:[recycled]}}]};
  const make=(roster_id,team_name)=>({
@@ -346,4 +346,9 @@ test('revision 106 normalizes final stat grammar and malformed hot-take insertio
  polishForwardReaderCopy([],overview,8);
  assert.match(overview.paragraphs[0],/1 carry, 1 rush yd/);
  assert.match(overview.hot_takes[0].take,/24.5 fantasy points/);
+});
+
+
+test('revision 107 recap evidence reports football facts without meta-publication caveats',()=>{
+ assert.doesNotMatch(source,/not a prewritten final score|not a claim about their dynasty market prices/i);
 });

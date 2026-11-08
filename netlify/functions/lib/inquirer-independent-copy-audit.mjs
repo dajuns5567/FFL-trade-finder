@@ -9,7 +9,7 @@ const defects=[
  ['malformed-upset-copy',/at the first names on the scoring sheet card/i],
  ['meta-editorial-caveat',/not a prewritten final score|not a claim about their dynasty market prices|that is useful flexibility, not repetition/i]
 ];
-export function auditIndependentInquirerCopy(editions,{revision=106,mode='preview'}={}){
+export function auditIndependentInquirerCopy(editions,{revision=107,mode='preview'}={}){
  const issues=[],summaries=[],byWeek=new Map();
  const issue=(week,id,team)=>issues.push({week,id,team});
  for(const edition of editions||[]){

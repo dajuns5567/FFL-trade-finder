@@ -3,6 +3,7 @@ import valueHistoryHandler from './value-history.mjs';
 // Forward drafts must be reviewed as written; synthetic scoreboard sentence repair is retired.
 import {inspectEditionBeforePublication,editorialApprovalMatches,editorialCopyDigest,deterministicInquirerAdmission,isReadOnlyEditorialPreview,inspectPreviousWeekEditorialReuse} from './inquirer-publication-guard.mjs';
 import { getStore } from '@netlify/blobs';
+import {auditIndependentInquirerCopy} from './lib/inquirer-independent-copy-audit.mjs';
 import {loadMida,attachMida} from './inquirer-context-v22.mjs';
 import {INQUIRER_VERSION,publicReporters,buildInquirerWeek,buildLeagueOverview,inquirerWeekClassification,INQUIRER_PLAYOFF_START_WEEK,INQUIRER_FINAL_WEEK} from './inquirer-reporters.mjs';
 import week1Preload2026 from './inquirer-week1-2026-preload.mjs';
@@ -10,6 +11,7 @@ import week2Preload2026 from './inquirer-week2-2026-preload.mjs';
 import {fetchBestSeason} from './history-fetch.mjs';
 import {applyInquirerEditorialV31,evaluateInquirerEditionQuality,FORWARD_INQUIRER_VERSION,FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
 import {inspectCanonicalArchive} from './lib/inquirer-legacy-history.mjs';
+import {privatePreviewStoreName,isVerifiedPrivatePreviewPredecessor} from './lib/inquirer-preview-diagnostics.mjs';
 
 const LEAGUE='1316867686394769408';
 const API='https://api.sleeper.app/v1';
@@ -386,6 +388,26 @@ export async function weeklyReport(req){
  // Publish sequentially. A missing older edition is generated before a newer one so every article has the immediately
  // previous locked edition available for continuity and copy-forward checks. Preloaded Week 1/2 editions count as published.
  let week=null,latestPublished=null;
+ // Only a numbered, protected Deploy Preview may read its own verified
+ // manuscript as the immediately preceding week's editorial reference.
+ // These reads never promote anything to a public locked archive.
+ const query=new URL(req.url),requestedRaw=query.searchParams.get('preview_week'),
+   requested=Number(requestedRaw),privateStoreName=previewReadOnly?privatePreviewStoreName(req.url):null;
+ let privatePredecessor;
+ const getPrivatePredecessor=async w=>{
+  if(!privateStoreName||requestedRaw===null||!Number.isInteger(requested)||
+     requested!==w+1||w<7)return null;
+  if(privatePredecessor!==undefined)return privatePredecessor;
+  privatePredecessor=null;
+  try{
+   const key=season+'/week-'+String(w).padStart(2,'0')+
+     '/editorial-r'+FORWARD_EDITORIAL_REVISION+'/edition.json';
+   const draft=await getStore({name:privateStoreName,consistency:'strong'}).get(key,{type:'json'});
+   if(isVerifiedPrivatePreviewPredecessor(draft,season,w))
+    privatePredecessor=draft;
+  }catch(error){console.warn('private-preview-predecessor-unavailable',w,String(error?.message||error))}
+  return privatePredecessor;
+ };
  for(let w=1;w<=cappedWeek;w++){
   const preload=preloadedBroadcast(season,w);
   if(preload){latestPublished=preload;continue}
@@ -410,6 +432,11 @@ export async function weeklyReport(req){
    }
    latestPublished=stored;continue;
   }
+  // Permit only the exact audited private draft immediately before the
+  // requested week. Do not skip an older unpublished or corrupt edition.
+  if(previewReadOnly&&await getPrivatePredecessor(w)){
+   latestPublished=privatePredecessor;continue;
+  }
   week=w;break;
  }
  if(!week)return latestPublished||{available:false,season,week:null,reason:'No completed Fleeced! Inquirer edition is available yet.'};
@@ -418,8 +445,6 @@ export async function weeklyReport(req){
  // silently label a Week 3 backfill as the Week 5 (or later) manuscript.
  // Production retains its sequential historical publication path unchanged.
  if(previewReadOnly){
-  const requestedRaw=new URL(req.url).searchParams.get('preview_week');
-  const requested=Number(requestedRaw);
   if(requestedRaw!==null&&(!Number.isInteger(requested)||requested<1||requested>INQUIRER_FINAL_WEEK))
    return{available:false,season,week,preview_only:true,published_locked:false,reason:'Invalid editorial preview week'};
   const targetWeek=requestedRaw!==null?requested:Math.max(1,cappedWeek-1);
@@ -451,9 +476,15 @@ export async function weeklyReport(req){
   try{previousStored=await s.get(`broadcasts/${season}/week-${String(week-1).padStart(2,'0')}.json`,{type:'json'})}
   catch(error){return{available:false,published_locked:false,season,week,reason:'Previous locked edition cannot be read. Generation held.'}}
  }
- const previousBroadcast=previousStored||preloadedBroadcast(season,week-1);
- if(week>1&&!isLockedInquirerEdition(previousBroadcast,season,week-1))
-  return{available:false,published_locked:false,season,week,reason:'Previous Week '+(week-1)+' is not a verified locked Inquirer edition. Historical newsroom continuity required.'};
+ const previousBroadcast=previousStored||
+  (previewReadOnly?await getPrivatePredecessor(week-1):null)||
+  preloadedBroadcast(season,week-1);
+ const previousTrusted=previousBroadcast&&(
+  isLockedInquirerEdition(previousBroadcast,season,week-1)||
+  (previewReadOnly&&previousBroadcast===privatePredecessor&&
+   isVerifiedPrivatePreviewPredecessor(previousBroadcast,season,week-1)));
+ if(week>1&&!previousTrusted)
+  return{available:false,published_locked:false,season,week,reason:'Previous Week '+(week-1)+' is not a verified locked Inquirer edition or exact audited private preview predecessor. Historical newsroom continuity required.'};
  // An exact-copy approval is for the previously staged manuscript, not a
  // newly generated draft whose prose and digest may have changed. Only the
  // replacement site's first forward release needs this recovery path.
@@ -606,6 +637,8 @@ export async function weeklyReport(req){
  // deterministic admission gate only after the prior week is locked.
  const publicationHost=new URL(req.url).hostname;
  const publicationSiteId=globalThis.Netlify?.env?.get?.('SITE_ID')||process.env.SITE_ID||'';
+ const currentPublisherSite=publicationSiteId==='fa33dfe4-8293-441e-8da0-25cc66fc984c'||
+  publicationHost==='precious-dango-fb4633.netlify.app';
  const replacementPublicationSite=publicationSiteId==='8776d155-bc7b-4dcd-bafc-3d70d3d51800'||
   publicationHost==='transcendent-manatee-2f0123.netlify.app';
  const admission=manualAdmission.approved?manualAdmission:
@@ -614,7 +647,12 @@ export async function weeklyReport(req){
  // evaluator also rejects recycled paragraphs and cross-reporter scaffolds.
  // Never allow a reviewed digest to override an unresolved generation failure.
  const deepQualityOk=week<3||quality.ok===true;
- if(!audit.ok||!deepQualityOk||!admission.approved){
+ // Independent Week 9+ copy integrity is a separate fail-closed publication
+ // check. It cannot be overridden by a generated audit or a manual digest.
+ const independentCopy=currentPublisherSite&&week>=9?
+  auditIndependentInquirerCopy([result],{revision:FORWARD_EDITORIAL_REVISION,mode:'publication'}):
+  {ok:true,issue_count:0,issues:[]};
+ if(!audit.ok||!deepQualityOk||!admission.approved||!independentCopy.ok){
   const pending=await s.get(stageKey,{type:'json'}).catch(()=>null);
   if(pending?.digest!==admission.digest||pending?.generation_quality?.ok!==quality.ok){
    await s.setJSON(stageKey,{schema_version:1,season,week,digest:admission.digest,
@@ -623,8 +661,9 @@ export async function weeklyReport(req){
   }
   return{available:false,published_locked:false,season,week,waiting_for_week:week,
    review_required:true,stage_key:stageKey,digest:admission.digest,
-   editorial_findings:audit.issues.length+(deepQualityOk?0:quality.issues.length),
-   reason:!deepQualityOk?'Deep editorial quality hold: '+quality.issues.length+' repeat/copy-forward findings. No edition was published.':
+   editorial_findings:audit.issues.length+(deepQualityOk?0:quality.issues.length)+independentCopy.issue_count,
+   reason:!independentCopy.ok?'Independent Week 9+ copy integrity hold: '+independentCopy.issue_count+' findings. No edition was published.':
+    !deepQualityOk?'Deep editorial quality hold: '+quality.issues.length+' repeat/copy-forward findings. No edition was published.':
     audit.ok?'Awaiting exact-copy editorial approval.':
     'Editorial quality hold: '+audit.issues.length+' findings. No edition was published.'};
  }

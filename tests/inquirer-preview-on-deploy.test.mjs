@@ -93,3 +93,12 @@ test('canonical PR hostname wins over the immutable deploy permalink',async()=>{
  assert.equal(started,true);
  assert.equal(target,stable+'/.netlify/functions/inquirer-preview-background?start=1&preview_week=5');
 });
+
+test('SSO-protected Deploy Preview never retries HTTP 401 or falsely reports a manuscript',async()=>{
+ const calls=[];
+ const started=await startPreviewDraftForDeploy({deploy:{context:'deploy-preview',sslUrl:previewUrl}},async req=>{
+  calls.push(req.url);return new Response('Protected',{status:401});
+ });
+ assert.equal(started,false);
+ assert.equal(calls.length,1);
+});

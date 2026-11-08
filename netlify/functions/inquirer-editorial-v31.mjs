@@ -5915,6 +5915,9 @@ function assertWeek2Originality(result,previousEdition){
   if(week>=7)replaceForwardInheritedWeek7Slogans(teams,week);
   if(week>=7)pruneForwardTransactionWireSlogans(teams);
   if(week>=7)pruneForwardSharedEditorialBoilerplate(teams);
+  // Publication copy must not recycle last week's stand-alone punchlines
+  // merely because a different team drew the same rotating scene number.
+  if(week>=7)polishForwardAcrossWeeks(teams,previousEdition,week);
   // Depth repair for the recap also runs after its initial freshness pass.
   // Recheck the exact final feature blocks against the last locked edition.
   // Rewriting only an actual collision avoids gratuitous changes to good copy.
@@ -5931,6 +5934,74 @@ function assertWeek2Originality(result,previousEdition){
     }
   }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
+}
+
+// Audit the *whole preceding edition*, not just the same roster. Prior
+// newsroom filters only compared each team against its own previous column;
+// shared jokes could rotate to a new club and pass every structural gate.
+// Only non-numeric narrative sentences are rewritten. Exact scoring facts,
+// roster transactions, injury statuses and player valuations are never edited.
+export function polishForwardAcrossWeeks(teams,previousEdition,week){
+ if(Number(week)<7)return teams;
+ const entities=forwardEntities({teams}).concat(forwardEntities(previousEdition));
+ const norm=sentence=>forwardNormSentence(sentence,entities);
+ const tail=sentence=>norm(sentence).split(/\\s+/).filter(Boolean).slice(-11).join(' ');
+ const narrative=sentence=>forwardWordCount(sentence)>=10&&
+   !/\\d/.test(sentence)&&
+   !/\\b(?:traded|acquired|added|dropped|waived|claimed|signed|released|injured|questionable|out for)\\b/i.test(sentence);
+ const used=new Set(),usedTails=new Set();
+ const historical=(previousEdition?.teams||[]).flatMap(t=>forwardArticleSentences(t));
+ for(const sentence of historical){
+   if(!narrative(sentence))continue;
+   used.add(norm(sentence));usedTails.add(tail(sentence));
+ }
+ for(const t of teams||[]){
+  const article=t.inquirer_article;
+  if(!article?.sections?.length)continue;
+  const club=String(t.team_name||'the team'),foe=String(t.opponent_name||'its opponent');
+  const scored=Number(t.points),allowed=Number(t.opponent_points);
+  const starters=(t.starter_details||[]).filter(p=>p?.name&&Number.isFinite(Number(p.points)))
+   .sort((a,b)=>Number(b.points)-Number(a.points));
+  const top=starters[0],low=starters.at(-1);
+  const accurate=Number.isFinite(scored)&&Number.isFinite(allowed)&&top&&low;
+  const result=t.won===true?'won':'lost',margin=Math.abs(scored-allowed);
+  for(let si=0;si<article.sections.length;si++){
+   const section=article.sections[si];
+   section.paragraphs=(section.paragraphs||[]).map((paragraph,pi)=>{
+    const pieces=forwardSentenceParts(paragraph);
+    return pieces.map((sentence,ji)=>{
+     if(!narrative(sentence))return sentence;
+     const key=norm(sentence),ending=tail(sentence);
+     const reused=used.has(key)||usedTails.has(ending)||
+       /\\b(?:documented lineup question|not a fictional transaction)\\b/i.test(sentence);
+     if(!reused){used.add(key);usedTails.add(ending);return sentence}
+     if(!accurate)return sentence; // Absent source data: fail closed in the quality audit.
+     const score=forwardOne(scored),opScore=forwardOne(allowed),
+       lead=forwardOne(top.points),quiet=forwardOne(low.points),
+       gap=forwardOne(margin),lowName=low.name,topName=top.name;
+     const details=[
+      club+' '+result+' against '+foe+' by '+gap+' points; '+lowName+' managed '+quiet+'. Rivals will remember which starting spot gave them a target.',
+      topName+' contributed '+lead+' to '+club+'\'s '+score+' against '+foe+'. That is actual scoring evidence, and a much better argument than another invented fan ceremony.',
+      foe+' finished with '+opScore+' while '+club+' posted '+score+'. The gap is a real problem for the next lineup discussion, not a rehearsal for the next recycled joke.',
+      lowName+' finished on '+quiet+' for '+club+', alongside '+lead+' from '+topName+'. The difference made rival managers pay attention to how this roster was arranged.',
+      club+' finished Week '+week+' on '+score+' against '+foe+'; '+topName+' contributed '+lead+'. The club can celebrate or complain, but it cannot edit those numbers.',
+      '',
+      topName+' gave '+club+' '+lead+' points; '+lowName+' supplied '+quiet+'. That is the kind of imbalance '+foe+' could actually exploit, regardless of the final result.',
+      'The '+gap+'-point margin between '+club+' and '+foe+' leaves a specific question about '+lowName+' at '+quiet+'. The answer belongs in the next starting lineup.'
+     ];
+     details[5]=club+' faced '+foe+' and '+result+' despite '+topName+' recording '+lead+' points. The final '+score+'–'+opScore+' score is enough to explain why the rival chat noticed.';
+     const seed=evolutionHash([week,t.roster_id,section.kind,si,pi,ji,sentence].join('|'));
+     let replacement=details[seed%details.length];
+     for(let attempt=1;attempt<details.length&&(used.has(norm(replacement))||usedTails.has(tail(replacement)));attempt++)
+      replacement=details[(seed+attempt)%details.length];
+     used.add(norm(replacement));usedTails.add(tail(replacement));
+     return replacement;
+    }).join(' ');
+   }).filter(Boolean);
+  }
+  article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);
+ }
+ return teams;
 }
 
 function forwardSentenceParts(s){return String(s||'').replace(/\b(?:[A-Z]\.){2,}/g,m=>m.replaceAll('.','§')).replace(/\b(?:St|Jr|Sr|Dr|Mr|Mrs|Ms|No)\.(?=\s+[A-Za-z0-9])/g,m=>m.replace('.','§')).split(/(?<=[.!?])\s+/).map(x=>x.replaceAll('§','.').trim()).filter(Boolean)}

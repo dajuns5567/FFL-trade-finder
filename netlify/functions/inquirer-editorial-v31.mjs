@@ -9,7 +9,7 @@ import {attributeForwardPlayerStatFragments,curateForwardTeamNarrative,inspectNa
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=101;
+export const FORWARD_EDITORIAL_REVISION=102;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -2145,7 +2145,7 @@ function w2OpeningHook(t,r,won,margin,opp,top){
     "mack-hollis":[
       won?star+" kicked the door in and the "+a.mascot+" made sure the rest of the lineup followed him through it.":foe+" put the "+a.mascot+" on the wrong side of the headline, and there is no quiet font for a "+w2One(margin)+"-point loss.",
       won?"The "+a.mascot+" finally gave us the loud Sunday this roster keeps threatening to have.":"The "+a.mascot+" got exposed in enough places that Week 3 does not need a mystery—just a toolbox.",
-      won?"This is the kind of win that makes the league chat scroll back up and check what just happened.":"Everybody saw where the "+a.mascot+" cracked, including managers who were not even trying to scout them.",
+      won?team+" earned a headline against "+foe+"; the final margin gives the rivals something measurable to argue about.":"Everybody saw where the "+a.mascot+" cracked, including managers who were not even trying to scout them.",
       won?"The scoreboard got loud early enough that "+foe+" spent the afternoon answering the "+a.mascot+" instead of writing the script.":"The worst part for the "+a.mascot+" is not the loss; it is how many weak spots volunteered for the headline.",
       won?(wide?team+" hit Week 2 like somebody had taped the accelerator down.":team+" found just enough live wires to keep "+foe+" from cutting the power."):tight?team+" lost close enough that every quiet starter can hear the replay machine warming up.":foe+" kept landing punches while "+team+" waited for too many lineup spots to swing back.",
       won?team+" put together a Sunday with enough noise from enough directions that nobody could mute the whole thing.":team+" had some useful noise, but "+foe+" found the dead outlets and charged rent.",
@@ -2379,7 +2379,7 @@ function forwardFanScenes(t,won,week,variationSalt){
   ["The neighborhood watch has politely declined jurisdiction over "+name+"'s starting decisions. "+star+"'s "+starPts+" points are evidence of what worked, while the rest of the scoreboard is a less convincing witness.","Fans are not asking for a criminal inquiry. They are asking the next lineup to look like somebody reviewed the last one."],
   ["The "+a.mascot+" train platform has become an unofficial postgame press conference. Riders can recite "+points+" without checking their phones, and "+dangerPts+" has become a number people mutter at the timetable.","The trip to the next matchup with "+next+" is not getting shorter. Supporters would settle for the lineup making it less unpleasant."],
   ["An imaginary "+a.mascot+" civic budget has allocated every available dollar to explaining "+danger+"'s "+dangerPts+" points. The treasury department insists no actual taxpayer funds were harmed.","People can laugh at the accounting until "+next+" arrives. A repeat will be less amusing, and considerably harder to defend."],
-  ["The fan podcast opened with ten seconds of silence for "+name+"'s weakest position. That was followed by thirty minutes on "+star+"'s "+starPts+" points and an argument over who gets to call that progress.","The hosts disagree about almost everything. Even they know the next opponent will care more about the starting lineup than the episode title."],
+  ["The fan podcast opened with ten seconds of silence for "+name+"'s weakest position. That was followed by thirty minutes on "+star+"'s "+starPts+" points and an argument over who gets to call that progress.","The callers can argue about the episode title; "+name+" still scored "+points+" and "+next+" gets the next chance to examine the lineup."],
   ["At the "+a.mascot+" tailgate, one group raised a toast to "+points+" points while another kept asking about "+danger+" and "+dangerPts+". The two circles have agreed to share the grill but not their conclusions.","The peace treaty lasts until "+next+" appears on the schedule. Fans are already reserving the louder picnic table."],
   ["A fan-made "+a.mascot+" scoreboard mural now shows "+star+" on one side and "+danger+" on the other. The artist gave each the same amount of wall space, which is more equality than their "+starPts+" and "+dangerPts+" points earned.","The debate is artistic only in the loosest sense. The manager gets another Sunday to make the picture less lopsided."],
   ["The "+a.mascot+" supporters called a mock zoning hearing to decide whether "+points+" points qualifies as a safe structure. "+(won?"Approval was granted with a noisy parade clause.":"Inspectors demanded that the weakest starter be reinforced immediately."),"Nobody has filed actual paperwork, but "+next+" will conduct the next inspection for free."],
@@ -3678,7 +3678,10 @@ function rewriteWeek2Overview(overview,teams,previousEdition,week=2){
     const rows=(team?.value_history_player_movers?.[key]||[]).filter(x=>Number.isFinite(Number(x?.delta))).slice(0,3);
     if(!rows.length)return" No verified player-level "+(key==="risers"?"gain":"decline")+" is available for attribution within that same snapshot window.";
     const items=rows.map(x=>String(x.player_name||x.player_id)+" ("+(Number(x.delta)>0?"+":"")+Math.round(Number(x.delta)).toLocaleString("en-US")+")");
-    return" The roster’s biggest "+label+" over that same window: "+w2Natural(items)+".";
+    const window=team?.value_history_week||{},start=Date.parse(window.baseline_t||''),end=Date.parse(window.latest_t||'');
+    const date=stamp=>new Date(stamp).toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'UTC'});
+    const period=Number.isFinite(start)&&Number.isFinite(end)&&end>=start?' from '+date(start)+' to '+date(end):' in the verified valuation snapshot';
+    return' For '+w2DisplayTeam(team.team_name)+', the largest player '+label+period+' were '+w2Natural(items)+'.';
   };
   const middleTeams=(teams||[]).filter(t=>Number(t?.league_context?.record?.wins)===1&&Number(t?.league_context?.record?.losses)===1),trajectoryReporter=rep(0)||{};
   if(Number(week)>2){
@@ -5705,11 +5708,11 @@ function assertWeek2Originality(result,previousEdition){
   // recovery and recap synthesis, must honor plural fantasy club names.
   if(week>=3){
     const plurals=[...new Set(teams.map(t=>String(t.team_name||'').trim()).filter(n=>/s$/i.test(n.split(/\\s+/).at(-1)||'')))];
-    const fixes={does:'do',gets:'get',has:'have',is:'are',needs:'need',sits:'sit',keeps:'keep',projects:'project',faces:'face'};
+    const fixes={does:'do',gets:'get',has:'have',is:'are',needs:'need',sits:'sit',keeps:'keep',projects:'project',faces:'face',spills:'spill',hands:'hand',makes:'make',puts:'put',takes:'take',wins:'win',loses:'lose',falls:'fall',awaits:'await'};
     const correct=body=>{
       let copy=String(body||'');
       for(const name of plurals){
-        const rule=new RegExp('\\b'+forwardEscRe(name)+' (does|gets|has|is|needs|sits|keeps|projects|faces)\\b','gi');
+        const rule=new RegExp('\\b'+forwardEscRe(name)+' (does|gets|has|is|needs|sits|keeps|projects|faces|spills|hands|makes|puts|takes|wins|loses|falls|awaits)\\b','gi');
         copy=copy.replace(rule,(match,verb,offset)=>{
           if(/\\b(?:against|around|covering|for|from|of|to|with|before|after)\\s$/i.test(copy.slice(0,offset)))return match;
           return match.slice(0,-verb.length)+fixes[verb.toLowerCase()];
@@ -5883,8 +5886,7 @@ function assertWeek2Originality(result,previousEdition){
           forwardOne(Number(high.points)-Number(low.points))+
           ' points of separation across the selected league lineups.':null,
           games.length?
-          'A count of '+games.length+' finished matchups yielded '+tight+
-          ' decisions within five fantasy points. One narrow win invites a victory speech; several narrow games suggest the league should keep the confetti receipts.':null];
+          'Of '+games.length+' completed Week '+week+' matchups, '+tight+' finished within five fantasy points. '+(tight===0?'Nobody can blame a one-point coin flip for this slate; the winners built measurable daylight.':tight===1?'Only one game demanded a calculator at the whistle; the others left managers with larger problems to answer.':'Those close finishes put every marginal starter under a microscope while the wider margins offered no such excuse.'):null];
         evidence.outlook=[alternateNext(high),alternateNext(second)];
       }
       for(const kind of ['lead','standings','players','decisions','league','outlook']){
@@ -6002,7 +6004,7 @@ export function replaceForwardInheritedWeek7Slogans(teams,week){
   const wireEvidence=validScore&&club&&opponent&&least?[
    least.name+' registered '+forwardOne(least.points)+' points in '+club+'’s '+forwardOne(score)+'-point result against '+opponent+'. That starting-card return, rather than an invented personnel move, belongs under review.',
    'Against '+opponent+', '+club+' finished with '+forwardOne(score)+' points while '+least.name+' supplied '+forwardOne(least.points)+'. The lineup is the evidence management actually has to answer for.',
-   'The '+club+' selection produced '+forwardOne(score)+' points against '+opponent+'; '+least.name+' contributed '+forwardOne(least.points)+'. That is a documented lineup question, not a fictional transaction.'
+   'Against '+opponent+', '+club+' recorded '+forwardOne(score)+' while '+least.name+' posted '+forwardOne(least.points)+'. The weak starting return is fair game for the rival chat.'
   ][id%3]:null;
   const divisionEvidence=validScore&&club&&opponent&&division&&
    Number.isInteger(rank)&&rank>0?[

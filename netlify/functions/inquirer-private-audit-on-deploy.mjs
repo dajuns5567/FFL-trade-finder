@@ -6,7 +6,7 @@ import {auditIndependentInquirerCopy} from './lib/inquirer-independent-copy-audi
 // asking the owner to export files, or accessing public production routes.
 export default {
  async deploySucceeded(event){
-  if(event?.deploy?.context!=='deploy-preview'||event?.site?.name!=='precious-dango-fb4633')return;
+  if(event?.deploy?.context!=='deploy-preview')return;
   const canonical='deploy-preview-427--precious-dango-fb4633.netlify.app';
   const urls=[event.deploy.sslUrl,event.deploy.url,event.deploy.permalinkUrl];
   const isCorrectPR=urls.some(value=>{try{return new URL(value).hostname===canonical}catch{return false}})||

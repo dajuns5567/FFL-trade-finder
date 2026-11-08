@@ -6025,7 +6025,7 @@ function assertWeek2Originality(result,previousEdition){
 export function polishForwardReaderCopy(teams,overview,week=0){
  const repair=raw=>String(raw??'').trim()
    .replace(/\bthe final score against ([^.!?;]{2,90}?) do not erase that work\b/gi,
-     (_m,opponent)=>'the final score against '+opponent+' does not erase that work')
+     (match,opponent)=>(match[0]==='T'?'The':'the')+' final score against '+opponent+' does not erase that work')
    .replace(/\bThe next test against ([^.!?;]{2,70}?) are better suited\b/gi,
      (_m,opponent)=>'The next test against '+opponent+' is better suited')
    .replace(/\bbeating ([^.!?;]{2,70}?) take a swing\b/gi,

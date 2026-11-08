@@ -2,6 +2,7 @@ import {getStore} from '@netlify/blobs';
 import {privatePreviewStoreName} from './lib/inquirer-preview-diagnostics.mjs';
 import {FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
 import {auditIndependentInquirerCopy} from './lib/inquirer-independent-copy-audit.mjs';
+import {verifiedNewSiteCutoverHistory,verifiedWeekNineAutopublishCutoverHistory} from './lib/inquirer-replacement-archive-gate.mjs';
 // Internal Netlify deploy event reads private Blobs without disabling SSO,
 // asking the owner to export files, or accessing public production routes.
 export default {
@@ -48,6 +49,28 @@ export default {
    const result=auditIndependentInquirerCopy([week7,week8],{revision:FORWARD_EDITORIAL_REVISION});
    // Only issue IDs and team names appear in logs: never full article prose.
    console.info('inquirer-independent-copy-audit',JSON.stringify(result));
+   // A signed Netlify deployment event can read the site-local production
+   // archive even when browser-facing preview routes require team SSO.
+   // This does not stage, lock, publish, or change any existing Blob.
+   const archive=getStore({name:'fleeced-league-hub',consistency:'strong'});
+   const [week3,week4,week5,week6,published7,published8,index,awards,status]=await Promise.all([
+    ...[3,4,5,6,7,8].map(week=>
+     archive.get('broadcasts/2026/week-'+String(week).padStart(2,'0')+'.json',{type:'json'})),
+    archive.get('broadcasts/index.json',{type:'json'}),
+    archive.get('awards/weekly.json',{type:'json'}),
+    archive.get('inquirer/publication-status.json',{type:'json'})
+   ]);
+   const baseline=verifiedNewSiteCutoverHistory({week3,week4,week5,week6,index,awards});
+   const forward=verifiedWeekNineAutopublishCutoverHistory({week7:published7,week8:published8,index,awards});
+   console.info('inquirer-new-site-cutover-readiness',JSON.stringify({
+    private_revision:FORWARD_EDITORIAL_REVISION,private_audit_ok:result.ok,
+    baseline_ready:baseline.ready,baseline_reason:baseline.reason,
+    weeks7_8_locked_ready:forward.ready,forward_reason:forward.reason,
+    published_weeks:[3,4,5,6,7,8].filter((_,i)=>[week3,week4,week5,week6,published7,published8][i]?.available),
+    archive_index_length:Array.isArray(index)?index.length:null,
+    awards_count:Array.isArray(awards?.records)?awards.records.length:null,
+    status_state:status?.state||'missing',status_week:status?.week??null
+   }));
   }catch(error){
    console.error('inquirer-independent-copy-audit-error',String(error?.message||error));
   }

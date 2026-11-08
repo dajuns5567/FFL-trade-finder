@@ -4,6 +4,7 @@ import {inquirerScheduleDecision} from './lib/inquirer-schedule-decision.mjs';
 import {verifiedReplacementHistory,verifiedNewSiteCutoverHistory,verifiedWeekNineAutopublishCutoverHistory} from './lib/inquirer-replacement-archive-gate.mjs';
 import {editorialApprovalMatches} from './inquirer-publication-guard.mjs';
 import {approvedWeek5Record} from './lib/inquirer-week5-owner-signoff.mjs';
+import {resolveInquirerQueueCredential} from './lib/inquirer-queue-credential.mjs';
 // Queue a long-running background job. Netlify scheduled functions have a
 // hard 30-second limit, while the full Inquirer edition takes longer.
 export default async function inquirerPublishScheduled(req){
@@ -25,8 +26,8 @@ export default async function inquirerPublishScheduled(req){
  const publishingEnabled=globalThis.Netlify?.env?.get?.('FLEECED_ENABLE_NEW_SITE_PUBLISHER')||process.env.FLEECED_ENABLE_NEW_SITE_PUBLISHER||'';
  if(isReplacement&&publishingEnabled!=='true')
   return skip('Replacement site is preview-only pending verified archive migration');
- const key=globalThis.Netlify?.env?.get('FLEECED_INQUIRER_QUEUE_KEY')||process.env.FLEECED_INQUIRER_QUEUE_KEY||'';
- if(!key)return skip('Publication queue credential not configured');
+ const configuredKey=globalThis.Netlify?.env?.get?.('FLEECED_INQUIRER_QUEUE_KEY')||process.env.FLEECED_INQUIRER_QUEUE_KEY||'';
+ if(!configuredKey&&!isCurrentSite)return skip('Publication queue credential not configured');
  // Do not spend another generation on identical copy that already failed the
  // editorial gate. A new newsroom revision or new completed NFL week unblocks it.
  try{
@@ -136,6 +137,17 @@ export default async function inquirerPublishScheduled(req){
   console.error('inquirer-schedule-status-check',String(error?.message||error));
   return skip('Publication state or NFL clock unavailable; holding publication');
  }
+ // Bootstrap an unguessable internal secret only after history and publication
+ // authorization checks pass. It never appears in public status or logs.
+ let key;
+ try{
+  key=await resolveInquirerQueueCredential({store:getStore('fleeced-league-hub',{consistency:'strong'}),
+   configured:configuredKey,bootstrap:isCurrentSite});
+ }catch(error){
+  console.error('inquirer-schedule-queue-credential',String(error?.message||error));
+  return skip('Internal queue credential unavailable; publication held');
+ }
+ if(!key)return skip('Internal queue credential not configured');
  const url=new URL('/.netlify/functions/inquirer-publish-background',req.url);
  const result=await fetch(url,{
   method:'POST',

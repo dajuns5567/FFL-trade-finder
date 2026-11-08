@@ -2,6 +2,7 @@ import {weeklyReport,weeklyAwards} from './league-hub.mjs';
 import {getStore} from '@netlify/blobs';
 import {FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
 import {verifiedNewSiteCutoverHistory,verifiedWeekNineAutopublishCutoverHistory} from './lib/inquirer-replacement-archive-gate.mjs';
+import {resolveInquirerQueueCredential,inquirerQueueKeyMatches} from './lib/inquirer-queue-credential.mjs';
 
 // Netlify background functions run for up to 15 minutes. The hourly scheduler
 // queues this private job instead of trying to generate 32 articles in 30 seconds.
@@ -47,12 +48,19 @@ export default async function publishInquirerInBackground(req){
   console.warn('inquirer-background-replacement-publisher-held');
   return new Response('Publication disabled on replacement site',{status:403});
  }
- const expected=globalThis.Netlify?.env?.get('FLEECED_INQUIRER_QUEUE_KEY')||process.env.FLEECED_INQUIRER_QUEUE_KEY||'';
- if(req.method!=='POST'||!expected||req.headers.get('x-fleeced-queue-key')!==expected){
+ const statusStore=getStore('fleeced-league-hub',{consistency:'strong'});
+ const configuredKey=globalThis.Netlify?.env?.get?.('FLEECED_INQUIRER_QUEUE_KEY')||process.env.FLEECED_INQUIRER_QUEUE_KEY||'';
+ let expected=null;
+ try{
+  expected=await resolveInquirerQueueCredential({store:isCurrentSite?statusStore:null,
+   configured:configuredKey,bootstrap:false});
+ }catch(error){
+  console.error('inquirer-background-queue-credential',String(error?.message||error));
+ }
+ if(req.method!=='POST'||!inquirerQueueKeyMatches(expected,req.headers.get('x-fleeced-queue-key'))){
   console.error('inquirer-background rejected unauthorized invocation');
   return new Response('Forbidden',{status:403});
  }
- const statusStore=getStore('fleeced-league-hub',{consistency:'strong'});
  // The worker may be invoked directly, so independently check the new site's
  // complete, locked continuity BEFORE writing even publication-status.json.
  if(isNewestSite){

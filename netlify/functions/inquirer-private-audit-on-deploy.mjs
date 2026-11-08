@@ -1,6 +1,5 @@
 import {getStore} from '@netlify/blobs';
-import {privatePreviewStoreName,isVerifiedPrivatePreviewPredecessor} from './lib/inquirer-preview-diagnostics.mjs';
-import generateInquirerPreview from './inquirer-preview-background.mjs';
+import {privatePreviewStoreName} from './lib/inquirer-preview-diagnostics.mjs';
 import {FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
 import {auditIndependentInquirerCopy} from './lib/inquirer-independent-copy-audit.mjs';
 // Internal Netlify deploy event reads private Blobs without disabling SSO,
@@ -29,26 +28,16 @@ export default {
      console.info('inquirer-independent-copy-rejection-details',JSON.stringify({
       revision:FORWARD_EDITORIAL_REVISION,issue_count:failed.issue_count,issues:failed.issues
      }));
-     // A signed Netlify deploy event can invoke the private worker directly,
-     // without an HTTP request blocked by Netlify's SSO preview protection.
-     // This one-time, revision-107-only retry is restricted to the exact
-     // previously rejected Week 8 stock-caveat defect, after verified Week 7.
-     // Never regenerate a completed edition or publish anything.
-     const eligible=FORWARD_EDITORIAL_REVISION===107&&
-      isVerifiedPrivatePreviewPredecessor(week7,2026,7)&&
-      failed.issue_count===1&&
-      failed.issues.every(issue=>issue.week===8&&issue.id==='meta-editorial-caveat'&&issue.team==='Weekly Recap');
-     if(eligible){
-      const marker='2026/week-08/editorial-r107/one-time-recap-source-retry.json';
-      const claim=await store.setJSON(marker,{at:new Date().toISOString(),reason:'verified-recap-caveat-source-fix'}, {onlyIfNew:true});
-      if(claim?.modified){
-       console.info('inquirer-private-week8-auto-retry-started',{revision:107,season:2026,week:8});
-       const url='https://'+canonical+'/.netlify/functions/inquirer-preview-background?start=1&preview_week=8';
-       await generateInquirerPreview(new Request(url));
-       const readback=await store.get(key(8),{type:'json'});
-       console.info('inquirer-private-week8-auto-retry-finished',{revision:107,completed:!!readback,team_count:readback?.teams?.length||0});
-      }
-     }
+     // The deploy-event request has a short platform deadline. Never invoke
+     // the full private generator inline here: a 504 can strand a running job.
+     const statusKey='2026/week-08/editorial-r'+FORWARD_EDITORIAL_REVISION+'/status.json';
+     const current=await store.get(statusKey,{type:'json'});
+     console.info('inquirer-private-week8-status',JSON.stringify({
+      revision:FORWARD_EDITORIAL_REVISION,state:current?.state||'not-started',
+      error:String(current?.error||'').slice(0,160),
+      completed:false
+     }));
+
     }else{
      console.info('inquirer-independent-copy-audit-pending',JSON.stringify({
       revision:FORWARD_EDITORIAL_REVISION,week7:!!week7,week8:!!week8,rejected:!!rejected

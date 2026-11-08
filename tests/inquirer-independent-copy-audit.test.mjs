@@ -68,11 +68,10 @@ test('recap source and one-time private retry address the actual rejected Week 8
  const editorial=readFileSync(new URL('../netlify/functions/inquirer-editorial-v31.mjs',import.meta.url),'utf8');
  assert.doesNotMatch(editorial,/That is useful flexibility, not repetition/);
  const retry=readFileSync(new URL('../netlify/functions/inquirer-private-audit-on-deploy.mjs',import.meta.url),'utf8');
- assert.match(retry,/FORWARD_EDITORIAL_REVISION===107/);
- assert.match(retry,/isVerifiedPrivatePreviewPredecessor\(week7,2026,7\)/);
- assert.match(retry,/failed\.issue_count===1/);
- assert.match(retry,/onlyIfNew:true/);
- assert.match(retry,/generateInquirerPreview\(new Request\(url\)\)/);
+ assert.match(retry,/inquirer-private-week8-status/);
+ assert.match(retry,/rejected-review\.json/);
+ assert.doesNotMatch(retry,/generateInquirerPreview\(new Request\(url\)\)/);
+ assert.doesNotMatch(retry,/onlyIfNew:true/);
  assert.match(retry,/event\?\.deploy\?\.context!=='deploy-preview'/);
  assert.match(retry,/precious-dango-fb4633\.netlify\.app/);
 });

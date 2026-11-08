@@ -133,17 +133,22 @@ test('backlogged Weeks 6, 7 and 8 each enqueue after the preceding week is commi
 });
 
 
-test('Netlify build ignore runs only on the newly connected owner account',async()=>{
+test('owner-approved cutover builds only new-site production and never old sites or previews',async()=>{
  const {spawnSync}=await import('node:child_process');
  const config=readFileSync(new URL('../netlify.toml',import.meta.url),'utf8');
- const script=config.match(/process\.exit\(process\.env\.SITE_ID[^"\n]+\? 1 : 0\)/)?.[0];
- assert.ok(script,'new site-name build filter must be a valid node expression');
- const code=(SITE_ID,SITE_NAME)=>spawnSync(process.execPath,['-e',script],{
-  env:{...process.env,SITE_ID,SITE_NAME},encoding:'utf8'}).status;
- assert.equal(code('3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f',''),1,'build new account by site ID');
- assert.equal(code('','gleaming-dodol-8dbc4a'),1,'build new account by site name');
- assert.equal(code('8776d155-bc7b-4dcd-bafc-3d70d3d51800','transcendent-manatee-2f0123'),0,'old published archive source must not auto-deploy');
- assert.equal(code('','unrelated-project'),0,'do not deploy unrelated clones');
- const workflow=readFileSync(new URL('../.github/workflows/inquirer-editorial-r5-smoke.yml',import.meta.url),'utf8');
- assert.match(workflow,/gleaming-dodol-8dbc4a\.netlify\.app/,'preview CI should select new site');
+ const literal=config.match(/^\s*ignore = (".*")$/m)?.[1];
+ assert.ok(literal,'Netlify build ignore must be present');
+ const command=JSON.parse(literal);
+ const code=(SITE_ID,SITE_NAME,CONTEXT)=>spawnSync('sh',['-c',command],{
+  env:{...process.env,SITE_ID,SITE_NAME,CONTEXT},encoding:'utf8'}).status;
+ assert.equal(code('fa33dfe4-8293-441e-8da0-25cc66fc984c','','deploy-preview'),0,'new site preview stays skipped');
+ assert.equal(code('fa33dfe4-8293-441e-8da0-25cc66fc984c','','production'),1,'new site production only');
+ assert.equal(code('','precious-dango-fb4633','production'),1,'new site production allowed by site name');
+ assert.equal(code('8776d155-bc7b-4dcd-bafc-3d70d3d51800','transcendent-manatee-2f0123','deploy-preview'),0,'old site never builds');
+ assert.equal(code('3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f','gleaming-dodol-8dbc4a','deploy-preview'),0,'retired site never builds');
+ const {privatePreviewStoreName,isPreviewDiagnosticContext}=await import('../netlify/functions/lib/inquirer-preview-diagnostics.mjs');
+ const preview='https://deploy-preview-427--precious-dango-fb4633.netlify.app/.netlify/functions/inquirer-preview-diagnostic';
+ assert.equal(privatePreviewStoreName(preview),'fleeced-inquirer-private-pr427-persistent');
+ assert.equal(isPreviewDiagnosticContext(preview),true);
+ assert.equal(privatePreviewStoreName('https://precious-dango-fb4633.netlify.app/'),null);
 });

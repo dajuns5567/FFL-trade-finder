@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {isPreviewDiagnosticContext,resolvePreviewIdentity,previewStatusMatchesIdentity,privatePreviewStoreName,PREVIEW_DIAGNOSTIC_STATUS,PREVIEW_DIAGNOSTIC_EDITION,PREVIEW_DIAGNOSTIC_REJECTED} from '../netlify/functions/lib/inquirer-preview-diagnostics.mjs';
 
 const preview=(site,n=402)=>'https://deploy-preview-'+n+'--'+site+'.netlify.app/.netlify/functions/inquirer-preview-diagnostic';
@@ -101,4 +102,51 @@ test('new account private diagnostics isolate PRs and reject production and unre
  assert.equal(privatePreviewStoreName(preview('transcendent-manatee-2f0123',402)),'fleeced-inquirer-private-pr402-persistent');
  assert.equal(privatePreviewStoreName(preview('gleaming-dodol-8dbc4a',402)),'fleeced-inquirer-private-pr402-persistent');
  assert.equal(privatePreviewStoreName('https://deploy-preview-421--gleaming-dodol-8dbc4a.netlify.app.evil.example/'),null);
+});
+
+test('private Week 8 continuity accepts only an exact, full-audit Week 7 manuscript',async()=>{
+ const {isVerifiedPrivatePreviewPredecessor}=await import('../netlify/functions/lib/inquirer-preview-diagnostics.mjs');
+ const {FORWARD_EDITORIAL_REVISION}=await import('../netlify/functions/inquirer-editorial-v31.mjs');
+ const kinds=['lede','players','management','hot-seat','cool-throne','value','sentiment','outlook'];
+ const reporters=['mack-hollis','nora-voss','walter-mercer','tess-delaney'];
+ const draft={
+  season:2026,week:7,preview_only:true,published_locked:false,
+  editorial_revision:FORWARD_EDITORIAL_REVISION,
+  preview_editorial_audit:{ok:true},preview_generation_quality:{ok:true},
+  teams:Array.from({length:32},(_,i)=>({
+   roster_id:i+1,team_name:'Team '+(i+1),
+   inquirer_article:{
+    headline:'Week 7 for team '+(i+1),reporter:{id:reporters[i%4]},
+    sections:kinds.map(kind=>({kind,paragraphs:[
+     Array.from({length:43},(_,j)=>'story'+i+'_'+kind.replace('-','')+'_'+j).join(' ') + '.'
+    ]}))
+   }
+  })),
+  league_overview:{sections:[
+   {blocks:['lead','standings','players','decisions','league','outlook'].map(kind=>({kind,paragraphs:['Unique audited recap '+kind]}))},
+   {paragraphs:['Another recap page']},{paragraphs:['Continued coverage']},{paragraphs:['Forward look']}
+  ]}
+ };
+ assert.equal(isVerifiedPrivatePreviewPredecessor(draft,2026,7),true,'fully reviewed draft can anchor only next private week');
+ for(const altered of [
+  {...draft,week:8},
+  {...draft,season:2027},
+  {...draft,preview_only:false,published_locked:true},
+  {...draft,editorial_revision:FORWARD_EDITORIAL_REVISION-1},
+  {...draft,preview_generation_quality:{ok:false}},
+  {...draft,preview_editorial_audit:{ok:false}},
+  {...draft,teams:draft.teams.slice(0,31)},
+  {...draft,teams:draft.teams.map((t,i)=>i===0?{...t,inquirer_article:{...t.inquirer_article,sections:[]}}:t)}
+ ])assert.equal(isVerifiedPrivatePreviewPredecessor(altered,2026,7),false,'must refuse nonmatching or substandard prior draft');
+ assert.equal(isVerifiedPrivatePreviewPredecessor(draft,2026,6),false);
+ assert.equal(isVerifiedPrivatePreviewPredecessor(draft,2026,8),false);
+});
+test('production publication path cannot consume private predecessors',()=>{
+ const source=readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
+ assert.match(source,/previewReadOnly\?privatePreviewStoreName\(req\.url\):null/);
+ assert.match(source,/previewReadOnly&&await getPrivatePredecessor\(w\)/);
+ assert.match(source,/previewReadOnly&&previousBroadcast===privatePredecessor/);
+ assert.match(source,/requested!==w\+1\|\|w<7/);
+ assert.match(source,/isLockedInquirerEdition\(stored,season,w\)/);
+ assert.match(source,/getStore\(\{name:privateStoreName,consistency:'strong'\}\)\.get/);
 });

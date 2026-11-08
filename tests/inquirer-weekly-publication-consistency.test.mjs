@@ -65,7 +65,7 @@ test('never certify old locked Week5 awards or incomplete player/scorer badges',
  assert.match(pub,/record\.newsroom_engine==='v31-forward'/);
 });
 test('awards cache never forces reading every published multi-megabyte manuscript on every visit',()=>{
- const start=hub.indexOf('export async function weeklyAwards()');
+ const start=hub.indexOf('export async function weeklyAwards({additionalLockedEditions=[]');
  const end=hub.indexOf('async function draftAwards()',start);
  assert.ok(start>0&&end>start);
  const code=hub.slice(start,end);
@@ -131,7 +131,8 @@ test('private deploy previews cannot invoke publishing worker even with valid qu
  assert.match(pub,/context==='branch-deploy'/);
  assert.match(pub,/context==='deploy-preview'/);
  assert.match(pub,/host\.endsWith\('--transcendent-manatee-2f0123\.netlify\.app'\)/);
- assert.ok(pub.indexOf('inquirer-background-preview-write-held')<pub.indexOf('const expected='));
+ assert.ok(pub.indexOf('inquirer-background-preview-write-held')<pub.indexOf('const statusStore='));
+ assert.ok(pub.indexOf('inquirer-background-preview-write-held')<pub.indexOf('resolveInquirerQueueCredential('));
 });
 
 test('preview publish worker returns 403 without touching blob stores',async()=>{

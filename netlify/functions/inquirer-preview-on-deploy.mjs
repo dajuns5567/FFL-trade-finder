@@ -54,6 +54,12 @@ export async function startPreviewDraftForDeploy(event,generate,resolveMissingWe
   try{
    const response=await submit(new Request(target,{headers:{'cache-control':'no-store'}}));
    if(!response||response.status===202||response.ok===true)return true;
+   // Team-SSO-protected previews return 401 before reaching the function.
+   // Do not retry a credential barrier or report a generation as completed.
+   if(response.status===401||response.status===403){
+    console.warn('inquirer-preview-auto-seed-held','Protected preview HTTP '+response.status);
+    return false;
+   }
    lastFailure='HTTP '+String(response.status);
    if(response.status!==502&&response.status!==503&&response.status!==504)break;
   }catch(error){lastFailure=String(error?.message||error)}

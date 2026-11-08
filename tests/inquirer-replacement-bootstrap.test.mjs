@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {verifiedReplacementHistory,verifiedNewSiteCutoverHistory} from '../netlify/functions/lib/inquirer-replacement-archive-gate.mjs';
+import {verifiedReplacementHistory,verifiedNewSiteCutoverHistory,verifiedWeekNineAutopublishCutoverHistory} from '../netlify/functions/lib/inquirer-replacement-archive-gate.mjs';
 const kinds=['lede','players','management','hot-seat','cool-throne','value','sentiment','outlook'];
 const beats=['lead','standings','players','decisions','league','outlook'];
 function edition(week){
@@ -77,7 +77,35 @@ test('new-account scheduler and worker both enforce owner enable flag and post-W
  const preflight=worker.indexOf('if(isNewestSite){');
  const writes=worker.indexOf("await statusStore.setJSON('inquirer/publication-status.json'");
  assert.ok(preflight>0&&writes>preflight,'worker must inspect locked archives before ANY status write');
- assert.match(scheduled,/status=\{state:'completed',available:true,season:2026,week:6/);
+ assert.match(scheduled,/status=\{state:'completed',available:true,season:2026,week:isCurrentSite\?8:6/);
  assert.match(worker,/gleaming-dodol-8dbc4a.netlify.app/);
  assert.match(worker,/Preview deployment cannot publish/);
+});
+
+test('new Netlify account is recognized but gated behind owner activation and Weeks 7–8 archive',()=>{
+ const scheduler=readFileSync(new URL('../netlify/functions/inquirer-publish-scheduled.mjs',import.meta.url),'utf8');
+ const worker=readFileSync(new URL('../netlify/functions/inquirer-publish-background.mjs',import.meta.url),'utf8');
+ for(const source of [scheduler,worker]){
+  assert.match(source,/fa33dfe4-8293-441e-8da0-25cc66fc984c/);
+  assert.match(source,/verifiedWeekNineAutopublishCutoverHistory/);
+ }
+ assert.match(scheduler,/week:isCurrentSite\?8:6/);
+ assert.match(scheduler,/publishingEnabled!=='true'/);
+ assert.match(worker,/enabled!=='true'/);
+ const config=readFileSync(new URL('../netlify.toml',import.meta.url),'utf8');
+ assert.match(config,/CONTEXT==='production'/);
+});
+test('Week 9 unattended cutover never substitutes private drafts for locked Weeks 7 and 8',()=>{
+ const week7={...edition(7),editorial_revision:107,editorial_generation:{engine:'v31-forward'}};
+ const week8={...edition(8),editorial_revision:107,editorial_generation:{engine:'v31-forward'}};
+ const index=[{season:2026,week:7},{season:2026,week:8}];
+ const awards={records:[{season:2026,week:8,newsroom_engine:'v31-forward',
+  players_of_week:{offense:{player_id:'A'},defense:{player_id:'B'}},
+  manager_awards:[{type:'highest-scorer'},{type:'lowest-scorer'}]}]};
+ const valid={week7,week8,index,awards};
+ assert.equal(verifiedWeekNineAutopublishCutoverHistory(valid).ready,true);
+ assert.equal(verifiedWeekNineAutopublishCutoverHistory({...valid,week7:null}).ready,false);
+ assert.equal(verifiedWeekNineAutopublishCutoverHistory({...valid,week8:{...week8,published_locked:false}}).ready,false);
+ assert.equal(verifiedWeekNineAutopublishCutoverHistory({...valid,index:index.slice(0,1)}).ready,false);
+ assert.equal(verifiedWeekNineAutopublishCutoverHistory({...valid,awards:{records:[]}}).ready,false);
 });

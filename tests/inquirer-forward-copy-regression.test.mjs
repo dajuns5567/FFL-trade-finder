@@ -129,11 +129,11 @@ test('Week 7 final writer removes the inherited transaction-wire joke only when 
  assert.match(short.inquirer_article.sections[0].paragraphs.join(' '),/transaction wire/,'underlength manuscript remains held, not silently shortened');
 });
 
-test('revision 99 rotates recap factual repairs without relaxing the independent deep quality checks',()=>{
- assert.match(source,/FORWARD_EDITORIAL_REVISION=99/);
+test('revision 105 keeps final recap originality without relaxing the independent deep quality checks',()=>{
+ assert.match(source,/FORWARD_EDITORIAL_REVISION=107/);
  assert.match(source,/if\(week>=7&&week%2===1\)/);
  assert.match(source,/previousNorm=new Set\(forwardRecapSentences\(previousEdition\)/);
- assert.match(source,/collisions\.length>=4/);
+ assert.match(source,/if\(collisions\.length\)/);
 });
 
 
@@ -157,4 +157,198 @@ test('shared Week 7 newsroom boilerplate can be pruned without losing scoring fa
   inquirer_article:{sections:[{kind:'management',paragraphs:[stock,managers]}]}}));
  pruneForwardSharedEditorialBoilerplate(short);
  assert.match(short[0].inquirer_article.sections[0].paragraphs.join(' '),/Someone announced/);
+});
+
+test('final Week 7 recap removes copied rhetoric only when substantive reporting remains',async()=>{
+ const {pruneFinalRecapCopyForward}=await import('../netlify/functions/inquirer-editorial-v31.mjs');
+ const recurring='The season standings still owe this club an explanation before the next whistle blows.';
+ const evidence='North Birds finished Week 7 on 115.3 points against South Cats at 108.2, a 7.1-point outcome from a completed matchup. The club remains in the title race because its accumulated results, rather than last week\'s rhetoric, place it among the leaders.';
+ const old={league_overview:{sections:[{blocks:[{kind:'lead',paragraphs:[recurring]}],paragraphs:[recurring]}]}};
+ const current={sections:[{blocks:[{kind:'lead',paragraphs:[recurring,evidence]}],paragraphs:[recurring,evidence]}]};
+ const frozen=structuredClone(old);
+ const clean=pruneFinalRecapCopyForward(current,old,[]);
+ assert.deepEqual(clean.sections[0].blocks[0].paragraphs,[evidence]);
+ assert.deepEqual(old,frozen,'locked prior week remains immutable');
+ const thin={sections:[{blocks:[{kind:'lead',paragraphs:[recurring]}],paragraphs:[recurring]}]};
+ const held=pruneFinalRecapCopyForward(thin,old,[]);
+ assert.deepEqual(held.sections[0].blocks[0].paragraphs,[recurring],'thin beat stays blocked, not silently erased');
+});
+
+test('Week 7 inherited slogans are replaced with verified lineup and division evidence',async()=>{
+ const {replaceForwardInheritedWeek7Slogans}=await import('../netlify/functions/inquirer-editorial-v31.mjs');
+ const team={roster_id:11,team_name:'South Bears',opponent_name:'North Hawks',points:115.3,
+  opponent_points:109.2,division_context:{division_name:'AFC West'},
+  league_context:{standings_rank:8},
+  starter_details:[{name:'Player A',points:7.5},{name:'Player B',points:21}],
+  inquirer_article:{sections:[
+   {kind:'management',paragraphs:['Manager A stayed off the Week 7 transaction wire. That means Player A at 7.5 is the management headline, not a move count.']},
+   {kind:'outlook',paragraphs:['The Bears enter Week 7 with division leverage still available. The season has a lot left to decide.']}
+  ]}};
+ const old=structuredClone(team);
+ replaceForwardInheritedWeek7Slogans([team],7);
+ const text=team.inquirer_article.paragraphs.join(' ');
+ assert.doesNotMatch(text,/transaction wire|division leverage still available/i);
+ assert.match(text,/Player A/);
+ assert.match(text,/7\.5/);
+ assert.match(text,/115\.3/);
+ assert.match(text,/North Hawks/);
+ assert.match(text,/AFC West/);
+ assert.match(text,/8/);
+ assert.match(text,/The season has a lot left to decide/);
+ assert.match(old.inquirer_article.paragraphs?.join(' ')||old.inquirer_article.sections[0].paragraphs[0],/transaction wire/);
+});
+test('Week 7 slogan repair never guesses absent scoreboard or standings facts',async()=>{
+ const {replaceForwardInheritedWeek7Slogans}=await import('../netlify/functions/inquirer-editorial-v31.mjs');
+ const wire='Manager A stayed off the Week 7 transaction wire. That means an old lineup is the management headline, not a move count.';
+ const division='The Bears enter Week 7 with division leverage still available.';
+ const team={roster_id:12,team_name:'South Bears',inquirer_article:{sections:[
+  {kind:'management',paragraphs:[wire]},{kind:'outlook',paragraphs:[division]}
+ ]}};
+ replaceForwardInheritedWeek7Slogans([team],7);
+ assert.deepEqual(team.inquirer_article.sections.map(s=>s.paragraphs[0]),[wire,division]);
+ const withFacts=structuredClone(team);
+ withFacts.points=115.3;withFacts.opponent_points=109.2;withFacts.starter_details=[{name:'Player A',points:7.5}];
+ withFacts.opponent_name='North Hawks';withFacts.division_context={division_name:'AFC West'};
+ withFacts.league_context={standings_rank:8};
+ replaceForwardInheritedWeek7Slogans([withFacts],6);
+ assert.deepEqual(withFacts.inquirer_article.sections.map(s=>s.paragraphs[0]),[wire,division]);
+});
+
+test('market value repairs do not reuse the rejected next-opponent price scaffold',()=>{
+ assert.doesNotMatch(source,/changed price\. Its next opponent can examine/i);
+ assert.match(source,/Math\.floor\(\(Number\(t\.roster_id\)\|\|1\)\/8\)%4/);
+ assert.match(source,/Separately, its lineup scored/);
+ assert.match(source,/Two measurements belong in separate columns/);
+});
+
+import {polishForwardAcrossWeeks,FORWARD_EDITORIAL_REVISION} from '../netlify/functions/inquirer-editorial-v31.mjs';
+
+test('editorial revision 105 replaces shared jokes from any previous team, not only its own',()=>{
+ assert.equal(FORWARD_EDITORIAL_REVISION,107);
+ const recycled='The hosts disagree about almost everything. Even they know the next opponent will care more about the starting lineup than the episode title.';
+ const previous={week:7,teams:[{roster_id:1,team_name:'North Dogs',inquirer_article:{paragraphs:[recycled]}}]};
+ const make=(roster_id,team_name)=>({
+  roster_id,team_name,opponent_name:'Rival Tigers',points:81+roster_id,
+  opponent_points:95,won:false,starter_details:[
+   {name:'Star Runner '+roster_id,points:21},
+   {name:'Quiet Runner '+roster_id,points:2}
+  ],inquirer_article:{sections:[{kind:'sentiment',paragraphs:[
+   'Listeners will have questions after this Sunday. '+recycled
+  ]}]}
+ });
+ const teams=[make(2,'East Birds'),make(3,'West Bears')],frozen=JSON.stringify(previous);
+ polishForwardAcrossWeeks(teams,previous,8);
+ assert.equal(JSON.stringify(previous),frozen,'previous edition must remain immutable');
+ for(const team of teams){
+  const text=team.inquirer_article.paragraphs.join(' ');
+  assert.doesNotMatch(text,/Even they know the next opponent will care more/);
+  assert.match(text,/Rival Tigers/);
+  assert.match(text,/\d/);
+ }
+});
+
+test('editorial revision 105 forbids unattributed market movement and self-referential fallback',()=>{
+ assert.doesNotMatch(source,/return" The roster’s biggest "/);
+ assert.doesNotMatch(source,/That is a documented lineup question, not a fictional transaction/);
+ assert.match(source,/For '\+w2DisplayTeam\(team\.team_name\)/);
+ assert.match(source,/window\.baseline_t/);
+ assert.match(source,/spills:'spill',hands:'hand'/);
+ assert.doesNotMatch(source,/One narrow win invites a victory speech; several narrow games suggest/);
+});
+
+import {pruneForwardRecapLessonScaffold} from '../netlify/functions/inquirer-editorial-v31.mjs';
+
+test('final recap removes mechanical lesson sentences without erasing real beats or leaving stale paragraph caches',()=>{
+ const evidence='The recorded matchup between North Bears and South Lions ended 105.3 to 99.8, and the two leading starters supplied 27.0 and 21.4 fantasy points.';
+ const another='The next scheduled opponent is East Wolves; no future score or manager transaction is asserted because neither has been recorded.';
+ const canned='The useful lesson is not that the box score settles everything. ';
+ const overview={sections:[
+  {blocks:[{kind:'league',paragraphs:[evidence,another,canned+evidence]}],paragraphs:[]},
+  {paragraphs:[evidence,another,canned+evidence]}
+ ],hot_takes:[{take:canned+evidence}]};
+ pruneForwardRecapLessonScaffold(overview);
+ assert.equal(overview.sections[0].blocks[0].paragraphs.length,3);
+ assert.doesNotMatch(overview.paragraphs.join(' '),/the useful lesson is not/i);
+ assert.doesNotMatch(overview.hot_takes[0].take,/the useful lesson is not/i);
+ assert.deepEqual(overview.sections[0].paragraphs,overview.sections[0].blocks[0].paragraphs);
+ assert.deepEqual(overview.paragraphs,overview.sections.flatMap(s=>s.paragraphs));
+ assert.match(overview.paragraphs.join(' '),/105.3 to 99.8/);
+});
+test('final recap leaves an under-depth beat unmodified for the independent editorial gate',()=>{
+ const only='The useful lesson is not that every victory guarantees a championship.';
+ const overview={sections:[{blocks:[{kind:'league',paragraphs:[only]}],paragraphs:[only]}]};
+ pruneForwardRecapLessonScaffold(overview);
+ assert.equal(overview.sections[0].blocks[0].paragraphs[0],only);
+});
+
+test('final recap repairs under-depth mechanical beats from recorded matchup evidence',()=>{
+ const canned='The useful lesson is not that every victory guarantees a championship.';
+ const teams=[
+ {team_name:'North Bears',opponent_name:'South Lions',points:140.5,opponent_points:105.2,next_opponent_name:'East Wolves',starter_details:[{name:'A Receiver',points:31.8}]},
+ {team_name:'West Foxes',opponent_name:'East Wolves',points:132.1,opponent_points:134.8,next_opponent_name:'North Bears',starter_details:[{name:'A Running Back',points:25.4}]}
+ ];
+ const overview={sections:[{blocks:[
+  {kind:'league',paragraphs:[canned]},
+  {kind:'outlook',paragraphs:[canned]},
+  {kind:'players',paragraphs:[canned]}
+ ],paragraphs:[]}],hot_takes:[{take:'The standings still need another completed game.'}]};
+ pruneForwardRecapLessonScaffold(overview,teams,8);
+ for(const block of overview.sections[0].blocks){
+  assert.doesNotMatch(block.paragraphs.join(' '),/the useful lesson is not|the margin asks more:/i);
+  assert.ok(block.paragraphs.join(' ').split(/\s+/).length>=30);
+  if(['league','outlook'].includes(block.kind))assert.ok(block.paragraphs.length>=2);
+  assert.match(block.paragraphs.join(' '),/140.5/);
+ }
+ assert.match(overview.paragraphs.join(' '),/A Receiver/);
+ assert.deepEqual(overview.sections[0].paragraphs,overview.paragraphs);
+});
+test('final recap cannot invent evidence when the source roster is missing',()=>{
+ const canned='The useful lesson is not that luck can win games.';
+ const overview={sections:[{blocks:[{kind:'league',paragraphs:[canned]}],paragraphs:[canned]}]};
+ pruneForwardRecapLessonScaffold(overview,[],8);
+ assert.equal(overview.sections[0].blocks[0].paragraphs[0],canned);
+});
+
+
+test('revision 106 repairs actual Week 7 and 8 publication-copy defects without altering facts',async()=>{
+ const {polishForwardReaderCopy}=await import('../netlify/functions/inquirer-editorial-v31.mjs');
+ const team=(week,result,headline,copy)=>({
+   team_name:'Los Angeles Rams',points:121.62,opponent_points:92.4,
+   league_context:{recent_games:[{week:week-1,result},{week,result:'W'}]},
+   inquirer_article:{headline,sections:[{kind:'cool-throne',paragraphs:[copy,' ']},
+     {kind:'outlook',paragraphs:['  The next test against Miami Dolphins are better suited to the lineup. '] }],paragraphs:[]}
+ });
+ const first=team(8,'L','Los Angeles Rams Win Again, Which Is How Expectations Get Expensive',
+  'The final score against Buffalo Billiards do not erase that work.');
+ const saved=team(7,'W','Los Angeles Rams Win Again, Which Is How Expectations Get Expensive',
+  'The final score against Seattle Seahawks do not erase that work.');
+ const overview={sections:[{blocks:[{kind:'league',paragraphs:[
+  'Of 16 matchups, of which 1 were decided within five fantasy points.',' '
+ ]}],paragraphs:[]}],hot_takes:[{take:'Forget the preamble: The upset pick uses the scores. Forget the preamble: The underdog needs a win. Forget the preamble: Forecasts are not final results.'}]};
+ polishForwardReaderCopy([first],overview,8);
+ assert.match(first.inquirer_article.headline,/Win Week 8/);
+ assert.equal(first.points,121.62);
+ assert.deepEqual(first.inquirer_article.sections[0].paragraphs,
+  ['The final score against Buffalo Billiards does not erase that work.']);
+ assert.match(first.inquirer_article.sections[1].paragraphs[0],/test against Miami Dolphins is better suited/);
+ assert.deepEqual(first.inquirer_article.paragraphs,
+  first.inquirer_article.sections.flatMap(s=>s.paragraphs));
+ assert.match(overview.sections[0].paragraphs[0],/of which 1 was decided/);
+ assert.deepEqual(overview.paragraphs,overview.sections[0].paragraphs);
+ assert.equal((overview.hot_takes[0].take.match(/Forget the preamble:/g)||[]).length,1);
+ polishForwardReaderCopy([saved],{sections:[],hot_takes:[]},7);
+ assert.match(saved.inquirer_article.headline,/Win Again/);
+});
+test('revision 106 normalizes final stat grammar and malformed hot-take insertions',async()=>{
+ const {polishForwardReaderCopy}=await import('../netlify/functions/inquirer-editorial-v31.mjs');
+ const overview={sections:[{paragraphs:['1 carries, 1 rush yds; a return.']}],
+  hot_takes:[{take:'Cam Ward just gave Jacksonville Jags 24.5 at the first names on the scoring sheet card.'}]};
+ polishForwardReaderCopy([],overview,8);
+ assert.match(overview.paragraphs[0],/1 carry, 1 rush yd/);
+ assert.match(overview.hot_takes[0].take,/24.5 fantasy points/);
+});
+
+
+test('revision 107 recap evidence reports football facts without meta-publication caveats',()=>{
+ assert.doesNotMatch(source,/not a prewritten final score|not a claim about their dynasty market prices/i);
 });

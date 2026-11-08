@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {auditIndependentInquirerCopy} from '../netlify/functions/lib/inquirer-independent-copy-audit.mjs';
 const kinds=['lede','players','management','hot-seat','cool-throne','value','sentiment','outlook'];
 const beats=['lead','standings','players','decisions','league','outlook'];
@@ -23,4 +24,25 @@ test('detects true revision-105 copy failures that passed generator audits',()=>
  assert.equal(audit.ok,false);
  for(const id of ['singular-score-agreement','blank-reader-paragraph','false-consecutive-win','repeated-hot-take-preface'])
   assert.ok(audit.issues.some(issue=>issue.id===id),id);
+});
+
+test('Week 9+ publication admission independently blocks broken prose without preview flags',()=>{
+ const candidate=edition(9);
+ delete candidate.preview_only;
+ candidate.published_locked=true;
+ delete candidate.preview_editorial_audit;
+ delete candidate.preview_generation_quality;
+ assert.equal(auditIndependentInquirerCopy([candidate],{mode:'publication'}).ok,true);
+ candidate.league_overview.sections[0].blocks[0].paragraphs=['of which 1 were decided within five fantasy points'];
+ const audit=auditIndependentInquirerCopy([candidate],{mode:'publication'});
+ assert.equal(audit.ok,false);
+ assert.ok(audit.issues.some(x=>x.id==='singular-recap-quantifier'));
+});
+test('live weekly writer checks independent copy before persistent archive writes',()=>{
+ const source=readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
+ const call=source.indexOf("auditIndependentInquirerCopy([result],{revision:FORWARD_EDITORIAL_REVISION,mode:'publication'})");
+ const persist=source.indexOf('await s.setJSON(key,result)',call);
+ assert.ok(call>0&&persist>call,'independent admission must run before publishing');
+ assert.match(source,/!independentCopy\.ok/);
+ assert.match(source,/currentPublisherSite&&week>=9/);
 });

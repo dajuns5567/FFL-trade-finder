@@ -9,7 +9,7 @@ const defects=[
  ['malformed-upset-copy',/at the first names on the scoring sheet card/i],
  ['meta-editorial-caveat',/not a prewritten final score|not a claim about their dynasty market prices|that is useful flexibility, not repetition/i]
 ];
-export function auditIndependentInquirerCopy(editions,{revision=106}={}){
+export function auditIndependentInquirerCopy(editions,{revision=106,mode='preview'}={}){
  const issues=[],summaries=[],byWeek=new Map();
  const issue=(week,id,team)=>issues.push({week,id,team});
  for(const edition of editions||[]){
@@ -17,9 +17,9 @@ export function auditIndependentInquirerCopy(editions,{revision=106}={}){
   byWeek.set(week,edition);
   if(!Number.isInteger(week)||week<5||Number(edition?.editorial_revision)!==revision)
    issue(week,'wrong-editorial-revision','Edition');
-  if(edition?.preview_only!==true||edition?.published_locked!==false)
+  if(mode==='preview'&&(edition?.preview_only!==true||edition?.published_locked!==false))
    issue(week,'not-isolated-preview','Edition');
-  if(edition?.preview_editorial_audit?.ok!==true||edition?.preview_generation_quality?.ok!==true)
+  if(mode==='preview'&&(edition?.preview_editorial_audit?.ok!==true||edition?.preview_generation_quality?.ok!==true))
    issue(week,'generator-audit-held','Edition');
   if(teams.length!==32||new Set(teams.map(t=>String(t?.roster_id))).size!==32)
    issue(week,'coverage','Edition');

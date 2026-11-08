@@ -5982,12 +5982,13 @@ export function polishForwardAcrossWeeks(teams,previousEdition,week){
        /\b(?:documented lineup question|not a fictional transaction)\b/i.test(sentence);
      if(!reused){used.add(key);usedTails.add(ending);return sentence}
      if(!accurate)return sentence; // Absent source data: fail closed in the quality audit.
-     const score=forwardOne(scored),opScore=forwardOne(allowed),
+     const possessive=/s$/i.test(club)?club+'\'':club+'\'s';
+   const score=forwardOne(scored),opScore=forwardOne(allowed),
        lead=forwardOne(top.points),quiet=forwardOne(low.points),
        gap=forwardOne(margin),lowName=low.name,topName=top.name;
      const details=[
       club+' '+result+' against '+foe+' by '+gap+' points; '+lowName+' managed '+quiet+'. Rivals will remember which starting spot gave them a target.',
-      topName+' contributed '+lead+' to '+club+'\'s '+score+' against '+foe+'. The opponent can argue with the interpretation, not the points already on the board.',
+      topName+' contributed '+lead+' to '+possessive+' '+score+' against '+foe+'. The opponent can argue with the interpretation, not the points already on the board.',
       foe+' finished with '+opScore+' while '+club+' posted '+score+'. The gap is a real problem for the next lineup discussion; the scoreboard will not let anyone talk it away.',
       lowName+' finished on '+quiet+' for '+club+', alongside '+lead+' from '+topName+'. The difference made rival managers pay attention to how this roster was arranged.',
       club+' finished Week '+week+' on '+score+' against '+foe+'; '+topName+' contributed '+lead+'. The club can celebrate or complain, but it cannot edit those numbers.',

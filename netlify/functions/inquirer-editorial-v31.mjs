@@ -5971,8 +5971,10 @@ export function polishForwardAcrossWeeks(teams,previousEdition,week){
   const top=starters[0],low=starters.at(-1);
   const accurate=Number.isFinite(scored)&&Number.isFinite(allowed)&&top&&low;
   const result=t.won===true?'won':'lost',margin=Math.abs(scored-allowed);
+  let words=forwardWordCount(article.sections.flatMap(sec=>sec.paragraphs||[]).join(' '));
   for(let si=0;si<article.sections.length;si++){
    const section=article.sections[si];
+   let deskWords=forwardWordCount((section.paragraphs||[]).join(' '));
    section.paragraphs=(section.paragraphs||[]).map((paragraph,pi)=>{
     const pieces=forwardSentenceParts(paragraph);
     return pieces.map((sentence,ji)=>{
@@ -5982,6 +5984,12 @@ export function polishForwardAcrossWeeks(teams,previousEdition,week){
        /\b(?:documented lineup question|not a fictional transaction)\b/i.test(sentence);
      if(!reused){used.add(key);usedTails.add(ending);return sentence}
      if(!accurate)return sentence; // Absent source data: fail closed in the quality audit.
+     // Retire a circulating joke instead of manufacturing another score recap.
+     // Preserve each required desk and its substantive reporting minimums.
+     const count=forwardWordCount(sentence);
+     const canDrop=(pieces.length>1||(section.paragraphs||[]).length>2)&&
+       words-count>=345&&deskWords-count>=45;
+     if(canDrop){words-=count;deskWords-=count;return ''}
      const possessive=/s$/i.test(club)?club+'\'':club+'\'s';
    const score=forwardOne(scored),opScore=forwardOne(allowed),
        lead=forwardOne(top.points),quiet=forwardOne(low.points),
@@ -5997,9 +6005,22 @@ export function polishForwardAcrossWeeks(teams,previousEdition,week){
       'The '+gap+'-point margin between '+club+' and '+foe+' leaves a specific question about '+lowName+' at '+quiet+'. The answer belongs in the next starting lineup.'
      ];
      const seed=evolutionHash([week,t.roster_id,section.kind,si,pi,ji,sentence].join('|'));
-     let replacement=details[seed%details.length];
-     for(let attempt=1;attempt<details.length&&(used.has(norm(replacement))||usedTails.has(tail(replacement)));attempt++)
-      replacement=details[(seed+attempt)%details.length];
+     let replacement=null;
+     for(let attempt=0;attempt<details.length;attempt++){
+      const candidate=details[(seed+attempt)%details.length];
+      if(!used.has(norm(candidate))&&!usedTails.has(tail(candidate))){replacement=candidate;break}
+     }
+     if(!replacement){
+      const other=starters[(si+pi+ji)%starters.length];
+      const extra=forwardOne(other.points),position=String(other.lineup_slot||other.position||'starting');
+      replacement=club+' finished with '+score+' points against '+foe+', including '+extra+
+       ' from '+other.name+' in the '+position+' slot. The selected lineup is the relevant evidence for this matchup.';
+     }
+     // If no unique source-backed replacement exists, leave the original
+     // for the independent publication guard rather than fabricate a fact.
+     if(used.has(norm(replacement))||usedTails.has(tail(replacement)))return sentence;
+     words+=forwardWordCount(replacement)-count;
+     deskWords+=forwardWordCount(replacement)-count;
      used.add(norm(replacement));usedTails.add(tail(replacement));
      return replacement;
     }).join(' ');

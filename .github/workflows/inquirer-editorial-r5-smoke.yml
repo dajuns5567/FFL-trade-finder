@@ -172,7 +172,9 @@ jobs:
 
   seed-private-preview:
     needs: inquirer-r6
-    if: github.event_name == 'pull_request'
+    # Release branches deliberately skip Netlify Deploy Previews to avoid credits.
+    # This seed job is only meaningful for test-only preview branches.
+    if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'release/')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

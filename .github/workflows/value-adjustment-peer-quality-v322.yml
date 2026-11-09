@@ -1,0 +1,32 @@
+name: Value Adjustment Peer-Quality V322
+
+on:
+  pull_request:
+    paths:
+      - 'trade-runtime-v256-compiled.js'
+      - 'scripts/value-adjustment-peer-quality-v322-smoke.cjs'
+      - 'scripts/value-adjustment-monotonic-v311-smoke.cjs'
+      - 'scripts/value-adjustment-v320-calibration-smoke.cjs'
+      - '.github/workflows/value-adjustment-peer-quality-v322.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  adjustment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Trade runtime syntax
+        run: node --check trade-runtime-v256-compiled.js
+      - name: Original V321 symmetry and monotonicity
+        run: node scripts/value-adjustment-monotonic-v311-smoke.cjs
+      - name: Updated historical calibration
+        run: node scripts/value-adjustment-v320-calibration-smoke.cjs
+      - name: Audit-led near-equal trade regressions
+        run: node scripts/value-adjustment-peer-quality-v322-smoke.cjs

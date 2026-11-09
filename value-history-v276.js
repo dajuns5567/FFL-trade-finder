@@ -96,6 +96,11 @@ function addStyles(){
   #valueHistory .vh-current{display:grid;grid-template-rows:18px 38px 18px;align-content:center;justify-items:center;text-align:center;border-left:1px solid var(--line);padding:10px 16px;min-width:0}
   #valueHistory .vh-current small{font-size:12px;font-weight:900;letter-spacing:.075em;text-transform:uppercase;color:#e4b53f!important;margin:0;line-height:18px}
   #valueHistory .vh-current .vh-big{font-size:36px;font-weight:900;line-height:38px}
+  /* Dense history: draw a legible trace, keep all snapshots interactive. */
+  #valueHistory .vh-hover-guide{stroke:#e4b53f;stroke-width:1;stroke-dasharray:4 4;opacity:.55;pointer-events:none;vector-effect:non-scaling-stroke}
+  #valueHistory .vh-hover-dot{fill:#e4b53f;stroke:var(--card);stroke-width:2;pointer-events:none;vector-effect:non-scaling-stroke}
+  #valueHistory .vh-plot-hit{cursor:crosshair;touch-action:pan-y}
+  #valueHistory .vh-plot-hit:focus-visible{outline:none;stroke:#e4b53f;stroke-width:1;stroke-dasharray:3 5}
   #valueHistory .vh-rank-chart svg{display:block;width:100%;height:auto}
   #valueHistory .vh-rank-chart .vh-axis{stroke:currentColor;opacity:.25}
   #valueHistory .vh-rank-chart .vh-axis-text{fill:currentColor;font-size:10px;opacity:.72}
@@ -570,7 +575,7 @@ function initUI(){
   input.addEventListener('input',()=>renderSearchResults(input.value));
   results.addEventListener('click',e=>{const b=e.target.closest('button[data-vh-id]');if(!b)return;selectPlayer(b.dataset.vhId)});
   root.addEventListener('click',handleContentClick);root.addEventListener('change',handleContentChange);
-  const content=document.getElementById('vhContent');content?.addEventListener('pointermove',handleChartPointer);content?.addEventListener('pointerleave',hideChartTooltip);content?.addEventListener('pointerdown',handleChartPointer);
+  const content=document.getElementById('vhContent');content?.addEventListener('pointermove',handleChartPointer);content?.addEventListener('pointerleave',hideChartTooltip);content?.addEventListener('pointerdown',handleChartPointer);content?.addEventListener('keydown',handleChartKey);
   syncSubnav();loadMarket();
 }
 function syncSubnav(){
@@ -665,11 +670,63 @@ function handleContentChange(e){
   const tradeYear=e.target.closest?.('[data-vh-trade-year]');if(tradeYear){tradeYearFilter=tradeYear.value;renderTradeHistory();return}
   const tradeMonth=e.target.closest?.('[data-vh-trade-month]');if(tradeMonth){tradeMonthFilter=tradeMonth.value;renderTradeHistory();return}
 }
-function hideChartTooltip(){document.querySelectorAll('#valueHistory .vh-chart-tooltip').forEach(tip=>tip.style.display='none')}
+const chartHoverCache=new WeakMap();
+function chartHoverData(hit){
+  let data=chartHoverCache.get(hit);
+  if(!data){try{data=JSON.parse(hit.dataset.vhChartSeries||'null')}catch{data=null}chartHoverCache.set(hit,data)}
+  return data;
+}
+function showChartHover(hit,index,tip,wrap,wrapRect,e){
+  const data=chartHoverData(hit),p=data?.points?.[index];if(!p)return;
+  hit.dataset.vhHoverIndex=String(index);
+  const line=hit.parentNode.querySelector('.vh-hover-guide'),
+    dot=hit.parentNode.querySelector('.vh-hover-dot');
+  if(line){line.setAttribute('x1',p.x);line.setAttribute('x2',p.x);line.setAttribute('visibility','visible')}
+  if(dot){dot.setAttribute('cx',p.x);dot.setAttribute('cy',p.y);dot.setAttribute('visibility','visible')}
+  const linked=p.trades||null,trades=Array.isArray(linked?.events)?linked.events:[],
+    tradeMarkup=trades.length?`<div class="vh-tooltip-trades"><small>Completed trade${trades.length===1?'':'s'} linked to this team snapshot</small>${trades.map(t=>`<div class="vh-tooltip-trade"><b>${esc(t.date)}</b> • vs. ${esc(t.counterparts)}</div>`).join('')}<div class="${deltaClass(linked.change)}">Observed team net-value change from prior authoritative snapshot: <strong>${signed(linked.change)}</strong></div><small>This is observed movement between snapshots, not an assumption that the trade alone caused the change.</small></div>`:'';
+  tip.innerHTML=data.kind==='net'?
+    `<b>${esc(p.date)}</b><div>Overall Net Value <strong>${esc(p.value)}</strong></div>${tradeMarkup}`:
+    data.kind==='rank'?
+    `<b>${esc(p.date)}</b><div>${esc(data.label)} <strong>#${esc(p.rank)}</strong></div>`:
+    `<b>${esc(p.date)}</b><div>Value <strong>${esc(p.value)}</strong></div><div>Overall #${esc(p.overall)} • ${esc(p.pos)} #${esc(p.posRank)}</div>`;
+  const svg=hit.ownerSVGElement,svgRect=svg.getBoundingClientRect(),
+    px=(svgRect.left-wrapRect.left)+(p.x/data.W)*svgRect.width,
+    py=(svgRect.top-wrapRect.top)+(p.y/Number(svg.viewBox.baseVal.height||1))*svgRect.height;
+  tip.style.left=`${Math.max(8,Math.min(Math.max(8,wrapRect.width-210),px))}px`;
+  tip.style.top=`${Math.max(20,Math.min(wrapRect.height-20,py))}px`;
+  tip.style.display='block';
+}
+function handleChartKey(e){
+  const hit=e.target?.closest?.('.vh-plot-hit');if(!hit||!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
+  const points=chartHoverData(hit)?.points||[];
+  if(!points.length)return;e.preventDefault();
+  const current=Number(hit.dataset.vhHoverIndex)||0,
+    next=e.key==='Home'?0:e.key==='End'?points.length-1:
+      Math.max(0,Math.min(points.length-1,current+(e.key==='ArrowRight'?1:-1)));
+  const wrap=hit.closest('.vh-value-chart,.vh-rank-chart,.vh-net-chart'),tip=wrap?.querySelector('.vh-chart-tooltip');
+  if(wrap&&tip)showChartHover(hit,next,tip,wrap,wrap.getBoundingClientRect(),e);
+}
+function hideChartTooltip(){document.querySelectorAll('#valueHistory .vh-chart-tooltip').forEach(tip=>tip.style.display='none');document.querySelectorAll('#valueHistory .vh-hover-layer .vh-hover-guide,#valueHistory .vh-hover-layer .vh-hover-dot').forEach(el=>el.setAttribute('visibility','hidden'))}
 function handleChartPointer(e){
-  const hit=e.target?.closest?.('.vh-point-hit,.vh-rank-hit,.vh-net-hit'),wrap=hit?.closest?.('.vh-value-chart,.vh-rank-chart,.vh-net-chart'),tip=wrap?.querySelector?.('.vh-chart-tooltip');
+  const hit=e.target?.closest?.('.vh-plot-hit,.vh-point-hit,.vh-rank-hit,.vh-net-hit'),
+    wrap=hit?.closest?.('.vh-value-chart,.vh-rank-chart,.vh-net-chart'),
+    tip=wrap?.querySelector?.('.vh-chart-tooltip');
   if(!hit||!wrap||!tip){if(e.type==='pointermove')hideChartTooltip();return}
-  const rect=wrap.getBoundingClientRect(),x=Math.max(8,Math.min(rect.width-210,e.clientX-rect.left)),y=Math.max(20,Math.min(rect.height-20,e.clientY-rect.top));
+  const rect=wrap.getBoundingClientRect(),
+    x=Math.max(8,Math.min(Math.max(8,rect.width-210),e.clientX-rect.left)),
+    y=Math.max(20,Math.min(rect.height-20,e.clientY-rect.top));
+  if(hit.classList.contains('vh-plot-hit')){
+    const data=chartHoverData(hit),points=data?.points||[];
+    if(!points.length)return;
+    const svg=hit.ownerSVGElement,svgRect=svg.getBoundingClientRect();
+    const hoverX=(e.clientX-svgRect.left)*data.W/Math.max(1,svgRect.width);
+    const index=e.vhKeyboardIndex==null?
+      Math.max(0,Math.min(points.length-1,Math.round((hoverX-data.L)/Math.max(1,data.W-data.L-data.R)*(points.length-1)))):
+      Math.max(0,Math.min(points.length-1,e.vhKeyboardIndex));
+    showChartHover(hit,index,tip,wrap,rect,e);
+    return;
+  }
   if(hit.classList.contains('vh-net-hit')){
     let linked=null;try{linked=hit.dataset.vhTrades?JSON.parse(hit.dataset.vhTrades):null}catch{}
     const trades=Array.isArray(linked?.events)?linked.events:[];
@@ -1715,6 +1772,49 @@ function periodPoints(pts,period){
   if(period==='1D')return inRange;
   const firstIndex=pts.indexOf(inRange[0]);if(firstIndex>0)inRange.unshift(pts[firstIndex-1]);
   return inRange;
+}
+// Plot only a representative line geometry, while preserving EVERY original
+// snapshot in the interactive hover layer. Largest-Triangle-Three-Buckets
+// retains sharp spikes and first/last observations without changing data.
+function chartTraceIndices(rows,field,maxPoints){
+  const len=rows.length,limit=Math.max(3,Math.floor(maxPoints));
+  if(len<=limit)return rows.map((_,i)=>i);
+  const sampled=[0],bucket=(len-2)/(limit-2);
+  let anchor=0;
+  for(let i=0;i<limit-2;i++){
+    const start=Math.floor(i*bucket)+1,end=Math.min(len-1,Math.floor((i+1)*bucket)+1),
+      nextStart=Math.floor((i+1)*bucket)+1,nextEnd=Math.min(len,Math.floor((i+2)*bucket)+1);
+    let avgX=0,avgY=0,count=0;
+    for(let j=nextStart;j<nextEnd;j++){avgX+=j;avgY+=Number(rows[j][field]);count++}
+    if(!count){avgX=len-1;avgY=Number(rows[len-1][field]);count=1}
+    avgX/=count;avgY/=count;
+    let area=-1,chosen=start;
+    for(let j=start;j<end;j++){
+      const a=Math.abs((anchor-avgX)*(Number(rows[j][field])-Number(rows[anchor][field]))-
+        (anchor-j)*(avgY-Number(rows[anchor][field])));
+      if(a>area){area=a;chosen=j}
+    }
+    sampled.push(chosen);anchor=chosen;
+  }
+  sampled.push(len-1);
+  return sampled;
+}
+function chartHoverLayer(rows,kind,{W,H,L,R,T,B,y,field,tradeMap=null,label=''}){
+  const count=rows.length,n=Math.max(1,count-1),width=W-L-R;
+  const snapshots=rows.map((p,i)=>({
+    x:L+width*i/n,y:y(Number(p[field])),date:dateTime(p.t),value:fmt(p.value),
+    overall:p.overall,pos:p.pos,posRank:p.posRank,rank:p[field],
+    trades:tradeMap?.get(String(p.t))||null
+  }));
+  const overlay=esc(JSON.stringify({kind,label,points:snapshots,L,R,W}));
+  return`<g class="vh-hover-layer">
+    <line class="vh-hover-guide" x1="${L}" x2="${L}" y1="${T}" y2="${H-B}" visibility="hidden"/>
+    <circle class="vh-hover-dot" cx="${L}" cy="${T}" r="5.5" visibility="hidden"/>
+    <rect class="vh-plot-hit" x="${L}" y="${T}" width="${width}" height="${H-B-T}"
+      fill="transparent" pointer-events="all" tabindex="0"
+      aria-label="Interactive ${esc(label||kind)} chart. Hover or use arrow keys to explore each historical observation."
+      data-vh-chart-series="${overlay}"/>
+  </g>`;
 }
 function rankSpark(points,field,axisLabel='Rank'){
   if(!points.length)return'<div class="vh-empty">No rank history yet.</div>';

@@ -31,7 +31,11 @@ function team(x){if(!current||String(current.league_id)!==leagueId())return null
 function overlay(x,from){
   const old=from(x);if(!x||x.type!=='pick')return old;
   const t=team(x);
-  if(!t)return old;
+  // Under no condition allow the legacy MIDA projected slot to become the
+  // ranking fallback. Only VALUE (old.value) is retained from the old model.
+  if(!t)return {...old,projectedSlot:null,rankingMethod:'record-pf-50-50-unavailable',
+    projectionContextUsed:false,projectionWeight:0,standingsWeight:0,
+    source:'Verified Sleeper standings unavailable; no draft order projected'};
   // The existing value is returned verbatim. Rank does not feed valuation.
   return{...old,projectedSlot:Number(t.projected_slot),value:old.value,
     rankingMethod:'record-pf-50-50',projectionContextUsed:false,
@@ -49,7 +53,10 @@ norm.pickContext=x=>{
     rankingCompletedWeek:Number(current.completed_week),recordRank:Number(t.record_rank),
     pointsRank:Number(t.points_rank),combinedRank:Number(t.combined_rank),
     projectionContextUsed:false,projectionWeight:0,standingsWeight:1,
-    source:'Verified Sleeper completed weeks: 50% record rank + 50% points-for rank'}:old;
+    source:'Verified Sleeper completed weeks: 50% record rank + 50% points-for rank'}:
+    {...old,projectedSlot:null,rankingMethod:'record-pf-50-50-unavailable',
+      projectionContextUsed:false,projectionWeight:0,standingsWeight:0,
+      source:'Verified Sleeper standings unavailable; no draft order projected'};
 };
 function updateStatus(error){
   const node=document.getElementById('pickRankingHealthV527')||document.createElement('div');

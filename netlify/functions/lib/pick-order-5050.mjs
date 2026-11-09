@@ -35,7 +35,7 @@ export function standingsFromCompletedMatchups(weekly,through){
     const groups=new Map(),used=new Set();
     for(const row of rows){
       const id=Number(row.roster_id),mid=String(row.matchup_id??''),pf=Number(row.points);
-      if(!Number.isInteger(id)||id<1||used.has(id)||!mid||!Number.isFinite(pf)||pf<0)throw Error('invalid matchup week '+w);
+      if(!Number.isInteger(id)||id<1||used.has(id)||!mid||row.points==null||!Number.isFinite(pf)||pf<0)throw Error('invalid matchup week '+w);
       used.add(id);if(!groups.has(mid))groups.set(mid,[]);groups.get(mid).push({id,pf});
     }
     if(groups.size!==16||[...groups.values()].some(p=>p.length!==2))throw Error('week '+w+' has incomplete head-to-head results');

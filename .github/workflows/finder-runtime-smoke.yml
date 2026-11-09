@@ -192,6 +192,8 @@ jobs:
           node scripts/one-time-generate-inquirer-week1.mjs
           node scripts/inquirer-v25-generated-audit.mjs /tmp/week1-inquirer.json
           node scripts/inquirer-overview-quality-audit.mjs /tmp/week1-inquirer.json
+      - name: New Inquirer edition discovery and live archive refresh regression
+        run: node --test tests/inquirer-live-archive-refresh.test.mjs
       - name: Full browser runtime syntax audit
         run: node scripts/site-runtime-syntax-audit.mjs
       - name: Value History data hub behavior and isolation

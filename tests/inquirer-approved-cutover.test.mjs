@@ -36,6 +36,25 @@ test('background cutover accepts authenticated internal production origins, but 
  assert.equal(cutoverRuntimeHoldReason({...base,host:''}),'missing-host');
 });
 
+test('Netlify published deploy metadata authorizes background execution when CONTEXT is missing',()=>{
+ const base={siteId:CUTOVER_SITE_ID,enabled:'true',host:'internal-functions.netlify.app'};
+ assert.equal(cutoverRuntimeHoldReason({...base,context:'',deployPublished:true}),null);
+ assert.equal(cutoverRuntimeHoldReason({...base,context:'unknown',deployPublished:true}),null);
+ assert.equal(cutoverRuntimeHoldReason({...base,context:'',deployPublished:undefined}),'not-production');
+ assert.equal(cutoverRuntimeHoldReason({...base,context:'production',deployPublished:undefined}),null);
+ assert.equal(cutoverRuntimeHoldReason({...base,context:'production',deployPublished:false}),'not-production');
+ assert.equal(cutoverRuntimeHoldReason({...base,context:'deploy-preview',deployPublished:true}),'not-production');
+ assert.equal(cutoverRuntimeHoldReason({...base,context:'branch-deploy',deployPublished:true}),'not-production');
+ assert.equal(cutoverRuntimeHoldReason({...base,context:'',deployPublished:true,host:'deploy-preview-436--precious-dango-fb4633.netlify.app'}),'preview-host');
+ assert.equal(cutoverRuntimeHoldReason({...base,context:'',deployPublished:true,host:'branch--precious-dango-fb4633.netlify.app'}),'preview-host');
+ assert.equal(cutoverRuntimeHoldReason({...base,context:'',deployPublished:true,siteId:'other'}),'wrong-site');
+ assert.equal(cutoverRuntimeHoldReason({...base,context:'',deployPublished:true,enabled:'false'}),'publisher-disabled');
+ assert.match(worker,/cutoverApprovedInquirerWeeks\(req,netlifyContext\)/);
+ assert.match(worker,/netlifyContext\?\.deploy\?\.context/);
+ assert.match(worker,/netlifyContext\?\.deploy\?\.published/);
+ assert.match(worker,/cutoverRuntimeHoldReason\(\{context,siteId,enabled,host,deployPublished\}\)/);
+ assert.match(worker,/inquirerQueueKeyMatches/);
+});
 test('private copies must pass cross-week audit before ANY create-only publication write',()=>{
  const copies=worker.indexOf('const [draft7,draft8]');
  const check=worker.indexOf('const independent=auditIndependentInquirerCopy');

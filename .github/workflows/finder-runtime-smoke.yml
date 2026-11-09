@@ -39,6 +39,10 @@ on:
       - 'scripts/v319-values-v311-integration-smoke.cjs'
       - 'netlify/functions/site-v17.mjs'
       - 'netlify/functions/site-v29.mjs'
+      - 'netlify/functions/lib/pick-order-5050.mjs'
+      - 'netlify/functions/pick-order-v527.mjs'
+      - 'draft-pick-rankings-v527.js'
+      - 'tests/draft-pick-order-5050.test.mjs'
       - 'netlify/functions/value-history.mjs'
       - 'netlify/functions/value-history-observability.mjs'
       - 'netlify/functions/ppr-scoring.mjs'
@@ -148,6 +152,12 @@ jobs:
           console.log(JSON.stringify({valid:r.valid,players:r.players_extracted,rows:r.ranking_rows,first:r.rankings?.slice(0,10),diagnostics:r.diagnostics},null,2));
           if(!r.valid||Number(r.players_extracted)<200||Number(r.ranking_rows)!==300)process.exit(18);
           NODE
+      - name: Draft pick 50/50 completed-week ranking and valuation isolation
+        run: |
+          node --check draft-pick-rankings-v527.js
+          node --check netlify/functions/lib/pick-order-5050.mjs
+          node --check netlify/functions/pick-order-v527.mjs
+          node --test tests/draft-pick-order-5050.test.mjs
       - name: Current-season scoring qualification
         run: node --test tests/ppr-history.test.mjs
       - name: Current-season scoring pipeline syntax

@@ -180,3 +180,15 @@ test('Buy and Sell opportunity filter preserves qualified candidates and guarant
   assert.match(source,/data-vh-opportunity-position/);
   assert.match(source,/opportunityCandidates\(\)\[kind\]/);
 });
+
+test('7D high/low window uses exact trailing seven days, never the preceding baseline observation',()=>{
+ const history=[
+  {t:'2026-10-01T00:00:00Z',rows:[{id:'a',pos:'QB',value:100,overall:1,posRank:1}]},
+  {t:'2026-10-02T00:00:00Z',rows:[{id:'a',pos:'QB',value:120,overall:1,posRank:1}]},
+  {t:'2026-10-10T00:00:00Z',rows:[{id:'a',pos:'QB',value:119,overall:1,posRank:1}]}
+ ];
+ // The October 2 record predates October 3, the true 7-day cutoff.
+ const result=marketInsightRange(history,'7D',history);
+ assert.equal(result.new_highs.length,0);
+ assert.equal(result.new_lows.length,0);
+});

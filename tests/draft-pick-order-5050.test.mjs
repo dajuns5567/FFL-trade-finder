@@ -54,7 +54,7 @@ test('client projected order changes while dynasty pick values remain byte-for-b
   const legacy=x=>({projectedSlot:16,value:5835,source:'original valuation source'});
   let renderCount=0;
   const data={status:'current',league_id:'1316867686394769408',season:2026,standings_season:2026,completed_week:9,
-    teams:Array.from({length:32},(_,i)=>({roster_id:i+1,record_rank:32-i,points_rank:32-i,combined_rank:32-i,projected_slot:i+1}))};
+    teams:Array.from({length:32},(_,i)=>({roster_id:i+1,wins:9,losses:0,ties:0,points_for:500+i*10,record_rank:1,points_rank:32-i,combined_rank:32-i,projected_slot:i+1}))};
   data.teams[0].projected_slot=1;
   const normalization={pickContext:x=>({...legacy(x),value:7000}),canonicalValue:x=>7000,sourceValue:x=>5835};
   const storage=new Map();
@@ -83,6 +83,20 @@ test('client projected order changes while dynasty pick values remain byte-for-b
   assert.equal(normalization.pickContext(pick).value,7000);
   assert.equal(normalization.canonicalValue(pick),7000);
   assert.equal(renderCount,1);
+  // A same-week Sleeper PF correction is a new ranking revision, even
+  // when the resulting 1.01–1.32 slots have not changed.
+  data.teams[0].points_for+=.25;
+  await win.draftPickRankingsV527.refresh(true);
+  assert.equal(renderCount,2);
+  assert.equal(normalization.pickContext(pick).value,7000);
+  // An older importer snapshot must never roll back the displayed week.
+  data.completed_week=8;
+  for(const t of data.teams){t.wins=8;t.losses=0}
+  await win.draftPickRankingsV527.refresh(true);
+  assert.equal(win.draftPickRankingsV527.status.completed_week,9);
+  assert.equal(renderCount,2);
+  assert.equal(win.draftPickProjection90(pick).value,5835);
+  assert.equal(normalization.pickContext(pick).value,7000);
 });
 test('existing trade snapshot values remain untouched by the post-cutover ranking overlay',()=>{
   const backend=readFileSync(new URL('../netlify/functions/value-history.mjs',import.meta.url),'utf8');

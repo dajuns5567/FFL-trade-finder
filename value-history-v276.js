@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 const API='/.netlify/functions/value-history';
-let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,currentPlayerId=null,trackedTeamId=null,playerHistoryTeamId=null,currentView='market',marketSort={key:'value',dir:-1},teamNetSort={key:'value',dir:-1},teamAttributionPeriod='7D',tradeHistoryCache=null,tradeTeamFilter='',tradeYearFilter='',tradeMonthFilter='',marketPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D'},teamPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D',posRankRisers:'30D',posRankFallers:'30D'},marketPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL'},teamPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL',posRankRisers:'ALL',posRankFallers:'ALL'},playerScoringCache=new Map(),playerScoringPending=new Map(),teamNetCache=new Map(),tradeDetailState=new Map();
+let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,currentPlayerId=null,trackedTeamId=null,playerHistoryTeamId=null,currentView='market',marketSort={key:'value',dir:-1},teamNetSort={key:'value',dir:-1},teamAttributionPeriod='7D',tradeHistoryCache=null,tradeHistoryCacheAt=0,tradeTeamFilter='',tradeYearFilter='',tradeMonthFilter='',marketPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D'},teamPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D',posRankRisers:'30D',posRankFallers:'30D'},marketPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL'},teamPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL',posRankRisers:'ALL',posRankFallers:'ALL'},playerScoringCache=new Map(),playerScoringPending=new Map(),teamNetCache=new Map(),tradeDetailState=new Map();
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 const tv=()=>window.tradeValueNormalizationV139||window.tradeValueNormalizationV130||{};
@@ -594,29 +594,48 @@ function handleChartPointer(e){
   else tip.innerHTML=`<b>${esc(hit.dataset.vhDate)}</b><div>Value <strong>${esc(hit.dataset.vhValue)}</strong></div><div>Overall #${esc(hit.dataset.vhOverall)} • ${esc(hit.dataset.vhPos)} #${esc(hit.dataset.vhPosRank)}</div>`;
   tip.style.left=`${x}px`;tip.style.top=`${y}px`;tip.style.display='block';
 }
+const TRADE_HISTORY_REFRESH_MS=5*60*1000;
 function primeTradeHistoryCache(data){
   if(!Array.isArray(data?.trades))return false;
-  tradeHistoryCache=data;
+  tradeHistoryCache=data;tradeHistoryCacheAt=Date.now();
   return true;
 }
 async function tradeHistoryFetch(){
-  if(tradeHistoryCache)return tradeHistoryCache;
-  if(primeTradeHistoryCache(globalThis.fleecedTradeHistorySharedCacheV515))return tradeHistoryCache;
+  if(tradeHistoryCache&&Date.now()-tradeHistoryCacheAt<TRADE_HISTORY_REFRESH_MS)
+    return tradeHistoryCache;
+  if(!tradeHistoryCache&&primeTradeHistoryCache(globalThis.fleecedTradeHistorySharedCacheV515))
+    return tradeHistoryCache;
   let last;
   for(let attempt=0;attempt<3;attempt++){
     try{
-      const r=await fetch(`${API}?trades=1`,{cache:'no-store'});
-      if(!r.ok)throw Error(`trade history unavailable (${r.status})`);
+      const r=await fetch(API+'?trades=1',{cache:'no-store'});
+      if(!r.ok)throw Error('trade history unavailable ('+r.status+')');
       const data=await r.json();
       if(!Array.isArray(data?.trades))throw Error('trade history response malformed');
-      tradeHistoryCache=data;
+      tradeHistoryCache=data;tradeHistoryCacheAt=Date.now();
+      globalThis.fleecedTradeHistorySharedCacheV515=data;
       return tradeHistoryCache;
     }catch(e){
       last=e;
       if(attempt<2)await new Promise(r=>setTimeout(r,300*(attempt+1)));
     }
   }
+  if(tradeHistoryCache){
+    // Keep previously verified trades, but clearly mark the live update as
+    // unavailable instead of presenting a stale cache as current.
+    tradeHistoryCache={...tradeHistoryCache,live_trade_feed:{
+      ...tradeHistoryCache.live_trade_feed,state:'unavailable'}};
+    tradeHistoryCacheAt=Date.now()-TRADE_HISTORY_REFRESH_MS/2;
+    return tradeHistoryCache;
+  }
   throw last||Error('trade history unavailable');
+}
+function refreshVisibleTradeHistory(){
+  const panel=document.getElementById('tradeHistory');
+  if(!panel||panel.offsetParent===null||document.hidden||
+     Date.now()-tradeHistoryCacheAt<TRADE_HISTORY_REFRESH_MS)return;
+  tradeHistoryFetch().then(renderTradeHistory).catch(error=>
+    console.warn('trade-history-live-refresh-unavailable',String(error?.message||error)));
 }
 function historicalTradeTeamName(trade,id){const archived=String(trade?.team_names?.[String(id)]||'').trim(),live=String(teamName(id)||'').trim(),generic=/^roster\s+\d+$/i.test(archived)||/^team\s+\d+$/i.test(archived);return generic&&live&&!/^roster\s+\d+$/i.test(live)&&!/^team\s+\d+$/i.test(live)?live:(archived||live)}
 function tradePickAsset(p,receiver){
@@ -1382,7 +1401,7 @@ function renderPlayerProfile(id,allPts,period='ALL'){
   ${similarPlayersSection(id)}`;
   setTimeout(()=>fitValueHistoryCellText(box),0);
 }
-function boot(){addShell();scheduleSnapshot(0,snapshotSourceFromUrl());document.getElementById('updateBtn')?.addEventListener('click',()=>{marketCache=null;teamNetCache.clear();scheduleSnapshot(1000,'manual-update');if(currentPlayerId)setTimeout(()=>loadPlayer(currentPlayerId),1800)},{passive:true})}
+function boot(){addShell();setInterval(refreshVisibleTradeHistory,TRADE_HISTORY_REFRESH_MS);window.addEventListener('focus',refreshVisibleTradeHistory);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshVisibleTradeHistory()});scheduleSnapshot(0,snapshotSourceFromUrl());document.getElementById('updateBtn')?.addEventListener('click',()=>{marketCache=null;teamNetCache.clear();scheduleSnapshot(1000,'manual-update');if(currentPlayerId)setTimeout(()=>loadPlayer(currentPlayerId),1800)},{passive:true})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 window.valueHistoryV331={currentRows,currentPickRows,currentTeamRows,recordSnapshot,historyFetch,marketFetch,marketData:(force=false)=>ensureMarketCache(!!force),livePlayerMeta,periodPoints,openPlayer:(id)=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>selectPlayer(String(id)),0)},openPlayerHistory:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(renderPlayerHistoryHub,0)},openFullMarket:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>loadFullMarketHistory(),0)}};
 })();

@@ -67,6 +67,13 @@ test('an active League Hub automatically discovers a published week and invalida
  await h.module.refreshPublishedInquirerIfAdvanced();
  assert.equal(h.state.renders,1,'no repeated render without new archive entries');
 });
+test('a transient archived-edition load failure self-heals without a newer index row',async()=>{
+ const h=harness([row(6)]);await h.module.weekly();
+ h.module.setCache(null);
+ await h.module.refreshPublishedInquirerIfAdvanced();
+ assert.equal(h.state.renders,1,'retry the visible League Hub even if archive index did not change');
+ assert.equal(h.module.latestPublishedInquirerRow(h.module.getArchive()).week,6);
+});
 test('preview manuscripts are not published by the reader and daily archive refresh is read-only',()=>{
  assert.match(source,/if\(inquirerPreviewMode\)return loadInquirerPreview\(\)/);
  assert.match(source,/setInterval\(refreshPublishedInquirerIfAdvanced,60000\)/);

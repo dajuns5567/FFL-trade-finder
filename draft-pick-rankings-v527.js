@@ -96,6 +96,15 @@ async function refresh(force=false){
         updateStatus('older importer standings rejected; retaining latest completed week');
         return current;
       }
+      if(current&&String(current.league_id)===String(data.league_id)&&
+          Number(current.season)===Number(data.season)&&
+          Number(data.completed_week)===Number(current.completed_week)&&
+          current.source==='sleeper-live-rosters'&&data.source==='sleeper-importer-audit'){
+        // An older imported audit must not silently replace verified live PF
+        // corrections for the same week during a transient Sleeper outage.
+        updateStatus('importer fallback retained as standby; keeping verified live week');
+        return current;
+      }
       const changed=!current||current.league_id!==data.league_id||
         Number(current.season)!==Number(data.season)||
         Number(current.completed_week)!==Number(data.completed_week)||

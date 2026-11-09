@@ -1058,7 +1058,7 @@ async function health(s){
   };
 }
 
-export { monthKey, marketFromSnapshots, baselineFor };
+export { monthKey, marketFromSnapshots, baselineFor, marketInsightsFromSnapshots, marketInsightRange };
 
 export default async (req)=>{
   try{

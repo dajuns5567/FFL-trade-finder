@@ -391,7 +391,7 @@ function currentRows(){const list=ranked();if(!list.length||!tv().playerValue)re
 function currentPickProjectionSlot(asset){
   try{
     const p=tv().pickContext?.(asset)||{},slot=Math.round(Number(p.projectedSlot));
-    const base=window.draftPickContext86,baseReady=base?.slots instanceof Map&&base.slots.size===32,projectionReady=Boolean(p.projectionContextUsed);
+    const base=window.draftPickContext86,baseReady=base?.slots instanceof Map&&base.slots.size===32,projectionReady=Boolean(p.projectionContextUsed)||p.rankingMethod==='record-pf-50-50';
     return (baseReady||projectionReady)&&slot>=1&&slot<=32?slot:null;
   }catch{return null}
 }
@@ -701,7 +701,14 @@ function historicalPickValue(side,p){
   const row=historicalPickSnapshotRow(side,p),n=Number(row?.value);
   return Number.isFinite(n)?Math.round(n):null;
 }
-function historicalPickProjectedSlot(side,p){
+function historicalPickProjectedSlot(side,p,trade){
+  // Preserve all prior editions. From Sep 25, 2026 onward the draft
+  // ORDER is taken from verified completed-week league results, never MIDA.
+  // Historical VALUE stays in then_picks and is not recalculated here.
+  if(Date.parse(trade?.created)>=Date.parse('2026-09-25T04:00:00.000Z')){
+    const n=Number(trade?.ranking_at_trade?.slots?.[String(p?.original_roster_id)]);
+    return Number.isInteger(n)&&n>=1&&n<=32?n:null;
+  }
   const n=Math.round(Number(historicalPickSnapshotRow(side,p)?.projected_slot));
   return n>=1&&n<=32?n:null;
 }
@@ -733,7 +740,7 @@ function sideValueModel(side,trade){
   for(const p of side.picks||[]){
     const pickAsset=tradePickAsset(p,side.roster_id),recorded=historicalPickValue(side,p),then=recorded??retroactiveTradeHistoryPickValue(pickAsset,trade);
     if(then==null)atTradeComplete=false;
-    const ownership=historicalPickOwnershipLabel(p,trade),slotLabel=historicalDraftSlotLabel(p),projectedAtTrade=historicalPickProjectedSlot(side,p),projectedAtTradeText=projectedPickSlotText(p.round,projectedAtTrade,'at trade');
+    const ownership=historicalPickOwnershipLabel(p,trade),slotLabel=historicalDraftSlotLabel(p),projectedAtTrade=historicalPickProjectedSlot(side,p,trade),projectedAtTradeText=projectedPickSlotText(p.round,projectedAtTrade,'at trade');
     atTradeItems.push({label:`Draft pick: ${p.season} R${p.round}`,meta:`${projectedAtTradeText?projectedAtTradeText+' • ':''}${ownership}`,kind:'pick',value:then});
     if(p.drafted_player_id){
       const drafted=tradePlayerAsset(p.drafted_player_id,side.roster_id),now=currentEvaluatorValue(drafted);if(now==null)currentComplete=false;
@@ -753,7 +760,7 @@ function tradeOutcomeAssets(side){
 }
 function tradeOriginalAssets(side){
   const out=(side?.player_ids||[]).map(id=>tradePlayerAsset(id,side.roster_id));
-  for(const p of side?.picks||[]){const pick=tradePickAsset(p,side.roster_id);if(pick){const recorded=historicalPickValue(side,p),projectedSlot=historicalPickProjectedSlot(side,p);if(recorded!=null)pick.historyRecordedValue=recorded;if(projectedSlot)pick.historyProjectedSlot=projectedSlot;out.push(pick)}}
+  for(const p of side?.picks||[]){const pick=tradePickAsset(p,side.roster_id);if(pick){const recorded=historicalPickValue(side,p),projectedSlot=historicalPickProjectedSlot(side,p,trade);if(recorded!=null)pick.historyRecordedValue=recorded;if(projectedSlot)pick.historyProjectedSlot=projectedSlot;out.push(pick)}}
   return out;
 }
 function tradeEvaluatorAnalysis(trade){

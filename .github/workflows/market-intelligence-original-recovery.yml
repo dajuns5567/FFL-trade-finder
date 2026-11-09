@@ -1,0 +1,35 @@
+name: Original Market Intelligence Recovery
+
+on:
+  pull_request:
+    paths:
+      - 'value-history-v276.js'
+      - 'netlify/functions/value-history.mjs'
+      - 'netlify/functions/player-signal-engine.mjs'
+      - 'netlify/functions/player-signals.mjs'
+      - 'netlify/functions/site-v29.mjs'
+      - 'tests/market-intelligence-original-recovery.test.mjs'
+      - '.github/workflows/market-intelligence-original-recovery.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  authentic-market-intelligence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install existing declared dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund --no-package-lock
+      - name: Syntax and exact archived analytics regression
+        run: |
+          node --check value-history-v276.js
+          node --check netlify/functions/value-history.mjs
+          node --check netlify/functions/player-signals.mjs
+          node --check netlify/functions/player-signal-engine.mjs
+          node --test tests/market-intelligence-original-recovery.test.mjs

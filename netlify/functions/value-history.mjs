@@ -1,4 +1,5 @@
 import {snapshotsThroughEdition} from './lib/inquirer-market-window.mjs';
+import {liveTradeWeekLimit,mergeCompletedTradeAuditWeeks} from './lib/trade-history-live-source.mjs';
 import { getStore } from '@netlify/blobs';
 
 const LEAGUE='1316867686394769408';
@@ -862,8 +863,11 @@ function normalizeCompletedTrade(tx,week,season,teamNames,draftResults){
   }));
   return{id:String(tx.transaction_id||''),created,season:Number(season)||null,week:Number(week)||null,roster_ids:rosterIds,team_names:teamNames||{},sides};
 }
-async function importedCompletedTrades(){
-  const now=Date.now();if(tradeAuditCache&&now-tradeAuditCache.t<60000)return tradeAuditCache.value;
+async function importedCompletedTrades({forceLive=false}={}){
+  const now=Date.now();if(!forceLive&&tradeAuditCache&&now-tradeAuditCache.t<60000)return tradeAuditCache.value;
+  // Historical audits are immutable snapshots, not a live transaction feed.
+  // The 2026 audit stopped refreshing after the early season; check Sleeper
+  // directly for current-week completed transactions on every cache refresh.
   const seasonBundles=await Promise.all(TRADE_AUDIT_SEASONS.map(async season=>{
     const [transactions,league,users,rosters]=await Promise.all([
       tradeJson(auditUrl(season,'transactions')),
@@ -874,6 +878,35 @@ async function importedCompletedTrades(){
     const teamNames=historicalTeamNames(users,rosters);
     return{season,transactions,league,teamNames};
   }));
+  const liveBundle=seasonBundles.find(bundle=>Number(bundle.season)===Number(seasonBundles.at(-1)?.season));
+  const liveSeason=Number(liveBundle?.season)||0;
+  let liveStatus={state:'unavailable',season:liveSeason,checked_through_week:null,failed_weeks:[]};
+  let liveTeamNames={};
+  if(liveBundle&&liveSeason){
+    const state=await tradeJson(`${SCORING_API}/state/nfl`).catch(()=>null);
+    const through=liveTradeWeekLimit(state,liveSeason);
+    const results=await Promise.allSettled(Array.from({length:through},(_,i)=>
+      tradeJson(`${SCORING_API}/league/${String(liveBundle.league?.league_id||LEAGUE)}/transactions/${i+1}`)));
+    const weeks={},failed=[];
+    for(let i=0;i<results.length;i++){
+      const result=results[i];
+      if(result.status==='fulfilled'&&Array.isArray(result.value))weeks[i+1]=result.value;
+      else failed.push(i+1);
+    }
+    // Keep original audited team names for historical trades; only newly
+    // recovered live transactions use the current Sleeper manager/team names.
+    const [users,rosters]=await Promise.all([
+      tradeJson(`${SCORING_API}/league/${String(liveBundle.league?.league_id||LEAGUE)}/users`).catch(()=>null),
+      tradeJson(`${SCORING_API}/league/${String(liveBundle.league?.league_id||LEAGUE)}/rosters`).catch(()=>null)
+    ]);
+    if(Array.isArray(users)&&Array.isArray(rosters))
+      liveTeamNames=historicalTeamNames(users,rosters);
+    liveBundle.transactions=mergeCompletedTradeAuditWeeks(liveBundle.transactions,weeks);
+    liveStatus={state:failed.length?'partial':'current',season:liveSeason,
+      checked_through_week:through,failed_weeks:failed};
+    if(failed.length)console.warn('trade-history-live-sleeper-partial',
+      {season:liveSeason,failed_weeks:failed});
+  }
   const combinedDraftResults=new Map(),ambiguous=new Set();
   for(const bundle of seasonBundles){
     const draftResults=await exactDraftResultMap(bundle.league);
@@ -883,9 +916,19 @@ async function importedCompletedTrades(){
     }
   }
   for(const key of ambiguous)combinedDraftResults.delete(key);
-  const trades=[];
-  for(const bundle of seasonBundles)for(const [week,rows] of Object.entries(bundle.transactions||{}))for(const tx of Array.isArray(rows)?rows:[]){const t=normalizeCompletedTrade(tx,week,bundle.season,bundle.teamNames,combinedDraftResults);if(t)trades.push(t)}
-  trades.sort((a,b)=>String(b.created).localeCompare(String(a.created)));tradeAuditCache={t:now,value:trades};return trades;
+  const trades=[],seen=new Set();
+  for(const bundle of seasonBundles)for(const [week,rows] of Object.entries(bundle.transactions||{}))
+    for(const tx of Array.isArray(rows)?rows:[]){
+      const t=normalizeCompletedTrade(tx,week,bundle.season,tx.__live_trade?
+        {...bundle.teamNames,...liveTeamNames}:bundle.teamNames,combinedDraftResults);
+      if(!t)continue;
+      const id=Number(bundle.season)+'|'+String(t.id||t.created+'|'+t.roster_ids.join(','));
+      if(seen.has(id))continue;
+      seen.add(id);trades.push(t);
+    }
+  trades.sort((a,b)=>String(b.created).localeCompare(String(a.created)));
+  const value={trades,live_trade_feed:liveStatus};
+  tradeAuditCache={t:now,value};return value;
 }
 function closestSnapshotItem(items,targetMs,maxGapMs=36*3600000){
   let best=null,bestGap=Infinity;
@@ -909,8 +952,8 @@ function pickValuesFromSide(side,map){
   }
   return{values,missing,complete:missing.length===0,total:values.reduce((n,x)=>n+x.value,0)};
 }
-async function completedTradeHistory(s){
-  const trades=await importedCompletedTrades();
+async function completedTradeHistory(s,{forceLive=false}={}){
+  const {trades,live_trade_feed}=await importedCompletedTrades({forceLive});
   const archiveSnaps=await archiveAllSnapshots();
   let localSnaps=[],localState=s?'empty':'unavailable';
   if(s){
@@ -921,7 +964,7 @@ async function completedTradeHistory(s){
   }
   const snaps=mergeSnapshots(archiveSnaps,localSnaps);
   const emptyTrade=t=>({...t,trade_snapshot_t:null,current_snapshot_t:null,sides:t.sides.map(side=>({...side,then_players:[],then_players_complete:false,then_picks:[],then_picks_complete:false,current_players:[],current_players_complete:false}))});
-  if(!snaps.length)return{source:'Sleeper imported transaction audits (2024–2026) + exact Sleeper draft results',history_source:localState,tracking_since:null,latest:null,trades:trades.map(emptyTrade)};
+  if(!snaps.length)return{source:'Sleeper audited transactions (2024–2026) + live current-season Sleeper trades + exact Sleeper draft results',live_trade_feed,history_source:localState,tracking_since:null,latest:null,trades:trades.map(emptyTrade)};
   const latestSnap=snaps[snaps.length-1],latestMap=rowMap(latestSnap||{rows:[]});
   const closestSnap=ms=>{let best=null;for(const snap of snaps){const sm=new Date(snap?.t||'').getTime();if(!Number.isFinite(sm))continue;if(sm<=ms)best=snap;else break}return best};
   const requestedTradeReference=snaps.find(snap=>String(snap?.t||'').slice(0,16)===V494_TRADE_REFERENCE_MINUTE)||null;
@@ -934,7 +977,7 @@ async function completedTradeHistory(s){
     return{...trade,trade_snapshot_t:histSnap?.t||null,trade_snapshot_reference:inRequestedWindow?'requested-2026-09-19-1801-et':null,current_snapshot_t:latestSnap?.t||null,sides};
   });
   const historySource=archiveSnaps.length?(localSnaps.length?'github-archive+netlify-live':'github-archive'):'netlify-live';
-  return{source:'Sleeper imported transaction audits (2024–2026) + exact Sleeper draft results',history_source:historySource,tracking_since:snaps[0]?.t||null,latest:latestSnap?.t||null,trades:out};
+  return{source:'Sleeper audited transactions (2024–2026) + live current-season Sleeper trades + exact Sleeper draft results',live_trade_feed,history_source:historySource,tracking_since:snaps[0]?.t||null,latest:latestSnap?.t||null,trades:out};
 }
 async function health(s){
   const arch=await archiveIndex();
@@ -1001,7 +1044,7 @@ export default async (req)=>{
         return json({market,history_state:'ok'});
       }
       if(url.searchParams.get('trades')==='1'){
-        const result=await retry(()=>completedTradeHistory(s),180);
+        const result=await retry(()=>completedTradeHistory(s,{forceLive:url.searchParams.get('trades_fresh')==='1'}),180);
         return json(result);
       }
       if(url.searchParams.get('player_scoring')==='1'){

@@ -394,7 +394,7 @@ assert(backend.includes("githubArchive:{reachable:"),'Value History health must 
 assert(backend.includes("netlifyLive:{reachable:"),'Value History health must report Netlify live-buffer reachability separately');
 assert(backend.includes("const archiveSnaps=await archiveAllSnapshots();"),'Value History read paths must load the durable GitHub archive independently of Netlify Blobs');
 assert(backend.includes("history_source:historySource"),'Trade History must expose its historical-value source separately from raw Sleeper trade audits');
-assert(backend.includes("const trades=await importedCompletedTrades();"),'Trade History must load Sleeper completed trades before optional historical-value storage');
+assert(backend.includes("const {trades,live_trade_feed}=await importedCompletedTrades();"),'Trade History must load live Sleeper completions and feed health before optional historical-value storage');
 
 assert(backend.includes("url.searchParams.get('market')==='1'"),'market summary endpoint missing');
 assert(backend.includes('LEGACY_INDEX_KEY'), 'legacy V330 history compatibility missing');
@@ -414,7 +414,7 @@ assert(backend.includes('completedTradeHistory(s)'),'completed trade history mus
 assert(backend.includes('TRADE_AUDIT_SEASONS'),'Sleeper imported multi-season trade audit source missing');
 assert(backend.includes('exactDraftResultMap'),'exact Sleeper draft-result mapping missing');
 assert(backend.includes('const combinedDraftResults=new Map(),ambiguous=new Set()'),'historical Sleeper draft results must be combined across imported league seasons');
-assert(backend.includes('normalizeCompletedTrade(tx,week,bundle.season,bundle.teamNames,combinedDraftResults)'),'historical trades must resolve picks against the cross-season Sleeper draft-result map');
+assert(backend.includes('normalizeCompletedTrade(tx,week,bundle.season,tx.__live_trade?')&&backend.includes(':bundle.teamNames,combinedDraftResults)'),'historical trades must keep audited team names and cross-season exact Sleeper draft-result mapping while new live trades may use refreshed names');
 assert(!backend.includes('bundle.teamNames,bundle.draftResults'),'historical trade resolution must not be limited to the transaction season draft list');
 assert(backend.includes('slot_to_roster_id'),'draft-result mapping must use Sleeper slot_to_roster_id rather than inference');
 assert(backend.includes("TRADE_AUDIT_SEASONS=[2024,2025,2026]"),'2024–2026 linked trade audit coverage missing');

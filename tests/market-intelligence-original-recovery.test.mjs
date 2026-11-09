@@ -192,3 +192,23 @@ test('7D high/low window uses exact trailing seven days, never the preceding bas
  assert.equal(result.new_highs.length,0);
  assert.equal(result.new_lows.length,0);
 });
+
+test('Buy/Sell View All features every qualified offensive player ahead of IDP, which remains accessible',()=>{
+  const source=readFileSync(new URL('../value-history-v276.js',import.meta.url),'utf8');
+  const modalStart=source.indexOf('function openMarketIntelModal('),
+    modalEnd=source.indexOf('function intelligencePeriodBar(',modalStart);
+  assert.ok(modalStart>=0&&modalEnd>modalStart);
+  const modal=source.slice(modalStart,modalEnd);
+  const heading=modal.indexOf('Offensive Position Players (QB · RB · WR · TE)'),
+    offensiveRows=modal.indexOf('...offense.map(opportunityRow)'),
+    defensiveGroup=modal.indexOf('<details class="vh-opportunity-idp-details">'),
+    defensiveRows=modal.indexOf('defense.map(opportunityRow)');
+  assert.ok(heading>=0&&offensiveRows>heading&&defensiveGroup>offensiveRows&&defensiveRows>defensiveGroup);
+  assert.match(modal,/candidates\.filter\(x=>x\.category==='OFFENSE'\)/);
+  assert.match(modal,/candidates\.filter\(x=>x\.category==='IDP'\)/);
+  assert.match(modal,/\.\.\.\(offense\.length\?offense\.map\(opportunityRow\)/);
+  assert.match(modal,/defense\.map\(opportunityRow\)\.join\(''\)/);
+  assert.match(modal,/if\(marketOpportunityPosition==='ALL'\)/);
+  assert.match(modal,/else\{\s*rows=candidates\.map\(opportunityRow\)/);
+  assert.match(source,/\.vh-opportunity-idp-details summary/);
+});

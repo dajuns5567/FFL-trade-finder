@@ -1209,7 +1209,7 @@ function openMarketIntelModal(kind){
     const high=kind==='highs';rows=(high?range?.new_highs:range?.new_lows)||[];
     title=high?'All New Player Value Highs':'All New Player Value Lows';
     subtitle=`${rows.length} player-value records inside ${intelPeriodLabel()}`;
-    rows=rows.map(r=>intelPlayerRow(r.id,`Previous ${high?'high':'low'} ${fmt(high?r.previous_high:r.previous_low)}`,`${high?'Above prior':'Below prior'} ${intelPeriodLabel()} ${high?'high':'low'}`,`${high?'+':''}${fmt(high?r.gain:r.drop)}`,high?'vh-up':'vh-down'));
+    rows=rows.map(r=>intelPlayerRow(r.id,`Hit ${dateTime(r.t)} • prior ${high?'high':'low'} ${fmt(high?r.previous_high:r.previous_low)}`,`${intelPeriodLabel()} new ${high?'high':'low'}`,`${high?'+':''}${fmt(high?r.gain:r.drop)}`,high?'vh-up':'vh-down'));
   }else if(kind==='heating'||kind==='cooling'){
     const positive=kind==='heating';
     const list=signals.filter(sig=>positive?(marketSignalDirection(sig.state)>0||sig.momentum==='hot'):(marketSignalDirection(sig.state)<0||sig.momentum==='cold')).sort((a,b)=>momentumScore(b)-momentumScore(a));
@@ -1279,7 +1279,7 @@ function newHighLowMarkup(){
   const data=intelRange();
   if(!data)return'<div class="vh-card"><div class="vh-empty">Checking tracked market records…</div></div>';
   const highs=(data.new_highs||[]).slice(0,8),lows=(data.new_lows||[]).slice(0,8),
-    list=(rows,high)=>rows.length?rows.map(r=>intelPlayerRow(r.id,`Previous ${high?'high':'low'} ${fmt(high?r.previous_high:r.previous_low)}`,`${high?'Above prior':'Below prior'} ${intelPeriodLabel()} ${high?'high':'low'}`,`${high?'+':''}${fmt(high?r.gain:r.drop)}`,high?'vh-up':'vh-down')).join(''):`<div class="vh-empty">No new ${high?'highs':'lows'} in the selected window.</div>`;
+    list=(rows,high)=>rows.length?rows.map(r=>intelPlayerRow(r.id,`Hit ${dateTime(r.t)} • prior ${high?'high':'low'} ${fmt(high?r.previous_high:r.previous_low)}`,`${intelPeriodLabel()} new ${high?'high':'low'}`,`${high?'+':''}${fmt(high?r.gain:r.drop)}`,high?'vh-up':'vh-down')).join(''):`<div class="vh-empty">No new ${high?'highs':'lows'} in the selected window.</div>`;
   return`<div class="vh-intel-grid"><div class="vh-card"><div class="vh-intel-card-title"><h3>New Player Value Highs</h3>${intelViewAllButton('highs')}</div><div class="vh-sub">Players setting strict new value highs versus earlier snapshots inside ${esc(intelPeriodLabel())}.</div><div class="vh-intel-list">${list(highs,true)}</div></div><div class="vh-card"><div class="vh-intel-card-title"><h3>New Player Value Lows</h3>${intelViewAllButton('lows')}</div><div class="vh-sub">Players setting strict new value lows versus earlier snapshots inside ${esc(intelPeriodLabel())}.</div><div class="vh-intel-list">${list(lows,false)}</div></div></div>`;
 }
 function momentumMarkup(){

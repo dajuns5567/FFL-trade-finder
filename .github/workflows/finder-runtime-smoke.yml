@@ -39,6 +39,7 @@ on:
       - 'scripts/v319-values-v311-integration-smoke.cjs'
       - 'netlify/functions/site-v17.mjs'
       - 'netlify/functions/site-v29.mjs'
+      - 'scripts/trade-history-scheduled-check.mjs'
       - 'netlify/functions/value-history.mjs'
       - 'netlify/functions/value-history-observability.mjs'
       - 'netlify/functions/ppr-scoring.mjs'
@@ -197,7 +198,9 @@ jobs:
       - name: Full browser runtime syntax audit
         run: node scripts/site-runtime-syntax-audit.mjs
       - name: Current Sleeper completed-trade feed and historical audit preservation
-        run: node --test tests/trade-history-live-sleeper.test.mjs
+        run: |
+          node --check scripts/trade-history-scheduled-check.mjs
+          node --test tests/trade-history-live-sleeper.test.mjs
       - name: Value History data hub behavior and isolation
         run: |
           node scripts/value-history-data-hub-v331-smoke.mjs

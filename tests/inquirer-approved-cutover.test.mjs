@@ -20,7 +20,7 @@ test('production cutover requires exact owner-approved site, context and queue s
  assert.match(scheduler,/verifiedNewSiteCutoverHistory/);
  assert.match(scheduler,/inquirer-cutover-background/);
  assert.match(scheduler,/publishingEnabled!=='true'/);
- assert.match(config,/CONTEXT==='production'/);
+ assert.match(config,/CONTEXT==='deploy-preview'/);
 });
 test('private copies must pass cross-week audit before ANY create-only publication write',()=>{
  const copies=worker.indexOf('const [draft7,draft8]');

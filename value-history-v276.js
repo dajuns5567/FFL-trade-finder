@@ -391,7 +391,7 @@ function currentRows(){const list=ranked();if(!list.length||!tv().playerValue)re
 function currentPickProjectionSlot(asset){
   try{
     const p=tv().pickContext?.(asset)||{},slot=Math.round(Number(p.projectedSlot));
-    const base=window.draftPickContext86,baseReady=base?.slots instanceof Map&&base.slots.size===32,projectionReady=Boolean(p.projectionContextUsed);
+    const base=window.draftPickContext86,baseReady=base?.slots instanceof Map&&base.slots.size===32,projectionReady=Boolean(p.projectionContextUsed)||p.rankingMethod==='record-pf-50-50';
     return (baseReady||projectionReady)&&slot>=1&&slot<=32?slot:null;
   }catch{return null}
 }

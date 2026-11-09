@@ -54,3 +54,16 @@ test('backend pulls current-season weekly Sleeper transactions instead of readin
   assert.match(src,/tradeAuditCache=\{t:now,value\}/,'backend cache remains short-lived');
   assert.match(src,/exactDraftResultMap\(bundle\.league\)/,'draft results must remain source-grounded');
 });
+
+test('visible Trade History refreshes stale browser cache and warns on degraded live feed',()=>{
+  const ui=readFileSync(new URL('../value-history-v276.js',import.meta.url),'utf8');
+  const site=readFileSync(new URL('../netlify/functions/site-v29.mjs',import.meta.url),'utf8');
+  assert.match(ui,/TRADE_HISTORY_REFRESH_MS=5\*60\*1000/);
+  assert.match(ui,/tradeHistoryCacheAt=Date\.now\(\)/);
+  assert.match(ui,/setInterval\(refreshVisibleTradeHistory,TRADE_HISTORY_REFRESH_MS\)/);
+  assert.match(ui,/document\.addEventListener\('visibilitychange'/);
+  assert.match(ui,/window\.addEventListener\('focus',refreshVisibleTradeHistory\)/);
+  assert.match(ui,/feedState==='partial'/);
+  assert.match(ui,/feedState==='unavailable'/);
+  assert.match(site,/value-history-v276\.js\?v=526/);
+});

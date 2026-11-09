@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {liveTradeWeekLimit,mergeCompletedTradeAuditWeeks} from '../netlify/functions/lib/trade-history-live-source.mjs';
+import {checkScheduledCompletedTrades} from '../scripts/trade-history-scheduled-check.mjs';
 
 const trade=(id,created,{status='complete',type='trade',recipient=1}={})=>({
   transaction_id:String(id),type,status,created,status_updated:created,
@@ -66,4 +67,62 @@ test('visible Trade History refreshes stale browser cache and warns on degraded 
   assert.match(ui,/feedState==='partial'/);
   assert.match(ui,/feedState==='unavailable'/);
   assert.match(site,/value-history-v276\.js\?v=526/);
+});
+
+test('every site opening forces live completed-trade search, independent of hidden tab and shared cache',()=>{
+  const ui=readFileSync(new URL('../value-history-v276.js',import.meta.url),'utf8');
+  const backend=readFileSync(new URL('../netlify/functions/value-history.mjs',import.meta.url),'utf8');
+  assert.match(ui,/function boot\(\)\{addShell\(\);searchTradesOnSiteOpen\(\)/);
+  assert.match(ui,/tradeHistoryFetch\(\{force:true\}\)/);
+  assert.match(ui,/if\(!force&&!tradeHistoryCache&&primeTradeHistoryCache/);
+  assert.match(ui,/if\(!force&&tradeHistoryCache&&Date\.now\(\)-tradeHistoryCacheAt/);
+  assert.match(ui,/trades=1&trades_fresh=1/);
+  assert.match(ui,/if\(tradeHistoryPending\)return tradeHistoryPending/);
+  assert.match(backend,/async function importedCompletedTrades\(\{forceLive=false\}=\{\}\)/);
+  assert.match(backend,/if\(!forceLive&&tradeAuditCache&&now-tradeAuditCache\.t<60000\)/);
+  assert.match(backend,/url\.searchParams\.get\('trades_fresh'\)==='1'/);
+});
+test('scheduled check executes independently of scheduled valuation snapshot due gate',()=>{
+  const workflow=readFileSync(new URL('../.github/workflows/value-history-headless-refresh.yml',import.meta.url),'utf8');
+  const poll=workflow.indexOf('name: Check current Sleeper completed trades');
+  const due=workflow.indexOf('name: Check whether scheduled history is due');
+  assert.ok(poll>0&&due>poll);
+  assert.match(workflow,/run: node scripts\/trade-history-scheduled-check\.mjs/);
+  assert.match(workflow,/cron: '17 \* \* \* \*'/);
+  assert.match(workflow,/cron: '47 \* \* \* \*'/);
+  const subsection=workflow.slice(poll,due);
+  assert.doesNotMatch(subsection,/if: steps\.due\.outputs/);
+});
+test('scheduled check finds deduplicated completed trades through current Sleeper week',async()=>{
+  const hits=[];
+  const mock=async url=>{
+    hits.push(String(url));
+    if(String(url).endsWith('/league/1316867686394769408'))
+      return {ok:true,json:async()=>({season:'2026'})};
+    if(String(url).endsWith('/state/nfl'))
+      return {ok:true,json:async()=>({season:'2026',week:9})};
+    const w=Number(String(url).split('/').at(-1));
+    if(!Number.isInteger(w)||w<1||w>9)return{ok:false,status:404};
+    return{ok:true,json:async()=>w===9?[
+      trade('nov7',Date.parse('2026-11-07T12:00:00Z')),
+      trade('nov7',Date.parse('2026-11-07T12:00:00Z')),
+      trade('pending',Date.now(),{status:'pending'})
+    ]:[]};
+  };
+  const result=await checkScheduledCompletedTrades({fetchImpl:mock});
+  assert.equal(result.ok,true);
+  assert.equal(result.checked_through_week,9);
+  assert.equal(result.completed_trade_count,1);
+  assert.equal(result.latest_completed_trade.id,'nov7');
+  assert.equal(hits.length,11);
+});
+test('scheduled check fails rather than reporting success on partial Sleeper transactions',async()=>{
+  const mock=async url=>{
+    const u=String(url);
+    if(u.endsWith('/league/1316867686394769408'))return{ok:true,json:async()=>({season:'2026'})};
+    if(u.endsWith('/state/nfl'))return{ok:true,json:async()=>({season:'2026',week:3})};
+    if(u.endsWith('/transactions/2'))return{ok:false,status:502};
+    return{ok:true,json:async()=>[]};
+  };
+  await assert.rejects(()=>checkScheduledCompletedTrades({fetchImpl:mock}),/Scheduled completed-trade poll incomplete/);
 });

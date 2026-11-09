@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
 import {marketInsightsFromSnapshots,marketInsightRange} from '../netlify/functions/value-history.mjs';
 import {buildPlayerSignal,recentFormProfile,PLAYER_SIGNAL_VERSION} from '../netlify/functions/player-signal-engine.mjs';
 
@@ -121,4 +122,61 @@ test('strict within-window highs and lows require earlier verified comparison, n
  const result=marketInsightRange(fixture,'7D');
  assert.equal(result.new_highs.length,0);
  assert.equal(result.new_lows.length,0);
+});
+
+test('selected 7-day window includes new records from any of its snapshots against prior historical observations',()=>{
+  const history=[
+    {t:'2026-10-01T00:00:00Z',rows:[{id:'a',pos:'QB',value:200,overall:1,posRank:1},{id:'b',pos:'RB',value:50,overall:2,posRank:1}]},
+    {t:'2026-10-02T00:00:00Z',rows:[{id:'a',pos:'QB',value:190,overall:1,posRank:1},{id:'b',pos:'RB',value:55,overall:2,posRank:1}]},
+    {t:'2026-10-06T00:00:00Z',rows:[{id:'a',pos:'QB',value:201,overall:1,posRank:1},{id:'b',pos:'RB',value:49,overall:2,posRank:1}]},
+    {t:'2026-10-07T00:00:00Z',rows:[{id:'a',pos:'QB',value:197,overall:1,posRank:1},{id:'b',pos:'RB',value:51,overall:2,posRank:1}]},
+    {t:'2026-10-09T00:00:00Z',rows:[{id:'a',pos:'QB',value:198,overall:1,posRank:1},{id:'b',pos:'RB',value:50,overall:2,posRank:1}]}
+  ];
+  const inWindow=history.slice(2);
+  const r=marketInsightRange(inWindow,'7D',history);
+  assert.deepEqual(r.new_highs.map(x=>x.id),['a']);
+  assert.deepEqual(r.new_lows.map(x=>x.id),['b']);
+  assert.equal(r.new_highs[0].t,history[2].t);
+  assert.equal(r.new_highs[0].previous_high,200);
+  assert.equal(r.new_lows[0].previous_low,50);
+  const neverBreaks=history.map((x,i)=>({...x,rows:x.rows.map(y=>({...y,value:y.id==='a'&&i===2?195:y.id==='b'&&i===2?52:y.value}))}));
+  const noRecords=marketInsightRange(neverBreaks.slice(2),'7D',neverBreaks);
+  assert.equal(noRecords.new_highs.length,0);
+  assert.equal(noRecords.new_lows.length,0);
+});
+test('Buy and Sell opportunity filter preserves qualified candidates and guarantees visible offense/IDP separation',()=>{
+  const source=readFileSync(new URL('../value-history-v276.js',import.meta.url),'utf8');
+  const start=source.indexOf('let marketOpportunityPosition=');
+  const end=source.indexOf('function categoryLeadersMarkup()',start);
+  assert.ok(start>0&&end>start);
+  const snippet=source.slice(start,end);
+  const rows=[],signals=[];
+  for(let i=0;i<12;i++){
+    const defensive=i<8,id=String(1000+i),pos=defensive?'IDP':'WR';
+    rows.push({id,pos,value:100+i,overall:i+1,delta7:0});
+    signals.push({player_id:id,position:defensive?'LB':'WR',state:'surging',momentum:'hot',
+      confidence:'established',evidence:{recent_form_delta:defensive?20-i:5-i*.01}});
+  }
+  const context={
+    marketCache:{marketRows:rows},marketSignalCache:{signals},
+    signalPerformanceDelta:s=>s.evidence.recent_form_delta,
+    marketSignalDirection:()=>1,
+    verifiedValueMove:()=>({delta:0}),
+    intelPlayerRow:(id)=>String(id),intelPeriodLabel:()=> '7D',
+    signed:x=>String(x),deltaClass:()=>'',fmt:x=>String(x),esc:x=>String(x)
+  };
+  vm.createContext(context);
+  vm.runInContext(snippet,context);
+  const qualified=vm.runInContext('opportunityCandidates().buy',context);
+  assert.equal(qualified.length,12);
+  const balanced=vm.runInContext('opportunityFiltered(opportunityCandidates().buy,"ALL",8)',context);
+  assert.equal(balanced.length,8);
+  assert.equal(balanced.filter(x=>x.category==='OFFENSE').length,4);
+  assert.equal(balanced.filter(x=>x.category==='IDP').length,4);
+  const offense=vm.runInContext('opportunityFiltered(opportunityCandidates().buy,"OFFENSE",8)',context);
+  assert.equal(offense.length,4);
+  const idp=vm.runInContext('opportunityFiltered(opportunityCandidates().buy,"IDP",8)',context);
+  assert.equal(idp.length,8);
+  assert.match(source,/data-vh-opportunity-position/);
+  assert.match(source,/opportunityCandidates\(\)\[kind\]/);
 });

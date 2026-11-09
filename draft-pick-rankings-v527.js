@@ -14,7 +14,7 @@ function leagueId(){return String(siteState().league?.league_id||'13168676863947
 function leagueSeason(){return Number(siteState().league?.season)||2026}
 function originalRoster(x){return Number(x?.original_owner)||Number(String(x?.id||'').match(/^pick-\d+-\d+-(\d+)$/)?.[1])||0}
 function loadCached(){
-  try{const v=JSON.parse(localStorage.getItem(CACHE_KEY)||'null');if(valid(v)&&String(v.league_id)===leagueId())current=v}catch(_){}
+  try{const v=JSON.parse(localStorage.getItem(CACHE_KEY)||'null');if(valid(v)&&String(v.league_id)===leagueId()&&Number(v.season)===leagueSeason())current=v}catch(_){}
 }
 function valid(data){
   if(data?.status!=='current'||!Array.isArray(data.teams)||data.teams.length!==32)return false;
@@ -25,9 +25,23 @@ function valid(data){
     if(!Number.isFinite(Number(t.record_rank))||!Number.isFinite(Number(t.points_rank)))return false;
     ids.add(id);slots.add(slot);
   }
-  return Number.isInteger(Number(data.completed_week))&&Number(data.completed_week)>=1&&Number(data.completed_week)<=18;
+  return Number.isInteger(Number(data.completed_week))&&Number(data.completed_week)>=1&&Number(data.completed_week)<=18&&
+    Number.isInteger(Number(data.season))&&Number(data.season)>=2026&&
+    data.teams.every(t=>Number.isFinite(Number(t.wins))&&Number.isFinite(Number(t.losses))&&
+      Number.isFinite(Number(t.ties))&&Number.isFinite(Number(t.points_for))&&
+      Number.isFinite(Number(t.combined_rank))&&
+      Number(t.wins)+Number(t.losses)+Number(t.ties)===Number(data.completed_week));
 }
-function team(x){if(!current||String(current.league_id)!==leagueId())return null;const id=originalRoster(x);return current.teams.find(t=>Number(t.roster_id)===id)||null}
+function team(x){if(!current||String(current.league_id)!==leagueId()||Number(current.season)!==leagueSeason())return null;const id=originalRoster(x);return current.teams.find(t=>Number(t.roster_id)===id)||null}
+// Include points and records in revision identity, not just the projected slot.
+// Sleeper can correct PF after updating a week without changing slot order.
+function revision(data){
+  return JSON.stringify((data?.teams||[]).map(t=>[
+    Number(t.roster_id),Number(t.wins),Number(t.losses),Number(t.ties),
+    Number(t.points_for),Number(t.record_rank),Number(t.points_rank),
+    Number(t.combined_rank),Number(t.projected_slot)
+  ]).sort((a,b)=>a[0]-b[0]));
+}
 function overlay(x,from){
   const old=from(x);if(!x||x.type!=='pick')return old;
   const t=team(x);
@@ -74,8 +88,18 @@ async function refresh(force=false){
       if(!r.ok)throw Error('standings source unavailable ('+r.status+')');
       const data=await r.json();
       if(!valid(data)||String(data.league_id)!==leagueId()||Number(data.season)!==leagueSeason())throw Error('incomplete ranking feed');
-      const changed=!current||current.league_id!==data.league_id||current.completed_week!==data.completed_week||
-        current.teams.some((t,i)=>Number(t.projected_slot)!==Number(data.teams[i]?.projected_slot));
+      if(current&&String(current.league_id)===String(data.league_id)&&
+          Number(current.season)===Number(data.season)&&
+          Number(data.completed_week)<Number(current.completed_week)){
+        // Offline importer audits may lag the live Sleeper feed. Never roll
+        // back to an older week after a newer verified result was displayed.
+        updateStatus('older importer standings rejected; retaining latest completed week');
+        return current;
+      }
+      const changed=!current||current.league_id!==data.league_id||
+        Number(current.season)!==Number(data.season)||
+        Number(current.completed_week)!==Number(data.completed_week)||
+        revision(current)!==revision(data);
       current=data;try{localStorage.setItem(CACHE_KEY,JSON.stringify(data))}catch(_){}
       updateStatus();
       if(changed&&typeof window.renderAll==='function')window.renderAll();
@@ -91,5 +115,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 else{updateStatus();refresh(true)}
 setInterval(()=>{if(!document.hidden)refresh()},CHECK_MS);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh(true)});
+window.addEventListener('online',()=>refresh(true));
 window.addEventListener('focus',()=>refresh(true));
 })();

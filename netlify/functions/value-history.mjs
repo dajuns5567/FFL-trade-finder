@@ -863,8 +863,8 @@ function normalizeCompletedTrade(tx,week,season,teamNames,draftResults){
   }));
   return{id:String(tx.transaction_id||''),created,season:Number(season)||null,week:Number(week)||null,roster_ids:rosterIds,team_names:teamNames||{},sides};
 }
-async function importedCompletedTrades(){
-  const now=Date.now();if(tradeAuditCache&&now-tradeAuditCache.t<60000)return tradeAuditCache.value;
+async function importedCompletedTrades({forceLive=false}={}){
+  const now=Date.now();if(!forceLive&&tradeAuditCache&&now-tradeAuditCache.t<60000)return tradeAuditCache.value;
   // Historical audits are immutable snapshots, not a live transaction feed.
   // The 2026 audit stopped refreshing after the early season; check Sleeper
   // directly for current-week completed transactions on every cache refresh.
@@ -952,8 +952,8 @@ function pickValuesFromSide(side,map){
   }
   return{values,missing,complete:missing.length===0,total:values.reduce((n,x)=>n+x.value,0)};
 }
-async function completedTradeHistory(s){
-  const {trades,live_trade_feed}=await importedCompletedTrades();
+async function completedTradeHistory(s,{forceLive=false}={}){
+  const {trades,live_trade_feed}=await importedCompletedTrades({forceLive});
   const archiveSnaps=await archiveAllSnapshots();
   let localSnaps=[],localState=s?'empty':'unavailable';
   if(s){
@@ -1044,7 +1044,7 @@ export default async (req)=>{
         return json({market,history_state:'ok'});
       }
       if(url.searchParams.get('trades')==='1'){
-        const result=await retry(()=>completedTradeHistory(s),180);
+        const result=await retry(()=>completedTradeHistory(s,{forceLive:url.searchParams.get('trades_fresh')==='1'}),180);
         return json(result);
       }
       if(url.searchParams.get('player_scoring')==='1'){

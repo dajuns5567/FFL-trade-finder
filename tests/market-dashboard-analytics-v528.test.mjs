@@ -67,11 +67,40 @@ test('market analytics do not mutate snapshot data or alter existing movers, pla
   assert.equal(JSON.stringify(market),before);
   const vh=readFileSync(new URL('../value-history-v276.js',import.meta.url),'utf8');
   const site=readFileSync(new URL('../netlify/functions/site-v29.mjs',import.meta.url),'utf8');
-  assert.match(vh,/marketDashboardAnalyticsV528\?\.render\?\.\(m,marketAnalyticsPeriod\)/);
+  assert.match(vh,/marketDashboardAnalyticsV528\?\.render\?\.\(m,marketAnalyticsPeriod,playerName\)/);
   assert.match(vh,/data-vh-analytics-period/);
   assert.match(vh,/moverCardActions\('market','valueRisers'/);
   assert.match(vh,/moverCardActions\('market','rankFallers'/);
   assert.match(vh,/function renderFullMarketHistory\(/);
   assert.match(site,/market-dashboard-analytics-v528\.js\?v=528/);
   assert.ok(site.indexOf('market-dashboard-analytics-v528.js')<site.indexOf('value-history-v276.js'));
+});
+
+test('Buy Low and Sell High watchlists include genuine recent drawdowns and run-ups only',()=>{
+  const signals=analytics.opportunitySignals(market);
+  assert.equal(signals.eligible,5);
+  assert.deepEqual([...signals.buyLow].map(x=>x.id),['idp1','rb1']);
+  assert.deepEqual([...signals.sellHigh].map(x=>x.id),['te1','qb1']);
+  assert.equal(signals.buyLow[0].percent7,-20);
+  assert.equal(signals.sellHigh[0].percent7,20);
+  assert.equal(signals.buyLow.some(x=>x.id==='missing'),false);
+  assert.equal(signals.sellHigh.some(x=>x.id==='missing'),false);
+});
+test('watchlists are not invented under missing or incomplete history',()=>{
+  assert.equal(analytics.opportunitySignals({snapshot_count:1,marketRows:market.marketRows}).eligible,0);
+  const noBaseline={snapshot_count:3,marketRows:[{id:'bad',value:10,delta7:11,overall:10}]};
+  assert.equal(analytics.opportunitySignals(noBaseline).eligible,0);
+  const outOfPool={snapshot_count:3,marketRows:[{id:'low',value:900,delta7:-90,overall:301}]};
+  assert.equal(analytics.opportunitySignals(outOfPool).eligible,0);
+  assert.match(analytics.opportunitySignals(market).method,/not independent fair-value estimates/);
+});
+test('watchlists show player names, latest and historical movement and reuse player history navigation',()=>{
+  const html=analytics.render(market,'7D',id=>'Verified Player '+id);
+  assert.match(html,/Buy Low Watchlist/);
+  assert.match(html,/Sell High Watchlist/);
+  assert.match(html,/data-vh-player="rb1"/);
+  assert.match(html,/Verified Player te1/);
+  assert.match(html,/30D/);
+  assert.match(html,/does not prove a player is underpriced/);
+  assert.equal(html.includes('Player undefined'),false);
 });

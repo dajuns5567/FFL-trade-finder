@@ -696,7 +696,7 @@ function marketInsightWindow(ordered,label,days=null){
   const latest=ordered.at(-1),latestMs=new Date(latest.t).getTime(),base=baselineFor(ordered,latestMs,Number(days))||ordered[0],baseMs=new Date(base.t).getTime();
   return ordered.filter(s=>new Date(s.t).getTime()>=baseMs);
 }
-function marketInsightRange(snaps,label){
+function marketInsightRange(snaps,label,historySnaps=snaps){
   const ordered=(snaps||[]).filter(s=>s?.t&&Array.isArray(s?.rows)).slice().sort((a,b)=>String(a.t).localeCompare(String(b.t)));
   if(ordered.length<2)return{label,available:false,snapshot_count:ordered.length,tracking_since:ordered[0]?.t||null,through:ordered.at(-1)?.t||null,position_indexes:[],market_volatility:null,position_volatility:[],player_changes:[],new_highs:[],new_lows:[],volatility:[]};
   const first=ordered[0],latest=ordered.at(-1),positions=['QB','RB','WR','TE','IDP'],position_indexes=[];
@@ -740,7 +740,16 @@ function marketInsightRange(snaps,label){
   // verified observations in that same period. Retain the latest occurrence
   // per player, including the real event timestamp.
   const recordHighs=new Map(),recordLows=new Map(),seenRecords=new Map();
-  for(const snapshot of ordered){
+  // Build the prior record baseline from ALL earlier verified snapshots.
+  // Events count only if they occur inside the selected 7D (or other) window.
+  // The first observation in a window must not automatically become a
+  // record merely because earlier history was excluded from its range.
+  const completeHistory=(historySnaps||[]).filter(s=>s?.t&&Array.isArray(s.rows))
+    .slice().sort((a,b)=>String(a.t).localeCompare(String(b.t)));
+  const recordWindowStart=String(ordered[0].t);
+  for(const snapshot of completeHistory){
+    if(String(snapshot.t)>String(latest.t))break;
+    const insideWindow=String(snapshot.t)>=recordWindowStart;
     for(const row of snapshot.rows||[]){
       const id=String(row?.id||''),value=Number(row?.value),pos=String(row?.pos||'');
       if(!id||!Number.isFinite(value)||value<=0)continue;
@@ -748,8 +757,8 @@ function marketInsightRange(snaps,label){
       if(!aggregate||(aggregate.positions?.size||0)>1)continue;
       const prev=seenRecords.get(id);
       if(prev){
-        if(value>prev.high)recordHighs.set(id,{id,pos,value,previous_high:prev.high,previous_high_t:prev.high_t,gain:value-prev.high,t:snapshot.t});
-        if(value<prev.low)recordLows.set(id,{id,pos,value,previous_low:prev.low,previous_low_t:prev.low_t,drop:value-prev.low,t:snapshot.t});
+        if(insideWindow&&value>prev.high)recordHighs.set(id,{id,pos,value,previous_high:prev.high,previous_high_t:prev.high_t,gain:value-prev.high,t:snapshot.t});
+        if(insideWindow&&value<prev.low)recordLows.set(id,{id,pos,value,previous_low:prev.low,previous_low_t:prev.low_t,drop:value-prev.low,t:snapshot.t});
       }
       seenRecords.set(id,{
         high:Math.max(prev?.high??value,value),
@@ -785,7 +794,7 @@ function marketInsightsFromSnapshots(snaps){
   const defs={1:1,7:7,30:30,90:90,365:365},ranges={};
   for(const [daysKey,days] of Object.entries(defs)){
     const label=daysKey==='365'?'1Y':daysKey+'D';
-    ranges[label]=marketInsightRange(marketInsightWindow(ordered,label,days),label);
+    ranges[label]=marketInsightRange(marketInsightWindow(ordered,label,days),label,ordered);
   }
   ranges.ALL=marketInsightRange(ordered,'ALL');
   const all=ranges.ALL;

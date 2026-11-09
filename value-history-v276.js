@@ -209,6 +209,9 @@ function addStyles(){
   #valueHistory .vh-category-card span{display:block;color:var(--muted);font-size:10px;margin-top:5px;text-align:center}
   #valueHistory button.vh-category-card:hover,#valueHistory button.vh-category-card:focus-visible{border-color:color-mix(in srgb,#e4b53f 65%,var(--line))!important;outline:none!important}
   #valueHistory .vh-category-card.vh-empty-card{opacity:.72}
+  #valueHistory .vh-opportunity-toolbar{margin-bottom:12px}
+  #valueHistory .vh-opportunity-filters{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 2px}
+  #valueHistory .vh-opportunity-filters button.vh-active{border-color:#e4b53f!important;color:#e4b53f!important;box-shadow:inset 0 -2px 0 #e4b53f!important}
   #valueHistory .vh-opportunity-note{margin-top:8px;padding-top:8px;border-top:1px solid var(--line);color:var(--muted);font-size:9px;line-height:1.45}
   #valueHistory .vh-volatility-layout{display:grid;grid-template-columns:minmax(270px,.8fr) minmax(0,1.65fr);gap:12px;align-items:start}
   #valueHistory .vh-volatility-summary{display:grid;gap:12px}
@@ -629,6 +632,7 @@ function handleContentClick(e){
   const heat=e.target.closest('[data-vh-heat-pos]');if(heat){openHeatMapModal(heat.dataset.vhHeatPos,heat.dataset.vhHeatMin,heat.dataset.vhHeatMax);return}
   const intelAll=e.target.closest('[data-vh-intel-view-all]');if(intelAll){openMarketIntelModal(intelAll.dataset.vhIntelViewAll||'');return}
   const volatilityPool=e.target.closest('[data-vh-volatility-pool]');if(volatilityPool){marketVolatilityPool=volatilityPool.dataset.vhVolatilityPool||'ALL';renderMarketIntelligence();return}
+  const opp=e.target.closest('[data-vh-opportunity-position]');if(opp){marketOpportunityPosition=opp.dataset.vhOpportunityPosition||'ALL';renderMarketIntelligence();return}
   const player=e.target.closest('[data-vh-player]');if(player){selectPlayer(player.dataset.vhPlayer);return}
   const back=e.target.closest('[data-vh-dashboard]');if(back){currentView='market';syncSubnav();setPrimaryPlayerSearchVisible(false);currentPlayerId=null;trackedTeamId=null;const input=document.getElementById('vhSearch');if(input)input.value='';syncPlayerSearchState();loadMarket(true);return}
   const track=e.target.closest('[data-vh-track-team]');if(track){currentView='team';syncSubnav();setPrimaryPlayerSearchVisible(true);currentPlayerId=null;syncPlayerSearchState();renderTrackMyTeam();return}
@@ -1215,16 +1219,11 @@ function openMarketIntelModal(kind){
     const list=signals.filter(sig=>positive?(marketSignalDirection(sig.state)>0||sig.momentum==='hot'):(marketSignalDirection(sig.state)<0||sig.momentum==='cold')).sort((a,b)=>momentumScore(b)-momentumScore(a));
     title=positive?'All Heating Up Players':'All Cooling Down Players';subtitle=`${list.length} completed-week signal leaders`;rows=list.map(renderSignal);
   }else if(kind==='buy'||kind==='sell'){
-    const wantBuy=kind==='buy',candidates=[];
-    for(const sig of signals){
-      const row=marketRows.find(r=>String(r.id)===String(sig.player_id)),perf=signalPerformanceDelta(sig),pct=positionValuePercentile(marketRows,row),move=verifiedValueMove(sig.player_id)?.delta,direction=marketSignalDirection(sig.state);
-      if(!row||!Number.isFinite(perf)||!Number.isFinite(pct))continue;
-      const usable=['strong','established'].includes(String(sig.confidence||'')),positive=direction>0||sig.momentum==='hot',negative=direction<0||sig.momentum==='cold';
-      if(wantBuy&&usable&&positive&&perf>0&&pct>=.35)candidates.push({sig,row,perf,pct,move,score:perf*5+pct*8-Math.max(0,move||0)/1200});
-      if(!wantBuy&&usable&&negative&&perf<0&&pct<=.40)candidates.push({sig,row,perf,pct,move,score:Math.abs(perf)*5+(1-pct)*8+(Number(row.value)||0)/2500});
-    }
-    candidates.sort((a,b)=>b.score-a.score);title=wantBuy?'All Buy Low Watch Players':'All Sell High Watch Players';subtitle=`${candidates.length} players meet the current evidence screen`;
-    rows=candidates.map(x=>intelPlayerRow(x.row.id,`${x.sig.reporter_label||x.sig.label} • ${x.sig.confidence||'unknown'} confidence • underlying ${x.perf>=0?'+':''}${x.perf.toFixed(2)} PPG • positional value percentile ${Math.max(1,Math.round(x.pct*100))}`,`${intelPeriodLabel()} value change`,x.move==null?'N/A':signed(x.move),deltaClass(x.move)));
+    const wantBuy=kind==='buy',all=opportunityCandidates()[kind],
+      candidates=opportunityFiltered(all,marketOpportunityPosition,Number.MAX_SAFE_INTEGER);
+    title=wantBuy?'All Buy Low Watch Players':'All Sell High Watch Players';
+    subtitle=`${candidates.length} qualified ${marketOpportunityPosition==='ALL'?'offensive and IDP':marketOpportunityPosition} candidates • evidence ranked within category • ${all.length} across all positions`;
+    rows=candidates.map(opportunityRow);
   }else if(kind==='signal-reversals'){
     const list=signalTransitionRows().slice().sort((a,b)=>Math.abs(marketSignalDirection(b.state)-marketSignalDirection(b.previous_state))-Math.abs(marketSignalDirection(a.state)-marketSignalDirection(a.previous_state))||Number(b.week)-Number(a.week));
     title='All Signal Reversals';subtitle=`${list.length} completed-week directional state changes`;
@@ -1318,19 +1317,64 @@ function positionValuePercentile(rows,row){
   const group=rows.filter(x=>String(x.pos)===String(row?.pos)).slice().sort((a,b)=>Number(b.value)-Number(a.value)),i=group.findIndex(x=>String(x.id)===String(row?.id));
   return i<0||!group.length?null:(i+1)/group.length;
 }
-function opportunityMarkup(){
-  const rows=marketCache?.marketRows||[],byId=new Map(rows.map(r=>[String(r.id),r])),signals=marketSignalCache?.signals||[],candidates=[];
-  for(const sig of signals){
-    const row=byId.get(String(sig.player_id)),perf=signalPerformanceDelta(sig),pct=positionValuePercentile(rows,row),movement=verifiedValueMove(sig.player_id),move=movement?.delta,direction=marketSignalDirection(sig.state);
-    if(!row||!Number.isFinite(perf)||!Number.isFinite(pct))continue;
-    const usableConfidence=['strong','established'].includes(String(sig.confidence||'')),
-      positive=direction>0||sig.momentum==='hot',negative=direction<0||sig.momentum==='cold';
-    if(usableConfidence&&positive&&perf>0&&pct>=.35)candidates.push({type:'buy',sig,row,perf,pct,move,score:perf*5+pct*8-Math.max(0,move||0)/1200});
-    if(usableConfidence&&negative&&perf<0&&pct<=.40)candidates.push({type:'sell',sig,row,perf,pct,move,score:Math.abs(perf)*5+(1-pct)*8+(Number(row.value)||0)/2500});
+// One evidence screen feeds both the cards and the full-list modal; avoid
+// duplicated formulas or silent position-specific weighting.
+let marketOpportunityPosition='ALL';
+const OPPORTUNITY_POSITIONS=['ALL','OFFENSE','QB','RB','WR','TE','IDP'];
+function opportunityCandidates(){
+  const rows=marketCache?.marketRows||[],byId=new Map(rows.map(r=>[String(r.id),r])),
+    signals=marketSignalCache?.signals||[],byPosition=new Map(),buy=[],sell=[];
+  for(const row of rows){
+    const pos=String(row?.pos||'');
+    if(!byPosition.has(pos))byPosition.set(pos,[]);
+    byPosition.get(pos).push(row);
   }
-  const buy=candidates.filter(x=>x.type==='buy').sort((a,b)=>b.score-a.score).slice(0,8),sell=candidates.filter(x=>x.type==='sell').sort((a,b)=>b.score-a.score).slice(0,8),
-    list=(arr,type)=>arr.length?arr.map(x=>intelPlayerRow(x.row.id,`${x.sig.reporter_label||x.sig.label} • ${x.sig.confidence||'unknown'} confidence • underlying ${x.perf>=0?'+':''}${x.perf.toFixed(2)} PPG • ${x.row.pos} value rank ${Math.max(1,Math.round(x.pct*100))}th percentile from top`,`${intelPeriodLabel()} value change`,x.move==null?'N/A':signed(x.move),deltaClass(x.move))).join(''):`<div class="vh-empty">No players currently meet the ${type==='buy'?'Buy Low':'Sell High'} evidence screen.</div>`;
-  return`<div class="vh-intel-grid"><div class="vh-card"><div class="vh-intel-card-title"><h3>Buy Low Watch</h3>${intelViewAllButton('buy')}</div><div class="vh-sub">Lower-priced positional assets where positive Fleeced evidence is stronger than the current market tier.</div><div class="vh-intel-list">${list(buy,'buy')}</div><div class="vh-opportunity-note">Screen only: positive normalized Fleeced state/hot momentum + improving underlying PPG + strong/established confidence + outside the top 35% of positional value. It does not change Fleeced value.</div></div><div class="vh-card"><div class="vh-intel-card-title"><h3>Sell High Watch</h3>${intelViewAllButton('sell')}</div><div class="vh-sub">Higher-priced positional assets where weakening Fleeced evidence conflicts with a premium market tier.</div><div class="vh-intel-list">${list(sell,'sell')}</div><div class="vh-opportunity-note">Screen only: negative normalized Fleeced state/cold momentum + declining underlying PPG + strong/established confidence + inside the top 40% of positional value. It does not change Fleeced value.</div></div></div>`;
+  for(const group of byPosition.values())group.sort((a,b)=>Number(b.value)-Number(a.value));
+  for(const sig of signals){
+    const row=byId.get(String(sig.player_id)),perf=signalPerformanceDelta(sig),
+      group=row?byPosition.get(String(row.pos))||[]:[],
+      idx=group.findIndex(x=>String(x.id)===String(row?.id)),
+      pct=idx>=0&&group.length?(idx+1)/group.length:null,
+      movement=verifiedValueMove(sig.player_id),move=movement?.delta,
+      direction=marketSignalDirection(sig.state);
+    if(!row||!Number.isFinite(perf)||!Number.isFinite(pct))continue;
+    const usable=['strong','established'].includes(String(sig.confidence||'')),
+      positive=direction>0||sig.momentum==='hot',negative=direction<0||sig.momentum==='cold',
+      entry={sig,row,perf,pct,move,category:String(row.pos)==='IDP'?'IDP':'OFFENSE'};
+    if(usable&&positive&&perf>0&&pct>=.35)buy.push({...entry,score:perf*5+pct*8-Math.max(0,move||0)/1200});
+    if(usable&&negative&&perf<0&&pct<=.40)sell.push({...entry,score:Math.abs(perf)*5+(1-pct)*8+(Number(row.value)||0)/2500});
+  }
+  const sorter=(a,b)=>b.score-a.score||String(a.row.id).localeCompare(String(b.row.id));
+  return{buy:buy.sort(sorter),sell:sell.sort(sorter)};
+}
+function opportunityFiltered(rows,position=marketOpportunityPosition,limit=8){
+  if(position==='ALL'){
+    // In the overview, give offense and IDP independent leaderboards.
+    // Raw PPG delta units are not comparable across the two populations.
+    // Empty buckets are not backfilled with unqualified players.
+    return[
+      ...rows.filter(x=>x.category==='OFFENSE').slice(0,Math.ceil(limit/2)),
+      ...rows.filter(x=>x.category==='IDP').slice(0,Math.floor(limit/2))
+    ];
+  }
+  return rows.filter(x=>position==='OFFENSE'?x.category==='OFFENSE':String(x.row.pos)===position).slice(0,limit);
+}
+function opportunityFilters(){
+  return`<div class="vh-opportunity-filters" role="group" aria-label="Buy Low and Sell High position filter">${OPPORTUNITY_POSITIONS.map(p=>`<button type="button" class="secondary small ${marketOpportunityPosition===p?'vh-active':''}" data-vh-opportunity-position="${p}" aria-pressed="${marketOpportunityPosition===p}">${p==='ALL'?'Balanced':p}</button>`).join('')}</div>`;
+}
+function opportunityRow(x){
+  const evidence=`${x.sig.reporter_label||x.sig.label} • ${x.sig.confidence||'unknown'} confidence • ${x.perf>=0?'+':''}${x.perf.toFixed(2)} recent PPG shift • ${x.row.pos} value rank ${Math.max(1,Math.round(x.pct*100))}th percentile from top`;
+  return intelPlayerRow(x.row.id,evidence,`${intelPeriodLabel()} value change`,x.move==null?'N/A':signed(x.move),deltaClass(x.move));
+}
+function opportunityMarkup(){
+  const all=opportunityCandidates(),label=marketOpportunityPosition==='ALL'?'4 offensive + 4 IDP qualified leaders per side':marketOpportunityPosition+' qualified leaders';
+  const list=(kind)=>{
+    const rows=opportunityFiltered(all[kind]),html=rows.map(opportunityRow).join('');
+    return html||`<div class="vh-empty">No players meet the ${kind==='buy'?'Buy Low':'Sell High'} evidence screen for this position.</div>`;
+  };
+  return`<div class="vh-card vh-opportunity-toolbar"><div class="vh-card-head"><div><h3>Opportunity Research Filters</h3><div class="vh-sub">${label} • ${all.buy.length} total Buy Low and ${all.sell.length} total Sell High candidates. Rankings are compared within offense and IDP, not across unlike raw PPG distributions.</div></div></div>${opportunityFilters()}</div>
+  <div class="vh-intel-grid"><div class="vh-card"><div class="vh-intel-card-title"><h3>Buy Low Watch</h3>${intelViewAllButton('buy')}</div><div class="vh-sub">Lower-priced positional assets where positive Fleeced evidence is stronger than the current market tier. Research screen, not a fair-value claim.</div><div class="vh-intel-list">${list('buy')}</div><div class="vh-opportunity-note">Requires positive completed-week signal/hot momentum, improving recent PPG, strong/established confidence, and outside the top 35% of positional market value. No player valuation is changed.</div></div>
+  <div class="vh-card"><div class="vh-intel-card-title"><h3>Sell High Watch</h3>${intelViewAllButton('sell')}</div><div class="vh-sub">Higher-priced positional assets where recent Fleeced momentum is weakening. Temporary cold form alone does not establish overvaluation.</div><div class="vh-intel-list">${list('sell')}</div><div class="vh-opportunity-note">Requires negative completed-week signal/cold momentum, falling recent PPG, strong/established confidence, and inside the top 40% of positional market value. No player valuation is changed.</div></div></div>`;
 }
 function categoryLeadersMarkup(){
   const m=marketCache||{},rows=m.marketRows||[],p=m.periods?.[marketIntelPeriod]||{},signals=marketSignalCache?.signals||[],range=intelRange();

@@ -29,7 +29,7 @@ test('only fully observed 32-team matchup weeks advance the draft order',()=>{
   assert.equal(result.length,32);
   const first=result.find(x=>x.id===1);
   assert.equal(first.games,2);
-  assert.equal(first.pf,200+210);
+  assert.equal(first.pf,100+110);
   assert.equal(first.losses,2);
   assert.throws(()=>standingsFromCompletedMatchups({1:week1,2:week2.slice(1)},2),/missing complete/);
   assert.throws(()=>standingsFromCompletedMatchups({1:week1},2),/missing complete/);

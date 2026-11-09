@@ -9,8 +9,9 @@ const norm=window.tradeValueNormalizationV139||window.tradeValueNormalizationV13
 if(typeof prior90!=='function'||typeof prior92!=='function'||!norm||typeof norm.pickContext!=='function')return;
 const oldPickContext=norm.pickContext.bind(norm);
 let current=null,lastChecked=0,pending=null;
-function leagueId(){return String(window.state?.league?.league_id||'1316867686394769408')}
-function leagueSeason(){return Number(window.state?.league?.season)||2026}
+function siteState(){try{return typeof state!=='undefined'?state:(window.state||{})}catch(_){return window.state||{}}}
+function leagueId(){return String(siteState().league?.league_id||'1316867686394769408')}
+function leagueSeason(){return Number(siteState().league?.season)||2026}
 function originalRoster(x){return Number(x?.original_owner)||Number(String(x?.id||'').match(/^pick-\d+-\d+-(\d+)$/)?.[1])||0}
 function loadCached(){
   try{const v=JSON.parse(localStorage.getItem(CACHE_KEY)||'null');if(valid(v)&&String(v.league_id)===leagueId())current=v}catch(_){}

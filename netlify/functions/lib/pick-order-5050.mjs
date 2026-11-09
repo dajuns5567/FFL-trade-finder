@@ -50,3 +50,23 @@ export function standingsFromCompletedMatchups(weekly,through){
   return rank5050([...totals.values()]);
 }
 export const postCutoverTrade=t=>Number.isFinite(Date.parse(t?.created))&&Date.parse(t.created)>=Date.parse(PICK_ORDER_CUTOVER_UTC);
+
+const weekCache=new Map();
+export async function getPickOrder5050(leagueId,through,{fetchImpl=fetch,ttlMs=300000}={}){
+  const id=String(leagueId||''),n=Number(through);
+  if(!/^\\d{10,22}$/.test(id)||!Number.isInteger(n)||n<1||n>18)throw Error('invalid Sleeper league or completed week');
+  const weekly={};
+  await Promise.all(Array.from({length:n},async(_,i)=>{
+    const week=i+1,key=id+'|'+week,prior=weekCache.get(key);
+    if(prior&&Date.now()-prior.at<ttlMs){weekly[week]=await prior.pending;return}
+    const pending=(async()=>{
+      const url='https://api.sleeper.app/v1/league/'+id+'/matchups/'+week;
+      const response=await fetchImpl(url,{headers:{accept:'application/json'},cache:'no-store'});
+      if(!response.ok)throw Error('Sleeper week '+week+' unavailable ('+response.status+')');
+      return response.json();
+    })();
+    weekCache.set(key,{at:Date.now(),pending});
+    try{weekly[week]=await pending}catch(e){weekCache.delete(key);throw e}
+  }));
+  return standingsFromCompletedMatchups(weekly,n);
+}

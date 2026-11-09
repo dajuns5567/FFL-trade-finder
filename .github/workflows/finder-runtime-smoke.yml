@@ -196,6 +196,8 @@ jobs:
         run: node --test tests/inquirer-live-archive-refresh.test.mjs
       - name: Full browser runtime syntax audit
         run: node scripts/site-runtime-syntax-audit.mjs
+      - name: Current Sleeper completed-trade feed and historical audit preservation
+        run: node --test tests/trade-history-live-sleeper.test.mjs
       - name: Value History data hub behavior and isolation
         run: |
           node scripts/value-history-data-hub-v331-smoke.mjs

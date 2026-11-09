@@ -746,10 +746,15 @@ function marketInsightRange(snaps,label,historySnaps=snaps){
   // record merely because earlier history was excluded from its range.
   const completeHistory=(historySnaps||[]).filter(s=>s?.t&&Array.isArray(s.rows))
     .slice().sort((a,b)=>String(a.t).localeCompare(String(b.t)));
-  const recordWindowStart=String(ordered[0].t);
+  const windowDays=label==='1Y'?365:/^(1D|7D|30D|90D)$/.test(label)?Number(label.slice(0,-1)):null;
+  const latestMs=Date.parse(latest.t);
+  const recordWindowStartMs=Number.isFinite(windowDays)?latestMs-windowDays*86400000:Date.parse(ordered[0].t);
   for(const snapshot of completeHistory){
-    if(String(snapshot.t)>String(latest.t))break;
-    const insideWindow=String(snapshot.t)>=recordWindowStart;
+    const eventMs=Date.parse(snapshot.t);
+    if(!Number.isFinite(eventMs)||eventMs>latestMs)continue;
+    // The index baseline can predate seven days; baseline observations
+    // anchor comparisons but cannot themselves count as 7D events.
+    const insideWindow=eventMs>=recordWindowStartMs;
     for(const row of snapshot.rows||[]){
       const id=String(row?.id||''),value=Number(row?.value),pos=String(row?.pos||'');
       if(!id||!Number.isFinite(value)||value<=0)continue;

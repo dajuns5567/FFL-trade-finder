@@ -64,7 +64,7 @@ test('client projected order changes while dynasty pick values remain byte-for-b
     state:{league:{league_id:data.league_id,season:2026}},renderAll:()=>{renderCount++},
     addEventListener:()=>{}};
   const ctx={window:win,document:doc,localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},
-    fetch:async()=>({ok:true,json:async()=>data}),setInterval:()=>0,console,Date,Number,String,JSON,Math,Promise,
+    fetch:async()=>({ok:true,json:async()=>structuredClone(data)}),setInterval:()=>0,console,Date,Number,String,JSON,Math,Promise,
     encodeURIComponent};
   vm.runInNewContext(src,ctx,{filename:'draft-pick-rankings-v527.js'});
   // Before any verified standings arrive, MIDA's old projected slot must

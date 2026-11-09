@@ -64,6 +64,9 @@ test('an active League Hub automatically discovers a published week and invalida
  assert.equal(h.state.renders,1);
  assert.equal(h.module.getCache(),null);
  assert.equal(h.module.latestPublishedInquirerRow(h.module.getArchive()).week,7);
+ // Real render('daily') loads the newly indexed edition; the harness render
+ // only counts calls, so simulate that read before the next polling cycle.
+ assert.equal((await h.module.weekly()).week,7);
  await h.module.refreshPublishedInquirerIfAdvanced();
  assert.equal(h.state.renders,1,'no repeated render without new archive entries');
 });

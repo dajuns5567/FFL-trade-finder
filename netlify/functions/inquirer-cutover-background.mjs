@@ -26,8 +26,14 @@ const completeFeature=record=>!!record?.players_of_week?.offense?.player_id&&
  record.newsroom_engine==='v31-forward'&&
  Number(record.newsroom_editorial_revision)===FORWARD_EDITORIAL_REVISION;
 
-export default async function cutoverApprovedInquirerWeeks(req){
- const context=globalThis.Netlify?.env?.get?.('CONTEXT')||process.env.CONTEXT||'';
+export default async function cutoverApprovedInquirerWeeks(req,netlifyContext){
+ // The official Netlify handler context is authoritative about published
+ // deployments; the legacy CONTEXT environment variable can be absent in
+ // asynchronous background invocations of this site's production deploy.
+ const context=netlifyContext?.deploy?.context||
+  globalThis.Netlify?.env?.get?.('CONTEXT')||process.env.CONTEXT||'';
+ const deployPublished=typeof netlifyContext?.deploy?.published==='boolean'?
+  netlifyContext.deploy.published:undefined;
  const siteId=globalThis.Netlify?.env?.get?.('SITE_ID')||process.env.SITE_ID||'';
  const host=new URL(req.url).hostname;
  // Netlify can deliver background jobs through a different internal URL than
@@ -35,10 +41,11 @@ export default async function cutoverApprovedInquirerWeeks(req){
  // must still match; an authenticated queue secret is independently required.
  const enabled=globalThis.Netlify?.env?.get?.('FLEECED_ENABLE_NEW_SITE_PUBLISHER')||
   process.env.FLEECED_ENABLE_NEW_SITE_PUBLISHER||'';
- const holdReason=cutoverRuntimeHoldReason({context,siteId,enabled,host});
+ const holdReason=cutoverRuntimeHoldReason({context,siteId,enabled,host,deployPublished});
  if(holdReason){
   console.warn('inquirer-cutover-entry-held',{reason:holdReason,site_matches:siteId===SITE_ID,
-   publisher_enabled:enabled==='true'});
+   publisher_enabled:enabled==='true',runtime_context:context||'unavailable',
+   deploy_published:deployPublished??null});
   return new Response('Production-only owner-approved cutover disabled',{status:403});
  }
  const store=getStore({name:'fleeced-league-hub',consistency:'strong'});

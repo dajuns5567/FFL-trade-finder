@@ -32,13 +32,17 @@ export function completedRosterStandings(rosters){
 async function verifiedLiveRankings(leagueId,season){
   // Sleeper live roster settings are authoritative; the importer saves the
   // exact same schema in league-audit/{season}/rosters.json for recovery.
-  const live=await sourceJson(SLEEPER+'/league/'+leagueId+'/rosters').catch(()=>null);
-  let source='sleeper-live-rosters',rosters=live;
-  if(!Array.isArray(live)||live.length!==32){
-    rosters=await sourceJson(AUDIT+'/'+season+'/rosters.json?ts='+Date.now());
-    source='sleeper-importer-audit';
+  // A partially updated 32-row live response is not a completed week.
+  // Only accept validated full-roster standings. The independently verified
+  // importer audit is a safe fallback if live is missing or incomplete.
+  try{
+    const live=await sourceJson(SLEEPER+'/league/'+leagueId+'/rosters');
+    return{...completedRosterStandings(live),source:'sleeper-live-rosters'};
+  }catch(e){
+    console.warn('pick-order-live-rosters-incomplete',String(e?.message||e));
   }
-  return{...completedRosterStandings(rosters),source};
+  const archived=await sourceJson(AUDIT+'/'+season+'/rosters.json?ts='+Date.now());
+  return{...completedRosterStandings(archived),source:'sleeper-importer-audit'};
 }
 export default async function handler(req){
   if(req.method!=='GET')return send({error:'GET only'},405);

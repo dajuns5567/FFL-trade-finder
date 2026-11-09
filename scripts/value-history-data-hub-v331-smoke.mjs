@@ -394,7 +394,7 @@ assert(backend.includes("githubArchive:{reachable:"),'Value History health must 
 assert(backend.includes("netlifyLive:{reachable:"),'Value History health must report Netlify live-buffer reachability separately');
 assert(backend.includes("const archiveSnaps=await archiveAllSnapshots();"),'Value History read paths must load the durable GitHub archive independently of Netlify Blobs');
 assert(backend.includes("history_source:historySource"),'Trade History must expose its historical-value source separately from raw Sleeper trade audits');
-assert(backend.includes("const trades=await importedCompletedTrades();"),'Trade History must load Sleeper completed trades before optional historical-value storage');
+assert(backend.includes("const {trades,live_trade_feed}=await importedCompletedTrades();"),'Trade History must load live Sleeper completions and feed health before optional historical-value storage');
 
 assert(backend.includes("url.searchParams.get('market')==='1'"),'market summary endpoint missing');
 assert(backend.includes('LEGACY_INDEX_KEY'), 'legacy V330 history compatibility missing');

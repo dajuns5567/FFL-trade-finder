@@ -209,6 +209,13 @@ function addStyles(){
   #valueHistory .vh-category-card span{display:block;color:var(--muted);font-size:10px;margin-top:5px;text-align:center}
   #valueHistory button.vh-category-card:hover,#valueHistory button.vh-category-card:focus-visible{border-color:color-mix(in srgb,#e4b53f 65%,var(--line))!important;outline:none!important}
   #valueHistory .vh-category-card.vh-empty-card{opacity:.72}
+  #valueHistory .vh-opportunity-group-heading{padding:10px 0 8px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+  #valueHistory .vh-opportunity-group-heading h4{margin:0;color:#e4b53f}
+  #valueHistory .vh-opportunity-group-heading span{font-size:11px;color:var(--muted)}
+  #valueHistory .vh-opportunity-idp-details{margin-top:16px;border:1px solid var(--line);border-radius:9px;padding:12px}
+  #valueHistory .vh-opportunity-idp-details summary{cursor:pointer;font-weight:800}
+  #valueHistory .vh-opportunity-idp-details summary span{display:block;font-size:11px;color:var(--muted);font-weight:400;margin-top:4px}
+  #valueHistory .vh-opportunity-idp-details .vh-intel-list{margin-top:10px}
   #valueHistory .vh-opportunity-toolbar{margin-bottom:12px}
   #valueHistory .vh-opportunity-filters{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 2px}
   #valueHistory .vh-opportunity-filters button.vh-active{border-color:#e4b53f!important;color:#e4b53f!important;box-shadow:inset 0 -2px 0 #e4b53f!important}
@@ -1223,7 +1230,22 @@ function openMarketIntelModal(kind){
       candidates=opportunityFiltered(all,marketOpportunityPosition,Number.MAX_SAFE_INTEGER);
     title=wantBuy?'All Buy Low Watch Players':'All Sell High Watch Players';
     subtitle=`${candidates.length} qualified ${marketOpportunityPosition==='ALL'?'offensive and IDP':marketOpportunityPosition} candidates • evidence ranked within category • ${all.length} across all positions`;
-    rows=candidates.map(opportunityRow);
+    if(marketOpportunityPosition==='ALL'){
+      // View All spotlights offensive position players first. Keep every
+      // qualified IDP available in an explicitly labeled expandable group:
+      // no candidates are dropped and raw offensive/IDP PPG scores are
+      // never compared directly.
+      const offense=candidates.filter(x=>x.category==='OFFENSE'),
+        defense=candidates.filter(x=>x.category==='IDP');
+      rows=[
+        `<div class="vh-opportunity-group-heading"><h4>Offensive Position Players (QB · RB · WR · TE)</h4><span>${offense.length} qualified • featured first</span></div>`,
+        ...(offense.length?offense.map(opportunityRow):['<div class="vh-empty">No qualifying offensive players currently.</div>']),
+        `<details class="vh-opportunity-idp-details"><summary>IDP Candidates — ${defense.length} qualified <span>Expand to view all defensive players</span></summary><div class="vh-intel-list">${defense.length?defense.map(opportunityRow).join(''):'<div class="vh-empty">No qualifying IDP players currently.</div>'}</div></details>`
+      ];
+      subtitle=`${offense.length} qualified offensive position players featured first • ${defense.length} IDP candidates available below • ${all.length} total`;
+    }else{
+      rows=candidates.map(opportunityRow);
+    }
   }else if(kind==='signal-reversals'){
     const list=signalTransitionRows().slice().sort((a,b)=>Math.abs(marketSignalDirection(b.state)-marketSignalDirection(b.previous_state))-Math.abs(marketSignalDirection(a.state)-marketSignalDirection(a.previous_state))||Number(b.week)-Number(a.week));
     title='All Signal Reversals';subtitle=`${list.length} completed-week directional state changes`;

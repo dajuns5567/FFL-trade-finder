@@ -30,7 +30,10 @@ export default async function handler(req){
       sourceLeague=String(league.previous_league_id);sourceSeason=season-1;completedWeek=18;
     }
     if(completedWeek<1)return send({status:'unavailable',error:'no verified completed week',season},503);
-    completedWeek=Math.min(18,completedWeek);
+    // Sleeper league record/PF are regular-season standings; playoff results
+    // must not reorder next year's draft picks after Week 14 in this league.
+    const playoffStart=Number(league?.settings?.playoff_week_start);
+    completedWeek=Math.min(18,completedWeek,Number.isInteger(playoffStart)&&playoffStart>1?playoffStart-1:18);
     const ranking=await getPickOrder5050(sourceLeague,completedWeek);
     return send({status:'current',method:'50% completed record rank + 50% completed points-for rank',league_id:leagueId,
       source_league_id:sourceLeague,season,standings_season:sourceSeason,completed_week:completedWeek,

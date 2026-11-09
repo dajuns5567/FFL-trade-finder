@@ -52,6 +52,9 @@ on:
       - '.github/workflows/value-history-headless-refresh.yml'
       - 'netlify/functions/ktc-adapter.mjs'
       - 'value-history-v276.js'
+      - 'netlify/functions/player-signals.mjs'
+      - 'netlify/functions/player-signal-engine.mjs'
+      - 'tests/market-intelligence-original-recovery.test.mjs'
       - 'value-history-ui-defaults-v386.js'
       - 'scripts/value-history-data-hub-v331-smoke.mjs'
       - 'league-hub-v451.js'
@@ -196,6 +199,13 @@ jobs:
         run: node --test tests/inquirer-live-archive-refresh.test.mjs
       - name: Full browser runtime syntax audit
         run: node scripts/site-runtime-syntax-audit.mjs
+      - name: Original Market Intelligence recovery and valuation isolation
+        run: |
+          node --check netlify/functions/player-signal-engine.mjs
+          node --check netlify/functions/player-signals.mjs
+          node --check netlify/functions/value-history.mjs
+          node --check value-history-v276.js
+          node --test tests/market-intelligence-original-recovery.test.mjs
       - name: Value History data hub behavior and isolation
         run: |
           node scripts/value-history-data-hub-v331-smoke.mjs

@@ -1,0 +1,31 @@
+name: Market Dashboard V528 regression
+
+on:
+  pull_request:
+    paths:
+      - 'market-dashboard-analytics-v528.js'
+      - 'value-history-v276.js'
+      - 'netlify/functions/site-v29.mjs'
+      - 'tests/market-dashboard-analytics-v528.test.mjs'
+      - '.github/workflows/market-dashboard-v528-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  market-dashboard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Read-only analytics syntax
+        run: |
+          node --check market-dashboard-analytics-v528.js
+          node --check value-history-v276.js
+          node --check netlify/functions/site-v29.mjs
+      - name: Heat map volatility breadth and value isolation tests
+        run: node --test tests/market-dashboard-analytics-v528.test.mjs

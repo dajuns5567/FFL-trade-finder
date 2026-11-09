@@ -52,6 +52,8 @@ on:
       - '.github/workflows/value-history-headless-refresh.yml'
       - 'netlify/functions/ktc-adapter.mjs'
       - 'value-history-v276.js'
+      - 'market-dashboard-analytics-v528.js'
+      - 'tests/market-dashboard-analytics-v528.test.mjs'
       - 'value-history-ui-defaults-v386.js'
       - 'scripts/value-history-data-hub-v331-smoke.mjs'
       - 'league-hub-v451.js'
@@ -196,6 +198,11 @@ jobs:
         run: node --test tests/inquirer-live-archive-refresh.test.mjs
       - name: Full browser runtime syntax audit
         run: node scripts/site-runtime-syntax-audit.mjs
+      - name: Market Dashboard heat map and volatility regression
+        run: |
+          node --check market-dashboard-analytics-v528.js
+          node --check value-history-v276.js
+          node --test tests/market-dashboard-analytics-v528.test.mjs
       - name: Value History data hub behavior and isolation
         run: |
           node scripts/value-history-data-hub-v331-smoke.mjs

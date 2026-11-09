@@ -54,7 +54,7 @@ export const postCutoverTrade=t=>Number.isFinite(Date.parse(t?.created))&&Date.p
 const weekCache=new Map();
 export async function getPickOrder5050(leagueId,through,{fetchImpl=fetch,ttlMs=300000}={}){
   const id=String(leagueId||''),n=Number(through);
-  if(!/^\\d{10,22}$/.test(id)||!Number.isInteger(n)||n<1||n>18)throw Error('invalid Sleeper league or completed week');
+  if(!/^\d{10,22}$/.test(id)||!Number.isInteger(n)||n<1||n>18)throw Error('invalid Sleeper league or completed week');
   const weekly={};
   await Promise.all(Array.from({length:n},async(_,i)=>{
     const week=i+1,key=id+'|'+week,prior=weekCache.get(key);

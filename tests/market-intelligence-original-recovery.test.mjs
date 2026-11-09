@@ -130,7 +130,7 @@ test('selected 7-day window includes new records from any of its snapshots again
     {t:'2026-10-02T00:00:00Z',rows:[{id:'a',pos:'QB',value:190,overall:1,posRank:1},{id:'b',pos:'RB',value:55,overall:2,posRank:1}]},
     {t:'2026-10-06T00:00:00Z',rows:[{id:'a',pos:'QB',value:201,overall:1,posRank:1},{id:'b',pos:'RB',value:49,overall:2,posRank:1}]},
     {t:'2026-10-07T00:00:00Z',rows:[{id:'a',pos:'QB',value:197,overall:1,posRank:1},{id:'b',pos:'RB',value:51,overall:2,posRank:1}]},
-    {t:'2026-10-09T00:00:00Z',rows:[{id:'a',pos:'QB',value:198,overall:1,posRank:1},{id:'b',pos:'RB',value:50,overall:2,posRank:1}]}
+    {t:'2026-10-09T12:00:00Z',rows:[{id:'a',pos:'QB',value:198,overall:1,posRank:1},{id:'b',pos:'RB',value:50,overall:2,posRank:1}]}
   ];
   const inWindow=history.slice(2);
   const r=marketInsightRange(inWindow,'7D',history);

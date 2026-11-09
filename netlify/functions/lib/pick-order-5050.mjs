@@ -17,7 +17,7 @@ export function rank5050(rows){
   if(teams.some(t=>t.games!==games))throw Error('different completed games across league');
   function ranks(key){
     const sorted=[...teams].sort((a,b)=>b[key]-a[key]||a.id-b.id),out=new Map();
-    for(let i=0;i<sorted.length;){let j=i+1;while(j<sorted.length&&Math.abs(sorted[i][key]-sorted[j][key])<1e-8)j++;const rank=(i+1+j)/2;for(let k=i;k<j;k++)out.set(sorted[k].id,rank);i=j}
+    for(let i=0;i<sorted.length;){let j=i+1;while(j<sorted.length&&Math.abs(sorted[i][key]-sorted[j][key])<1e-8)j++;const rank=i+1;for(let k=i;k<j;k++)out.set(sorted[k].id,rank);i=j}
     return out;
   }
   const recordRanks=ranks('record'),pointsRanks=ranks('pf');

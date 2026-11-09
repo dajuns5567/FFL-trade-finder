@@ -600,15 +600,24 @@ function primeTradeHistoryCache(data){
   tradeHistoryCache=data;tradeHistoryCacheAt=Date.now();
   return true;
 }
-async function tradeHistoryFetch(){
-  if(tradeHistoryCache&&Date.now()-tradeHistoryCacheAt<TRADE_HISTORY_REFRESH_MS)
+let tradeHistoryPending=null;
+async function tradeHistoryFetch({force=false}={}){
+  // Every site opening forces an actual completed-trade search, even when
+  // the tab is hidden or a prior page left a shared browser cache behind.
+  if(tradeHistoryPending)return tradeHistoryPending;
+  if(!force&&tradeHistoryCache&&Date.now()-tradeHistoryCacheAt<TRADE_HISTORY_REFRESH_MS)
     return tradeHistoryCache;
-  if(!tradeHistoryCache&&primeTradeHistoryCache(globalThis.fleecedTradeHistorySharedCacheV515))
+  if(!force&&!tradeHistoryCache&&primeTradeHistoryCache(globalThis.fleecedTradeHistorySharedCacheV515))
     return tradeHistoryCache;
+  tradeHistoryPending=tradeHistoryFetchNetwork(force);
+  try{return await tradeHistoryPending}
+  finally{tradeHistoryPending=null}
+}
+async function tradeHistoryFetchNetwork(force){
   let last;
   for(let attempt=0;attempt<3;attempt++){
     try{
-      const r=await fetch(API+'?trades=1',{cache:'no-store'});
+      const r=await fetch(API+(force?'?trades=1&trades_fresh=1':'?trades=1'),{cache:'no-store'});
       if(!r.ok)throw Error('trade history unavailable ('+r.status+')');
       const data=await r.json();
       if(!Array.isArray(data?.trades))throw Error('trade history response malformed');
@@ -629,6 +638,14 @@ async function tradeHistoryFetch(){
     return tradeHistoryCache;
   }
   throw last||Error('trade history unavailable');
+}
+function searchTradesOnSiteOpen(){
+  // Fire on every new document load rather than waiting for the user to open
+  // Trade History or for an elapsed 5-minute timer.
+  tradeHistoryFetch({force:true}).then(()=>{
+    const panel=document.getElementById('tradeHistory');
+    if(panel&&!panel.hidden)renderTradeHistory();
+  }).catch(error=>console.warn('trade-history-site-open-check-unavailable',String(error?.message||error)));
 }
 function refreshVisibleTradeHistory(){
   const panel=document.getElementById('tradeHistory');
@@ -928,7 +945,7 @@ function tradeCard(trade){
   const names=(trade.roster_ids||[]).map(id=>esc(historicalTradeTeamName(trade,id))).join(' ↔ ');
   return`<div class="vh-trade-card ${anyOpen?'vh-trade-expanded':'vh-trade-collapsed'}" data-vh-trade-card-id="${esc(key)}"><div class="vh-trade-head"><div><h4><span class="vh-trade-date">${esc(dateTime(trade.created))}</span> • ${esc(String(trade.season||''))} Trade</h4><div class="vh-sub">${names}</div></div>${trade.trade_snapshot_t?`<small>Historical snapshot: ${esc(dateTime(trade.trade_snapshot_t))}</small>`:''}</div><div class="vh-compact-trade">${(trade.sides||[]).map(side=>compactTradeSide(side,trade)).join('')}</div><div class="vh-trade-toggle-row"><button type="button" class="${open.hindsight?'vh-trade-toggle-active':'secondary'} small vh-trade-toggle" data-vh-trade-toggle="hindsight" data-vh-trade-id="${esc(key)}" aria-expanded="${open.hindsight?'true':'false'}">Hindsight</button><button type="button" class="${open.original?'vh-trade-toggle-active':'secondary'} small vh-trade-toggle" data-vh-trade-toggle="original" data-vh-trade-id="${esc(key)}" aria-expanded="${open.original?'true':'false'}">Original Trade Analysis</button></div>${open.hindsight?tradeValuePresentation(trade):''}${open.original?tradeEvaluatorSection(trade):''}${anyOpen?historicalValueComparisonSection(trade):''}</div>`
 }
-function initTradeHistoryUI(){if(!tradeHistoryCache)loadTradeHistory();else renderTradeHistory()}
+function initTradeHistoryUI(){if(!tradeHistoryCache)loadTradeHistory();else{renderTradeHistory();refreshVisibleTradeHistory()}}
 window.openValueHistoryTeamV458=function(id,showLeagueComparison=false){
  const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');btn?.click();currentView='team';trackedTeamId=String(id||'');syncSubnav();
  const go=()=>{renderTrackMyTeam();if(trackedTeamId){loadTrackedTeam();if(showLeagueComparison){let n=0,t=setInterval(()=>{n++;if(document.querySelector('[data-vh-team-net-all]')){clearInterval(t);openTeamNetModal()}else if(n>40)clearInterval(t)},100)}}};
@@ -1406,7 +1423,7 @@ function renderPlayerProfile(id,allPts,period='ALL'){
   ${similarPlayersSection(id)}`;
   setTimeout(()=>fitValueHistoryCellText(box),0);
 }
-function boot(){addShell();setInterval(refreshVisibleTradeHistory,TRADE_HISTORY_REFRESH_MS);window.addEventListener('focus',refreshVisibleTradeHistory);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshVisibleTradeHistory()});scheduleSnapshot(0,snapshotSourceFromUrl());document.getElementById('updateBtn')?.addEventListener('click',()=>{marketCache=null;teamNetCache.clear();scheduleSnapshot(1000,'manual-update');if(currentPlayerId)setTimeout(()=>loadPlayer(currentPlayerId),1800)},{passive:true})}
+function boot(){addShell();searchTradesOnSiteOpen();setInterval(refreshVisibleTradeHistory,TRADE_HISTORY_REFRESH_MS);window.addEventListener('focus',refreshVisibleTradeHistory);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshVisibleTradeHistory()});scheduleSnapshot(0,snapshotSourceFromUrl());document.getElementById('updateBtn')?.addEventListener('click',()=>{marketCache=null;teamNetCache.clear();scheduleSnapshot(1000,'manual-update');if(currentPlayerId)setTimeout(()=>loadPlayer(currentPlayerId),1800)},{passive:true})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 window.valueHistoryV331={currentRows,currentPickRows,currentTeamRows,recordSnapshot,historyFetch,marketFetch,marketData:(force=false)=>ensureMarketCache(!!force),livePlayerMeta,periodPoints,openPlayer:(id)=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>selectPlayer(String(id)),0)},openPlayerHistory:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(renderPlayerHistoryHub,0)},openFullMarket:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>loadFullMarketHistory(),0)}};
 })();

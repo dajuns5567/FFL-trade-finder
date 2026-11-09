@@ -9,6 +9,7 @@ on:
       - 'netlify/functions/player-signals.mjs'
       - 'netlify/functions/site-v29.mjs'
       - 'tests/market-intelligence-original-recovery.test.mjs'
+      - 'tests/value-history-dense-charts.test.mjs'
       - '.github/workflows/market-intelligence-original-recovery.yml'
   workflow_dispatch:
 
@@ -32,4 +33,4 @@ jobs:
           node --check netlify/functions/value-history.mjs
           node --check netlify/functions/player-signals.mjs
           node --check netlify/functions/player-signal-engine.mjs
-          node --test tests/market-intelligence-original-recovery.test.mjs
+          node --test tests/market-intelligence-original-recovery.test.mjs tests/value-history-dense-charts.test.mjs

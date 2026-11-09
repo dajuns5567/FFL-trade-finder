@@ -53,7 +53,7 @@ test('client projected order changes while dynasty pick values remain byte-for-b
   const pick={type:'pick',id:'pick-2027-1-1',season:2027,round:1,original_owner:1,owner:2};
   const legacy=x=>({projectedSlot:16,value:5835,source:'original valuation source'});
   let renderCount=0;
-  const data={status:'current',league_id:'1316867686394769408',season:2026,standings_season:2026,completed_week:9,
+  const data={status:'current',source:'sleeper-live-rosters',league_id:'1316867686394769408',season:2026,standings_season:2026,completed_week:9,
     teams:Array.from({length:32},(_,i)=>({roster_id:i+1,wins:9,losses:0,ties:0,points_for:500+i*10,record_rank:1,points_rank:32-i,combined_rank:32-i,projected_slot:i+1}))};
   data.teams[0].projected_slot=1;
   const normalization={pickContext:x=>({...legacy(x),value:7000}),canonicalValue:x=>7000,sourceValue:x=>5835};
@@ -89,6 +89,12 @@ test('client projected order changes while dynasty pick values remain byte-for-b
   await win.draftPickRankingsV527.refresh(true);
   assert.equal(renderCount,2);
   assert.equal(normalization.pickContext(pick).value,7000);
+  // Same-week imported PF from a stale audit cannot replace newer live PF.
+  data.source='sleeper-importer-audit';
+  data.teams[0].points_for-=.25;
+  await win.draftPickRankingsV527.refresh(true);
+  assert.equal(win.draftPickRankingsV527.status.source,'sleeper-live-rosters');
+  assert.equal(renderCount,2);
   // An older importer snapshot must never roll back the displayed week.
   data.completed_week=8;
   for(const t of data.teams){t.wins=8;t.losses=0}
@@ -136,7 +142,8 @@ test('ranking endpoint uses importer-compatible roster source and never calls ma
   const backend=readFileSync(new URL('../netlify/functions/pick-order-v527.mjs',import.meta.url),'utf8');
   assert.match(backend,/sourceJson\(SLEEPER\+'\/league\/'.*'\/rosters'\)/);
   assert.match(backend,/sourceJson\(AUDIT\+'\/'.*'\/rosters\.json/);
-  assert.match(backend,/completedRosterStandings\(rosters\)/);
+  assert.match(backend,/completedRosterStandings\(live\)/);
+  assert.match(backend,/completedRosterStandings\(archived\)/);
   assert.doesNotMatch(backend,/getPickOrder5050\(sourceLeague,completedWeek\)/);
   assert.match(backend,/rank5050\(current\.rows\)/);
 });

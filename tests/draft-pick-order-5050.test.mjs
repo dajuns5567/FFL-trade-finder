@@ -1,3 +1,4 @@
+import {completedRosterStandings} from '../netlify/functions/pick-order-v527.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -84,4 +85,36 @@ test('existing trade snapshot values remain untouched by the post-cutover rankin
   assert.match(frontend,/Date\.parse\('2026-09-25T04:00:00\.000Z'\)/);
   assert.match(backend,/then_picks:thenPicks\.values/);
   assert.match(frontend,/value:then/);
+});
+
+test('importer roster standings supply complete league record and PF without matchup pairs',()=>{
+  const source=Array.from({length:32},(_,i)=>({
+    roster_id:i+1,
+    settings:{wins:i===31?9:Math.floor(i/4),losses:i===31?0:9-Math.floor(i/4),
+      ties:0,fpts:250+i*19,fpts_decimal:i%100}
+  }));
+  const read=completedRosterStandings(source);
+  assert.equal(read.completedWeek,9);
+  assert.equal(read.rows[0].pf,250);
+  assert.equal(read.rows[31].pf,250+31*19+.31);
+  const ranks=rank5050(read.rows);
+  assert.equal(ranks.find(x=>x.id===32).recordRank,1);
+  assert.equal(ranks.find(x=>x.id===32).pointsRank,1);
+  assert.equal(ranks.find(x=>x.id===32).projectedSlot,32);
+  assert.equal(ranks.find(x=>x.id===1).projectedSlot,1);
+  assert.throws(()=>completedRosterStandings(source.slice(0,31)),/32-team/);
+  const missing=structuredClone(source);delete missing[0].settings.wins;
+  assert.throws(()=>completedRosterStandings(missing),/incomplete/);
+  const partial=structuredClone(source);partial[2].settings.losses--;
+  assert.throws(()=>completedRosterStandings(partial),/same completed week/);
+  const invalid=structuredClone(source);invalid[1].settings.fpts_decimal=100;
+  assert.throws(()=>completedRosterStandings(invalid),/incomplete/);
+});
+test('ranking endpoint uses importer-compatible roster source and never calls matchups for current standings',()=>{
+  const backend=readFileSync(new URL('../netlify/functions/pick-order-v527.mjs',import.meta.url),'utf8');
+  assert.match(backend,/sourceJson\(SLEEPER\+'\/league\/'.*'\/rosters'\)/);
+  assert.match(backend,/sourceJson\(AUDIT\+'\/'.*'\/rosters\.json/);
+  assert.match(backend,/completedRosterStandings\(rosters\)/);
+  assert.doesNotMatch(backend,/getPickOrder5050\(sourceLeague,completedWeek\)/);
+  assert.match(backend,/rank5050\(current\.rows\)/);
 });

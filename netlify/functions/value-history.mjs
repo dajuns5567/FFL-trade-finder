@@ -917,7 +917,7 @@ async function completedTradeHistory(s){
   // A transaction in week N uses the preceding fully completed week (N-1);
   // never use later results to fabricate its original trade-time draft rank.
   const afterCutover=trades.filter(t=>postCutoverTrade(t)&&(t.sides||[]).some(side=>(side.picks||[]).length));
-  const weeks=[...new Set(afterCutover.map(t=>Math.max(1,Math.min(18,Number(t.week)-1))).filter(Number.isFinite))];
+  const weeks=[...new Set(afterCutover.map(t=>Math.max(1,Math.min(14,Number(t.week)-1))).filter(Number.isFinite))];
   const rankByWeek=new Map();
   await Promise.all(weeks.map(async week=>{
     try{
@@ -926,7 +926,7 @@ async function completedTradeHistory(s){
     }catch(e){console.warn('trade-time-pick-order-unavailable',week,String(e?.message||e))}
   }));
   for(const trade of afterCutover){
-    const completedWeek=Math.max(1,Math.min(18,Number(trade.week)-1)),slots=rankByWeek.get(completedWeek);
+    const completedWeek=Math.max(1,Math.min(14,Number(trade.week)-1)),slots=rankByWeek.get(completedWeek);
     trade.ranking_at_trade=slots?{method:'50% record rank + 50% points-for rank',
       standings_week:completedWeek,season:trade.season,slots}:null;
   }

@@ -67,6 +67,13 @@ test('client projected order changes while dynasty pick values remain byte-for-b
     fetch:async()=>({ok:true,json:async()=>data}),setInterval:()=>0,console,Date,Number,String,JSON,Math,Promise,
     encodeURIComponent};
   vm.runInNewContext(src,ctx,{filename:'draft-pick-rankings-v527.js'});
+  // Before any verified standings arrive, MIDA's old projected slot must
+  // never leak through, although the original valuation must remain exact.
+  assert.equal(win.draftPickProjection90(pick).projectedSlot,null);
+  assert.equal(win.draftPickProjection92(pick).projectedSlot,null);
+  assert.equal(normalization.pickContext(pick).projectedSlot,null);
+  assert.equal(win.draftPickProjection90(pick).value,5835);
+  assert.equal(normalization.pickContext(pick).value,7000);
   await win.draftPickRankingsV527.refresh(true);
   assert.equal(win.draftPickProjection90(pick).projectedSlot,1);
   assert.equal(win.draftPickProjection92(pick).projectedSlot,1);

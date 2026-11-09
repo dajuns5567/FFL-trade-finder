@@ -151,7 +151,7 @@ test('Buy and Sell opportunity filter preserves qualified candidates and guarant
   assert.ok(start>0&&end>start);
   const snippet=source.slice(start,end);
   const rows=[],signals=[];
-  for(let i=0;i<12;i++){
+  for(let i=0;i<16;i++){
     const defensive=i<8,id=String(1000+i),pos=defensive?'IDP':'WR';
     rows.push({id,pos,value:100+i,overall:i+1,delta7:0});
     signals.push({player_id:id,position:defensive?'LB':'WR',state:'surging',momentum:'hot',
@@ -174,9 +174,9 @@ test('Buy and Sell opportunity filter preserves qualified candidates and guarant
   assert.equal(balanced.filter(x=>x.category==='OFFENSE').length,4);
   assert.equal(balanced.filter(x=>x.category==='IDP').length,4);
   const offense=vm.runInContext('opportunityFiltered(opportunityCandidates().buy,"OFFENSE",8)',context);
-  assert.equal(offense.length,4);
+  assert.equal(offense.length,6);
   const idp=vm.runInContext('opportunityFiltered(opportunityCandidates().buy,"IDP",8)',context);
-  assert.equal(idp.length,8);
+  assert.equal(idp.length,6);
   assert.match(source,/data-vh-opportunity-position/);
   assert.match(source,/opportunityCandidates\(\)\[kind\]/);
 });

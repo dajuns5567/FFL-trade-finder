@@ -91,3 +91,34 @@ test('the authentic UI and API, not fabricated watchlists, are used by the Marke
  assert.match(site,/value-history-v276\.js\?v=529/);
  assert.doesNotMatch(site,/market-dashboard-analytics-v528/);
 });
+
+test('7-day highs and lows include records made before the last refresh with actual event dates',()=>{
+ const fixture=[
+   {t:'2026-10-01T00:00:00Z',rows:[{id:'a',pos:'QB',value:100,overall:1,posRank:1},{id:'b',pos:'RB',value:100,overall:2,posRank:1}]},
+   {t:'2026-10-03T00:00:00Z',rows:[{id:'a',pos:'QB',value:125,overall:1,posRank:1},{id:'b',pos:'RB',value:75,overall:2,posRank:1}]},
+   {t:'2026-10-05T00:00:00Z',rows:[{id:'a',pos:'QB',value:110,overall:1,posRank:1},{id:'b',pos:'RB',value:90,overall:2,posRank:1}]},
+   {t:'2026-10-07T00:00:00Z',rows:[{id:'a',pos:'QB',value:115,overall:1,posRank:1},{id:'b',pos:'RB',value:85,overall:2,posRank:1}]}
+ ];
+ const result=marketInsightRange(fixture,'7D');
+ const high=result.new_highs.find(r=>r.id==='a'),low=result.new_lows.find(r=>r.id==='b');
+ assert.equal(high.t,'2026-10-03T00:00:00Z');
+ assert.equal(high.value,125);
+ assert.equal(high.previous_high,100);
+ assert.equal(low.t,'2026-10-03T00:00:00Z');
+ assert.equal(low.value,75);
+ assert.equal(low.previous_low,100);
+ assert.notEqual(high.t,result.through);
+ assert.notEqual(low.t,result.through);
+ const ui=readFileSync(new URL('../value-history-v276.js',import.meta.url),'utf8');
+ assert.match(ui,/Hit \$\{dateTime\(r\.t\)\}/);
+});
+test('strict within-window highs and lows require earlier verified comparison, never fabricate equal observations',()=>{
+ const fixture=[
+  {t:'2026-10-01T00:00:00Z',rows:rows([100,80,70,50,40])},
+  {t:'2026-10-02T00:00:00Z',rows:rows([100,80,70,50,40])},
+  {t:'2026-10-03T00:00:00Z',rows:rows([100,80,70,50,40])}
+ ];
+ const result=marketInsightRange(fixture,'7D');
+ assert.equal(result.new_highs.length,0);
+ assert.equal(result.new_lows.length,0);
+});

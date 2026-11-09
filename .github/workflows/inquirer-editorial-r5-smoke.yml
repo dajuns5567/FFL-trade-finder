@@ -174,7 +174,7 @@ jobs:
     needs: inquirer-r6
     # Release branches deliberately skip Netlify Deploy Previews to avoid credits.
     # This seed job is only meaningful for test-only preview branches.
-    if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'release/')
+    if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'test/inquirer-')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

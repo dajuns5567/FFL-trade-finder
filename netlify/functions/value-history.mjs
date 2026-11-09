@@ -734,6 +734,33 @@ function marketInsightRange(snaps,label){
     }
   }
   const new_highs=[],new_lows=[],volatility=[],player_changes=[];
+  // A new high/low is an event anywhere INSIDE the selected market window,
+  // not merely a record still standing on the last refresh. Revisit all
+  // observations chronologically and record strict crossings versus earlier
+  // verified observations in that same period. Retain the latest occurrence
+  // per player, including the real event timestamp.
+  const recordHighs=new Map(),recordLows=new Map(),seenRecords=new Map();
+  for(const snapshot of ordered){
+    for(const row of snapshot.rows||[]){
+      const id=String(row?.id||''),value=Number(row?.value),pos=String(row?.pos||'');
+      if(!id||!Number.isFinite(value)||value<=0)continue;
+      const aggregate=full.get(id);
+      if(!aggregate||(aggregate.positions?.size||0)>1)continue;
+      const prev=seenRecords.get(id);
+      if(prev){
+        if(value>prev.high)recordHighs.set(id,{id,pos,value,previous_high:prev.high,previous_high_t:prev.high_t,gain:value-prev.high,t:snapshot.t});
+        if(value<prev.low)recordLows.set(id,{id,pos,value,previous_low:prev.low,previous_low_t:prev.low_t,drop:value-prev.low,t:snapshot.t});
+      }
+      seenRecords.set(id,{
+        high:Math.max(prev?.high??value,value),
+        low:Math.min(prev?.low??value,value),
+        high_t:value>(prev?.high??Infinity)?snapshot.t:(prev?.high_t||snapshot.t),
+        low_t:value<(prev?.low??-Infinity)?snapshot.t:(prev?.low_t||snapshot.t)
+      });
+    }
+  }
+  new_highs.push(...recordHighs.values());
+  new_lows.push(...recordLows.values());
   for(const row of latest.rows||[]){
     const id=String(row?.id||''),value=Number(row?.value),p=prior.get(id),all=full.get(id),rowPos=String(row?.pos||'');
     if(!id||!Number.isFinite(value)||!all)continue;
@@ -745,8 +772,6 @@ function marketInsightRange(snaps,label){
       const latestOverall=Number(row?.overall),latestPosRank=Number(row?.posRank),baseOverall=Number(base?.overall),basePosRank=Number(base?.posRank);
       player_changes.push({id,pos:rowPos,value,overall:latestOverall,posRank:latestPosRank,from_value:baseValue,from_overall:Number.isFinite(baseOverall)?baseOverall:null,from_pos_rank:Number.isFinite(basePosRank)?basePosRank:null,from_t:base.t,delta,pct:Number((delta/baseValue*100).toFixed(4)),overall_delta:Number.isFinite(baseOverall)&&Number.isFinite(latestOverall)?baseOverall-latestOverall:null,pos_rank_delta:Number.isFinite(basePosRank)&&Number.isFinite(latestPosRank)?basePosRank-latestPosRank:null,through_t:latest.t});
     }
-    if(p&&value>Number(p.high))new_highs.push({id,pos:rowPos,value,previous_high:Number(p.high),previous_high_t:p.high_t,gain:value-Number(p.high),t:latest.t});
-    if(p&&value<Number(p.low))new_lows.push({id,pos:rowPos,value,previous_low:Number(p.low),previous_low_t:p.low_t,drop:value-Number(p.low),t:latest.t});
     const mid=(Number(all.high)+Number(all.low))/2,range=Number(all.high)-Number(all.low),drawdown=Number(all.high)>0?(value-Number(all.high))/Number(all.high)*100:null;
     volatility.push({id,pos:rowPos,value,high:Number(all.high),low:Number(all.low),range,range_pct:mid>0?Number((range/mid*100).toFixed(2)):null,drawdown_pct:Number.isFinite(drawdown)?Number(drawdown.toFixed(2)):null,observations:Number(all.observations)||0,identity_clean:true,high_t:all.high_t,low_t:all.low_t});
   }

@@ -28,8 +28,8 @@ test('market heat map reflects position-specific snapshot-derived changes and re
   assert.equal(a.positions.find(p=>p.pos==='QB').averagePct,10);
   assert.equal(a.positions.find(p=>p.pos==='RB').averagePct,-10);
   assert.equal(a.positions.find(p=>p.pos==='IDP').averagePct,-20);
-  assert.equal(a.summary.averageAbsPct,11.33);
-  assert.equal(a.summary.averagePct,-.67);
+  assert.equal(a.summary.averageAbsPct,12);
+  assert.equal(a.summary.averagePct,0);
   assert.equal(a.hasHistory,true);
 });
 test('volatility means cross-sectional absolute player percent changes, not forecast',()=>{

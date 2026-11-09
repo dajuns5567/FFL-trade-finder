@@ -1,4 +1,5 @@
 import {snapshotsThroughEdition} from './lib/inquirer-market-window.mjs';
+import {getPickOrder5050,postCutoverTrade} from './lib/pick-order-5050.mjs';
 import { getStore } from '@netlify/blobs';
 
 const LEAGUE='1316867686394769408';
@@ -911,6 +912,24 @@ function pickValuesFromSide(side,map){
 }
 async function completedTradeHistory(s){
   const trades=await importedCompletedTrades();
+  // The dated trade snapshot's VALUE remains immutable. The displayed
+  // projected pick order only changes for trades completed after Sep 24, 2026.
+  // A transaction in week N uses the preceding fully completed week (N-1);
+  // never use later results to fabricate its original trade-time draft rank.
+  const afterCutover=trades.filter(t=>postCutoverTrade(t)&&(t.sides||[]).some(side=>(side.picks||[]).length));
+  const weeks=[...new Set(afterCutover.map(t=>Math.max(1,Math.min(18,Number(t.week)-1))).filter(Number.isFinite))];
+  const rankByWeek=new Map();
+  await Promise.all(weeks.map(async week=>{
+    try{
+      const rows=await getPickOrder5050(LEAGUE,week);
+      if(rows.length===32)rankByWeek.set(week,Object.fromEntries(rows.map(row=>[String(row.id),row.projectedSlot])));
+    }catch(e){console.warn('trade-time-pick-order-unavailable',week,String(e?.message||e))}
+  }));
+  for(const trade of afterCutover){
+    const completedWeek=Math.max(1,Math.min(18,Number(trade.week)-1)),slots=rankByWeek.get(completedWeek);
+    trade.ranking_at_trade=slots?{method:'50% record rank + 50% points-for rank',
+      standings_week:completedWeek,season:trade.season,slots}:null;
+  }
   const archiveSnaps=await archiveAllSnapshots();
   let localSnaps=[],localState=s?'empty':'unavailable';
   if(s){

@@ -34,6 +34,11 @@ jobs:
         with:
           node-version: '20'
 
+      # Trade ingestion runs on EVERY scheduled/workflow wake, even when
+      # Value History has no new valuation snapshot due. It is read-only.
+      - name: Check current Sleeper completed trades
+        run: node scripts/trade-history-scheduled-check.mjs
+
       - name: Check whether scheduled history is due
         id: due
         env:

@@ -5,6 +5,7 @@ import {verifiedNewSiteCutoverHistory,verifiedWeekNineAutopublishCutoverHistory}
 import {auditIndependentInquirerCopy} from './lib/inquirer-independent-copy-audit.mjs';
 import {resolveInquirerQueueCredential,inquirerQueueKeyMatches} from './lib/inquirer-queue-credential.mjs';
 import {FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
+import {cutoverRuntimeHoldReason} from './lib/inquirer-cutover-runtime.mjs';
 
 export const config={background:true};
 // One owner-approved cutover, never a live generator or an archive rewrite.
@@ -29,26 +30,39 @@ export default async function cutoverApprovedInquirerWeeks(req){
  const context=globalThis.Netlify?.env?.get?.('CONTEXT')||process.env.CONTEXT||'';
  const siteId=globalThis.Netlify?.env?.get?.('SITE_ID')||process.env.SITE_ID||'';
  const host=new URL(req.url).hostname;
- // Netlify's scheduler invokes functions on the exact site-ID hostname.
- // Accept both that internal origin and the canonical public site hostname.
- const authorizedHost=host===SITE_HOST||host===SITE_ID+'.netlify.app';
+ // Netlify can deliver background jobs through a different internal URL than
+ // the one used by the scheduler. The runtime site ID and production context
+ // must still match; an authenticated queue secret is independently required.
  const enabled=globalThis.Netlify?.env?.get?.('FLEECED_ENABLE_NEW_SITE_PUBLISHER')||
   process.env.FLEECED_ENABLE_NEW_SITE_PUBLISHER||'';
- if(context!=='production'||siteId!==SITE_ID||!authorizedHost||enabled!=='true')
+ const holdReason=cutoverRuntimeHoldReason({context,siteId,enabled,host});
+ if(holdReason){
+  console.warn('inquirer-cutover-entry-held',{reason:holdReason,site_matches:siteId===SITE_ID,
+   publisher_enabled:enabled==='true'});
   return new Response('Production-only owner-approved cutover disabled',{status:403});
+ }
  const store=getStore({name:'fleeced-league-hub',consistency:'strong'});
  const configured=globalThis.Netlify?.env?.get?.('FLEECED_INQUIRER_QUEUE_KEY')||
   process.env.FLEECED_INQUIRER_QUEUE_KEY||'';
  const key=await resolveInquirerQueueCredential({store,configured,bootstrap:false});
- if(req.method!=='POST'||!inquirerQueueKeyMatches(key,req.headers.get('x-fleeced-queue-key')))
+ if(req.method!=='POST'||!inquirerQueueKeyMatches(key,req.headers.get('x-fleeced-queue-key'))){
+  console.warn('inquirer-cutover-queue-auth-held',{method:req.method,credential_ready:!!key,
+   queue_header_present:!!req.headers.get('x-fleeced-queue-key')});
   return new Response('Unauthorized cutover request',{status:403});
+ }
  const priorStatus=await store.get(STATE,{type:'json'});
- if(priorStatus?.state==='completed')return;
- if(priorStatus?.state==='running'&&Date.now()-Date.parse(priorStatus.started_at||0)<16*60*1000)
+ if(priorStatus?.state==='completed'){
+  console.info('inquirer-cutover-already-completed');
   return;
+ }
+ if(priorStatus?.state==='running'&&Date.now()-Date.parse(priorStatus.started_at||0)<16*60*1000){
+  console.info('inquirer-cutover-already-running');
+  return;
+ }
  const started_at=new Date().toISOString();
- await store.setJSON(STATE,{state:'running',started_at,revision:FORWARD_EDITORIAL_REVISION});
  try{
+  await store.setJSON(STATE,{state:'running',started_at,revision:FORWARD_EDITORIAL_REVISION});
+  console.info('inquirer-cutover-accepted',{revision:FORWARD_EDITORIAL_REVISION});
   const [week3,week4,week5,week6,idx,oldAwards,existing7,existing8]=await Promise.all([
    ...[3,4,5,6].map(week=>store.get(archiveKey(week),{type:'json'})),
    store.get('broadcasts/index.json',{type:'json'}),

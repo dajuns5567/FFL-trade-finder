@@ -103,6 +103,15 @@ test('client projected order changes while dynasty pick values remain byte-for-b
   assert.equal(renderCount,2);
   assert.equal(win.draftPickProjection90(pick).value,5835);
   assert.equal(normalization.pickContext(pick).value,7000);
+  // The next completed Sleeper week must supersede the previous one
+  // automatically, with updated PF and no user-triggered revaluation.
+  data.source='sleeper-live-rosters';
+  data.completed_week=10;
+  for(const t of data.teams){t.wins=10;t.losses=0;t.points_for+=90}
+  await win.draftPickRankingsV527.refresh(true);
+  assert.equal(win.draftPickRankingsV527.status.completed_week,10);
+  assert.equal(renderCount,3);
+  assert.equal(normalization.canonicalValue(pick),7000);
 });
 test('existing trade snapshot values remain untouched by the post-cutover ranking overlay',()=>{
   const backend=readFileSync(new URL('../netlify/functions/value-history.mjs',import.meta.url),'utf8');

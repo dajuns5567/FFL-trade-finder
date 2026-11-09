@@ -30,10 +30,61 @@ function compute(market,period='7D'){
   return{period,key,totalPlayers:source.length,available:usable.length,
     summary,positions,movers,hasHistory:usable.length>0&&Number(market?.snapshot_count)>=2};
 }
+// Market signals describe observed value movement, not fair-price gaps or
+// trade instructions. They never feed back into valuation or trade scoring.
+// Valid history is mandatory; missing movement is not interpreted as zero.
+function opportunitySignals(market,{limit=5,pool=300}={}){
+  const rows=Array.isArray(market?.marketRows)?market.marketRows:[];
+  if(Number(market?.snapshot_count)<2)return{buyLow:[],sellHigh:[],reversals:[],eligible:0};
+  const eligible=[];
+  for(const row of rows){
+    const value=Number(row?.value),overall=Number(row?.overall);
+    const d7=row?.delta7==null?NaN:Number(row.delta7);
+    const base7=value-d7;
+    if(!Number.isFinite(value)||value<=0||!Number.isFinite(overall)||overall<1||overall>pool||
+      !Number.isFinite(d7)||!Number.isFinite(base7)||base7<=0)continue;
+    const d30=row?.delta30==null?NaN:Number(row.delta30);
+    const base30=value-d30;
+    const p30=Number.isFinite(d30)&&base30>0?100*d30/base30:null;
+    eligible.push({id:String(row.id),pos:String(row.pos||'—').toUpperCase(),
+      value,overall,delta7:d7,percent7:round(100*d7/base7,2),
+      percent30:p30==null?null:round(p30,2)});
+  }
+  const byAbsDescending=(a,b)=>Math.abs(b.percent7)-Math.abs(a.percent7)||a.overall-b.overall||a.id.localeCompare(b.id);
+  const buyLow=eligible.filter(r=>r.delta7<0).sort(byAbsDescending).slice(0,limit);
+  const sellHigh=eligible.filter(r=>r.delta7>0).sort(byAbsDescending).slice(0,limit);
+  const reversals=eligible.filter(r=>r.percent30!=null&&r.percent7*r.percent30<0)
+    .sort(byAbsDescending).slice(0,limit);
+  return{buyLow,sellHigh,reversals,eligible:eligible.length,
+    pool,method:'Read-only 7-day observed value drawdowns and run-ups, not independent fair-value estimates'};
+}
+function renderOpportunitySignals(market,lookupPlayer){
+  const signals=opportunitySignals(market);
+  const name=id=>typeof lookupPlayer==='function'?lookupPlayer(id):'Player '+id;
+  const list=(rows,kind)=>{
+    if(!rows.length)return'<div class="vh-empty">No qualifying moves in verified snapshot history.</div>';
+    return'<div class="vh-opportunity-list">'+rows.map((r,i)=>
+      '<div class="vh-opportunity-row"><span class="vh-ranknum">'+(i+1)+'</span>'+
+      '<button type="button" class="vh-player-link" data-vh-player="'+esc(r.id)+'"><b>'+
+      esc(name(r.id))+'</b><small>'+esc(r.pos)+' • Overall #'+r.overall+
+      ' • Value '+fmt(r.value)+'</small></button><div class="vh-opportunity-change '+(kind==='low'?'vh-down':'vh-up')+
+      '"><b>'+pct(r.percent7)+'</b><small>7D'+(r.percent30==null?'':' • 30D '+pct(r.percent30))+'</small></div></div>'
+    ).join('')+'</div>';
+  };
+  return'<section class="vh-card vh-analytics-panel" data-vh-market-opportunities>'+
+    '<div class="vh-card-head"><div><h3>Buy Low & Sell High Watchlists</h3>'+
+    '<div class="vh-sub">Observed value movement from the existing Value History snapshots • Top 300 overall players</div></div></div>'+
+    '<div class="vh-opportunity-grid">'+
+      '<div><h4>Buy Low Watchlist</h4><div class="vh-sub">Largest recent value declines • research potential rebounds, not automatic bargains</div>'+
+      list(signals.buyLow,'low')+'</div>'+
+      '<div><h4>Sell High Watchlist</h4><div class="vh-sub">Largest recent value gains • research potential exits, not automatic overvaluations</div>'+
+      list(signals.sellHigh,'high')+'</div>'+
+    '</div><div class="vh-sub">Signals cover '+fmt(signals.eligible)+' players with comparable recent values. A falling value does not prove a player is underpriced; a rising value does not prove a player is overpriced. Open a player to inspect actual Value History before making a trade.</div></section>';
+}
 const fmt=n=>Number(n).toLocaleString(undefined,{maximumFractionDigits:0});
 const pct=n=>n==null?'—':((n>0?'+':'')+Number(n).toFixed(1)+'%');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function render(market,period='7D'){
+function render(market,period='7D',lookupPlayer){
   const a=compute(market,period);
   const buttons=Object.keys(PERIODS).map(p=>'<button type="button" class="'+(p===period?'':'secondary ')+'small" data-vh-analytics-period="'+p+'" aria-pressed="'+(p===period)+'">'+(p==='1Y'?'1 Year':p==='ALL'?'All':p)+'</button>').join('');
   if(!a.hasHistory){
@@ -59,7 +110,7 @@ function render(market,period='7D'){
     '<div class="vh-heat-grid">'+cells+'</div>'+
     '<div class="vh-analytics-breadth" role="img" aria-label="'+s.up+' rising, '+s.down+' falling, '+s.flat+' unchanged out of '+s.count+' comparable players"><div class="vh-analytics-up" style="width:'+(s.up/all*100).toFixed(2)+'%"></div><div class="vh-analytics-flat" style="width:'+(s.flat/all*100).toFixed(2)+'%"></div><div class="vh-analytics-down" style="width:'+(s.down/all*100).toFixed(2)+'%"></div></div>'+
     '<div class="vh-sub">Market breadth: '+s.up+' gainers · '+s.flat+' unchanged · '+s.down+' decliners. Volatility is cross-sectional movement intensity, not a time-series forecast. '+fmt(a.available)+' of '+fmt(a.totalPlayers)+' current market players have comparable historical values.</div>'+
-    '</section>';
+    '</section>'+renderOpportunitySignals(market,lookupPlayer);
 }
 function installStyles(){
   if(document.getElementById('vhMarketAnalyticsStyles528'))return;
@@ -82,8 +133,17 @@ function installStyles(){
     '#valueHistory .vh-heat-cell small{font-size:11px;color:var(--muted)}'+
     '#valueHistory .vh-analytics-breadth{display:flex;width:100%;height:10px;border-radius:10px;overflow:hidden;background:var(--line);margin:12px 0 9px}'+
     '#valueHistory .vh-analytics-up{background:var(--good,#1f9d68)}#valueHistory .vh-analytics-flat{background:var(--muted)}#valueHistory .vh-analytics-down{background:var(--bad,#c45151)}'+
-    '@media(max-width:850px){#valueHistory .vh-analytics-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}#valueHistory .vh-heat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}';
+    '#valueHistory .vh-opportunity-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:12px 0}'+
+    '#valueHistory .vh-opportunity-grid>div{min-width:0;border:1px solid var(--line);border-radius:10px;padding:12px}'+
+    '#valueHistory .vh-opportunity-grid h4{margin:0 0 6px;color:#e4b53f}'+
+    '#valueHistory .vh-opportunity-list{display:grid;gap:4px;margin-top:12px}'+
+    '#valueHistory .vh-opportunity-row{display:flex;align-items:center;gap:9px;min-width:0;padding:8px 0;border-top:1px solid var(--line)}'+
+    '#valueHistory .vh-opportunity-row .vh-player-link{min-width:0;flex:1;text-align:left}'+
+    '#valueHistory .vh-opportunity-row .vh-player-link b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'+
+    '#valueHistory .vh-opportunity-row small{display:block;color:var(--muted);font-size:10px}'+
+    '#valueHistory .vh-opportunity-change{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}'+
+    '@media(max-width:850px){#valueHistory .vh-analytics-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}#valueHistory .vh-heat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#valueHistory .vh-opportunity-grid{grid-template-columns:minmax(0,1fr)}}';
   document.head.appendChild(style);
 }
-window.marketDashboardAnalyticsV528={compute,render,installStyles,periods:Object.keys(PERIODS)};
+window.marketDashboardAnalyticsV528={compute,opportunitySignals,render,installStyles,periods:Object.keys(PERIODS)};
 })();

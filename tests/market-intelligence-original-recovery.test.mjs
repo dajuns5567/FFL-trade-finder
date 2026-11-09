@@ -200,7 +200,7 @@ test('Buy/Sell View All features every qualified offensive player ahead of IDP, 
   assert.ok(modalStart>=0&&modalEnd>modalStart);
   const modal=source.slice(modalStart,modalEnd);
   const heading=modal.indexOf('Offensive Position Players (QB · RB · WR · TE)'),
-    offensiveRows=modal.indexOf('...offense.map(opportunityRow)'),
+    offensiveRows=modal.indexOf('offense.map(opportunityRow)'),
     defensiveGroup=modal.indexOf('<details class="vh-opportunity-idp-details">'),
     defensiveRows=modal.indexOf('defense.map(opportunityRow)');
   assert.ok(heading>=0&&offensiveRows>heading&&defensiveGroup>offensiveRows&&defensiveRows>defensiveGroup);

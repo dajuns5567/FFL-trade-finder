@@ -11,6 +11,25 @@ const oldPickContext=norm.pickContext.bind(norm);
 let current=null,lastChecked=0,pending=null;
 let valueOrderCache=null,valueOrderRevision='';
 function pickOrderKey(x){return String(Number(x?.season))+'|'+String(Number(x?.round))}
+// Source curve from draft-pick-context-v92.js (NOT a new valuation model).
+// The old model sometimes exposes the same cached value for every pick of
+// a year/round. A sorted flat cohort cannot distinguish 1.01 from 1.32.
+function sourceCurveRatio(round,slot){
+  const curves={1:[[1,4200],[4,3600],[8,3000],[16,2300],[24,1700],[32,1300]],
+    2:[[1,1200],[8,1000],[16,800],[24,640],[32,500]],
+    3:[[1,450],[8,380],[16,300],[24,235],[32,175]]};
+  const points=curves[Number(round)];
+  if(!points)return null;
+  const s=Math.max(1,Math.min(32,Math.round(Number(slot)||16)));
+  let v=points.at(-1)[1];
+  for(let i=1;i<points.length;i++){
+    if(s<=points[i][0]){
+      const [x0,y0]=points[i-1],[x1,y1]=points[i];
+      v=y0+(y1-y0)*(s-x0)/(x1-x0);break;
+    }
+  }
+  return v/points[0][1];
+}
 function orderedPickValue(x){
   const t=team(x);
   if(!t)return null;
@@ -34,9 +53,17 @@ function orderedPickValue(x){
       if(picks.length!==32||validOwners.size!==32)continue;
       const ranked=picks.map(a=>({a,t:team(a),v:Number(prior92(a)?.value)}));
       if(ranked.some(x=>!x.t||!(x.v>0)||!Number.isFinite(x.v)))continue;
-      const values=ranked.map(x=>x.v).sort((a,b)=>b-a);
+      const sourceValues=ranked.map(x=>x.v).sort((a,b)=>b-a);
+      // Existing 32-value cohorts are only reordered. Flat cohorts instead
+      // use the source model's published positional curve anchored to the
+      // existing highest value; never fabricate a new anchor.
+      const isFlat=sourceValues[0]-sourceValues.at(-1)<.001;
+      const round=Number(picks[0]?.round);
+      const values=isFlat&&sourceCurveRatio(round,1)!=null
+        ?Array.from({length:32},(_,i)=>Math.max(5,Math.round(sourceValues[0]*sourceCurveRatio(round,i+1)/5)*5))
+        :sourceValues;
       const slots=new Set(ranked.map(x=>Number(x.t.projected_slot)));
-      if(slots.size!==32)continue;
+      if(slots.size!==32||[...slots].some(v=>!Number.isInteger(v)||v<1||v>32))continue;
       const mapped=new Map();
       for(const x of ranked)mapped.set(originalRoster(x.a),values[Number(x.t.projected_slot)-1]);
       valueOrderCache.set(k,mapped);

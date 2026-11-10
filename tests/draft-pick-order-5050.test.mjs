@@ -223,3 +223,43 @@ test('complete 2027 first-round cohort assigns original 32 values monotonically 
   assert.equal(normalization.pickContext(picks[3]).value,newValues[3]);
   assert.equal(normalization.canonicalValue(picks[6]),newValues[6]);
 });
+
+
+test('verified 50/50 slots restore original V92 slope from a flat source cohort across all three draft rounds',async()=>{
+  const src=readFileSync(new URL('../draft-pick-rankings-v527.js',import.meta.url),'utf8');
+  const years=[2027,2028,2029],rounds=[1,2,3];
+  const anchors={2027:{1:7000,2:1930,3:615},2028:{1:6870,2:1930,3:615},2029:{1:6870,2:1930,3:615}};
+  const picks=years.flatMap(year=>rounds.flatMap(round=>Array.from({length:32},(_,i)=>({
+    type:'pick',id:'pick-'+year+'-'+round+'-'+(i+1),season:year,round,original_owner:i+1,owner:i+1
+  }))));
+  const source=x=>({value:anchors[x.season][x.round],projectedSlot:16,source:'flat legacy cache'});
+  const norm={pickContext:source,pickValue:x=>win.draftPickProjection92(x).value,
+    canonicalValue:x=>win.draftPickProjection92(x).value};
+  const teams=Array.from({length:32},(_,i)=>({roster_id:i+1,wins:9,losses:0,ties:0,
+    points_for:900+i,record_rank:1,points_rank:32-i,combined_rank:32-i,projected_slot:i+1}));
+  const data={status:'current',source:'sleeper-live-rosters',league_id:'1316867686394769408',
+    season:2026,standings_season:2026,completed_week:9,teams};
+  const doc={readyState:'complete',hidden:false,getElementById:()=>({id:'pickRankingHealthV527'}),
+    createElement:()=>({}),addEventListener:()=>{}};
+  const win={draftPickProjection90:source,draftPickProjection92:source,
+    tradeValueNormalizationV139:norm,state:{allAssets:picks,league:{league_id:data.league_id,season:2026}},
+    renderAll:()=>{},addEventListener:()=>{}};
+  const ctx={window:win,document:doc,localStorage:{getItem:()=>null,setItem:()=>{}},
+    fetch:async()=>({ok:true,json:async()=>structuredClone(data)}),setInterval:()=>0,
+    console,Date,Number,String,JSON,Math,Promise,encodeURIComponent};
+  vm.runInNewContext(src,ctx,{filename:'draft-pick-rankings-v527.js'});
+  await win.draftPickRankingsV527.refresh(true);
+  for(const year of years)for(const r of rounds){
+    const group=picks.filter(x=>x.season===year&&x.round===r);
+    const values=group.map(norm.canonicalValue);
+    assert.equal(values[0],anchors[year][r],year+' round '+r+' original value anchor unchanged');
+    assert.ok(values[3]>values[6],year+' round '+r+' 1.04 must exceed 1.07');
+    assert.ok(values[0]>values[31],year+' round '+r+' earliest pick must exceed latest');
+    for(let i=1;i<values.length;i++)
+      assert.ok(values[i-1]>=values[i],year+' round '+r+' monotonic at slot '+(i+1));
+    for(const pick of group)
+      assert.equal(norm.pickContext(pick).value,norm.canonicalValue(pick),
+        'Trade Finder, Evaluator and Player Values must share canonical pick value');
+  }
+  assert.equal(norm.canonicalValue(picks.find(x=>x.season===2027&&x.round===1&&x.original_owner===1)),7000);
+});

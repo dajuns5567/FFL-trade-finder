@@ -26,6 +26,7 @@ on:
       - 'scripts/compile-v256-runtimes.cjs'
       - 'scripts/patch-regular-family-v328.cjs'
       - 'scripts/regular-finder-family-diversity-v328-smoke.cjs'
+      - 'scripts/incoming-partner-diversity-v330-smoke.cjs'
       - 'scripts/finder-runtime-smoke-v254.cjs'
       - 'scripts/finder-runtime-compiled-smoke-v257.cjs'
       - 'scripts/select-all-blank-equivalence-v258.cjs'
@@ -132,6 +133,8 @@ jobs:
         run: node scripts/specific-player-family-diversity-v327-smoke.cjs
       - name: Regular Finder outgoing player-core family diversity
         run: node scripts/regular-finder-family-diversity-v328-smoke.cjs
+      - name: Incoming partner diversity and unchanged manual finder
+        run: node scripts/incoming-partner-diversity-v330-smoke.cjs
       - name: Live KTC parser integrity
         run: |
           node --input-type=module <<'NODE'

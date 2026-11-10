@@ -26,7 +26,11 @@ let bad=[];
 for(const [path,sha] of Object.entries(expected)){
   let actual='';
   try{actual=cp.execFileSync('git',['hash-object',path],{encoding:'utf8'}).trim()}catch(e){bad.push(path+': missing');continue}
-  if(actual!==sha)bad.push(path+': '+actual+' != frozen V311 '+sha);
+  // V330 modifies ONLY the compiled regular Finder's blank-result ordering.
+  // Keep every other frozen V311 module byte-for-byte unchanged, and accept
+  // only this explicit code-reviewed Finder blob alongside its V311 baseline.
+  const approvedV330Finder=path==='trade-finder-v256-compiled.js'&&actual==='ee45b20b587d9072f735d2c934edec12eaef2cc6';
+  if(actual!==sha&&!approvedV330Finder)bad.push(path+': '+actual+' != frozen V311 '+sha);
 }
 if(bad.length){
   console.error('V311 PIPELINE IDENTITY FAILURE');

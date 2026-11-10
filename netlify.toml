@@ -2,13 +2,11 @@
 [build]
   publish = "."
   functions = "netlify/functions"
-  # Build only the owner's NEW Netlify account. The previous published
-  # project remains a read-only historical source and no longer builds.
-  # Netlify ignore-command exit 0 skips; exit 1 builds.
-  # Permit only original Market Intelligence PR #442 preview on canonical site.
-  # Production behavior unchanged; no production deployment initiated.
-  # All other preview and legacy Netlify projects remain skipped.
-  ignore = "node -e \"const e=process.env;const site=e.SITE_ID==='fa33dfe4-8293-441e-8da0-25cc66fc984c'||e.SITE_NAME==='precious-dango-fb4633'||[e.DEPLOY_PRIME_URL,e.DEPLOY_URL,e.URL].some(v=>String(v||'').includes('precious-dango-fb4633.netlify.app'));const preview=e.CONTEXT==='deploy-preview'&&(e.REVIEW_ID==='442'||e.BRANCH==='fix/recover-authentic-market-intelligence-r1'||String(e.DEPLOY_PRIME_URL||'').includes('deploy-preview-442--'));process.exit(site&&(e.CONTEXT==='production'||preview)?1:0)\""
+  # TEST-ONLY INTEGRATION: enable Deploy Preview for this exact branch on
+  # the canonical current site. NEVER build production, branch deploys or
+  # previews from other branches/accounts. No change to main configuration.
+  # Ignore exit 1 builds, exit 0 skips.
+  ignore = "node -e \"const e=process.env;const site=e.SITE_ID==='fa33dfe4-8293-441e-8da0-25cc66fc984c'||e.SITE_NAME==='precious-dango-fb4633';const preview=e.CONTEXT==='deploy-preview'&&e.BRANCH==='test/integrated-draft-picks-market-v322-preview';process.exit(site&&preview?1:0)\""
 
 [functions]
   node_bundler = "esbuild"

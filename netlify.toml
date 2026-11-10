@@ -6,7 +6,7 @@
   # the canonical current site. NEVER build production, branch deploys or
   # previews from other branches/accounts. No change to main configuration.
   # Ignore exit 1 builds, exit 0 skips.
-  ignore = "node -e \"const e=process.env;const site=e.SITE_ID==='fa33dfe4-8293-441e-8da0-25cc66fc984c'||e.SITE_NAME==='precious-dango-fb4633';const preview=e.CONTEXT==='deploy-preview'&&e.BRANCH==='test/integrated-draft-picks-market-v322-preview';process.exit(site&&preview?1:0)\""
+  ignore = "node -e \"const e=process.env;const site=e.SITE_ID==='fa33dfe4-8293-441e-8da0-25cc66fc984c'||e.SITE_NAME==='precious-dango-fb4633';const preview=e.CONTEXT==='deploy-preview'&&String(e.REVIEW_ID)==='444';process.exit(site&&preview?1:0)\""
 
 [functions]
   node_bundler = "esbuild"

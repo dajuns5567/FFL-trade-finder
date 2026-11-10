@@ -9,6 +9,41 @@ const norm=window.tradeValueNormalizationV139||window.tradeValueNormalizationV13
 if(typeof prior90!=='function'||typeof prior92!=='function'||!norm||typeof norm.pickContext!=='function')return;
 const oldPickContext=norm.pickContext.bind(norm);
 let current=null,lastChecked=0,pending=null;
+let valueOrderCache=null,valueOrderRevision='';
+function pickOrderKey(x){return String(Number(x?.season))+'|'+String(Number(x?.round))}
+function orderedPickValue(x){
+  const t=team(x);
+  if(!t)return null;
+  // Reassign the existing source-curve values to the verified 50/50
+  // projected slots. Preserve the exact 32 values in each year/round
+  // cohort; do not synthesize prices or recalculate historical trades.
+  const st=siteState(),assets=(st.allAssets||[]).filter(a=>a?.type==='pick');
+  const fingerprint=revision(current)+'|'+String(current?.completed_week)+'|'+assets.length;
+  if(!valueOrderCache||valueOrderRevision!==fingerprint){
+    valueOrderCache=new Map();valueOrderRevision=fingerprint;
+    const groups=new Map();
+    for(const a of assets){
+      const k=pickOrderKey(a);
+      if(!groups.has(k))groups.set(k,[]);
+      groups.get(k).push(a);
+    }
+    for(const [k,picks] of groups){
+      const validOwners=new Set(picks.map(originalRoster));
+      // Only remap a complete, unique 32-slot cohort. Incomplete data
+      // must preserve the original model rather than guess.
+      if(picks.length!==32||validOwners.size!==32)continue;
+      const ranked=picks.map(a=>({a,t:team(a),v:Number(prior92(a)?.value)}));
+      if(ranked.some(x=>!x.t||!(x.v>0)||!Number.isFinite(x.v)))continue;
+      const values=ranked.map(x=>x.v).sort((a,b)=>b-a);
+      const slots=new Set(ranked.map(x=>Number(x.t.projected_slot)));
+      if(slots.size!==32)continue;
+      const mapped=new Map();
+      for(const x of ranked)mapped.set(originalRoster(x.a),values[Number(x.t.projected_slot)-1]);
+      valueOrderCache.set(k,mapped);
+    }
+  }
+  return valueOrderCache.get(pickOrderKey(x))?.get(originalRoster(x))??null;
+}
 function siteState(){try{return typeof state!=='undefined'?state:(window.state||{})}catch(_){return window.state||{}}}
 function leagueId(){return String(siteState().league?.league_id||'1316867686394769408')}
 function leagueSeason(){return Number(siteState().league?.season)||2026}
@@ -51,7 +86,7 @@ function overlay(x,from){
     projectionContextUsed:false,projectionWeight:0,standingsWeight:0,
     source:'Verified Sleeper standings unavailable; no draft order projected'};
   // The existing value is returned verbatim. Rank does not feed valuation.
-  return{...old,projectedSlot:Number(t.projected_slot),value:old.value,
+  return{...old,projectedSlot:Number(t.projected_slot),value:orderedPickValue(x)??old.value,
     rankingMethod:'record-pf-50-50',projectionContextUsed:false,
     projectionWeight:0,standingsWeight:1,recordRank:Number(t.record_rank),
     pointsRank:Number(t.points_rank),combinedRank:Number(t.combined_rank),
@@ -63,7 +98,7 @@ window.draftPickProjection92=x=>overlay(x,prior92);
 norm.pickContext=x=>{
   const old=oldPickContext(x);if(!x||x.type!=='pick')return old;
   const t=team(x);
-  return t?{...old,projectedSlot:Number(t.projected_slot),rankingMethod:'record-pf-50-50',
+  return t?{...old,projectedSlot:Number(t.projected_slot),value:norm.pickValue(x),rankingMethod:'record-pf-50-50',
     rankingCompletedWeek:Number(current.completed_week),recordRank:Number(t.record_rank),
     pointsRank:Number(t.points_rank),combinedRank:Number(t.combined_rank),
     projectionContextUsed:false,projectionWeight:0,standingsWeight:1,

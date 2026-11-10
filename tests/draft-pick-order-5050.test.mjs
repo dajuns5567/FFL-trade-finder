@@ -202,3 +202,24 @@ test('Netlify ranking endpoint can recover verified importer audit roster data',
     assert.equal(calls.length,3);
   }finally{globalThis.fetch=previous}
 });
+
+
+test('complete 2027 first-round cohort assigns original 32 values monotonically to 50/50 projected slots',async()=>{
+  const src=readFileSync(new URL('../draft-pick-rankings-v527.js',import.meta.url),'utf8');
+  const picks=Array.from({length:32},(_,i)=>({type:'pick',id:'pick-2027-1-'+(i+1),season:2027,round:1,original_owner:i+1,owner:i+1}));
+  const legacy=x=>({projectedSlot:x.original_owner,value:7000-(33-x.original_owner)*110,source:'old ranking'});
+  const teams=picks.map((p,i)=>({roster_id:i+1,wins:9,losses:0,ties:0,points_for:900+i,record_rank:1,points_rank:32-i,combined_rank:32-i,projected_slot:i+1}));
+  const data={status:'current',source:'sleeper-live-rosters',league_id:'1316867686394769408',season:2026,standings_season:2026,completed_week:9,teams};
+  const normalization={pickContext:x=>({...legacy(x)}),pickValue:x=>Number(win.draftPickProjection92(x).value),canonicalValue:x=>Number(win.draftPickProjection92(x).value)};
+  const doc={readyState:'complete',hidden:false,getElementById:()=>({id:'pickRankingHealthV527'}),createElement:()=>({}),addEventListener:()=>{}};
+  const win={draftPickProjection90:legacy,draftPickProjection92:legacy,tradeValueNormalizationV139:normalization,state:{allAssets:picks,league:{league_id:data.league_id,season:2026}},renderAll:()=>{},addEventListener:()=>{}};
+  const context={window:win,document:doc,localStorage:{getItem:()=>null,setItem:()=>{}},fetch:async()=>({ok:true,json:async()=>structuredClone(data)}),setInterval:()=>0,console,Date,Number,String,JSON,Math,Promise,encodeURIComponent};
+  vm.runInNewContext(src,context,{filename:'draft-pick-rankings-v527.js'});
+  await win.draftPickRankingsV527.refresh(true);
+  const oldValues=picks.map(p=>legacy(p).value).sort((a,b)=>b-a);
+  const newValues=picks.map(p=>win.draftPickProjection92(p).value);
+  assert.deepEqual(newValues,oldValues,'must redistribute exact existing value curve, without altering total cohort supply');
+  for(let i=1;i<newValues.length;i++)assert.ok(newValues[i-1]>=newValues[i],'2027 1.'+String(i).padStart(2,'0')+' cannot be valued less than later 1.'+String(i+1).padStart(2,'0'));
+  assert.equal(normalization.pickContext(picks[3]).value,newValues[3]);
+  assert.equal(normalization.canonicalValue(picks[6]),newValues[6]);
+});

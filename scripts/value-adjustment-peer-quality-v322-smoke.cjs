@@ -39,6 +39,25 @@ for(const c of cases){
  }
  console.log(c.name, JSON.stringify({rawA:result.aRaw,rawB:result.bRaw,adj:result.aAdj,score:result.score,status:result.status}));
 }
+// Verified live-audit cases that formerly finished inside 100 adjusted points.
+// Test narrow pathological outcomes while deliberately preserving legitimate
+// top-asset-vs-depth situations; no player-specific production exceptions.
+const auditFixtures=[
+ {name:'Maye versus Trey McBride and first',a:[maye],b:[P('McBride',7890,18,'TE'),K('2028-first',4275)],maxScore:93},
+ {name:'Maye versus Trevor Lawrence and first',a:[maye],b:[P('Lawrence',7698,21,'QB'),K('2027-first',4825,2027)],maxScore:93},
+ {name:'Burrow versus Herbert and LaPorta',a:[P('Burrow',8576,9,'QB')],b:[P('Herbert',6314,50,'QB'),P('LaPorta',6166,54,'TE')],maxScore:93},
+ {name:'Allen versus Caleb and two IDPs',a:[P('Allen',9999,1,'QB')],b:[caleb,P('Humphrey',2246,259,'IDP'),P('Carter',2194,264,'IDP')],maxScore:93},
+ {name:'Allen versus McBride and depth',a:[P('Allen',9999,1,'QB')],b:[P('McBride2',7890,18,'TE'),P('Shakir',3659,153),P('White',3163,184,'RB')],minScore:94}
+];
+for(const c of auditFixtures){
+ const f=fair(c.a,c.b),reverse=fair(c.b,c.a);
+ assert.equal(f.score,reverse.score,c.name+' symmetry');
+ assert.equal(f.aRaw,c.a.reduce((sum,x)=>sum+x.v,0));
+ assert.equal(f.bRaw,c.b.reduce((sum,x)=>sum+x.v,0));
+ if(c.maxScore!=null)assert.ok(f.score<=c.maxScore,c.name+' must not be an automatic Excellent Fit: '+f.score);
+ if(c.minScore!=null)assert.ok(f.score>=c.minScore,c.name+' established elite-vs-depth example must remain competitive: '+f.score);
+ console.log('Original audit fixture:',c.name,'score',f.score,'adjustment',Math.round(f.aAdj+f.bAdj));
+}
 // Preserve the established zero-adjustment one-for-one invariant.
 assert.equal(fair([maye],[lamar]).aAdj,0);
 assert.equal(fair([maye],[lamar]).bAdj,0);

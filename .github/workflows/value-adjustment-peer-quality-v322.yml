@@ -5,6 +5,7 @@ on:
     paths:
       - 'trade-runtime-v256-compiled.js'
       - 'scripts/value-adjustment-peer-quality-v322-smoke.cjs'
+      - 'scripts/value-adjustment-wide-v322-audit.cjs'
       - 'scripts/value-adjustment-monotonic-v311-smoke.cjs'
       - 'scripts/value-adjustment-v320-calibration-smoke.cjs'
       - '.github/workflows/value-adjustment-peer-quality-v322.yml'
@@ -30,3 +31,5 @@ jobs:
         run: node scripts/value-adjustment-v320-calibration-smoke.cjs
       - name: Audit-led near-equal trade regressions
         run: node scripts/value-adjustment-peer-quality-v322-smoke.cjs
+      - name: Wide multi-position and multi-package V321 vs V322 audit
+        run: node scripts/value-adjustment-wide-v322-audit.cjs

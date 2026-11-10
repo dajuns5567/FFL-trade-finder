@@ -98,7 +98,7 @@ window.draftPickProjection92=x=>overlay(x,prior92);
 norm.pickContext=x=>{
   const old=oldPickContext(x);if(!x||x.type!=='pick')return old;
   const t=team(x);
-  return t?{...old,projectedSlot:Number(t.projected_slot),value:norm.pickValue(x),rankingMethod:'record-pf-50-50',
+  return t?{...old,projectedSlot:Number(t.projected_slot),value:typeof norm.pickValue==='function'?norm.pickValue(x):old.value,rankingMethod:'record-pf-50-50',
     rankingCompletedWeek:Number(current.completed_week),recordRank:Number(t.record_rank),
     pointsRank:Number(t.points_rank),combinedRank:Number(t.combined_rank),
     projectionContextUsed:false,projectionWeight:0,standingsWeight:1,

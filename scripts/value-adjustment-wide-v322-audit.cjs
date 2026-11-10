@@ -134,3 +134,25 @@ if(violations.length){console.error('HARD INVARIANT FAILURES',JSON.stringify(vio
 if(danger.length)console.warn('REVIEW REQUIRED: '+danger.length+' score swings >=25; evaluate quality independently rather than optimizing counts.');
 if(packages.length<10000)throw Error('Expected broad audit to cover 10,000+ distinct combinations, got '+packages.length);
 console.log('Wide matrix exercised '+packages.length+' combinations; '+violations.length+' mathematical safety violations.');
+
+// Discontinuity guard: a one-rank or one-value-point change must not cause
+// an abrupt >300-point effective consolidation jump. The V322 current
+// qualityStarters >= 2 branch violates this at rank 60/61, value 5500.
+const premium=[P('boundary-elite',9500,3,'QB')];
+const first=P('boundary-peer',7500,30,'WR');
+const atRank60=newFair(premium,[first,P('boundary-second',5500,60,'RB')]);
+const atRank61=newFair(premium,[first,P('boundary-second',5500,61,'RB')]);
+const atValue5500=newFair(premium,[first,P('boundary-second',5500,60,'RB')]);
+const atValue5499=newFair(premium,[first,P('boundary-second',5499,60,'RB')]);
+const rankCliff=Math.abs(atRank60.aAdj-atRank61.aAdj);
+const valueCliff=Math.abs(atValue5500.aAdj-atValue5499.aAdj);
+console.log('Threshold continuity audit:',JSON.stringify({
+ rank60Adjustment:atRank60.aAdj,rank61Adjustment:atRank61.aAdj,
+ rankCliff,value5500Adjustment:atValue5500.aAdj,
+ value5499Adjustment:atValue5499.aAdj,valueCliff
+}));
+assert.ok(rankCliff<=300,
+ 'RELEASE BLOCKER: one rank (60=>61) changes Value Adjustment by '+Math.round(rankCliff)+', violating smooth calibration');
+assert.ok(valueCliff<=300,
+ 'RELEASE BLOCKER: one canonical value point (5500=>5499) changes Value Adjustment by '+Math.round(valueCliff)+', violating smooth calibration');
+

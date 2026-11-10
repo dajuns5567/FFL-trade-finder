@@ -263,3 +263,41 @@ test('verified 50/50 slots restore original V92 slope from a flat source cohort 
   }
   assert.equal(norm.canonicalValue(picks.find(x=>x.season===2027&&x.round===1&&x.original_owner===1)),7000);
 });
+
+
+test('real V139 canonical pricing and trade baseValue consume projected-slot curve consistently',async()=>{
+  const normalization=readFileSync(new URL('../trade-value-normalization-v139.js',import.meta.url),'utf8');
+  const overlay=readFileSync(new URL('../draft-pick-rankings-v527.js',import.meta.url),'utf8');
+  const picks=Array.from({length:32},(_,i)=>({type:'pick',id:'pick-2027-1-'+(i+1),
+    season:2027,round:1,original_owner:i+1,owner:i+1}));
+  const legacy=x=>({value:7000,projectedSlot:16,source:'legacy flat price'});
+  const standings={status:'current',source:'sleeper-live-rosters',league_id:'1316867686394769408',
+    season:2026,standings_season:2026,completed_week:9,
+    teams:Array.from({length:32},(_,i)=>({roster_id:i+1,wins:9,losses:0,ties:0,
+      points_for:900+i,record_rank:1,points_rank:32-i,combined_rank:32-i,projected_slot:i+1}))};
+  const win={state:{league:{league_id:standings.league_id,season:2026},allAssets:picks},
+    draftPickProjection90:legacy,draftPickProjection92:legacy,
+    baseValue:x=>7000,pickValue:x=>7000,packageValue:xs=>xs.length*7000,
+    renderAll:()=>{},addEventListener:()=>{}};
+  const doc={readyState:'complete',hidden:false,getElementById:()=>({id:'pickRankingHealthV527'}),
+    createElement:()=>({}),addEventListener:()=>{}};
+  const ctx={window:win,document:doc,localStorage:{getItem:()=>null,setItem:()=>{}},
+    fetch:async()=>({ok:true,json:async()=>structuredClone(standings)}),
+    setInterval:()=>0,console,Date,Number,String,JSON,Math,Promise,encodeURIComponent};
+  vm.runInNewContext(normalization,ctx,{filename:'trade-value-normalization-v139.js'});
+  vm.runInNewContext(overlay,ctx,{filename:'draft-pick-rankings-v527.js'});
+  await win.draftPickRankingsV527.refresh(true);
+  const v=win.tradeValueNormalizationV139;
+  for(let i=0;i<32;i++){
+    const pick=picks[i],current=v.canonicalValue(pick);
+    assert.equal(win.baseValue(pick),current,'Trade Finder must read canonical current value');
+    assert.equal(win.packageValue([pick]),current,'package scoring must read current value');
+    assert.equal(v.pickValue(pick),current,'Evaluator must read current value');
+    assert.equal(v.pickContext(pick).value,current,'Player Values must show current value');
+    assert.equal(win.draftPickProjection92(pick).value,current,'projected slot must use current curve');
+    if(i>0)assert.ok(current<=v.canonicalValue(picks[i-1]),'slot curve is monotonic at '+(i+1));
+  }
+  assert.equal(v.canonicalValue(picks[0]),7000,'original nearest-year first-round anchor remains 7000');
+  assert.ok(v.canonicalValue(picks[3])>v.canonicalValue(picks[6]),'1.04 must be worth more than 1.07');
+  assert.ok(v.canonicalValue(picks[0])>v.canonicalValue(picks[21]),'1.01 must be worth more than 1.22');
+});

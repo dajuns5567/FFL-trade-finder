@@ -1,0 +1,25 @@
+name: Incoming package diversity diagnostic
+on:
+  pull_request:
+    paths:
+      - 'scripts/incoming-package-diversity-diagnostic.cjs'
+      - '.github/workflows/incoming-package-diversity-diagnostic.yml'
+  workflow_dispatch:
+jobs:
+  incoming-diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Audit actual compiled ranked Finder on controlled 32-team fixture
+        run: node scripts/incoming-package-diversity-diagnostic.cjs
+      - name: Save detailed incoming recommendation metrics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: incoming-package-diversity-diagnostic
+          path: incoming-audit-report.json
+          if-no-files-found: warn

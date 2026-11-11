@@ -18,6 +18,17 @@ function production50(c,a){
   return{value:clamp50(.72*c,c+reliability*(observed-c),1.28*c),
     seasons,reason:'qualified-sleeper-anchor',reliability};
 }
+function sourceStatus50(sourceNames){
+  const records=state.rankings||{};
+  const snapshots=sourceNames.filter(n=>!String(n).endsWith(' (not listed)')).map(name=>{
+    const r=records[name]||{},time=r.updated||r.updatedAt||null;
+    const parsed=time?Date.parse(time):NaN;
+    const ageDays=Number.isFinite(parsed)?Math.max(0,(Date.now()-parsed)/86400000):null;
+    return{source:String(name),snapshotUpdatedAt:time,ageDays};
+  });
+  return{snapshots,unknownDates:snapshots.filter(s=>s.ageDays==null).length,
+    olderThan30Days:snapshots.filter(s=>s.ageDays!=null&&s.ageDays>30).length};
+}
 function rebuild50(z){
   const pos=String(groupPos(z?.x)||'').toUpperCase();
   if(!OFF50.has(pos))return z; // No IDP, pick or other position changes.
@@ -31,6 +42,7 @@ function rebuild50(z){
   const rank=finite50(detail.offenseRank);
   const a=z?.production?.correctedAudit||{};
   const p=production50(c,a);
+  const sourceStatus=sourceStatus50(Array.isArray(detail.offenseSources)?detail.offenseSources:[]);
   const ctx=clamp50(.90*c,finite50(z?.context)??c,1.15*c);
   const ageFactor=clamp50(.88,finite50(z?.production?.ageFactor)??1,1.10);
   const raw=.70*c+.18*p.value+.08*ctx+.04*c*ageFactor;
@@ -47,6 +59,9 @@ function rebuild50(z){
       offenseTerminalExactV50:exact,effectiveScoringValue:Math.round(p.value),
       consensusSourceRankV50:rank,
       consensusSourceEvidenceV50:Array.isArray(detail.offenseSourceEvidence)?detail.offenseSourceEvidence.map(e=>({...e})):[],
+      consensusSnapshotsV50:sourceStatus.snapshots,
+      consensusUnknownSnapshotDatesV50:sourceStatus.unknownDates,
+      consensusSourcesOlderThan30DaysV50:sourceStatus.olderThan30Days,
       consensusSourcesV50:Array.isArray(detail.offenseSources)?detail.offenseSources.slice():[],
       consensusSourceCountV50:Array.isArray(detail.offenseSources)?detail.offenseSources.filter(s=>!String(s).includes('(not listed)')).length:0,
       consensusNotListedPenaltyCountV50:Array.isArray(detail.offenseSources)?detail.offenseSources.filter(s=>String(s).includes('(not listed)')).length:0,

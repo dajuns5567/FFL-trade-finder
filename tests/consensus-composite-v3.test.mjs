@@ -52,3 +52,26 @@ test("does not assign an exact-name source row to an incompatible-position Sleep
   assert.equal(c.byId.wrong,undefined);
   assert.ok(c.byId.right>0);
 });
+
+test("offensive ranking trace exposes source ranks and omission penalties without altering IDP",()=>{
+  const mk=(name,rank)=>({player:name,rank,position:"WR"});
+  const a=Array.from({length:30},(_,i)=>mk(i===9?"Denzel Boston":"A"+i,i+1));
+  const b=Array.from({length:30},(_,i)=>mk(i===11?"Denzel Boston":"B"+i,i+1));
+  const missing=Array.from({length:30},(_,i)=>mk("C"+i,i+1));
+  const rows=[result("Ranker A","ranker-a",a),result("Ranker B","ranker-b",b),
+    result("Ranker C","ranker-c",missing),
+    result("IDP A","idp-a",[{player:"Elite LB",rank:1,position:"LB"}])];
+  const c=buildConsensusComposite(rows,[{id:"denzel",name:"Denzel Boston",positions:["WR"]},
+    {id:"lb",name:"Elite LB",positions:["LB"]}]);
+  const trace=c.detailsById.denzel.offenseSourceEvidence;
+  assert.equal(c.detailsById.denzel.offenseObservedSourceCount,2);
+  assert.equal(trace.length,3);
+  assert.deepEqual(trace.filter(x=>x.listed).map(x=>[x.source,x.rank]),
+    [["Ranker A",10],["Ranker B",12]]);
+  assert.equal(trace.filter(x=>!x.listed).length,1);
+  assert.ok(trace[2].source.includes("(not listed)"));
+  assert.equal(c.detailsById.lb.idpRank,1);
+  assert.equal(c.detailsById.lb.offenseSourceEvidence.length,0);
+  assert.ok(Math.abs(trace.reduce((s,x)=>s+x.rank*x.weight,0)/
+    trace.reduce((s,x)=>s+x.weight,0)-c.detailsById.denzel.offenseRank)<1e-10);
+});

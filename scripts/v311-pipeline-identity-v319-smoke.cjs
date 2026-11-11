@@ -3,8 +3,8 @@ const expected={
   'trade-value-normalization-v139.js':'a3176707c4812e4747864914bfc68b05294990a0',
   'trade-te-scoring-adjustment-v259.js':'7f087f0339b5d8a3af1c97e8787f4c55d28f59a6',
   'trade-finder-v256-compiled.js':'ee45b20b587d9072f735d2c934edec12eaef2cc6',
-  // Test-only integration of V330 Finder with existing experimental V322 runtime; neither is approved for production.
-  'trade-runtime-v256-compiled.js':'09c42fb717b1b20ae9aec0d6959e2de8c59661fd',
+  // Test-only integration of V330 Finder with reviewed smooth-threshold V322 runtime; neither is approved for production.
+  'trade-runtime-v256-compiled.js':'007227de50a6cb867697ef09f1433730f5996851',
   'trade-evaluator-any-team-v184.js':'c088af9ce9bd24f6142873fae201f1a262c63123',
   'trade-finder-candidate-guard-v223.js':'9373b06e4014f5fc368cf8eb00ed087b261ba1a7',
   'trade-ui-canonical-v136.js':'b9474616d1be29ae2c97ba0838cedd45e2a077b8',

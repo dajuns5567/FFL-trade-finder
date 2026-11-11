@@ -58,6 +58,23 @@ for(const c of auditFixtures){
  if(c.minScore!=null)assert.ok(f.score>=c.minScore,c.name+' established elite-vs-depth example must remain competitive: '+f.score);
  console.log('Original audit fixture:',c.name,'score',f.score,'adjustment',Math.round(f.aAdj+f.bAdj));
 }
+// The wide matrix's only formerly Excellent large-move exception: a single
+// high-value IDP against a high QB plus a strong IDP. Under the exact supplied
+// canonical values, the extra asset is a substantial overpay, not a fair peer.
+const formerExcellent={
+  a:[P('Elite synthetic IDP',9288,7,'IDP')],
+  b:[P('High synthetic QB',7800,27,'QB'),P('Strong synthetic IDP',6588,54,'IDP')]
+};
+const correction=fair(formerExcellent.a,formerExcellent.b);
+assert.ok(correction.score<82,'Formerly Excellent IDP-plus-QB overpay must no longer score Fair/Excellent: '+correction.score);
+assert.ok(correction.aAdj<Math.abs(correction.bRaw-correction.aRaw),'Near-peer consolidation credit must not erase entire raw counteroffer overpay: '+correction.aAdj);
+const imbalancedBoth={
+  a:[P('High synthetic QB',7800,27,'QB'),P('Elite synthetic RB',9447,4,'RB')],
+  b:[P('Bench synthetic RB',1047,401,'RB'),P('Elite synthetic QB',9500,3,'QB')]
+};
+const bothScore=fair(imbalancedBoth.a,imbalancedBoth.b);
+assert.ok(bothScore.score<55,'Clearly imbalanced two-premium swap must not be negotiated as fair: '+bothScore.score);
+assert.equal(fair(imbalancedBoth.b,imbalancedBoth.a).score,bothScore.score,'Two-premium case remains symmetric');
 // Preserve the established zero-adjustment one-for-one invariant.
 assert.equal(fair([maye],[lamar]).aAdj,0);
 assert.equal(fair([maye],[lamar]).bAdj,0);

@@ -7,12 +7,12 @@ const source=readFileSync(new URL('../valuation-offense-v40.js',import.meta.url)
 const precisionSource=readFileSync(new URL('../combined-market-precision-v386.js',import.meta.url),'utf8');
 function fixture(rows){
   const byId={},detailsById={};
-  for(const r of rows){if(r.c!=null)byId[r.id]=r.c;detailsById[r.id]={offenseRank:r.rank??100}}
+  for(const r of rows){if(r.c!=null)byId[r.id]=r.c;detailsById[r.id]={offenseRank:r.rank??100,offenseSources:r.sources??[]}}
   const master=rows.map(r=>({x:{id:r.id,type:'player',pos:r.pos},value:r.priorValue??500,
     context:r.context??r.c??500,production:{ageFactor:r.ageFactor??1,
       correctedAudit:{value:r.production,qualifyingSeasons:r.seasons}}}));
   const sandbox={window:{assetCurveAudit:raw=>({exact:raw,curved:Math.round(raw)})},
-    state:{consensusComposite:{byId,detailsById}},groupPos:x=>x.pos,
+    state:{consensusComposite:{byId,detailsById},players:Object.fromEntries(rows.map(r=>[r.id,{age:r.age??null}]))},groupPos:x=>x.pos,
     masterRankings:()=>master,ensureMaster:()=>master,masterRankCache:null,
     playerRankValue:()=>({}),baseValue:()=>0,playerName:()=>'',pickValue:()=>30,
     valueCache:new Map(),fitCache:new Map(),stageCache:new Map()};
@@ -72,4 +72,15 @@ test('market precision prefers V50 full-precision outcome to old stale terminal'
   const idp={x:{id:'def',pos:'IDP'},value:400,
     production:{idpOverallTradeCurveExactV72:412.5}};
   assert.equal(sandbox.window.combinedMarketPrecisionV386.precisionValue(idp).value,412.5);
+});
+
+test('audit explains verified per-player source coverage and available age without modifying the model',()=>{
+  const {rows}=fixture([row('denzel','WR',714,1,834,
+    {age:22,sources:['FantasyPros','KTC'],rank:86})]);
+  const p=rows[0].production;
+  assert.equal(p.consensusSourceCountV50,2);
+  assert.deepEqual([...p.consensusSourcesV50],['FantasyPros','KTC']);
+  assert.equal(p.ageYearsV50,22);
+  assert.equal(p.consensusSourceRankV50,86);
+  assert.equal(p.productionSeasonsV50,1);
 });

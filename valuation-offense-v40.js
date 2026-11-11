@@ -21,6 +21,9 @@ function production50(c,a){
 function rebuild50(z){
   const pos=String(groupPos(z?.x)||'').toUpperCase();
   if(!OFF50.has(pos))return z; // No IDP, pick or other position changes.
+  // V384 has already verified these players lack exact offensive-source coverage.
+  // Do not resurrect an unverified fuzzy composite by revaluing its fallback slot.
+  if(z?.coverageGate384===true)return z;
   const id=String(z?.x?.id??'');
   const c=finite50(state.consensusComposite?.byId?.[id]);
   if(c==null||c<=0)return z; // Never manufacture a missing consensus.
@@ -44,7 +47,8 @@ function rebuild50(z){
       offenseTerminalExactV50:exact,effectiveScoringValue:Math.round(p.value),
       consensusSourceRankV50:rank,
       consensusSourcesV50:Array.isArray(detail.offenseSources)?detail.offenseSources.slice():[],
-      consensusSourceCountV50:Array.isArray(detail.offenseSources)?detail.offenseSources.length:0,
+      consensusSourceCountV50:Array.isArray(detail.offenseSources)?detail.offenseSources.filter(s=>!String(s).includes('(not listed)')).length:0,
+      consensusNotListedPenaltyCountV50:Array.isArray(detail.offenseSources)?detail.offenseSources.filter(s=>String(s).includes('(not listed)')).length:0,
       ageYearsV50:finite50(state.players?.[id]?.age),
       productionHistoryReasonV50:p.reason,
       productionReliabilityV50:p.reliability??0,

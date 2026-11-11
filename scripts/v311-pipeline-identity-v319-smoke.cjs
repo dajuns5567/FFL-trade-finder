@@ -3,7 +3,8 @@ const expected={
   'trade-value-normalization-v139.js':'a3176707c4812e4747864914bfc68b05294990a0',
   'trade-te-scoring-adjustment-v259.js':'7f087f0339b5d8a3af1c97e8787f4c55d28f59a6',
   'trade-finder-v256-compiled.js':'6291d395dbe6b29d5b085a656863ebcbe21e9e2b',
-  'trade-runtime-v256-compiled.js':'84295dec5ce758ea42e72cfc65bc25065905944c',
+  // V322 isolated one-subsystem exception: reviewed smooth peer-quality Value Adjustment.
+  'trade-runtime-v256-compiled.js':'007227de50a6cb867697ef09f1433730f5996851',
   'trade-evaluator-any-team-v184.js':'c088af9ce9bd24f6142873fae201f1a262c63123',
   'trade-finder-candidate-guard-v223.js':'9373b06e4014f5fc368cf8eb00ed087b261ba1a7',
   'trade-ui-canonical-v136.js':'b9474616d1be29ae2c97ba0838cedd45e2a077b8',
@@ -34,4 +35,4 @@ if(bad.length){
   process.exit(1);
 }
 require('./offense-consensus-coverage-gate-v384-smoke.cjs');
-console.log('V384 pipeline identity verified: frozen trade/value-adjustment modules unchanged and offense zero-consensus coverage gate isolation passed for '+Object.keys(expected).length+' loaded modules.');
+console.log('V322 pipeline identity verified: only the audited trade runtime hash is updated; all remaining frozen modules and offense coverage isolation passed for '+Object.keys(expected).length+' loaded modules.');

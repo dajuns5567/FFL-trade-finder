@@ -3,7 +3,7 @@
 // ONLY the appended peer-quality attenuation; all other code and valuations match.
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const current=fs.readFileSync('trade-runtime-v256-compiled.js','utf8');
-const suffix='const base=Math.min(Math.max(scarcityPremium,packageGapFloor),depthCap);const peerStrength=clamp(0,(rel-.80)/.20,1);const peerFactor=1-.75*peerStrength;const qualityStarters=(otherAssets||[]).filter(x=>x?.type===\'player\'&&rankOf(x)<=60&&av(x)>=5500).length;const multiStarterFactor=qualityStarters>=2?.70:1;return base*peerFactor*multiStarterFactor';
+const suffix='const base=Math.min(Math.max(scarcityPremium,packageGapFloor),depthCap);const peerStrength=clamp(0,(rel-.80)/.20,1);const peerFactor=1-.75*peerStrength;const qualityStrength=(otherAssets||[]).filter(x=>x?.type===\'player\').reduce((sum,x)=>sum+clamp(0,(75-rankOf(x))/15,1)*clamp(0,(av(x)-5200)/300,1),0);const multiStarterFactor=1-.30*clamp(0,qualityStrength-1,1);return base*peerFactor*multiStarterFactor';
 const original='return Math.min(Math.max(scarcityPremium,packageGapFloor),depthCap)';
 assert.equal(current.split(suffix).length,2,'V322 must preserve exactly one identifiable adjustment delta; review changed source before testing');
 const prior=current.replace(suffix,original);
@@ -137,7 +137,7 @@ console.log('Wide matrix exercised '+packages.length+' combinations; '+violation
 
 // Discontinuity guard: a one-rank or one-value-point change must not cause
 // an abrupt >300-point effective consolidation jump. The V322 current
-// qualityStarters >= 2 branch violates this at rank 60/61, value 5500.
+// The former binary qualityStarters >= 2 branch violated this at rank 60/61 and value 5500; guard the continuous replacement.
 const premium=[P('boundary-elite',9500,3,'QB')];
 const first=P('boundary-peer',7500,30,'WR');
 const atRank60=newFair(premium,[first,P('boundary-second',5500,60,'RB')]);

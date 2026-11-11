@@ -46,6 +46,7 @@ function rebuild50(z){
       offenseConsensusAnchorV50:true,offenseTerminalRawV50:constrained,
       offenseTerminalExactV50:exact,effectiveScoringValue:Math.round(p.value),
       consensusSourceRankV50:rank,
+      consensusSourceEvidenceV50:Array.isArray(detail.offenseSourceEvidence)?detail.offenseSourceEvidence.map(e=>({...e})):[],
       consensusSourcesV50:Array.isArray(detail.offenseSources)?detail.offenseSources.slice():[],
       consensusSourceCountV50:Array.isArray(detail.offenseSources)?detail.offenseSources.filter(s=>!String(s).includes('(not listed)')).length:0,
       consensusNotListedPenaltyCountV50:Array.isArray(detail.offenseSources)?detail.offenseSources.filter(s=>String(s).includes('(not listed)')).length:0,

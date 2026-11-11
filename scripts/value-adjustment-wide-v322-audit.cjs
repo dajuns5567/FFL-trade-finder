@@ -120,6 +120,42 @@ const originalNear=outcomes.filter(x=>x.oldGap<=100);
 const currentNear=outcomes.filter(x=>x.newGap<=100);
 const nearReclassified=outcomes.filter(x=>(x.oldGap<=100)!==(x.newGap<=100));
 const bigMoves=sorted.slice(0,35);
+// Separate large score movement by direction and intrinsic trade structure.
+// Do not equate a large correction with an error: raw values, near-peer
+// counterpieces and league-dependent IDP values determine its interpretation.
+const largeMoveReview={total:danger.length,negative:0,positive:0,
+  becameExcellent:0,lostExcellent:0,becameFair:0,lostFair:0,
+  idpIncluded:0,picksIncluded:0,nearPeerCounter:0,
+  counterOverpay40pct:0,byCategory:{},byShape:{},
+  negativeExamples:[],positiveExamples:[]};
+for(const v of danger){
+  const original=packages.find(p=>p.shape===v.shape&&p.category===v.category&&
+    p.a.map(x=>x.id).join('|')===v.A.join('|')&&p.b.map(x=>x.id).join('|')===v.B.join('|'));
+  if(!original)throw Error('Review matrix lost a source-backed comparison');
+  const both=[...original.a,...original.b];
+  const rawA=original.a.reduce((n,x)=>n+x.v,0),rawB=original.b.reduce((n,x)=>n+x.v,0);
+  const highSide=original.a.length===1?original.a:original.b.length===1?original.b:null;
+  const other=highSide===original.a?original.b:highSide===original.b?original.a:null;
+  const singleTop=highSide?.[0]?.v||0;
+  const counterTop=other?.length?Math.max(...other.map(x=>x.v)):0;
+  const nearPeer=singleTop>0&&counterTop/singleTop>=.85&&counterTop<singleTop;
+  if(v.delta<0)largeMoveReview.negative++;else largeMoveReview.positive++;
+  if(v.oldScore<94&&v.newScore>=94)largeMoveReview.becameExcellent++;
+  if(v.oldScore>=94&&v.newScore<94)largeMoveReview.lostExcellent++;
+  if(v.oldScore<82&&v.newScore>=82)largeMoveReview.becameFair++;
+  if(v.oldScore>=82&&v.newScore<82)largeMoveReview.lostFair++;
+  if(both.some(x=>x.pos==='IDP'))largeMoveReview.idpIncluded++;
+  if(both.some(x=>x.type==='pick'))largeMoveReview.picksIncluded++;
+  if(nearPeer)largeMoveReview.nearPeerCounter++;
+  if(highSide&&other.reduce((n,x)=>n+x.v,0)>=1.4*singleTop)largeMoveReview.counterOverpay40pct++;
+  largeMoveReview.byCategory[v.category]=(largeMoveReview.byCategory[v.category]||0)+1;
+  largeMoveReview.byShape[v.shape]=(largeMoveReview.byShape[v.shape]||0)+1;
+  const example={oldScore:v.oldScore,newScore:v.newScore,delta:v.delta,
+    rawA,rawB,A:v.A,B:v.B,category:v.category,nearPeer};
+  const list=v.delta<0?largeMoveReview.negativeExamples:largeMoveReview.positiveExamples;
+  if(list.length<8)list.push(example);
+}
+console.log('LARGE-SCORE-MOVE REVIEW: '+JSON.stringify(largeMoveReview));
 const results={version:'V322-wide-safety-audit',builtFrom:'deterministic player/pick value tiers; no invented consensus data',
  sources:'site canonical compiled fair() and exact V321 baseline delta',total:packages.length,
  invariantsTested:invariants,hardViolations:violations.length,
@@ -127,7 +163,7 @@ const results={version:'V322-wide-safety-audit',builtFrom:'deterministic player/
  scoreMoves:{changed:outcomes.filter(x=>x.delta).length,
  large25:danger.length,negative:outcomes.filter(x=>x.delta<0).length,
  positive:outcomes.filter(x=>x.delta>0).length},
- byShape,byGroup,biggestChanges:bigMoves,
+ byShape,byGroup,largeMoveReview,biggestChanges:bigMoves,
  examples:nearReclassified.slice(0,60)};
 console.log('WIDE VALUE ADJUSTMENT SAFETY AUDIT:\n'+JSON.stringify(results,null,2));
 if(violations.length){console.error('HARD INVARIANT FAILURES',JSON.stringify(violations.slice(0,25),null,2));process.exitCode=1;}

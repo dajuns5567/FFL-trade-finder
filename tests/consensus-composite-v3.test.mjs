@@ -70,7 +70,8 @@ test("offensive ranking trace exposes source ranks and omission penalties withou
     [["Ranker A",10],["Ranker B",12]]);
   assert.equal(trace.filter(x=>!x.listed).length,1);
   assert.ok(trace[2].source.includes("(not listed)"));
-  assert.equal(c.detailsById.lb.idpRank,1);
+  // Existing single-source IDP coverage floor is 180, not raw source rank 1.
+  assert.equal(c.detailsById.lb.idpRank,180);
   assert.equal(c.detailsById.lb.offenseSourceEvidence.length,0);
   assert.ok(Math.abs(trace.reduce((s,x)=>s+x.rank*x.weight,0)/
     trace.reduce((s,x)=>s+x.weight,0)-c.detailsById.denzel.offenseRank)<1e-10);

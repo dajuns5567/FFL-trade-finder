@@ -127,7 +127,7 @@ const largeMoveReview={total:danger.length,negative:0,positive:0,
   becameExcellent:0,lostExcellent:0,becameFair:0,lostFair:0,
   idpIncluded:0,picksIncluded:0,nearPeerCounter:0,
   counterOverpay40pct:0,byCategory:{},byShape:{},
-  negativeExamples:[],positiveExamples:[]};
+  negativeExamples:[],positiveExamples:[],outsideNearPeerExamples:[],lostExcellentExamples:[]};
 for(const v of danger){
   const original=packages.find(p=>p.shape===v.shape&&p.category===v.category&&
     p.a.map(x=>x.id).join('|')===v.A.join('|')&&p.b.map(x=>x.id).join('|')===v.B.join('|'));
@@ -154,6 +154,8 @@ for(const v of danger){
     rawA,rawB,A:v.A,B:v.B,category:v.category,nearPeer};
   const list=v.delta<0?largeMoveReview.negativeExamples:largeMoveReview.positiveExamples;
   if(list.length<8)list.push(example);
+  if(!nearPeer&&largeMoveReview.outsideNearPeerExamples.length<20)largeMoveReview.outsideNearPeerExamples.push(example);
+  if(v.oldScore>=94&&v.newScore<94&&largeMoveReview.lostExcellentExamples.length<10)largeMoveReview.lostExcellentExamples.push(example);
 }
 console.log('LARGE-SCORE-MOVE REVIEW: '+JSON.stringify(largeMoveReview));
 const results={version:'V322-wide-safety-audit',builtFrom:'deterministic player/pick value tiers; no invented consensus data',

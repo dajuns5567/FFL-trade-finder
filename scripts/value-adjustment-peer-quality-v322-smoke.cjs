@@ -67,7 +67,7 @@ const formerExcellent={
 };
 const correction=fair(formerExcellent.a,formerExcellent.b);
 assert.ok(correction.score<82,'Formerly Excellent IDP-plus-QB overpay must no longer score Fair/Excellent: '+correction.score);
-assert.ok(correction.aAdj<2000,'Near-peer counteroffer must not receive massive consolidation premium: '+correction.aAdj);
+assert.ok(correction.aAdj<Math.abs(correction.bRaw-correction.aRaw),'Near-peer consolidation credit must not erase entire raw counteroffer overpay: '+correction.aAdj);
 const imbalancedBoth={
   a:[P('High synthetic QB',7800,27,'QB'),P('Elite synthetic RB',9447,4,'RB')],
   b:[P('Bench synthetic RB',1047,401,'RB'),P('Elite synthetic QB',9500,3,'QB')]

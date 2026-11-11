@@ -84,3 +84,17 @@ test('audit explains verified per-player source coverage and available age witho
   assert.equal(p.consensusSourceRankV50,86);
   assert.equal(p.productionSeasonsV50,1);
 });
+
+test('V384 zero-source coverage fallback cannot be overwritten by terminal V50',()=>{
+  const {sandbox}=fixture([row('fuzzy','WR',603,0,null,{priorValue:42})]);
+  const z={x:{id:'fuzzy',pos:'WR'},value:42,coverageGate384:true,
+    production:{correctedAudit:{qualifyingSeasons:0,value:603}}};
+  const result=sandbox.window.offenseConsensusAnchorV50.rebuild(z);
+  assert.equal(result,z,'verified coverage fallback object and numeric value must be preserved');
+});
+test('missing-source penalty is not counted as an actual independent ranking source',()=>{
+  const {rows}=fixture([row('te','TE',600,2,750,
+    {sources:['FantasyPros','DraftSharks (not listed)','KTC']})]);
+  assert.equal(rows[0].production.consensusSourceCountV50,2);
+  assert.equal(rows[0].production.consensusNotListedPenaltyCountV50,1);
+});

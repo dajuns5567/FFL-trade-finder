@@ -26,6 +26,8 @@ on:
       - 'valuation-offense-v40.js'
       - 'combined-market-precision-v386.js'
       - 'tests/offense-consensus-anchor-v50.test.mjs'
+      - 'netlify/functions/consensus-composite-v3.mjs'
+      - 'tests/consensus-composite-v3.test.mjs'
       - 'scripts/compile-v256-runtimes.cjs'
       - 'scripts/patch-regular-family-v328.cjs'
       - 'scripts/regular-finder-family-diversity-v328-smoke.cjs'
@@ -173,7 +175,7 @@ jobs:
           node --check netlify/functions/pick-order-v527.mjs
           node --test tests/draft-pick-order-5050.test.mjs
       - name: Offensive consensus anchoring V50 full-cohort regression
-        run: node --test tests/offense-consensus-anchor-v50.test.mjs
+        run: node --test tests/offense-consensus-anchor-v50.test.mjs tests/consensus-composite-v3.test.mjs
       - name: Current-season scoring qualification
         run: node --test tests/ppr-history.test.mjs
       - name: Current-season scoring pipeline syntax

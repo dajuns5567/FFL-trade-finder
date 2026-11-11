@@ -12,7 +12,7 @@ function fixture(rows){
     context:r.context??r.c??500,production:{ageFactor:r.ageFactor??1,
       correctedAudit:{value:r.production,qualifyingSeasons:r.seasons}}}));
   const sandbox={window:{assetCurveAudit:raw=>({exact:raw,curved:Math.round(raw)})},
-    state:{consensusComposite:{byId,detailsById},players:Object.fromEntries(rows.map(r=>[r.id,{age:r.age??null}]))},groupPos:x=>x.pos,
+    state:{consensusComposite:{byId,detailsById},rankings:{'FantasyPros':{updated:'2026-11-10T00:00:00.000Z'},'KTC':{updated:'2026-01-01T00:00:00.000Z'}},players:Object.fromEntries(rows.map(r=>[r.id,{age:r.age??null}]))},groupPos:x=>x.pos,
     masterRankings:()=>master,ensureMaster:()=>master,masterRankCache:null,
     playerRankValue:()=>({}),baseValue:()=>0,playerName:()=>'',pickValue:()=>30,
     valueCache:new Map(),fitCache:new Map(),stageCache:new Map()};
@@ -97,4 +97,14 @@ test('missing-source penalty is not counted as an actual independent ranking sou
     {sources:['FantasyPros','DraftSharks (not listed)','KTC']})]);
   assert.equal(rows[0].production.consensusSourceCountV50,2);
   assert.equal(rows[0].production.consensusNotListedPenaltyCountV50,1);
+});
+
+test('source recency audit uses actual snapshot updated field, not guessed refresh age',()=>{
+  const {rows}=fixture([row('one','WR',800,1,800,{sources:['FantasyPros','KTC','No timestamp','DraftSharks (not listed)']})]);
+  const p=rows[0].production;
+  assert.equal(p.consensusSnapshotsV50.length,3);
+  assert.equal(p.consensusUnknownSnapshotDatesV50,1);
+  assert.equal(p.consensusSourcesOlderThan30DaysV50,1);
+  assert.equal(p.consensusSnapshotsV50.find(x=>x.source==='FantasyPros').snapshotUpdatedAt,'2026-11-10T00:00:00.000Z');
+  assert.equal(p.consensusSnapshotsV50.find(x=>x.source==='No timestamp').ageDays,null);
 });

@@ -1,0 +1,21 @@
+/* V538: ChromeOS/desktop hover exposes the horizontal nav scrollbar as a
+   translucent rectangle over the menu headings. Hide the track visually,
+   keeping overflow-x:auto so touch, keyboard and trackpad scrolling work. */
+header.fleeced-site-header > .tabs,
+header.fleeced-site-header .fleeced-header-tabs{
+  scrollbar-width:none!important;
+  -ms-overflow-style:none;
+}
+header.fleeced-site-header > .tabs::-webkit-scrollbar,
+header.fleeced-site-header .fleeced-header-tabs::-webkit-scrollbar{
+  display:none!important;
+  width:0!important;
+  height:0!important;
+}
+header.fleeced-site-header > .tabs::-webkit-scrollbar-track,
+header.fleeced-site-header .fleeced-header-tabs::-webkit-scrollbar-track,
+header.fleeced-site-header > .tabs::-webkit-scrollbar-thumb,
+header.fleeced-site-header .fleeced-header-tabs::-webkit-scrollbar-thumb{
+  background:transparent!important;
+  box-shadow:none!important;
+}

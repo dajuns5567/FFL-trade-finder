@@ -27,7 +27,7 @@ test('team popup offers value history, filtered trade history, and cancel, all w
  assert.match(style,/min-height:46px/);
  assert.match(style,/@media\(max-width:700px\)/);
  assert.match(site,/team-net-choice-v540\.css\?v=540/);
- assert.match(site,/value-history-v276\.js\?v=540/);
+ assert.match(site,/value-history-v276\.js\?v=541/);
  assert.match(site,/ui-player-values-v139\.js\?v=540/);
 });
 test('choice logic sends value and trades to existing filtered routes; cancel retains comparison',()=>{

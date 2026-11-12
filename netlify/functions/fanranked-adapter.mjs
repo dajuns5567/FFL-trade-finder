@@ -2,6 +2,7 @@ const PLAYERS_URL="https://www.fanranked.com/api/players?mode=football_dynasty_s
 const MARKET_URL="https://www.fanranked.com/api/football/market-values?format=superflex";
 const SOURCE_URL="https://www.fanranked.com/football/dynasty-rankings";
 const TIMEOUT_MS=7000;
+import { marketObservationFreshness } from "./consensus-source-freshness.mjs";
 const MAX_PLAYERS=300;
 const OFFENSE_POSITIONS=new Set(["QB","RB","WR","TE"]);
 
@@ -80,6 +81,7 @@ export async function refreshFanRanked(opts={}){
       players_extracted:uniqueNames,
       ranking_rows:rows.length,
       rankings:rows,
+      marketObservation:marketObservationFreshness(rows,now),
       timestamp:now,
       stage:valid?"validated":"extract",
       error,

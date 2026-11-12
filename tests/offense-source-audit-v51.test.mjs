@@ -122,3 +122,25 @@ test('two peer sources alone are insufficient to call a ranking an outlier',()=>
   assert.equal(out.highImpactDisagreements.rows.length,0);
   assert.equal(out.highImpactDisagreements.bySource.DraftSharks.measured,0);
 });
+
+test('outlier protection audit exposes base/effective weights and the unchanged original rank',()=>{
+  const a=fixture(),input=vals([{id:'p',first_name:'Example',last_name:'WR',fantasy_positions:['WR']}],
+    [{id:'p',offenseRank:41,consensusCompositeValue:900,offenseSourceEvidence:[
+      {source:'FantasyPros',rank:30,weight:1,baseWeight:1,listed:true},
+      {source:'DraftSharks',rank:35,weight:1,baseWeight:1,listed:true},
+      {source:'The IDP Show Combined Offense',rank:133,weight:.25,baseWeight:1,outlierProtected:true,listed:true},
+      {source:'KTC',rank:25,weight:.5,baseWeight:.5,listed:true}
+    ],offenseOutlierAdjustments:[{
+      source:'The IDP Show Combined Offense',rank:133,peerMedian:30,deviation:103,
+      originalWeight:1,adjustedWeight:.25,reason:'independent peers agree'
+    }]}],[{x:{id:'p'},value:900}]);
+  const out=a.build(input),p=out.players[0],e=p.sourceRanks['The IDP Show Combined Offense'];
+  assert.equal(out.summary.outlierProtectedPlayers,1);
+  assert.equal(out.summary.outlierProtectedBySource['The IDP Show Combined Offense'],1);
+  assert.equal(e.rank,133);
+  assert.equal(e.weight,.25);
+  assert.equal(e.baseWeight,1);
+  assert.equal(e.outlierProtected,true);
+  assert.equal(p.outlierAdjustments[0].peerMedian,30);
+  assert.equal(input.consensusComposite.detailsById.p.offenseSourceEvidence[2].weight,.25,'export does not mutate source evidence');
+});

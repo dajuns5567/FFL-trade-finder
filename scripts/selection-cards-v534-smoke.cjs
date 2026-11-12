@@ -4,6 +4,8 @@ const assert=require('node:assert/strict');
 const stylesheet=fs.readFileSync('trade-asset-selection-v534.css','utf8');
 const loader=fs.readFileSync('netlify/functions/site-v29.mjs','utf8');
 const script=fs.readFileSync('trade-select-all-v165.js','utf8');
+const bridge=fs.readFileSync('trade-selection-sync-v534.js','utf8');
+assert.match(loader,/trade-selection-sync-v534\.js\?v=534/);
 assert.match(loader,/trade-asset-selection-v534\.css\?v=534/);
 assert.match(stylesheet,/:is\(#findShop,#evalChooserA,#evalChooserB\) label\.checkrow/);
 assert.match(stylesheet,/label\.checkrow:has\(input:checked\)/);
@@ -30,13 +32,16 @@ const context={window:{section1V130:{finderSel:selection}},document:{
  createElement,addEventListener:(name,cb)=>events[name]=cb},
  MutationObserver:class{observe(){}},setTimeout:()=>0};
 context.window.window=context.window;context.window.document=context.document;
+context.queueMicrotask=fn=>fn();
 vm.runInNewContext(script,context);
+vm.runInNewContext(bridge,context);
+const clickSelectAll=()=>events.click({target:{closest:selector=>selector==='#tradeSelectAllButton165'?{}:null}});
 const api=context.window.tradeSelectAllV165;
 assert.ok(api);
-api.selectAllBlankAlias();
+api.selectAllBlankAlias();clickSelectAll();
 assert.deepEqual(boxes.map(x=>x.checked),[true,true,true]);
 assert.equal(selection.size,3);
-api.selectAllBlankAlias(); // second click must not undo selected state
+api.selectAllBlankAlias();clickSelectAll(); // second click must not undo selected state
 assert.deepEqual(boxes.map(x=>x.checked),[true,true,true]);
 assert.equal(selection.size,3);
 for(const b of boxes)b.checked=selection.has(b._asset.id); // active runtime synchronization

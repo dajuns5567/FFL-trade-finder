@@ -77,6 +77,7 @@ on:
       - '.github/workflows/value-history-headless-refresh.yml'
       - 'netlify/functions/ktc-adapter.mjs'
       - 'value-history-v276.js'
+      - 'tests/value-history-all-time-milestones.test.mjs'
       - 'netlify/functions/player-signals.mjs'
       - 'netlify/functions/player-signal-engine.mjs'
       - 'tests/market-intelligence-original-recovery.test.mjs'
@@ -195,6 +196,8 @@ jobs:
           node --check scripts/import-sleeper-history.mjs
           node --check sleeper-history-client-v22.js
           node --check netlify/functions/ppr-scoring.mjs
+      - name: All-Time Milestones scoring render and failure regression
+        run: node --test tests/value-history-all-time-milestones.test.mjs
       - name: Value History data hub syntax
         run: |
           node --check value-history-v276.js

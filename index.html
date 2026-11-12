@@ -94,6 +94,8 @@ button{border:0;border-radius:9px;padding:10px 13px;font:inherit;font-weight:700
   <div id="consensusDiagnostics" class="card fleeced-home-consensus" style="margin-top:18px;display:none">
     <h3 style="margin:0 0 8px">Consensus refresh diagnostics</h3>
     <div id="consensusSummary" class="muted" style="margin-bottom:8px"></div>
+    <button type="button" id="offenseSourceAuditDownload" class="secondary small" style="margin:0 0 12px">Download all-player source ranking audit (JSON)</button>
+    <div class="tiny muted" id="offenseSourceAuditStatus" style="margin-bottom:8px">Read-only comparison of five offensive dynasty sources. No valuation changes.</div>
     <div id="consensusSources"></div>
   </div>
 </div>
@@ -597,6 +599,24 @@ async function boot(){
   }else await updateData();
 }
 
+document.getElementById("offenseSourceAuditDownload").onclick=()=>{
+  const statusBox=document.getElementById("offenseSourceAuditStatus");
+  try{
+    const reporter=window.fflOffenseSourceAuditV51;
+    if(!reporter?.build||!reporter?.download)throw new Error("Source audit module is not loaded");
+    if(!state?.consensusComposite?.detailsById||!Object.keys(state.consensusComposite.detailsById).length)
+      throw new Error("No validated consensus snapshot. Click UPDATE and let its refresh complete.");
+    const audit=reporter.build({
+      players:state.players,consensusComposite:state.consensusComposite,
+      rankings:state.rankings,masterRows:ensureMaster()
+    });
+    if(!audit.summary.totalOffense)throw new Error("No offensive rankings available yet");
+    reporter.download(audit);
+    if(statusBox)statusBox.textContent="Exported "+audit.summary.totalOffense+" offensive players; "+audit.summary.flagged+" flagged for review. Upload the JSON for a complete source disagreement audit.";
+  }catch(error){
+    if(statusBox)statusBox.textContent="Source audit unavailable: "+String(error?.message||error);
+  }
+};
 document.getElementById("updateBtn").onclick=updateData;
 document.getElementById("runFinder").onclick=runFinder;
 document.getElementById("addA").onclick=()=>addAssetPrompt("A");

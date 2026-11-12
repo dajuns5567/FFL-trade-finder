@@ -60,7 +60,11 @@ export default async (req)=>{
     }
     const promoted={sources:candidate.sources,composite:candidate.composite,updatedAt:candidate.updatedAt,sourceManifest:candidate.summary.results.map(x=>({source:x.source,status:"fresh",snapshot_timestamp:x.timestamp||candidate.updatedAt,attempt_timestamp:x.timestamp||candidate.updatedAt,players_extracted:x.players_extracted,ranking_rows:x.ranking_rows,publisher_updated_at:null,source_freshness:(x.source==="The IDP Show Combined"?candidate.sources["The IDP Show Combined Offense"]?.freshness:candidate.sources[x.source]?.freshness)||null,market_observation:x.market_observation||null}))};
     await writeLastGood(promoted);
-    return json({...candidate,promotion:{promoted:true,using_last_known_good:false},sourceManifest:promoted.sourceManifest});
+    const summary={...candidate.summary,results:candidate.summary.results.map(x=>({...x,
+      source_freshness:(x.source==="The IDP Show Combined"?candidate.sources["The IDP Show Combined Offense"]?.freshness:candidate.sources[x.source]?.freshness)||null,
+      market_observation:x.market_observation||null
+    }))};
+    return json({...candidate,summary,promotion:{promoted:true,using_last_known_good:false},sourceManifest:promoted.sourceManifest});
   }
 
   const priorSources=previous?.sources&&Object.keys(previous.sources).length?previous.sources:null;
@@ -72,7 +76,7 @@ export default async (req)=>{
     const old=priorManifest.find(p=>p.source===x.source);
     return{source:x.source,status:old?"last-known-good":"unavailable",snapshot_timestamp:old?.snapshot_timestamp||null,attempt_timestamp:x.timestamp||candidate.updatedAt,players_extracted:old?.players_extracted??null,ranking_rows:old?.ranking_rows??null,publisher_updated_at:old?.publisher_updated_at||null,source_freshness:old?.source_freshness||null,market_observation:old?.market_observation||null,error:x.error||"Live refresh failed"};
   });
-  const summary={...candidate.summary,successful:candidate.summary.results.filter(x=>x.ok).length,results:manifest.map(x=>({source:x.source,ok:x.status==="fresh-not-promoted",status:x.status,players_extracted:x.players_extracted,ranking_rows:x.ranking_rows,timestamp:x.attempt_timestamp,snapshot_timestamp:x.snapshot_timestamp,error:x.error||null}))};
+  const summary={...candidate.summary,successful:candidate.summary.results.filter(x=>x.ok).length,results:manifest.map(x=>({source:x.source,ok:x.status==="fresh-not-promoted",status:x.status,players_extracted:x.players_extracted,ranking_rows:x.ranking_rows,timestamp:x.attempt_timestamp,snapshot_timestamp:x.snapshot_timestamp,source_freshness:x.source_freshness||null,market_observation:x.market_observation||null,publisher_updated_at:x.publisher_updated_at||null,error:x.error||null}))};
   return json({...candidate,sources:priorSources||{},composite:priorComposite||candidate.composite,summary,sourceManifest:manifest,promotion:{promoted:false,using_last_known_good:!!priorSources,last_good_updated_at:previous?.updatedAt||null},integrity:{...candidate.integrity,reason:priorSources?`${candidate.integrity.reason}; complete last-known-good consensus from ${previous.updatedAt} remains active`:`${candidate.integrity.reason}; no persisted last-known-good consensus is available yet`}});
 };
 function json(body,status=200){return new Response(JSON.stringify(body),{status,headers:{"content-type":"application/json; charset=utf-8","cache-control":"no-store"}})}

@@ -58,7 +58,7 @@ test('choice logic sends value and trades to existing filtered routes; cancel re
   currentTeamNetStandings:()=>[{id:'17',name:'Philadelphia Eagles'}],
   esc:s=>String(s),
   closeMoverModal(){modalRemoved++;overlay=null},
-  renderTrackMyTeam(){trackOpened++;teamId=this.trackedTeamId},
+  renderTrackMyTeam(){trackOpened++},
   openTradeHistoryTab(id){tradeId=id},
   trackedTeamId:null,
  };

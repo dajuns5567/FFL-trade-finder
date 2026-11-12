@@ -31,7 +31,7 @@ test('team popup offers value history, filtered trade history, and cancel, all w
  assert.match(site,/ui-player-values-v139\.js\?v=540/);
 });
 test('choice logic sends value and trades to existing filtered routes; cancel retains comparison',()=>{
- const a=valueUI.indexOf('function openTeamNetChoice(teamId){');
+ const a=valueUI.indexOf('function openTeamNetChoice(teamId,trigger=null){');
  const b=valueUI.indexOf('function openTeamNetModal(){',a);
  assert.ok(a>0&&b>a);
  const code=valueUI.slice(a,b);

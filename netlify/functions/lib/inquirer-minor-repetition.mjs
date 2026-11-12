@@ -21,9 +21,22 @@ export function assessMinorNineWordReuse(teams,repeated){
  if([...owners].some(id=>!byTeam.has(id)))return{tolerated:false};
  const [first,...others]=[...owners];
  const shared=[...byTeam.get(first)].filter(sentence=>others.every(id=>byTeam.get(id).has(sentence)));
+ // Never waive a copied paragraph. Each occurrence must be one incidental
+ // sentence embedded inside independently written, substantive surrounding prose.
+ const embedded=(team,sentence)=>{
+  const paragraphs=(team.inquirer_article?.sections||[]).flatMap(section=>section.paragraphs||[]);
+  return paragraphs.some(paragraph=>{
+   const parts=sentences({sections:[{paragraphs:[paragraph]}]});
+   const occurrences=parts.filter(part=>tokens(part).join(' ')===sentence).length;
+   const surrounding=parts.filter(part=>tokens(part).join(' ')!==sentence);
+   return occurrences===1&&surrounding.length>=2&&
+     surrounding.reduce((total,part)=>total+tokens(part).length,0)>=18;
+  });
+ };
  const matches=shared.filter(sentence=>{
   const padded=' '+sentence+' ';
-  return collisions.every(([phrase])=>padded.includes(' '+phrase+' '));
+  return collisions.every(([phrase])=>padded.includes(' '+phrase+' '))&&
+    [...owners].every(id=>embedded((teams||[]).find(t=>String(t.roster_id)===id),sentence));
  });
  if(matches.length!==1)return{tolerated:false};
  return{tolerated:true,team_count:4,phrase_windows:collisions.length,

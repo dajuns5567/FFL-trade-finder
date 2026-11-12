@@ -26,7 +26,7 @@ const nineGrams=text=>{
  return out;
 };
 test('Week 9 held cross-team scaffold is eliminated at its generation source',()=>{
- assert.equal(FORWARD_EDITORIAL_REVISION,108);
+ assert.equal(FORWARD_EDITORIAL_REVISION,109);
  assert.doesNotMatch(source,/The bench advantage deserves a Week 6 review/);
  assert.doesNotMatch(source,/Those unused points will be much louder at the next lineup meeting/);
  assert.doesNotMatch(source,/A losing week is a rough time to discover the bench had a better answer/);
@@ -75,7 +75,11 @@ import {assessMinorNineWordReuse} from '../netlify/functions/lib/inquirer-minor-
 
 const repeatedFixture=(groups)=>{
  const teams=Array.from({length:32},(_,i)=>({roster_id:i+1,inquirer_article:{
-  sections:[{paragraphs:[...groups.filter(group=>group.members.includes(i+1)).map(group=>group.sentence)]}]}}));
+  sections:[{paragraphs:[...groups.filter(group=>group.members.includes(i+1)).map(group=>
+   'Distinct opening evidence for this exact roster ' + (i+1) + '. ' +
+   group.sentence + ' This closing review documents that individual club ' +
+   (i+1) + ' in a unique way with verified personnel context and a specific next opponent for this roster ' +
+   (i+1) + '.')]}]}}));
  const owners=new Map();
  for(const team of teams){
   const prose=team.inquirer_article.sections.flatMap(s=>s.paragraphs).join(' ');
@@ -101,6 +105,11 @@ test('a fifth affected article or two repeated sentences cannot use the minor to
   {sentence:'A completely separate repeated decision emerged as the manager evaluated a different lineup and roster situation.',members:[5,6,7,8]}]);
  assert.equal(assessMinorNineWordReuse(two.teams,two.repeated).tolerated,false);
 });
+test('a duplicated whole paragraph is still fatal even with exactly four teams',()=>{
+ const fixture=repeatedFixture([{sentence:one,members:[1,2,3,4]}]);
+ for(const team of fixture.teams.slice(0,4))team.inquirer_article.sections[0].paragraphs=[one];
+ assert.equal(assessMinorNineWordReuse(fixture.teams,fixture.repeated).tolerated,false);
+});
 test('extended duplicate prose remains a fatal repeated passage',()=>{
  const long='A detailed repeated editorial passage that describes the same manager and the same lineup evaluation without distinctive player reporting and therefore repeats its conclusion instead of examining a real result or any useful tactical decision.';
  const fixture=repeatedFixture([{sentence:long,members:[1,2,3,4]}]);
@@ -109,5 +118,10 @@ test('extended duplicate prose remains a fatal repeated passage',()=>{
 test('the production-quality gate records tolerance but retains all other failures',()=>{
  assert.match(source,/assessMinorNineWordReuse\(teams,longRecycled\)/);
  assert.match(source,/minor_repetition_warning:minorRepetition\.tolerated/);
+ assert.match(source,/const blockingIssues=minorPhraseSets\?issues\.filter/);
+ assert.match(source,/if\(issue\.id==='cross-team-copy-scaffold'&&issue\.sentence===minorSentenceNorm\)/);
+ assert.match(source,/if\(issue\.id==='cross-reporter-phrase-scaffold'/);
+ assert.match(source,/if\(issue\.id==='cross-team-clause-scaffold'/);
+ assert.match(source,/if\(issue\.id==='paired-editorial-clause-scaffold'/);
  assert.match(source,/if\(longRecycled\.length&&!minorRepetition\.tolerated\)/);
 });

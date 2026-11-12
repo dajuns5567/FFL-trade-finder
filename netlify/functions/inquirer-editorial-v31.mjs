@@ -10,7 +10,7 @@ import {attributeForwardPlayerStatFragments,curateForwardTeamNarrative,inspectNa
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=108;
+export const FORWARD_EDITORIAL_REVISION=109;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -6696,6 +6696,27 @@ export function evaluateInquirerEditionQuality(current,previous=null){
     if(matches.length>=2)issues.push({id:'recap-stacked-prefaces',block:b.heading,count:matches.length});
   }
   const seen=new Set();for(const s of blockSentences){const n=forwardNormSentence(s,entities);if(seen.has(n))issues.push({id:'recap-repeated-developed-sentence',sentence:n});seen.add(n)}
-  return{ok:issues.length===0,issues,metrics:{team_articles:teams.length,cross_team_scaffolds:[...articleScaffold.values()].filter(ids=>ids.size>=4).length,minor_repetition_warning:minorRepetition.tolerated?minorRepetition:null}};
+    // The short repeated sentence can trigger several overlapping phrase
+  // detectors. Waive only signatures belonging to that same verified sentence;
+  // every unrelated issue (and every publication/structural gate) stays fatal.
+  const minorPhraseSets=minorRepetition.tolerated?{
+    reporter:new Set(forwardEditorialPhraseKeys(minorRepetition.sentence,entities)),
+    clause:new Set(forwardEditorialPhraseKeys(minorRepetition.sentence,entities,12,false)),
+    paired:new Set(forwardEditorialPhraseKeys(minorRepetition.sentence,entities,16,false))
+  }:null;
+  const minorSentenceNorm=minorRepetition.tolerated?
+    forwardNormSentence(minorRepetition.sentence,entities):null;
+  const blockingIssues=minorPhraseSets?issues.filter(issue=>{
+    if(issue.id==='cross-team-copy-scaffold'&&issue.sentence===minorSentenceNorm)return false;
+    if(issue.id==='cross-reporter-phrase-scaffold'&&minorPhraseSets.reporter.has(issue.phrase))return false;
+    if(issue.id==='cross-team-clause-scaffold'&&minorPhraseSets.clause.has(issue.phrase))return false;
+    if(issue.id==='paired-editorial-clause-scaffold'&&minorPhraseSets.paired.has(issue.phrase))return false;
+    return true;
+  }):issues;
+  return{ok:blockingIssues.length===0,issues:blockingIssues,metrics:{
+    team_articles:teams.length,
+    cross_team_scaffolds:[...articleScaffold.values()].filter(ids=>ids.size>=4).length,
+    minor_repetition_warning:minorRepetition.tolerated?minorRepetition:null}};
+
 }
 

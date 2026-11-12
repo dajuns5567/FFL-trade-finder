@@ -631,7 +631,7 @@ function handleContentClick(e){
   const teamNetChoice=e.target.closest('[data-vh-team-net-choice]');
   if(teamNetChoice){useTeamNetChoice(teamNetChoice.dataset.vhTeamNetChoice,teamNetChoice.dataset.vhTeamNetId);return}
   const teamNetMenu=e.target.closest('[data-vh-team-net-menu]');
-  if(teamNetMenu){openTeamNetChoice(teamNetMenu.dataset.vhTeamNetMenu);return}
+  if(teamNetMenu){openTeamNetChoice(teamNetMenu.dataset.vhTeamNetMenu,teamNetMenu);return}
   const tradeReset=e.target.closest('[data-vh-trade-reset]');
   if(tradeReset){tradeTeamFilter='';tradeYearFilter='';tradeMonthFilter='';renderTradeHistory();return}
   const tradeToggle=e.target.closest('[data-vh-trade-toggle]');
@@ -1776,7 +1776,7 @@ function sortedTeamNetRows(){
   });
 }
 function teamNetSortHeader(label,key){const active=teamNetSort.key===key,arrow=active?(teamNetSort.dir>0?' ▲':' ▼'):'';return`<button type="button" class="vh-team-net-sort" data-vh-team-net-sort="${key}">${label}${arrow}</button>`}
-function openTeamNetChoice(teamId){
+function openTeamNetChoice(teamId,trigger=null){
   const modal=document.getElementById('vhMoverModal');
   const id=String(teamId||'');
   const team=currentTeamNetStandings().find(t=>String(t.id)===id);
@@ -1784,6 +1784,7 @@ function openTeamNetChoice(teamId){
   modal.querySelector('.vh-team-net-choice-overlay')?.remove();
   const overlay=document.createElement('div');
   overlay.className='vh-team-net-choice-overlay';
+  overlay.returnFocusTo=trigger;
   overlay.innerHTML=`<div class="vh-team-net-choice-panel" role="dialog" aria-modal="true" aria-label="${esc(team.name)} history options">
     <h4>${esc(team.name)}</h4>
     <p>Which history would you like to view?</p>
@@ -1796,8 +1797,10 @@ function openTeamNetChoice(teamId){
 }
 function useTeamNetChoice(action,teamId){
   if(action==='cancel'){
-    document.querySelector('#vhMoverModal .vh-team-net-choice-overlay')?.remove();
-    document.querySelector('#vhMoverModal [data-vh-team-net-menu]')?.focus();
+    const overlay=document.querySelector('#vhMoverModal .vh-team-net-choice-overlay');
+    const trigger=overlay?.returnFocusTo;
+    overlay?.remove();
+    trigger?.focus();
     return;
   }
   const id=String(teamId||'');

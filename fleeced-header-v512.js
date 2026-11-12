@@ -238,9 +238,9 @@ function positionMenu(){
  // Keep the menu wholly below the navigation strip. Avoid covering tab
  // headings, even when the header is sticky or horizontally scrollable.
  const below=Math.max(r.bottom+8,headerBottom+6);
- const height=m.getBoundingClientRect().height||m.scrollHeight||0;
- const above=Math.max(8,r.top-height-8);
- const top=below+Math.min(height,window.innerHeight-16)>window.innerHeight&&above>=8&&above+height<r.top?above:below;
+ // Keep the dropdown below the navigation heading at every viewport size.
+ // Scroll the menu's own contents when little vertical space remains.
+ const top=below;
  m.style.left=Math.max(12,Math.min(window.innerWidth-w-12,r.left+r.width/2-w/2))+'px';
  m.style.top=top+'px';
  m.style.maxHeight=Math.max(120,window.innerHeight-top-12)+'px'
@@ -266,11 +266,18 @@ function wireMenus(){
   button.dataset.fleecedMenuWired='1';
   // Tapping/clicking is the sole opening gesture. Hover and focus do not
   // open menus; mouse departure never dismisses an intentional selection.
-  button.addEventListener('click',()=>{
+  button.addEventListener('click',e=>{
    if(!(MENUS[button.dataset.tab]||[]).length){closeMenu();return}
+   // The original site assigns button.onclick to activate its first view.
+   // A real user heading click should open the menu WITHOUT executing that
+   // onclick or any later delegated tab-navigation handlers. Programmatic
+   // .click() from menu actions and cross-section links must still navigate.
+   if(!e.isTrusted)return;
+   e.preventDefault();
+   e.stopImmediatePropagation();
    if(activeMenuButton===button)closeMenu();
    else showMenu(button);
-  });
+  },true);
   button.addEventListener('keydown',e=>{
    if(!(MENUS[button.dataset.tab]||[]).length)return;
    if(e.key==='ArrowDown'){

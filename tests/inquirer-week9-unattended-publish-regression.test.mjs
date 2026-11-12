@@ -70,3 +70,44 @@ test('Fleeced Daily preview reader no longer shows the redundant archive warning
  assert.match(loader,/league-hub-v451\.js\?v=542/);
  assert.match(hub,/inquirerPreviewMode/,'private manuscript preview entry remains available through normal controls');
 });
+
+import {assessMinorNineWordReuse} from '../netlify/functions/lib/inquirer-minor-repetition.mjs';
+
+const repeatedFixture=(groups)=>{
+ const teams=Array.from({length:32},(_,i)=>({roster_id:i+1,inquirer_article:{
+  sections:[{paragraphs:[...groups.filter(group=>group.members.includes(i+1)).map(group=>group.sentence)]}]}}));
+ const owners=new Map();
+ for(const team of teams){
+  const prose=team.inquirer_article.sections.flatMap(s=>s.paragraphs).join(' ');
+  const words=prose.toLowerCase().match(/[a-z0-9]+/g)||[];
+  const unique=new Set();
+  for(let i=0;i+9<=words.length;i++)unique.add(words.slice(i,i+9).join(' '));
+  for(const phrase of unique){const ids=owners.get(phrase)||new Set();ids.add(String(team.roster_id));owners.set(phrase,ids);}
+ }
+ return{teams,repeated:[...owners].filter(([,ids])=>ids.size>=4)};
+};
+const one='The roster review reached the same conclusion without turning that single line into an interchangeable article.';
+test('one short identical line in four of 32 articles is a transparent nonfatal warning',()=>{
+ const fixture=repeatedFixture([{sentence:one,members:[1,2,3,4]}]);
+ const audit=assessMinorNineWordReuse(fixture.teams,fixture.repeated);
+ assert.equal(audit.tolerated,true);
+ assert.equal(audit.team_count,4);
+ assert.ok(audit.phrase_windows>0);
+});
+test('a fifth affected article or two repeated sentences cannot use the minor tolerance',()=>{
+ const five=repeatedFixture([{sentence:one,members:[1,2,3,4,5]}]);
+ assert.equal(assessMinorNineWordReuse(five.teams,five.repeated).tolerated,false);
+ const two=repeatedFixture([{sentence:one,members:[1,2,3,4]},
+  {sentence:'A completely separate repeated decision emerged as the manager evaluated a different lineup and roster situation.',members:[5,6,7,8]}]);
+ assert.equal(assessMinorNineWordReuse(two.teams,two.repeated).tolerated,false);
+});
+test('extended duplicate prose remains a fatal repeated passage',()=>{
+ const long='A detailed repeated editorial passage that describes the same manager and the same lineup evaluation without distinctive player reporting and therefore repeats its conclusion instead of examining a real result or any useful tactical decision.';
+ const fixture=repeatedFixture([{sentence:long,members:[1,2,3,4]}]);
+ assert.equal(assessMinorNineWordReuse(fixture.teams,fixture.repeated).tolerated,false);
+});
+test('the production-quality gate records tolerance but retains all other failures',()=>{
+ assert.match(source,/assessMinorNineWordReuse\(teams,longRecycled\)/);
+ assert.match(source,/minor_repetition_warning:minorRepetition\.tolerated/);
+ assert.match(source,/if\(longRecycled\.length&&!minorRepetition\.tolerated\)/);
+});

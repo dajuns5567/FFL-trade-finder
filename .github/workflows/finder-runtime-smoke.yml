@@ -59,6 +59,9 @@ on:
       - 'netlify/functions/pick-order-v527.mjs'
       - 'tests/draft-pick-order-5050.test.mjs'
       - 'tests/trade-history-live-sleeper.test.mjs'
+      - 'tests/trade-history-hindsight-live-sync.test.mjs'
+      - 'nonblocking-consensus-v277.js'
+      - 'league-hub-v451.js'
       - 'netlify/functions/lib/trade-history-live-source.mjs'
       - 'scripts/trade-history-scheduled-check.mjs'
       - 'netlify/functions/value-history.mjs'
@@ -178,7 +181,7 @@ jobs:
           if(!r.valid||Number(r.players_extracted)<200||Number(r.ranking_rows)!==300)process.exit(18);
           NODE
       - name: Live completed Trade History and immutable historical audit regression
-        run: node --test tests/trade-history-live-sleeper.test.mjs
+        run: node --test tests/trade-history-live-sleeper.test.mjs tests/trade-history-hindsight-live-sync.test.mjs
       - name: Historical draft pick 50/50 order with valuation isolation
         run: |
           node --check draft-pick-rankings-v527.js

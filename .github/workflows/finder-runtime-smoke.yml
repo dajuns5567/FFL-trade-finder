@@ -79,6 +79,8 @@ on:
       - 'value-history-v276.js'
       - 'trade-asset-selection-v534.css'
       - 'trade-selection-sync-v534.js'
+      - 'fleeced-header-v512.js'
+      - 'tests/header-click-menu-v536.test.mjs'
       - 'scripts/selection-cards-v534-smoke.cjs'
       - 'trade-select-all-v165.js'
       - 'netlify/functions/site-v29.mjs'
@@ -136,6 +138,8 @@ jobs:
         run: node scripts/finder-runtime-compiled-smoke-v257.cjs
       - name: Select All exact blank-search equivalence
         run: node scripts/select-all-blank-equivalence-v258.cjs
+      - name: V536 persistent click navigation and menu positioning
+        run: node --test tests/header-click-menu-v536.test.mjs
       - name: V534 selection cards and Select All live-state guard
         run: node scripts/selection-cards-v534-smoke.cjs
       - name: Select All survives roster rerender

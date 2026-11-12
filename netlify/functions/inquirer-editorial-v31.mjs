@@ -9,7 +9,7 @@ import {attributeForwardPlayerStatFragments,curateForwardTeamNarrative,inspectNa
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=107;
+export const FORWARD_EDITORIAL_REVISION=108;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -987,11 +987,18 @@ function w2BenchRead(t,r,miss,gap,won,margin){
     "The result stands; "+team+" still needs to explain why those "+points+" unused points stayed on the bench."
   ]:[
     reserve+" outscored "+starter+" during a "+marginText+"-point loss. That hurts.",
-    "Those unused points will be much louder at the next lineup meeting.",
+    team+" has "+points+" points from "+reserve+" to account for before choosing the next "+slot+" starter.",
     starter+" started in the "+String(slot).toUpperCase()+" slot. "+reserve+" beat that choice by "+points+".",
-    "A losing week is a rough time to discover the bench had a better answer."
+    team+" lost by "+marginText+" while "+reserve+" finished "+points+" points ahead of its "+slot+" starter "+starter+"."
   ];
-  return facts[choice]+" "+(choice===11?"The bench advantage deserves a Week 6 review.":judgment[w2Hash(team+"|bench-verdict")%judgment.length]);
+  // Every desk conclusion needs source-specific evidence; a fixed verdict
+  // repeated across four rosters previously blocked Week 9 publication.
+  // Never embed an old NFL week number in forward-week reporting.
+  const verdict=choice===11
+    ?team+" left "+points+" points from "+reserve+" on the bench while "+starter+
+      " held the "+slot+" start; "+(won?"the win covered the decision, not the gap.":"the loss exposed that choice.")
+    :judgment[w2Hash(team+"|bench-verdict")%judgment.length];
+  return facts[choice]+" "+verdict;
 }
 function w2StatKind(p){
   const pos=String(p?.position||"").toUpperCase();

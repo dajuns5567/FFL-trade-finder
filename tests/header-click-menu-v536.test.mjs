@@ -26,7 +26,7 @@ function fixture(){
   document:{
    getElementById:id=>id==='fleecedHeaderDropdown'?menu:null,
    querySelectorAll:()=>tabs,
-   querySelector:()=>({getBoundingClientRect:()=>({bottom:260})})
+   querySelector:()=>({getBoundingClientRect:()=>({bottom:260}),focus:()=>{}})
   },
   window:{innerWidth:850,innerHeight:750},
   requestAnimationFrame:fn=>fn(),

@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-let installed=false,currentTab='',entryFromTab='',backNavigating=false,tabHistory=[],activeMenuButton=null,menuCloseTimer=null;
+let installed=false,currentTab='',entryFromTab='',backNavigating=false,tabHistory=[],activeMenuButton=null;
 const $=s=>document.querySelector(s);
 const activeTab=()=>$('.tabs button.active[data-tab]')?.dataset.tab||[...document.querySelectorAll('.tab')].find(x=>!x.hidden)?.id||'';
 const visible=el=>!!(el&&el.isConnected&&el.getClientRects().length);
@@ -52,6 +52,9 @@ function addStyles(){
  'header>.tabs button.active,header .fleeced-header-tabs button.active{background:transparent!important;color:#fff!important;border-color:color-mix(in srgb,#e4b53f 38%,var(--line))!important;box-shadow:inset 0 -2px 0 #e4b53f!important}',
  'header .fleeced-header-dropdown{position:fixed;z-index:240;display:grid;gap:6px;width:max-content;min-width:205px;max-width:min(300px,calc(100vw - 24px));max-height:min(520px,calc(100vh - 150px));overflow:auto;padding:9px;border:0;border-radius:11px;background:color-mix(in srgb,var(--card) 89%,#06080c);box-shadow:0 14px 32px rgba(0,0,0,.34);opacity:0;visibility:hidden;pointer-events:none;transform:translateY(-7px) scaleY(.94);transform-origin:top center;transition:opacity .16s ease,transform .2s ease,visibility 0s linear .2s}',
  'header .fleeced-header-dropdown.open{opacity:1;visibility:visible;pointer-events:auto;transform:translateY(0) scaleY(1);transition:opacity .16s ease,transform .2s ease,visibility 0s}',
+ 'header .fleeced-header-dropdown{overscroll-behavior:contain;touch-action:pan-y;box-sizing:border-box}',
+ 'header .fleeced-header-dropdown button{min-height:44px!important;padding:11px 12px!important}',
+ 'header .fleeced-header-tabs button[data-fleeced-has-menu="1"][aria-expanded="true"]{border-color:#e4b53f!important;box-shadow:inset 0 -2px 0 #e4b53f!important}',
  'header .fleeced-header-dropdown button{display:block;width:100%;min-height:34px;padding:8px 10px;border:1px solid color-mix(in srgb,#e4b53f 38%,var(--line));border-radius:8px;background:transparent;color:#f4f4f5;font-family:inherit;font-size:12px;font-weight:900;line-height:1.2;letter-spacing:.035em;text-align:left;text-transform:uppercase;white-space:normal;box-shadow:none;text-shadow:none;cursor:pointer;transition:color .14s ease,border-color .14s ease,background .14s ease}',
  'header .fleeced-header-dropdown button:hover,header .fleeced-header-dropdown button:focus-visible{background:color-mix(in srgb,#e4b53f 7%,var(--card));color:#fff;border-color:#e4b53f;outline:none}',
  '@media(max-width:1050px){header>.tabs,header .fleeced-header-tabs{justify-content:flex-start!important}header>.tabs button,header .fleeced-header-tabs button{flex:0 0 auto!important}}',
@@ -221,10 +224,6 @@ function menuEl(){
  let m=document.getElementById('fleecedHeaderDropdown');
  if(m)return m;
  m=document.createElement('div');m.id='fleecedHeaderDropdown';m.className='fleeced-header-dropdown';m.setAttribute('role','menu');m.setAttribute('aria-label','Section shortcuts');
- m.addEventListener('pointerenter',()=>clearTimeout(menuCloseTimer));
- m.addEventListener('pointerleave',scheduleCloseMenu);
- m.addEventListener('focusin',()=>clearTimeout(menuCloseTimer));
- m.addEventListener('focusout',scheduleCloseMenu);
  m.addEventListener('click',e=>{
   const b=e.target.closest('[data-fleeced-header-action]');if(!b)return;
   e.preventDefault();e.stopPropagation();const action=b.dataset.fleecedHeaderAction;closeMenu();runMenuAction(action)
@@ -234,33 +233,51 @@ function menuEl(){
 function positionMenu(){
  const m=document.getElementById('fleecedHeaderDropdown');if(!m?.classList.contains('open')||!activeMenuButton)return;
  const r=activeMenuButton.getBoundingClientRect(),w=m.getBoundingClientRect().width||230;
+ const header=document.querySelector('header.fleeced-site-header')||activeMenuButton.closest('header');
+ const headerBottom=header?.getBoundingClientRect().bottom||r.bottom;
+ // Keep the menu wholly below the navigation strip. Avoid covering tab
+ // headings, even when the header is sticky or horizontally scrollable.
+ const below=Math.max(r.bottom+8,headerBottom+6);
+ const height=m.getBoundingClientRect().height||m.scrollHeight||0;
+ const above=Math.max(8,r.top-height-8);
+ const top=below+Math.min(height,window.innerHeight-16)>window.innerHeight&&above>=8&&above+height<r.top?above:below;
  m.style.left=Math.max(12,Math.min(window.innerWidth-w-12,r.left+r.width/2-w/2))+'px';
- m.style.top=(r.bottom+7)+'px'
+ m.style.top=top+'px';
+ m.style.maxHeight=Math.max(120,window.innerHeight-top-12)+'px'
 }
 function showMenu(button){
  const items=MENUS[button?.dataset?.tab];if(!items?.length){closeMenu();return}
- clearTimeout(menuCloseTimer);
  if(activeMenuButton&&activeMenuButton!==button)activeMenuButton.setAttribute('aria-expanded','false');
  activeMenuButton=button;button.setAttribute('aria-expanded','true');
  const m=menuEl();m.innerHTML=items.map(([label,action])=>'<button type="button" role="menuitem" data-fleeced-header-action="'+esc(action)+'">'+esc(label)+'</button>').join('');
  m.classList.add('open');requestAnimationFrame(positionMenu)
 }
 function closeMenu(){
- clearTimeout(menuCloseTimer);const m=document.getElementById('fleecedHeaderDropdown');m?.classList.remove('open');
+ const m=document.getElementById('fleecedHeaderDropdown');m?.classList.remove('open');
  if(activeMenuButton)activeMenuButton.setAttribute('aria-expanded','false');activeMenuButton=null
 }
-function scheduleCloseMenu(){clearTimeout(menuCloseTimer);menuCloseTimer=setTimeout(closeMenu,150)}
+
 function wireMenus(){
  document.querySelectorAll('.tabs button[data-tab]').forEach(button=>{
   const items=MENUS[button.dataset.tab]||[];
-  if(items.length){button.dataset.fleecedHasMenu='1';button.setAttribute('aria-haspopup','menu');button.setAttribute('aria-expanded','false')}
+  if(items.length){button.dataset.fleecedHasMenu='1';button.setAttribute('aria-haspopup','menu');button.setAttribute('aria-expanded',String(activeMenuButton===button))}
   else{delete button.dataset.fleecedHasMenu;button.removeAttribute('aria-haspopup');button.removeAttribute('aria-expanded')}
   if(button.dataset.fleecedMenuWired==='1')return;
   button.dataset.fleecedMenuWired='1';
-  button.addEventListener('pointerenter',()=>{if((MENUS[button.dataset.tab]||[]).length)showMenu(button);else closeMenu()});
-  button.addEventListener('pointerleave',()=>{if((MENUS[button.dataset.tab]||[]).length)scheduleCloseMenu()});
-  button.addEventListener('focus',()=>{if((MENUS[button.dataset.tab]||[]).length)showMenu(button)});
-  button.addEventListener('blur',scheduleCloseMenu)
+  // Tapping/clicking is the sole opening gesture. Hover and focus do not
+  // open menus; mouse departure never dismisses an intentional selection.
+  button.addEventListener('click',()=>{
+   if(!(MENUS[button.dataset.tab]||[]).length){closeMenu();return}
+   if(activeMenuButton===button)closeMenu();
+   else showMenu(button);
+  });
+  button.addEventListener('keydown',e=>{
+   if(!(MENUS[button.dataset.tab]||[]).length)return;
+   if(e.key==='ArrowDown'){
+    e.preventDefault();showMenu(button);
+    requestAnimationFrame(()=>document.querySelector('#fleecedHeaderDropdown button')?.focus());
+   }else if(e.key==='Escape'){e.preventDefault();closeMenu()}
+  })
  })
 }
 function install(){
@@ -276,6 +293,18 @@ function install(){
  currentTab=activeTab();back.addEventListener('click',goBack);
  document.addEventListener('click',markSameTabNavigation,true);
  wireMenus();menuEl();
+ // Outside tap, Escape, or an actual menu choice closes a persistent menu.
+ // Ordinary pointer movement leaves it open for mobile and keyboard users.
+ document.addEventListener('click',e=>{
+  if(!activeMenuButton)return;
+  if(e.target.closest?.('#fleecedHeaderDropdown'))return;
+  if(e.target.closest?.('.tabs button[data-tab]'))return;
+  closeMenu();
+ });
+ document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape'||!activeMenuButton)return;
+  const focusTarget=activeMenuButton;closeMenu();focusTarget?.focus();
+ });
  new MutationObserver(()=>queueMicrotask(()=>{syncTab();wireMenus()})).observe(tabs,{subtree:true,attributes:true,attributeFilter:['class'],childList:true});
  window.addEventListener('resize',positionMenu,{passive:true});window.addEventListener('scroll',positionMenu,{passive:true})
 }

@@ -1095,6 +1095,17 @@ function tradeCard(trade){
   const names=(trade.roster_ids||[]).map(id=>esc(historicalTradeTeamName(trade,id))).join(' ↔ ');
   return`<div class="vh-trade-card ${anyOpen?'vh-trade-expanded':'vh-trade-collapsed'}" data-vh-trade-card-id="${esc(key)}"><div class="vh-trade-head"><div><h4><span class="vh-trade-date">${esc(dateTime(trade.created))}</span> • ${esc(String(trade.season||''))} Trade</h4><div class="vh-sub">${names}</div></div>${trade.trade_snapshot_t?`<small>Historical snapshot: ${esc(dateTime(trade.trade_snapshot_t))}</small>`:''}</div><div class="vh-compact-trade">${(trade.sides||[]).map(side=>compactTradeSide(side,trade)).join('')}</div><div class="vh-trade-toggle-row"><button type="button" class="${open.hindsight?'vh-trade-toggle-active':'secondary'} small vh-trade-toggle" data-vh-trade-toggle="hindsight" data-vh-trade-id="${esc(key)}" aria-expanded="${open.hindsight?'true':'false'}">Hindsight</button><button type="button" class="${open.original?'vh-trade-toggle-active':'secondary'} small vh-trade-toggle" data-vh-trade-toggle="original" data-vh-trade-id="${esc(key)}" aria-expanded="${open.original?'true':'false'}">Original Trade Analysis</button></div>${open.hindsight?tradeValuePresentation(trade):''}${open.original?tradeEvaluatorSection(trade):''}${anyOpen?historicalValueComparisonSection(trade):''}</div>`
 }
+function refreshTradeHistoryCurrentValuesV533(){
+  // Hindsight and the historical-comparison 'Current value' column derive
+  // from the current evaluator, not from current_players in archived API data.
+  // Preserve the trade payload and original trade-time valuation unchanged.
+  const panel=document.getElementById('tradeHistory');
+  if(!tradeHistoryCache?.trades||!panel||panel.hidden)return false;
+  renderTradeHistory();
+  return true;
+}
+window.refreshTradeHistoryCurrentValuesV533=refreshTradeHistoryCurrentValuesV533;
+window.addEventListener('fll:valuation-refreshed',refreshTradeHistoryCurrentValuesV533);
 function initTradeHistoryUI(){if(!tradeHistoryCache)loadTradeHistory();else renderTradeHistory()}
 window.openValueHistoryTeamV458=function(id,showLeagueComparison=false){
  const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');btn?.click();currentView='team';trackedTeamId=String(id||'');syncSubnav();

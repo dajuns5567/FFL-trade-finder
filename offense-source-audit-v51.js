@@ -59,6 +59,8 @@ function build({players={},consensusComposite={},rankings={},masterRows=[],captu
       const penalty=evidence.find(e=>e.source===src+' (not listed)');
       return[src,{
         rank:entry?finite(entry.rank):null,weight:entry?finite(entry.weight):null,
+        baseWeight:entry?finite(entry.baseWeight??entry.weight):null,
+        outlierProtected:!!entry?.outlierProtected,
         status:entry?'listed':penalty?'not-listed-penalty':'not-listed-or-unmatched',
         penaltyRank:penalty?finite(penalty.rank):null,
         penaltyWeight:penalty?finite(penalty.weight):null,
@@ -90,6 +92,7 @@ function build({players={},consensusComposite={},rankings={},masterRows=[],captu
       consensusOffenseRank:compositeRank,consensusValue:finite(consensusComposite.byId?.[id]),
       modelValue:finite(z?.value),observedSourceCount:observed.length,
       sourceRankMin:min,sourceRankMax:max,sourceRankSpread:span,
+      outlierAdjustments:Array.isArray(detail.offenseOutlierAdjustments)?detail.offenseOutlierAdjustments:[],
       notListedPenaltyCount:evidence.filter(e=>e.listed===false).length,
       missingSourceNames:missing,sourceRanks,
       sensitivityRemovingSourceFromFixedEvidence:sensitivity,
@@ -114,11 +117,14 @@ function build({players={},consensusComposite={},rankings={},masterRows=[],captu
       missing:'Not listed, unmatched, or outside source published depth; missing does not prove an error.',
       sensitivity:'Fixed-evidence weighted rank change if one channel is omitted; diagnostic only, not a full recalculation or recommended change.',
       freshness:'FetchedAt is retrieval time, not publisher update time.',
+      outlierProtection:'For QB/RB/WR/TE only: if at least four sources list a player, one extreme source may be weighted at 25% when at least three other rankings agree. The source and original rank are preserved.',
       rankTypes:'offenseOnlyRank excludes IDP; overallRank includes IDP.',
       highImpactDisagreements:'Source-to-median-of-other-sources comparison, at least 3 peer listings and rank 150 or better; flags disagreement, not data errors or stale ranking proof.'
     },
     summary:{
       totalOffense:output.length,flagged:flagged.length,
+      outlierProtectedPlayers:output.filter(p=>p.outlierAdjustments.length>0).length,
+      outlierProtectedBySource:Object.fromEntries(SOURCES.map(src=>[src,output.filter(p=>p.outlierAdjustments.some(a=>a.source===src)).length])),
       missingAllSources:output.filter(p=>p.observedSourceCount===0).length,
       singleSource:output.filter(p=>p.observedSourceCount===1).length,
       rankSpread50:output.filter(p=>p.sourceRankSpread!=null&&p.sourceRankSpread>=50).length,

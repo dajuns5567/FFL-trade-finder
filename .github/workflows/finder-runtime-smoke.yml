@@ -78,6 +78,7 @@ on:
       - 'netlify/functions/ktc-adapter.mjs'
       - 'value-history-v276.js'
       - 'trade-asset-selection-v534.css'
+      - 'trade-selection-sync-v534.js'
       - 'scripts/selection-cards-v534-smoke.cjs'
       - 'trade-select-all-v165.js'
       - 'netlify/functions/site-v29.mjs'

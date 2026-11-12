@@ -21,13 +21,23 @@ function production50(c,a){
 function sourceStatus50(sourceNames){
   const records=state.rankings||{};
   const snapshots=sourceNames.filter(n=>!String(n).endsWith(' (not listed)')).map(name=>{
-    const r=records[name]||{},time=r.updated||r.updatedAt||null;
+    const r=records[name]||{},f=r.freshness||{};
+    const time=f.fetchedAt||r.updated||r.updatedAt||null;
     const parsed=time?Date.parse(time):NaN;
-    const ageDays=Number.isFinite(parsed)?Math.max(0,(Date.now()-parsed)/86400000):null;
-    return{source:String(name),snapshotUpdatedAt:time,ageDays};
+    const fetchAgeDays=Number.isFinite(parsed)?Math.max(0,(Date.now()-parsed)/86400000):null;
+    const pub=f.publisherUpdatedAt||null,updated=pub?Date.parse(pub):NaN;
+    const publisherAgeDays=Number.isFinite(updated)?Math.max(0,(Date.now()-updated)/86400000):null;
+    const changed=f.contentLastChangedAt||null,changeTime=changed?Date.parse(changed):NaN;
+    return{source:String(name),snapshotUpdatedAt:time,ageDays:fetchAgeDays,fetchAgeDays,
+      publisherUpdatedAt:pub,publisherAgeDays,
+      contentLastChangedAt:changed,contentChangeAgeDays:Number.isFinite(changeTime)?Math.max(0,(Date.now()-changeTime)/86400000):null,
+      contentChangeStatus:f.contentChangeStatus||'unknown',
+      marketObservation:f.observation||r.observation||null};
   });
   return{snapshots,unknownDates:snapshots.filter(s=>s.ageDays==null).length,
-    olderThan30Days:snapshots.filter(s=>s.ageDays!=null&&s.ageDays>30).length};
+    olderThan30Days:snapshots.filter(s=>s.fetchAgeDays!=null&&s.fetchAgeDays>30).length,
+    unknownPublisherDates:snapshots.filter(s=>s.publisherAgeDays==null).length,
+    publisherOlderThan30Days:snapshots.filter(s=>s.publisherAgeDays!=null&&s.publisherAgeDays>30).length};
 }
 function rebuild50(z){
   const pos=String(groupPos(z?.x)||'').toUpperCase();
@@ -62,6 +72,8 @@ function rebuild50(z){
       consensusSnapshotsV50:sourceStatus.snapshots,
       consensusUnknownSnapshotDatesV50:sourceStatus.unknownDates,
       consensusSourcesOlderThan30DaysV50:sourceStatus.olderThan30Days,
+      consensusUnknownPublisherDatesV50:sourceStatus.unknownPublisherDates,
+      consensusPublisherOlderThan30DaysV50:sourceStatus.publisherOlderThan30Days,
       consensusSourcesV50:Array.isArray(detail.offenseSources)?detail.offenseSources.slice():[],
       consensusSourceCountV50:Array.isArray(detail.offenseSources)?detail.offenseSources.filter(s=>!String(s).includes('(not listed)')).length:0,
       consensusNotListedPenaltyCountV50:Array.isArray(detail.offenseSources)?detail.offenseSources.filter(s=>String(s).includes('(not listed)')).length:0,

@@ -482,6 +482,7 @@ function renderConsensusDiagnostics(summary){
     const label=fetched?"Fetched and validated":retained?"Last validated snapshot retained":unpromoted?"Fetched, but not promoted":"Unavailable / failed";
     const f=x.source_freshness||{};
     const obs=x.market_observation||f.observation||null;
+    const provenance=x.source_provenance||null;
     const freshness=[
       "Last successful fetch: "+date(f.fetchedAt||x.snapshot_timestamp||x.timestamp),
       "Publisher update: "+date(f.publisherUpdatedAt||x.publisher_updated_at),
@@ -491,7 +492,8 @@ function renderConsensusDiagnostics(summary){
       f.unchangedSinceAt?"Unchanged since observation: "+date(f.unchangedSinceAt):"",
       obs?"Market observations older than 30 days: "+Number(obs.rowsOlderThan30Days||0)+"/"+Number(obs.sampleSize||0):"",
       obs?"Dated / undated market observations: "+Number(obs.datedRows||0)+" / "+Number(obs.undatedRows||0):"",
-      obs?"Oldest / newest market observation: "+date(obs.oldestObservationAt)+" / "+date(obs.newestObservationAt):""
+      obs?"Oldest / newest market observation: "+date(obs.oldestObservationAt)+" / "+date(obs.newestObservationAt):"",
+      provenance?.pinnedRevision?"Source version: pinned revision "+String(provenance.chartRevision||"unknown")+"; newest publisher version not verified":provenance?.kind==="unversioned-ranking-query"?"Source version: unversioned ranking endpoint; publisher revision not verified":""
     ].filter(Boolean).join(" • ");
     const detail=[
       label,

@@ -13,7 +13,35 @@ function compatibleFirst(a,b){if(!a||!b)return false;if(a===b)return true;if(a[0
 function positionFilter(rows,positions){if(!positions?.size)return rows;return rows.filter(r=>{const rp=String(r?.position||"").toUpperCase();return !rp||positions.has(rp)||rp==="IDP"})}
 function hit(channel,name,positions,strictOffense=false){const key=norm(name),same=channel.byName.get(key)||[],sameByPos=positionFilter(same,positions);if(sameByPos.length===1)return sameByPos[0].modelRank;if(same.length)return null;const ck=canonical(name),canon=positionFilter(channel.byCanonical.get(ck)||[],positions);if(canon.length===1)return canon[0].modelRank;if(canon.length>1)return null;if(strictOffense)return null;const ps=parts(name),first=ps[0],last=ps.at(-1),candidates=positionFilter((channel.byLast.get(last)||[]).filter(r=>{const rp=parts(r.player),rf=rp[0];return compatibleFirst(first,rf)}),positions);return candidates.length===1?candidates[0].modelRank:null}
 function mean(hits){const w=hits.reduce((s,x)=>s+x.weight,0);return hits.reduce((s,x)=>s+x.rank*x.weight,0)/w}
-function weighted(list,p,floor,strictOffense=false,eligible=null){const hits=[],missing=[];for(const c of list){if(eligible&&!eligible(c))continue;const rank=hit(c,p.name,p.positions,strictOffense);if(Number.isFinite(rank))hits.push({rank,weight:c.weight,source:c.name});else missing.push(c)}if(!hits.length)return{rank:null,hits};if(hits.length===1)return{rank:Math.max(floor,hits[0].rank),hits};const preliminary=mean(hits);for(const c of missing){const depth=c.rows.length;if(depth>=preliminary*.80)hits.push({rank:Math.min(depth+1,preliminary*1.25),weight:c.weight*.60,source:`${c.name} (not listed)`})}return{rank:mean(hits),hits}}
+// A single extreme offensive source must not dominate 3+ agreeing peers.
+// Require >=4 independently listed sources, a coherent peer cluster, and a
+// large absolute AND proportional deviation. Never alter IDP or omission rows.
+const OFF_OUTLIER_MULTIPLIER=.25;
+function medianRanks(rows){const sorted=rows.map(x=>x.rank).sort((a,b)=>a-b),mid=Math.floor(sorted.length/2);return sorted.length%2?sorted[mid]:(sorted[mid-1]+sorted[mid])/2}
+function protectOffenseEvidence(listed){
+  if(listed.length<4)return[];
+  const candidates=[];
+  for(const row of listed){
+    const peers=listed.filter(x=>x!==row);
+    const center=medianRanks(peers);
+    const spread=Math.max(...peers.map(x=>x.rank))-Math.min(...peers.map(x=>x.rank));
+    const allowedSpread=Math.max(45,.65*center);
+    const deviation=Math.abs(row.rank-center);
+    const threshold=Math.max(40,.60*center);
+    if(spread>allowedSpread||deviation<threshold)continue;
+    candidates.push({row,peerMedian:center,peerSpread:spread,deviation,threshold});
+  }
+  // Split camps or more than one divergent source are market disagreement,
+  // not a justified singleton outlier; leave original weights untouched.
+  if(candidates.length!==1)return[];
+  const {row,peerMedian,peerSpread,deviation,threshold}=candidates[0];
+  const originalWeight=row.weight;
+  row.weight=originalWeight*OFF_OUTLIER_MULTIPLIER;
+  return[{source:row.source,rank:row.rank,peerMedian,peerSpread,deviation,
+    threshold,originalWeight,adjustedWeight:row.weight,
+    reason:"single extreme ranking versus at least three clustered independent dynasty sources"}];
+}
+function weighted(list,p,floor,strictOffense=false,eligible=null){const hits=[],missing=[];for(const c of list){if(eligible&&!eligible(c))continue;const rank=hit(c,p.name,p.positions,strictOffense);if(Number.isFinite(rank))hits.push({rank,weight:c.weight,source:c.name});else missing.push(c)}if(!hits.length)return{rank:null,hits,outlierAdjustments:[]};if(hits.length===1)return{rank:Math.max(floor,hits[0].rank),hits,outlierAdjustments:[]};const outlierAdjustments=strictOffense?protectOffenseEvidence(hits):[];const preliminary=mean(hits);for(const c of missing){const depth=c.rows.length;if(depth>=preliminary*.80)hits.push({rank:Math.min(depth+1,preliminary*1.25),weight:c.weight*.60,source:`${c.name} (not listed)`})}return{rank:mean(hits),hits,outlierAdjustments}}
 const curve=(rank,scale,exp)=>Math.max(1,Math.round(scale/Math.pow(Math.max(1,rank),exp)));
 // One published row must not silently value multiple distinct Sleeper players.
 // For same-canonical-name offense records, a source must expose a position that
@@ -37,4 +65,4 @@ export function buildConsensusComposite(results,players){const c=channels(result
     peers.push(p);offenseByCanonical.set(ck,peers);
   }for(const p of players||[]){const k=norm(p?.name);if(k)counts.set(k,(counts.get(k)||0)+1)}const byId={},byName={},detailsById={};for(const p of players||[]){const id=String(p?.id||"").trim(),name=String(p?.name||"").trim(),key=norm(name),positions=positionsOf(p);if(!id||!key)continue;const hasOff=[...positions].some(x=>OFF.has(x));const hasIdp=[...positions].some(x=>IDP.has(x))||(!hasOff&&positions.size>0);const peers=offenseByCanonical.get(canonical(name))||[];
 const o=hasOff?weighted(c.offense,{name,positions},OFF_FLOOR,true,
-  channel=>offenseOwnershipAllowed(channel,p,peers)):{rank:null,hits:[]};const d=hasIdp?weighted(c.idp,{name,positions},IDP_FLOOR):{rank:null,hits:[]};const offenseValue=Number.isFinite(o.rank)?curve(o.rank,OFF_SCALE,OFF_EXP):null,idpValue=Number.isFinite(d.rank)?curve(d.rank,IDP_SCALE,IDP_EXP):null;let value=null,kind="none";if(Number.isFinite(offenseValue)&&Number.isFinite(idpValue)){value=Math.min(Math.round(offenseValue*DUAL_CAP),Math.round(offenseValue+idpValue*DUAL_IDP_SHARE));kind="dual"}else if(Number.isFinite(offenseValue)){value=offenseValue;kind="offense"}else if(Number.isFinite(idpValue)){value=idpValue;kind="idp"}if(!Number.isFinite(value))continue;const detail={id,name,kind,consensusCompositeValue:value,offenseRank:o.rank,idpRank:d.rank,offenseValue,idpValue,offenseSources:o.hits.map(x=>x.source),offenseSourceEvidence:o.hits.map(x=>({source:x.source,rank:x.rank,weight:x.weight,listed:!String(x.source).endsWith(' (not listed)')})),offenseObservedSourceCount:o.hits.filter(x=>!String(x.source).endsWith(' (not listed)')).length,idpSources:d.hits.map(x=>x.source)};byId[id]=value;if(counts.get(key)===1)byName[name.toLowerCase()]=value;detailsById[id]=detail}return{byId,byName,detailsById,sourceCounts:{offense:c.offense.length,idp:c.idp.length},ambiguousNames:[...counts].filter(([,n])=>n>1).map(([k])=>k)}}
+  channel=>offenseOwnershipAllowed(channel,p,peers)):{rank:null,hits:[]};const d=hasIdp?weighted(c.idp,{name,positions},IDP_FLOOR):{rank:null,hits:[]};const offenseValue=Number.isFinite(o.rank)?curve(o.rank,OFF_SCALE,OFF_EXP):null,idpValue=Number.isFinite(d.rank)?curve(d.rank,IDP_SCALE,IDP_EXP):null;let value=null,kind="none";if(Number.isFinite(offenseValue)&&Number.isFinite(idpValue)){value=Math.min(Math.round(offenseValue*DUAL_CAP),Math.round(offenseValue+idpValue*DUAL_IDP_SHARE));kind="dual"}else if(Number.isFinite(offenseValue)){value=offenseValue;kind="offense"}else if(Number.isFinite(idpValue)){value=idpValue;kind="idp"}if(!Number.isFinite(value))continue;const detail={id,name,kind,consensusCompositeValue:value,offenseRank:o.rank,idpRank:d.rank,offenseValue,idpValue,offenseSources:o.hits.map(x=>x.source),offenseSourceEvidence:o.hits.map(x=>({source:x.source,rank:x.rank,weight:x.weight,baseWeight:(o.outlierAdjustments||[]).find(a=>a.source===x.source)?.originalWeight??x.weight,outlierProtected:(o.outlierAdjustments||[]).some(a=>a.source===x.source),listed:!String(x.source).endsWith(' (not listed)')})),offenseObservedSourceCount:o.hits.filter(x=>!String(x.source).endsWith(' (not listed)')).length,offenseOutlierAdjustments:o.outlierAdjustments||[],idpSources:d.hits.map(x=>x.source)};byId[id]=value;if(counts.get(key)===1)byName[name.toLowerCase()]=value;detailsById[id]=detail}return{byId,byName,detailsById,sourceCounts:{offense:c.offense.length,idp:c.idp.length},ambiguousNames:[...counts].filter(([,n])=>n>1).map(([k])=>k)}}

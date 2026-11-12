@@ -59,4 +59,7 @@ test('existing diagnostics distinguish fetched, unpromoted, retained and publish
   for(const field of ['last-known-good','fresh-not-promoted','Last successful fetch: ','Publisher update: ','Observed ranking change: ','Market observations older than 30 days: '])
     assert.ok(ui.includes(field),'missing visible freshness distinction: '+field);
   assert.ok(!ui.includes('Freshly refreshed'),'legacy label must not imply publisher refresh');
+  assert.equal((ui.match(/function renderConsensusDiagnostics\\(/g)||[]).length,1,'only one authoritative diagnostics renderer must exist');
+  assert.ok(!ui.includes('window.renderConsensusDiagnostics=function'),'a later legacy script must not override the authoritative renderer');
+  assert.ok(!ui.includes('freshly refreshed'),'legacy status cannot reappear in the page');
 });

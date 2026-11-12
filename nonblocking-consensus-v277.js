@@ -21,6 +21,12 @@ async function refreshConsensusBackground277(run){
     if(run!==consensusRun277)return;
     refreshDerivedValuation277('consensus refresh');
     buildTeams();renderAll();
+    // Hindsight and historical comparison already use the current evaluator.
+    // Notify their visible views after the consensus-derived caches rebuild;
+    // never rewrite immutable trade-time snapshots.
+    try{window.dispatchEvent(new CustomEvent('fll:valuation-refreshed',{
+      detail:{reason:'consensus',run,sourceCount:Number(consensusCount)||0}
+    }))}catch(e){console.warn('Live valuation view refresh event failed',e)}
     window.__fllConsensusRefresh={complete:true,ok:Number(consensusCount)>=7,successful:Number(consensusCount)||0,total:7,completedAt:new Date().toISOString()};
     state.lastUpdate=new Date().toISOString();
     cacheSet('fll_sleeper_snapshot',{league:state.league,users:state.users,rosters:state.rosters,players:state.players,stats:state.stats,trending:state.trending,rankings:state.rankings,tradedPicks:state.tradedPicks,draftPicks:state.draftPicks,lastUpdate:state.lastUpdate});

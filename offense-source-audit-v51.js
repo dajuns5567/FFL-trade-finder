@@ -5,6 +5,32 @@ const POS=new Set(['QB','RB','WR','TE']);
 const SOURCES=['FantasyPros','DraftSharks','The IDP Show Combined Offense','KTC','FanRanked'];
 const finite=x=>x==null||x===''?null:(Number.isFinite(Number(x))?Number(x):null);
 const normalized=x=>String(x||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[’']/g,'').replace(/[^a-z0-9]+/gi,' ').trim().toLowerCase();
+const median=values=>{if(!values.length)return null;const sorted=[...values].sort((a,b)=>a-b),i=Math.floor(sorted.length/2);return sorted.length%2?sorted[i]:(sorted[i-1]+sorted[i])/2;};
+const disagreementReview=(pool,limit=150)=>{
+  const eligible=pool.filter(p=>p.offenseOnlyRank!=null&&p.offenseOnlyRank<=limit);
+  const rows=[];
+  for(const p of eligible)for(const source of SOURCES){
+    const own=p.sourceRanks[source]?.rank;
+    if(own==null)continue;
+    const peers=SOURCES.filter(s=>s!==source).map(s=>p.sourceRanks[s]?.rank).filter(x=>x!=null);
+    if(peers.length<3)continue;
+    const peerMedian=median(peers),delta=own-peerMedian;
+    if(Math.abs(delta)<40)continue;
+    rows.push({id:p.id,name:p.name,position:p.position,offenseOnlyRank:p.offenseOnlyRank,
+      source,sourceRank:own,peerMedian,peerCount:peers.length,
+      signedDifference:Math.round(delta*10)/10,
+      absoluteDifference:Math.round(Math.abs(delta)*10)/10,
+      consensusOffenseRank:p.consensusOffenseRank});
+  }
+  rows.sort((a,b)=>a.offenseOnlyRank-b.offenseOnlyRank||b.absoluteDifference-a.absoluteDifference||a.source.localeCompare(b.source));
+  const bySource=Object.fromEntries(SOURCES.map(s=>{
+    const measured=eligible.filter(p=>p.sourceRanks[s]?.rank!=null&&
+      SOURCES.filter(x=>x!==s&&p.sourceRanks[x]?.rank!=null).length>=3).length;
+    return[s,{measured,outliers40:rows.filter(x=>x.source===s).length}];
+  }));
+  return{selection:'top offensive players with >=3 other listed rankings; absolute delta from peer median >=40',
+    thresholdRank:limit,bySource,rows};
+};
 function build({players={},consensusComposite={},rankings={},masterRows=[],capturedAt=null}={}){
   const details=consensusComposite.detailsById||{};
   const offenseRows=(masterRows||[]).filter(z=>{
@@ -72,6 +98,7 @@ function build({players={},consensusComposite={},rankings={},masterRows=[],captu
   }
   output.sort((a,b)=>(a.offenseOnlyRank??99999)-(b.offenseOnlyRank??99999)||a.name.localeCompare(b.name));
   const flagged=output.filter(p=>p.flags.length);
+  const highImpactDisagreements=disagreementReview(output,150);
   const bySource=Object.fromEntries(SOURCES.map(src=>[src,{
     listedPlayers:output.filter(p=>p.sourceRanks[src].status==='listed').length,
     notListedPenaltyPlayers:output.filter(p=>p.sourceRanks[src].status==='not-listed-penalty').length,
@@ -87,7 +114,8 @@ function build({players={},consensusComposite={},rankings={},masterRows=[],captu
       missing:'Not listed, unmatched, or outside source published depth; missing does not prove an error.',
       sensitivity:'Fixed-evidence weighted rank change if one channel is omitted; diagnostic only, not a full recalculation or recommended change.',
       freshness:'FetchedAt is retrieval time, not publisher update time.',
-      rankTypes:'offenseOnlyRank excludes IDP; overallRank includes IDP.'
+      rankTypes:'offenseOnlyRank excludes IDP; overallRank includes IDP.',
+      highImpactDisagreements:'Source-to-median-of-other-sources comparison, at least 3 peer listings and rank 150 or better; flags disagreement, not data errors or stale ranking proof.'
     },
     summary:{
       totalOffense:output.length,flagged:flagged.length,
@@ -98,7 +126,13 @@ function build({players={},consensusComposite={},rankings={},masterRows=[],captu
       modelConsensusGap40:output.filter(p=>p.flags.includes('model-vs-consensus-rank-gap-40-plus')).length,
       bySource
     },
-    priorityReview:flagged.sort((a,b)=>(b.sourceRankSpread??0)-(a.sourceRankSpread??0)).slice(0,100).map(p=>({id:p.id,name:p.name,position:p.position,sourceRankSpread:p.sourceRankSpread,sourceRanks:Object.fromEntries(SOURCES.map(src=>[src,p.sourceRanks[src].rank])),flags:p.flags})),
+    highImpactDisagreements,
+    // Review elite and liquid dynasty assets before deep bench disagreement.
+    // This is a triage score, not a valuation or recommendation to reweight a source.
+    priorityReview:[...flagged].sort((a,b)=>{
+      const tier=x=>x.offenseOnlyRank==null?4:x.offenseOnlyRank<=100?0:x.offenseOnlyRank<=150?1:x.offenseOnlyRank<=250?2:3;
+      return tier(a)-tier(b)||(b.sourceRankSpread??0)-(a.sourceRankSpread??0)||a.name.localeCompare(b.name);
+    }).slice(0,100).map(p=>({id:p.id,name:p.name,position:p.position,offenseOnlyRank:p.offenseOnlyRank,sourceRankSpread:p.sourceRankSpread,sourceRanks:Object.fromEntries(SOURCES.map(src=>[src,p.sourceRanks[src].rank])),flags:p.flags})),
     players:output
   };
 }

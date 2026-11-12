@@ -56,7 +56,8 @@ test("publisher-linked chart revision drives the validated data fetch; source ra
   assert.equal(result.rankings[0].rank,1);
   assert.equal(result.rankings[1].position,'IDP');
   assert.equal(result.diagnostics.source_provenance.chartRevision,'6');
-  assert.equal(result.diagnostics.source_provenance.publisherLatestRevisionVerified,true);
+  assert.equal(result.diagnostics.source_provenance.publisherLatestRevisionVerified,false);
+  assert.equal(result.diagnostics.source_provenance.publisherArticleRevisionMatched,true);
   assert.equal(result.diagnostics.source_provenance.pinnedRevision,false);
   assert.ok(calls.includes("https://datawrapper.dwcdn.net/gNM2r/6/dataset.csv"));
   assert.ok(!calls.includes("https://datawrapper.dwcdn.net/gNM2r/1/"));

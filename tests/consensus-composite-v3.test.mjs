@@ -100,3 +100,49 @@ test("only offense tightens matching; IDP keeps its prior compatible first-and-l
   assert.ok(c.byId.john>0);
   assert.equal(c.detailsById.john.idpRank,1);
 });
+
+test("three identically named WR roster identities cannot inherit one publisher ranking",()=>{
+  const results=[
+    result("FantasyPros","fantasypros",[{player:"Kyle Williams",rank:14,position:"WR"}]),
+    result("KTC","ktc",[{player:"Kyle Williams",rank:18,position:"WR"}]),
+    result("FanRanked","fanranked",[{player:"Kyle Williams",rank:17}])
+  ];
+  const c=buildConsensusComposite(results,[
+    {id:"7437",name:"Kyle Williams",positions:["WR"]},
+    {id:"638",name:"Kyle Williams",positions:["WR"]},
+    {id:"12547",name:"Kyle Williams",positions:["WR"]}
+  ]);
+  for(const id of ["7437","638","12547"])assert.equal(c.byId[id],undefined);
+});
+test("ambiguous suffix collision preserves a player only when position proves its identity",()=>{
+  const c=buildConsensusComposite([
+    result("Ranker WR","off-wr",[{player:"Kenneth Walker III",rank:12,position:"RB"}]),
+    result("Ranker ambiguous","off-a",[{player:"Kenneth Walker",rank:15}])
+  ],[
+    {id:"rb",name:"Kenneth Walker III",positions:["RB"]},
+    {id:"wr",name:"Kenneth Walker",positions:["WR"]}
+  ]);
+  assert.equal(c.detailsById.rb.offenseObservedSourceCount,1);
+  assert.equal(c.detailsById.rb.offenseSources[0],"Ranker WR");
+  assert.equal(c.byId.wr,undefined);
+});
+test("untyped source rank cannot be assigned to same-name players at different positions",()=>{
+  const c=buildConsensusComposite([
+    result("FanRanked","fanranked",[{player:"Antonio Williams",rank:2}])
+  ],[
+    {id:"receiver",name:"Antonio Williams",positions:["WR"]},
+    {id:"back",name:"Antonio Williams",positions:["RB"]}
+  ]);
+  assert.equal(c.byId.receiver,undefined);
+  assert.equal(c.byId.back,undefined);
+});
+test("same-position suffix collision is not treated as a confidently identified ranking",()=>{
+  const c=buildConsensusComposite([
+    result("KTC","ktc",[{player:"Frank Gore Jr.",rank:50,position:"RB"}])
+  ],[
+    {id:"junior",name:"Frank Gore Jr.",positions:["RB"]},
+    {id:"senior",name:"Frank Gore",positions:["RB"]}
+  ]);
+  assert.equal(c.byId.junior,undefined);
+  assert.equal(c.byId.senior,undefined);
+});

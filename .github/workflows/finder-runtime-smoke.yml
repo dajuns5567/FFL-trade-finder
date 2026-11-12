@@ -84,6 +84,9 @@ on:
       - 'header-scrollbar-v538.css'
       - 'tests/header-scrollbar-v538.test.mjs'
       - 'tests/presentation-copy-cleanup-v539.test.mjs'
+      - 'team-net-choice-v540.css'
+      - 'tests/team-net-choice-v540.test.mjs'
+      - 'ui-player-values-v139.js'
       - 'scripts/selection-cards-v534-smoke.cjs'
       - 'trade-select-all-v165.js'
       - 'netlify/functions/site-v29.mjs'
@@ -147,6 +150,8 @@ jobs:
         run: node --test tests/header-scrollbar-v538.test.mjs
       - name: V539 visual copy cleanup without removed controls
         run: node --test tests/presentation-copy-cleanup-v539.test.mjs
+      - name: V540 team history action menu and Player Values copy cleanup
+        run: node --test tests/team-net-choice-v540.test.mjs
       - name: V534 selection cards and Select All live-state guard
         run: node scripts/selection-cards-v534-smoke.cjs
       - name: Select All survives roster rerender

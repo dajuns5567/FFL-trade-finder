@@ -142,7 +142,7 @@ export async function refreshIdpShow(opts={}){
   }catch(error){publisherDiscoveryError=String(error?.message||error);}
   const provenance={kind:"datawrapper-chart",
     pinnedRevision:!publisherLinked,
-    chartRevision:embedUrl.match(/\\/(\\d+)\\/$/)?.[1]||null,
+    chartRevision:new URL(embedUrl).pathname.split("/").filter(Boolean).at(-1)||null,
     publisherLatestRevisionVerified:false,
     publisherArticleRevisionMatched:publisherLinked,
     verificationBasis:publisherLinked?"publisher-article-embed":"pinned-fallback-unverified",

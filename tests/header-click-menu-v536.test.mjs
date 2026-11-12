@@ -102,5 +102,5 @@ test('outside-click/Escape close installed; no hover-dismiss timer remains; orig
  assert.match(src,/button.addEventListener\('click'/);
  assert.match(src,/e\.stopImmediatePropagation\(\)/);
  assert.match(src,/if\(!e\.isTrusted\)return/);
- assert.match(site,/fleeced-header-v512\.js\?v=536/);
+ assert.match(site,/fleeced-header-v512\.js\?v=537/);
 });

@@ -8,20 +8,21 @@ const literal=config.match(/^\s*ignore = (".*")$/m)?.[1];
 assert.ok(literal,'Netlify build.ignore must be present');
 const command=JSON.parse(literal);
 
-function exitCode({siteId,siteName,context}){
+function exitCode({siteId,siteName,context,reviewId=''}) {
  const result=spawnSync('sh',['-c',command],{
-  env:{...process.env,SITE_ID:siteId,SITE_NAME:siteName,CONTEXT:context},
+  env:{...process.env,SITE_ID:siteId,SITE_NAME:siteName,CONTEXT:context,REVIEW_ID:reviewId},
   encoding:'utf8'
  });
  assert.equal(result.error,undefined,result.stderr);
  return result.status;
 }
-
-test('only the approved current Netlify site builds production cutover',()=>{
+test('only authorized PR previews build on the current Netlify site, production stays blocked',()=>{
  const dest='fa33dfe4-8293-441e-8da0-25cc66fc984c';
- assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'deploy-preview'}),0);
- assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'production'}),1);
- assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'branch-deploy'}),0);
+ assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'deploy-preview',reviewId:'450'}),1);
+ assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'deploy-preview',reviewId:'448'}),1);
+ assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'deploy-preview',reviewId:'451'}),0);
+ assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'production',reviewId:'450'}),0);
+ assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'branch-deploy',reviewId:'450'}),0);
  assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:''}),0);
 });
 test('previous accounts skip builds even for deploy-preview context',()=>{
@@ -34,6 +35,7 @@ test('previous accounts skip builds even for deploy-preview context',()=>{
 });
 
 test('production cutover never spends deploy preview credits',()=>{
- assert.match(config,/CONTEXT==='production'/);
- assert.doesNotMatch(config,/site&&process\.env\.CONTEXT==='deploy-preview'\?1:0/);
+ assert.match(config,/e\.CONTEXT==='deploy-preview'/);
+ assert.match(config,/\['448','450'\]/);
+ assert.doesNotMatch(config,/e\.CONTEXT==='production'/);
 });

@@ -628,6 +628,10 @@ function selectPlayer(id){
   loadPlayer(id);
 }
 function handleContentClick(e){
+  const teamNetChoice=e.target.closest('[data-vh-team-net-choice]');
+  if(teamNetChoice){useTeamNetChoice(teamNetChoice.dataset.vhTeamNetChoice,teamNetChoice.dataset.vhTeamNetId);return}
+  const teamNetMenu=e.target.closest('[data-vh-team-net-menu]');
+  if(teamNetMenu){openTeamNetChoice(teamNetMenu.dataset.vhTeamNetMenu);return}
   const tradeReset=e.target.closest('[data-vh-trade-reset]');
   if(tradeReset){tradeTeamFilter='';tradeYearFilter='';tradeMonthFilter='';renderTradeHistory();return}
   const tradeToggle=e.target.closest('[data-vh-trade-toggle]');
@@ -1772,10 +1776,45 @@ function sortedTeamNetRows(){
   });
 }
 function teamNetSortHeader(label,key){const active=teamNetSort.key===key,arrow=active?(teamNetSort.dir>0?' ▲':' ▼'):'';return`<button type="button" class="vh-team-net-sort" data-vh-team-net-sort="${key}">${label}${arrow}</button>`}
+function openTeamNetChoice(teamId){
+  const modal=document.getElementById('vhMoverModal');
+  const id=String(teamId||'');
+  const team=currentTeamNetStandings().find(t=>String(t.id)===id);
+  if(!modal||!team)return;
+  modal.querySelector('.vh-team-net-choice-overlay')?.remove();
+  const overlay=document.createElement('div');
+  overlay.className='vh-team-net-choice-overlay';
+  overlay.innerHTML=`<div class="vh-team-net-choice-panel" role="dialog" aria-modal="true" aria-label="${esc(team.name)} history options">
+    <h4>${esc(team.name)}</h4>
+    <p>Which history would you like to view?</p>
+    <button type="button" data-vh-team-net-choice="values" data-vh-team-net-id="${esc(id)}">Team Value History</button>
+    <button type="button" data-vh-team-net-choice="trades" data-vh-team-net-id="${esc(id)}">Trade History</button>
+    <button type="button" class="vh-team-net-choice-cancel" data-vh-team-net-choice="cancel">Cancel — back to comparison</button>
+  </div>`;
+  modal.appendChild(overlay);
+  overlay.querySelector('[data-vh-team-net-choice="values"]')?.focus();
+}
+function useTeamNetChoice(action,teamId){
+  if(action==='cancel'){
+    document.querySelector('#vhMoverModal .vh-team-net-choice-overlay')?.remove();
+    document.querySelector('#vhMoverModal [data-vh-team-net-menu]')?.focus();
+    return;
+  }
+  const id=String(teamId||'');
+  if(!id||!currentTeamNetStandings().some(t=>String(t.id)===id))return;
+  if(action==='values'){
+    closeMoverModal();
+    trackedTeamId=id;
+    renderTrackMyTeam();
+  }else if(action==='trades'){
+    closeMoverModal();
+    openTradeHistoryTab(id);
+  }
+}
 function openTeamNetModal(){
   closeMoverModal();const all=sortedTeamNetRows(),wrap=document.createElement('div');wrap.id='vhMoverModal';wrap.className='vh-modal-backdrop';
   const delta=n=>n==null?'—':`<span class="${deltaClass(n)}">${signed(n)}</span>`;
-  wrap.innerHTML=`<div class="vh-modal" role="dialog" aria-modal="true" aria-label="All team net values"><div class="vh-modal-head"><div><h3>All 32 Teams — Overall Net Value</h3><div class="vh-sub">Current totals plus current-roster value movement from stored Value History snapshots. Rank change appears only when every current roster asset has baseline coverage.</div></div><button type="button" class="secondary small" data-vh-modal-close>Close</button></div><div class="vh-modal-body"><div class="vh-team-net-table"><div class="vh-team-net-row vh-team-net-head"><div>Rank</div><div>${teamNetSortHeader('Team name','name')}</div><div>${teamNetSortHeader('Total value','value')}</div><div>${teamNetSortHeader('7D Δ','delta7')}</div><div>${teamNetSortHeader('30D Δ','delta30')}</div><div>${teamNetSortHeader('30D Rank Δ','rankDelta30')}</div></div>${all.map(t=>`<div class="vh-team-net-row"><div>#${t.rank}</div><div><b>${esc(t.name)}</b></div><div>${fmt(t.value)}</div><div>${delta(t.coverage7?t.delta7:null)}</div><div>${delta(t.coverage30?t.delta30:null)}</div><div>${delta(t.rankDelta30)}</div></div>`).join('')}</div></div></div>`;
+  wrap.innerHTML=`<div class="vh-modal" role="dialog" aria-modal="true" aria-label="All team net values"><div class="vh-modal-head"><div><h3>All 32 Teams — Overall Net Value</h3><div class="vh-sub">Current totals plus current-roster value movement from stored Value History snapshots. Rank change appears only when every current roster asset has baseline coverage.</div></div><button type="button" class="secondary small" data-vh-modal-close>Close</button></div><div class="vh-modal-body"><div class="vh-team-net-table"><div class="vh-team-net-row vh-team-net-head"><div>Rank</div><div>${teamNetSortHeader('Team name','name')}</div><div>${teamNetSortHeader('Total value','value')}</div><div>${teamNetSortHeader('7D Δ','delta7')}</div><div>${teamNetSortHeader('30D Δ','delta30')}</div><div>${teamNetSortHeader('30D Rank Δ','rankDelta30')}</div></div>${all.map(t=>`<div class="vh-team-net-row"><div>#${t.rank}</div><div><button type="button" class="vh-team-net-team-link" data-vh-team-net-menu="${esc(t.id)}" aria-label="Open ${esc(t.name)} team history options">${esc(t.name)}<span aria-hidden="true"> ↗</span></button></div><div>${fmt(t.value)}</div><div>${delta(t.coverage7?t.delta7:null)}</div><div>${delta(t.coverage30?t.delta30:null)}</div><div>${delta(t.rankDelta30)}</div></div>`).join('')}</div></div></div>`;
   (document.getElementById('vhLazy')||document.getElementById('valueHistory')||document.body).appendChild(wrap);
 }
 window.openValueHistoryLeagueNetModalV476=function(){const go=()=>{if(marketCache){openTeamNetModal();requestAnimationFrame(()=>document.querySelector('#vhMoverModal .vh-modal-body')?.scrollTo({top:0,behavior:'auto'}));return}loadMarket().then(()=>{openTeamNetModal();requestAnimationFrame(()=>document.querySelector('#vhMoverModal .vh-modal-body')?.scrollTo({top:0,behavior:'auto'}))}).catch(()=>{})};go()};

@@ -146,3 +146,19 @@ test("same-position suffix collision is not treated as a confidently identified 
   assert.equal(c.byId.junior,undefined);
   assert.equal(c.byId.senior,undefined);
 });
+
+test("distinct source WR/RB rows retain both validated same-name players when positions prove identity",()=>{
+  const c=buildConsensusComposite([
+    result("Named ranks","off-a",[
+      {player:"Antonio Williams",rank:5,position:"WR"},
+      {player:"Antonio Williams",rank:30,position:"RB"}
+    ])
+  ],[
+    {id:"receiver",name:"Antonio Williams",positions:["WR"]},
+    {id:"back",name:"Antonio Williams",positions:["RB"]}
+  ]);
+  assert.equal(c.detailsById.receiver.offenseSources[0],"Named ranks");
+  assert.equal(c.detailsById.receiver.offenseSourceEvidence[0].rank,1);
+  assert.equal(c.detailsById.back.offenseSources[0],"Named ranks");
+  assert.equal(c.detailsById.back.offenseSourceEvidence[0].rank,2);
+});

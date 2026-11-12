@@ -75,3 +75,28 @@ test('existing diagnostics distinguish fetched, unpromoted, retained and publish
   for(const field of ['Consecutive identical fetches: ','Unchanged since observation: ','Dated / undated market observations: ','Oldest / newest market observation: '])
     assert.ok(ui.includes(field),'missing source freshness detail: '+field);
 });
+
+test('publisher revision provenance passes through diagnostics without changing consensus rankings',()=>{
+  const mk=(id,source,provenance)=>({id,source,valid:true,status:'refreshed',
+    ranking_rows:1,players_extracted:1,timestamp:'2026-11-11T00:00:00.000Z',
+    rankings:[{player:'Example Runner',position:'RB',rank:1}],
+    diagnostics:{source_provenance:provenance}});
+  const pinned={kind:'datawrapper-chart',pinnedRevision:true,chartRevision:'1',publisherLatestRevisionVerified:false};
+  const dynamic={kind:'unversioned-ranking-query',pinnedRevision:false,publisherLatestRevisionVerified:false};
+  const results=[mk('draftsharks','DraftSharks',dynamic),mk('combined-dynasty','The IDP Show Combined',pinned)];
+  const candidate=buildConsensusPayload({results},[{id:'runner',name:'Example Runner',positions:['RB']}]);
+  assert.equal(candidate.summary.results[0].source_provenance.kind,'unversioned-ranking-query');
+  assert.equal(candidate.summary.results[1].source_provenance.chartRevision,'1');
+  assert.equal(candidate.summary.results[1].publisher_updated_at,null);
+  assert.equal(candidate.withheld,true);
+  assert.deepEqual(candidate.sources,{});
+});
+test('source revision transparency remains visible in the existing diagnostics',()=>{
+  const ui=readFileSyncApi(new URL('../index.html',import.meta.url),'utf8');
+  assert.ok(ui.includes('Source version: pinned revision '));
+  assert.ok(ui.includes('newest publisher version not verified'));
+  assert.ok(ui.includes('Source version: unversioned ranking endpoint'));
+  const adapter=readFileSyncApi(new URL('../netlify/functions/idpshow-adapter.mjs',import.meta.url),'utf8');
+  assert.ok(adapter.includes('datawrapper.dwcdn.net/gNM2r/1/'));
+  assert.ok(adapter.includes('publisherLatestRevisionVerified:false'));
+});

@@ -1,5 +1,11 @@
 const SOURCE_URL="https://www.theidpshow.com/p/combined-idp-offense-dynasty-rankings-fantasy-football";
 const EMBED_URL="https://datawrapper.dwcdn.net/gNM2r/1/";
+// Explicit chart revision in the canonical adapter URL: fetch success cannot
+// establish that this is the publisher's latest Datawrapper revision.
+const REVISION_PINNED=/(?<=\/)[0-9]+(?=\/$)/.test(EMBED_URL);
+const SOURCE_PROVENANCE={kind:"datawrapper-chart",pinnedRevision:REVISION_PINNED,
+  chartRevision:EMBED_URL.match(/\/([0-9]+)\/$/)?.[1]||null,
+  publisherLatestRevisionVerified:false};
 const TIMEOUT_MS=7000;
 
 const DEFENSIVE_POSITIONS=new Set(["DL","DE","DT","EDGE","LB","ILB","OLB","DB","CB","S","FS","SS"]);
@@ -117,7 +123,7 @@ export async function refreshIdpShow(opts={}){
   const fetchImpl=opts.fetchImpl||fetch;
   let embedHtml="";
   try{embedHtml=await fetchText(EMBED_URL,fetchImpl,"text/html,application/xhtml+xml,*/*;q=0.8");}
-  catch(error){return {source:"The IDP Show Combined",id:"combined-dynasty",status:"failed",valid:false,format:"combined-offense-idp-dynasty",reducedWeight:false,players_extracted:0,ranking_rows:0,rankings:[],timestamp:now,stage:"fetch",error:`Datawrapper embed fetch failed: ${String(error?.message||error)}`,urls:[SOURCE_URL],diagnostics:{embed_url:EMBED_URL,validation_result:false}};}
+  catch(error){return {source:"The IDP Show Combined",id:"combined-dynasty",status:"failed",valid:false,format:"combined-offense-idp-dynasty",reducedWeight:false,players_extracted:0,ranking_rows:0,rankings:[],timestamp:now,stage:"fetch",error:`Datawrapper embed fetch failed: ${String(error?.message||error)}`,urls:[SOURCE_URL],diagnostics:{embed_url:EMBED_URL,source_provenance:SOURCE_PROVENANCE,validation_result:false}};}
 
   const attempted=[];let rankings=[];let dataUrl=null;
   let validation={valid:false,minRank:null,maxRank:null,missing:[],duplicateRanks:[],duplicatePlayers:[],allowedDualRolePlayers:[],blockingDuplicatePlayers:[]};
@@ -141,5 +147,5 @@ export async function refreshIdpShow(opts={}){
     else if(validation.blockingDuplicatePlayers.length)error=`Invalid duplicate player row: ${validation.blockingDuplicatePlayers.map(x=>`${x.player} at ranks ${x.ranks.join("/")} positions ${x.entries.map(e=>e.rawPosition||e.position||"unknown").join("/")}`).join("; ")}`;
     else error=`Only ${rankings.length} validated ranking rows were extracted from Datawrapper`;
   }
-  return {source:"The IDP Show Combined",id:"combined-dynasty",status:valid?"refreshed":"failed",valid,format:"combined-offense-idp-dynasty",reducedWeight:false,players_extracted:uniquePlayers,ranking_rows:rankings.length,rankings,timestamp:now,stage:valid?"validated":"extract",error,urls:[SOURCE_URL],diagnostics:{fetch_method:"datawrapper-discovery",embed_url:EMBED_URL,data_url:dataUrl,attempted,parser:"idpshow-datawrapper-csv-dual-role",unique_players_extracted:uniquePlayers,ranking_rows:rankings.length,min_rank:validation.minRank,max_rank:validation.maxRank,missing_ranks:validation.missing,duplicate_ranks:validation.duplicateRanks,allowed_dual_role_players:validation.allowedDualRolePlayers,blocking_duplicate_players:validation.blockingDuplicatePlayers,rank_sequence_contiguous:validation.missing.length===0&&validation.minRank===1,first_10:rankings.slice(0,10),rows_198_208:rankings.filter(x=>x.rank>=198&&x.rank<=208),validation_result:valid}};
+  return {source:"The IDP Show Combined",id:"combined-dynasty",status:valid?"refreshed":"failed",valid,format:"combined-offense-idp-dynasty",reducedWeight:false,players_extracted:uniquePlayers,ranking_rows:rankings.length,rankings,timestamp:now,stage:valid?"validated":"extract",error,urls:[SOURCE_URL],diagnostics:{fetch_method:"datawrapper-discovery",embed_url:EMBED_URL,source_provenance:SOURCE_PROVENANCE,data_url:dataUrl,attempted,parser:"idpshow-datawrapper-csv-dual-role",unique_players_extracted:uniquePlayers,ranking_rows:rankings.length,min_rank:validation.minRank,max_rank:validation.maxRank,missing_ranks:validation.missing,duplicate_ranks:validation.duplicateRanks,allowed_dual_role_players:validation.allowedDualRolePlayers,blocking_duplicate_players:validation.blockingDuplicatePlayers,rank_sequence_contiguous:validation.missing.length===0&&validation.minRank===1,first_10:rankings.slice(0,10),rows_198_208:rankings.filter(x=>x.rank>=198&&x.rank<=208),validation_result:valid}};
 }

@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "league_id": "1316867686394769408",
-  "snapshot_count": 304,
+  "snapshot_count": 305,
   "tracking_since": "2026-09-19T22:01:38.323Z",
-  "latest": "2026-11-12T01:02:15.163Z",
+  "latest": "2026-11-12T03:51:18.658Z",
   "items": [
     {
       "t": "2026-09-19T22:01:38.323Z",
@@ -2130,6 +2130,13 @@
       "t": "2026-11-12T01:02:15.163Z",
       "path": "value-history/snapshots/2026/11/2026-11-12T01-02-15-163Z.json",
       "fingerprint": "t9ndf7",
+      "count": 898,
+      "source": "scheduled"
+    },
+    {
+      "t": "2026-11-12T03:51:18.658Z",
+      "path": "value-history/snapshots/2026/11/2026-11-12T03-51-18-658Z.json",
+      "fingerprint": "p6ul9l",
       "count": 898,
       "source": "scheduled"
     }

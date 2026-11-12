@@ -35,7 +35,7 @@ test('choice logic sends value and trades to existing filtered routes; cancel re
  const b=valueUI.indexOf('function openTeamNetModal(){',a);
  assert.ok(a>0&&b>a);
  const code=valueUI.slice(a,b);
- let overlay=null,modalRemoved=0,trackOpened=0,tradeId='',teamId='',focused=false;
+ let overlay=null,modalRemoved=0,trackOpened=0,tradeId='',teamId='',focused=false,returnedFocus=0;
  const modal={
   appendChild(el){overlay=el},
   querySelector(selector){
@@ -63,12 +63,13 @@ test('choice logic sends value and trades to existing filtered routes; cancel re
   trackedTeamId:null,
  };
  runInNewContext(code,ctx);
- ctx.openTeamNetChoice('17');
+ ctx.openTeamNetChoice('17',{focus(){returnedFocus++}});
  assert.match(overlay.innerHTML,/Philadelphia Eagles/);
  assert.match(overlay.innerHTML,/data-vh-team-net-id="17"/);
  ctx.useTeamNetChoice('cancel');
  assert.equal(overlay,null);
  assert.equal(modalRemoved,0,'cancel must not close the underlying table');
+ assert.equal(returnedFocus,1,'cancel must restore focus to the selected team, not jump to the first row');
  ctx.openTeamNetChoice('17');
  ctx.useTeamNetChoice('values','17');
  assert.equal(ctx.trackedTeamId,'17');

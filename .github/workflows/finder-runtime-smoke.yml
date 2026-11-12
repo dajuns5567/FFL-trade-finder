@@ -30,6 +30,8 @@ on:
       - 'tests/consensus-composite-v3.test.mjs'
       - 'tests/consensus-source-freshness.test.mjs'
       - 'tests/offense-source-audit-v51.test.mjs'
+      - 'tests/idpshow-version-discovery.test.mjs'
+      - 'netlify/functions/idpshow-adapter.mjs'
       - 'offense-source-audit-v51.js'
       - 'netlify/functions/site-v17.mjs'
       - 'netlify/functions/consensus-source-freshness.mjs'
@@ -158,7 +160,7 @@ jobs:
       - name: Incoming partner diversity and manual Finder isolation
         run: node scripts/incoming-partner-diversity-v330-smoke.cjs
       - name: Offensive consensus anchoring V50 full-cohort regression
-        run: node --test tests/offense-consensus-anchor-v50.test.mjs tests/consensus-composite-v3.test.mjs tests/consensus-source-freshness.test.mjs tests/offense-source-audit-v51.test.mjs
+        run: node --test tests/offense-consensus-anchor-v50.test.mjs tests/consensus-composite-v3.test.mjs tests/consensus-source-freshness.test.mjs tests/offense-source-audit-v51.test.mjs tests/idpshow-version-discovery.test.mjs
       - name: Live KTC parser integrity
         run: |
           node --input-type=module <<'NODE'

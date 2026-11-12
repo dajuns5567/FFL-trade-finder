@@ -31,6 +31,12 @@ export function buildFreshnessSnapshot(snapshot,previous,now=new Date().toISOStr
     contentLastChangedAt:changed?fetchedAt:ISO(previous?.freshness?.contentLastChangedAt),
     contentChangeStatus:changed?'changed':unchanged?'unchanged':'unknown-baseline',
     unchangedFetchCount:unchanged?(Number(previous?.freshness?.unchangedFetchCount)||0)+1:0,
+    unchangedSinceAt:unchanged
+      ? ISO(previous?.freshness?.unchangedSinceAt)
+        || ISO(previous?.freshness?.fetchedAt)
+        || ISO(previous?.updated)
+        || null
+      : null,
     contentFingerprint:fingerprint,
     observation: snapshot?.observation||previous?.freshness?.observation||null
   };

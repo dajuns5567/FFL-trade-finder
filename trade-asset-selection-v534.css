@@ -66,3 +66,76 @@
   :is(#findShop,#evalChooserA,#evalChooserB) label.checkrow,
   #tradeSelectAllButton165{transition:none}
 }
+
+/* V535 centering repair: the legacy trade98/finder rules have greater
+   specificity than the generic cards above and force flex-start / 4px
+   padding. Override only these three asset selectors, never preferences. */
+.trade98-finder-grid #findShop label.checkrow,
+#findShop label.checkrow,
+#evalChooserA label.checkrow,
+#evalChooserB label.checkrow{
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  min-height:62px!important;
+  padding:11px 13px!important;
+  gap:12px!important;
+  text-align:left!important;
+  line-height:1.35!important;
+}
+.trade98-finder-grid #findShop label.checkrow input.shopCheck[type="checkbox"],
+#findShop label.checkrow input[type="checkbox"],
+#evalChooserA label.checkrow input[type="checkbox"],
+#evalChooserB label.checkrow input[type="checkbox"]{
+  display:block!important;
+  align-self:center!important;
+  flex:0 0 22px!important;
+  width:22px!important;
+  height:22px!important;
+  min-width:22px!important;
+  margin:0!important;
+  vertical-align:middle!important;
+}
+.trade98-finder-grid #findShop label.checkrow>span,
+#findShop label.checkrow>span,
+#evalChooserA label.checkrow>span,
+#evalChooserB label.checkrow>span{
+  display:block!important;
+  flex:1 1 0!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:0!important;
+  align-self:center!important;
+  line-height:1.42!important;
+}
+.trade98-finder-grid #findShop label.checkrow>span>b,
+#findShop label.checkrow>span>b,
+#evalChooserA label.checkrow>span>b,
+#evalChooserB label.checkrow>span>b{
+  display:inline-block;
+  line-height:1.3!important;
+}
+:is(#findShop,#evalChooserA,#evalChooserB) .checklist{
+  box-sizing:border-box;
+  padding-inline:5px 7px!important;
+}
+@media(max-width:700px){
+  .trade98-finder-grid #findShop label.checkrow,
+  #findShop label.checkrow,
+  #evalChooserA label.checkrow,
+  #evalChooserB label.checkrow{
+    min-height:66px!important;
+    padding:12px 14px!important;
+    gap:13px!important;
+  }
+  .trade98-finder-grid #findShop label.checkrow input.shopCheck[type="checkbox"],
+  #findShop label.checkrow input[type="checkbox"],
+  #evalChooserA label.checkrow input[type="checkbox"],
+  #evalChooserB label.checkrow input[type="checkbox"]{
+    flex-basis:24px!important;
+    width:24px!important;
+    min-width:24px!important;
+    height:24px!important;
+  }
+}

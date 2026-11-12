@@ -66,13 +66,13 @@ test('preview seeding targets the active Netlify account by default',()=>{
 });
 
 test('unpublished manuscript and missing migrated archives are never conflated',()=>{
- assert.match(readerSource,/const onNetlifyDeployPreview=/);
- assert.match(readerSource,/onNetlifyDeployPreview&&new URLSearchParams\(location\.search\)\.get\('inquirer_preview'\)==='1'/);
- assert.doesNotMatch(readerSource,/Deploy Preview: published archive view/);
- assert.match(readerSource,/host\\.innerHTML=dailyHTML\\(all,stats,w,md,spotlightW\\|\\|w\\)/);
- assert.match(readerSource,/const inquirerPreviewEntryUrl=/);
- assert.match(readerSource,/if\\(inquirerPreviewMode\\)/);
- assert.match(readerSource,/Private .*preview is not ready/);
+ assert.ok(readerSource.includes('const onNetlifyDeployPreview='));
+ assert.ok(readerSource.includes("onNetlifyDeployPreview&&new URLSearchParams(location.search).get('inquirer_preview')==='1'"));
+ assert.ok(!readerSource.includes('Deploy Preview: published archive view'),'removed notice must stay absent');
+ assert.ok(readerSource.includes('host.innerHTML=dailyHTML(all,stats,w,md,spotlightW||w)'));
+ assert.ok(readerSource.includes('const inquirerPreviewEntryUrl='));
+ assert.ok(readerSource.includes('if(inquirerPreviewMode)'),'private reading still uses its distinct guarded route');
+ assert.ok(readerSource.includes('preview is not ready'));
 });
 
 test('every private draft targets the requested or latest completed week rather than silently backfilling',()=>{

@@ -76,10 +76,9 @@ import {assessMinorNineWordReuse} from '../netlify/functions/lib/inquirer-minor-
 const repeatedFixture=(groups)=>{
  const teams=Array.from({length:32},(_,i)=>({roster_id:i+1,inquirer_article:{
   sections:[{paragraphs:[...groups.filter(group=>group.members.includes(i+1)).map(group=>
-   'Distinct opening evidence for this exact roster ' + (i+1) + '. ' +
-   group.sentence + ' This closing review documents that individual club ' +
-   (i+1) + ' in a unique way with verified personnel context and a specific next opponent for this roster ' +
-   (i+1) + '.')]}]}}));
+   'Distinct opening evidence for this exact documented roster ' + (i+1) + '. ' +
+   group.sentence + ' Club' + (i+1) +
+   ' verifies its lineup with individual opponent weekly context.')]}]}}));
  const owners=new Map();
  for(const team of teams){
   const prose=team.inquirer_article.sections.flatMap(s=>s.paragraphs).join(' ');

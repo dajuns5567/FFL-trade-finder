@@ -81,6 +81,8 @@ on:
       - 'trade-selection-sync-v534.js'
       - 'fleeced-header-v512.js'
       - 'tests/header-click-menu-v536.test.mjs'
+      - 'header-scrollbar-v538.css'
+      - 'tests/header-scrollbar-v538.test.mjs'
       - 'scripts/selection-cards-v534-smoke.cjs'
       - 'trade-select-all-v165.js'
       - 'netlify/functions/site-v29.mjs'
@@ -140,6 +142,8 @@ jobs:
         run: node scripts/select-all-blank-equivalence-v258.cjs
       - name: V536 persistent click navigation and menu positioning
         run: node --test tests/header-click-menu-v536.test.mjs
+      - name: V538 hidden header scrollbar without lost horizontal scrolling
+        run: node --test tests/header-scrollbar-v538.test.mjs
       - name: V534 selection cards and Select All live-state guard
         run: node scripts/selection-cards-v534-smoke.cjs
       - name: Select All survives roster rerender

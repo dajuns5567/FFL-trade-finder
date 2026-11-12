@@ -4,8 +4,8 @@ const CHART_ID="gNM2r";
 // Resolve the published chart revision from the publisher's own article before
 // falling back to the original pinned URL. Never guess revision numbers.
 export function discoverPublishedChartEmbed(html){
-  const content=String(html||"").replace(/\\\\\//g,"/");
-  const matches=[...content.matchAll(/(?:https?:)?\\/\\/datawrapper\\.dwcdn\\.net\\/gNM2r\\/(\\d+)\\/?/gi)];
+  const content=String(html||"").split(String.fromCharCode(92)+"/").join("/");
+  const matches=[...content.matchAll(new RegExp("(?:https?:)?//datawrapper[.]dwcdn[.]net/gNM2r/([0-9]+)/?","gi"))];
   const revisions=[...new Set(matches.map(m=>Number(m[1])).filter(n=>Number.isSafeInteger(n)&&n>0))];
   if(!revisions.length)return null;
   // More than one revision on the article is ambiguous: don't silently pick.

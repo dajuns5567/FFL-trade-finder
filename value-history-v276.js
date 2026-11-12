@@ -1607,13 +1607,40 @@ function renderMarketTable(){
   host.innerHTML=marketTableRowsMarkup(rows);
 }
 function scoringMilestonesRows(scoring,loading=false){
-  if(!scoring&&loading)return'<div class="vh-feed-row"><span class="vh-milestone-label">Scoring milestones<span class="vh-milestone-time">Loading completed-week scoring in the background…</span></span><b>…</b></div>';
-  return`
-      <div id="vhScoringMilestones">${scoringMilestonesRows(scoring,scoringLoading)}</div>`;
+  if(!scoring){
+    const msg=loading?'Loading completed-week scoring in the background…':'Scoring milestones unavailable; historical value and rank records remain available.';
+    return '<div class="vh-feed-row"><span class="vh-milestone-label">Scoring milestones<span class="vh-milestone-time">'+esc(msg)+'</span></span><b>'+ (loading?'…':'—') +'</b></div>';
+  }
+  const weeks=[
+    ['Highest points in a week',scoring.highWeek,
+      scoring.highWeek?scoring.highWeek.season+' Week '+scoring.highWeek.week:'No recorded NFL week yet'],
+    ['Highest points in a season',scoring.highSeason,
+      scoring.highSeason?scoring.highSeason.season+' • '+scoring.highSeason.games+' games':'No qualifying 8+ game season yet'],
+    ['Highest PPG in qualifying season',scoring.highPpg,
+      scoring.highPpg?scoring.highPpg.season+' • '+scoring.highPpg.games+' games':'No qualifying 8+ game season yet']
+  ];
+  const rows=weeks.map(([title,record,when])=>
+    '<div class="vh-feed-row"><span class="vh-milestone-label">'+esc(title)+
+    '<span class="vh-milestone-time">'+esc(when)+'</span></span><b>'+
+    (record&&Number.isFinite(Number(record.points))?Number(record.points).toFixed(2):'—')+'</b></div>').join('');
+  const awards=(Array.isArray(scoring.weeklyAwards)?scoring.weeklyAwards:[]).map(a=>
+    '<div class="vh-feed-row"><span class="vh-milestone-label">'+esc(a.title||'Player of the Week')+
+    '<span class="vh-milestone-time">'+esc(String(a.season))+' Week '+esc(String(a.week))+
+    ' • '+(a.week_started_at?esc(dateShort(a.week_started_at)):'date unavailable')+
+    '</span></span><span class="vh-milestone-award">🏅 '+
+    (Number.isFinite(Number(a.points))?Number(a.points).toFixed(2):'—')+' pts</span></div>').join('');
+  return rows+awards;
 }
 async function loadPlayerScoring(id){
   const key=String(id);if(playerScoringCache.has(key))return;
-  try{const data=await scoringFetch(key);playerScoringCache.set(key,data?.scoring_milestones||null)}catch{return}
+  try{
+    const data=await scoringFetch(key);
+    const value=data?.scoring_milestones;
+    playerScoringCache.set(key,value&&typeof value==='object'?value:null);
+  }catch(error){
+    console.warn('Player scoring milestones unavailable',key,error);
+    playerScoringCache.set(key,null);
+  }
   if(String(currentPlayerId)!==key)return;
   const target=document.getElementById('vhScoringMilestones');if(target)target.innerHTML=scoringMilestonesRows(playerScoringCache.get(key),false);
 }
@@ -1948,10 +1975,7 @@ function renderPlayerProfile(id,allPts,period='ALL'){
       <div class="vh-feed-row"><span class="vh-milestone-label">Best overall<span class="vh-milestone-time">${bestOverallPoint?dateTime(bestOverallPoint.t):'—'}</span></span><b>#${bestOverall}</b></div>
       <div class="vh-feed-row"><span class="vh-milestone-label">Best ${esc(meta.pos)}</span><b>#${bestPos}</b></div>
       <div class="vh-feed-row"><span class="vh-milestone-label">Lowest ${esc(meta.pos)} Rank</span><b>#${lowestPos}</b></div>
-      <div class="vh-feed-row"><span class="vh-milestone-label">Highest points in a week<span class="vh-milestone-time">${scoring?.highWeek?`${scoring.highWeek.season} Week ${scoring.highWeek.week}`:'No recorded NFL week yet'}</span></span><b>${scoring?.highWeek?Number(scoring.highWeek.points).toFixed(2):'—'}</b></div>
-      <div class="vh-feed-row"><span class="vh-milestone-label">Highest points in a season<span class="vh-milestone-time">${scoring?.highSeason?`${scoring.highSeason.season} • ${scoring.highSeason.games} games`:'No qualifying 8+ game season yet'}</span></span><b>${scoring?.highSeason?Number(scoring.highSeason.points).toFixed(2):'—'}</b></div>
-      <div class="vh-feed-row"><span class="vh-milestone-label">Highest PPG in qualifying season<span class="vh-milestone-time">${scoring?.highPpg?`${scoring.highPpg.season} • ${scoring.highPpg.games} games`:'No qualifying 8+ game season yet'}</span></span><b>${scoring?.highPpg?Number(scoring.highPpg.points).toFixed(2):'—'}</b></div>
-      ${(scoring?.weeklyAwards||[]).map(a=>`<div class="vh-feed-row"><span class="vh-milestone-label">${esc(a.title||'Player of the Week')}<span class="vh-milestone-time">${esc(String(a.season))} Week ${esc(String(a.week))} • ${a.week_started_at?dateShort(a.week_started_at):'date unavailable'}</span></span><span class="vh-milestone-award">🏅 ${Number(a.points||0).toFixed(2)} pts</span></div>`).join('')}
+      <div id="vhScoringMilestones">${scoringMilestonesRows(scoring,scoringLoading)}</div>
       <div class="vh-feed-row"><span class="vh-milestone-label">Observations</span><b>${fmt(allPts.length)}</b></div>
     </div><div class="tiny muted" style="margin-top:10px">Scoring milestones use Sleeper weekly regular-season stats and this league’s scoring settings. Informational only.</div></div>
   </div>

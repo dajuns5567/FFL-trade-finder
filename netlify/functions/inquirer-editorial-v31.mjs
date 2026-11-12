@@ -996,7 +996,9 @@ function w2BenchRead(t,r,miss,gap,won,margin){
   // Never embed an old NFL week number in forward-week reporting.
   const verdict=choice===11
     ?team+" left "+points+" points from "+reserve+" on the bench while "+starter+
-      " held the "+slot+" start; "+(won?"the win covered the decision, not the gap.":"the loss exposed that choice.")
+      " held the "+slot+" start; "+(won?
+        team+" won despite that wasted "+points+"-point edge from "+reserve+".":
+        team+" lost with "+reserve+"'s "+points+" unused points still sitting there.")
     :judgment[w2Hash(team+"|bench-verdict")%judgment.length];
   return facts[choice]+" "+verdict;
 }

@@ -154,6 +154,8 @@ jobs:
         run: node scripts/regular-finder-family-diversity-v328-smoke.cjs
       - name: Incoming partner diversity and manual Finder isolation
         run: node scripts/incoming-partner-diversity-v330-smoke.cjs
+      - name: Offensive consensus anchoring V50 full-cohort regression
+        run: node --test tests/offense-consensus-anchor-v50.test.mjs tests/consensus-composite-v3.test.mjs tests/consensus-source-freshness.test.mjs
       - name: Live KTC parser integrity
         run: |
           node --input-type=module <<'NODE'
@@ -178,8 +180,6 @@ jobs:
           node --check netlify/functions/lib/pick-order-5050.mjs
           node --check netlify/functions/pick-order-v527.mjs
           node --test tests/draft-pick-order-5050.test.mjs
-      - name: Offensive consensus anchoring V50 full-cohort regression
-        run: node --test tests/offense-consensus-anchor-v50.test.mjs tests/consensus-composite-v3.test.mjs tests/consensus-source-freshness.test.mjs
       - name: Current-season scoring qualification
         run: node --test tests/ppr-history.test.mjs
       - name: Current-season scoring pipeline syntax

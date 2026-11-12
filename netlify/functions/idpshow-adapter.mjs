@@ -143,7 +143,8 @@ export async function refreshIdpShow(opts={}){
   const provenance={kind:"datawrapper-chart",
     pinnedRevision:!publisherLinked,
     chartRevision:embedUrl.match(/\\/(\\d+)\\/$/)?.[1]||null,
-    publisherLatestRevisionVerified:false,\n    publisherArticleRevisionMatched:publisherLinked,
+    publisherLatestRevisionVerified:false,
+    publisherArticleRevisionMatched:publisherLinked,
     verificationBasis:publisherLinked?"publisher-article-embed":"pinned-fallback-unverified",
     publisherDiscoveryError};
   try{embedHtml=await fetchText(embedUrl,fetchImpl,"text/html,application/xhtml+xml,*/*;q=0.8");}

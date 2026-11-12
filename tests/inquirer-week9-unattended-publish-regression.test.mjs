@@ -60,3 +60,13 @@ test('a new reviewed revision allows automatic retry without overriding quality 
  assert.equal(renewed.queue,true);
  assert.equal(renewed.finishedWeek,9);
 });
+
+test('Fleeced Daily preview reader no longer shows the redundant archive warning',()=>{
+ const hub=readFileSync(new URL('../league-hub-v451.js',import.meta.url),'utf8');
+ const loader=readFileSync(new URL('../netlify/functions/site-v29.mjs',import.meta.url),'utf8');
+ assert.doesNotMatch(hub,/Deploy Preview: published archive view/);
+ assert.doesNotMatch(hub,/This view shows only editions stored on this Netlify project/);
+ assert.match(hub,/host\.innerHTML=dailyHTML\(all,stats,w,md,spotlightW\|\|w\)/);
+ assert.match(loader,/league-hub-v451\.js\?v=542/);
+ assert.match(hub,/inquirerPreviewMode/,'private manuscript preview entry remains available through normal controls');
+});

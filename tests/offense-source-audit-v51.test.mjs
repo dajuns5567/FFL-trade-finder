@@ -81,3 +81,44 @@ test('browser page includes a wired downloadable read-only audit before boot',()
   assert.ok(!source.includes('updateData()'));
   assert.ok(!source.includes('refreshConsensus()'));
 });
+
+test('high-impact disagreement requires three peers and triages top 150 ahead of depth',()=>{
+  const a=fixture(),src=['FantasyPros','DraftSharks','The IDP Show Combined Offense','KTC','FanRanked'];
+  const players=Array.from({length:160},(_,i)=>({
+    id:String(i+1),first_name:'Player',last_name:String(i+1),fantasy_positions:['WR']
+  }));
+  const masterRows=players.map(p=>({x:{id:p.id},value:600}));
+  const details=players.map((p,i)=>({
+    id:p.id,offenseRank:i+1,consensusCompositeValue:600,
+    offenseSourceEvidence:src.map((name,j)=>({
+      source:name,weight:1,listed:true,
+      rank:(i===61&&j===2)?133:(i===154&&j===2)?250:i+1
+    }))
+  }));
+  const out=a.build(vals(players,details,masterRows));
+  assert.equal(out.summary.totalOffense,160);
+  assert.equal(out.highImpactDisagreements.thresholdRank,150);
+  const flagged=out.highImpactDisagreements.rows;
+  assert.equal(flagged.length,1,'deep ranked players do not count as high-impact disagreements');
+  assert.equal(flagged[0].name,'Player 62');
+  assert.equal(flagged[0].source,'The IDP Show Combined Offense');
+  assert.equal(flagged[0].sourceRank,133);
+  assert.equal(flagged[0].peerMedian,62);
+  assert.equal(flagged[0].peerCount,4);
+  assert.equal(flagged[0].signedDifference,71);
+  assert.equal(out.highImpactDisagreements.bySource['The IDP Show Combined Offense'].outliers40,1);
+  assert.ok(out.priorityReview[0].offenseOnlyRank<=150);
+});
+test('two peer sources alone are insufficient to call a ranking an outlier',()=>{
+  const a=fixture(),data=vals([{id:'p',first_name:'Example',last_name:'Test',fantasy_positions:['TE']}],
+    [{id:'p',offenseRank:70,consensusCompositeValue:600,offenseSourceEvidence:[
+      {source:'FantasyPros',rank:10,weight:1,listed:true},
+      {source:'DraftSharks',rank:100,weight:1,listed:true},
+      {source:'KTC',rank:8,weight:1,listed:true}
+    ]}],
+    [{x:{id:'p'},value:600}]);
+  const out=a.build(data);
+  assert.equal(out.players[0].sourceRankSpread,92);
+  assert.equal(out.highImpactDisagreements.rows.length,0);
+  assert.equal(out.highImpactDisagreements.bySource.DraftSharks.measured,0);
+});

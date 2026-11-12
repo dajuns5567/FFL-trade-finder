@@ -162,3 +162,82 @@ test("distinct source WR/RB rows retain both validated same-name players when po
   assert.equal(c.detailsById.back.offenseSources[0],"Named ranks");
   assert.equal(c.detailsById.back.offenseSourceEvidence[0].rank,2);
 });
+
+const rankedWithTarget=(name,position,rank,total=200)=>Array.from({length:total},(_,i)=>({
+  player:i===rank-1?name:'Generated '+position+' '+i,rank:i+1,position
+}));
+test("offense suppresses one extreme publisher when four independent source peers cluster",()=>{
+  const target="Matthew Golden";
+  const results=[
+    result("FantasyPros","fantasypros",rankedWithTarget(target,"WR",47)),
+    result("DraftSharks","draftsharks",rankedWithTarget(target,"WR",37)),
+    result("The IDP Show Combined","combined-dynasty",rankedWithTarget(target,"WR",133)),
+    result("KTC","ktc",rankedWithTarget(target,"WR",19),true),
+    result("FanRanked","fanranked",rankedWithTarget(target,"WR",24))
+  ];
+  const c=buildConsensusComposite(results,[{id:"golden",name:target,positions:["WR"]}]);
+  const d=c.detailsById.golden,change=d.offenseOutlierAdjustments;
+  assert.equal(change.length,1);
+  assert.equal(change[0].source,"The IDP Show Combined Offense");
+  assert.equal(change[0].rank,133);
+  assert.equal(change[0].peerMedian,30.5);
+  assert.equal(change[0].originalWeight,1);
+  assert.equal(change[0].adjustedWeight,.25);
+  assert.equal(d.offenseSourceEvidence.find(x=>x.source==="The IDP Show Combined Offense").outlierProtected,true);
+  assert.equal(d.offenseObservedSourceCount,5);
+  const raw=(47+37+133+.5*19+24)/4.5;
+  const corrected=(47+37+.25*133+.5*19+24)/3.75;
+  assert.ok(Math.abs(d.offenseRank-corrected)<1e-8);
+  assert.ok(d.offenseRank<raw-15,"material outlier influence reduced");
+});
+test("no suppression with only three listed ranks regardless of the disagreement size",()=>{
+  const target="Sparse Rookie";
+  const c=buildConsensusComposite([
+    result("FantasyPros","fantasypros",rankedWithTarget(target,"WR",20)),
+    result("KTC","ktc",rankedWithTarget(target,"WR",22)),
+    result("The IDP Show Combined","combined-dynasty",rankedWithTarget(target,"WR",170))
+  ],[{id:"sparse",name:target,positions:["WR"]}]);
+  assert.deepEqual(c.detailsById.sparse.offenseOutlierAdjustments,[]);
+  assert.equal(c.detailsById.sparse.offenseSourceEvidence.find(x=>x.source==="The IDP Show Combined Offense").weight,1);
+});
+test("two camps and evenly split sources are retained as legitimate market disagreement",()=>{
+  const target="Divided Rookie",results=[
+    result("FantasyPros","fantasypros",rankedWithTarget(target,"WR",20)),
+    result("DraftSharks","draftsharks",rankedWithTarget(target,"WR",30)),
+    result("KTC","ktc",rankedWithTarget(target,"WR",125)),
+    result("FanRanked","fanranked",rankedWithTarget(target,"WR",135))
+  ];
+  const d=buildConsensusComposite(results,[{id:"split",name:target,positions:["WR"]}]).detailsById.split;
+  assert.deepEqual(d.offenseOutlierAdjustments,[]);
+  assert.ok(d.offenseSourceEvidence.every(x=>x.weight===1));
+});
+test("single-source safety floor remains conservative, no injected consensus",()=>{
+  const d=buildConsensusComposite([
+    result("FantasyPros","fantasypros",rankedWithTarget("Lonely Rookie","RB",1))
+  ],[{id:"solo",name:"Lonely Rookie",positions:["RB"]}]).detailsById.solo;
+  assert.equal(d.offenseRank,260);
+  assert.deepEqual(d.offenseOutlierAdjustments,[]);
+});
+test("IDP aggregation remains unchanged even with one extreme rank and three agreeing sources",()=>{
+  const target="Linebacker Outlier",results=[
+    result("IDP One","one-idp",rankedWithTarget(target,"LB",20)),
+    result("IDP Two","two-idp",rankedWithTarget(target,"LB",21)),
+    result("IDP Three","three-idp",rankedWithTarget(target,"LB",22)),
+    result("IDP Four","four-idp",rankedWithTarget(target,"LB",130))
+  ];
+  const d=buildConsensusComposite(results,[{id:"lb",name:target,positions:["LB"]}]).detailsById.lb;
+  assert.equal(d.idpRank,(20+21+22+130)/4);
+  assert.deepEqual(d.offenseOutlierAdjustments,[]);
+});
+test("omission penalties are not counted as agreeing peers when protecting offense consensus",()=>{
+  const target="Two Peers",results=[
+    result("FantasyPros","fantasypros",rankedWithTarget(target,"WR",20)),
+    result("DraftSharks","draftsharks",rankedWithTarget(target,"WR",25)),
+    result("The IDP Show Combined","combined-dynasty",rankedWithTarget(target,"WR",150)),
+    result("KTC","ktc",Array.from({length:200},(_,i)=>({player:"Absent A"+i,rank:i+1,position:"WR"}))),
+    result("FanRanked","fanranked",Array.from({length:200},(_,i)=>({player:"Absent B"+i,rank:i+1,position:"WR"})))
+  ];
+  const d=buildConsensusComposite(results,[{id:"two",name:target,positions:["WR"]}]).detailsById.two;
+  assert.deepEqual(d.offenseOutlierAdjustments,[]);
+  assert.equal(d.offenseObservedSourceCount,3);
+});

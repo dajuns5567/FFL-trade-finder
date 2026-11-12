@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {sourceFingerprint,marketObservationFreshness,buildFreshnessSnapshot,ageFreshness}
   from '../netlify/functions/consensus-source-freshness.mjs';
 import {buildConsensusPayload} from '../netlify/functions/update.mjs';
+import {readFileSync as readFileSyncApi} from 'node:fs';
 
 test('fingerprint tracks substantive ranking changes independent of key ordering',()=>{
   assert.equal(sourceFingerprint({alpha:1,beta:2}),sourceFingerprint({beta:2,alpha:1}));
@@ -52,3 +53,12 @@ test('all-source candidate still withholds replacement if any required source fa
   assert.deepEqual(payload.sources,{});
   assert.equal(payload.integrity.all_sources_valid,false);
 });
+
+test('existing diagnostics distinguish fetched, unpromoted, retained and publisher-unknown data',()=>{
+  const fs=requireFs();
+  const ui=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
+  for(const field of ['last-known-good','fresh-not-promoted','Last successful fetch: ','Publisher update: ','Observed ranking change: ','Market observations older than 30 days: '])
+    assert.ok(ui.includes(field),'missing visible freshness distinction: '+field);
+  assert.ok(!ui.includes('Freshly refreshed'),'legacy label must not imply publisher refresh');
+});
+function requireFs(){return readFileSyncApi;}

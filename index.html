@@ -487,7 +487,11 @@ function renderConsensusDiagnostics(summary){
       "Publisher update: "+date(f.publisherUpdatedAt||x.publisher_updated_at),
       "Observed ranking change: "+date(f.contentLastChangedAt),
       f.contentChangeStatus?"Content comparison: "+f.contentChangeStatus:"",
-      obs?"Market observations older than 30 days: "+Number(obs.rowsOlderThan30Days||0)+"/"+Number(obs.sampleSize||0):""
+      Number.isFinite(Number(f.unchangedFetchCount))?"Consecutive identical fetches: "+Math.max(0,Number(f.unchangedFetchCount)):"",
+      f.unchangedSinceAt?"Unchanged since observation: "+date(f.unchangedSinceAt):"",
+      obs?"Market observations older than 30 days: "+Number(obs.rowsOlderThan30Days||0)+"/"+Number(obs.sampleSize||0):"",
+      obs?"Dated / undated market observations: "+Number(obs.datedRows||0)+" / "+Number(obs.undatedRows||0):"",
+      obs?"Oldest / newest market observation: "+date(obs.oldestObservationAt)+" / "+date(obs.newestObservationAt):""
     ].filter(Boolean).join(" • ");
     const detail=[
       label,

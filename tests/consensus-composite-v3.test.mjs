@@ -76,3 +76,27 @@ test("offensive ranking trace exposes source ranks and omission penalties withou
   assert.ok(Math.abs(trace.reduce((s,x)=>s+x.rank*x.weight,0)/
     trace.reduce((s,x)=>s+x.weight,0)-c.detailsById.denzel.offenseRank)<1e-10);
 });
+
+test("offense never invents consensus from same-first-and-last partial name",()=>{
+  const results=[
+    result("Ranker A","off-a",[{player:"Chris Bell",rank:50,position:"WR"}]),
+    result("Ranker B","off-b",[{player:"Chris Bell",rank:55,position:"WR"}])
+  ];
+  const players=[
+    {id:"autman",name:"Chris Autman-Bell",positions:["WR"]},
+    {id:"bell",name:"Chris Bell",positions:["WR"]}
+  ];
+  const c=buildConsensusComposite(results,players);
+  assert.equal(c.byId.autman,undefined);
+  assert.equal(c.detailsById.autman,undefined);
+  assert.ok(c.byId.bell>0);
+  assert.equal(c.detailsById.bell.offenseObservedSourceCount,2);
+});
+test("only offense tightens matching; IDP keeps its prior compatible first-and-last alias rule",()=>{
+  const results=[result("IDP A","idp-a",[{player:"John Smith",rank:30,position:"LB"}]),
+    result("IDP B","idp-b",[{player:"John Smith",rank:32,position:"LB"}])];
+  const c=buildConsensusComposite(results,[
+    {id:"john",name:"John Andrew Smith",positions:["LB"]}]);
+  assert.ok(c.byId.john>0);
+  assert.equal(c.detailsById.john.idpRank,1);
+});

@@ -21,10 +21,10 @@ const curve=(rank,scale,exp)=>Math.max(1,Math.round(scale/Math.pow(Math.max(1,ra
 // is omitted entirely (not counted as a "not listed" penalty).
 function offenseOwnershipAllowed(channel,p,peers){
   if(peers.length<=1)return true;
-  const rows=channel.byCanonical.get(canonical(p.name))||[];
+  const rows=(channel.byCanonical.get(canonical(p.name))||[]).filter(row=>
+    OFF.has(String(row.position||'').toUpperCase())&&positionsOf(p).has(String(row.position||'').toUpperCase()));
   if(rows.length!==1)return false;
-  const rowPos=String(rows[0].position||'').toUpperCase();
-  if(!OFF.has(rowPos))return false;
+  const rowPos=String(rows[0].position).toUpperCase();
   const eligible=peers.filter(peer=>positionsOf(peer).has(rowPos));
   return eligible.length===1&&String(eligible[0].id)===String(p.id);
 }

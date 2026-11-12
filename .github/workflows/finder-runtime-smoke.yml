@@ -28,6 +28,10 @@ on:
       - 'tests/offense-consensus-anchor-v50.test.mjs'
       - 'netlify/functions/consensus-composite-v3.mjs'
       - 'tests/consensus-composite-v3.test.mjs'
+      - 'tests/consensus-source-freshness.test.mjs'
+      - 'netlify/functions/consensus-source-freshness.mjs'
+      - 'netlify/functions/update.mjs'
+      - 'netlify/functions/fanranked-adapter.mjs'
       - 'scripts/compile-v256-runtimes.cjs'
       - 'scripts/patch-regular-family-v328.cjs'
       - 'scripts/regular-finder-family-diversity-v328-smoke.cjs'
@@ -175,7 +179,7 @@ jobs:
           node --check netlify/functions/pick-order-v527.mjs
           node --test tests/draft-pick-order-5050.test.mjs
       - name: Offensive consensus anchoring V50 full-cohort regression
-        run: node --test tests/offense-consensus-anchor-v50.test.mjs tests/consensus-composite-v3.test.mjs
+        run: node --test tests/offense-consensus-anchor-v50.test.mjs tests/consensus-composite-v3.test.mjs tests/consensus-source-freshness.test.mjs
       - name: Current-season scoring qualification
         run: node --test tests/ppr-history.test.mjs
       - name: Current-season scoring pipeline syntax

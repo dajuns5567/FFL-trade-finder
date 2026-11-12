@@ -93,8 +93,9 @@ test('publisher revision provenance passes through diagnostics without changing 
 });
 test('source revision transparency remains visible in the existing diagnostics',()=>{
   const ui=readFileSyncApi(new URL('../index.html',import.meta.url),'utf8');
-  assert.ok(ui.includes('Source version: pinned revision '));
-  assert.ok(ui.includes('newest publisher version not verified'));
+  assert.ok(ui.includes('Source version: pinned fallback revision '));
+  assert.ok(ui.includes('Source version: publisher article linked revision '));
+  assert.ok(ui.includes('latest publisher update date unverified'));
   assert.ok(ui.includes('Source version: unversioned ranking endpoint'));
   const adapter=readFileSyncApi(new URL('../netlify/functions/idpshow-adapter.mjs',import.meta.url),'utf8');
   assert.ok(adapter.includes('datawrapper.dwcdn.net/gNM2r/1/'));

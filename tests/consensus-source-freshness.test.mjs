@@ -16,10 +16,20 @@ test('successful repeat fetch does not claim publisher updated the rankings',()=
   assert.equal(next.publisherUpdateStatus,'unknown');
   assert.equal(next.contentChangeStatus,'unchanged');
   assert.equal(next.unchangedFetchCount,5);
+  assert.equal(next.unchangedSinceAt,null,'legacy snapshot without a known fetch date cannot imply an unchanged duration');
   assert.equal(next.contentLastChangedAt,'2026-10-01T00:00:00.000Z');
   assert.equal(next.observedFirstAt,'2026-09-01T00:00:00.000Z');
   assert.equal(next.fetchedAt,'2026-11-11T00:00:00.000Z');
   assert.equal(ageFreshness(next,'2026-11-12T00:00:00.000Z').publisherAgeKnown,false);
+});
+test('unchanged observation streak carries exact first observed identical fetch date',()=>{
+  const prior={updated:'2026-11-08T00:00:00.000Z',data:{alpha:1},freshness:{fetchedAt:'2026-11-10T00:00:00.000Z',unchangedFetchCount:2,unchangedSinceAt:'2026-11-08T00:00:00.000Z'}};
+  const n=buildFreshnessSnapshot({data:{alpha:1}},prior,'2026-11-11T00:00:00.000Z');
+  assert.equal(n.unchangedFetchCount,3);
+  assert.equal(n.unchangedSinceAt,'2026-11-08T00:00:00.000Z');
+  const changed=buildFreshnessSnapshot({data:{alpha:2}},{...prior,freshness:n},'2026-11-12T00:00:00.000Z');
+  assert.equal(changed.unchangedFetchCount,0);
+  assert.equal(changed.unchangedSinceAt,null);
 });
 test('first seen snapshot does not fabricate a content-change date',()=>{
   const n=buildFreshnessSnapshot({data:{a:10}},null,'2026-11-11T00:00:00.000Z');
@@ -62,4 +72,6 @@ test('existing diagnostics distinguish fetched, unpromoted, retained and publish
   assert.equal(ui.split('function renderConsensusDiagnostics(').length-1,1,'only one authoritative diagnostics renderer must exist');
   assert.ok(!ui.includes('window.renderConsensusDiagnostics=function'),'a later legacy script must not override the authoritative renderer');
   assert.ok(!ui.includes('freshly refreshed'),'legacy status cannot reappear in the page');
+  for(const field of ['Consecutive identical fetches: ','Unchanged since observation: ','Dated / undated market observations: ','Oldest / newest market observation: '])
+    assert.ok(ui.includes(field),'missing source freshness detail: '+field);
 });

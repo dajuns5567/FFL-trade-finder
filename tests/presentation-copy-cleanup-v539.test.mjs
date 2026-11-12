@@ -23,5 +23,5 @@ test('important display headings, filters, and live-update controls are unchange
     '<h2 class="vh-brand-title">Value History</h2>'])assert.ok(history.includes(text),text);
  for(const text of ['<h2>Fleeced! League Hub</h2>','data-lh-view="daily"','data-lh-view="awards"'])assert.ok(league.includes(text),text);
  assert.match(loader,/value-history-v276\.js\?v=541/);
- assert.match(loader,/league-hub-v451\.js\?v=539/);
+ assert.match(loader,/league-hub-v451\.js\?v=542/);
 });

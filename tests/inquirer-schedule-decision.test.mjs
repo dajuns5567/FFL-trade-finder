@@ -143,6 +143,8 @@ test('current deployment policy builds only authorized production and PR preview
   env:{...process.env,SITE_ID,SITE_NAME,CONTEXT,REVIEW_ID},encoding:'utf8'}).status;
  const site='fa33dfe4-8293-441e-8da0-25cc66fc984c';
  assert.equal(code(site,'','deploy-preview','450'),1,'authorized PR #450 preview builds');
+ assert.equal(code(site,'','deploy-preview','453'),1,'authorized PR #453 preview builds');
+ assert.equal(code(site,'','deploy-preview','452'),0,'unallowlisted PR #452 stays separate');
  assert.equal(code(site,'','deploy-preview','448'),1,'authorized PR #448 preview builds');
  assert.equal(code(site,'','deploy-preview','451'),0,'unapproved preview is skipped');
  assert.equal(code(site,'','production','450'),1,'authorized canonical production builds');

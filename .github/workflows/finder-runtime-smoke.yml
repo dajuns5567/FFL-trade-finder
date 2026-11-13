@@ -62,6 +62,7 @@ on:
       - 'tests/trade-history-hindsight-live-sync.test.mjs'
       - 'nonblocking-consensus-v277.js'
       - 'league-hub-v451.js'
+      - 'tests/awards-all-time-highs.test.mjs'
       - 'netlify/functions/lib/trade-history-live-source.mjs'
       - 'scripts/trade-history-scheduled-check.mjs'
       - 'netlify/functions/value-history.mjs'
@@ -150,6 +151,8 @@ jobs:
         run: node --test tests/header-scrollbar-v538.test.mjs
       - name: V539 visual copy cleanup without removed controls
         run: node --test tests/presentation-copy-cleanup-v539.test.mjs
+      - name: Awards all-time highs preview safety and persistence regression
+        run: node --test tests/awards-all-time-highs.test.mjs
       - name: V540 team history action menu and Player Values copy cleanup
         run: node --test tests/team-net-choice-v540.test.mjs
       - name: V534 selection cards and Select All live-state guard

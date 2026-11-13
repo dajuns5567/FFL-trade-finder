@@ -67,3 +67,18 @@ test('production scheduler repairs verified visibility before skipping an alread
   'archive repair must run before the completed-cursor scheduler decision');
  assert.doesNotMatch(source,/await store\.setJSON\(key,edition/,'visibility watchdog must never rewrite protected newspaper');
 });
+
+test('public publication health endpoint is read-only, reportable, and never exposes draft copy',()=>{
+ const hub=readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
+ const start=hub.indexOf('async function inquirerPublicationHealth(){');
+ const end=hub.indexOf('async function broadcastStored(',start);
+ assert.ok(start>=0&&end>start);
+ const body=hub.slice(start,end);
+ assert.match(hub,/u\.searchParams\.get\('publication_health'\)==='1'/);
+ assert.match(body,/inspectInquirerPublicationVisibility/);
+ assert.match(body,/latest_indexed_week/);
+ assert.match(body,/completed_week_discoverable/);
+ assert.match(body,/requires_attention:attention/);
+ assert.match(body,/scheduler_interval_minutes:5/);
+ assert.doesNotMatch(body,/setJSON\(|\.set\(|weeklyReport\(|inquirer\/editorial-staging/);
+});

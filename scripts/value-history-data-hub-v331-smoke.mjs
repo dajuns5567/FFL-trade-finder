@@ -107,8 +107,12 @@ for(const needle of [
   'slice(vi+1,vi+6)',
   'slice(Math.max(0,pi-5),pi)',
   'slice(pi+1,pi+6)',
-  'vh-rank-hit',
-  'data-vh-rank-label',
+  'vh-plot-hit',
+  'data-vh-chart-series=',
+  "hover=chartHoverLayer(clean,'rank'",
+  "data.kind==='rank'?",
+  'esc(data.label)',
+  'esc(p.rank)',
   "marketCache=null;teamNetCache.clear();scheduleSnapshot(1000,'manual-update')",
   'Tracked since',
   "'1D','7D','30D','90D','1Y','ALL'",
@@ -234,6 +238,19 @@ for(const needle of [
   'data-vh-trade-team',
   'Trade-linked team net-value points'
 ])assert(ui.includes(needle),'missing Value History UI feature: '+needle);
+
+// Rank tooltips now derive their label and historical rank from the same
+// accessible, keyboard-navigable chart-series payload. Never require the
+// obsolete per-point data-vh-rank-label attribute or silently drop hover data.
+assert(ui.includes('function chartHoverLayer(rows,kind,')&&
+  ui.includes('data-vh-chart-series="${overlay}"')&&
+  ui.includes("hover=chartHoverLayer(clean,'rank'")&&
+  ui.includes("rank:p[field]")&&
+  ui.includes("data.kind==='rank'?")&&
+  ui.includes('esc(data.label)')&&ui.includes('esc(p.rank)')&&
+  ui.includes("['ArrowLeft','ArrowRight','Home','End']")&&
+  ui.includes('showChartHover(hit,next,tip,wrap,wrap.getBoundingClientRect(),e)'),
+  'rank history must preserve labeled, timestamped hover and keyboard navigation');
 
 for(const forbidden of [
   'modeledPlayerValuesV319.build(',

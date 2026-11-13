@@ -374,6 +374,9 @@ export async function weeklyReport(req){
  // the next week. Read-only reader/previews never acquire this extra gate.
  const enforceFeatureContinuity=req.method==='POST'&&
   !!req.headers?.get?.('x-fleeced-queue-key');
+ // New scheduled editions remain invisible until their awards are persisted.
+ // The background worker performs the public archive-index commit afterward.
+ const deferPublicIndex=enforceFeatureContinuity;
  const [league,nfl]=await Promise.all([fetchJson(`${API}/league/${LEAGUE}`),fetchJson(`${API}/state/nfl`)]);
  const season=Number(league?.season||nfl?.season),currentWeek=Number(nfl?.week)||1,origin=new URL(req.url).origin,s=store(),
   cappedWeek=Math.min(INQUIRER_FINAL_WEEK,Math.max(1,currentWeek));
@@ -421,7 +424,7 @@ export async function weeklyReport(req){
    if(!isLockedInquirerEdition(stored,season,w))
     return{available:false,published_locked:false,season,week:w,
      reason:'Stored Week '+w+' is incomplete or not explicitly locked. Refusing to overwrite historical content.'};
-   if(!previewReadOnly)await ensureLockedEditionIndexed(s,stored,key);
+   if(!previewReadOnly)await ensureLockedEditionIndexed(s,stored,key,{commitIndex:!(deferPublicIndex&&season>=2026&&w>=9)});
    if(enforceFeatureContinuity&&(season>2026||(season===2026&&w>=5))){
     const award=awardedWeeks.get(season+'|'+w);
     if(!isTrustedWeeklyAwardCache(award,season,w)){
@@ -671,7 +674,7 @@ export async function weeklyReport(req){
  if(automatedAdmission.approved&&!manualAdmission.approved)
   result.editorial_generation.publication_mode='audited-deterministic-v31';
  await s.setJSON(key,result);
- await ensureLockedEditionIndexed(s,result,key);
+ await ensureLockedEditionIndexed(s,result,key,{commitIndex:!(deferPublicIndex&&season>=2026&&week>=9)});
  return result;
 }
 // Read-only end-to-end publication health. Do not derive success from a

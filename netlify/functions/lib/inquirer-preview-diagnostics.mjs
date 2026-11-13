@@ -1,4 +1,5 @@
 import {FORWARD_EDITORIAL_REVISION} from '../inquirer-editorial-v31.mjs';
+import {assessMinorNineWordReuse} from './inquirer-minor-repetition.mjs';
 // Deploy Preview diagnostics are isolated from shared league publication storage.
 export const PREVIEW_DIAGNOSTIC_STORE = 'fleeced-inquirer-editorial-diagnostics';
 export const PREVIEW_DIAGNOSTIC_STATUS = 'current-status.json';
@@ -163,7 +164,11 @@ export function auditPrivateEdition(edition){
  const repeatedOpenings=[...openings].filter(([,ids])=>ids.length>=3);
  if(repeatedOpenings.length)issues.push('recycled column openings: '+repeatedOpenings.length);
  const recycledSequences=[...phraseOwners].filter(([,owners])=>owners.size>=4);
- if(recycledSequences.length)issues.push('recurring nine-word story scaffolds: '+recycledSequences.length);
+ // Use exactly the same narrowly scoped exception as the core editorial gate.
+ // The full manuscript still must pass every structural and independent audit.
+ const minorRepetition=assessMinorNineWordReuse(teams,recycledSequences);
+ if(recycledSequences.length&&!minorRepetition.tolerated)
+  issues.push('recurring nine-word story scaffolds: '+recycledSequences.length);
  if(repeated.length)issues.push('repeated cross-roster paragraphs: '+repeated.length);
  const overview=edition?.league_overview||{},blocks=overview?.sections?.[0]?.blocks||[];
  if(!Array.isArray(overview.sections)||overview.sections.length<4||
@@ -173,5 +178,6 @@ export function auditPrivateEdition(edition){
  if(edition?.preview_editorial_audit?.ok!==true||edition?.preview_generation_quality?.ok!==true)issues.push('underlying editorial audit failed');
  return{passed:issues.length===0,issues,article_count:teams.length,reporter_counts:counts,
   word_counts:{minimum:lengths.length?Math.min(...lengths):null,maximum:lengths.length?Math.max(...lengths):null,average:lengths.length?Math.round(lengths.reduce((a,b)=>a+b,0)/lengths.length):null},
-  repeated_paragraph_groups:repeated.length,recycled_opening_groups:repeatedOpenings.length,recycled_nine_word_scaffolds:recycledSequences.length,recap_beats:blocks.map(b=>b.kind)};
+  repeated_paragraph_groups:repeated.length,recycled_opening_groups:repeatedOpenings.length,recycled_nine_word_scaffolds:recycledSequences.length,
+  minor_repetition_warning:minorRepetition.tolerated?minorRepetition:null,recap_beats:blocks.map(b=>b.kind)};
 }

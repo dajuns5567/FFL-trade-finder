@@ -55,3 +55,36 @@ test('rejects praise for zero-point roster production',()=>{
  assert.equal(audit.passed,false);
  assert.match(audit.issues.join(' '),/zero-point team falsely credited/);
 });
+
+test('a single short repeated line in four otherwise distinct columns is warning-only',()=>{
+ const e=makeDraft();
+ const common='An ordinary newsroom phrase appeared in four articles without changing their documented fantasy outcomes.';
+ for(const i of [0,1,2,3]){
+  const section=e.teams[i].inquirer_article.sections[0];
+  section.paragraphs=[
+   'Individual context for roster '+(i+1)+' identifies a meaningful lineup detail and distinct scoring decisions.',
+   common,
+   'This separate roster '+(i+1)+' analysis connects recorded starters to an opponent-specific football consequence. '+
+   section.paragraphs[0]
+  ];
+ }
+ const audit=auditPrivateEdition(e);
+ assert.equal(audit.passed,true,JSON.stringify(audit.issues));
+ assert.equal(audit.minor_repetition_warning?.team_count,4);
+ assert.ok(audit.recycled_nine_word_scaffolds>0);
+});
+test('five teams copying the same sentence never get a warning-only pass',()=>{
+ const e=makeDraft();
+ const common='An ordinary newsroom phrase appeared in five articles without changing their documented fantasy outcomes.';
+ for(const i of [0,1,2,3,4]){
+  const section=e.teams[i].inquirer_article.sections[0];
+  section.paragraphs=[
+   'Individual roster '+(i+1)+' was studied against its recorded weekly starter selection.',
+   common,
+   'The actual scoring context for roster '+(i+1)+' is distinguishable from neighboring reports. '+section.paragraphs[0]
+  ];
+ }
+ const audit=auditPrivateEdition(e);
+ assert.equal(audit.passed,false);
+ assert.match(audit.issues.join(' '),/recurring nine-word story scaffolds/);
+});

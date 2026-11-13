@@ -29,7 +29,7 @@ test('false completed cursor ahead of reader index triggers immediate incident',
  assert.match(classifyInquirerPublicationHealth(h,{now:on()}).reason,/marked complete/);
 });
 test('new finished week receives normal completion grace before Thursday',()=>{
- const h=healthy();h.latest_public.week=8;h.caught_up_to_nfl_clock=false;
+ const h=healthy();h.latest_public.week=8;h.publisher.week=8;h.caught_up_to_nfl_clock=false;
  assert.equal(classifyInquirerPublicationHealth(h,{now:on('2026-11-11T04:00:00Z')}).state,'pending');
  assert.equal(classifyInquirerPublicationHealth(h,{now:on('2026-11-12T14:00:00Z')}).state,'alert');
 });

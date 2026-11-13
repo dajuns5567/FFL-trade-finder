@@ -424,7 +424,19 @@ export async function weeklyReport(req){
    if(!isLockedInquirerEdition(stored,season,w))
     return{available:false,published_locked:false,season,week:w,
      reason:'Stored Week '+w+' is incomplete or not explicitly locked. Refusing to overwrite historical content.'};
-   if(!previewReadOnly)await ensureLockedEditionIndexed(s,stored,key,{commitIndex:!(season>2026||season===2026&&w>=9)});
+   if(season>2026||season===2026&&w>=9){
+    // A locked broadcast without an archive index is prepared, NOT public.
+    // Only the authenticated worker may finish awards and commit its index.
+    const index=await s.get('broadcasts/index.json',{type:'json'}).catch(()=>null);
+    const committed=Array.isArray(index)&&index.some(x=>
+     Number(x?.season)===season&&Number(x?.week)===w&&String(x?.key)===key);
+    if(!committed){
+     if(enforceFeatureContinuity)return stored;
+     return latestPublished||{available:false,season,week:w,
+      reason:'Newspaper is prepared but its public archive and awards are not committed.'};
+    }
+   }
+   if(!previewReadOnly)await ensureLockedEditionIndexed(s,stored,key);
    if(enforceFeatureContinuity&&(season>2026||(season===2026&&w>=5))){
     const award=awardedWeeks.get(season+'|'+w);
     if(!isTrustedWeeklyAwardCache(award,season,w)){
@@ -681,7 +693,10 @@ export async function weeklyReport(req){
  if(automatedAdmission.approved&&!manualAdmission.approved)
   result.editorial_generation.publication_mode='audited-deterministic-v31';
  await s.setJSON(key,result);
- await ensureLockedEditionIndexed(s,result,key,{commitIndex:!(deferPublicIndex&&(season>2026||season===2026&&week>=9))});
+ // Do not expose reporter articles, recap or index before weekly awards are
+ // persisted. The scheduled worker completes this commit in one verified step.
+ if(!(deferPublicIndex&&(season>2026||season===2026&&week>=9)))
+  await ensureLockedEditionIndexed(s,result,key);
  return result;
 }
 // Read-only end-to-end publication health. Do not derive success from a

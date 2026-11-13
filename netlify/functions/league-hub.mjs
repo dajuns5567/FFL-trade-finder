@@ -708,7 +708,8 @@ async function inquirerPublicationHealth(){
   publisher:{state:String(status?.state||'unknown'),season:status?.season??null,
    week:status?.week??null,available:status?.available===true,
    editorial_revision:status?.editorial_revision??null,
-   finished_at:status?.finished_at||null,reason:String(status?.reason||status?.error||'').slice(0,180)||null}
+   started_at:status?.started_at||null,finished_at:status?.finished_at||null,
+   reason:String(status?.reason||status?.error||'').slice(0,180)||null}
  };
 }
 async function broadcastArchive(){

@@ -444,6 +444,13 @@ export async function weeklyReport(req){
   week=w;break;
  }
  if(!week)return latestPublished||{available:false,season,week:null,reason:'No completed Fleeced! Inquirer edition is available yet.'};
+ // Public GET requests must NEVER generate or index a new paper mid-release.
+ // Only the authenticated scheduled worker can commit a new weekly edition.
+ // Readers always receive the latest already-locked edition until the full
+ // newspaper/awards/index transaction is complete.
+ if(!previewReadOnly&&!enforceFeatureContinuity)
+  return latestPublished||{available:false,season,week,
+   published_locked:false,reason:'Awaiting unattended authenticated weekly publication.'};
  // A private editorial draft must be the requested or current completed week.
  // A newly provisioned Netlify site with only Week 1/2 preloads must never
  // silently label a Week 3 backfill as the Week 5 (or later) manuscript.

@@ -5,6 +5,8 @@ import {verifiedReplacementHistory,verifiedNewSiteCutoverHistory,verifiedWeekNin
 import {editorialApprovalMatches} from './inquirer-publication-guard.mjs';
 import {approvedWeek5Record} from './lib/inquirer-week5-owner-signoff.mjs';
 import {resolveInquirerQueueCredential} from './lib/inquirer-queue-credential.mjs';
+import {ensureLockedEditionIndexed,isLockedInquirerEdition} from './league-hub.mjs';
+import {inspectInquirerPublicationVisibility} from './lib/inquirer-publication-visibility.mjs';
 // Queue a long-running background job. Netlify scheduled functions have a
 // hard 30-second limit, while the full Inquirer edition takes longer.
 export default async function inquirerPublishScheduled(req){
@@ -76,6 +78,34 @@ export default async function inquirerPublishScheduled(req){
  try{
   const store=getStore('fleeced-league-hub',{consistency:'strong'});
   let status=await store.get('inquirer/publication-status.json',{type:'json'});
+  // Publication is not complete until the reader-facing index exposes the
+  // locked newspaper. Repair a lost index entry from immutable, verified
+  // bytes and fully recorded awards; never regenerate or overwrite an edition.
+  // This also runs when the scheduler would otherwise skip a completed week.
+  if(isCurrentSite&&status?.state==='completed'&&status?.available===true&&
+     Number.isInteger(Number(status.week))&&Number(status.week)>=5){
+   const season=Number(status.season),week=Number(status.week);
+   const key='broadcasts/'+season+'/week-'+String(week).padStart(2,'0')+'.json';
+   const [index,edition,awards]=await Promise.all([
+    store.get('broadcasts/index.json',{type:'json'}),
+    store.get(key,{type:'json'}),
+    store.get('awards/weekly.json',{type:'json'})
+   ]);
+   let check=inspectInquirerPublicationVisibility({status,index,edition,awards,
+    locked:isLockedInquirerEdition(edition,season,week)});
+   if(check.repair){
+    await ensureLockedEditionIndexed(store,edition,key);
+    const verifiedIndex=await store.get('broadcasts/index.json',{type:'json'});
+    check=inspectInquirerPublicationVisibility({status,index:verifiedIndex,edition,awards,
+     locked:isLockedInquirerEdition(edition,season,week)});
+    if(check.visible)console.info('inquirer-published-index-repaired',{season,week});
+   }
+   if(!check.visible){
+    console.error('inquirer-publication-visibility-hold',{season,week,reason:check.reason});
+    return skip('Completed edition is not publicly discoverable: '+check.reason);
+   }
+  }
+
   if(isReplacement){
    // After safe migration the new site's publication-status may be absent.
    // Requiring that missing status before queuing causes a permanent deadlock.

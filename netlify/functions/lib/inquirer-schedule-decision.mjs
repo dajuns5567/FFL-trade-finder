@@ -17,7 +17,9 @@ export function inquirerScheduleDecision({status,nfl,revision,approvedHeldEditio
  if(status?.state==='editorial-hold'&&unchanged&&Number(status?.season)===season&&
     Number.isInteger(blockingWeek)&&blockingWeek>=1&&blockingWeek<=finishedWeek&&!approvedHeldEdition)
   return{queue:false,reason:'Unchanged earlier-week editorial hold; revise newsroom before retrying'};
- if(same&&unchanged&&status?.state==='completed'&&status?.available===true)
+ // A new editorial revision repairs held drafts, never a previously completed
+ // locked edition. Otherwise a Week 10 newsroom change could requeue Week 9.
+ if(same&&status?.state==='completed'&&status?.available===true)
   return{queue:false,reason:'Current completed week is already published'};
  return{queue:true,season,finishedWeek};
 }

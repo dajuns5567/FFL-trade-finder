@@ -702,7 +702,8 @@ async function inquirerPublicationHealth(){
   s.get('awards/weekly.json',{type:'json'}).catch(()=>null)
  ]);
  const season=Number(status?.season),week=Number(status?.week);
- const eligible=Number.isInteger(season)&&season>=2026&&Number.isInteger(week)&&week>=5&&week<=18;
+ const eligible=Number.isInteger(season)&&season>=2026&&Number.isInteger(week)&&
+  week>=1&&week<=18&&(season>2026||week>=5);
  const edition=eligible?await s.get('broadcasts/'+season+'/week-'+String(week).padStart(2,'0')+'.json',{type:'json'}).catch(()=>null):null;
  const check=inspectInquirerPublicationVisibility({status,index,edition,awards,
   locked:eligible&&isLockedInquirerEdition(edition,season,week)});

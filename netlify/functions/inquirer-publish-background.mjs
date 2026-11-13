@@ -1,4 +1,4 @@
-import {weeklyReport,weeklyAwards,isLockedInquirerEdition} from './league-hub.mjs';
+import {weeklyReport,weeklyAwards,isLockedInquirerEdition,ensureLockedEditionIndexed} from './league-hub.mjs';
 import {verifyPublishedInquirerReadback} from './lib/inquirer-publication-readback.mjs';
 import {getStore} from '@netlify/blobs';
 import {FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
@@ -130,9 +130,18 @@ export default async function publishInquirerInBackground(req){
  // Never write Week N awards when Week N's newsroom copy is held or incomplete.
  if(report?.available===true&&report?.published_locked===true){
   try{
-   awards=await weeklyAwards();
+   // For a newly generated scheduled edition, persist the matching awards
+   // before committing its public archive index. Older locked editions remain
+   // immutable and use their existing archive entries.
+   const isForward=Number(report?.season)>=2026&&Number(report?.week)>=9;
+   awards=await weeklyAwards({additionalLockedEditions:isForward?[report]:[]});
    if(!hasCompleteWeekFeaturePackage(report,awards))
     throw Error('Weekly awards package incomplete (offense, IDP defense, verified locked newspaper or manager scorer badges) for '+report.season+' Week '+report.week);
+   if(isForward){
+    const key='broadcasts/'+Number(report.season)+'/week-'+String(Number(report.week)).padStart(2,'0')+'.json';
+    await ensureLockedEditionIndexed(statusStore,report,key);
+    console.info('inquirer-public-archive-committed',{season:report.season,week:report.week});
+   }
    console.info('inquirer-background-awards',JSON.stringify({records:awards?.records?.length||0,season:report.season,week:report.week}));
   }catch(error){awardsError=String(error?.message||error);console.error('inquirer-background-awards-failed',error)}
  }else console.info('inquirer-background-awards-held','No fully published newspaper; awards were not backfilled.');

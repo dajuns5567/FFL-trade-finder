@@ -270,7 +270,11 @@ assert(ui.includes('function currentPickRows()'),'Value History must capture liv
 assert(ui.includes('function currentTeamRows(playerRows=currentRows())'),'Value History must capture authoritative per-team net totals at snapshot time');
 assert(ui.includes('function teamTradeNetEvents(teamId,netData,period)'),'Track My Team must identify completed trades against authoritative net-value points');
 assert(ui.includes('function teamNetPointTradeMap(teamId,points)'),'Overall Net Value chart must map completed trades to authoritative team data points');
-assert(ui.includes('data-vh-trades='),'trade-linked Overall Net Value points must carry trade context into the chart tooltip');
+assert(ui.includes("hover=chartHoverLayer(pts,'net'")&&
+  ui.includes('trades:tradeMap?.get(String(p.t))||null')&&
+  ui.includes('const linked=p.trades||null')&&
+  ui.includes("data.kind==='net'?"),
+  'trade-linked Overall Net Value points must retain their trade context in the shared chart hover series');
 assert(ui.includes('Observed team net-value change from prior authoritative snapshot'),'Overall Net Value tooltip must display observed net-value movement tied to the point');
 assert(ui.includes('not an assumption that the trade alone caused the change'),'Overall Net Value tooltip must preserve non-causal attribution language');
 assert(ui.includes("p?.teamSnapshot===true"),'trade-linked team events must never use legacy reconstructed net points');
@@ -282,7 +286,9 @@ assert(ui.includes('The snapshot change is observed team net-value movement, not
 assert(ui.includes("body:JSON.stringify({league:'1316867686394769408',rows,picks,teams,source})"),'Value History snapshot POST must include separate player, pick, and team ownership totals');
 assert(ui.includes('const recorded=Number(asset.historyRecordedValue)'),'Trade History must prefer recorded historical pick values before retroactive fallback');
 assert(ui.includes('vh-assets-title'),'Trade History must visually emphasize Assets received');
-assert(ui.includes('tradeOriginalAssets(side)'), 'Trade Evaluator analysis must evaluate the original traded package rather than mutate it into current outcomes');
+assert(ui.includes('function tradeOriginalAssets(side,trade)')&&
+  ui.includes('tradeOriginalAssets(sideA,trade)')&&ui.includes('tradeOriginalAssets(sideB,trade)'),
+  'Trade Evaluator analysis must evaluate both original traded packages with the correct historical trade context');
 assert(ui.includes('return Number.isFinite(season)&&season>2000?season+1:null'),'retroactive Trade History nearest draft year must roll from the trade season');
 assert(ui.includes('function tradeHistoryPickTimingFactor(year,round,nearestYear)'),'Trade History distance-based pick timing helper missing');
 assert(ui.includes('Math.max(0,y-base)'),'Trade History pick distance must be measured from trade-season nearest draft year');

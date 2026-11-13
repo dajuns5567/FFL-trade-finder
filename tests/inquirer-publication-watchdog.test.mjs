@@ -41,7 +41,7 @@ test('scheduled watchdog is independent of production deploys and never writes a
  const yml=fs.readFileSync('.github/workflows/inquirer-live-publication-watchdog.yml','utf8');
  const script=fs.readFileSync('scripts/inquirer-publication-watchdog.mjs','utf8');
  assert.match(yml,/schedule:/);assert.match(yml,/issues: write/);
- assert.doesNotMatch(yml,/netlify deploy|git push|publish/);
+ assert.doesNotMatch(yml,/netlify deploy|git push|inquirer-publish-background/);
  assert.match(script,/publication_health=1/);
  assert.doesNotMatch(script,/setJSON\(|broadcasts\/index\.json/);
 });

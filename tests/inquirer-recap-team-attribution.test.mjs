@@ -72,3 +72,19 @@ test('final editorial writer invokes attribution after all cleanup passes',()=>{
  assert.ok(polish>0&&repair>polish&&done>repair);
  assert.match(generator,/export const FORWARD_EDITORIAL_REVISION=110;/);
 });
+
+
+test('Week 9 read-time correction is restricted to the PR 453 preview and never changes locked storage',()=>{
+ const hub=readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
+ const start=hub.indexOf('async function broadcastStored(season,week,req=null){');
+ const end=hub.indexOf('function weeklyAwardStatRows(',start);
+ assert.ok(start>=0&&end>start);
+ const body=hub.slice(start,end);
+ assert.match(body,/isLockedInquirerEdition\(v,season,week\)/);
+ assert.match(body,/previewHost==='deploy-preview-453--precious-dango-fb4633\.netlify\.app'/);
+ assert.match(body,/Number\(season\)===2026&&Number\(week\)===9/);
+ assert.match(body,/structuredClone\(v\)/);
+ assert.match(body,/groundForwardRecapTeamAttribution/);
+ assert.doesNotMatch(body,/setJSON\(|\.set\(/);
+ assert.match(hub,/broadcastStored\(u\.searchParams\.get\('broadcast_season'\),u\.searchParams\.get\('broadcast_week'\),req\)/);
+});

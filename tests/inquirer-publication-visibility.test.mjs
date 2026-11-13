@@ -82,3 +82,17 @@ test('public publication health endpoint is read-only, reportable, and never exp
  assert.match(body,/scheduler_interval_minutes:5/);
  assert.doesNotMatch(body,/setJSON\(|\.set\(|weeklyReport\(|inquirer\/editorial-staging/);
 });
+
+test('background publisher never marks a week completed before public archive readback',()=>{
+ const worker=readFileSync(new URL('../netlify/functions/inquirer-publish-background.mjs',import.meta.url),'utf8');
+ const gate=worker.indexOf('const visibility=inspectInquirerPublicationVisibility(');
+ const complete=worker.indexOf('const completed=!reportError&&!awardsError&&!visibilityError');
+ const statusWrite=worker.indexOf("await statusStore.setJSON('inquirer/publication-status.json',{\n  state:");
+ assert.ok(gate>=0&&complete>gate&&statusWrite>complete);
+ assert.match(worker,/statusStore\.get\('broadcasts\/index\.json'/);
+ assert.match(worker,/statusStore\.get\('awards\/weekly\.json'/);
+ assert.match(worker,/isLockedInquirerEdition\(persisted,season,week\)/);
+ assert.match(worker,/inquirer-public-archive-readback-failed/);
+ assert.match(worker,/state:reportError\|\|awardsError\|\|visibilityError\?'error'/);
+ assert.match(worker,/error:reportError\|\|visibilityError/);
+});

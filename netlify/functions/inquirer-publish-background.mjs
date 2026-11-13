@@ -1,4 +1,5 @@
-import {weeklyReport,weeklyAwards} from './league-hub.mjs';
+import {weeklyReport,weeklyAwards,isLockedInquirerEdition} from './league-hub.mjs';
+import {verifyPublishedInquirerReadback} from './lib/inquirer-publication-readback.mjs';
 import {getStore} from '@netlify/blobs';
 import {FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
 import {verifiedNewSiteCutoverHistory,verifiedWeekNineAutopublishCutoverHistory} from './lib/inquirer-replacement-archive-gate.mjs';
@@ -135,6 +136,18 @@ export default async function publishInquirerInBackground(req){
    console.info('inquirer-background-awards',JSON.stringify({records:awards?.records?.length||0,season:report.season,week:report.week}));
   }catch(error){awardsError=String(error?.message||error);console.error('inquirer-background-awards-failed',error)}
  }else console.info('inquirer-background-awards-held','No fully published newspaper; awards were not backfilled.');
+ // Do not report a completed weekly publication until every public-facing
+ // read path has independently observed the locked archive, reporter columns,
+ // recap and persisted weekly awards. A transient failure stays retryable.
+ if(!reportError&&!awardsError&&hasCompleteWeekFeaturePackage(report,awards)){
+  const check=await verifyPublishedInquirerReadback(statusStore,report,{
+   isLockedEdition:isLockedInquirerEdition
+  });
+  if(!check.ok){
+   reportError='Published edition readback not verified: '+check.reason;
+   console.error('inquirer-publication-readback-held',JSON.stringify(check));
+  }else console.info('inquirer-publication-readback-verified',JSON.stringify(check));
+ }
  const completed=!reportError&&!awardsError&&!report?.review_required&&hasCompleteWeekFeaturePackage(report,awards);
  await statusStore.setJSON('inquirer/publication-status.json',{
   state:reportError||awardsError?'error':report?.review_required?'editorial-hold':completed?'completed':'waiting',

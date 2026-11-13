@@ -764,6 +764,13 @@ async function broadcastStored(season,week){
   if(!isLockedInquirerEdition(v,season,week))
    return{available:false,season:Number(season),week:Number(week),
     reason:'Archived Inquirer edition fails the Week 4 newsroom continuity/quality contract. Publication held; original bytes were not altered.'};
+  if(Number(season)>2026||Number(season)===2026&&Number(week)>=9){
+   const idx=await s.get('broadcasts/index.json',{type:'json'}).catch(()=>null);
+   if(!Array.isArray(idx)||!idx.some(row=>
+      Number(row?.season)===Number(season)&&Number(row?.week)===Number(week)&&
+      String(row?.key)==='broadcasts/'+Number(season)+'/week-'+String(Number(week)).padStart(2,'0')+'.json'))
+    return{error:'broadcast not yet published'};
+  }
   return v;
  }
  return preloadedBroadcast(season,week)||{error:'broadcast not found'};

@@ -424,7 +424,7 @@ export async function weeklyReport(req){
    if(!isLockedInquirerEdition(stored,season,w))
     return{available:false,published_locked:false,season,week:w,
      reason:'Stored Week '+w+' is incomplete or not explicitly locked. Refusing to overwrite historical content.'};
-   if(!previewReadOnly)await ensureLockedEditionIndexed(s,stored,key,{commitIndex:!(deferPublicIndex&&(season>2026||season===2026&&w>=9))});
+   if(!previewReadOnly)await ensureLockedEditionIndexed(s,stored,key,{commitIndex:!(season>2026||season===2026&&w>=9)});
    if(enforceFeatureContinuity&&(season>2026||(season===2026&&w>=5))){
     const award=awardedWeeks.get(season+'|'+w);
     if(!isTrustedWeeklyAwardCache(award,season,w)){

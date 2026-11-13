@@ -417,7 +417,9 @@ assert(backend.includes("githubArchive:{reachable:"),'Value History health must 
 assert(backend.includes("netlifyLive:{reachable:"),'Value History health must report Netlify live-buffer reachability separately');
 assert(backend.includes("const archiveSnaps=await archiveAllSnapshots();"),'Value History read paths must load the durable GitHub archive independently of Netlify Blobs');
 assert(backend.includes("history_source:historySource"),'Trade History must expose its historical-value source separately from raw Sleeper trade audits');
-assert(backend.includes("const trades=await importedCompletedTrades();"),'Trade History must load Sleeper completed trades before optional historical-value storage');
+assert(backend.includes('const {trades,live_trade_feed}=await importedCompletedTrades({forceLive});')&&
+  backend.includes('async function importedCompletedTrades({forceLive=false}={})'),
+  'Trade History must load immutable historical trades plus optional fresh Sleeper completed transactions');
 
 assert(backend.includes("url.searchParams.get('market')==='1'"),'market summary endpoint missing');
 assert(backend.includes('LEGACY_INDEX_KEY'), 'legacy V330 history compatibility missing');
@@ -433,11 +435,15 @@ assert(backend.includes('await appendIndex(s,key,t);'),'Value History write must
 assert(!backend.includes("try{await appendIndex(s,key,t)}catch"),'Value History must not silently report success for an unindexed snapshot');
 assert(backend.includes('histPickMap=pickMap'),'completed trade history must read pick values from the exact historical snapshot');
 assert(backend.includes('then_picks:thenPicks.values'),'completed trade history must expose recorded pick values to Trade History');
-assert(backend.includes('completedTradeHistory(s)'),'completed trade history must remain in Value History backend');
+assert(backend.includes('async function completedTradeHistory(s,{forceLive=false}={})')&&
+  backend.includes("completedTradeHistory(s,{forceLive:url.searchParams.get('trades_fresh')==='1'})"),
+  'completed Trade History must support a safe explicit fresh-fetch mode without losing the historical archive');
 assert(backend.includes('TRADE_AUDIT_SEASONS'),'Sleeper imported multi-season trade audit source missing');
 assert(backend.includes('exactDraftResultMap'),'exact Sleeper draft-result mapping missing');
 assert(backend.includes('const combinedDraftResults=new Map(),ambiguous=new Set()'),'historical Sleeper draft results must be combined across imported league seasons');
-assert(backend.includes('normalizeCompletedTrade(tx,week,bundle.season,bundle.teamNames,combinedDraftResults)'),'historical trades must resolve picks against the cross-season Sleeper draft-result map');
+assert(backend.includes('normalizeCompletedTrade(tx,week,bundle.season,tx.__live_trade?')&&
+  backend.includes('{...bundle.teamNames,...liveTeamNames}:bundle.teamNames,combinedDraftResults)'),
+  'historical and live trades must retain cross-season draft results and correct trade-time team identities');
 assert(!backend.includes('bundle.teamNames,bundle.draftResults'),'historical trade resolution must not be limited to the transaction season draft list');
 assert(backend.includes('slot_to_roster_id'),'draft-result mapping must use Sleeper slot_to_roster_id rather than inference');
 assert(backend.includes("TRADE_AUDIT_SEASONS=[2024,2025,2026]"),'2024–2026 linked trade audit coverage missing');

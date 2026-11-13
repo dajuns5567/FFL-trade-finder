@@ -30,7 +30,9 @@ test('previous published copy can neither be invented nor overwritten after part
 });
 test('Week 5+ publication includes locked award package or remains retryable',()=>{
  assert.match(pub,/report\?\.available===true&&report\?\.published_locked===true/);
- assert.match(pub,/await weeklyAwards\(\)/);
+ assert.match(pub,/await weeklyAwards\(\{additionalLockedEditions:isForward\?\[report\]:\[\]\}\)/);
+ assert.match(pub,/await ensureLockedEditionIndexed\(statusStore,report,key\)/);
+ assert.match(pub,/verifyPublishedInquirerReadback/);
  assert.match(pub,/record\?\.players_of_week/);
  assert.match(pub,/Array\.isArray\(record\?\.manager_awards\)/);
  assert.match(pub,/awardsError/);

@@ -133,7 +133,7 @@ export default async function publishInquirerInBackground(req){
    // For a newly generated scheduled edition, persist the matching awards
    // before committing its public archive index. Older locked editions remain
    // immutable and use their existing archive entries.
-   const isForward=Number(report?.season)>=2026&&Number(report?.week)>=9;
+   const isForward=(Number(report?.season)>2026||Number(report?.season)===2026&&Number(report?.week)>=9);
    awards=await weeklyAwards({additionalLockedEditions:isForward?[report]:[]});
    if(!hasCompleteWeekFeaturePackage(report,awards))
     throw Error('Weekly awards package incomplete (offense, IDP defense, verified locked newspaper or manager scorer badges) for '+report.season+' Week '+report.week);

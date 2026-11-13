@@ -83,7 +83,8 @@ export default async function inquirerPublishScheduled(req){
   // bytes and fully recorded awards; never regenerate or overwrite an edition.
   // This also runs when the scheduler would otherwise skip a completed week.
   if(isCurrentSite&&status?.state==='completed'&&status?.available===true&&
-     Number.isInteger(Number(status.week))&&Number(status.week)>=5){
+     Number.isInteger(Number(status.week))&&Number(status.season)>=2026&&
+     (Number(status.season)>2026||Number(status.week)>=5)){
    const season=Number(status.season),week=Number(status.week);
    const key='broadcasts/'+season+'/week-'+String(week).padStart(2,'0')+'.json';
    const [index,edition,awards]=await Promise.all([

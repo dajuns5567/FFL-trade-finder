@@ -1,0 +1,141 @@
+/* V534 — presentation only. Keep original labels, data attributes, input events
+   and the Finder/Evaluator scroll regions intact. */
+:is(#findShop,#evalChooserA,#evalChooserB) .checklist{
+  display:flex;flex-direction:column;gap:7px;padding:6px 4px 10px 2px;
+}
+:is(#findShop,#evalChooserA,#evalChooserB) label.checkrow{
+  box-sizing:border-box;position:relative;display:flex!important;align-items:center!important;
+  gap:12px!important;min-height:58px;padding:10px 12px!important;margin:0!important;
+  border:1px solid rgba(148,163,184,.17);border-radius:11px;
+  background:linear-gradient(135deg,rgba(29,36,51,.92),rgba(17,23,34,.96));
+  color:#f1f5f9;cursor:pointer;transition:border-color .14s ease,background .14s ease,box-shadow .14s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+:is(#findShop,#evalChooserA,#evalChooserB) label.checkrow:hover{
+  border-color:rgba(245,191,67,.55);
+  background:linear-gradient(135deg,rgba(42,45,55,.96),rgba(26,31,44,.98));
+}
+:is(#findShop,#evalChooserA,#evalChooserB) label.checkrow:has(input:checked){
+  border-color:rgba(244,190,58,.85);
+  background:linear-gradient(105deg,rgba(98,70,23,.33),rgba(28,34,46,.96));
+  box-shadow:inset 3px 0 0 #e7b63e,0 0 0 1px rgba(231,182,62,.06);
+}
+:is(#findShop,#evalChooserA,#evalChooserB) label.checkrow:has(input:focus-visible){
+  outline:2px solid #f9d977;outline-offset:2px;
+}
+:is(#findShop,#evalChooserA,#evalChooserB) label.checkrow input[type="checkbox"]{
+  box-sizing:border-box;flex:0 0 22px;min-width:22px!important;width:22px!important;
+  height:22px!important;margin:0!important;accent-color:#e9b93f;cursor:pointer;
+}
+:is(#findShop,#evalChooserA,#evalChooserB) label.checkrow>span{
+  display:block;min-width:0;flex:1;overflow-wrap:anywhere;font-size:13px!important;line-height:1.4!important;
+}
+:is(#findShop,#evalChooserA,#evalChooserB) label.checkrow b{
+  font-weight:750;
+}
+:is(#findShop,#evalChooserA,#evalChooserB) label.checkrow .muted,
+:is(#findShop,#evalChooserA,#evalChooserB) label.checkrow .tiny{
+  color:#abb7c8!important;font-size:11px!important;line-height:1.43!important;
+}
+#tradeSelectAll165{max-width:240px}
+#tradeSelectAllButton165{
+  min-height:44px;border:1px solid rgba(233,185,63,.64)!important;border-radius:10px!important;
+  background:rgba(233,185,63,.08)!important;color:#f6d06c!important;font-size:12px!important;
+  letter-spacing:.025em;cursor:pointer;transition:background .14s ease,border-color .14s ease;
+}
+#tradeSelectAllButton165:hover,#tradeSelectAllButton165:focus-visible{
+  background:rgba(233,185,63,.17)!important;border-color:#f6d06c!important;
+}
+#tradeSelectAllButton165[data-selected="1"]{
+  background:rgba(233,185,63,.18)!important;border-color:#e9b93f!important;
+}
+@media(max-width:700px){
+  :is(#findShop,#evalChooserA,#evalChooserB) .checklist{gap:9px;padding:5px 2px 12px}
+  :is(#findShop,#evalChooserA,#evalChooserB) label.checkrow{
+    min-height:60px;padding:12px!important;gap:13px!important;border-radius:12px;
+    touch-action:manipulation;
+  }
+  :is(#findShop,#evalChooserA,#evalChooserB) label.checkrow input[type="checkbox"]{
+    flex-basis:24px;min-width:24px!important;width:24px!important;height:24px!important;
+  }
+  :is(#findShop,#evalChooserA,#evalChooserB) label.checkrow>span{font-size:13px!important}
+  #tradeSelectAll165{max-width:none;width:100%}
+  #tradeSelectAllButton165{min-height:48px;width:100%}
+}
+@media(prefers-reduced-motion:reduce){
+  :is(#findShop,#evalChooserA,#evalChooserB) label.checkrow,
+  #tradeSelectAllButton165{transition:none}
+}
+
+/* V535 centering repair: the legacy trade98/finder rules have greater
+   specificity than the generic cards above and force flex-start / 4px
+   padding. Override only these three asset selectors, never preferences. */
+.trade98-finder-grid #findShop label.checkrow,
+#findShop label.checkrow,
+#evalChooserA label.checkrow,
+#evalChooserB label.checkrow{
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  min-height:62px!important;
+  padding:11px 13px!important;
+  gap:12px!important;
+  text-align:left!important;
+  line-height:1.35!important;
+}
+.trade98-finder-grid #findShop label.checkrow input.shopCheck[type="checkbox"],
+#findShop label.checkrow input[type="checkbox"],
+#evalChooserA label.checkrow input[type="checkbox"],
+#evalChooserB label.checkrow input[type="checkbox"]{
+  display:block!important;
+  align-self:center!important;
+  flex:0 0 22px!important;
+  width:22px!important;
+  height:22px!important;
+  min-width:22px!important;
+  margin:0!important;
+  vertical-align:middle!important;
+}
+.trade98-finder-grid #findShop label.checkrow>span,
+#findShop label.checkrow>span,
+#evalChooserA label.checkrow>span,
+#evalChooserB label.checkrow>span{
+  display:block!important;
+  flex:1 1 0!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:0!important;
+  align-self:center!important;
+  line-height:1.42!important;
+}
+.trade98-finder-grid #findShop label.checkrow>span>b,
+#findShop label.checkrow>span>b,
+#evalChooserA label.checkrow>span>b,
+#evalChooserB label.checkrow>span>b{
+  display:inline-block;
+  line-height:1.3!important;
+}
+:is(#findShop,#evalChooserA,#evalChooserB) .checklist{
+  box-sizing:border-box;
+  padding-inline:5px 7px!important;
+}
+@media(max-width:700px){
+  .trade98-finder-grid #findShop label.checkrow,
+  #findShop label.checkrow,
+  #evalChooserA label.checkrow,
+  #evalChooserB label.checkrow{
+    min-height:66px!important;
+    padding:12px 14px!important;
+    gap:13px!important;
+  }
+  .trade98-finder-grid #findShop label.checkrow input.shopCheck[type="checkbox"],
+  #findShop label.checkrow input[type="checkbox"],
+  #evalChooserA label.checkrow input[type="checkbox"],
+  #evalChooserB label.checkrow input[type="checkbox"]{
+    flex-basis:24px!important;
+    width:24px!important;
+    min-width:24px!important;
+    height:24px!important;
+  }
+}

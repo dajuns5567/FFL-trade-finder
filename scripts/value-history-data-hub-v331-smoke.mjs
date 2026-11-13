@@ -107,8 +107,12 @@ for(const needle of [
   'slice(vi+1,vi+6)',
   'slice(Math.max(0,pi-5),pi)',
   'slice(pi+1,pi+6)',
-  'vh-rank-hit',
-  'data-vh-rank-label',
+  'vh-plot-hit',
+  'data-vh-chart-series=',
+  "hover=chartHoverLayer(clean,'rank'",
+  "data.kind==='rank'?",
+  'esc(data.label)',
+  'esc(p.rank)',
   "marketCache=null;teamNetCache.clear();scheduleSnapshot(1000,'manual-update')",
   'Tracked since',
   "'1D','7D','30D','90D','1Y','ALL'",
@@ -235,6 +239,19 @@ for(const needle of [
   'Trade-linked team net-value points'
 ])assert(ui.includes(needle),'missing Value History UI feature: '+needle);
 
+// Rank tooltips now derive their label and historical rank from the same
+// accessible, keyboard-navigable chart-series payload. Never require the
+// obsolete per-point data-vh-rank-label attribute or silently drop hover data.
+assert(ui.includes('function chartHoverLayer(rows,kind,')&&
+  ui.includes('data-vh-chart-series="${overlay}"')&&
+  ui.includes("hover=chartHoverLayer(clean,'rank'")&&
+  ui.includes("rank:p[field]")&&
+  ui.includes("data.kind==='rank'?")&&
+  ui.includes('esc(data.label)')&&ui.includes('esc(p.rank)')&&
+  ui.includes("['ArrowLeft','ArrowRight','Home','End']")&&
+  ui.includes('showChartHover(hit,next,tip,wrap,wrap.getBoundingClientRect(),e)'),
+  'rank history must preserve labeled, timestamped hover and keyboard navigation');
+
 for(const forbidden of [
   'modeledPlayerValuesV319.build(',
   'section1V130.install(',
@@ -253,7 +270,11 @@ assert(ui.includes('function currentPickRows()'),'Value History must capture liv
 assert(ui.includes('function currentTeamRows(playerRows=currentRows())'),'Value History must capture authoritative per-team net totals at snapshot time');
 assert(ui.includes('function teamTradeNetEvents(teamId,netData,period)'),'Track My Team must identify completed trades against authoritative net-value points');
 assert(ui.includes('function teamNetPointTradeMap(teamId,points)'),'Overall Net Value chart must map completed trades to authoritative team data points');
-assert(ui.includes('data-vh-trades='),'trade-linked Overall Net Value points must carry trade context into the chart tooltip');
+assert(ui.includes("hover=chartHoverLayer(pts,'net'")&&
+  ui.includes('trades:tradeMap?.get(String(p.t))||null')&&
+  ui.includes('const linked=p.trades||null')&&
+  ui.includes("data.kind==='net'?"),
+  'trade-linked Overall Net Value points must retain their trade context in the shared chart hover series');
 assert(ui.includes('Observed team net-value change from prior authoritative snapshot'),'Overall Net Value tooltip must display observed net-value movement tied to the point');
 assert(ui.includes('not an assumption that the trade alone caused the change'),'Overall Net Value tooltip must preserve non-causal attribution language');
 assert(ui.includes("p?.teamSnapshot===true"),'trade-linked team events must never use legacy reconstructed net points');
@@ -265,7 +286,9 @@ assert(ui.includes('The snapshot change is observed team net-value movement, not
 assert(ui.includes("body:JSON.stringify({league:'1316867686394769408',rows,picks,teams,source})"),'Value History snapshot POST must include separate player, pick, and team ownership totals');
 assert(ui.includes('const recorded=Number(asset.historyRecordedValue)'),'Trade History must prefer recorded historical pick values before retroactive fallback');
 assert(ui.includes('vh-assets-title'),'Trade History must visually emphasize Assets received');
-assert(ui.includes('tradeOriginalAssets(side)'), 'Trade Evaluator analysis must evaluate the original traded package rather than mutate it into current outcomes');
+assert(ui.includes('function tradeOriginalAssets(side,trade)')&&
+  ui.includes('tradeOriginalAssets(sideA,trade)')&&ui.includes('tradeOriginalAssets(sideB,trade)'),
+  'Trade Evaluator analysis must evaluate both original traded packages with the correct historical trade context');
 assert(ui.includes('return Number.isFinite(season)&&season>2000?season+1:null'),'retroactive Trade History nearest draft year must roll from the trade season');
 assert(ui.includes('function tradeHistoryPickTimingFactor(year,round,nearestYear)'),'Trade History distance-based pick timing helper missing');
 assert(ui.includes('Math.max(0,y-base)'),'Trade History pick distance must be measured from trade-season nearest draft year');
@@ -394,7 +417,9 @@ assert(backend.includes("githubArchive:{reachable:"),'Value History health must 
 assert(backend.includes("netlifyLive:{reachable:"),'Value History health must report Netlify live-buffer reachability separately');
 assert(backend.includes("const archiveSnaps=await archiveAllSnapshots();"),'Value History read paths must load the durable GitHub archive independently of Netlify Blobs');
 assert(backend.includes("history_source:historySource"),'Trade History must expose its historical-value source separately from raw Sleeper trade audits');
-assert(backend.includes("const trades=await importedCompletedTrades();"),'Trade History must load Sleeper completed trades before optional historical-value storage');
+assert(backend.includes('const {trades,live_trade_feed}=await importedCompletedTrades({forceLive});')&&
+  backend.includes('async function importedCompletedTrades({forceLive=false}={})'),
+  'Trade History must load immutable historical trades plus optional fresh Sleeper completed transactions');
 
 assert(backend.includes("url.searchParams.get('market')==='1'"),'market summary endpoint missing');
 assert(backend.includes('LEGACY_INDEX_KEY'), 'legacy V330 history compatibility missing');
@@ -410,11 +435,15 @@ assert(backend.includes('await appendIndex(s,key,t);'),'Value History write must
 assert(!backend.includes("try{await appendIndex(s,key,t)}catch"),'Value History must not silently report success for an unindexed snapshot');
 assert(backend.includes('histPickMap=pickMap'),'completed trade history must read pick values from the exact historical snapshot');
 assert(backend.includes('then_picks:thenPicks.values'),'completed trade history must expose recorded pick values to Trade History');
-assert(backend.includes('completedTradeHistory(s)'),'completed trade history must remain in Value History backend');
+assert(backend.includes('async function completedTradeHistory(s,{forceLive=false}={})')&&
+  backend.includes("completedTradeHistory(s,{forceLive:url.searchParams.get('trades_fresh')==='1'})"),
+  'completed Trade History must support a safe explicit fresh-fetch mode without losing the historical archive');
 assert(backend.includes('TRADE_AUDIT_SEASONS'),'Sleeper imported multi-season trade audit source missing');
 assert(backend.includes('exactDraftResultMap'),'exact Sleeper draft-result mapping missing');
 assert(backend.includes('const combinedDraftResults=new Map(),ambiguous=new Set()'),'historical Sleeper draft results must be combined across imported league seasons');
-assert(backend.includes('normalizeCompletedTrade(tx,week,bundle.season,bundle.teamNames,combinedDraftResults)'),'historical trades must resolve picks against the cross-season Sleeper draft-result map');
+assert(backend.includes('normalizeCompletedTrade(tx,week,bundle.season,tx.__live_trade?')&&
+  backend.includes('{...bundle.teamNames,...liveTeamNames}:bundle.teamNames,combinedDraftResults)'),
+  'historical and live trades must retain cross-season draft results and correct trade-time team identities');
 assert(!backend.includes('bundle.teamNames,bundle.draftResults'),'historical trade resolution must not be limited to the transaction season draft list');
 assert(backend.includes('slot_to_roster_id'),'draft-result mapping must use Sleeper slot_to_roster_id rather than inference');
 assert(backend.includes("TRADE_AUDIT_SEASONS=[2024,2025,2026]"),'2024–2026 linked trade audit coverage missing');
@@ -486,7 +515,7 @@ assert(indexHtml.includes('Review real trades, analysis at the time of trade, an
 assert(indexHtml.includes('Historical value hub, risers, fallers, team value analysis, and more'),'Home Value History description must match');
 assert(indexHtml.includes('id="homeTopPlayers"')&&indexHtml.includes('id="homeValueRisers"'),'Home must expose current top players and 7D riser summary slots');
 assert(/\/trade-select-all-v165\.js\?v=[^"'<>\s]+/.test(siteV29),'production shell must load Select All with an explicit cache-bust key');
-assert(siteV29.includes('/ui-player-values-v139.js?v=430'),'production shell must cache-bust the current V398 Player Values UI');
+assert(siteV29.includes('/ui-player-values-v139.js?v=540'),'production shell must cache-bust the current V398 Player Values UI');
 assert(/\/nonblocking-consensus-v277\.js\?v=[^"'<>\s]+/.test(siteV29),'production shell must load consensus completion runtime with an explicit cache-bust key');
 const archiveWriter=fs.readFileSync('scripts/archive-value-history.mjs','utf8');
 assert(archiveWriter.includes("dataBranch='value-history-data'"),'archive writer must target the durable data branch');

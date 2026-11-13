@@ -460,9 +460,9 @@ function addShell(){
   tabs.appendChild(valueBtn);tabs.appendChild(tradeBtn);
   const main=document.querySelector('main');if(!main)return;
   const sec=document.createElement('section');sec.id='valueHistory';sec.className='tab';sec.hidden=true;
-  sec.innerHTML='<div class="card"><div class="vh-shell"><div class="vh-brand-head"><h2 class="vh-brand-title">Value History</h2><p class="vh-brand-copy">Historical intelligence for the finished Fleeced! master value. Read-only: this data never feeds back into values, rankings, Trade Finder or Trade Evaluator.</p></div><div id="vhLazy"><div class="empty">Open Value History to load the market dashboard.</div></div></div></div>';
+  sec.innerHTML='<div class="card"><div class="vh-shell"><div class="vh-brand-head"><h2 class="vh-brand-title">Value History</h2></div><div id="vhLazy"><div class="empty">Open Value History to load the market dashboard.</div></div></div></div>';
   const tradeSec=document.createElement('section');tradeSec.id='tradeHistory';tradeSec.className='tab';tradeSec.hidden=true;
-  tradeSec.innerHTML='<div class="card"><div class="vh-shell"><div class="vh-brand-head"><h2 class="vh-brand-title">Trade History</h2><p class="vh-brand-copy">Completed Sleeper trades with historical value presentation and a read-only analysis from the current Trade Evaluator logic.</p></div><div id="tradeHistoryContent"><div class="empty">Open Trade History to load completed trades.</div></div></div></div>';
+  tradeSec.innerHTML='<div class="card"><div class="vh-shell"><div class="vh-brand-head"><h2 class="vh-brand-title">Trade History</h2></div><div id="tradeHistoryContent"><div class="empty">Open Trade History to load completed trades.</div></div></div></div>';
   main.appendChild(sec);main.appendChild(tradeSec);
   const activate=(button,id)=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));button.classList.add('active');document.querySelectorAll('.tab').forEach(x=>x.hidden=x.id!==id)};
   valueBtn.addEventListener('click',()=>{activate(valueBtn,'valueHistory');setTimeout(()=>{if(!uiReady){initUI();return}syncSubnav();if(currentView==='fullMarket')loadFullMarketHistory();else if(currentView==='team')renderTrackMyTeam();else if(currentView==='playerHub')renderPlayerHistoryHub()},0)});
@@ -628,6 +628,10 @@ function selectPlayer(id){
   loadPlayer(id);
 }
 function handleContentClick(e){
+  const teamNetChoice=e.target.closest('[data-vh-team-net-choice]');
+  if(teamNetChoice){useTeamNetChoice(teamNetChoice.dataset.vhTeamNetChoice,teamNetChoice.dataset.vhTeamNetId);return}
+  const teamNetMenu=e.target.closest('[data-vh-team-net-menu]');
+  if(teamNetMenu){openTeamNetChoice(teamNetMenu.dataset.vhTeamNetMenu,teamNetMenu);return}
   const tradeReset=e.target.closest('[data-vh-trade-reset]');
   if(tradeReset){tradeTeamFilter='';tradeYearFilter='';tradeMonthFilter='';renderTradeHistory();return}
   const tradeToggle=e.target.closest('[data-vh-trade-toggle]');
@@ -1095,6 +1099,17 @@ function tradeCard(trade){
   const names=(trade.roster_ids||[]).map(id=>esc(historicalTradeTeamName(trade,id))).join(' ↔ ');
   return`<div class="vh-trade-card ${anyOpen?'vh-trade-expanded':'vh-trade-collapsed'}" data-vh-trade-card-id="${esc(key)}"><div class="vh-trade-head"><div><h4><span class="vh-trade-date">${esc(dateTime(trade.created))}</span> • ${esc(String(trade.season||''))} Trade</h4><div class="vh-sub">${names}</div></div>${trade.trade_snapshot_t?`<small>Historical snapshot: ${esc(dateTime(trade.trade_snapshot_t))}</small>`:''}</div><div class="vh-compact-trade">${(trade.sides||[]).map(side=>compactTradeSide(side,trade)).join('')}</div><div class="vh-trade-toggle-row"><button type="button" class="${open.hindsight?'vh-trade-toggle-active':'secondary'} small vh-trade-toggle" data-vh-trade-toggle="hindsight" data-vh-trade-id="${esc(key)}" aria-expanded="${open.hindsight?'true':'false'}">Hindsight</button><button type="button" class="${open.original?'vh-trade-toggle-active':'secondary'} small vh-trade-toggle" data-vh-trade-toggle="original" data-vh-trade-id="${esc(key)}" aria-expanded="${open.original?'true':'false'}">Original Trade Analysis</button></div>${open.hindsight?tradeValuePresentation(trade):''}${open.original?tradeEvaluatorSection(trade):''}${anyOpen?historicalValueComparisonSection(trade):''}</div>`
 }
+function refreshTradeHistoryCurrentValuesV533(){
+  // Hindsight and the historical-comparison 'Current value' column derive
+  // from the current evaluator, not from current_players in archived API data.
+  // Preserve the trade payload and original trade-time valuation unchanged.
+  const panel=document.getElementById('tradeHistory');
+  if(!tradeHistoryCache?.trades||!panel||panel.hidden)return false;
+  renderTradeHistory();
+  return true;
+}
+window.refreshTradeHistoryCurrentValuesV533=refreshTradeHistoryCurrentValuesV533;
+window.addEventListener('fll:valuation-refreshed',refreshTradeHistoryCurrentValuesV533);
 function initTradeHistoryUI(){if(!tradeHistoryCache)loadTradeHistory();else renderTradeHistory()}
 window.openValueHistoryTeamV458=function(id,showLeagueComparison=false){
  const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');btn?.click();currentView='team';trackedTeamId=String(id||'');syncSubnav();
@@ -1132,7 +1147,7 @@ function renderTradeHistory(){
   const feedWarning=feedState==='partial'?
     'Live Sleeper trades are temporarily incomplete for week'+(failedWeeks.length===1?' ':'s ')+failedWeeks.join(', ')+'. Some recent trades may be missing.':
     feedState==='unavailable'?'Live Sleeper trade updates are unavailable. Showing previously verified trades.':'';
-  box.innerHTML=`<div class="vh-card vh-trade-history-summary"><div class="vh-card-head"><div><h3>Completed Trade History</h3><div class="vh-sub">Trades open in a compact view showing the teams and assets exchanged. Expand Hindsight and/or Original Trade Analysis only when you want the full detail; Historical Value Comparison appears with either expanded section.</div></div></div><div class="vh-team-toolbar vh-trade-filter-toolbar"><label><b>Filter by team</b><select data-vh-trade-team><option value="">All teams</option>${ids.map(id=>`<option value="${esc(id)}" ${String(tradeTeamFilter)===String(id)?'selected':''}>${esc(teamName(id))}</option>`).join('')}</select></label><label><b>Year</b><select data-vh-trade-year><option value="">All years</option>${years.map(y=>`<option value="${esc(y)}" ${String(tradeYearFilter)===String(y)?'selected':''}>${esc(y)}</option>`).join('')}</select></label><label><b>Month</b><select data-vh-trade-month><option value="">All months</option>${months.map(([v,l])=>`<option value="${v}" ${String(tradeMonthFilter)===v?'selected':''}>${l}</option>`).join('')}</select></label><div class="vh-trade-reset-wrap"><span class="vh-trade-reset-spacer" aria-hidden="true"></span><button type="button" class="secondary small vh-trade-reset" data-vh-trade-reset>Reset filters</button></div></div><div class="vh-trade-note">Source: ${esc(data.source||'Sleeper transaction history')} • ${filtered.length} completed trade${filtered.length===1?'':'s'} shown. Exact draft-result mapping is displayed only when Sleeper provides an unambiguous draft slot → roster → player chain.</div>${feedWarning?'<div class=vh-trade-note role=status>'+esc(feedWarning)+'</div>':''}</div><div class="vh-trade-list">${filtered.map(tradeCard).join('')||'<div class="vh-card"><div class="vh-empty">No completed trades match these filters.</div></div>'}</div>`;
+  box.innerHTML=`<div class="vh-card vh-trade-history-summary"><div class="vh-card-head"><div><h3>Completed Trade History</h3></div></div><div class="vh-team-toolbar vh-trade-filter-toolbar"><label><b>Filter by team</b><select data-vh-trade-team><option value="">All teams</option>${ids.map(id=>`<option value="${esc(id)}" ${String(tradeTeamFilter)===String(id)?'selected':''}>${esc(teamName(id))}</option>`).join('')}</select></label><label><b>Year</b><select data-vh-trade-year><option value="">All years</option>${years.map(y=>`<option value="${esc(y)}" ${String(tradeYearFilter)===String(y)?'selected':''}>${esc(y)}</option>`).join('')}</select></label><label><b>Month</b><select data-vh-trade-month><option value="">All months</option>${months.map(([v,l])=>`<option value="${v}" ${String(tradeMonthFilter)===v?'selected':''}>${l}</option>`).join('')}</select></label><div class="vh-trade-reset-wrap"><span class="vh-trade-reset-spacer" aria-hidden="true"></span><button type="button" class="secondary small vh-trade-reset" data-vh-trade-reset>Reset filters</button></div></div><div class="vh-trade-note">Source: ${esc(data.source||'Sleeper transaction history')} • ${filtered.length} completed trade${filtered.length===1?'':'s'} shown. Exact draft-result mapping is displayed only when Sleeper provides an unambiguous draft slot → roster → player chain.</div>${feedWarning?'<div class=vh-trade-note role=status>'+esc(feedWarning)+'</div>':''}</div><div class="vh-trade-list">${filtered.map(tradeCard).join('')||'<div class="vh-card"><div class="vh-empty">No completed trades match these filters.</div></div>'}</div>`;
 }
 async function loadTradeHistory(){
   const box=document.getElementById('tradeHistoryContent');if(!box)return;
@@ -1596,13 +1611,40 @@ function renderMarketTable(){
   host.innerHTML=marketTableRowsMarkup(rows);
 }
 function scoringMilestonesRows(scoring,loading=false){
-  if(!scoring&&loading)return'<div class="vh-feed-row"><span class="vh-milestone-label">Scoring milestones<span class="vh-milestone-time">Loading completed-week scoring in the background…</span></span><b>…</b></div>';
-  return`
-      <div id="vhScoringMilestones">${scoringMilestonesRows(scoring,scoringLoading)}</div>`;
+  if(!scoring){
+    const msg=loading?'Loading completed-week scoring in the background…':'Scoring milestones unavailable; historical value and rank records remain available.';
+    return '<div class="vh-feed-row"><span class="vh-milestone-label">Scoring milestones<span class="vh-milestone-time">'+esc(msg)+'</span></span><b>'+ (loading?'…':'—') +'</b></div>';
+  }
+  const weeks=[
+    ['Highest points in a week',scoring.highWeek,
+      scoring.highWeek?scoring.highWeek.season+' Week '+scoring.highWeek.week:'No recorded NFL week yet'],
+    ['Highest points in a season',scoring.highSeason,
+      scoring.highSeason?scoring.highSeason.season+' • '+scoring.highSeason.games+' games':'No qualifying 8+ game season yet'],
+    ['Highest PPG in qualifying season',scoring.highPpg,
+      scoring.highPpg?scoring.highPpg.season+' • '+scoring.highPpg.games+' games':'No qualifying 8+ game season yet']
+  ];
+  const rows=weeks.map(([title,record,when])=>
+    '<div class="vh-feed-row"><span class="vh-milestone-label">'+esc(title)+
+    '<span class="vh-milestone-time">'+esc(when)+'</span></span><b>'+
+    (record&&Number.isFinite(Number(record.points))?Number(record.points).toFixed(2):'—')+'</b></div>').join('');
+  const awards=(Array.isArray(scoring.weeklyAwards)?scoring.weeklyAwards:[]).map(a=>
+    '<div class="vh-feed-row"><span class="vh-milestone-label">'+esc(a.title||'Player of the Week')+
+    '<span class="vh-milestone-time">'+esc(String(a.season))+' Week '+esc(String(a.week))+
+    ' • '+(a.week_started_at?esc(dateShort(a.week_started_at)):'date unavailable')+
+    '</span></span><span class="vh-milestone-award">🏅 '+
+    (Number.isFinite(Number(a.points))?Number(a.points).toFixed(2):'—')+' pts</span></div>').join('');
+  return rows+awards;
 }
 async function loadPlayerScoring(id){
   const key=String(id);if(playerScoringCache.has(key))return;
-  try{const data=await scoringFetch(key);playerScoringCache.set(key,data?.scoring_milestones||null)}catch{return}
+  try{
+    const data=await scoringFetch(key);
+    const value=data?.scoring_milestones;
+    playerScoringCache.set(key,value&&typeof value==='object'?value:null);
+  }catch(error){
+    console.warn('Player scoring milestones unavailable',key,error);
+    playerScoringCache.set(key,null);
+  }
   if(String(currentPlayerId)!==key)return;
   const target=document.getElementById('vhScoringMilestones');if(target)target.innerHTML=scoringMilestonesRows(playerScoringCache.get(key),false);
 }
@@ -1626,7 +1668,7 @@ function renderPlayerHistoryHub(){
   const ids=leagueTeamIds(),selected=playerHistoryTeamId&&ids.includes(String(playerHistoryTeamId))?String(playerHistoryTeamId):'';
   const input=document.getElementById('vhSearch'),results=document.getElementById('vhResults');
   if(input)input.value='';if(results)results.innerHTML='';
-  const status=document.getElementById('vhStatus');if(status)status.textContent='Search any player or choose a fantasy team to browse its current roster.';
+  const status=document.getElementById('vhStatus');if(status)status.textContent='';
   box.innerHTML=`
     <div class="vh-card vh-player-history-choice">
       <div class="vh-card-head"><div><h3>Player Value History</h3><div class="vh-sub">Search for a player to open that player's full Value History.</div></div></div>
@@ -1734,10 +1776,48 @@ function sortedTeamNetRows(){
   });
 }
 function teamNetSortHeader(label,key){const active=teamNetSort.key===key,arrow=active?(teamNetSort.dir>0?' ▲':' ▼'):'';return`<button type="button" class="vh-team-net-sort" data-vh-team-net-sort="${key}">${label}${arrow}</button>`}
+function openTeamNetChoice(teamId,trigger=null){
+  const modal=document.getElementById('vhMoverModal');
+  const id=String(teamId||'');
+  const team=currentTeamNetStandings().find(t=>String(t.id)===id);
+  if(!modal||!team)return;
+  modal.querySelector('.vh-team-net-choice-overlay')?.remove();
+  const overlay=document.createElement('div');
+  overlay.className='vh-team-net-choice-overlay';
+  overlay.returnFocusTo=trigger;
+  overlay.innerHTML=`<div class="vh-team-net-choice-panel" role="dialog" aria-modal="true" aria-label="${esc(team.name)} history options">
+    <h4>${esc(team.name)}</h4>
+    <p>Which history would you like to view?</p>
+    <button type="button" data-vh-team-net-choice="values" data-vh-team-net-id="${esc(id)}">Team Value History</button>
+    <button type="button" data-vh-team-net-choice="trades" data-vh-team-net-id="${esc(id)}">Trade History</button>
+    <button type="button" class="vh-team-net-choice-cancel" data-vh-team-net-choice="cancel">Cancel — back to comparison</button>
+  </div>`;
+  modal.appendChild(overlay);
+  overlay.querySelector('[data-vh-team-net-choice="values"]')?.focus();
+}
+function useTeamNetChoice(action,teamId){
+  if(action==='cancel'){
+    const overlay=document.querySelector('#vhMoverModal .vh-team-net-choice-overlay');
+    const trigger=overlay?.returnFocusTo;
+    overlay?.remove();
+    trigger?.focus();
+    return;
+  }
+  const id=String(teamId||'');
+  if(!id||!currentTeamNetStandings().some(t=>String(t.id)===id))return;
+  if(action==='values'){
+    closeMoverModal();
+    trackedTeamId=id;
+    renderTrackMyTeam();
+  }else if(action==='trades'){
+    closeMoverModal();
+    openTradeHistoryTab(id);
+  }
+}
 function openTeamNetModal(){
   closeMoverModal();const all=sortedTeamNetRows(),wrap=document.createElement('div');wrap.id='vhMoverModal';wrap.className='vh-modal-backdrop';
   const delta=n=>n==null?'—':`<span class="${deltaClass(n)}">${signed(n)}</span>`;
-  wrap.innerHTML=`<div class="vh-modal" role="dialog" aria-modal="true" aria-label="All team net values"><div class="vh-modal-head"><div><h3>All 32 Teams — Overall Net Value</h3><div class="vh-sub">Current totals plus current-roster value movement from stored Value History snapshots. Rank change appears only when every current roster asset has baseline coverage.</div></div><button type="button" class="secondary small" data-vh-modal-close>Close</button></div><div class="vh-modal-body"><div class="vh-team-net-table"><div class="vh-team-net-row vh-team-net-head"><div>Rank</div><div>${teamNetSortHeader('Team name','name')}</div><div>${teamNetSortHeader('Total value','value')}</div><div>${teamNetSortHeader('7D Δ','delta7')}</div><div>${teamNetSortHeader('30D Δ','delta30')}</div><div>${teamNetSortHeader('30D Rank Δ','rankDelta30')}</div></div>${all.map(t=>`<div class="vh-team-net-row"><div>#${t.rank}</div><div><b>${esc(t.name)}</b></div><div>${fmt(t.value)}</div><div>${delta(t.coverage7?t.delta7:null)}</div><div>${delta(t.coverage30?t.delta30:null)}</div><div>${delta(t.rankDelta30)}</div></div>`).join('')}</div></div></div>`;
+  wrap.innerHTML=`<div class="vh-modal" role="dialog" aria-modal="true" aria-label="All team net values"><div class="vh-modal-head"><div><h3>All 32 Teams — Overall Net Value</h3><div class="vh-sub">Current totals plus current-roster value movement from stored Value History snapshots. Rank change appears only when every current roster asset has baseline coverage.</div></div><button type="button" class="secondary small" data-vh-modal-close>Close</button></div><div class="vh-modal-body"><div class="vh-team-net-table"><div class="vh-team-net-row vh-team-net-head"><div>Rank</div><div>${teamNetSortHeader('Team name','name')}</div><div>${teamNetSortHeader('Total value','value')}</div><div>${teamNetSortHeader('7D Δ','delta7')}</div><div>${teamNetSortHeader('30D Δ','delta30')}</div><div>${teamNetSortHeader('30D Rank Δ','rankDelta30')}</div></div>${all.map(t=>`<div class="vh-team-net-row"><div>#${t.rank}</div><div><button type="button" class="vh-team-net-team-link" data-vh-team-net-menu="${esc(t.id)}" aria-label="Open ${esc(t.name)} team history options">${esc(t.name)}<span aria-hidden="true"> ↗</span></button></div><div>${fmt(t.value)}</div><div>${delta(t.coverage7?t.delta7:null)}</div><div>${delta(t.coverage30?t.delta30:null)}</div><div>${delta(t.rankDelta30)}</div></div>`).join('')}</div></div></div>`;
   (document.getElementById('vhLazy')||document.getElementById('valueHistory')||document.body).appendChild(wrap);
 }
 window.openValueHistoryLeagueNetModalV476=function(){const go=()=>{if(marketCache){openTeamNetModal();requestAnimationFrame(()=>document.querySelector('#vhMoverModal .vh-modal-body')?.scrollTo({top:0,behavior:'auto'}));return}loadMarket().then(()=>{openTeamNetModal();requestAnimationFrame(()=>document.querySelector('#vhMoverModal .vh-modal-body')?.scrollTo({top:0,behavior:'auto'}))}).catch(()=>{})};go()};
@@ -1937,10 +2017,7 @@ function renderPlayerProfile(id,allPts,period='ALL'){
       <div class="vh-feed-row"><span class="vh-milestone-label">Best overall<span class="vh-milestone-time">${bestOverallPoint?dateTime(bestOverallPoint.t):'—'}</span></span><b>#${bestOverall}</b></div>
       <div class="vh-feed-row"><span class="vh-milestone-label">Best ${esc(meta.pos)}</span><b>#${bestPos}</b></div>
       <div class="vh-feed-row"><span class="vh-milestone-label">Lowest ${esc(meta.pos)} Rank</span><b>#${lowestPos}</b></div>
-      <div class="vh-feed-row"><span class="vh-milestone-label">Highest points in a week<span class="vh-milestone-time">${scoring?.highWeek?`${scoring.highWeek.season} Week ${scoring.highWeek.week}`:'No recorded NFL week yet'}</span></span><b>${scoring?.highWeek?Number(scoring.highWeek.points).toFixed(2):'—'}</b></div>
-      <div class="vh-feed-row"><span class="vh-milestone-label">Highest points in a season<span class="vh-milestone-time">${scoring?.highSeason?`${scoring.highSeason.season} • ${scoring.highSeason.games} games`:'No qualifying 8+ game season yet'}</span></span><b>${scoring?.highSeason?Number(scoring.highSeason.points).toFixed(2):'—'}</b></div>
-      <div class="vh-feed-row"><span class="vh-milestone-label">Highest PPG in qualifying season<span class="vh-milestone-time">${scoring?.highPpg?`${scoring.highPpg.season} • ${scoring.highPpg.games} games`:'No qualifying 8+ game season yet'}</span></span><b>${scoring?.highPpg?Number(scoring.highPpg.points).toFixed(2):'—'}</b></div>
-      ${(scoring?.weeklyAwards||[]).map(a=>`<div class="vh-feed-row"><span class="vh-milestone-label">${esc(a.title||'Player of the Week')}<span class="vh-milestone-time">${esc(String(a.season))} Week ${esc(String(a.week))} • ${a.week_started_at?dateShort(a.week_started_at):'date unavailable'}</span></span><span class="vh-milestone-award">🏅 ${Number(a.points||0).toFixed(2)} pts</span></div>`).join('')}
+      <div id="vhScoringMilestones">${scoringMilestonesRows(scoring,scoringLoading)}</div>
       <div class="vh-feed-row"><span class="vh-milestone-label">Observations</span><b>${fmt(allPts.length)}</b></div>
     </div><div class="tiny muted" style="margin-top:10px">Scoring milestones use Sleeper weekly regular-season stats and this league’s scoring settings. Informational only.</div></div>
   </div>

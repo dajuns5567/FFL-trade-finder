@@ -13,6 +13,21 @@ test('automatic poll skips a published or unchanged held edition',()=>{
  assert.equal(inquirerScheduleDecision({nfl,revision,status:{state:'completed',available:true,season:2026,week:5,editorial_revision:29}}).queue,false);
  assert.equal(inquirerScheduleDecision({nfl,revision,status:{state:'editorial-hold',season:2026,week:5,editorial_revision:29}}).queue,false);
 });
+test('Week 10 editorial revision cannot republish completed Week 9',()=>{
+ const nfl={season:2026,week:10};
+ const locked={state:'completed',available:true,season:2026,week:9,editorial_revision:109};
+ const unchanged=inquirerScheduleDecision({nfl,revision:109,status:locked});
+ const updated=inquirerScheduleDecision({nfl,revision:110,status:locked});
+ assert.equal(unchanged.queue,false);
+ assert.equal(updated.queue,false,'new editorial revision must preserve completed Week 9');
+ assert.match(updated.reason,/already published/);
+ const next=inquirerScheduleDecision({nfl:{season:2026,week:11},revision:110,status:locked});
+ assert.equal(next.queue,true,'once Week 10 is final the next week must queue');
+ assert.equal(next.finishedWeek,10);
+ const held={...locked,state:'editorial-hold',available:false};
+ assert.equal(inquirerScheduleDecision({nfl,revision:110,status:held}).queue,true,
+  'revision bump still retries a held Week 9');
+});
 test('automatic poll avoids duplicate concurrent generation and resumes stale jobs',()=>{
  const now=Date.parse('2026-10-20T10:00:00Z');
  const running={state:'running',started_at:'2026-10-20T09:50:00Z'};

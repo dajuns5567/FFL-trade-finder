@@ -1,4 +1,6 @@
 import {snapshotsThroughEdition} from './lib/inquirer-market-window.mjs';
+import {liveTradeWeekLimit,mergeCompletedTradeAuditWeeks} from './lib/trade-history-live-source.mjs';
+import {getPickOrder5050,postCutoverTrade} from './lib/pick-order-5050.mjs';
 import { getStore } from '@netlify/blobs';
 
 const LEAGUE='1316867686394769408';
@@ -669,6 +671,150 @@ async function getMarketSummary(s){
   snaps.sort((a,b)=>String(a.t).localeCompare(String(b.t)));
   const market=marketFromSnapshots(snaps);market.snapshot_count=timed.length;market.archive_snapshot_count=(arch.items||[]).length;market.local_snapshot_count=(local.items||[]).length;return market;
 }
+// EXACT archived Market Intelligence pipeline from player-signal-layer-r1.
+// Read-only analytics of existing archived Value History snapshots.
+let marketInsightsCache=null,marketInsightsCacheAt=0;
+function marketInsightAverage(snapshot,pos=null,limit=24){
+  const rows=(snapshot?.rows||[]).filter(r=>(!pos||String(r?.pos||'')===String(pos))&&Number.isFinite(Number(r?.value))&&Number(r.value)>0).slice().sort((a,b)=>Number(b.value)-Number(a.value)).slice(0,limit);
+  if(!rows.length)return{average:null,count:0};
+  return{average:rows.reduce((n,r)=>n+Number(r.value),0)/rows.length,count:rows.length};
+}
+function marketVolatilitySummary(ordered,pos=null,limit=24){
+  const series=[];
+  for(const snap of ordered||[]){
+    const z=marketInsightAverage(snap,pos,limit);
+    if(Number.isFinite(Number(z.average))&&z.average>0)series.push({t:snap.t,value:Number(z.average),count:z.count});
+  }
+  if(series.length<2)return{pos:pos||'OVERALL',available:false,observations:series.length,range_pct:null,avg_step_pct:null,current_index:null};
+  const base=series[0].value,indexed=series.map(x=>({...x,index:base>0?x.value/base*100:null})).filter(x=>Number.isFinite(x.index)),
+    vals=indexed.map(x=>x.index),high=Math.max(...vals),low=Math.min(...vals),mid=(high+low)/2,
+    steps=indexed.slice(1).map((x,i)=>Math.abs((x.index-indexed[i].index)/indexed[i].index*100)).filter(Number.isFinite),
+    avgStep=steps.length?steps.reduce((a,b)=>a+b,0)/steps.length:null;
+  return{pos:pos||'OVERALL',available:true,observations:indexed.length,constituents:indexed.at(-1)?.count||0,current_index:Number(indexed.at(-1).index.toFixed(2)),high_index:Number(high.toFixed(2)),low_index:Number(low.toFixed(2)),range_pct:mid>0?Number(((high-low)/mid*100).toFixed(2)):null,avg_step_pct:Number.isFinite(avgStep)?Number(avgStep.toFixed(3)):null,tracking_since:indexed[0]?.t||null,through:indexed.at(-1)?.t||null};
+}
+function marketInsightWindow(ordered,label,days=null){
+  if(!ordered.length)return[];
+  if(label==='ALL'||!Number.isFinite(Number(days)))return ordered.slice();
+  const latest=ordered.at(-1),latestMs=new Date(latest.t).getTime(),base=baselineFor(ordered,latestMs,Number(days))||ordered[0],baseMs=new Date(base.t).getTime();
+  return ordered.filter(s=>new Date(s.t).getTime()>=baseMs);
+}
+function marketInsightRange(snaps,label,historySnaps=snaps){
+  const ordered=(snaps||[]).filter(s=>s?.t&&Array.isArray(s?.rows)).slice().sort((a,b)=>String(a.t).localeCompare(String(b.t)));
+  if(ordered.length<2)return{label,available:false,snapshot_count:ordered.length,tracking_since:ordered[0]?.t||null,through:ordered.at(-1)?.t||null,position_indexes:[],market_volatility:null,position_volatility:[],player_changes:[],new_highs:[],new_lows:[],volatility:[]};
+  const first=ordered[0],latest=ordered.at(-1),positions=['QB','RB','WR','TE','IDP'],position_indexes=[];
+  for(const pos of positions){
+    const baseSnap=ordered.find(s=>marketInsightAverage(s,pos).count>0)||first,base=marketInsightAverage(baseSnap,pos),z=marketInsightAverage(latest,pos);
+    if(!Number.isFinite(z.average))continue;
+    position_indexes.push({
+      pos,count:z.count,current_avg:Number(z.average.toFixed(2)),
+      baseline_avg:Number.isFinite(base.average)?Number(base.average.toFixed(2)):null,
+      index:Number.isFinite(base.average)&&base.average>0?Number((z.average/base.average*100).toFixed(2)):null,
+      change_pct:Number.isFinite(base.average)&&base.average>0?Number(((z.average-base.average)/base.average*100).toFixed(2)):null,
+      baseline_t:baseSnap.t,through_t:latest.t
+    });
+  }
+  const market_volatility=marketVolatilitySummary(ordered,null,300),
+    position_volatility=positions.map(pos=>marketVolatilitySummary(ordered,pos,24));
+  const prior=new Map(),full=new Map(),firstSeen=new Map();
+  for(let i=0;i<ordered.length;i++){
+    const snap=ordered[i],isLatest=i===ordered.length-1;
+    for(const row of snap.rows||[]){
+      const id=String(row?.id||''),value=Number(row?.value);if(!id||!Number.isFinite(value)||value<=0)continue;
+      const rowPos=String(row?.pos||'');if(!firstSeen.has(id))firstSeen.set(id,{id,pos:rowPos,value,overall:Number(row?.overall),posRank:Number(row?.posRank),t:snap.t});
+      const bucket=full.get(id)||{id,pos:rowPos,positions:new Set(rowPos?[rowPos]:[]),high:value,low:value,high_t:snap.t,low_t:snap.t,observations:0};
+      bucket.pos=rowPos||bucket.pos||'';if(rowPos)bucket.positions.add(rowPos);bucket.observations++;
+      if(value>bucket.high){bucket.high=value;bucket.high_t=snap.t}
+      if(value<bucket.low){bucket.low=value;bucket.low_t=snap.t}
+      full.set(id,bucket);
+      if(!isLatest){
+        const p=prior.get(id)||{high:value,low:value,high_t:snap.t,low_t:snap.t,observations:0};
+        p.pos=String(row?.pos||p.pos||'');p.observations++;
+        if(value>p.high){p.high=value;p.high_t=snap.t}
+        if(value<p.low){p.low=value;p.low_t=snap.t}
+        prior.set(id,p);
+      }
+    }
+  }
+  const new_highs=[],new_lows=[],volatility=[],player_changes=[];
+  // A new high/low is an event anywhere INSIDE the selected market window,
+  // not merely a record still standing on the last refresh. Revisit all
+  // observations chronologically and record strict crossings versus earlier
+  // verified observations in that same period. Retain the latest occurrence
+  // per player, including the real event timestamp.
+  const recordHighs=new Map(),recordLows=new Map(),seenRecords=new Map();
+  // Build the prior record baseline from ALL earlier verified snapshots.
+  // Events count only if they occur inside the selected 7D (or other) window.
+  // The first observation in a window must not automatically become a
+  // record merely because earlier history was excluded from its range.
+  const completeHistory=(historySnaps||[]).filter(s=>s?.t&&Array.isArray(s.rows))
+    .slice().sort((a,b)=>String(a.t).localeCompare(String(b.t)));
+  const windowDays=label==='1Y'?365:/^(1D|7D|30D|90D)$/.test(label)?Number(label.slice(0,-1)):null;
+  const latestMs=Date.parse(latest.t);
+  const recordWindowStartMs=Number.isFinite(windowDays)?latestMs-windowDays*86400000:Date.parse(ordered[0].t);
+  for(const snapshot of completeHistory){
+    const eventMs=Date.parse(snapshot.t);
+    if(!Number.isFinite(eventMs)||eventMs>latestMs)continue;
+    // The index baseline can predate seven days; baseline observations
+    // anchor comparisons but cannot themselves count as 7D events.
+    const insideWindow=eventMs>=recordWindowStartMs;
+    for(const row of snapshot.rows||[]){
+      const id=String(row?.id||''),value=Number(row?.value),pos=String(row?.pos||'');
+      if(!id||!Number.isFinite(value)||value<=0)continue;
+      const aggregate=full.get(id);
+      if(!aggregate||(aggregate.positions?.size||0)>1)continue;
+      const prev=seenRecords.get(id);
+      if(prev){
+        if(insideWindow&&value>prev.high)recordHighs.set(id,{id,pos,value,previous_high:prev.high,previous_high_t:prev.high_t,gain:value-prev.high,t:snapshot.t});
+        if(insideWindow&&value<prev.low)recordLows.set(id,{id,pos,value,previous_low:prev.low,previous_low_t:prev.low_t,drop:value-prev.low,t:snapshot.t});
+      }
+      seenRecords.set(id,{
+        high:Math.max(prev?.high??value,value),
+        low:Math.min(prev?.low??value,value),
+        high_t:value>(prev?.high??Infinity)?snapshot.t:(prev?.high_t||snapshot.t),
+        low_t:value<(prev?.low??-Infinity)?snapshot.t:(prev?.low_t||snapshot.t)
+      });
+    }
+  }
+  new_highs.push(...recordHighs.values());
+  new_lows.push(...recordLows.values());
+  for(const row of latest.rows||[]){
+    const id=String(row?.id||''),value=Number(row?.value),p=prior.get(id),all=full.get(id),rowPos=String(row?.pos||'');
+    if(!id||!Number.isFinite(value)||!all)continue;
+    const identityClean=(all.positions?.size||0)<=1&&(!all.pos||!rowPos||String(all.pos)===rowPos);
+    if(!identityClean)continue;
+    const base=firstSeen.get(id),baseValue=Number(base?.value);
+    if(base&&String(base.t)!==String(latest.t)&&String(base.pos||rowPos)===rowPos&&Number.isFinite(baseValue)&&baseValue>0){
+      const delta=value-baseValue;
+      const latestOverall=Number(row?.overall),latestPosRank=Number(row?.posRank),baseOverall=Number(base?.overall),basePosRank=Number(base?.posRank);
+      player_changes.push({id,pos:rowPos,value,overall:latestOverall,posRank:latestPosRank,from_value:baseValue,from_overall:Number.isFinite(baseOverall)?baseOverall:null,from_pos_rank:Number.isFinite(basePosRank)?basePosRank:null,from_t:base.t,delta,pct:Number((delta/baseValue*100).toFixed(4)),overall_delta:Number.isFinite(baseOverall)&&Number.isFinite(latestOverall)?baseOverall-latestOverall:null,pos_rank_delta:Number.isFinite(basePosRank)&&Number.isFinite(latestPosRank)?basePosRank-latestPosRank:null,through_t:latest.t});
+    }
+    const mid=(Number(all.high)+Number(all.low))/2,range=Number(all.high)-Number(all.low),drawdown=Number(all.high)>0?(value-Number(all.high))/Number(all.high)*100:null;
+    volatility.push({id,pos:rowPos,value,high:Number(all.high),low:Number(all.low),range,range_pct:mid>0?Number((range/mid*100).toFixed(2)):null,drawdown_pct:Number.isFinite(drawdown)?Number(drawdown.toFixed(2)):null,observations:Number(all.observations)||0,identity_clean:true,high_t:all.high_t,low_t:all.low_t});
+  }
+  new_highs.sort((a,b)=>b.gain-a.gain||b.value-a.value);new_lows.sort((a,b)=>a.drop-b.drop||b.value-a.value);
+  volatility.sort((a,b)=>Number(b.range_pct||0)-Number(a.range_pct||0)||b.range-a.range);
+  return{label,available:true,snapshot_count:ordered.length,tracking_since:first.t,through:latest.t,position_indexes,market_volatility,position_volatility,player_changes,new_highs:new_highs.slice(0,50),new_lows:new_lows.slice(0,50),volatility};
+}
+function marketInsightsFromSnapshots(snaps){
+  const ordered=(snaps||[]).filter(s=>s?.t&&Array.isArray(s?.rows)).slice().sort((a,b)=>String(a.t).localeCompare(String(b.t)));
+  if(ordered.length<2)return{available:false,snapshot_count:ordered.length,through:ordered.at(-1)?.t||null,ranges:{}};
+  const defs={1:1,7:7,30:30,90:90,365:365},ranges={};
+  for(const [daysKey,days] of Object.entries(defs)){
+    const label=daysKey==='365'?'1Y':daysKey+'D';
+    ranges[label]=marketInsightRange(marketInsightWindow(ordered,label,days),label,ordered);
+  }
+  ranges.ALL=marketInsightRange(ordered,'ALL');
+  const all=ranges.ALL;
+  return{available:true,snapshot_count:ordered.length,tracking_since:ordered[0].t,through:ordered.at(-1).t,ranges,position_indexes:all.position_indexes,new_highs:all.new_highs,new_lows:all.new_lows,volatility:all.volatility};
+}
+async function getMarketInsights(s){
+  const now=Date.now();if(marketInsightsCache&&now-marketInsightsCacheAt<300000)return marketInsightsCache;
+  const archived=await archiveAllSnapshots().catch(()=>[]),indexed=s?await allItems(s).catch(()=>({items:[]})):{items:[]},
+    live=s?await readSnapshotsBounded(s,indexed.items||[],25).catch(()=>[]):[],snaps=mergeSnapshots(archived,live),
+    result=marketInsightsFromSnapshots(snaps);
+  marketInsightsCache=result;marketInsightsCacheAt=now;return result;
+}
+
 async function appendIndex(s,key,t){
   const legacy=normalizeItems(await safeGet(s,LEGACY_INDEX_KEY),LEGACY_MAX).filter(x=>x.key!==key);
   legacy.push({key,t});legacy.sort((a,b)=>String(a.t||a.key).localeCompare(String(b.t||b.key)));
@@ -862,8 +1008,11 @@ function normalizeCompletedTrade(tx,week,season,teamNames,draftResults){
   }));
   return{id:String(tx.transaction_id||''),created,season:Number(season)||null,week:Number(week)||null,roster_ids:rosterIds,team_names:teamNames||{},sides};
 }
-async function importedCompletedTrades(){
-  const now=Date.now();if(tradeAuditCache&&now-tradeAuditCache.t<60000)return tradeAuditCache.value;
+async function importedCompletedTrades({forceLive=false}={}){
+  const now=Date.now();if(!forceLive&&tradeAuditCache&&now-tradeAuditCache.t<60000)return tradeAuditCache.value;
+  // Historical audits are immutable snapshots, not a live transaction feed.
+  // The 2026 audit stopped refreshing after the early season; check Sleeper
+  // directly for current-week completed transactions on every cache refresh.
   const seasonBundles=await Promise.all(TRADE_AUDIT_SEASONS.map(async season=>{
     const [transactions,league,users,rosters]=await Promise.all([
       tradeJson(auditUrl(season,'transactions')),
@@ -874,6 +1023,35 @@ async function importedCompletedTrades(){
     const teamNames=historicalTeamNames(users,rosters);
     return{season,transactions,league,teamNames};
   }));
+  const liveBundle=seasonBundles.find(bundle=>Number(bundle.season)===Number(seasonBundles.at(-1)?.season));
+  const liveSeason=Number(liveBundle?.season)||0;
+  let liveStatus={state:'unavailable',season:liveSeason,checked_through_week:null,failed_weeks:[]};
+  let liveTeamNames={};
+  if(liveBundle&&liveSeason){
+    const state=await tradeJson(`${SCORING_API}/state/nfl`).catch(()=>null);
+    const through=liveTradeWeekLimit(state,liveSeason);
+    const results=await Promise.allSettled(Array.from({length:through},(_,i)=>
+      tradeJson(`${SCORING_API}/league/${String(liveBundle.league?.league_id||LEAGUE)}/transactions/${i+1}`)));
+    const weeks={},failed=[];
+    for(let i=0;i<results.length;i++){
+      const result=results[i];
+      if(result.status==='fulfilled'&&Array.isArray(result.value))weeks[i+1]=result.value;
+      else failed.push(i+1);
+    }
+    // Keep original audited team names for historical trades; only newly
+    // recovered live transactions use the current Sleeper manager/team names.
+    const [users,rosters]=await Promise.all([
+      tradeJson(`${SCORING_API}/league/${String(liveBundle.league?.league_id||LEAGUE)}/users`).catch(()=>null),
+      tradeJson(`${SCORING_API}/league/${String(liveBundle.league?.league_id||LEAGUE)}/rosters`).catch(()=>null)
+    ]);
+    if(Array.isArray(users)&&Array.isArray(rosters))
+      liveTeamNames=historicalTeamNames(users,rosters);
+    liveBundle.transactions=mergeCompletedTradeAuditWeeks(liveBundle.transactions,weeks);
+    liveStatus={state:failed.length?'partial':'current',season:liveSeason,
+      checked_through_week:through,failed_weeks:failed};
+    if(failed.length)console.warn('trade-history-live-sleeper-partial',
+      {season:liveSeason,failed_weeks:failed});
+  }
   const combinedDraftResults=new Map(),ambiguous=new Set();
   for(const bundle of seasonBundles){
     const draftResults=await exactDraftResultMap(bundle.league);
@@ -883,9 +1061,19 @@ async function importedCompletedTrades(){
     }
   }
   for(const key of ambiguous)combinedDraftResults.delete(key);
-  const trades=[];
-  for(const bundle of seasonBundles)for(const [week,rows] of Object.entries(bundle.transactions||{}))for(const tx of Array.isArray(rows)?rows:[]){const t=normalizeCompletedTrade(tx,week,bundle.season,bundle.teamNames,combinedDraftResults);if(t)trades.push(t)}
-  trades.sort((a,b)=>String(b.created).localeCompare(String(a.created)));tradeAuditCache={t:now,value:trades};return trades;
+  const trades=[],seen=new Set();
+  for(const bundle of seasonBundles)for(const [week,rows] of Object.entries(bundle.transactions||{}))
+    for(const tx of Array.isArray(rows)?rows:[]){
+      const t=normalizeCompletedTrade(tx,week,bundle.season,tx.__live_trade?
+        {...bundle.teamNames,...liveTeamNames}:bundle.teamNames,combinedDraftResults);
+      if(!t)continue;
+      const id=Number(bundle.season)+'|'+String(t.id||t.created+'|'+t.roster_ids.join(','));
+      if(seen.has(id))continue;
+      seen.add(id);trades.push(t);
+    }
+  trades.sort((a,b)=>String(b.created).localeCompare(String(a.created)));
+  const value={trades,live_trade_feed:liveStatus};
+  tradeAuditCache={t:now,value};return value;
 }
 function closestSnapshotItem(items,targetMs,maxGapMs=36*3600000){
   let best=null,bestGap=Infinity;
@@ -909,8 +1097,26 @@ function pickValuesFromSide(side,map){
   }
   return{values,missing,complete:missing.length===0,total:values.reduce((n,x)=>n+x.value,0)};
 }
-async function completedTradeHistory(s){
-  const trades=await importedCompletedTrades();
+async function completedTradeHistory(s,{forceLive=false}={}){
+  const {trades,live_trade_feed}=await importedCompletedTrades({forceLive});
+  // The dated trade snapshot's VALUE remains immutable. The displayed
+  // projected pick order only changes for trades completed after Sep 24, 2026.
+  // A transaction in week N uses the preceding fully completed week (N-1);
+  // never use later results to fabricate its original trade-time draft rank.
+  const afterCutover=trades.filter(t=>postCutoverTrade(t)&&(t.sides||[]).some(side=>(side.picks||[]).length));
+  const weeks=[...new Set(afterCutover.map(t=>Math.max(1,Math.min(14,Number(t.week)-1))).filter(Number.isFinite))];
+  const rankByWeek=new Map();
+  await Promise.all(weeks.map(async week=>{
+    try{
+      const rows=await getPickOrder5050(LEAGUE,week);
+      if(rows.length===32)rankByWeek.set(week,Object.fromEntries(rows.map(row=>[String(row.id),row.projectedSlot])));
+    }catch(e){console.warn('trade-time-pick-order-unavailable',week,String(e?.message||e))}
+  }));
+  for(const trade of afterCutover){
+    const completedWeek=Math.max(1,Math.min(14,Number(trade.week)-1)),slots=rankByWeek.get(completedWeek);
+    trade.ranking_at_trade=slots?{method:'50% record rank + 50% points-for rank',
+      standings_week:completedWeek,season:trade.season,slots}:null;
+  }
   const archiveSnaps=await archiveAllSnapshots();
   let localSnaps=[],localState=s?'empty':'unavailable';
   if(s){
@@ -921,7 +1127,7 @@ async function completedTradeHistory(s){
   }
   const snaps=mergeSnapshots(archiveSnaps,localSnaps);
   const emptyTrade=t=>({...t,trade_snapshot_t:null,current_snapshot_t:null,sides:t.sides.map(side=>({...side,then_players:[],then_players_complete:false,then_picks:[],then_picks_complete:false,current_players:[],current_players_complete:false}))});
-  if(!snaps.length)return{source:'Sleeper imported transaction audits (2024–2026) + exact Sleeper draft results',history_source:localState,tracking_since:null,latest:null,trades:trades.map(emptyTrade)};
+  if(!snaps.length)return{source:'Sleeper audited transactions (2024–2026) + live current-season Sleeper trades + exact Sleeper draft results',live_trade_feed,history_source:localState,tracking_since:null,latest:null,trades:trades.map(emptyTrade)};
   const latestSnap=snaps[snaps.length-1],latestMap=rowMap(latestSnap||{rows:[]});
   const closestSnap=ms=>{let best=null;for(const snap of snaps){const sm=new Date(snap?.t||'').getTime();if(!Number.isFinite(sm))continue;if(sm<=ms)best=snap;else break}return best};
   const requestedTradeReference=snaps.find(snap=>String(snap?.t||'').slice(0,16)===V494_TRADE_REFERENCE_MINUTE)||null;
@@ -934,7 +1140,7 @@ async function completedTradeHistory(s){
     return{...trade,trade_snapshot_t:histSnap?.t||null,trade_snapshot_reference:inRequestedWindow?'requested-2026-09-19-1801-et':null,current_snapshot_t:latestSnap?.t||null,sides};
   });
   const historySource=archiveSnaps.length?(localSnaps.length?'github-archive+netlify-live':'github-archive'):'netlify-live';
-  return{source:'Sleeper imported transaction audits (2024–2026) + exact Sleeper draft results',history_source:historySource,tracking_since:snaps[0]?.t||null,latest:latestSnap?.t||null,trades:out};
+  return{source:'Sleeper audited transactions (2024–2026) + live current-season Sleeper trades + exact Sleeper draft results',live_trade_feed,history_source:historySource,tracking_since:snaps[0]?.t||null,latest:latestSnap?.t||null,trades:out};
 }
 async function health(s){
   const arch=await archiveIndex();
@@ -953,7 +1159,7 @@ async function health(s){
   };
 }
 
-export { monthKey, marketFromSnapshots, baselineFor };
+export { monthKey, marketFromSnapshots, baselineFor, marketInsightsFromSnapshots, marketInsightRange };
 
 export default async (req)=>{
   try{
@@ -996,12 +1202,16 @@ export default async (req)=>{
         for(const snap of snaps)for(const row of snap?.teams||[]){const id=String(row?.id||''),value=Number(row?.value);if(!id||!Number.isFinite(value))continue;if(!highs[id]||value>highs[id].value)highs[id]={team_id:id,value:Math.round(value),t:snap.t}}
         return json({team_highs:true,highs:Object.values(highs),snapshot_count:snaps.length,history_state:snaps.length?'ok':'empty'});
       }
+      if(url.searchParams.get('market_insights')==='1'){
+        const insights=await retry(()=>getMarketInsights(s),180);
+        return json({market_insights:true,...insights,history_state:insights.available?'ok':'empty'});
+      }
       if(url.searchParams.get('market')==='1'){
         const market=await retry(()=>getMarketSummary(s),180);
         return json({market,history_state:'ok'});
       }
       if(url.searchParams.get('trades')==='1'){
-        const result=await retry(()=>completedTradeHistory(s),180);
+        const result=await retry(()=>completedTradeHistory(s,{forceLive:url.searchParams.get('trades_fresh')==='1'}),180);
         return json(result);
       }
       if(url.searchParams.get('player_scoring')==='1'){

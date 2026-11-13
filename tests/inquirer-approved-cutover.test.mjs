@@ -16,13 +16,16 @@ test('production cutover requires exact owner-approved site, context and queue s
  assert.match(worker,/publisher_enabled:enabled==='true'/);
  assert.match(worker,/inquirerQueueKeyMatches/);
  assert.match(worker,/req\.method!=='POST'/);
- assert.match(worker,/FORWARD_EDITORIAL_REVISION!==107/);
+ assert.match(worker,/FORWARD_EDITORIAL_REVISION<107/);
+ assert.match(worker,/auditIndependentInquirerCopy\(\[draft7,draft8\],\{revision:107\}\)/);
  assert.match(worker,/privatePreviewStoreName/);
  assert.match(scheduler,/isCurrentSite/);
  assert.match(scheduler,/verifiedNewSiteCutoverHistory/);
  assert.match(scheduler,/inquirer-cutover-background/);
  assert.match(scheduler,/publishingEnabled!=='true'/);
- assert.match(config,/CONTEXT==='production'/);
+ assert.match(config,/e\.CONTEXT==='deploy-preview'/);
+ assert.match(config,/\['448','450'\]/);
+ assert.doesNotMatch(config,/e\.CONTEXT==='production'/);
 });
 test('background cutover accepts authenticated internal production origins, but never preview or foreign sites',()=>{
  const base={context:'production',siteId:CUTOVER_SITE_ID,enabled:'true'};

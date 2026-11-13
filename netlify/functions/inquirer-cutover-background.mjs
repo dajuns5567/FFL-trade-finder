@@ -91,7 +91,7 @@ export default async function cutoverApprovedInquirerWeeks(req,netlifyContext){
   const [draft7,draft8]=await Promise.all([7,8].map(w=>
    privateStore.get(privateKey(w),{type:'json'})));
   if(!draft7||!draft8)throw Error('Missing completed private Week 7–8 approved manuscripts');
-  if(FORWARD_EDITORIAL_REVISION!==107)throw Error('Exact owner-accepted revision 107 required');
+  if(FORWARD_EDITORIAL_REVISION<107)throw Error('Forward newsroom must not predate owner-accepted historical revision 107');
   const independent=auditIndependentInquirerCopy([draft7,draft8],{revision:107});
   if(!independent.ok)throw Error('Independent private audit rejected '+independent.issue_count+' defects');
   const locked=[draft7,draft8].map(draft=>{

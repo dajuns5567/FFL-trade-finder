@@ -50,7 +50,7 @@ button{border:0;border-radius:9px;padding:10px 13px;font:inherit;font-weight:700
 <section id="home" class="tab">
 <div class="card fleeced-home-shell">
   <div class="fleeced-home-head">
-    <div><h2>Home</h2><p class="muted">League data, market-source status, and direct navigation across Fleeced.</p></div>
+    <div><h2>Home</h2></div>
   </div>
   <div id="homeDataStatus" class="fleeced-home-status">
     <div class="notice" id="updateStatus">Loading Sleeper league data…</div>
@@ -94,6 +94,8 @@ button{border:0;border-radius:9px;padding:10px 13px;font:inherit;font-weight:700
   <div id="consensusDiagnostics" class="card fleeced-home-consensus" style="margin-top:18px;display:none">
     <h3 style="margin:0 0 8px">Consensus refresh diagnostics</h3>
     <div id="consensusSummary" class="muted" style="margin-bottom:8px"></div>
+    <button type="button" id="offenseSourceAuditDownload" class="secondary small" style="margin:0 0 12px">Download all-player source ranking audit (JSON)</button>
+    <div class="tiny muted" id="offenseSourceAuditStatus" style="margin-bottom:8px">Read-only comparison of five offensive dynasty sources. No valuation changes.</div>
     <div id="consensusSources"></div>
   </div>
 </div>
@@ -102,7 +104,7 @@ button{border:0;border-radius:9px;padding:10px 13px;font:inherit;font-weight:700
 <section id="finder" class="tab" hidden>
 <div class="card">
   <h2>Trade Finder</h2>
-  <p class="muted">Team fit affects only partner selection. It does not change player value. The Finder and Evaluator use the same master ranking.</p>
+  
   <div class="grid3">
     <div>
       <label>Your team</label>
@@ -470,20 +472,37 @@ function renderConsensusDiagnostics(summary){
   const sm=document.getElementById("consensusSummary");
   if(!box||!list||!sm)return;
   const total=Number(summary?.total||7), ok=Number(summary?.successful||0);
-  sm.textContent=`${ok}/${total} consensus sources refreshed`;
+  sm.textContent=`${ok}/${total} sources fetched successfully; publisher freshness is separate`;
   const rows=Array.isArray(summary?.results)?summary.results:[];
+  const date=x=>x?String(x).slice(0,10):"unknown";
   list.innerHTML=rows.map(x=>{
-    const fresh=Boolean(x.ok)||String(x.status||"").toLowerCase()==="refreshed";
-    const retained=String(x.status||"").toLowerCase()==="retained";
-    const icon=fresh?"✓":retained?"↻":"✗";
-    const label=fresh?"Freshly refreshed":retained?"Validated snapshot retained":"Failed";
+    const status=String(x.status||"").toLowerCase();
+    const fetched=status==="refreshed"&&Boolean(x.ok);
+    const retained=status==="last-known-good"||status==="retained";
+    const unpromoted=status==="fresh-not-promoted";
+    const icon=fetched?"✓":retained?"↻":unpromoted?"!":"✗";
+    const label=fetched?"Fetched and validated":retained?"Last validated snapshot retained":unpromoted?"Fetched, but not promoted":"Unavailable / failed";
+    const f=x.source_freshness||{};
+    const obs=x.market_observation||f.observation||null;
+    const provenance=x.source_provenance||null;
+    const freshness=[
+      "Last successful fetch: "+date(f.fetchedAt||x.snapshot_timestamp||x.timestamp),
+      "Publisher update: "+date(f.publisherUpdatedAt||x.publisher_updated_at),
+      "Observed ranking change: "+date(f.contentLastChangedAt),
+      f.contentChangeStatus?"Content comparison: "+f.contentChangeStatus:"",
+      Number.isFinite(Number(f.unchangedFetchCount))?"Consecutive identical fetches: "+Math.max(0,Number(f.unchangedFetchCount)):"",
+      f.unchangedSinceAt?"Unchanged since observation: "+date(f.unchangedSinceAt):"",
+      obs?"Market observations older than 30 days: "+Number(obs.rowsOlderThan30Days||0)+"/"+Number(obs.sampleSize||0):"",
+      obs?"Dated / undated market observations: "+Number(obs.datedRows||0)+" / "+Number(obs.undatedRows||0):"",
+      obs?"Oldest / newest market observation: "+date(obs.oldestObservationAt)+" / "+date(obs.newestObservationAt):"",
+      provenance?.kind==="datawrapper-chart"?(provenance.publisherArticleRevisionMatched?"Source version: publisher article linked revision ":"Source version: pinned fallback revision ")+String(provenance.chartRevision||"unknown")+"; latest publisher update date unverified":provenance?.kind==="unversioned-ranking-query"?"Source version: unversioned ranking endpoint; publisher revision not verified":""
+    ].filter(Boolean).join(" • ");
     const detail=[
       label,
       Number.isFinite(Number(x.players_extracted))?`${x.players_extracted} players extracted`:"",
-      x.stage?`stage: ${x.stage}`:"",
       x.error?String(x.error):""
     ].filter(Boolean).join(" • ");
-    return `<div class="asset"><div><b>${icon} ${esc(x.source||"Unknown")}</b><br><small class="muted">${esc(detail)}</small></div><small class="muted">${esc(x.url||"")}</small></div>`;
+    return `<div class="asset"><div><b>${icon} ${esc(x.source||"Unknown")}</b><br><small class="muted">${esc(detail)}</small><br><small class="muted">${esc(freshness)}</small></div><small class="muted">${esc(x.url||"")}</small></div>`;
   }).join("");
   box.style.display="block";
 }
@@ -580,6 +599,24 @@ async function boot(){
   }else await updateData();
 }
 
+document.getElementById("offenseSourceAuditDownload").onclick=()=>{
+  const statusBox=document.getElementById("offenseSourceAuditStatus");
+  try{
+    const reporter=window.fflOffenseSourceAuditV51;
+    if(!reporter?.build||!reporter?.download)throw new Error("Source audit module is not loaded");
+    if(!state?.consensusComposite?.detailsById||!Object.keys(state.consensusComposite.detailsById).length)
+      throw new Error("No validated consensus snapshot. Click UPDATE and let its refresh complete.");
+    const audit=reporter.build({
+      players:state.players,consensusComposite:state.consensusComposite,
+      rankings:state.rankings,masterRows:ensureMaster()
+    });
+    if(!audit.summary.totalOffense)throw new Error("No offensive rankings available yet");
+    reporter.download(audit);
+    if(statusBox)statusBox.textContent="Exported "+audit.summary.totalOffense+" offensive players; "+audit.summary.flagged+" flagged for review. Upload the JSON for a complete source disagreement audit.";
+  }catch(error){
+    if(statusBox)statusBox.textContent="Source audit unavailable: "+String(error?.message||error);
+  }
+};
 document.getElementById("updateBtn").onclick=updateData;
 document.getElementById("runFinder").onclick=runFinder;
 document.getElementById("addA").onclick=()=>addAssetPrompt("A");
@@ -614,29 +651,9 @@ window.fllConsensusStatus = function(summary) {
 </script>
 
 
-<script>
-window.renderConsensusDiagnostics=function(summary){
-  const box=document.getElementById("consensusDiagnostics"),list=document.getElementById("consensusSources"),sm=document.getElementById("consensusSummary");
-  if(!box||!list||!sm)return;
-  const rows=Array.isArray(summary?.results)?summary.results:[],total=Number(summary?.total??7);
-  const fresh=rows.filter(x=>["refreshed","fresh"].includes(String(x.status||"").toLowerCase())||x.ok).length;
-  const lkg=rows.filter(x=>String(x.status||"").toLowerCase()==="last-known-good").length;
-  const unavailable=rows.filter(x=>String(x.status||"").toLowerCase()==="unavailable").length;
-  sm.textContent=`${fresh}/${total} freshly refreshed${lkg?` • ${lkg}/${total} using last-known-good`:""}${unavailable?` • ${unavailable} unavailable`:""}`;
-  list.innerHTML=rows.map(x=>{
-    const st=String(x.status||"").toLowerCase(),isFresh=x.ok||st==="refreshed"||st==="fresh",isLkg=st==="last-known-good",pending=st==="fresh-not-promoted";
-    const icon=isFresh?"✓":isLkg?"⚠":pending?"•":"✗";
-    const label=isFresh?"Fresh":isLkg?"Using last-known-good":pending?"Fresh candidate — batch not promoted":"Unavailable";
-    const attempted=x.timestamp?new Date(x.timestamp).toLocaleString():"",snap=x.snapshot_timestamp?new Date(x.snapshot_timestamp).toLocaleString():"";
-    const detail=[label,isLkg&&snap?`snapshot ${snap}`:"",attempted?`attempt ${attempted}`:"",Number.isFinite(Number(x.players_extracted))?`${x.players_extracted} players`:"",x.error?String(x.error):""].filter(Boolean).join(" • ");
-    return `<div class="asset"><div><b>${icon} ${esc(x.source||"Unknown")}</b><br><small class="muted">${esc(detail)}</small></div></div>`;
-  }).join("");
-  box.style.display="block";
-};
-</script>
 
 
 
-<div id="v16ConsensusNote" class="tiny muted" style="margin-top:6px">V16 source-specific ingestion: pagination, extraction, and validation are handled per source. No valuation changes are applied in this step.</div>
+
 </body>
 </html>

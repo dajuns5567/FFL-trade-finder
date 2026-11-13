@@ -23,9 +23,24 @@ on:
       - 'trade-finder-candidate-guard-v223.js'
       - 'trade-te-scoring-adjustment-v259.js'
       - 'modeled-player-values-v319.js'
+      - 'valuation-offense-v40.js'
+      - 'combined-market-precision-v386.js'
+      - 'tests/offense-consensus-anchor-v50.test.mjs'
+      - 'netlify/functions/consensus-composite-v3.mjs'
+      - 'tests/consensus-composite-v3.test.mjs'
+      - 'tests/consensus-source-freshness.test.mjs'
+      - 'tests/offense-source-audit-v51.test.mjs'
+      - 'tests/idpshow-version-discovery.test.mjs'
+      - 'netlify/functions/idpshow-adapter.mjs'
+      - 'offense-source-audit-v51.js'
+      - 'netlify/functions/site-v17.mjs'
+      - 'netlify/functions/consensus-source-freshness.mjs'
+      - 'netlify/functions/update.mjs'
+      - 'netlify/functions/fanranked-adapter.mjs'
       - 'scripts/compile-v256-runtimes.cjs'
       - 'scripts/patch-regular-family-v328.cjs'
       - 'scripts/regular-finder-family-diversity-v328-smoke.cjs'
+      - 'scripts/incoming-partner-diversity-v330-smoke.cjs'
       - 'scripts/finder-runtime-smoke-v254.cjs'
       - 'scripts/finder-runtime-compiled-smoke-v257.cjs'
       - 'scripts/select-all-blank-equivalence-v258.cjs'
@@ -39,6 +54,16 @@ on:
       - 'scripts/v319-values-v311-integration-smoke.cjs'
       - 'netlify/functions/site-v17.mjs'
       - 'netlify/functions/site-v29.mjs'
+      - 'draft-pick-rankings-v527.js'
+      - 'netlify/functions/lib/pick-order-5050.mjs'
+      - 'netlify/functions/pick-order-v527.mjs'
+      - 'tests/draft-pick-order-5050.test.mjs'
+      - 'tests/trade-history-live-sleeper.test.mjs'
+      - 'tests/trade-history-hindsight-live-sync.test.mjs'
+      - 'nonblocking-consensus-v277.js'
+      - 'league-hub-v451.js'
+      - 'netlify/functions/lib/trade-history-live-source.mjs'
+      - 'scripts/trade-history-scheduled-check.mjs'
       - 'netlify/functions/value-history.mjs'
       - 'netlify/functions/value-history-observability.mjs'
       - 'netlify/functions/ppr-scoring.mjs'
@@ -52,6 +77,23 @@ on:
       - '.github/workflows/value-history-headless-refresh.yml'
       - 'netlify/functions/ktc-adapter.mjs'
       - 'value-history-v276.js'
+      - 'trade-asset-selection-v534.css'
+      - 'trade-selection-sync-v534.js'
+      - 'fleeced-header-v512.js'
+      - 'tests/header-click-menu-v536.test.mjs'
+      - 'header-scrollbar-v538.css'
+      - 'tests/header-scrollbar-v538.test.mjs'
+      - 'tests/presentation-copy-cleanup-v539.test.mjs'
+      - 'team-net-choice-v540.css'
+      - 'tests/team-net-choice-v540.test.mjs'
+      - 'ui-player-values-v139.js'
+      - 'scripts/selection-cards-v534-smoke.cjs'
+      - 'trade-select-all-v165.js'
+      - 'netlify/functions/site-v29.mjs'
+      - 'tests/value-history-all-time-milestones.test.mjs'
+      - 'netlify/functions/player-signals.mjs'
+      - 'netlify/functions/player-signal-engine.mjs'
+      - 'tests/market-intelligence-original-recovery.test.mjs'
       - 'value-history-ui-defaults-v386.js'
       - 'scripts/value-history-data-hub-v331-smoke.mjs'
       - 'league-hub-v451.js'
@@ -102,6 +144,16 @@ jobs:
         run: node scripts/finder-runtime-compiled-smoke-v257.cjs
       - name: Select All exact blank-search equivalence
         run: node scripts/select-all-blank-equivalence-v258.cjs
+      - name: V536 persistent click navigation and menu positioning
+        run: node --test tests/header-click-menu-v536.test.mjs
+      - name: V538 hidden header scrollbar without lost horizontal scrolling
+        run: node --test tests/header-scrollbar-v538.test.mjs
+      - name: V539 visual copy cleanup without removed controls
+        run: node --test tests/presentation-copy-cleanup-v539.test.mjs
+      - name: V540 team history action menu and Player Values copy cleanup
+        run: node --test tests/team-net-choice-v540.test.mjs
+      - name: V534 selection cards and Select All live-state guard
+        run: node scripts/selection-cards-v534-smoke.cjs
       - name: Select All survives roster rerender
         run: node scripts/select-all-persistence-v260.cjs
       - name: Selected positions only isolation and eligibility
@@ -132,6 +184,10 @@ jobs:
         run: node scripts/specific-player-family-diversity-v327-smoke.cjs
       - name: Regular Finder outgoing player-core family diversity
         run: node scripts/regular-finder-family-diversity-v328-smoke.cjs
+      - name: Incoming partner diversity and manual Finder isolation
+        run: node scripts/incoming-partner-diversity-v330-smoke.cjs
+      - name: Offensive consensus anchoring V50 full-cohort regression
+        run: node --test tests/offense-consensus-anchor-v50.test.mjs tests/consensus-composite-v3.test.mjs tests/consensus-source-freshness.test.mjs tests/offense-source-audit-v51.test.mjs tests/idpshow-version-discovery.test.mjs
       - name: Live KTC parser integrity
         run: |
           node --input-type=module <<'NODE'
@@ -148,6 +204,14 @@ jobs:
           console.log(JSON.stringify({valid:r.valid,players:r.players_extracted,rows:r.ranking_rows,first:r.rankings?.slice(0,10),diagnostics:r.diagnostics},null,2));
           if(!r.valid||Number(r.players_extracted)<200||Number(r.ranking_rows)!==300)process.exit(18);
           NODE
+      - name: Live completed Trade History and immutable historical audit regression
+        run: node --test tests/trade-history-live-sleeper.test.mjs tests/trade-history-hindsight-live-sync.test.mjs
+      - name: Historical draft pick 50/50 order with valuation isolation
+        run: |
+          node --check draft-pick-rankings-v527.js
+          node --check netlify/functions/lib/pick-order-5050.mjs
+          node --check netlify/functions/pick-order-v527.mjs
+          node --test tests/draft-pick-order-5050.test.mjs
       - name: Current-season scoring qualification
         run: node --test tests/ppr-history.test.mjs
       - name: Current-season scoring pipeline syntax
@@ -155,6 +219,8 @@ jobs:
           node --check scripts/import-sleeper-history.mjs
           node --check sleeper-history-client-v22.js
           node --check netlify/functions/ppr-scoring.mjs
+      - name: All-Time Milestones scoring render and failure regression
+        run: node --test tests/value-history-all-time-milestones.test.mjs
       - name: Value History data hub syntax
         run: |
           node --check value-history-v276.js
@@ -196,6 +262,13 @@ jobs:
         run: node --test tests/inquirer-live-archive-refresh.test.mjs
       - name: Full browser runtime syntax audit
         run: node scripts/site-runtime-syntax-audit.mjs
+      - name: Original Market Intelligence recovery and valuation isolation
+        run: |
+          node --check netlify/functions/player-signal-engine.mjs
+          node --check netlify/functions/player-signals.mjs
+          node --check netlify/functions/value-history.mjs
+          node --check value-history-v276.js
+          node --test tests/market-intelligence-original-recovery.test.mjs
       - name: Value History data hub behavior and isolation
         run: |
           node scripts/value-history-data-hub-v331-smoke.mjs

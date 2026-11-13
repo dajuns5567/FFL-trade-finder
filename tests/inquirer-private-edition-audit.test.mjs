@@ -55,3 +55,29 @@ test('rejects praise for zero-point roster production',()=>{
  assert.equal(audit.passed,false);
  assert.match(audit.issues.join(' '),/zero-point team falsely credited/);
 });
+
+test('a single short repeated line in four otherwise distinct columns is warning-only',()=>{
+ const e=makeDraft();
+ const common='An ordinary newsroom phrase appeared in four articles without changing their documented fantasy outcomes.';
+ for(const i of [0,1,2,3]){
+  const section=e.teams[i].inquirer_article.sections[0];
+  const unique=section.paragraphs[0].split(' ');
+  section.paragraphs=[unique.slice(0,20).join(' ')+'. '+common+' '+unique.slice(20).join(' ')+'.'];
+ }
+ const audit=auditPrivateEdition(e);
+ assert.equal(audit.passed,true,JSON.stringify(audit.issues));
+ assert.equal(audit.minor_repetition_warning?.team_count,4);
+ assert.ok(audit.recycled_nine_word_scaffolds>0);
+});
+test('five teams copying the same sentence never get a warning-only pass',()=>{
+ const e=makeDraft();
+ const common='An ordinary newsroom phrase appeared in five articles without changing their documented fantasy outcomes.';
+ for(const i of [0,1,2,3,4]){
+  const section=e.teams[i].inquirer_article.sections[0];
+  const unique=section.paragraphs[0].split(' ');
+  section.paragraphs=[unique.slice(0,20).join(' ')+'. '+common+' '+unique.slice(20).join(' ')+'.'];
+ }
+ const audit=auditPrivateEdition(e);
+ assert.equal(audit.passed,false);
+ assert.match(audit.issues.join(' '),/recurring nine-word story scaffolds/);
+});

@@ -110,7 +110,8 @@ test('publisher completion cannot be claimed without the matching locked newsroo
 test('private archive-to-preview link keeps an explicitly requested week instead of misleadingly opening another week',()=>{
  assert.match(ui,/const inquirerPreviewEntryUrl=/);
  assert.match(ui,/inquirerPreviewRequestedWeek\?'&preview_week='\+inquirerPreviewRequestedWeek/);
- assert.match(ui,/Open the private Inquirer manuscript preview/);
+ assert.match(ui,/const inquirerPreviewMode=/);
+ assert.doesNotMatch(ui,/Deploy Preview: published archive view/);
  assert.doesNotMatch(ui,/Open the private Week 5 manuscript preview/);
 });
 
@@ -222,8 +223,9 @@ test('player Jr suffix is not misread as sentence boundary before lowercase prob
 });
 
 
-test('standalone bench verdict and subject capitalization are regression protected',()=>{
- assert.match(source,/choice===11\?"The bench advantage deserves a Week 6 review\."/);
+test('bench verdict is player-specific and does not recycle stale Week 6 prose',()=>{
+ assert.match(source,/const verdict=choice===11/);
+ assert.doesNotMatch(source,/The bench advantage deserves a Week 6 review/);
  assert.match(source,/w2Sentence\(who\)\+" has averaged "/);
  assert.doesNotMatch(source,/^\s+who\+" has averaged "/m);
 });

@@ -93,3 +93,17 @@ test('scheduled publication is atomic: awards precede the public index and publi
  assert.ok(awards>0&&awards<checked&&checked<committed&&committed<readback&&readback<completed,
   'Reader-visible index must commit only after awards, then readback before completed');
 });
+
+test('every public reader surface hides prepared-but-unindexed forward editions',()=>{
+ const hub=fs.readFileSync('netlify/functions/league-hub.mjs','utf8');
+ assert.match(hub,/if\(!committed\)/);
+ assert.match(hub,/if\(enforceFeatureContinuity\)return stored/);
+ assert.match(hub,/return latestPublished\|\|\{available:false,season,week:w/);
+ assert.match(hub,/broadcast not yet published/);
+ assert.match(hub,/const committed=new Set/);
+ assert.match(hub,/\.filter\(article=>Number\(article\?\.season\)<2026/);
+ assert.match(hub,/const pending=records\.filter\(rec=>/);
+ assert.match(hub,/isTrustedWeeklyAwardCache\(rec,season,week\)/);
+ assert.match(hub,/records:onlyAdditional\?next:next\.filter\(rec=>/);
+ assert.match(hub,/if\(!\(deferPublicIndex&&\(season>2026\|\|season===2026&&week>=9\)\)\)/);
+});

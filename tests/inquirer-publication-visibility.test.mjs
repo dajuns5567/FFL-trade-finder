@@ -71,6 +71,8 @@ test('production scheduler repairs verified visibility before skipping an alread
  const source=readFileSync(new URL('../netlify/functions/inquirer-publish-scheduled.mjs',import.meta.url),'utf8');
  assert.match(source,/inspectInquirerPublicationVisibility/);
  assert.match(source,/ensureLockedEditionIndexed\(store,edition,key\)/);
+ assert.match(source,/if\(check\.visible\)await ensureLockedEditionIndexed\(store,edition,key\)/,
+  'an indexed week must also repair missing reporter and overview records');
  assert.match(source,/verifiedIndex=await store\.get\('broadcasts\/index\.json'/);
  assert.match(source,/if\(!check\.visible\)/);
  assert.match(source,/inquirer-publication-visibility-hold/);

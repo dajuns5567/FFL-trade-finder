@@ -61,11 +61,8 @@ test('a single short repeated line in four otherwise distinct columns is warning
  const common='An ordinary newsroom phrase appeared in four articles without changing their documented fantasy outcomes.';
  for(const i of [0,1,2,3]){
   const section=e.teams[i].inquirer_article.sections[0];
-  section.paragraphs=[
-   'Club'+(i+1)+' reviews its documented starting lineup decisions against a roster-specific opponent in this fantasy matchup. '+
-   common+' Club'+(i+1)+' records an individual conclusion about its measured starter returns and opponent-specific football context.',
-   section.paragraphs[0]
-  ];
+  const unique=section.paragraphs[0].split(' ');
+  section.paragraphs=[unique.slice(0,20).join(' ')+'. '+common+' '+unique.slice(20).join(' ')+'.'];
  }
  const audit=auditPrivateEdition(e);
  assert.equal(audit.passed,true,JSON.stringify(audit.issues));
@@ -77,11 +74,8 @@ test('five teams copying the same sentence never get a warning-only pass',()=>{
  const common='An ordinary newsroom phrase appeared in five articles without changing their documented fantasy outcomes.';
  for(const i of [0,1,2,3,4]){
   const section=e.teams[i].inquirer_article.sections[0];
-  section.paragraphs=[
-   'Club'+(i+1)+' reviews its documented starting lineup decisions against a roster-specific opponent in this fantasy matchup. '+
-   common+' Club'+(i+1)+' records an individual conclusion about its measured starter returns and opponent-specific football context.',
-   section.paragraphs[0]
-  ];
+  const unique=section.paragraphs[0].split(' ');
+  section.paragraphs=[unique.slice(0,20).join(' ')+'. '+common+' '+unique.slice(20).join(' ')+'.'];
  }
  const audit=auditPrivateEdition(e);
  assert.equal(audit.passed,false);

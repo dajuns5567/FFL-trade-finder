@@ -17,10 +17,12 @@ export function classifyInquirerPublicationHealth(h,{now=new Date()}={}){
  if(status.state==='editorial-hold'||status.state==='error')
   return{state:'alert',reason:'Automated publisher is in '+status.state+': '+(status.reason||'details unavailable'),target:key};
  if(status.state==='running'){
-  const age=now.getTime()-Date.parse(status.finished_at||'');
-  // A running job has a 15-minute Netlify limit. A prior finished_at is
-  // not a reliable start timestamp; do not infer a stuck job from it.
-  if(!Number.isFinite(age))return{state:'pending',reason:'Background publisher is running',target:key};
+  const started=Date.parse(status.started_at||'');
+  // Netlify background functions have a hard 15-minute budget. After a
+  // larger grace period, a stuck or terminated worker is actionable.
+  if(Number.isFinite(started)&&now.getTime()-started>25*60*1000)
+   return{state:'alert',reason:'Background publishing has exceeded its expected completion window',target:key};
+  return{state:'pending',reason:'Background publisher is running',target:key};
  }
  if(status.state==='completed'&&status.available===true&&latest&&
     Number(status.season)===Number(latest.season)&&Number(status.week)>Number(latest.week))
@@ -49,7 +51,8 @@ async function github(path,method='GET',body){
 }
 async function existingIncident(){
  const rows=await github('/issues?state=all&per_page=100');
- return rows.find(x=>!x.pull_request&&x.title===ISSUE_TITLE)||null;
+ return rows.find(x=>!x.pull_request&&x.title===ISSUE_TITLE&&x.state==='open')||
+  rows.find(x=>!x.pull_request&&x.title===ISSUE_TITLE)||null;
 }
 async function monitor(){
  let health;

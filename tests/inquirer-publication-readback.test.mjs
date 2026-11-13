@@ -81,7 +81,9 @@ test('scheduled publication is atomic: awards precede the public index and publi
  assert.match(hub,/if\(!previewReadOnly&&!enforceFeatureContinuity\)/);
  assert.match(hub,/Awaiting unattended authenticated weekly publication/);
  assert.match(hub,/deferPublicIndex&&\(season>2026\|\|season===2026&&week>=9\)/);
- assert.match(hub,/commitIndex:!\(deferPublicIndex/);
+ assert.match(hub,/if\(!\(deferPublicIndex/);
+ assert.match(hub,/if\(!committed\)/);
+ assert.match(hub,/if\(enforceFeatureContinuity\)return stored/);
  assert.match(worker,/weeklyAwards\(\{additionalLockedEditions:isForward\?\[report\]:\[\]\}\)/);
  const awards=worker.indexOf('awards=await weeklyAwards(');
  const checked=worker.indexOf('if(!hasCompleteWeekFeaturePackage(report,awards))');

@@ -1,0 +1,27 @@
+name: Inquirer live publication watchdog
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: inquirer-publication-watchdog
+  cancel-in-progress: false
+
+jobs:
+  verify-reader-visible-week:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify the published archive, recap, reporter columns, and awards
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/inquirer-publication-watchdog.mjs

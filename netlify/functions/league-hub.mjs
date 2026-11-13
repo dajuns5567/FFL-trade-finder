@@ -12,6 +12,7 @@ import {fetchBestSeason} from './history-fetch.mjs';
 import {applyInquirerEditorialV31,evaluateInquirerEditionQuality,FORWARD_INQUIRER_VERSION,FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
 import {inspectCanonicalArchive} from './lib/inquirer-legacy-history.mjs';
 import {privatePreviewStoreName,isVerifiedPrivatePreviewPredecessor} from './lib/inquirer-preview-diagnostics.mjs';
+import {verifyPublishedInquirerReadback} from './lib/inquirer-publication-readback.mjs';
 
 const LEAGUE='1316867686394769408';
 const API='https://api.sleeper.app/v1';
@@ -345,7 +346,15 @@ export async function ensureLockedEditionIndexed(s,edition,key,{commitIndex=true
 }
 async function reporterArchive(id){
  const reporter=publicReporters().find(x=>x.id===String(id||''));if(!reporter)return{error:'reporter not found'};
- const s=store(),j=await s.get('inquirer/reporters/'+reporter.id+'/index.json',{type:'json'}).catch(()=>null),articles=mergeArchiveEntries(Array.isArray(j?.articles)?j.articles:[],preloadedReporterEntries(reporter.id));
+ const s=store(),[j,index]=await Promise.all([
+  s.get('inquirer/reporters/'+reporter.id+'/index.json',{type:'json'}).catch(()=>null),
+  s.get('broadcasts/index.json',{type:'json'}).catch(()=>null)
+ ]);
+ const committed=new Set((Array.isArray(index)?index:[]).map(row=>Number(row.season)+'|'+Number(row.week)));
+ const articles=mergeArchiveEntries(Array.isArray(j?.articles)?j.articles:[],preloadedReporterEntries(reporter.id))
+  .filter(article=>Number(article?.season)<2026||
+   Number(article?.season)===2026&&Number(article?.week)<9||
+   committed.has(Number(article?.season)+'|'+Number(article?.week)));
  return{schema_version:1,reporter,articles};
 }
 async function reporterDirectory(){return{schema_version:1,inquirer_version:INQUIRER_VERSION,reporters:publicReporters()}}
@@ -373,6 +382,9 @@ export async function weeklyReport(req){
  // the next week. Read-only reader/previews never acquire this extra gate.
  const enforceFeatureContinuity=req.method==='POST'&&
   !!req.headers?.get?.('x-fleeced-queue-key');
+ // New scheduled editions remain invisible until their awards are persisted.
+ // The background worker performs the public archive-index commit afterward.
+ const deferPublicIndex=enforceFeatureContinuity;
  const [league,nfl]=await Promise.all([fetchJson(`${API}/league/${LEAGUE}`),fetchJson(`${API}/state/nfl`)]);
  const season=Number(league?.season||nfl?.season),currentWeek=Number(nfl?.week)||1,origin=new URL(req.url).origin,s=store(),
   cappedWeek=Math.min(INQUIRER_FINAL_WEEK,Math.max(1,currentWeek));
@@ -420,6 +432,18 @@ export async function weeklyReport(req){
    if(!isLockedInquirerEdition(stored,season,w))
     return{available:false,published_locked:false,season,week:w,
      reason:'Stored Week '+w+' is incomplete or not explicitly locked. Refusing to overwrite historical content.'};
+   if(season>2026||season===2026&&w>=9){
+    // A locked broadcast without an archive index is prepared, NOT public.
+    // Only the authenticated worker may finish awards and commit its index.
+    const index=await s.get('broadcasts/index.json',{type:'json'}).catch(()=>null);
+    const committed=Array.isArray(index)&&index.some(x=>
+     Number(x?.season)===season&&Number(x?.week)===w&&String(x?.key)===key);
+    if(!committed){
+     if(enforceFeatureContinuity)return stored;
+     return latestPublished||{available:false,season,week:w,
+      reason:'Newspaper is prepared but its public archive and awards are not committed.'};
+    }
+   }
    if(!previewReadOnly)await ensureLockedEditionIndexed(s,stored,key);
    if(enforceFeatureContinuity&&(season>2026||(season===2026&&w>=5))){
     const award=awardedWeeks.get(season+'|'+w);
@@ -440,6 +464,13 @@ export async function weeklyReport(req){
   week=w;break;
  }
  if(!week)return latestPublished||{available:false,season,week:null,reason:'No completed Fleeced! Inquirer edition is available yet.'};
+ // Public GET requests must NEVER generate or index a new paper mid-release.
+ // Only the authenticated scheduled worker can commit a new weekly edition.
+ // Readers always receive the latest already-locked edition until the full
+ // newspaper/awards/index transaction is complete.
+ if(!previewReadOnly&&!enforceFeatureContinuity)
+  return latestPublished||{available:false,season,week,
+   published_locked:false,reason:'Awaiting unattended authenticated weekly publication.'};
  // A private editorial draft must be the requested or current completed week.
  // A newly provisioned Netlify site with only Week 1/2 preloads must never
  // silently label a Week 3 backfill as the Week 5 (or later) manuscript.
@@ -670,8 +701,49 @@ export async function weeklyReport(req){
  if(automatedAdmission.approved&&!manualAdmission.approved)
   result.editorial_generation.publication_mode='audited-deterministic-v31';
  await s.setJSON(key,result);
- await ensureLockedEditionIndexed(s,result,key);
+ // Do not expose reporter articles, recap or index before weekly awards are
+ // persisted. The scheduled worker completes this commit in one verified step.
+ if(!(deferPublicIndex&&(season>2026||season===2026&&week>=9)))
+  await ensureLockedEditionIndexed(s,result,key);
  return result;
+}
+// Read-only end-to-end publication health. Do not derive success from a
+// scheduled HTTP 200, a queued background 202, or generation alone.
+async function inquirerPublicationHealth(){
+ const s=store();
+ const [index,status,nfl]=await Promise.all([
+  s.get('broadcasts/index.json',{type:'json'}).catch(()=>null),
+  s.get('inquirer/publication-status.json',{type:'json'}).catch(()=>null),
+  fetchJson(API+'/state/nfl').catch(()=>null)
+ ]);
+ const rows=(Array.isArray(index)?index:[]).filter(x=>
+  Number.isInteger(Number(x?.season))&&Number.isInteger(Number(x?.week)))
+  .slice().sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week));
+ const latest=rows[0]||null;
+ const season=latest?Number(latest.season):null,week=latest?Number(latest.week):null;
+ const edition=latest?await s.get('broadcasts/'+season+'/week-'+String(week).padStart(2,'0')+'.json',{type:'json'}).catch(()=>null):null;
+ const checked=latest?await verifyPublishedInquirerReadback(s,edition||{season,week},{
+  isLockedEdition:isLockedInquirerEdition
+ }):{ok:false,reason:'No indexed public newspaper'};
+ const nflSeason=Number(nfl?.season),nflWeek=Number(nfl?.week);
+ const candidate=Number.isInteger(nflSeason)&&Number.isInteger(nflWeek)&&nflWeek>=2?
+  {season:nflSeason,week:Math.min(INQUIRER_FINAL_WEEK,nflWeek-1)}:null;
+ const current=candidate&&checked.ok&&
+  (season>candidate.season||season===candidate.season&&week>=candidate.week);
+ return{
+  schema_version:1,checked_at:new Date().toISOString(),
+  latest_public:latest?{season,week,archive_indexed:checked.ok,recap_visible:!!checked.recap_visible,
+   reporter_count:checked.reporter_count||0,article_count:checked.article_count||0,
+   awards_visible:!!checked.awards_visible}:null,
+  reader_verified:checked.ok===true,readback_failure:checked.ok?null:checked.reason,
+  newest_nfl_completed_week_candidate:candidate,
+  caught_up_to_nfl_clock:current===true,
+  publisher:{state:String(status?.state||'unknown'),season:status?.season??null,
+   week:status?.week??null,available:status?.available===true,
+   editorial_revision:status?.editorial_revision??null,
+   started_at:status?.started_at||null,finished_at:status?.finished_at||null,
+   reason:String(status?.reason||status?.error||'').slice(0,180)||null}
+ };
 }
 async function broadcastArchive(){
  const s=store(),idx=await s.get('broadcasts/index.json',{type:'json'}),rows=Array.isArray(idx)?idx.slice():[];
@@ -700,6 +772,13 @@ async function broadcastStored(season,week){
   if(!isLockedInquirerEdition(v,season,week))
    return{available:false,season:Number(season),week:Number(week),
     reason:'Archived Inquirer edition fails the Week 4 newsroom continuity/quality contract. Publication held; original bytes were not altered.'};
+  if(Number(season)>2026||Number(season)===2026&&Number(week)>=9){
+   const idx=await s.get('broadcasts/index.json',{type:'json'}).catch(()=>null);
+   if(!Array.isArray(idx)||!idx.some(row=>
+      Number(row?.season)===Number(season)&&Number(row?.week)===Number(week)&&
+      String(row?.key)==='broadcasts/'+Number(season)+'/week-'+String(Number(week)).padStart(2,'0')+'.json'))
+    return{error:'broadcast not yet published'};
+  }
   return v;
  }
  return preloadedBroadcast(season,week)||{error:'broadcast not found'};
@@ -810,12 +889,21 @@ export async function weeklyAwards({additionalLockedEditions=[],persist=true,onl
     byKey.set(rec.season+'|'+rec.week,rec);
   }
  }
+ // Awards for a prepared, not-yet-indexed Week 9+ paper may already be
+ // persisted by the scheduled worker. Public GETs must not delete that
+ // prepared award, or expose it until the broadcast index is committed.
+ const pending=records.filter(rec=>{
+  const season=Number(rec?.season),week=Number(rec?.week);
+  return !eligible.has(season+'|'+week)&&(season>2026||season===2026&&week>=9)&&
+   isTrustedWeeklyAwardCache(rec,season,week);
+ });
  const next=(onlyAdditional?[...records,...[...byKey.values()].filter(rec=>
   !records.some(old=>Number(old.season)===Number(rec.season)&&Number(old.week)===Number(rec.week)))]:
-  [...byKey.values()]).sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));
+  [...byKey.values(),...pending]).sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));
  if(persist&&(missing.length||records.length!==next.length))
   await s.setJSON('awards/weekly.json',{schema_version:1,records:next});
- return{schema_version:1,records:next};
+ return{schema_version:1,records:onlyAdditional?next:next.filter(rec=>
+  eligible.has(Number(rec.season)+'|'+Number(rec.week)))};
 }
 
 async function draftAwards(){
@@ -936,5 +1024,5 @@ export default async req=>{try{const u=new URL(req.url);
    return cached?json({...cached,cache_hit:true,preview_read_only:true}):json({error:'No manager history cache in preview; production backfill disabled.',preview_read_only:true},503);
   }
  }
-if(u.searchParams.get('weekly')==='1')return json(await weeklyReport(req));if(u.searchParams.get('reporters')==='1')return json(await reporterDirectory());if(u.searchParams.get('reporter_archive'))return json(await reporterArchive(u.searchParams.get('reporter_archive')));if(u.searchParams.get('broadcast_archive')==='1')return json(await broadcastArchive());if(u.searchParams.get('broadcast_season')&&u.searchParams.get('broadcast_week'))return json(await broadcastStored(u.searchParams.get('broadcast_season'),u.searchParams.get('broadcast_week')));if(u.searchParams.get('weekly_awards')==='1')return json(await weeklyAwards());if(u.searchParams.get('managers')==='1'){const s=store(),cached=await s.get('managers/history-cache.json',{type:'json'}).catch(()=>null),valid=cached?.cache_version===MANAGER_CACHE_VERSION&&cached?.career?.length&&cached.career.some(x=>(Number(x.wins)||0)+(Number(x.losses)||0)>0);if(valid){const nfl=await fetchJson(`${API}/state/nfl`).catch(()=>({})),season=Number(nfl?.season)||0,through=Math.max(0,Math.min(17,(Number(nfl?.week)||1)-1)),fresh=Number(cached?.scoring_history?.through_season)===season&&Number(cached?.scoring_history?.through_week)>=through;if(fresh)return json({...cached,cache_hit:true,stale:false})}return json(await managerHistory())}if(u.searchParams.get('drafts')==='1')return json(await draftAwards());if(u.searchParams.get('draft_records')==='1')return draftRecords(req);if(u.searchParams.get('award_highs')==='1')return awardHighs(req);if(u.searchParams.get('awards')==='1')return awards(req);return json({error:'query required'},400)}catch(e){console.error('league-hub',e);return json({error:'league hub unavailable'},503)}};
+if(u.searchParams.get('publication_health')==='1')return json(await inquirerPublicationHealth());if(u.searchParams.get('weekly')==='1')return json(await weeklyReport(req));if(u.searchParams.get('reporters')==='1')return json(await reporterDirectory());if(u.searchParams.get('reporter_archive'))return json(await reporterArchive(u.searchParams.get('reporter_archive')));if(u.searchParams.get('broadcast_archive')==='1')return json(await broadcastArchive());if(u.searchParams.get('broadcast_season')&&u.searchParams.get('broadcast_week'))return json(await broadcastStored(u.searchParams.get('broadcast_season'),u.searchParams.get('broadcast_week')));if(u.searchParams.get('weekly_awards')==='1')return json(await weeklyAwards());if(u.searchParams.get('managers')==='1'){const s=store(),cached=await s.get('managers/history-cache.json',{type:'json'}).catch(()=>null),valid=cached?.cache_version===MANAGER_CACHE_VERSION&&cached?.career?.length&&cached.career.some(x=>(Number(x.wins)||0)+(Number(x.losses)||0)>0);if(valid){const nfl=await fetchJson(`${API}/state/nfl`).catch(()=>({})),season=Number(nfl?.season)||0,through=Math.max(0,Math.min(17,(Number(nfl?.week)||1)-1)),fresh=Number(cached?.scoring_history?.through_season)===season&&Number(cached?.scoring_history?.through_week)>=through;if(fresh)return json({...cached,cache_hit:true,stale:false})}return json(await managerHistory())}if(u.searchParams.get('drafts')==='1')return json(await draftAwards());if(u.searchParams.get('draft_records')==='1')return draftRecords(req);if(u.searchParams.get('award_highs')==='1')return awardHighs(req);if(u.searchParams.get('awards')==='1')return awards(req);return json({error:'query required'},400)}catch(e){console.error('league-hub',e);return json({error:'league hub unavailable'},503)}};
 

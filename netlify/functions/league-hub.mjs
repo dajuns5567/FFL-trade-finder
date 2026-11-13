@@ -727,7 +727,7 @@ async function inquirerPublicationHealth(){
  }):{ok:false,reason:'No indexed public newspaper'};
  const nflSeason=Number(nfl?.season),nflWeek=Number(nfl?.week);
  const candidate=Number.isInteger(nflSeason)&&Number.isInteger(nflWeek)&&nflWeek>=2?
-  {season:nflSeason,week:nflWeek-1}:null;
+  {season:nflSeason,week:Math.min(INQUIRER_FINAL_WEEK,nflWeek-1)}:null;
  const current=candidate&&checked.ok&&
   (season>candidate.season||season===candidate.season&&week>=candidate.week);
  return{

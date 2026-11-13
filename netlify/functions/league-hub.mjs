@@ -346,7 +346,15 @@ export async function ensureLockedEditionIndexed(s,edition,key,{commitIndex=true
 }
 async function reporterArchive(id){
  const reporter=publicReporters().find(x=>x.id===String(id||''));if(!reporter)return{error:'reporter not found'};
- const s=store(),j=await s.get('inquirer/reporters/'+reporter.id+'/index.json',{type:'json'}).catch(()=>null),articles=mergeArchiveEntries(Array.isArray(j?.articles)?j.articles:[],preloadedReporterEntries(reporter.id));
+ const s=store(),[j,index]=await Promise.all([
+  s.get('inquirer/reporters/'+reporter.id+'/index.json',{type:'json'}).catch(()=>null),
+  s.get('broadcasts/index.json',{type:'json'}).catch(()=>null)
+ ]);
+ const committed=new Set((Array.isArray(index)?index:[]).map(row=>Number(row.season)+'|'+Number(row.week)));
+ const articles=mergeArchiveEntries(Array.isArray(j?.articles)?j.articles:[],preloadedReporterEntries(reporter.id))
+  .filter(article=>Number(article?.season)<2026||
+   Number(article?.season)===2026&&Number(article?.week)<9||
+   committed.has(Number(article?.season)+'|'+Number(article?.week)));
  return{schema_version:1,reporter,articles};
 }
 async function reporterDirectory(){return{schema_version:1,inquirer_version:INQUIRER_VERSION,reporters:publicReporters()}}

@@ -101,6 +101,11 @@ export default async function inquirerPublishScheduled(req){
      locked:isLockedInquirerEdition(edition,season,week)});
     if(check.visible)console.info('inquirer-published-index-repaired',{season,week});
    }
+   // A discoverable weekly index is not enough when individual reporter
+   // archives or the league overview have lost their derived links. This
+   // idempotent repair checks all 32 reporter references and only rewrites
+   // missing derived records; the locked newspaper itself stays immutable.
+   if(check.visible)await ensureLockedEditionIndexed(store,edition,key);
    if(!check.visible){
     console.error('inquirer-publication-visibility-hold',{season,week,reason:check.reason});
     return skip('Completed edition is not publicly discoverable: '+check.reason);

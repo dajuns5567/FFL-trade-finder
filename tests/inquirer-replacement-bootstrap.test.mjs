@@ -94,7 +94,7 @@ test('new Netlify account is recognized but gated behind owner activation and We
  assert.match(worker,/enabled!=='true'/);
  const config=readFileSync(new URL('../netlify.toml',import.meta.url),'utf8');
  assert.match(config,/e\.CONTEXT==='deploy-preview'/);
- assert.match(config,/\['448','450'\]/);
+ assert.match(config,/\['448','450','453'\]/);
  assert.match(config,/e\.CONTEXT==='production'/);
 });
 test('Week 9 unattended cutover never substitutes private drafts for locked Weeks 7 and 8',()=>{

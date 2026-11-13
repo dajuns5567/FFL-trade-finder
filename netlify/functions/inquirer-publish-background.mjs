@@ -1,4 +1,5 @@
-import {weeklyReport,weeklyAwards} from './league-hub.mjs';
+import {weeklyReport,weeklyAwards,isLockedInquirerEdition} from './league-hub.mjs';
+import {inspectInquirerPublicationVisibility} from './lib/inquirer-publication-visibility.mjs';
 import {getStore} from '@netlify/blobs';
 import {FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
 import {verifiedNewSiteCutoverHistory,verifiedWeekNineAutopublishCutoverHistory} from './lib/inquirer-replacement-archive-gate.mjs';
@@ -135,15 +136,40 @@ export default async function publishInquirerInBackground(req){
    console.info('inquirer-background-awards',JSON.stringify({records:awards?.records?.length||0,season:report.season,week:report.week}));
   }catch(error){awardsError=String(error?.message||error);console.error('inquirer-background-awards-failed',error)}
  }else console.info('inquirer-background-awards-held','No fully published newspaper; awards were not backfilled.');
- const completed=!reportError&&!awardsError&&!report?.review_required&&hasCompleteWeekFeaturePackage(report,awards);
+ // A worker HTTP 202 and a completed report are insufficient: prove that
+ // the final published index, locked newspaper and weekly awards are all
+ // readable before committing the completed status cursor. Failed readback
+ // is operationally retryable; the approved edition is never rewritten.
+ let visibilityError=null;
+ if(!reportError&&!awardsError&&report?.available===true&&report?.published_locked===true){
+  try{
+   const season=Number(report.season),week=Number(report.week);
+   const key='broadcasts/'+season+'/week-'+String(week).padStart(2,'0')+'.json';
+   const [index,persisted,recordedAwards]=await Promise.all([
+    statusStore.get('broadcasts/index.json',{type:'json'}),
+    statusStore.get(key,{type:'json'}),
+    statusStore.get('awards/weekly.json',{type:'json'})
+   ]);
+   const visibility=inspectInquirerPublicationVisibility({
+    status:{state:'completed',available:true,season,week},index,edition:persisted,
+    awards:recordedAwards,locked:isLockedInquirerEdition(persisted,season,week)
+   });
+   if(!visibility.visible)throw Error(visibility.reason||'Public archive readback failed');
+   console.info('inquirer-public-archive-verified',{season,week});
+  }catch(error){
+   visibilityError=String(error?.message||error);
+   console.error('inquirer-public-archive-readback-failed',visibilityError);
+  }
+ }
+ const completed=!reportError&&!awardsError&&!visibilityError&&!report?.review_required&&hasCompleteWeekFeaturePackage(report,awards);
  await statusStore.setJSON('inquirer/publication-status.json',{
-  state:reportError||awardsError?'error':report?.review_required?'editorial-hold':completed?'completed':'waiting',
+  state:reportError||awardsError||visibilityError?'error':report?.review_required?'editorial-hold':completed?'completed':'waiting',
   started_at:startedAt,finished_at:new Date().toISOString(),
   season:report?.season??null,week:report?.week??null,
   available:completed,newsroom_available:!!report?.available,review_required:!!report?.review_required,
   reason:report?.reason||null,editorial_findings:report?.editorial_findings??null,
   editorial_revision:FORWARD_EDITORIAL_REVISION,
   weekly_awards_records:awards?.records?.length??null,
-  error:reportError,award_error:awardsError
+  error:reportError||visibilityError,award_error:awardsError
  }).catch(error=>console.error('inquirer-status-final',error));
 }

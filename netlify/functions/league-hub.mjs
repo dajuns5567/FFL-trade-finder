@@ -889,12 +889,21 @@ export async function weeklyAwards({additionalLockedEditions=[],persist=true,onl
     byKey.set(rec.season+'|'+rec.week,rec);
   }
  }
+ // Awards for a prepared, not-yet-indexed Week 9+ paper may already be
+ // persisted by the scheduled worker. Public GETs must not delete that
+ // prepared award, or expose it until the broadcast index is committed.
+ const pending=records.filter(rec=>{
+  const season=Number(rec?.season),week=Number(rec?.week);
+  return !eligible.has(season+'|'+week)&&(season>2026||season===2026&&week>=9)&&
+   isTrustedWeeklyAwardCache(rec,season,week);
+ });
  const next=(onlyAdditional?[...records,...[...byKey.values()].filter(rec=>
   !records.some(old=>Number(old.season)===Number(rec.season)&&Number(old.week)===Number(rec.week)))]:
-  [...byKey.values()]).sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));
+  [...byKey.values(),...pending]).sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));
  if(persist&&(missing.length||records.length!==next.length))
   await s.setJSON('awards/weekly.json',{schema_version:1,records:next});
- return{schema_version:1,records:next};
+ return{schema_version:1,records:onlyAdditional?next:next.filter(rec=>
+  eligible.has(Number(rec.season)+'|'+Number(rec.week)))};
 }
 
 async function draftAwards(){

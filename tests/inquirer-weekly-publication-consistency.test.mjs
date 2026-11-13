@@ -104,7 +104,8 @@ test('publisher completion cannot be claimed without the matching locked newsroo
  assert.equal(hasCompleteWeekFeaturePackage(report,{records:[{...award,players_of_week:{offense:{player_id:'O1'},defense:null}}]}),false);
  assert.equal(hasCompleteWeekFeaturePackage(report,{records:[{...award,manager_awards:[]}]}),false);
  assert.match(pub,/hasCompleteWeekFeaturePackage\(report,awards\)/);
- assert.match(pub,/const completed=!reportError&&!awardsError&&!report\?\.review_required&&hasCompleteWeekFeaturePackage\(report,awards\)/);
+ assert.match(pub,/const completed=!reportError&&!awardsError&&!visibilityError&&!report\?\.review_required&&hasCompleteWeekFeaturePackage\(report,awards\)/);
+ assert.match(pub,/inquirer-public-archive-readback-failed/,'completed cursor requires public index and awards readback');
 });
 
 test('private archive-to-preview link keeps an explicitly requested week instead of misleadingly opening another week',()=>{

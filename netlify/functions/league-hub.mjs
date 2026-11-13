@@ -424,7 +424,7 @@ export async function weeklyReport(req){
    if(!isLockedInquirerEdition(stored,season,w))
     return{available:false,published_locked:false,season,week:w,
      reason:'Stored Week '+w+' is incomplete or not explicitly locked. Refusing to overwrite historical content.'};
-   if(!previewReadOnly)await ensureLockedEditionIndexed(s,stored,key,{commitIndex:!(deferPublicIndex&&season>=2026&&w>=9)});
+   if(!previewReadOnly)await ensureLockedEditionIndexed(s,stored,key,{commitIndex:!(deferPublicIndex&&(season>2026||season===2026&&w>=9))});
    if(enforceFeatureContinuity&&(season>2026||(season===2026&&w>=5))){
     const award=awardedWeeks.get(season+'|'+w);
     if(!isTrustedWeeklyAwardCache(award,season,w)){
@@ -674,7 +674,7 @@ export async function weeklyReport(req){
  if(automatedAdmission.approved&&!manualAdmission.approved)
   result.editorial_generation.publication_mode='audited-deterministic-v31';
  await s.setJSON(key,result);
- await ensureLockedEditionIndexed(s,result,key,{commitIndex:!(deferPublicIndex&&season>=2026&&week>=9)});
+ await ensureLockedEditionIndexed(s,result,key,{commitIndex:!(deferPublicIndex&&(season>2026||season===2026&&week>=9))});
  return result;
 }
 // Read-only end-to-end publication health. Do not derive success from a

@@ -48,6 +48,17 @@ test('cannot silently index bad, duplicate, or wrong-key archive records',()=>{
  assert.equal(check({locked:false}).repair,false);
 });
 
+test('future seasons reconcile their first week without treating it like protected 2026 legacy history',()=>{
+ const futureStatus={...status,season:2027,week:1};
+ const futureEdition={...edition,season:2027,week:1};
+ const futureAwards={records:[{...award,season:2027,week:1}]};
+ const result=check({status:futureStatus,edition:futureEdition,awards:futureAwards,index:[]});
+ assert.equal(result.checked,true);
+ assert.equal(result.repair,true);
+ assert.equal(result.visible,false);
+ assert.equal(check({status:{...status,week:4},index:[]}).checked,false,'approved 2026 legacy history is never modified');
+});
+
 test('quality hold and still-running week cannot be marked publicly complete',()=>{
  for(const state of ['editorial-hold','error','waiting','running']){
   const value=check({status:{...status,state}});

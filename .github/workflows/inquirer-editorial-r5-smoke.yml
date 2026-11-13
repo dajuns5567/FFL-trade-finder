@@ -7,6 +7,8 @@ on:
       - 'netlify/functions/league-hub.mjs'
       - 'netlify/functions/value-history.mjs'
       - 'netlify/functions/lib/inquirer-schedule-decision.mjs'
+      - 'netlify/functions/lib/inquirer-publication-readback.mjs'
+      - 'tests/inquirer-publication-readback.test.mjs'
       - 'tests/inquirer-schedule-decision.test.mjs'
       - 'tests/inquirer-replacement-bootstrap.test.mjs'
       - 'netlify/functions/lib/inquirer-replacement-archive-gate.mjs'
@@ -58,6 +60,8 @@ jobs:
 
       - name: Install generator dependency
         run: npm install --no-save --package-lock=false @netlify/blobs
+      - name: Verify Inquirer committed publication readback contract
+        run: node --test tests/inquirer-publication-readback.test.mjs
       - name: Audit machine-readable private manuscript contract
         run: node --test tests/inquirer-private-edition-audit.test.mjs
       - name: Syntax check active Inquirer
@@ -70,6 +74,8 @@ jobs:
           node --check netlify/functions/inquirer-format-contract.mjs
           node --check netlify/functions/inquirer-narrative-architecture.mjs
           node --check netlify/functions/inquirer-publish-scheduled.mjs
+          node --check netlify/functions/inquirer-publish-background.mjs
+          node --check netlify/functions/lib/inquirer-publication-readback.mjs
           node --check netlify/functions/inquirer-cutover-background.mjs
           node --check scripts/one-time-generate-inquirer-week1.mjs
           node --check scripts/one-time-generate-inquirer-week2.mjs

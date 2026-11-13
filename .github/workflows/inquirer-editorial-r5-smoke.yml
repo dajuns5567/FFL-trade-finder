@@ -9,6 +9,9 @@ on:
       - 'netlify/functions/lib/inquirer-schedule-decision.mjs'
       - 'netlify/functions/lib/inquirer-publication-readback.mjs'
       - 'tests/inquirer-publication-readback.test.mjs'
+      - 'tests/inquirer-publication-watchdog.test.mjs'
+      - 'scripts/inquirer-publication-watchdog.mjs'
+      - '.github/workflows/inquirer-live-publication-watchdog.yml'
       - 'tests/inquirer-schedule-decision.test.mjs'
       - 'tests/inquirer-replacement-bootstrap.test.mjs'
       - 'netlify/functions/lib/inquirer-replacement-archive-gate.mjs'
@@ -61,7 +64,7 @@ jobs:
       - name: Install generator dependency
         run: npm install --no-save --package-lock=false @netlify/blobs
       - name: Verify Inquirer committed publication readback contract
-        run: node --test tests/inquirer-publication-readback.test.mjs
+        run: node --test tests/inquirer-publication-readback.test.mjs tests/inquirer-publication-watchdog.test.mjs
       - name: Audit machine-readable private manuscript contract
         run: node --test tests/inquirer-private-edition-audit.test.mjs
       - name: Syntax check active Inquirer
@@ -76,6 +79,7 @@ jobs:
           node --check netlify/functions/inquirer-publish-scheduled.mjs
           node --check netlify/functions/inquirer-publish-background.mjs
           node --check netlify/functions/lib/inquirer-publication-readback.mjs
+          node --check scripts/inquirer-publication-watchdog.mjs
           node --check netlify/functions/inquirer-cutover-background.mjs
           node --check scripts/one-time-generate-inquirer-week1.mjs
           node --check scripts/one-time-generate-inquirer-week2.mjs

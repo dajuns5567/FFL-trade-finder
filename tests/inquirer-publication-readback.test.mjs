@@ -74,3 +74,20 @@ test('production routes, completion decision, and preview guards retain separate
  assert.match(publisher,/state:reportError\|\|awardsError\?'error'/);
  assert.match(preview,/Non-production deployment/);
 });
+
+test('scheduled publication is atomic: awards precede the public index and public GET never generates',()=>{
+ const hub=fs.readFileSync('netlify/functions/league-hub.mjs','utf8');
+ const worker=fs.readFileSync('netlify/functions/inquirer-publish-background.mjs','utf8');
+ assert.match(hub,/if\(!previewReadOnly&&!enforceFeatureContinuity\)/);
+ assert.match(hub,/Awaiting unattended authenticated weekly publication/);
+ assert.match(hub,/deferPublicIndex&&\(season>2026\|\|season===2026&&week>=9\)/);
+ assert.match(hub,/commitIndex:!\(deferPublicIndex/);
+ assert.match(worker,/weeklyAwards\(\{additionalLockedEditions:isForward\?\[report\]:\[\]\}\)/);
+ const awards=worker.indexOf('awards=await weeklyAwards(');
+ const checked=worker.indexOf('if(!hasCompleteWeekFeaturePackage(report,awards))');
+ const committed=worker.indexOf('await ensureLockedEditionIndexed(statusStore,report,key)');
+ const readback=worker.indexOf('await verifyPublishedInquirerReadback(statusStore,report,');
+ const completed=worker.indexOf('const completed=!reportError');
+ assert.ok(awards>0&&awards<checked&&checked<committed&&committed<readback&&readback<completed,
+  'Reader-visible index must commit only after awards, then readback before completed');
+});

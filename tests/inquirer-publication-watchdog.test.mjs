@@ -43,5 +43,7 @@ test('scheduled watchdog is independent of production deploys and never writes a
  assert.match(yml,/schedule:/);assert.match(yml,/issues: write/);
  assert.doesNotMatch(yml,/netlify deploy|git push|inquirer-publish-background/);
  assert.match(script,/publication_health=1/);
+ const hub=fs.readFileSync('netlify/functions/league-hub.mjs','utf8');
+ assert.match(hub,/Math\.min\(INQUIRER_FINAL_WEEK,nflWeek-1\)/);
  assert.doesNotMatch(script,/setJSON\(|broadcasts\/index\.json/);
 });

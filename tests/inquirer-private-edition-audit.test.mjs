@@ -62,9 +62,8 @@ test('a single short repeated line in four otherwise distinct columns is warning
  for(const i of [0,1,2,3]){
   const section=e.teams[i].inquirer_article.sections[0];
   section.paragraphs=[
-   'Individual context for roster '+(i+1)+' identifies a meaningful lineup detail and distinct scoring decisions.',
-   common,
-   'This separate roster '+(i+1)+' analysis connects recorded starters to an opponent-specific football consequence. '+
+   'Club'+(i+1)+' reviews its documented starting lineup decisions against a roster-specific opponent in this fantasy matchup. '+
+   common+' Club'+(i+1)+' records an individual conclusion about its measured starter returns and opponent-specific football context.',
    section.paragraphs[0]
   ];
  }
@@ -79,9 +78,9 @@ test('five teams copying the same sentence never get a warning-only pass',()=>{
  for(const i of [0,1,2,3,4]){
   const section=e.teams[i].inquirer_article.sections[0];
   section.paragraphs=[
-   'Individual roster '+(i+1)+' was studied against its recorded weekly starter selection.',
-   common,
-   'The actual scoring context for roster '+(i+1)+' is distinguishable from neighboring reports. '+section.paragraphs[0]
+   'Club'+(i+1)+' reviews its documented starting lineup decisions against a roster-specific opponent in this fantasy matchup. '+
+   common+' Club'+(i+1)+' records an individual conclusion about its measured starter returns and opponent-specific football context.',
+   section.paragraphs[0]
   ];
  }
  const audit=auditPrivateEdition(e);

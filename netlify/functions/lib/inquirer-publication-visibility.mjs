@@ -3,7 +3,8 @@
 export function inspectInquirerPublicationVisibility({status,index,edition,awards,locked=false}={}){
  const season=Number(status?.season),week=Number(status?.week);
  if(status?.state!=='completed'||status?.available!==true||
-    !Number.isInteger(season)||season<2026||!Number.isInteger(week)||week<5||week>18)
+    !Number.isInteger(season)||season<2026||!Number.isInteger(week)||week<1||week>18||
+    (season===2026&&week<5))
   return{checked:false,visible:false,repair:false,reason:'No completed forward edition to reconcile'};
  const key='broadcasts/'+season+'/week-'+String(week).padStart(2,'0')+'.json';
  if(!locked||Number(edition?.season)!==season||Number(edition?.week)!==week)

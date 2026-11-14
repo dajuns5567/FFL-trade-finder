@@ -26,7 +26,7 @@ try{
    const raw=has?.20*c+.45*sc+.35*ctx-80.15:.4*sc+.2*ctx;
    const revised=has?Math.max(1,Math.round(clamp(c*.45,raw,Math.max(c*2.15,c+760)))):old;
    const player=window.state?.players?.[id]||{};
-   return{id,name:x.name,pos:player.position,role:role(player),consensus:has?c:null,scoring:sc,context:ctx,ppg:x.weightedPpg??null,confidence:x.confidence??null,old,new:revised,delta:revised-old,percent:(revised-old)/Math.max(1,old)*100,withConsensus:has};
+   return{id,name:x.name,pos:player.position,role:role(player),consensus:has?c:null,scoring:sc,context:ctx,ppg:x.weightedPpg??null,confidence:x.confidence??null,old,new:revised,observedV25:Number(x.v25),delta:revised-old,percent:(revised-old)/Math.max(1,old)*100,withConsensus:has};
   });
   const pct=(arr,q)=>{if(!arr.length)return null;const sorted=[...arr].sort((a,b)=>a-b);return sorted[Math.floor((sorted.length-1)*q)]};
   const summary=arr=>({n:arr.length,medianChange:pct(arr.map(x=>x.delta),.5),
@@ -35,13 +35,14 @@ try{
     up:arr.filter(x=>x.delta>0).length,down:arr.filter(x=>x.delta<0).length,
     over10pct:arr.filter(x=>Math.abs(x.percent)>=10).length,
     oldMedian:pct(arr.map(x=>x.old),.5),newMedian:pct(arr.map(x=>x.new),.5)});
+  const actualMismatch=points.filter(x=>x.observedV25!==x.new);
   const byRole={};for(const r of ['EDGE','LB','INTERIOR','DB','OTHER'])byRole[r]=summary(points.filter(x=>x.role===r));
   const top=[...points].sort((a,b)=>b.old-a.old).slice(0,60);
   const watched=['David Bailey','Chris Jones','Nick Bosa','Will Anderson Jr.','Maxx Crosby','Quay Walker','Robert Spillane','Myles Garrett'];
   return {at:new Date().toISOString(),offenseWeightsObserved:window.offenseConsensusAnchorV50?.version||null,
    currentSourceCount:window.__fllConsensusRefresh?.successful||0,
    sourceSeason:window.state?.sleeperHistory?.completedWeek||null,
-   total:summary(points),withConsensus:summary(points.filter(x=>x.withConsensus)),
+   total:summary(points),runtimeV25Mismatches:actualMismatch.length,mismatchExamples:actualMismatch.slice(0,12),withConsensus:summary(points.filter(x=>x.withConsensus)),
    noConsensus:summary(points.filter(x=>!x.withConsensus)),
    byRole,topTier:summary(top),watched:points.filter(x=>watched.some(t=>x.name?.toLowerCase()===t.toLowerCase())),
    biggestRelativeUp:[...points].sort((a,b)=>b.percent-a.percent).slice(0,20),
@@ -49,5 +50,6 @@ try{
  });
  console.log('IDP_POPULATION_AUDIT '+JSON.stringify({url,result,pageErrors},null,2));
  if(result.total.n<150)throw Error('IDP population insufficient');
+ if(result.runtimeV25Mismatches)throw Error('Live IDP V25 values diverge from audited formula: '+result.runtimeV25Mismatches);
  if(pageErrors.length)throw Error('Browser errors '+pageErrors.join(','));
 }finally{await browser.close()}

@@ -64,3 +64,12 @@ test('monotonic scoring evidence within the no-consensus historical cohort remai
   assert.ok(z.value>=last);last=z.value;
  }
 });
+
+test('Player Values explicitly explains the unverified scoring fallback without pretending 520 is actual production',()=>{
+ const ui=fs.readFileSync(new URL('../ui-player-values-v139.js',import.meta.url),'utf8');
+ assert.match(ui,/idpUnverifiedNoConsensusFallbackV73===true/);
+ assert.match(ui,/idpEffectiveFallbackScoringV73/);
+ assert.match(ui,/No qualifying Sleeper IDP production or confirmed dynasty source/);
+ assert.match(ui,/conservative model-scoring floor/);
+ assert.match(ui,/valuation-weighted PPG/);
+});

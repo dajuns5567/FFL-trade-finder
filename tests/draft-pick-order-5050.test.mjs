@@ -416,6 +416,17 @@ test('2027–2029 discounted picks propagate to Player Values, Finder, Evaluator
  assert.match(runtime,/function generateFinder\(\)/);
  assert.match(runtime,/function syncEval\(side\)/);
  assert.match(runtime,/function assetMarkup\(x\)/);
+ const siteLoader=readFileSync(new URL('../netlify/functions/site-v29.mjs',import.meta.url),'utf8');
+ assert.match(siteLoader,/draft-pick-rankings-v527\.js\?v=528/,
+  'the revised pick overlay must cache-bust every page');
+ assert.ok(siteLoader.indexOf('trade-value-normalization-v139.js')<
+  siteLoader.indexOf('draft-pick-rankings-v527.js'));
+ assert.ok(siteLoader.indexOf('draft-pick-rankings-v527.js')<
+  siteLoader.indexOf('trade-runtime-v256-compiled.js'),
+  'canonical value overlay must load before the Finder/Evaluator runtime');
+ assert.ok(siteLoader.includes('value-history-v276.js'),
+  'Trade History/Hindsight still use canonical values after runtime boot');
+
  assert.match(history,/function hindsightFair\(give,recv,trade\)\{return fairWithValue\(give,recv,a=>hindsightValue\(a,trade\)\)\}/);
  assert.match(history,/function tradeHistoryEvaluatorValue\(asset,trade\)/);
  const datedTrade={created:'2026-10-15T12:00:00.000Z'};

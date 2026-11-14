@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 
 const source=readFileSync(new URL('../trade-specific-max-value-v279.js',import.meta.url),'utf8');
+const site=readFileSync(new URL('../netlify/functions/site-v29.mjs',import.meta.url),'utf8');
 function runtime({outgoingCount=34,targetExtras=20}={}){
  const my=1,other=2;
  const own=Array.from({length:outgoingCount},(_,i)=>({type:'player',id:'out-'+i,owner:my,value:1100+i*110,rank:40+i,name:'Outgoing '+i}));
@@ -71,4 +72,8 @@ test('every Max Value package still contains the target and no equity/consensus 
  assert.match(source,/out=\[\[target\]\]/);
  assert.match(source,/window\.section1V130\?\.fair\?\.\(a,b\)/);
  assert.match(source,/if\(my!==token\)return/);
+});
+
+test('assembled preview loads the updated Finder script rather than the stale browser cache key',()=>{
+ assert.match(site,/trade-specific-max-value-v279\.js\?v=440/);
 });

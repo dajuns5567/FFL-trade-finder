@@ -108,7 +108,30 @@ function idpProductionComponent24(id){const rs=realScore24(id,'idp'),d=distribut
 function offenseProductionComponent24(id,pos){const rs=realScore24(id,'offense'),d=distributions24()[pos]?.ppg||[];if(!rs.seasons)return{value:null,rs,ppgPct:null,effectivePct:.50};const ppgPct=percentile24(d,rs.ppg),effectivePct=.50+rs.confidence*(ppgPct-.50);const base={QB:1050,RB:900,WR:900,TE:760}[pos]||850,spread={QB:1450,RB:1250,WR:1200,TE:1050}[pos]||1100;const value=base*.35+spread*Math.pow(clamp24(.03,effectivePct,.99),2.15);return{value,rs,ppgPct,effectivePct}}
 function otherIdpContext24(id,rs){const sample=rs.historicalSeasons>=3?1:rs.historicalSeasons===2?.96:rs.historicalSeasons===1?.90:.86;return 500*idpAgeFactor24(id)*sample}
 function offenseOtherContext24(id,pos,c,detail){let scarcity=1;if(pos==='QB'){const r=Number(detail?.offenseRank);scarcity=Number.isFinite(r)&&r<=24?1.20:Number.isFinite(r)&&r<=72?1.16:1.12}else if(pos==='RB'){const r=Number(detail?.offenseRank);scarcity=Number.isFinite(r)&&r<=80?1.18:Number.isFinite(r)&&r<=180?1.14:1.10}else if(pos==='WR')scarcity=1.03;else if(pos==='TE')scarcity=1.01;return c*scarcity*offenseAgeFactor24(id,pos)}
-function universe24(){const ids=new Set(state.allAssets.filter(x=>x.type==='player').map(x=>String(x.id)));for(const id of Object.keys(state.consensusComposite?.byId||{}))ids.add(String(id));return[...ids].filter(id=>state.players?.[id]?.fantasy_positions?.length).map(id=>({type:'player',id,owner:state.allAssets.find(x=>x.type==='player'&&String(x.id)===id)?.owner??null}))}
+function universe24(){
+ // Roster membership and successfully identified dynasty-source coverage
+ // must never be the sole path for a proven IDP to enter the master list.
+ // Retain active, individually identified defensive players with a qualified
+ // current regular-season Sleeper sample, even if an ambiguous source ranking
+ // is correctly rejected. Their value uses the existing conservative
+ // no-consensus fallback; no consensus is invented.
+ const assets=Array.isArray(state.allAssets)?state.allAssets:[],
+       ids=new Set(assets.filter(x=>x.type==='player').map(x=>String(x.id)));
+ for(const id of Object.keys(state.consensusComposite?.byId||{}))ids.add(String(id));
+ const current=Number(state.sleeperHistory?.currentSeason),
+       season=Number.isFinite(current)?state.stats?.[current]:null;
+ if(state.sleeperHistory?.complete===true&&season&&typeof season==='object'){
+  for(const [id,row] of Object.entries(season)){
+   const p=state.players?.[id],s=statObj24(row);
+   if(p?.active!==true||!p?.fantasy_positions?.length)continue;
+   if(groupPos({type:'player',id})!=='IDP')continue;
+   if(games24(row)<8||statNumber24(s,'pts_idp')<=0)continue;
+   ids.add(String(id));
+  }
+ }
+ return [...ids].filter(id=>state.players?.[id]?.fantasy_positions?.length)
+  .map(id=>({type:'player',id,owner:assets.find(x=>x.type==='player'&&String(x.id)===id)?.owner??null}));
+}
 function model24(x,legacyById){
  const pos=groupPos(x),c=consensus24(x.id),detail=detail24(x.id);
  if(pos==='IDP'){

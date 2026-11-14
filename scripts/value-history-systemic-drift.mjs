@@ -47,7 +47,7 @@ export function scheduledArchiveDecision(previous,candidate,pending=null){
    pending.valuation_contract===candidate?.valuation_contract&&
    Number.isFinite(pendingTime)&&Number.isFinite(nextTime)&&pendingTime>priorTime&&nextTime>pendingTime&&
    Array.isArray(pending.rows)&&pending.rows.length>=700;
- const corroborated=drift.flagged&&pendingValid&&corroboratesPending(pending.rows,candidate.rows);
+ const corroborated=drift.flagged&&drift.reason!=='population-coverage-collapse'&&pendingValid&&corroboratesPending(pending.rows,candidate.rows);
  return {
    action:drift.flagged?(corroborated?'archive-confirmed':'quarantine'):'archive',
    drift,corroborated:!!corroborated,

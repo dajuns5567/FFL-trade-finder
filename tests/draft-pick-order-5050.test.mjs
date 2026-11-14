@@ -406,6 +406,7 @@ test('2027–2029 discounted picks propagate to Player Values, Finder, Evaluator
   'Trade History audit must target known live implementation, not an absent or changed helper');
  const histCtx={window:win,state:win.state,Math,Number,String,Date,Map,Array,
   activeNearestDraftYear:()=>2027,
+  currentPickProjectionSlot:a=>norm.pickContext(a).projectedSlot,
   retroactiveTradeHistoryPickValue:()=>{throw Error('historical reconstruction not expected for unexpired draft picks')}};
  vm.runInNewContext(extract.join('\n'),histCtx,{filename:'value-history-v276-extracted-current-pricing.js'});
  // These runtime entry points are consumed by the actual Finder and Evaluator;

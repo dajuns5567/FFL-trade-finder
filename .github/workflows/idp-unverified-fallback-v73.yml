@@ -1,0 +1,26 @@
+name: IDP unverified consensus and scoring fallback
+on:
+  pull_request:
+    paths:
+      - 'valuation-idp-v25-perf.js'
+      - 'tests/idp-unverified-fallback-v73.test.mjs'
+      - '.github/workflows/idp-unverified-fallback-v73.yml'
+  push:
+    branches:
+      - fix/idp-unverified-fallback-source-audit
+permissions:
+  contents: read
+jobs:
+  idp-source-fallback:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate runtime syntax and explicit fallback test
+        run: |
+          node --check valuation-idp-v25-perf.js
+          node --check netlify/functions/consensus-composite-v3.mjs
+          node --test tests/idp-unverified-fallback-v73.test.mjs tests/idp-source-integrity-audit-v73.test.mjs tests/idp-fuzzy-identity-ownership-v73.test.mjs tests/consensus-composite-v3.test.mjs tests/idp-20-45-35-calibration.test.mjs tests/idp-dynasty-development.test.mjs tests/idp-scored-universe-retention.test.mjs tests/idp-v72-source-retention.test.mjs

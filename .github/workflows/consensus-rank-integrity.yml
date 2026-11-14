@@ -1,0 +1,27 @@
+name: Consensus published-rank integrity
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/consensus-composite-v3.mjs'
+      - 'netlify/functions/consensus-source-promotion-guard.mjs'
+      - 'netlify/functions/update.mjs'
+      - 'tests/consensus-composite-v3.test.mjs'
+      - 'tests/consensus-source-promotion-guard.test.mjs'
+      - '.github/workflows/consensus-rank-integrity.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  rank-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --ignore-scripts --no-audit --no-fund
+      - run: node --check netlify/functions/consensus-composite-v3.mjs
+      - run: node --check netlify/functions/consensus-source-promotion-guard.mjs
+      - run: node --check netlify/functions/update.mjs
+      - run: node --test tests/consensus-composite-v3.test.mjs
+      - run: node --test tests/consensus-source-freshness.test.mjs tests/consensus-source-promotion-guard.test.mjs tests/idpshow-version-discovery.test.mjs

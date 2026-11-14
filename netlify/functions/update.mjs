@@ -2,6 +2,7 @@ import { refreshAllSources } from "./consensus-source-overrides.mjs";
 import { buildConsensusComposite } from "./consensus-composite-v3.mjs";
 import { buildFreshnessSnapshot,ageFreshness } from "./consensus-source-freshness.mjs";
 import { getStore } from "@netlify/blobs";
+import { findUnverifiedChartRegression } from "./consensus-source-promotion-guard.mjs";
 
 const SNAPSHOT_STORE="fleeced-consensus-lkg";
 const SNAPSHOT_KEY="validated-sources-v1";
@@ -43,6 +44,32 @@ export function buildConsensusPayload(refresh,players=[],updatedAt=new Date().to
   return {ok:true,sources:integrityReady?sources:{},composite,withheld:!integrityReady,integrity:{all_sources_valid:integrityReady,failed_sources:failedSources,reason:integrityReady?null:`Consensus replacement withheld because ${failedSources.length?failedSources.join(', '):'one or more required sources'} did not validate; prior validated source set remains in use`},summary:{total:results.length,successful,failed:results.length-successful,results:diagnostics},updatedAt};
 }
 
+// Pure post-fetch decision: only a complete prior validated consensus can
+// protect against an unverified chart revision going backwards.
+export function applyPublisherRevisionGate(candidate,previous){
+  // Source extraction may be valid while its revision is not authoritative:
+  // falling back to pinned IDP Show /1/ after a verified later chart must
+  // preserve the complete known-good consensus rather than create a value dip.
+  const canRecover=!!previous?.sources?.["The IDP Show Combined IDP"]&&
+    !!previous?.sources?.["The IDP Show Combined Offense"]&&
+    !!previous?.composite?.byId&&Object.keys(previous.composite.byId).length>0;
+  const revisionRegression=canRecover
+    ?findUnverifiedChartRegression(candidate.summary.results,previous.sourceManifest)
+    :null;
+  if(revisionRegression){
+    candidate.withheld=true;
+    candidate.summary.results=candidate.summary.results.map(x=>x.source===revisionRegression.source
+      ?{...x,ok:false,status:"withheld-unverified-revision",error:revisionRegression.reason}
+      :x);
+    candidate.summary.successful=candidate.summary.results.filter(x=>x.ok).length;
+    candidate.summary.failed=candidate.summary.results.length-candidate.summary.successful;
+    candidate.integrity={...candidate.integrity,all_sources_valid:false,
+      failed_sources:[...new Set([...(candidate.integrity.failed_sources||[]),revisionRegression.source])],
+      reason:revisionRegression.reason};
+  }
+  return revisionRegression;
+}
+
 export default async (req)=>{
   if(req.method==="OPTIONS")return json({ok:true});
   if(req.method!=="POST")return json({ok:false,error:"POST required"},405);
@@ -52,6 +79,7 @@ export default async (req)=>{
   const refresh=await refreshAllSources();
   const candidate=buildConsensusPayload(refresh,players);
   const previous=await readLastGood();
+  applyPublisherRevisionGate(candidate,previous);
 
   if(!candidate.withheld){
     for(const [name,snapshot] of Object.entries(candidate.sources)){

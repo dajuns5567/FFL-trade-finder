@@ -257,3 +257,27 @@ test("IDP ranks and valuations still use the exact unmodified IDP aggregation",(
   assert.deepEqual(d.offenseRobustWeights,[]);
   assert.deepEqual(d.offenseOutlierAdjustments,[]);
 });
+
+test('single-source rank gaps do not cause synthetic market-wide increases',()=>{
+ const players=Array.from({length:200},(_,i)=>({id:'rank-'+i,name:'Ranked Player '+i,positions:['WR']}));
+ const rows=players.map((p,i)=>({player:p.name,rank:i+1,position:'WR'}));
+ const a=result('Publisher A','publisher-a',rows);
+ const b=result('Publisher B','publisher-b',rows);
+ const baseline=buildConsensusComposite([a,b],players);
+ // These 30 rows were omitted by the scraper but publisher rank numbers
+ // for every remaining player were not changed.
+ const dropped=buildConsensusComposite([{...a,rankings:rows.slice(30)},b],players);
+ for(let i=30;i<players.length;i++){
+   const id=players[i].id;
+   assert.equal(dropped.byId[id],baseline.byId[id],id+' cannot revalue from extraction omissions');
+   assert.equal(dropped.detailsById[id].offenseRank,baseline.detailsById[id].offenseRank);
+ }
+});
+test('publisher ranking changes still immediately change dynasty consensus values',()=>{
+ const players=[{id:'starter',name:'Live Starter',positions:['WR']}];
+ const before=buildConsensusComposite([result('A','a',[{player:'Live Starter',rank:220,position:'WR'}])],players);
+ const after=buildConsensusComposite([result('A','a',[{player:'Live Starter',rank:15,position:'WR'}])],players);
+ assert.ok(after.byId.starter>before.byId.starter);
+ assert.equal(before.detailsById.starter.offenseRank,260); // conservative one-source floor
+ assert.equal(after.detailsById.starter.offenseRank,260); // same floor, no guessed extra consensus
+});

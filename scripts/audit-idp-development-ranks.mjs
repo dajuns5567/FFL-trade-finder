@@ -23,6 +23,11 @@ try{
    return {generatedAt:new Date().toISOString(),week:window.state?.sleeperHistory?.completedWeek??null,
     consensusStatus:window.__fllConsensusRefresh?.successful,
     namesakes:Object.entries(window.state.players||{}).filter(([id,p])=>String(p?.full_name||'').toLowerCase()==='chris jones').map(([id,p])=>({id,position:p.position,team:p.team,consensus:window.state.consensusComposite?.byId?.[id]??null,modelValue:byId.get(id)?.value??null})),
+    population:rows.filter(z=>z.production?.leagueContext&&z.x?.type==='player').map(z=>{
+      const id=String(z.x.id),p=window.state.players?.[id]||{},m=z.production?.m||{};
+      return{id,name:p.full_name||id,position:p.position,consensus:window.state.consensusComposite?.byId?.[id]??null,ppg:m.ppg??null,
+        confidence:m.confidence??null,value:Number(z.value),qualifyingSeasons:z.production?.a?.qualifyingSeasons??null};
+    }),
     rows:ids.map(id=>{
      const z=byId.get(id),p=window.state.players?.[id]||{},cv=Number(window.state?.consensusComposite?.byId?.[id])||0,
        final=window.playerRankValue({type:'player',id});
@@ -52,7 +57,28 @@ try{
    developmentIndex:x.developmentIndex,oldConfidence:prior.scoringAuditConfidence,newConfidence:x.scoringAuditConfidence};
  });
  const mismatchedInputs=rows.filter(x=>!x.sourceConsensusSame||!x.scoringPpgSame);
- console.log('IDP_DEVELOPMENT_LIVE_RANKS '+JSON.stringify({inputsComparable:mismatchedInputs.length===0,mismatchedInputs,rows,old:{at:old.generatedAt,week:old.week,sourceStatus:old.consensusStatus,errors:old.errors,namesakes:old.namesakes},current:{at:current.generatedAt,week:current.week,sourceStatus:current.consensusStatus,errors:current.errors,namesakes:current.namesakes}},null,2));
+ const priorById=new Map(old.population.map(x=>[x.id,x]));
+ const populationChanges=current.population.map(x=>{
+   const prior=priorById.get(x.id);
+   return{...x,oldValue:prior?.value??null,delta:prior?x.value-prior.value:null,
+     changePct:prior?100*(x.value-prior.value)/Math.max(1,prior.value):null,
+     sameConsensus:prior?.consensus===x.consensus,samePpg:prior!=null&&Math.abs((prior.ppg||0)-(x.ppg||0))<.000001,
+     oldConfidence:prior?.confidence??null};
+ });
+ const changedInputs=populationChanges.filter(x=>!x.sameConsensus||!x.samePpg);
+ const comparable=populationChanges.filter(x=>x.oldValue!=null);
+ const abs=comparable.map(x=>Math.abs(x.changePct)).sort((a,b)=>a-b);
+ const q=p=>abs[Math.floor((abs.length-1)*p)]??0;
+ const populationAudit={currentCount:current.population.length,previousCount:old.population.length,missingPrevious:current.population.length-comparable.length,
+   inputMismatches:changedInputs.length,examplesOfMismatches:changedInputs.slice(0,8),
+   medianAbsoluteChangePct:q(.5),p95AbsoluteChangePct:q(.95),maxAbsoluteChangePct:abs.at(-1)||0,
+   overTenPct:comparable.filter(x=>Math.abs(x.changePct)>10).length,
+   overThirtyPct:comparable.filter(x=>Math.abs(x.changePct)>30).length,
+   increases:comparable.filter(x=>x.delta>0).length,decreases:comparable.filter(x=>x.delta<0).length,
+   youngWithOneSeason:comparable.filter(x=>x.qualifyingSeasons===1).length,
+   highestRisers:[...comparable].sort((a,b)=>b.changePct-a.changePct).slice(0,15),
+   highestFallers:[...comparable].sort((a,b)=>a.changePct-b.changePct).slice(0,10)};
+ console.log('IDP_DEVELOPMENT_LIVE_RANKS '+JSON.stringify({inputsComparable:mismatchedInputs.length===0,mismatchedInputs,populationAudit,rows,old:{at:old.generatedAt,week:old.week,sourceStatus:old.consensusStatus,errors:old.errors,namesakes:old.namesakes},current:{at:current.generatedAt,week:current.week,sourceStatus:current.consensusStatus,errors:current.errors,namesakes:current.namesakes}},null,2));
  if(old.errors.length||current.errors.length)throw Error('Browser errors');
- if(mismatchedInputs.length)throw Error('Ranking observations used changed source/scoring inputs');
+ if(mismatchedInputs.length||changedInputs.length)throw Error('Ranking observations used changed source/scoring inputs');
 }finally{await browser.close()}

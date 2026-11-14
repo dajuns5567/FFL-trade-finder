@@ -3,6 +3,7 @@
 // Week 1/2 preloads remain immutable; Week 3+ runs this layer with week-aware
 // variation, prior-edition continuity, playoff-race context and postseason rounds.
 import {finishReviewedForwardCopy} from './inquirer-reviewed-copy.mjs';
+import {groundForwardRecapTeamAttribution} from './lib/inquirer-recap-attribution.mjs';
 import {assessMinorNineWordReuse} from './lib/inquirer-minor-repetition.mjs';
 import {inspectInquirerFormatContract} from './inquirer-format-contract.mjs';
 import {attributeForwardPlayerStatFragments,curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPlayerFact,restoreForwardArticleDepth} from './inquirer-narrative-architecture.mjs';
@@ -10,7 +11,7 @@ import {attributeForwardPlayerStatFragments,curateForwardTeamNarrative,inspectNa
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=109;
+export const FORWARD_EDITORIAL_REVISION=110;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -6021,6 +6022,9 @@ function assertWeek2Originality(result,previousEdition){
   if(week>=5){
     overview=pruneForwardRecapLessonScaffold(overview,teams,week);
     overview=polishForwardReaderCopy(teams,overview,week);
+    // The last writer must restore named-team evidence after all recap
+    // pruning/evolution passes. Never publish an anonymous factual paragraph.
+    overview=groundForwardRecapTeamAttribution(overview,teams,week);
   }
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }

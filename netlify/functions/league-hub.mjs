@@ -11,6 +11,8 @@ import week2Preload2026 from './inquirer-week2-2026-preload.mjs';
 import {fetchBestSeason} from './history-fetch.mjs';
 import {applyInquirerEditorialV31,evaluateInquirerEditionQuality,FORWARD_INQUIRER_VERSION,FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
 import {inspectCanonicalArchive} from './lib/inquirer-legacy-history.mjs';
+import {inspectInquirerPublicationVisibility} from './lib/inquirer-publication-visibility.mjs';
+import {groundForwardRecapTeamAttribution} from './lib/inquirer-recap-attribution.mjs';
 import {privatePreviewStoreName,isVerifiedPrivatePreviewPredecessor} from './lib/inquirer-preview-diagnostics.mjs';
 
 const LEAGUE='1316867686394769408';
@@ -691,15 +693,53 @@ async function broadcastArchive(){
  }
  rows.sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));return{reports:rows};
 }
-async function broadcastStored(season,week){
+// Public, read-only publisher health for monitors and the weekly newsroom.
+// Never returns draft copy, private audit issues or queue credentials.
+async function inquirerPublicationHealth(){
+ const s=store();
+ const [status,index,awards]=await Promise.all([
+  s.get('inquirer/publication-status.json',{type:'json'}).catch(()=>null),
+  s.get('broadcasts/index.json',{type:'json'}).catch(()=>null),
+  s.get('awards/weekly.json',{type:'json'}).catch(()=>null)
+ ]);
+ const season=Number(status?.season),week=Number(status?.week);
+ const eligible=Number.isInteger(season)&&season>=2026&&Number.isInteger(week)&&
+  week>=1&&week<=18&&(season>2026||week>=5);
+ const edition=eligible?await s.get('broadcasts/'+season+'/week-'+String(week).padStart(2,'0')+'.json',{type:'json'}).catch(()=>null):null;
+ const check=inspectInquirerPublicationVisibility({status,index,edition,awards,
+  locked:eligible&&isLockedInquirerEdition(edition,season,week)});
+ const rows=Array.isArray(index)?index.filter(x=>Number.isInteger(Number(x?.season))&&Number.isInteger(Number(x?.week))):[];
+ const latest=rows.sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week))[0]||null;
+ const state=String(status?.state||'unavailable');
+ const attention=state==='error'||state==='editorial-hold'||(check.checked&&!check.visible);
+ return{schema_version:1,publication_state:state,
+  generation_season:eligible?season:null,generation_week:eligible?week:null,
+  latest_indexed_season:latest?Number(latest.season):null,
+  latest_indexed_week:latest?Number(latest.week):null,
+  completed_week_discoverable:check.checked?check.visible:null,
+  requires_attention:attention,
+  attention_reason:attention?(check.checked&&!check.visible?check.reason:
+    state==='editorial-hold'?'A weekly edition was withheld by editorial safeguards':'The weekly publication worker reported an error'):null,
+  last_completed_at:String(status?.finished_at||'')||null,
+  scheduler_interval_minutes:5};
+}
+
+async function broadcastStored(season,week,req=null){
  const s=store(),v=await s.get(`broadcasts/${Number(season)}/week-${String(Number(week)).padStart(2,'0')}.json`,{type:'json'});
  if(v!==null&&v!==undefined){
-  // The existing Blob index is NOT admission evidence. The original site
-  // contains a marked-locked but rejected 2026 Week 5 revision-14 draft.
-  // Never display it as canonical news if it enters the replacement store.
   if(!isLockedInquirerEdition(v,season,week))
    return{available:false,season:Number(season),week:Number(week),
     reason:'Archived Inquirer edition fails the Week 4 newsroom continuity/quality contract. Publication held; original bytes were not altered.'};
+  // Read-only editorial overlay on integration preview only.
+  const previewHost=req?new URL(req.url).hostname:'';
+  if(Number(season)===2026&&Number(week)===9&&
+     ['deploy-preview-453--precious-dango-fb4633.netlify.app','deploy-preview-455--precious-dango-fb4633.netlify.app'].includes(previewHost)&&
+     Array.isArray(v?.teams)&&v?.league_overview){
+   const readOnlyView=structuredClone(v);
+   readOnlyView.league_overview=groundForwardRecapTeamAttribution(
+    readOnlyView.league_overview,readOnlyView.teams,9);
+   return{...readOnlyView,recap_attribution_preview:true};
+  }
   return v;
  }
  return preloadedBroadcast(season,week)||{error:'broadcast not found'};
@@ -936,5 +976,5 @@ export default async req=>{try{const u=new URL(req.url);
    return cached?json({...cached,cache_hit:true,preview_read_only:true}):json({error:'No manager history cache in preview; production backfill disabled.',preview_read_only:true},503);
   }
  }
-if(u.searchParams.get('weekly')==='1')return json(await weeklyReport(req));if(u.searchParams.get('reporters')==='1')return json(await reporterDirectory());if(u.searchParams.get('reporter_archive'))return json(await reporterArchive(u.searchParams.get('reporter_archive')));if(u.searchParams.get('broadcast_archive')==='1')return json(await broadcastArchive());if(u.searchParams.get('broadcast_season')&&u.searchParams.get('broadcast_week'))return json(await broadcastStored(u.searchParams.get('broadcast_season'),u.searchParams.get('broadcast_week')));if(u.searchParams.get('weekly_awards')==='1')return json(await weeklyAwards());if(u.searchParams.get('managers')==='1'){const s=store(),cached=await s.get('managers/history-cache.json',{type:'json'}).catch(()=>null),valid=cached?.cache_version===MANAGER_CACHE_VERSION&&cached?.career?.length&&cached.career.some(x=>(Number(x.wins)||0)+(Number(x.losses)||0)>0);if(valid){const nfl=await fetchJson(`${API}/state/nfl`).catch(()=>({})),season=Number(nfl?.season)||0,through=Math.max(0,Math.min(17,(Number(nfl?.week)||1)-1)),fresh=Number(cached?.scoring_history?.through_season)===season&&Number(cached?.scoring_history?.through_week)>=through;if(fresh)return json({...cached,cache_hit:true,stale:false})}return json(await managerHistory())}if(u.searchParams.get('drafts')==='1')return json(await draftAwards());if(u.searchParams.get('draft_records')==='1')return draftRecords(req);if(u.searchParams.get('award_highs')==='1')return awardHighs(req);if(u.searchParams.get('awards')==='1')return awards(req);return json({error:'query required'},400)}catch(e){console.error('league-hub',e);return json({error:'league hub unavailable'},503)}};
+if(u.searchParams.get('weekly')==='1')return json(await weeklyReport(req));if(u.searchParams.get('reporters')==='1')return json(await reporterDirectory());if(u.searchParams.get('reporter_archive'))return json(await reporterArchive(u.searchParams.get('reporter_archive')));if(u.searchParams.get('broadcast_archive')==='1')return json(await broadcastArchive());if(u.searchParams.get('publication_health')==='1')return json(await inquirerPublicationHealth());if(u.searchParams.get('broadcast_season')&&u.searchParams.get('broadcast_week'))return json(await broadcastStored(u.searchParams.get('broadcast_season'),u.searchParams.get('broadcast_week'),req));if(u.searchParams.get('weekly_awards')==='1')return json(await weeklyAwards());if(u.searchParams.get('managers')==='1'){const s=store(),cached=await s.get('managers/history-cache.json',{type:'json'}).catch(()=>null),valid=cached?.cache_version===MANAGER_CACHE_VERSION&&cached?.career?.length&&cached.career.some(x=>(Number(x.wins)||0)+(Number(x.losses)||0)>0);if(valid){const nfl=await fetchJson(`${API}/state/nfl`).catch(()=>({})),season=Number(nfl?.season)||0,through=Math.max(0,Math.min(17,(Number(nfl?.week)||1)-1)),fresh=Number(cached?.scoring_history?.through_season)===season&&Number(cached?.scoring_history?.through_week)>=through;if(fresh)return json({...cached,cache_hit:true,stale:false})}return json(await managerHistory())}if(u.searchParams.get('drafts')==='1')return json(await draftAwards());if(u.searchParams.get('draft_records')==='1')return draftRecords(req);if(u.searchParams.get('award_highs')==='1')return awardHighs(req);if(u.searchParams.get('awards')==='1')return awards(req);return json({error:'query required'},400)}catch(e){console.error('league-hub',e);return json({error:'league hub unavailable'},503)}};
 

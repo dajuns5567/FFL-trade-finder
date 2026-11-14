@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-let installed=false,tradeCache=null,weeklyCache=null,spotlightWeeklyCache=null,weeklyAwardsCache=null,draftCache=null,managerCache=null,reporterDirectoryCache=null,reporterArchiveCache={},openReporterArchive='',awardHistory=[],awardHighHistory=[],broadcastArchive=[],openBroadcastTeam='',currentView='daily',rankingAwardKey='',awardYearFilters={},awardHighMode={},hallExpanded=false,selectedManagerId='',inquirerPlayerLinkCache=null;
+let installed=false,tradeCache=null,weeklyCache=null,spotlightWeeklyCache=null,weeklyAwardsCache=null,draftCache=null,managerCache=null,reporterDirectoryCache=null,reporterArchiveCache={},openReporterArchive='',awardHistory=[],awardHighHistory=[],awardHighSyncError='',broadcastArchive=[],openBroadcastTeam='',currentView='daily',rankingAwardKey='',awardYearFilters={},awardHighMode={},hallExpanded=false,selectedManagerId='',inquirerPlayerLinkCache=null;
 // Unpublished editions are reviewable only on Netlify PR previews, and only
 // through the same League Hub rendering path as the published archive.
 const onNetlifyDeployPreview=/^deploy-preview-\d+--[^.]+\.netlify\.app$/i.test(location.hostname);
@@ -403,9 +403,72 @@ function currentAwards(stats,draftData){return awardStandings(stats,draftData).m
 const tradeAdjustedAwardKeys=new Set(['fleecer','fleeced','deal-maker','efficiency','big-swing','trade-average','volume-wins','big-regret','balanced']);
 function awardRecordKey(key){const k=String(key||'');return tradeAdjustedAwardKeys.has(k)?k+':trade-adjusted-v1':k}
 function awardPeriod(){const d=new Date(),anchor=new Date('2026-09-14T00:00:00');if(d<anchor)return'Sep 14 2026';const months=(d.getFullYear()-anchor.getFullYear())*12+d.getMonth()-anchor.getMonth(),step=Math.floor(months/6)*6,x=new Date(anchor);x.setMonth(x.getMonth()+step);return x.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
-async function syncAwards(rows){try{try{let h=await fetch('/.netlify/functions/league-hub?award_highs=1',{cache:'no-store'}).then(r=>r.json()),records=rows.flatMap(a=>(a.standings||[]).map(x=>({award_key:awardRecordKey(a.key),roster_id:x.roster_id,score:x.score,detail:x.detail})));h=await fetch('/.netlify/functions/league-hub?award_highs=1',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({records})}).then(r=>r.json());awardHighHistory=h.records||[]}catch{}const draftAward=rows.find(x=>x.key==='best-draft-pick');if(draftAward){const records=(draftCache?.draft_picks||[]).map(p=>{const v=Number(globalThis.tradeValueNormalizationV130?.canonicalValue?.({type:'player',id:String(p.player_id),owner:0}))||0;return v&&p.pick_no?{season:p.season,roster_id:p.roster_id,player_id:p.player_id,pick_no:p.pick_no,captured_value:v,delta:Math.round(v-retroPick(p.season,p.pick_no))}:null}).filter(Boolean);fetch('/.netlify/functions/league-hub?draft_records=1',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({records})}).catch(()=>{})}let r=await fetch('/.netlify/functions/league-hub?awards=1',{cache:'no-store'}),j=await r.json();awardHistory=j.history||[];const p=awardPeriod();if(!awardHistory.some(x=>x.period===p)){r=await fetch('/.netlify/functions/league-hub?awards=1',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({period:p,awards:rows})});j=await r.json();awardHistory=j.history||awardHistory}}catch{}}
+async function syncAwards(rows){
+ // Deploy Previews are deliberately read-only. They must never try a POST
+ // then silently confuse the resulting HTTP 403 with an empty award history.
+ awardHighSyncError='';
+ const endpoint='/.netlify/functions/league-hub?award_highs=1';
+ try{
+  const response=await fetch(endpoint,{cache:'no-store'});
+  if(!response.ok)throw Error('Award highs GET HTTP '+response.status);
+  const payload=await response.json();
+  if(!Array.isArray(payload?.records))throw Error('Award highs response has no records');
+  awardHighHistory=payload.records;
+  if(!onNetlifyDeployPreview){
+   const records=rows.flatMap(a=>(a.standings||[]).map(x=>({
+    award_key:awardRecordKey(a.key),roster_id:x.roster_id,score:x.score,detail:x.detail
+   }))).filter(x=>x.award_key&&x.roster_id&&Number.isFinite(Number(x.score)));
+   if(records.length){
+    const write=await fetch(endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({records})});
+    if(!write.ok)throw Error('Award highs POST HTTP '+write.status);
+    const saved=await write.json();
+    if(!Array.isArray(saved?.records))throw Error('Award highs write did not return records');
+    awardHighHistory=saved.records;
+   }
+  }
+ }catch(error){
+  awardHighSyncError=String(error?.message||error);
+  console.warn('award-highs-sync',awardHighSyncError);
+ }
+ // Historical awards and draft snapshots are also read-only in previews.
+ if(onNetlifyDeployPreview)return;
+ try{
+  const draftAward=rows.find(x=>x.key==='best-draft-pick');
+  if(draftAward){
+   const records=(draftCache?.draft_picks||[]).map(p=>{
+    const v=Number(globalThis.tradeValueNormalizationV130?.canonicalValue?.({type:'player',id:String(p.player_id),owner:0}))||0;
+    return v&&p.pick_no?{season:p.season,roster_id:p.roster_id,player_id:p.player_id,pick_no:p.pick_no,captured_value:v,delta:Math.round(v-retroPick(p.season,p.pick_no))}:null
+   }).filter(Boolean);
+   fetch('/.netlify/functions/league-hub?draft_records=1',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({records})}).catch(()=>{});
+  }
+  let r=await fetch('/.netlify/functions/league-hub?awards=1',{cache:'no-store'}),j=await r.json();
+  awardHistory=j.history||[];
+  const p=awardPeriod();
+  if(!awardHistory.some(x=>x.period===p)){
+   r=await fetch('/.netlify/functions/league-hub?awards=1',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({period:p,awards:rows})});
+   j=await r.json();awardHistory=j.history||awardHistory;
+  }
+ }catch(error){console.warn('awards-history-sync',String(error?.message||error))}
+}
 function awardCard(a){const yf=a.yearFilter?`<label class="lh-year-filter"><b>YEAR</b><select data-lh-award-year="${esc(a.key)}"><option value="all">All</option>${(a.years||[]).map(y=>`<option value="${y}" ${String(awardYearFilters[a.key]||'all')===String(y)?'selected':''}>${y}</option>`).join('')}</select></label>`:'';const win=a.standings?.[0],link=a.leagueNetModal?`<button class="secondary small" data-lh-loaded-roster>Open Value History chart</button>`:a.teamTradeLink&&win?`<button class="secondary small" data-lh-manager-trades="${esc(win.roster_id)}">Winner Trade History</button>`:a.specificTradeLink&&win?.trade_id?`<button class="secondary small" data-lh-trade="${esc(win.trade_id)}">View Winning Trade</button>`:'';return`<div class="lh-card"><h3>${esc(a.title)}</h3><div class="lh-sub">${esc(a.desc||'')}</div>${yf}<div class="lh-story"><b>${a.roster_id?esc(teamName(a.roster_id)):'—'}</b><small>${esc(a.detail)}</small></div><div class="lh-action"><button class="secondary small" data-lh-rankings="${esc(a.key)}">View all rankings</button> ${link}</div></div>`}
-function awardRecordsHTML(a){const hist=awardHighHistory.filter(x=>x.award_key===awardRecordKey(a.key)),rows=hist.slice().sort((x,y)=>Number(y.score)-Number(x.score));return`<div class="lh-records"><h3>📈 All-Time Highs</h3><div class="lh-sub">Each team's highest recorded performance for this award. The timestamp is when that exact high was first captured and remains attached until a new high replaces it.</div>${rows.map((x,i)=>`<div class="lh-stat"><span><b>#${i+1}</b> ${esc(teamName(x.roster_id))}</span><span><small>${esc(x.detail||fmt(x.score))}</small><small style="display:block;color:var(--muted);margin-top:3px">Recorded ${esc(x.captured_at?new Date(x.captured_at).toLocaleString():'Timestamp unavailable')}</small></span></div>`).join('')||'<div class="lh-sub">No timestamped high has been captured yet.</div>'}</div>`}
+function awardRecordsHTML(a){
+ const hist=awardHighHistory.filter(x=>x.award_key===awardRecordKey(a.key)&&x.captured_at),
+  rows=hist.slice().sort((x,y)=>Number(y.score)-Number(x.score));
+ const captured=rows.length>0;
+ const shown=captured?rows:(a.standings||[]);
+ const desc=captured?
+  'Each team’s highest captured result for this award. The recorded time is when that high was first saved.':
+  'Current rankings shown as a provisional baseline. No timestamped historical highs have been captured for this award; these results are not being presented as historical records.';
+ const notice=awardHighSyncError?
+  '<div class="lh-sub">Historical high synchronization unavailable: '+esc(awardHighSyncError)+'.</div>':'';
+ return '<div class="lh-records"><h3>📈 All-Time Highs</h3><div class="lh-sub">'+esc(desc)+'</div>'+notice+
+  shown.map((x,i)=>'<div class="lh-stat"><span><b>#'+(i+1)+'</b> '+esc(teamName(x.roster_id))+
+   '</span><span><small>'+esc(x.detail||fmt(x.score))+'</small>'+
+   '<small style="display:block;color:var(--muted);margin-top:3px">'+
+    (captured?'Recorded '+esc(new Date(x.captured_at).toLocaleString()):'Current standings · not yet captured')+
+   '</small></span></div>').join('')+
+  (!shown.length?'<div class="lh-sub">No current rankings are available for this award.</div>':'')+'</div>';
+}
 function rankingsHTML(rows,key){const a=rows.find(x=>x.key===key)||rows[0];if(!a)return'<div class="lh-awards-page"><div class="lh-card">No rankings available.</div></div>';if(a.key==='roster-value')return loadedRosterRankingsHTML(a);const high=!!awardHighMode[a.key],yf=`<div class="lh-action"><button type="button" class="secondary small ${high?'active':''}" data-lh-award-high="${esc(a.key)}">${high?'Turn off All-Time Highs':'📈 All-Time Highs'}</button>${a.yearFilter?` <label class="lh-year-filter"><b>YEAR</b><select data-lh-award-year="${esc(a.key)}"><option value="all">All</option>${(a.years||[]).map(y=>`<option value="${y}" ${String(awardYearFilters[a.key]||'all')===String(y)?'selected':''}>${y}</option>`).join('')}</select></label>`:''}</div>`;return`<div class="lh-awards-page"><div class="lh-card"><div class="lh-action"><button class="secondary small" data-lh-rankings-back>← All Awards</button></div><h3 style="margin-top:12px">${esc(a.title)} — All 32 Teams</h3><div class="lh-sub">${esc(a.desc||'Current standings')}</div>${yf}${high?awardRecordsHTML(a):a.standings.map(x=>`<div class="lh-stat"><span><b>#${x.rank}</b> ${esc(teamName(x.roster_id))}</span><span><small>${esc(x.detail)}</small>${a.teamTradeLink?` <button class="secondary small" data-lh-manager-trades="${esc(x.roster_id)}">Trade History</button>`:''}${a.specificTradeLink&&x.trade_id?` <button class="secondary small" data-lh-trade="${esc(x.trade_id)}">View Trade</button>`:''}</span></div>`).join('')}</div></div>`}
 function loadedRosterRankingsHTML(a){return`<div class="lh-awards-page"><div class="lh-card"><div class="lh-action"><button class="secondary small" data-lh-rankings-back>← All Awards</button></div><h3 style="margin-top:12px">${esc(a.title)} — All 32 Teams</h3><div class="lh-sub">Current loaded-roster net value ranking. Use View chart to open the same league comparison pop-out.</div>${a.standings.map(x=>`<div class="lh-stat"><span><b>#${x.rank}</b> ${esc(teamName(x.roster_id))}</span><span><small>${esc(x.detail)}</small> <button class="secondary small" data-lh-loaded-roster>View chart</button></span></div>`).join('')}</div></div>`}
 function weeklyCopy(t){const margin=Math.abs(t.points-t.opponent_points),projOk=t.projection_coverage>=Math.max(1,Math.ceil(t.starter_count*.65)),proj=t.projected||0;let opener=t.won?`${t.team_name} walked out with a ${t.points.toFixed(1)}–${t.opponent_points.toFixed(1)} win`:`${t.team_name} took a ${t.opponent_points.toFixed(1)}–${t.points.toFixed(1)} loss`;if(margin<8)opener+=', and this one was a fourth-quarter stomach ache.';else if(margin>35)opener+=t.won?', and it was never especially polite.':', and the scoreboard got ugly in a hurry.';else opener+='.';
@@ -619,7 +682,7 @@ async function render(view=currentView,managerId=''){const previousView=currentV
  }
  if(view==='managers'||view==='career'){const [data,mgr,wk,weeklyAwardData]=await Promise.all([trades(),managers(),weekly().catch(()=>null),weeklyAwards().catch(()=>({records:[]}))]);weeklyAwardsCache=weeklyAwardData;all=data?.trades||[];stats=teamTradeStats(all);md=mgr;if(wk)weeklyCache=wk;await spotlightWeek(wk).catch(()=>null);if(view==='career'){host.innerHTML=careerRankingsHTML(managerId,md);return}if(managerId||selectedManagerId){draftData=await drafts();host.innerHTML=managerHTML(managerId||selectedManagerId,stats,all);return}host.innerHTML=managersHTML(stats,md);return}
  if(view==='hall'){const data=await trades();all=data?.trades||[];host.innerHTML=hallHTML(all);return}
- if(view==='awards'){const [data,draftsData,weeklyAwardData]=await Promise.all([trades(),drafts(),weeklyAwards().catch(()=>({records:[]}))]);weeklyAwardsCache=weeklyAwardData;all=data?.trades||[];stats=teamTradeStats(all);draftData=draftsData;awards=currentAwards(stats,draftData);host.innerHTML=awardsHTML(awards);syncAwards(awards);return}
+ if(view==='awards'){const [data,draftsData,weeklyAwardData]=await Promise.all([trades(),drafts(),weeklyAwards().catch(()=>({records:[]}))]);weeklyAwardsCache=weeklyAwardData;all=data?.trades||[];stats=teamTradeStats(all);draftData=draftsData;awards=currentAwards(stats,draftData);await syncAwards(awards);host.innerHTML=awardsHTML(awards);return}
  const [data,mgr,w,arc,reporters,weeklyAwardData]=await Promise.all([trades(),managers(),weekly().catch(()=>null),fetch('/.netlify/functions/league-hub?broadcast_archive=1',{cache:'no-store'}).then(r=>r.ok?r.json():{reports:[]}).catch(()=>({reports:[]})),reporterDirectory().catch(()=>({reporters:[]})),weeklyAwards().catch(()=>({records:[]}))]);weeklyAwardsCache=weeklyAwardData;all=data?.trades||[];stats=teamTradeStats(all);md=mgr;weeklyCache=w;reporterDirectoryCache=reporters;broadcastArchive=arc?.reports||[];if(inquirerPreviewMode&&w?.preview_only)broadcastArchive=[{season:w.season,week:w.week,headline:w.league_overview?.headline,preview_only:true},...broadcastArchive.filter(x=>Number(x.season)!==Number(w.season)||Number(x.week)!==Number(w.week))];const spotlightW=await spotlightWeek(w,broadcastArchive).catch(()=>null);host.innerHTML=dailyHTML(all,stats,w,md,spotlightW||w);
  }catch(error){if(inquirerPreviewMode&&view==='daily'){
   const detail=String(error?.message||'Draft not ready'),isRunning=/generation (started|in progress)/i.test(detail);

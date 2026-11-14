@@ -12,7 +12,7 @@ function fixture(rows){
     context:r.context??r.c??500,production:{ageFactor:r.ageFactor??1,
       correctedAudit:{value:r.production,qualifyingSeasons:r.seasons}}}));
   const sandbox={window:{assetCurveAudit:raw=>({exact:raw,curved:Math.round(raw)})},
-    state:{consensusComposite:{byId,detailsById},rankings:{'FantasyPros':{updated:'2026-11-10T00:00:00.000Z'},'KTC':{updated:'2026-01-01T00:00:00.000Z'}},players:Object.fromEntries(rows.map(r=>[r.id,{age:r.age??null}]))},groupPos:x=>x.pos,
+    state:{consensusComposite:{byId,detailsById},rankings:{'FantasyPros':{updated:'2026-11-10T00:00:00.000Z'},'KTC':{updated:'2026-01-01T00:00:00.000Z'}},players:Object.fromEntries(rows.map(r=>[r.id,{age:r.age??null,years_exp:r.yearsExp??null}]))},groupPos:x=>x.pos,
     masterRankings:()=>master,ensureMaster:()=>master,masterRankCache:null,
     playerRankValue:()=>({}),baseValue:()=>0,playerName:()=>'',pickValue:()=>30,
     valueCache:new Map(),fitCache:new Map(),stageCache:new Map()};
@@ -27,7 +27,10 @@ test('every covered offensive position uses the consensus-first terminal, IDP re
   const {rows}=fixture(inputs),byId=Object.fromEntries(rows.map(r=>[r.x.id,r]));
   for(const id of ['q','r','w','t']){
     assert.equal(byId[id].production.offenseConsensusAnchorV50,true);
-    assert.equal(byId[id].production.modelWeights.consensus,.70);
+    assert.equal(byId[id].production.modelWeights.consensus,.60);
+    assert.equal(byId[id].production.modelWeights.scoringLookback,.23);
+    assert.equal(byId[id].production.modelWeights.scarcityAndOtherContext,.12);
+    assert.equal(byId[id].production.modelWeights.ageContext,.05);
     const c=inputs.find(r=>r.id===id).c;
     assert.ok(byId[id].value>=c*.89&&byId[id].value<=c*1.13);
   }
@@ -107,4 +110,63 @@ test('source recency audit uses actual snapshot updated field, not guessed refre
   assert.equal(p.consensusSourcesOlderThan30DaysV50,1);
   assert.equal(p.consensusSnapshotsV50.find(x=>x.source==='FantasyPros').snapshotUpdatedAt,'2026-11-10T00:00:00.000Z');
   assert.equal(p.consensusSnapshotsV50.find(x=>x.source==='No timestamp').ageDays,null);
+});
+
+test('all four offense positions use experience-adjusted development, not named-player exceptions',()=>{
+ const rows=['QB','RB','WR','TE'].flatMap(pos=>[
+  row(pos+'-early',pos,700,3,750,{age:23,yearsExp:2,ageFactor:1.05}),
+  row(pos+'-late',pos,700,3,750,{age:33,yearsExp:11,ageFactor:.92})]);
+ const byId=Object.fromEntries(fixture(rows).rows.map(z=>[z.x.id,z]));
+ for(const pos of ['QB','RB','WR','TE']){
+  const early=byId[pos+'-early'],late=byId[pos+'-late'];
+  assert.ok(early.production.dynastyDevelopmentV50.factor>late.production.dynastyDevelopmentV50.factor,pos);
+  assert.ok(early.value>=late.value,pos+' young with equal verified market/scoring must not trail late career');
+  assert.equal(early.production.modelWeights.consensus,.60);
+  assert.equal(late.production.modelWeights.ageContext,.05);
+ }
+});
+test('positive career-stage projections require evidence; missing age or experience remains conservative',()=>{
+ const inputs=[
+  row('unproven','WR',720,0,null,{age:22,yearsExp:0,ageFactor:1.07}),
+  row('verified','WR',720,3,720,{age:22,yearsExp:2,ageFactor:1.07}),
+  row('unknown','WR',720,0,null,{age:null,yearsExp:null,ageFactor:1}),
+  row('veteran','WR',720,3,720,{age:34,yearsExp:12,ageFactor:.92})
+ ];
+ const z=Object.fromEntries(fixture(inputs).rows.map(x=>[x.x.id,x]));
+ const u=z.unproven.production.dynastyDevelopmentV50,v=z.verified.production.dynastyDevelopmentV50;
+ assert.ok(u.stageAdjustment>0&&u.stageAdjustment<v.stageAdjustment,'positive projection must be evidence-shrunk');
+ assert.equal(z.unknown.production.dynastyDevelopmentV50.factor,1);
+ assert.ok(z.veteran.production.dynastyDevelopmentV50.stageAdjustment<0);
+ assert.ok(u.factor<=1.12&&u.factor>=.86);
+});
+test('missing dynasty source and verified coverage fallback keep exact previous value',()=>{
+ const {sandbox}=fixture([row('missing','TE',null,4,900,{priorValue:377,yearsExp:2})]);
+ assert.equal(sandbox.masterRankings()[0].value,377);
+ const covered={x:{id:'has-slot',pos:'RB'},value:455,coverageGate384:true,production:{ageFactor:1}};
+ assert.equal(sandbox.window.offenseConsensusAnchorV50.rebuild(covered),covered);
+});
+
+test('established production premiums remain subordinate to sourced dynasty consensus',()=>{
+ const rows=[
+  row('emerging','WR',716,1,790,{age:22,yearsExp:0,ageFactor:1.07,context:795,rank:88,
+   sources:['FantasyPros','DraftSharks','The IDP Show Combined Offense','KTC','FanRanked']}),
+  row('veteran','WR',693,4,1075,{age:26,yearsExp:3,ageFactor:1.04,context:717,rank:98,
+   sources:['FantasyPros','DraftSharks','The IDP Show Combined Offense','KTC','FanRanked']})
+ ];
+ const {rows:actual,sandbox}=fixture(rows);
+ const m=Object.fromEntries(actual.map(z=>[z.x.id,z]));
+ assert.ok(m.emerging.value>m.veteran.value,'confirmed higher 5-source dynasty consensus should not be overturned solely by 4-year scoring premium');
+ assert.equal(sandbox.window.offenseConsensusAnchorV50.production(693,{qualifyingSeasons:4,value:1075}).value,693*1.2);
+ assert.equal(sandbox.window.offenseConsensusAnchorV50.production(693,{qualifyingSeasons:2,value:1075}).value,693*1.28);
+ assert.equal(sandbox.window.offenseConsensusAnchorV50.production(693,{qualifyingSeasons:0,value:1075}).value,693);
+});
+test('offense calibrated three-year cap applies equally to all QB RB WR TE and does not disturb downside',()=>{
+ for(const pos of ['QB','RB','WR','TE']){
+  const {rows}=fixture([row(pos,pos,800,3,5000,{age:26,yearsExp:4})]);
+  assert.equal(rows[0].production.effectiveScoringValue,960);
+ }
+ const {sandbox}=fixture([]);
+ const p=sandbox.window.offenseConsensusAnchorV50.production;
+ assert.equal(p(800,{qualifyingSeasons:4,value:0}).value,576);
+ assert.equal(p(800,{qualifyingSeasons:1,value:0}).value,800*(1-.12));
 });

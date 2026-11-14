@@ -10,7 +10,7 @@ function simulate({complete=true,players={},current={},assets=[],consensus={}}={
  const sandbox={state,groupPos:x=>['LB','DL','DT','DE','CB','DB','S','EDGE'].includes(state.players?.[x.id]?.position)?'IDP':'WR',
   statObj24:x=>x?.stats||x,games24:x=>Number((x?.stats||x)?.gp)||0,
   statNumber24:(x,key)=>Number(x?.[key])||0,Number,Object,Array,String,Set};
- return runInNewContext(src.slice(start,end)+'\nuniverse24()',sandbox).map(x=>({id:String(x.id),owner:x.owner}));
+ return Array.from(runInNewContext(src.slice(start,end)+'\nuniverse24()',sandbox),x=>({id:String(x.id),owner:x.owner}));
 }
 const player=(position,active=true)=>({position,active,fantasy_positions:[position]});
 test('qualified active IDP with verified scoring remains valued when every consensus source omits them',()=>{

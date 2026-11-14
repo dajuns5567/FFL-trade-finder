@@ -81,8 +81,20 @@ function realScore24(id,kind){
  const premiumPpg=kind==='idp'?calcSamples.reduce((s,x)=>s+(x.premiumPpg||0)*x.calcWeight,0)/den:0;
  // Confidence continues to use actual evidence coverage. Effective current share is measured against
  // the same denominator actually used by scoring, not merely the sum of available samples.
- const confidence=seasonConfidence24(historical.length,currentSample,evidenceCoverage),currentEffectiveShare=currentSample&&scheduledDen>0?currentAssigned/scheduledDen:0,currentPlannedShare=plannedWeight>0?currentAssigned/plannedWeight:0;
- return{seasons:samples.length,historicalSeasons:historical.length,ppg,premiumPpg,confidence,weightCoverage:evidenceCoverage,calculationWeight:calcWeight,plannedWeight,currentAssignedWeight:currentAssigned,currentPlannedShare,currentEffectiveShare,weightAmplification:currentPlannedShare>0?currentEffectiveShare/currentPlannedShare:1,samples,weightPlan:plan,idpNoGameHistoricalInvariant:kind==='idp'&&plan.mode==='in-season'&&!currentSample};
+ // An established IDP rookie with verified current-season games cannot be
+ // evaluated as though only 10–20% of a season was ever played. Make evidence
+ // confidence accumulate continuously with qualified games, but do not change
+ // the valuation-weighted PPG denominator or the Week-1/one-game behavior.
+ // No prior seasons / no games => no invented production uplift.
+ const qualifiedCurrentGames=Number(currentSample?.games)||0;
+ const currentOnlyIdp=kind==='idp'&&currentSample&&historical.length===0;
+ const verifiedRookieCoverage=currentOnlyIdp?clamp24(0,(qualifiedCurrentGames-1)/13,1):0;
+ const evidenceConfidenceFloor=verifiedRookieCoverage*.72;
+ const confidence=currentOnlyIdp?
+  Math.max(seasonConfidence24(historical.length,currentSample,evidenceCoverage),evidenceConfidenceFloor):
+  seasonConfidence24(historical.length,currentSample,evidenceCoverage);
+ const currentEffectiveShare=currentSample&&scheduledDen>0?currentAssigned/scheduledDen:0,currentPlannedShare=plannedWeight>0?currentAssigned/plannedWeight:0;
+ return{seasons:samples.length,historicalSeasons:historical.length,ppg,premiumPpg,confidence,weightCoverage:evidenceCoverage,calculationWeight:calcWeight,plannedWeight,currentAssignedWeight:currentAssigned,currentPlannedShare,currentEffectiveShare,weightAmplification:currentPlannedShare>0?currentEffectiveShare/currentPlannedShare:1,verifiedRookieCoverage,evidenceConfidenceFloor,samples,weightPlan:plan,idpNoGameHistoricalInvariant:kind==='idp'&&plan.mode==='in-season'&&!currentSample};
 }
 function percentile24(arr,x){if(!arr.length)return.5;const a=arr.slice().sort((m,n)=>m-n);let below=0,equal=0;for(const v of a){if(v<x)below++;else if(v===x)equal++}return clamp24(.01,(below+.5*equal)/a.length,.99)}
 let distCache24=null,distStatsRef24=null,distPlanKey24='';

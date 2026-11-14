@@ -81,8 +81,8 @@ test('Week 9 read-time correction is restricted to the PR 453 preview and never 
  assert.ok(start>=0&&end>start);
  const body=hub.slice(start,end);
  assert.match(body,/isLockedInquirerEdition\(v,season,week\)/);
- assert.match(body,/deploy-preview-453--precious-dango-fb4633\\.netlify\\.app/);
- assert.match(body,/deploy-preview-455--precious-dango-fb4633\\.netlify\\.app/);
+ assert.ok(body.includes('deploy-preview-453--precious-dango-fb4633.netlify.app'));
+ assert.ok(body.includes('deploy-preview-455--precious-dango-fb4633.netlify.app'));
  assert.match(body,/Number\(season\)===2026&&Number\(week\)===9/);
  assert.match(body,/structuredClone\(v\)/);
  assert.match(body,/groundForwardRecapTeamAttribution/);

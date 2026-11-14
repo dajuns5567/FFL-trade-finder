@@ -20,4 +20,4 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: node scripts/audit-idp-20-45-35.mjs
         env:
-          IDP_AUDIT_URL: https://deploy-preview-460--precious-dango-fb4633.netlify.app
+          IDP_AUDIT_URL: https://deploy-preview-462--precious-dango-fb4633.netlify.app

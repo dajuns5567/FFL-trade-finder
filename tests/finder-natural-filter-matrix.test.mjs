@@ -40,7 +40,7 @@ function harness({rosterSize=18,mode='balanced',tier='neutral',position='ANY',se
  vm.runInNewContext(maxCode,ctx,{filename:'trade-specific-max-value-v279.js'});
  vm.runInNewContext(ordinaryCode,ctx,{filename:'trade-specific-player-v232.js'});
  vm.runInNewContext(routerCode,ctx,{filename:'trade-specific-blank-router-v325.js'});
- return {win,doc,elements,boxes,jt,getYields:()=>yieldCount};
+ return {win,doc,ctx,elements,boxes,jt,getYields:()=>yieldCount};
 }
 
 test('all targeted filter families, intents, manual/alias modes and position choices terminate without a stuck searching state',async()=>{
@@ -96,4 +96,24 @@ test('regular non-targeted searches still cap blank-package generation and yield
  assert.match(fullFinder,/if\(\+\+steps%2===0\)await yieldUI\(\)/);
  assert.match(fullFinder,/if\(token!==runToken\)return\[\]/);
  assert.match(routerCode,/const api=mode==='value'\?window\.tradeSpecificMaxValueV279:window\.tradeSpecificPlayerV232/);
+});
+
+test('ordinary Finder handles 36 realistic untargeted permutations including full Select All and manual additions',async()=>{
+ let completed=0;
+ for(const mode of ['balanced','need','value'])
+  for(const tier of ['neutral','up','down','draft'])
+   for(const position of ['ANY','WR','IDP']){
+    const selected=completed%2===1,addAssets=selected&&completed%3===0;
+    const f=harness({rosterSize:14,mode,tier,position,selected,alias:!selected,addAssets,target:false});
+    vm.runInNewContext(fullFinder,f.ctx,{filename:'trade-finder-v256-compiled.js'});
+    const results=await Promise.race([
+      f.win.tradeFinderV168.generateAsync(0),
+      new Promise((_,reject)=>setTimeout(()=>reject(Error('untargeted Finder stalled '+JSON.stringify({mode,tier,position,selected,addAssets}))),12000))
+    ]);
+    assert.ok(Array.isArray(results));
+    assert.ok(results.length<=250);
+    assert.ok(results.every(row=>row.give?.length&&row.recv?.length&&Number(row.other)===2));
+    completed++;
+   }
+ assert.equal(completed,36);
 });

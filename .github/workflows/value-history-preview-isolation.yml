@@ -7,6 +7,7 @@ on:
       - 'netlify/functions/value-history.mjs'
       - 'tests/value-history-preview-isolation.test.mjs'
       - 'scripts/archive-value-history.mjs'
+      - 'scripts/value-history-headless-refresh.mjs'
       - 'scripts/value-history-snapshot-integrity.mjs'
       - 'tests/value-history-snapshot-source-stability.test.mjs'
       - '.github/workflows/value-history-preview-isolation.yml'
@@ -29,6 +30,7 @@ jobs:
           node --check value-history-v276.js
           node --check netlify/functions/value-history.mjs
           node --check scripts/archive-value-history.mjs
+          node --check scripts/value-history-headless-refresh.mjs
           node --check scripts/value-history-snapshot-integrity.mjs
       - name: Test Deploy Preview history write isolation
         run: node --test tests/value-history-preview-isolation.test.mjs tests/value-history-snapshot-source-stability.test.mjs

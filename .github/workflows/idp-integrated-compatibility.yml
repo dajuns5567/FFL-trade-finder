@@ -9,6 +9,7 @@ on:
       - 'valuation-idp-v25-perf.js'
       - 'netlify/functions/consensus-composite-v3.mjs'
       - 'tests/idp-rookie-scoring-display.test.mjs'
+      - 'tests/idp-scored-universe-retention.test.mjs'
       - 'tests/idp-dynasty-development.test.mjs'
       - '.github/workflows/idp-integrated-compatibility.yml'
 permissions:
@@ -28,4 +29,4 @@ jobs:
           node --check netlify/functions/consensus-composite-v3.mjs
           node --check ui-player-values-v139.js
       - name: IDP identity, population scoring, development and audited weighting
-        run: node --test tests/idp-rookie-scoring-display.test.mjs tests/idp-dynasty-development.test.mjs tests/idp-20-45-35-calibration.test.mjs tests/idp-valuation-refresh-contract.test.mjs tests/consensus-composite-v3.test.mjs
+        run: node --test tests/idp-rookie-scoring-display.test.mjs tests/idp-scored-universe-retention.test.mjs tests/idp-dynasty-development.test.mjs tests/idp-20-45-35-calibration.test.mjs tests/idp-valuation-refresh-contract.test.mjs tests/consensus-composite-v3.test.mjs

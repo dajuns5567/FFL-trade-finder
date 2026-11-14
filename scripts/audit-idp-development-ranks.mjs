@@ -20,12 +20,15 @@ try{
   const result=await page.evaluate(ids=>{
    try{window.fllStateBridgeV141?.syncState?.()}catch{}
    const rows=window.ensureMaster(),byId=new Map(rows.map((r,i)=>[String(r.x?.id),{...r,modelOverallRank:i+1}]));
+   const norm=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+   const nameCounts=new Map();
+   for(const p of Object.values(window.state.players||{})){const k=norm(p?.full_name);if(k)nameCounts.set(k,(nameCounts.get(k)||0)+1)}
    return {generatedAt:new Date().toISOString(),week:window.state?.sleeperHistory?.completedWeek??null,
     consensusStatus:window.__fllConsensusRefresh?.successful,
     namesakes:Object.entries(window.state.players||{}).filter(([id,p])=>String(p?.full_name||'').toLowerCase()==='chris jones').map(([id,p])=>({id,position:p.position,team:p.team,consensus:window.state.consensusComposite?.byId?.[id]??null,modelValue:byId.get(id)?.value??null})),
     population:rows.filter(z=>z.production?.leagueContext&&z.x?.type==='player').map(z=>{
       const id=String(z.x.id),p=window.state.players?.[id]||{},m=z.production?.m||{};
-      return{id,name:p.full_name||id,position:p.position,consensus:window.state.consensusComposite?.byId?.[id]??null,ppg:m.ppg??null,
+      return{id,name:p.full_name||id,namePeerCount:nameCounts.get(norm(p.full_name))||0,position:p.position,consensus:window.state.consensusComposite?.byId?.[id]??null,ppg:m.ppg??null,
         confidence:m.confidence??null,value:Number(z.value),qualifyingSeasons:z.production?.a?.qualifyingSeasons??null};
     }),
     rows:ids.map(id=>{
@@ -66,11 +69,15 @@ try{
      oldConfidence:prior?.confidence??null};
  });
  const changedInputs=populationChanges.filter(x=>!x.sameConsensus||!x.samePpg);
+ const unexpectedInputChanges=changedInputs.filter(x=>!x.samePpg||!x.sameConsensus&&x.namePeerCount<=1);
+ const currentIds=new Set(current.population.map(x=>x.id));
+ const removedRows=old.population.filter(x=>!currentIds.has(x.id));
  const comparable=populationChanges.filter(x=>x.oldValue!=null);
  const abs=comparable.map(x=>Math.abs(x.changePct)).sort((a,b)=>a-b);
  const q=p=>abs[Math.floor((abs.length-1)*p)]??0;
  const populationAudit={currentCount:current.population.length,previousCount:old.population.length,missingPrevious:current.population.length-comparable.length,
-   inputMismatches:changedInputs.length,examplesOfMismatches:changedInputs.slice(0,8),
+   identitySpecificConsensusChanges:changedInputs.filter(x=>!x.sameConsensus&&x.namePeerCount>1).length,
+   unexpectedInputChanges:unexpectedInputChanges.length,examplesOfMismatches:changedInputs.slice(0,8),removedRows:removedRows.slice(0,25),
    medianAbsoluteChangePct:q(.5),p95AbsoluteChangePct:q(.95),maxAbsoluteChangePct:abs.at(-1)||0,
    overTenPct:comparable.filter(x=>Math.abs(x.changePct)>10).length,
    overThirtyPct:comparable.filter(x=>Math.abs(x.changePct)>30).length,
@@ -80,5 +87,5 @@ try{
    highestFallers:[...comparable].sort((a,b)=>a.changePct-b.changePct).slice(0,10)};
  console.log('IDP_DEVELOPMENT_LIVE_RANKS '+JSON.stringify({inputsComparable:mismatchedInputs.length===0,mismatchedInputs,populationAudit,rows,old:{at:old.generatedAt,week:old.week,sourceStatus:old.consensusStatus,errors:old.errors,namesakes:old.namesakes},current:{at:current.generatedAt,week:current.week,sourceStatus:current.consensusStatus,errors:current.errors,namesakes:current.namesakes}},null,2));
  if(old.errors.length||current.errors.length)throw Error('Browser errors');
- if(mismatchedInputs.length||changedInputs.length)throw Error('Ranking observations used changed source/scoring inputs');
+ if(mismatchedInputs.length||unexpectedInputChanges.length)throw Error('Unexplained change to scoring or a uniquely named player’s source consensus');
 }finally{await browser.close()}

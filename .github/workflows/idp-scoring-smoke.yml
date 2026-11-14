@@ -10,6 +10,9 @@ on:
       - 'netlify/functions/consensus-composite-v3.mjs'
       - 'tests/idp-valuation-refresh-contract.test.mjs'
       - 'scripts/import-sleeper-history.mjs'
+      - 'scripts/audit-qualified-player-games.mjs'
+      - 'scripts/qualified-player-game-audit-finality.mjs'
+      - 'tests/sleeper-idp-audit-finality.test.mjs'
       - 'sleeper-history-client-v22.js'
       - 'netlify/functions/ppr-scoring.mjs'
       - 'netlify/functions/history-weights.mjs'
@@ -27,6 +30,8 @@ jobs:
           node-version: '20'
       - name: PPG and game qualification
         run: node --test tests/ppr-history.test.mjs
+      - name: Sleeper finalized-week scoring audit regression
+        run: node --test tests/sleeper-idp-audit-finality.test.mjs
       - name: IDP Week 1 weighting invariants
         run: node --test tests/idp-week1-weighting.test.mjs
       - name: IDP weekly refresh and rank-stability contract

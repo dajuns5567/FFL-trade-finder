@@ -58,12 +58,7 @@ test('IDP display labels actual Sleeper PPG separately from model valuation PPG'
  const state={players};
  const ctx={window,state,groupPos:x=>'IDP',rawScore:()=>({}),playerName:id=>players[id].full_name,
   normText:x=>String(x).toLowerCase(),Number,Object,String,Map};
- vm.runInNewContext(source+String.raw`
- const real=historyLabel('13363');
- const chris=idpIdentityLabel('1430');
- const kc=idpIdentityLabel('3558');
- [real,chris,kc];
- `,ctx);
+
  const out=vm.runInNewContext(source+"\n[historyLabel('13363'),idpIdentityLabel('1430'),idpIdentityLabel('3558')]",ctx);
  assert.match(out[0],/21\.4 actual 2026 PPG \(8 qualifying games\)/);
  assert.match(out[0],/7\.2 valuation-weighted PPG/);

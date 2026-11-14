@@ -4,6 +4,9 @@
 // delegated to the existing model unchanged. Never rewrite historical values.
 const API='/.netlify/functions/pick-order-v527';
 const CHECK_MS=5*60*1000,CACHE_KEY='fleeced-verified-pick-order-5050-v527';
+// Existing V92 future-year discount: a pick one draft further out is worth
+// at most 88% of its otherwise equivalent slot in the preceding draft.
+const FUTURE_YEAR_DISCOUNT_V92=.88;
 const prior90=window.draftPickProjection90,prior92=window.draftPickProjection92;
 const norm=window.tradeValueNormalizationV139||window.tradeValueNormalizationV130;
 if(typeof prior90!=='function'||typeof prior92!=='function'||!norm||typeof norm.pickContext!=='function')return;
@@ -67,6 +70,33 @@ function orderedPickValue(x){
       const mapped=new Map();
       for(const x of ranked)mapped.set(originalRoster(x.a),values[Number(x.t.projected_slot)-1]);
       valueOrderCache.set(k,mapped);
+    }
+    // V527 independently remaps each season/round to its 50/50 slots. That
+    // accidentally erased V92's time discount when later years contained
+    // stale flat source values. Apply the existing V92 ceiling per *same*
+    // projected slot, never raising a source value or changing pick ORDER.
+    // Incomplete cohorts stay on the original conservative source fallback.
+    const byRound=new Map();
+    for(const [key,mapped] of valueOrderCache){
+      const [season,round]=key.split('|').map(Number);
+      if(!Number.isInteger(season)||!Number.isInteger(round))continue;
+      if(!byRound.has(round))byRound.set(round,[]);
+      byRound.get(round).push({season,mapped});
+    }
+    for(const seasons of byRound.values()){
+      seasons.sort((a,b)=>a.season-b.season);
+      for(let i=1;i<seasons.length;i++){
+        const prev=seasons[i-1],later=seasons[i];
+        const years=later.season-prev.season;
+        if(years<1)continue;
+        const rate=Math.pow(FUTURE_YEAR_DISCOUNT_V92,years);
+        for(const [rid,value] of later.mapped){
+          const previous=prev.mapped.get(rid);
+          if(!(previous>0)||!(value>0))continue;
+          const ceiling=Math.max(5,Math.floor(previous*rate/5)*5);
+          later.mapped.set(rid,Math.min(value,ceiling));
+        }
+      }
     }
   }
   return valueOrderCache.get(pickOrderKey(x))?.get(originalRoster(x))??null;

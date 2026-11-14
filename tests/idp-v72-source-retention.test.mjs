@@ -52,3 +52,28 @@ test('downstream original V72 curve and role shields remain present and only IDP
  assert.match(source,/idpV72PreSourceRetention:compressed/);
  assert.match(source,/idpV72SourceRetentionBonus:retention\.bonus/);
 });
+
+test('V72 final full precision includes the verified retention bonus consumed by global ranking',()=>{
+ assert.match(source,/idpV72PreSourceRetentionExact:baseline\*servedFactor/);
+ assert.match(source,/idpOverallTradeCurveExactV72:baseline\*servedFactor\+retention\.bonus/);
+ const precisionSource=readFileSync(new URL('../combined-market-precision-v386.js',import.meta.url),'utf8');
+ assert.match(precisionSource,/const exact=num\(p\.idpOverallTradeCurveExactV72\)/);
+ assert.match(precisionSource,/\.sort\(\(a,b\)=>Number\(b\.marketPrecisionValueV386\)-Number\(a\.marketPrecisionValueV386\)/);
+});
+test('final master ranks reflect the IDP bonus, while the underlying V72 pre-bonus evidence stays inspectable',()=>{
+ const precisionSource=readFileSync(new URL('../combined-market-precision-v386.js',import.meta.url),'utf8');
+ const originalRows=[
+  {x:{type:'player',id:'other'},value:439,production:{idpOverallTradeCurveExactV72:439.5}},
+  {x:{type:'player',id:'turner'},value:446,production:{idpV72PreSourceRetention:430,idpV72PreSourceRetentionExact:429.8,idpV72SourceRetentionBonus:16,idpOverallTradeCurveExactV72:445.8}},
+  {x:{type:'player',id:'another'},value:432,production:{idpOverallTradeCurveExactV72:432.1}}
+ ];
+ const output={masterRankings:()=>originalRows,ensureMaster:()=>originalRows,window:{},Number,Math,Set};
+ const sandbox={...output,masterRankCache:null,valueCache:new Map(),fitCache:new Map(),stageCache:new Map(),
+  groupPos:()=> 'IDP'};
+ vm.runInNewContext(precisionSource,sandbox);
+ const result=sandbox.masterRankings();
+ assert.deepEqual(Array.from(result,x=>x.x.id),['turner','other','another']);
+ assert.equal(result[0].value,446);
+ assert.equal(result[0].marketPrecisionValueV386,445.8);
+ assert.equal(result[0].production.idpV72PreSourceRetention,430);
+});

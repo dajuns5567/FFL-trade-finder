@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {rows,qualifiesCurrentSeasonGame,aggregateWeeks,leagueFantasyPoints} from '../netlify/functions/ppr-scoring.mjs';
+import {currentSeasonAuditGate} from './qualified-player-game-audit-finality.mjs';
 
 const ROOT=path.resolve(process.env.SLEEPER_DATA_DIR||'data/sleeper');
 const years=[2026,2025,2024,2023];
@@ -18,6 +19,7 @@ const manifest=await read(path.join(ROOT,'manifest.json'));
 const scoring=manifest?.currentLeagueScoringSettings||{};
 let players={};try{players=await read(path.join(ROOT,'players.json'))}catch{}
 if(!Object.keys(players).length)throw new Error('players.json is required and must be non-empty for an independent qualification audit');
+const currentGate=currentSeasonAuditGate(manifest);
 
 const report={
  summary:{playerGames:0,qualified:0,rejected:0,nonPlayerRowsIgnored:0,offense:{playerGames:0,qualified:0,rejected:0,aggregateMismatches:0},idp:{playerGames:0,qualified:0,rejected:0,aggregateMismatches:0},aggregateMismatches:0},
@@ -31,10 +33,15 @@ for(const year of years){
  const counts={offense:{playerGames:0,qualified:0,rejected:0},idp:{playerGames:0,qualified:0,rejected:0},nonPlayerRowsIgnored:0};
 
  for(let week=1;week<=18;week++){
+  // Current-year importer only includes teams whose NFL games are final and
+  // whose ENTIRE fantasy week is complete. Raw future/partial game stats are
+  // intentionally not valued, and must not be audited as if they were stored.
+  if(year===Number(manifest.currentSeason)&&week>currentGate.completedWeek)continue;
   const parsed=rows(weekly?.[week]),teamMax=new Map();
   for(const [id,s] of parsed){
    if(!isPlayerRow(id,players)){counts.nonPlayerRowsIgnored++;continue}
    const meta=players[id],team=normalizeTeamCode(meta.team),phase=playerPhase(meta),n=snapCount(s,phase);
+   if(year===Number(manifest.currentSeason)&&!currentGate.eligible(week,team))continue;
    phaseById[id]=phase;
    if(!team||n==null)continue;
    const k=team+'|'+phase;teamMax.set(k,Math.max(num(teamMax.get(k)),n));
@@ -43,6 +50,7 @@ for(const year of years){
   for(const [id,s] of parsed){
    if(!isPlayerRow(id,players))continue;
    const meta=players[id],team=normalizeTeamCode(meta.team),phase=phaseById[id]||playerPhase(meta);
+   if(year===Number(manifest.currentSeason)&&!currentGate.eligible(week,team))continue;
    counts[phase==='defense'?'idp':'offense'].playerGames++;
    const q=qualifiesCurrentSeasonGame(s,{phase,teamSnapMax:num(teamMax.get(team+'|'+phase)),scoringSettings:scoring});
    if(q.qualified){

@@ -4,6 +4,7 @@ on:
     paths:
       - 'value-history-v276.js'
       - 'tests/trade-history-ranked-unrostered-hindsight.test.mjs'
+      - 'tests/trade-history-original-pick-projection.test.mjs'
       - 'tests/trade-history-hindsight-live-sync.test.mjs'
       - '.github/workflows/trade-history-hindsight-consistency.yml'
   push:
@@ -23,4 +24,4 @@ jobs:
       - name: Check source syntax and Hindsight/History regression contracts
         run: |
           node --check value-history-v276.js
-          node --test tests/trade-history-ranked-unrostered-hindsight.test.mjs tests/trade-history-hindsight-live-sync.test.mjs tests/trade-history-live-sleeper.test.mjs tests/value-history-all-time-milestones.test.mjs tests/value-history-dense-charts.test.mjs
+          node --test tests/trade-history-original-pick-projection.test.mjs tests/trade-history-ranked-unrostered-hindsight.test.mjs tests/trade-history-hindsight-live-sync.test.mjs tests/trade-history-live-sleeper.test.mjs tests/value-history-all-time-milestones.test.mjs tests/value-history-dense-charts.test.mjs

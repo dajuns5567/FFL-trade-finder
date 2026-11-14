@@ -1,6 +1,9 @@
 (()=>{
 'use strict';
 const API='/.netlify/functions/value-history',SIGNAL_API='/.netlify/functions/player-signals';
+// Experimental deploy previews may read archival history but must never
+// persist their branch-specific ranks into the canonical shared timeline.
+const isValueHistoryDeployPreview=()=>/^deploy-preview-\d+--/i.test(location.hostname);
 let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,marketInsightsCache=null,marketSignalCache=null,marketInsightsPending=null,marketSignalsPending=null,marketIntelPeriod='7D',marketVolatilityPool='ALL',currentPlayerId=null,trackedTeamId=null,playerHistoryTeamId=null,currentView='market',marketSort={key:'value',dir:-1},teamNetSort={key:'value',dir:-1},teamAttributionPeriod='7D',tradeHistoryCache=null,tradeHistoryCacheAt=0,tradeTeamFilter='',tradeYearFilter='',tradeMonthFilter='',marketPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D'},teamPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D',posRankRisers:'30D',posRankFallers:'30D'},marketPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL'},teamPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL',posRankRisers:'ALL',posRankFallers:'ALL'},playerScoringCache=new Map(),playerScoringPending=new Map(),teamNetCache=new Map(),tradeDetailState=new Map();
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
@@ -535,6 +538,7 @@ function snapshotSourceFromUrl(){
   try{return new URLSearchParams(location.search).get('vh_source')==='scheduled'?'scheduled':'page-load'}catch{return'page-load'}
 }
 async function recordSnapshot(source=pendingSnapshotSource){
+  if(isValueHistoryDeployPreview())return false;
   try{
     if(!snapshotPreconditions()||!scheduledRefreshReady()){scheduleSnapshot(2000,source);return false}
     const firstRows=currentRows();
@@ -565,7 +569,7 @@ async function recordSnapshot(source=pendingSnapshotSource){
     scheduleSnapshot(3000,source);return false
   }
 }
-function scheduleSnapshot(delay=60000,source=pendingSnapshotSource){pendingSnapshotSource=source;clearTimeout(snapshotTimer);snapshotTimer=setTimeout(()=>{if('requestIdleCallback'in window)requestIdleCallback(()=>recordSnapshot(source),{timeout:5000});else recordSnapshot(source)},delay)}
+function scheduleSnapshot(delay=60000,source=pendingSnapshotSource){if(isValueHistoryDeployPreview())return;pendingSnapshotSource=source;clearTimeout(snapshotTimer);snapshotTimer=setTimeout(()=>{if('requestIdleCallback'in window)requestIdleCallback(()=>recordSnapshot(source),{timeout:5000});else recordSnapshot(source)},delay)}
 
 function initUI(){
   if(uiReady)return;uiReady=true;
@@ -1978,10 +1982,18 @@ function renderPlayerProfile(id,allPts,period='ALL'){
   const box=document.getElementById('vhContent');if(!box)return;
   if(!allPts.length){box.innerHTML=`<div class="vh-profile-back"><button class="secondary small" data-vh-dashboard>← Market dashboard</button></div><div class="vh-card"><div class="vh-empty">No historical observations recorded yet for ${esc(playerName(id))}. Their history begins with the first completed snapshot in which Sleeper makes them available to the current valuation database.</div></div>`;return}
   const meta=livePlayerMeta(id),pts=periodPoints(allPts,period),first=pts[0],last=pts[pts.length-1],delta=Number(last.value)-Number(first.value),pct=Number(first.value)?delta/Number(first.value)*100:0,vals=pts.map(p=>Number(p.value)),pmin=Math.min(...vals),pmax=Math.max(...vals),allVals=allPts.map(p=>Number(p.value)),allMin=Math.min(...allVals),allMax=Math.max(...allVals),bestOverall=Math.min(...allPts.map(p=>Number(p.overall))),bestPos=Math.min(...allPts.map(p=>Number(p.posRank))),lowestPos=Math.max(...allPts.map(p=>Number(p.posRank))),highPoint=allPts.find(p=>Number(p.value)===allMax),lowPoint=allPts.find(p=>Number(p.value)===allMin),bestOverallPoint=allPts.find(p=>Number(p.overall)===bestOverall),scoring=playerScoringCache.get(String(id))||null,scoringLoading=!playerScoringCache.has(String(id));
+  const archivedLast=allPts[allPts.length-1],previewRankMismatch=isValueHistoryDeployPreview()&&(
+    (meta.overall!=null&&Number(meta.overall)!==Number(archivedLast.overall))||
+    (meta.posRank!=null&&Number(meta.posRank)!==Number(archivedLast.posRank))||
+    (meta.value>0&&Number(meta.value)!==Number(archivedLast.value)));
+  const previewSnapshotNote=previewRankMismatch?
+    '<div class="notice" role="status">Live Deploy Preview: current value/rank above use this build; charts below show recorded historical snapshots from a different valuation version. Preview ranks are not saved to the canonical history.</div>':
+    isValueHistoryDeployPreview()?'<div class="tiny muted">Historical charts show archived snapshots; this Deploy Preview does not write new observations.</div>':'';
   const latestMs=new Date(allPts[allPts.length-1].t).getTime(),rank30=allPts.filter(p=>new Date(p.t).getTime()>=latestMs-30*86400000),rankBase=rank30[0]||allPts[0],rankLast=rank30[rank30.length-1]||allPts[allPts.length-1],overallMove=Number(rankBase.overall)-Number(rankLast.overall),posMove=Number(rankBase.posRank)-Number(rankLast.posRank);
   const status=document.getElementById('vhStatus');if(status)status.textContent=`Tracked since ${dateShort(allPts[0].t)} • ${fmt(allPts.length)} player observations`;
   box.innerHTML=`
   <div id="vhProfileData" data-points="${esc(JSON.stringify(allPts))}" hidden></div>
+  ${previewSnapshotNote}
   <div class="vh-profile-back"><button class="secondary small" data-vh-dashboard>← Market dashboard</button></div>
   <div class="vh-card">
     <div class="vh-profile-info">

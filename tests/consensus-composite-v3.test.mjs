@@ -257,3 +257,46 @@ test("IDP ranks and valuations still use the exact unmodified IDP aggregation",(
   assert.deepEqual(d.offenseRobustWeights,[]);
   assert.deepEqual(d.offenseOutlierAdjustments,[]);
 });
+
+
+test('same-name IDPs without unique position or team evidence never share a source rank',()=>{
+ const results=[result('IDP publisher','source-idp',[
+  {player:'Chris Jones',rank:4,position:'DL'}
+ ])];
+ const players=[
+  {id:'3558',name:'Chris Jones',positions:['DL'],position:'DT',team:'KC'},
+  {id:'1430',name:'Chris Jones',positions:['DL'],position:'DT',team:null},
+  {id:'5815',name:'Chris Jones',positions:['DB'],position:'CB',team:null}
+ ];
+ const data=buildConsensusComposite(results,players);
+ assert.equal(data.byId['3558'],undefined,'ambiguous DL name must not be assigned by guess');
+ assert.equal(data.byId['1430'],undefined,'inactive same-name DL cannot inherit KC ranking');
+ assert.equal(data.byId['5815'],undefined,'same-name CB must not inherit DL consensus');
+});
+test('same-name IDP with sourced team is assigned only to the single matching Sleeper ID',()=>{
+ const results=[result('IDP publisher','source-idp',[
+  {player:'Chris Jones',rank:4,position:'DT',team:'KC'}
+ ])];
+ const players=[
+  {id:'3558',name:'Chris Jones',positions:['DL'],position:'DT',team:'KC'},
+  {id:'1430',name:'Chris Jones',positions:['DL'],position:'DT',team:null},
+  {id:'5815',name:'Chris Jones',positions:['DB'],position:'CB',team:null}
+ ];
+ const data=buildConsensusComposite(results,players);
+ assert.ok(data.byId['3558']>0,'verified Kansas City IDP retains consensus');
+ assert.equal(data.byId['1430'],undefined);
+ assert.equal(data.byId['5815'],undefined);
+ assert.equal(data.detailsById['3558'].idpIdentityPeerCount,3);
+});
+test('position alone disambiguates different same-name IDP roles without guessing teams',()=>{
+ const results=[result('IDP publisher','source-idp',[
+  {player:'Same Name',rank:11,position:'CB'}
+ ])];
+ const players=[
+  {id:'cb',name:'Same Name',positions:['DB'],position:'CB'},
+  {id:'dt',name:'Same Name',positions:['DL'],position:'DT'}
+ ];
+ const data=buildConsensusComposite(results,players);
+ assert.ok(data.byId.cb>0);
+ assert.equal(data.byId.dt,undefined);
+});

@@ -1,0 +1,33 @@
+name: Combined valuation and history contract (draft only)
+on:
+  pull_request:
+    paths:
+      - 'valuation-offense-v40.js'
+      - 'valuation-idp-v43.js'
+      - 'value-history-v276.js'
+      - 'netlify/functions/value-history.mjs'
+      - 'ui-player-values-v139.js'
+      - 'tests/combined-valuation-history-contract.test.mjs'
+      - '.github/workflows/combined-valuation-history-contract.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cross-subsystem-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax validation
+        run: |
+          node --check valuation-offense-v40.js
+          node --check valuation-idp-v43.js
+          node --check ui-player-values-v139.js
+          node --check value-history-v276.js
+          node --check netlify/functions/value-history.mjs
+      - name: Existing targeted and combined regression suites
+        run: |
+          node --test tests/offense-consensus-anchor-v50.test.mjs tests/idp-20-45-35-calibration.test.mjs tests/idp-dynasty-development.test.mjs tests/idp-rookie-scoring-display.test.mjs tests/idp-v72-source-retention.test.mjs tests/value-history-preview-isolation.test.mjs tests/combined-valuation-history-contract.test.mjs

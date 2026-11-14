@@ -7,11 +7,11 @@ const idp=fs.readFileSync('valuation-idp-v21.js','utf8');
 const ui=fs.readFileSync('ui-player-values-v139.js','utf8');
 const index=fs.readFileSync('index.html','utf8');
 
-function scoreWithCurrentGames(games,kind='idp'){
+function scoreWithCurrentGames(games,kind='idp',actualPpg=21.36875){
  const start=idp.indexOf('function realScore24(id,kind){'),end=idp.indexOf('function percentile24(',start);
  assert.ok(start>=0&&end>start);
  const source=idp.slice(start,end);
- const sample={season:2026,games,ppg:21.36875,premiumPpg:12,
+ const sample={season:2026,games,ppg:actualPpg,premiumPpg:12,
   assignedWeight:.18823529411764706,currentSeason:true};
  const ctx={
   historyPlan24:()=>({mode:'in-season',yearWeights:{2026:sample.assignedWeight,2025:.49607843137254903,2024:.22549019607843138,2023:.09019607843137256}}),
@@ -95,4 +95,47 @@ test('every IDP audit lookup refuses ambiguous Chris Jones names yet accepts exa
  const site=fs.readFileSync('netlify/functions/site-v17.mjs','utf8');
  assert.match(site,/valuation-idp-v25-perf\.js\?v=20261114-idp-identity/,
   'all pages must load the refreshed identity-safe scoring audit');
+});
+
+test('the evidence correction applies to every current-only IDP, not a named player',()=>{
+ // Frozen canonical Sleeper 2026 season sample from sleeper-data branch.
+ // All twelve IDs had 6+ games, >=12 Sleeper IDP PPG, and no 8+ game
+ // qualifying season in 2023, 2024 or 2025 when this audit was collected.
+ const cases=[
+  ['13377',8,185],['13363',8,165],['13453',8,142],
+  ['13379',8,139],['13375',8,136],['13365',8,131],
+  ['13482',9,133],['12588',6,84],['13371',9,117],
+  ['13376',9,115],['13369',9,109],['13508',7,84]
+ ];
+ for(const [id,games,points] of cases){
+  const ppg=points/games;
+  const first=scoreWithCurrentGames(1,'idp',ppg);
+  const actual=scoreWithCurrentGames(games,'idp',ppg);
+  assert.equal(actual.seasons,1,id+' has only current qualifying evidence');
+  assert.equal(actual.historicalSeasons,0,id+' has no invented prior history');
+  assert.ok(actual.confidence>first.confidence,id+' gains confidence as verified games accumulate');
+  assert.ok(actual.confidence>=Math.min(1,(games-1)/13)*.72-1e-10,id+' meets evidence confidence floor');
+  assert.equal(actual.samples[0].ppg,ppg,id+' retains actual game production');
+  assert.equal(actual.ppg,first.ppg,id+' keeps scheduled multi-year scoring denominator');
+  assert.ok(actual.ppg<ppg,id+' distinguishes weighted PPG from true production');
+ }
+});
+test('all current-only IDP rookies share monotone, bounded confidence across a full season',()=>{
+ let prior=0;
+ for(let games=1;games<=18;games++){
+  const current=scoreWithCurrentGames(games);
+  assert.ok(current.confidence>=prior-1e-10,'confidence cannot decrease at '+games+' games');
+  assert.ok(current.confidence<=1,'confidence cannot exceed one at '+games+' games');
+  if(games===1)assert.equal(current.confidence,.19);
+  if(games>=8)assert.ok(current.confidence>.35);
+  assert.equal(current.historicalSeasons,0);
+  prior=current.confidence;
+ }
+});
+test('raising rookie confidence never invents historical seasons or reallocates scheduled weights',()=>{
+ const current=scoreWithCurrentGames(8);
+ assert.equal(current.historicalSeasons,0);
+ assert.equal(current.seasons,1);
+ assert.equal(current.samples.length,1);
+ assert.equal(current.weightAmplification,1);
 });

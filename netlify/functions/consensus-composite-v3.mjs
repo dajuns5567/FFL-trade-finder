@@ -61,7 +61,22 @@ const teamCode=v=>{
 // IDP name collisions are real, e.g. four distinct Sleeper Chris Jones IDs.
 // Never copy a publisher's same-name ranking to every candidate. Position
 // and team (when a source actually supplies it) must identify exactly one.
-function idpOwnershipAllowed(channel,p,peers){
+function idpOwnershipAllowed(channel,p,peers,nearbyPeers=[]){
+ // The IDP publisher alias matcher deliberately accepts compatible first
+ // names (e.g. Jonathan/Jonathon), but that may also map Quincy/Quinnen,
+ // Chris/Christian or Carl/Carlton to an entirely different Sleeper ID.
+ // When multiple distinct defensive players could own the same fuzzy source
+ // row, require an exact canonical publisher name for the target. Do not
+ // duplicate one rank across plausible peers or guess which alias is real.
+ const exactKey=canonical(p.name),first=parts(p.name)[0];
+ const ambiguousFuzzy=(nearbyPeers||[]).some(other=>
+  String(other.id)!==String(p.id)&&canonical(other.name)!==exactKey&&
+  compatibleFirst(first,parts(other.name)[0]));
+ if(ambiguousFuzzy){
+  const exactRows=channel.byCanonical.get(exactKey)||[];
+  const hasExact=exactRows.some(row=>idpPositionMatch(row.position,positionsOf(p)));
+  if(!hasExact)return false;
+ }
  if(peers.length<=1)return true;
  const named=channel.byCanonical.get(canonical(p.name))||[];
  const sourceRows=named.filter(row=>idpPositionMatch(row.position,positionsOf(p)));
@@ -85,7 +100,7 @@ function offenseOwnershipAllowed(channel,p,peers){
   const eligible=peers.filter(peer=>positionsOf(peer).has(rowPos));
   return eligible.length===1&&String(eligible[0].id)===String(p.id);
 }
-export function buildConsensusComposite(results,players){const c=channels(results),counts=new Map(),offenseByCanonical=new Map(),idpByCanonical=new Map();
+export function buildConsensusComposite(results,players){const c=channels(results),counts=new Map(),offenseByCanonical=new Map(),idpByCanonical=new Map(),idpByLast=new Map();
   for(const p of players||[]){
     if(![...positionsOf(p)].some(x=>OFF.has(x)))continue;
     const ck=canonical(p?.name);
@@ -98,9 +113,9 @@ export function buildConsensusComposite(results,players){const c=channels(result
  const hasIdp=[...positions].some(x=>IDP.has(x))||(!hasOff&&positions.size>0);
  if(hasIdp){
   const ck=canonical(p.name);
-  if(ck){const same=idpByCanonical.get(ck)||[];same.push(p);idpByCanonical.set(ck,same)}
+  if(ck){const same=idpByCanonical.get(ck)||[];same.push(p);idpByCanonical.set(ck,same);const last=parts(p.name).at(-1);if(last){const peers=idpByLast.get(last)||[];peers.push(p);idpByLast.set(last,peers)}}
  }
 }const byId={},byName={},detailsById={};for(const p of players||[]){const id=String(p?.id||"").trim(),name=String(p?.name||"").trim(),key=norm(name),positions=positionsOf(p);if(!id||!key)continue;const hasOff=[...positions].some(x=>OFF.has(x));const hasIdp=[...positions].some(x=>IDP.has(x))||(!hasOff&&positions.size>0);const peers=offenseByCanonical.get(canonical(name))||[];
 const o=hasOff?weighted(c.offense,{name,positions},OFF_FLOOR,true,
   channel=>offenseOwnershipAllowed(channel,p,peers)):{rank:null,hits:[]};const d=hasIdp?weighted(c.idp,{name,positions},IDP_FLOOR,false,
-  channel=>idpOwnershipAllowed(channel,p,idpByCanonical.get(canonical(name))||[])):{rank:null,hits:[]};const offenseValue=Number.isFinite(o.rank)?curve(o.rank,OFF_SCALE,OFF_EXP):null,idpValue=Number.isFinite(d.rank)?curve(d.rank,IDP_SCALE,IDP_EXP):null;let value=null,kind="none";if(Number.isFinite(offenseValue)&&Number.isFinite(idpValue)){value=Math.min(Math.round(offenseValue*DUAL_CAP),Math.round(offenseValue+idpValue*DUAL_IDP_SHARE));kind="dual"}else if(Number.isFinite(offenseValue)){value=offenseValue;kind="offense"}else if(Number.isFinite(idpValue)){value=idpValue;kind="idp"}if(!Number.isFinite(value))continue;const detail={id,name,kind,consensusCompositeValue:value,offenseRank:o.rank,idpRank:d.rank,offenseValue,idpValue,offenseSources:o.hits.map(x=>x.source),offenseSourceEvidence:o.hits.map(x=>({source:x.source,rank:x.rank,weight:x.weight,baseWeight:(o.robustWeights||[]).find(a=>a.source===x.source)?.originalWeight??x.weight,outlierProtected:(o.outlierAdjustments||[]).some(a=>a.source===x.source),robustEvaluated:(o.robustWeights||[]).some(a=>a.source===x.source),listed:!String(x.source).endsWith(' (not listed)')})),offenseObservedSourceCount:o.hits.filter(x=>!String(x.source).endsWith(' (not listed)')).length,offenseOutlierAdjustments:o.outlierAdjustments||[],offenseRobustWeights:o.robustWeights||[],idpSources:d.hits.map(x=>x.source),idpIdentityPeerCount:(idpByCanonical.get(canonical(name))||[]).length};byId[id]=value;if(counts.get(key)===1)byName[name.toLowerCase()]=value;detailsById[id]=detail}return{byId,byName,detailsById,sourceCounts:{offense:c.offense.length,idp:c.idp.length},ambiguousNames:[...counts].filter(([,n])=>n>1).map(([k])=>k)}}
+  channel=>idpOwnershipAllowed(channel,p,idpByCanonical.get(canonical(name))||[],idpByLast.get(parts(name).at(-1))||[])):{rank:null,hits:[]};const offenseValue=Number.isFinite(o.rank)?curve(o.rank,OFF_SCALE,OFF_EXP):null,idpValue=Number.isFinite(d.rank)?curve(d.rank,IDP_SCALE,IDP_EXP):null;let value=null,kind="none";if(Number.isFinite(offenseValue)&&Number.isFinite(idpValue)){value=Math.min(Math.round(offenseValue*DUAL_CAP),Math.round(offenseValue+idpValue*DUAL_IDP_SHARE));kind="dual"}else if(Number.isFinite(offenseValue)){value=offenseValue;kind="offense"}else if(Number.isFinite(idpValue)){value=idpValue;kind="idp"}if(!Number.isFinite(value))continue;const detail={id,name,kind,consensusCompositeValue:value,offenseRank:o.rank,idpRank:d.rank,offenseValue,idpValue,offenseSources:o.hits.map(x=>x.source),offenseSourceEvidence:o.hits.map(x=>({source:x.source,rank:x.rank,weight:x.weight,baseWeight:(o.robustWeights||[]).find(a=>a.source===x.source)?.originalWeight??x.weight,outlierProtected:(o.outlierAdjustments||[]).some(a=>a.source===x.source),robustEvaluated:(o.robustWeights||[]).some(a=>a.source===x.source),listed:!String(x.source).endsWith(' (not listed)')})),offenseObservedSourceCount:o.hits.filter(x=>!String(x.source).endsWith(' (not listed)')).length,offenseOutlierAdjustments:o.outlierAdjustments||[],offenseRobustWeights:o.robustWeights||[],idpSources:d.hits.map(x=>x.source),idpIdentityPeerCount:(idpByCanonical.get(canonical(name))||[]).length};byId[id]=value;if(counts.get(key)===1)byName[name.toLowerCase()]=value;detailsById[id]=detail}return{byId,byName,detailsById,sourceCounts:{offense:c.offense.length,idp:c.idp.length},ambiguousNames:[...counts].filter(([,n])=>n>1).map(([k])=>k)}}

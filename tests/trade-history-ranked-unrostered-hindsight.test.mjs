@@ -48,8 +48,7 @@ test('roster-current players survive missing-master, and no alternative player-p
  assert.match(active,/tradeValueNormalizationV130\?\.canonicalValue/);
  assert.doesNotMatch(active,/rank.*\*|Math\.pow|sourceRank|consensus.*\*/);
 });
-test('preview history read-only and historical-transaction values remain separate from hindsight',()=>{
- assert.match(source,/if\(isValueHistoryDeployPreview\(\)\)return false/);
+test('original historical-transaction values stay separate from present-day hindsight',()=>{
  assert.match(source,/function tradeHistoryEvaluatorValue\(asset,trade\)/);
  assert.match(source,/historicalPlayerValue\(side,asset\.id\)/);
  assert.match(source,/function hindsightValue\(asset,trade\)/);

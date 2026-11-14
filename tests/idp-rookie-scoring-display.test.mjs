@@ -139,3 +139,30 @@ test('raising rookie confidence never invents historical seasons or reallocates 
  assert.equal(current.samples.length,1);
  assert.equal(current.weightAmplification,1);
 });
+
+test('every imported current-only IDP uses the same confidence and evidence rules',()=>{
+ const fixture=JSON.parse(fs.readFileSync('tests/fixtures/idp-current-only-sleeper-2026.json','utf8'));
+ assert.equal(fixture.record_count,262);
+ assert.equal(fixture.records.length,fixture.record_count);
+ const ids=new Set(),impacted=[];
+ for(const record of fixture.records){
+  const {id,qualifiedGames,sleeperIdpPoints}=record;
+  assert.ok(!ids.has(id),'duplicate Sleeper ID '+id);
+  ids.add(id);
+  assert.ok(Number.isInteger(qualifiedGames)&&qualifiedGames>=1&&qualifiedGames<=18,id+' game-count integrity');
+  assert.ok(Number.isFinite(sleeperIdpPoints),id+' points integrity');
+  const ppg=sleeperIdpPoints/qualifiedGames;
+  const before=scoreWithCurrentGames(1,'idp',ppg);
+  const after=scoreWithCurrentGames(qualifiedGames,'idp',ppg);
+  const evidenceFloor=Math.min(1,Math.max(0,(qualifiedGames-1)/13))*.72;
+  assert.equal(after.historicalSeasons,0,id+' cannot acquire invented historical seasons');
+  assert.equal(after.seasons,1,id+' has exactly one current-year sample');
+  assert.equal(after.samples[0].ppg,ppg,id+' game production preserved');
+  assert.ok(after.confidence+1e-10>=before.confidence,id+' confidence cannot drop');
+  assert.ok(after.confidence+1e-10>=evidenceFloor,id+' gets game-supported evidence floor');
+  assert.equal(after.ppg,before.ppg,id+' scheduled scoring weights never reallocated');
+  if(qualifiedGames>=6&&ppg>=12)impacted.push(id);
+ }
+ assert.equal(impacted.length,12,'the observed high-production cohort must be fully covered');
+ assert.ok(impacted.includes('13363'),'Bailey is a member, not a special-cased exception');
+});

@@ -27,7 +27,7 @@ try{
      development:prod.dynastyDevelopmentV50||null};
    });
    return {week:s.sleeperHistory?.completedWeek??null,sourceCount:window.__fllConsensusRefresh?.successful??null,
-    records,offense:f=>null};
+    records};
   });
   snapshots.push({name,url,week:data.week,sourceCount:data.sourceCount,records:data.records,errors});
   await page.close();

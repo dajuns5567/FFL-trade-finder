@@ -1,0 +1,22 @@
+name: Offensive dynasty consensus premium integrity
+on:
+  pull_request:
+    paths:
+      - 'valuation-offense-v40.js'
+      - 'tests/offense-consensus-anchor-v50.test.mjs'
+      - 'tests/offense-sparse-history.test.mjs'
+      - 'tests/offense-source-audit-v51.test.mjs'
+      - '.github/workflows/offense-consensus-premium.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  consensus-primary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check valuation-offense-v40.js
+      - run: node --test tests/offense-consensus-anchor-v50.test.mjs tests/offense-sparse-history.test.mjs tests/offense-source-audit-v51.test.mjs tests/consensus-composite-v3.test.mjs

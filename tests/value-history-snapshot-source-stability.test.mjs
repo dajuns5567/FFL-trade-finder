@@ -56,3 +56,12 @@ test('snapback guard runs before any archival index or immutable snapshot writin
  assert.ok(src.indexOf('VALUE_HISTORY_COHORT_SNAPBACK')<src.indexOf('await putFile(path,JSON.stringify(snap'));
  assert.match(src,/preserving immutable archive and retrying on next schedule/);
 });
+
+test('scheduled headless capture records exact code commit and ranked-source fingerprint provenance',()=>{
+ const src=readFileSync(new URL('../scripts/value-history-headless-refresh.mjs',import.meta.url),'utf8');
+ assert.match(src,/const sourceManifest=Object\.entries\(window\.state\?\.rankings\|\|\{\}\)/);
+ assert.match(src,/JSON\.stringify\(first\.sourceManifest\)===JSON\.stringify\(second\.sourceManifest\)/);
+ assert.match(src,/provenance:\{git_commit:process\.env\.GITHUB_SHA\|\|null/);
+ assert.match(src,/source_manifest:captured\.sourceManifest,canonical_parity:'exact'/);
+ assert.match(src,/consensus_sources:Number\(readiness\.consensusMarker\?\.successful\)\|\|0/);
+});

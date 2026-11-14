@@ -34,6 +34,7 @@ jobs:
           node --check trade-specific-max-value-v279.js
           node --check trade-specific-player-v232.js
           node --check scripts/archive-value-history.mjs
+          node --check scripts/value-history-headless-refresh.mjs
           node --check scripts/value-history-snapshot-integrity.mjs
           node --check trade-specific-max-value-v279.js
           node --check netlify/functions/value-history.mjs

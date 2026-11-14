@@ -2,7 +2,7 @@ import { getStore } from '@netlify/blobs';
 import { readFileSync } from 'node:fs';
 import { emptyMonthBundle, parseMonthBundleText } from './value-history-archive-utils.mjs';
 import { readSnapshotInventory } from './archive-blob-inventory.mjs';
-import { scheduledArchiveDecision } from './value-history-systemic-drift.mjs';
+import { scheduledArchiveDecision, compareSnapshotProvenance } from './value-history-systemic-drift.mjs';
 const token=process.env.GITHUB_TOKEN;
 const repository=process.env.GITHUB_REPOSITORY||'dajuns5567/FFL-trade-finder';
 const sourceBase=process.env.VALUE_HISTORY_SOURCE_URL||'https://subtle-genie-6167c5.netlify.app/.netlify/functions/value-history';
@@ -106,6 +106,8 @@ if(scheduledSnapshotFile&&incoming.length===1&&incoming[0].source==='scheduled')
   if(previous?.content){
     const candidate=incoming[0],prior=JSON.parse(previous.content);
     const decision=scheduledArchiveDecision(prior,candidate);
+    const provenance=compareSnapshotProvenance(prior,candidate);
+    console.log(JSON.stringify({event:'value-history-input-provenance',previous:lastScheduled.t,candidate:candidate.t,...provenance}));
     if(decision.marketMovementObserved||decision.action==='quarantine'){
       console.log(JSON.stringify({event:'scheduled-value-history-integrity',...decision,previous:lastScheduled.t,candidate:candidate.t}));
     }

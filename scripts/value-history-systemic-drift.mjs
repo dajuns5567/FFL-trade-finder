@@ -50,3 +50,26 @@ export function scheduledArchiveDecision(previous,candidate){
   drift,marketMovementObserved:!!(drift.flagged&&drift.reason!=='population-coverage-collapse')
  };
 }
+
+/**
+ * Explain the *inputs* behind a historical price move; advisory only.
+ * Unknown provenance is explicitly reported, never classified as unchanged.
+ */
+export function compareSnapshotProvenance(previous={},current={}){
+ const before=previous?.inputEvidence||null,after=current?.inputEvidence||null;
+ if(!before||!after)return {available:false,reason:'input-evidence-unavailable',codeChanged:null,scoringChanged:null,consensusChanged:null,changedSources:[]};
+ const compare=(a,b)=>a!=null&&b!=null?a!==b:null;
+ const codeChanged=compare(before.githubCommit,after.githubCommit);
+ const scoringChanged=compare(
+   JSON.stringify([before.scoringGeneratedAt,before.scoringCompletedWeek,before.scoringMode]),
+   JSON.stringify([after.scoringGeneratedAt,after.scoringCompletedWeek,after.scoringMode]));
+ const srcBefore=new Map((before.consensusSources||[]).map(s=>[String(s.source),s]));
+ const srcAfter=new Map((after.consensusSources||[]).map(s=>[String(s.source),s]));
+ const keys=[...new Set([...srcBefore.keys(),...srcAfter.keys()])].sort();
+ const changedSources=keys.filter(key=>{
+   const a=srcBefore.get(key),b=srcAfter.get(key);
+   return !a||!b||a.rankingDigest!==b.rankingDigest||a.rankedPlayers!==b.rankedPlayers;
+ });
+ const consensusChanged=Array.isArray(before.consensusSources)&&Array.isArray(after.consensusSources)?changedSources.length>0:null;
+ return {available:true,codeChanged,scoringChanged,consensusChanged,changedSources};
+}

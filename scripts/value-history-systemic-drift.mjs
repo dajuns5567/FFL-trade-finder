@@ -19,13 +19,39 @@ export function summarizeDrift(previousRows=[],nextRows=[]){
  const idp=groups.IDP;
  const broad=(rising>=3||falling>=3);
  const idpShock=idp.count>=100&&idp.share10>=.40;
- const shared=rows.length,coverage=Math.min(previousRows.length,nextRows.length)>0?shared/Math.min(previousRows.length,nextRows.length):0;
- const flagged=shared>=500&&coverage>=.90&&(broad||idpShock);
- return{flagged,reason:flagged?(idpShock?'idp-population-shock':'multi-position-coherent-shift'):null,shared,coverage:Number(coverage.toFixed(4)),groups};
+ const shared=rows.length,coverage=Math.max(previousRows.length,nextRows.length)>0?shared/Math.max(previousRows.length,nextRows.length):0;
+ const populationShock=previousRows.length>=700&&nextRows.length>=100&&coverage<.90;
+ const flagged=populationShock||(shared>=500&&(broad||idpShock));
+ return{flagged,reason:flagged?(populationShock?'population-coverage-collapse':idpShock?'idp-population-shock':'multi-position-coherent-shift'):null,shared,coverage:Number(coverage.toFixed(4)),groups};
 }
 export function corroboratesPending(pendingRows=[],candidateRows=[]){
  const old=new Map(pendingRows.filter(r=>r?.id!=null&&Number(r.value)>0).map(r=>[String(r.id),r]));
  const comparisons=candidateRows.filter(r=>old.has(String(r?.id))&&old.get(String(r.id)).pos===r.pos).map(r=>Math.abs(Number(r.value)-Number(old.get(String(r.id)).value))/Number(old.get(String(r.id)).value)).filter(Number.isFinite);
- const coverage=comparisons.length/Math.max(1,Math.min(pendingRows.length,candidateRows.length));
+ const coverage=comparisons.length/Math.max(1,Math.max(pendingRows.length,candidateRows.length));
  return comparisons.length>=500&&coverage>=.95&&median(comparisons)<=.012&&comparisons.filter(x=>x>.03).length/comparisons.length<=.15;
+}
+
+/**
+ * Pure decision boundary: no GitHub writes until source freshness, monotonicity
+ * and independent corroboration have been established. A pending candidate is
+ * only eligible when it was created from the *same* archived baseline and the
+ * new capture was made later, under the same valuation contract.
+ */
+export function scheduledArchiveDecision(previous,candidate,pending=null){
+ const drift=summarizeDrift(previous?.rows||[],candidate?.rows||[]);
+ const nextTime=Date.parse(candidate?.t||'');
+ const priorTime=Date.parse(previous?.t||'');
+ const pendingTime=Date.parse(pending?.capturedAt||'');
+ const pendingValid=!!pending&&pending.schema_version===1&&
+   pending.previous===previous?.t&&
+   pending.valuation_contract===candidate?.valuation_contract&&
+   Number.isFinite(pendingTime)&&Number.isFinite(nextTime)&&pendingTime>priorTime&&nextTime>pendingTime&&
+   Array.isArray(pending.rows)&&pending.rows.length>=700;
+ const corroborated=drift.flagged&&pendingValid&&corroboratesPending(pending.rows,candidate.rows);
+ return {
+   action:drift.flagged?(corroborated?'archive-confirmed':'quarantine'):'archive',
+   drift,corroborated:!!corroborated,
+   previousPendingValid:!!pendingValid,
+   pendingStale:!!pending&&!pendingValid
+ };
 }

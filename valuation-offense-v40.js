@@ -15,7 +15,15 @@ function production50(c,a){
   // One qualified season is weak evidence, not a complete dynasty verdict.
   // Two seasons earn more weight; long-term production remains a secondary anchor.
   const reliability=seasons===1?(observed<c?.12:.35):seasons===2?.60:1;
-  return{value:clamp50(.72*c,c+reliability*(observed-c),1.28*c),
+  // Three-year regular-season production is an anchor, not a replacement
+  // for verified dynasty PPR consensus. Established veterans cannot gain a
+  // +28% scoring-only premium that reverses stronger multi-source dynasty
+  // evidence for emerging players. Constrain ONLY the positive premium of
+  // 3+ qualifying-season players; preserve all 0-2-season evidence rules and
+  // the established downside adjustment. No player- or position-specific
+  // boost, injury guess, smoothing, or consensus override is introduced.
+  const upper=seasons>=3?1.20*c:1.28*c;
+  return{value:clamp50(.72*c,c+reliability*(observed-c),upper),
     seasons,reason:'qualified-sleeper-anchor',reliability};
 }
 function sourceStatus50(sourceNames){

@@ -120,12 +120,12 @@ if(scheduledSnapshotFile&&incoming.length===1&&incoming[0].source==='scheduled')
     if(decision.action==='quarantine'){
       const record={schema_version:1,capturedAt:candidate.t,previous:lastScheduled.t,valuation_contract:candidate.valuation_contract,
         diagnostic:decision.drift,rows:candidate.rows.map(r=>({id:r.id,pos:r.pos,value:r.value}))};
-      await putFile(pendingPath,JSON.stringify(record,null,2)+'\\n','Quarantine uncorroborated Value History systemic shift',pendingFile?.sha);
+      await putFile(pendingPath,JSON.stringify(record,null,2)+'\n','Quarantine uncorroborated Value History systemic shift',pendingFile?.sha);
       console.warn('Scheduled history systemic shift quarantined; next independent scheduled run will automatically recheck. Prior archive preserved.');
       process.exit(0);
     }
     if(pendingFile?.sha&&pending?.rows?.length){
-      await putFile(pendingPath,JSON.stringify({schema_version:1,resolvedAt:candidate.t,corroborated:decision.corroborated,diagnostic:decision.drift},null,2)+'\\n','Resolve pending Value History systemic shift',pendingFile.sha);
+      await putFile(pendingPath,JSON.stringify({schema_version:1,resolvedAt:candidate.t,corroborated:decision.corroborated,diagnostic:decision.drift},null,2)+'\n','Resolve pending Value History systemic shift',pendingFile.sha);
     }
   }
 }

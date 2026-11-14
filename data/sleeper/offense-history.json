@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-11-14T17:04:13.393Z",
+  "generatedAt": "2026-11-14T21:27:50.585Z",
   "source": "Sleeper importer snapshot",
   "currentSeason": 2026,
   "completedWeek": 9,
@@ -1640,8 +1640,8 @@
     },
     "diagnostics": {
       "finalGames": 137,
-      "qualifiedPlayerGames": 9015,
-      "rejectedPlayerGames": 10449,
+      "qualifiedPlayerGames": 9014,
+      "rejectedPlayerGames": 10443,
       "ignoredGames": 0
     }
   },
@@ -10043,19 +10043,6 @@
       "rush_rec_yd": 4,
       "rush_yd": 4,
       "fum": 1
-    },
-    "6024": {
-      "gp": 1,
-      "_ppr_native_weeks": 0,
-      "_ppr_reconstructed_weeks": 0,
-      "off_snp": 14,
-      "pos_rank_half_ppr": 999,
-      "pos_rank_ppr": 999,
-      "pos_rank_std": 999,
-      "st_snp": 3,
-      "tm_def_snp": 72,
-      "tm_off_snp": 62,
-      "tm_st_snp": 27
     },
     "6025": {
       "gp": 3,
@@ -46423,21 +46410,21 @@
       "withGames": 885
     },
     "2024": {
-      "players": 961,
+      "players": 960,
       "withPpr": 795,
-      "withGames": 961
+      "withGames": 960
     },
     "2025": {
-      "players": 1050,
+      "players": 1049,
       "withPpr": 563,
-      "withGames": 1050
+      "withGames": 1049
     },
     "2026": {
-      "players": 1550,
+      "players": 1549,
       "withPpr": 531,
-      "withGames": 1550,
+      "withGames": 1549,
       "currentSeasonQualified": true,
-      "compactPlayers": 1550
+      "compactPlayers": 1549
     }
   },
   "stats": {
@@ -66613,10 +66600,6 @@
         "fum": 6,
         "pass_inc": 103
       },
-      "6024": {
-        "gp": 8,
-        "off_snp": 465
-      },
       "6025": {
         "pts_ppr": 4,
         "gp": 17,
@@ -74977,8 +74960,8 @@
       },
       "11636": {
         "pts_ppr": 14.8,
-        "gp": 11,
-        "off_snp": 329,
+        "gp": 12,
+        "off_snp": 340,
         "rec_tgt": 14,
         "rec_td": 1,
         "bonus_fd_wr": 2,
@@ -82563,10 +82546,6 @@
         "idp_qb_hit": 4,
         "idp_ff": 2,
         "idp_tkl_ast": 15
-      },
-      "6024": {
-        "gp": 12,
-        "off_snp": 560
       },
       "6025": {
         "gp": 17,
@@ -99505,10 +99484,6 @@
         "rush_yd": 4,
         "fum": 1,
         "pass_inc": 15
-      },
-      "6024": {
-        "gp": 1,
-        "off_snp": 14
       },
       "6025": {
         "gp": 3,

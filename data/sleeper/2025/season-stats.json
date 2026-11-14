@@ -8652,22 +8652,6 @@
     "idp_pass_def": 2,
     "idp_sack_yd": 11
   },
-  "6024": {
-    "gp": 12,
-    "_ppr_native_weeks": 0,
-    "_ppr_reconstructed_weeks": 0,
-    "off_snp": 560,
-    "pos_rank_half_ppr": 11988,
-    "pos_rank_ppr": 11988,
-    "pos_rank_std": 11988,
-    "st_snp": 53,
-    "tm_def_snp": 793,
-    "tm_off_snp": 747,
-    "tm_st_snp": 316,
-    "gs": 7,
-    "penalty": 5,
-    "penalty_yd": 34
-  },
   "6025": {
     "gp": 17,
     "_ppr_native_weeks": 0,

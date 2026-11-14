@@ -8397,19 +8397,6 @@
     "rush_yd": 4,
     "fum": 1
   },
-  "6024": {
-    "gp": 1,
-    "_ppr_native_weeks": 0,
-    "_ppr_reconstructed_weeks": 0,
-    "off_snp": 14,
-    "pos_rank_half_ppr": 999,
-    "pos_rank_ppr": 999,
-    "pos_rank_std": 999,
-    "st_snp": 3,
-    "tm_def_snp": 72,
-    "tm_off_snp": 62,
-    "tm_st_snp": 27
-  },
   "6025": {
     "gp": 3,
     "_ppr_native_weeks": 0,

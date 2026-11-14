@@ -185,7 +185,7 @@ test('higher evidence confidence helps genuine high-producing IDPs without blank
    clamp25:(min,x,max)=>Math.max(min,Math.min(x,max)),
    Math,Number
   };
-  return vm.runInNewContext(code+'\\nscoring25("representative-idp")',context);
+  return vm.runInNewContext(code+'\nscoring25("representative-idp")',context);
  };
  const highEarly=run(20.625,.19),highVerified=run(20.625,.39);
  assert.ok(highVerified.value>highEarly.value,'real high production benefits from more verified games');

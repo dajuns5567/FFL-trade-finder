@@ -133,7 +133,7 @@ test('backlogged Weeks 6, 7 and 8 each enqueue after the preceding week is commi
 });
 
 
-test('current deployment policy builds only authorized PR previews, never production or retired sites',async()=>{
+test('current deployment policy builds only canonical-site production and allowlisted previews',async()=>{
  const {spawnSync}=await import('node:child_process');
  const config=readFileSync(new URL('../netlify.toml',import.meta.url),'utf8');
  const literal=config.match(/^\s*ignore = (".*")$/m)?.[1];
@@ -143,10 +143,11 @@ test('current deployment policy builds only authorized PR previews, never produc
   env:{...process.env,SITE_ID,SITE_NAME,CONTEXT,REVIEW_ID},encoding:'utf8'}).status;
  const site='fa33dfe4-8293-441e-8da0-25cc66fc984c';
  assert.equal(code(site,'','deploy-preview','450'),1,'authorized PR #450 preview builds');
+ assert.equal(code(site,'','deploy-preview','458'),1,'IDP review preview #458 is allowed');
  assert.equal(code(site,'','deploy-preview','448'),1,'authorized PR #448 preview builds');
  assert.equal(code(site,'','deploy-preview','451'),0,'unapproved preview is skipped');
- assert.equal(code(site,'','production','450'),0,'production deploy remains blocked');
- assert.equal(code('','precious-dango-fb4633','production','450'),0,'site-name path also blocks production');
+ assert.equal(code(site,'','production','450'),1,'canonical production policy remains enabled');
+ assert.equal(code('','precious-dango-fb4633','production','450'),1,'canonical site-name production policy remains enabled');
  assert.equal(code(site,'','branch-deploy','450'),0,'branch deploys stay blocked');
  assert.equal(code('8776d155-bc7b-4dcd-bafc-3d70d3d51800','transcendent-manatee-2f0123','deploy-preview','450'),0,'old site never builds');
  assert.equal(code('3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f','gleaming-dodol-8dbc4a','deploy-preview','450'),0,'retired site never builds');

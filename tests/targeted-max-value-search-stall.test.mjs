@@ -22,7 +22,7 @@ function runtime({outgoingCount=34,targetExtras=20}={}){
  };
  let yields=0;
  const win={
-  state:{allAssets:[...own,target,...others],teams:[{id:1,name:'Team 1'},{id:2,name:'Team 2'}],players:{}},
+  state:{allAssets:[...own,target,...others],teams:Array.from({length:32},(_,i)=>({id:i+1,name:'Team '+(i+1)})),players:{}},
   tradeValueNormalizationV139:{canonicalValue:x=>x.value||0},
   tradeSelectAllV165:{aliasActive:()=>true},
   playerName:x=>x==='jonathan-taylor'?'Jonathan Taylor':x,
@@ -68,7 +68,7 @@ test('every Max Value package still contains the target and no equity/consensus 
  assert.match(source,/function tierOK\(give,recv,tier,w\)/);
  assert.match(source,/const target=\(st\(\)\.allAssets\|\|\[\]\)\.find/);
  assert.match(source,/function incoming\(owner,target\)/);
- assert.match(source,/const out=\[\[target\]\]/);
+ assert.match(source,/out=\[\[target\]\]/);
  assert.match(source,/window\.section1V130\?\.fair\?\.\(a,b\)/);
  assert.match(source,/if\(my!==token\)return/);
 });

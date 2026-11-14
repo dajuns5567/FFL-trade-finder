@@ -31,3 +31,10 @@ jobs:
       - name: Existing targeted and combined regression suites
         run: |
           node --test tests/offense-consensus-anchor-v50.test.mjs tests/idp-20-45-35-calibration.test.mjs tests/idp-dynasty-development.test.mjs tests/idp-rookie-scoring-display.test.mjs tests/idp-v72-source-retention.test.mjs tests/value-history-preview-isolation.test.mjs tests/combined-valuation-history-contract.test.mjs
+      - name: Remaining browser runtime syntax and historical hub checks
+        run: |
+          node scripts/site-runtime-syntax-audit.mjs
+          node --test tests/market-intelligence-original-recovery.test.mjs
+          node scripts/value-history-data-hub-v331-smoke.mjs
+          node --check scripts/value-history-headless-refresh.mjs
+          node --check scripts/value-history-scheduled-due.mjs

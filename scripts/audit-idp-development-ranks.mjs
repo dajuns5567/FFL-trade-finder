@@ -1,7 +1,7 @@
 import { chromium } from 'playwright';
 const endpoints=[
- {name:'previous context',url:'https://6af7f4c73cb446f363104a86--precious-dango-fb4633.netlify.app'},
- {name:'all-role development',url:'https://6af7f9162b8d06b35b504254--precious-dango-fb4633.netlify.app'}];
+ {name:'previous context',url:'https://6af7f9162b8d06b35b504254--precious-dango-fb4633.netlify.app'},
+ {name:'integrated IDP',url:'https://deploy-preview-464--precious-dango-fb4633.netlify.app'}];
 const ids=['11667','11665','12574','13363','10892','3973','5991','5816','5041','8266','13375','4968','5726','12578','11687'];
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 try{
@@ -22,6 +22,7 @@ try{
    const rows=window.ensureMaster(),byId=new Map(rows.map((r,i)=>[String(r.x?.id),{...r,modelOverallRank:i+1}]));
    return {generatedAt:new Date().toISOString(),week:window.state?.sleeperHistory?.completedWeek??null,
     consensusStatus:window.__fllConsensusRefresh?.successful,
+    namesakes:Object.entries(window.state.players||{}).filter(([id,p])=>String(p?.full_name||'').toLowerCase()==='chris jones').map(([id,p])=>({id,position:p.position,team:p.team,consensus:window.state.consensusComposite?.byId?.[id]??null,modelValue:byId.get(id)?.value??null})),
     rows:ids.map(id=>{
      const z=byId.get(id),p=window.state.players?.[id]||{},cv=Number(window.state?.consensusComposite?.byId?.[id])||0,
        final=window.playerRankValue({type:'player',id});
@@ -31,6 +32,7 @@ try{
       scoringComponent:z?.production?.value??null,
       ppg:z?.production?.m?.ppg??null,
       confidence:z?.production?.m?.confidence??null,
+      scoringAuditConfidence:typeof window.idpScoringAudit==='function'?window.idpScoringAudit(id)?.confidence??null:null,
       developmentIndex:z?.production?.leagueContext?.development?.index??null};
     })};
   },ids);
@@ -47,10 +49,10 @@ try{
    oldRank:prior.finalOverallRank,newRank:x.finalOverallRank,
    rankImprovement:prior.finalOverallRank-x.finalOverallRank,
    oldModeled:prior.modelValue,newModeled:x.modelValue,
-   developmentIndex:x.developmentIndex};
+   developmentIndex:x.developmentIndex,oldConfidence:prior.scoringAuditConfidence,newConfidence:x.scoringAuditConfidence};
  });
  const mismatchedInputs=rows.filter(x=>!x.sourceConsensusSame||!x.scoringPpgSame);
- console.log('IDP_DEVELOPMENT_LIVE_RANKS '+JSON.stringify({inputsComparable:mismatchedInputs.length===0,mismatchedInputs,rows,old:{at:old.generatedAt,week:old.week,sourceStatus:old.consensusStatus,errors:old.errors},current:{at:current.generatedAt,week:current.week,sourceStatus:current.consensusStatus,errors:current.errors}},null,2));
+ console.log('IDP_DEVELOPMENT_LIVE_RANKS '+JSON.stringify({inputsComparable:mismatchedInputs.length===0,mismatchedInputs,rows,old:{at:old.generatedAt,week:old.week,sourceStatus:old.consensusStatus,errors:old.errors,namesakes:old.namesakes},current:{at:current.generatedAt,week:current.week,sourceStatus:current.consensusStatus,errors:current.errors,namesakes:current.namesakes}},null,2));
  if(old.errors.length||current.errors.length)throw Error('Browser errors');
  if(mismatchedInputs.length)throw Error('Ranking observations used changed source/scoring inputs');
 }finally{await browser.close()}

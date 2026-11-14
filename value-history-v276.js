@@ -514,7 +514,13 @@ function hasValidatedKtcSnapshot(){for(const [name,src] of Object.entries(state?
 function snapshotPreconditions(){
   if(!window.state||!state.players||Object.keys(state.players).length<100)return false;
   if(window.__fllValueRefresh?.inFlight)return false;
-  if(window.__fllConsensusRefresh?.complete!==true)return false;
+  // A completed refresh can be a FAILED/partial refresh. The previous
+  // check accepted complete=true even when fewer than seven dynasty
+  // publishers had successfully refreshed, permanently recording transitory
+  // fallback values as if they were reliable market movements.
+  const consensus=window.__fllConsensusRefresh;
+  if(consensus?.complete!==true||consensus?.ok!==true||Number(consensus?.successful)<7)return false;
+  if(window.__fllValueRefresh?.phase!=='complete')return false;
   if(window.modeledPlayerValuesV319&&window.modeledPlayerValuesV319.ready!==true)return false;
   if(state.sleeperHistory&&state.sleeperHistory.complete!==true)return false;
   const text=String(document.getElementById('updateStatus')?.textContent||'').toLowerCase();
@@ -540,11 +546,25 @@ function snapshotSourceFromUrl(){
 async function recordSnapshot(source=pendingSnapshotSource){
   if(isValueHistoryDeployPreview())return false;
   try{
-    if(!snapshotPreconditions()||!scheduledRefreshReady()){scheduleSnapshot(2000,source);return false}
+    if(!snapshotPreconditions()||!scheduledRefreshReady()){
+      if(window.__fllConsensusRefresh?.complete===true&&window.__fllConsensusRefresh?.ok!==true){
+        window.__vhLastSnapshot={ok:false,reason:'consensus-refresh-incomplete'};
+        console.warn('Value History snapshot skipped: consensus sources incomplete; no fallback values archived');
+        return false;
+      }
+      scheduleSnapshot(2000,source);return false
+    }
     const firstRows=currentRows();
     if(firstRows.length<100){scheduleSnapshot(2000,source);return false}
     await new Promise(r=>setTimeout(r,1200));
-    if(!snapshotPreconditions()||!scheduledRefreshReady()){scheduleSnapshot(2000,source);return false}
+    if(!snapshotPreconditions()||!scheduledRefreshReady()){
+      if(window.__fllConsensusRefresh?.complete===true&&window.__fllConsensusRefresh?.ok!==true){
+        window.__vhLastSnapshot={ok:false,reason:'consensus-refresh-incomplete'};
+        console.warn('Value History snapshot skipped: consensus sources incomplete; no fallback values archived');
+        return false;
+      }
+      scheduleSnapshot(2000,source);return false
+    }
     const rows=currentRows();
     if(rows.length<100||!sameSnapshotRows(firstRows,rows)){scheduleSnapshot(2000,source);return false}
     let picks=[],teams=[];

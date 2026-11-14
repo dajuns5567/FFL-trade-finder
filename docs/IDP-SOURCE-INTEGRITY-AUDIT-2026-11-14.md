@@ -33,6 +33,14 @@ The composite source parser previously allowed a publisher's fuzzy first-name ma
 
 The source composite now accepts a publisher's **exact canonical name** for each player as before, and preserves uniquely owned aliases. When different IDP Sleeper players could both plausibly own one fuzzy publisher row, it refuses to assign that row to a different-canonical player. It does **not** transfer the source value to a guessed identity. Offensive ownership logic and source values are unchanged. The new regression tests use synthetic candidates rather than hardcoding adjustments for the listed players.
 
+## Publisher consensus with no qualified Sleeper history
+
+Six defensive entries in the actual 1,041-player audit have a positive imported consensus value, **zero qualifying seasons**, and need provenance review. Five lack an NFL team: Josh Allen (Sleeper 2212; CV 358), Cam Thomas (573; CV 152), Carl Davis (2395; CV 153), Marcel Jones (1187; CV 174), Chris Gonzalez (5404; CV 172). Jonathan Cooper (1574; CV 151) is listed with DEN and no qualified history. These records are **not** in the strictly no-source/no-scoring cohort, so the new V73 conservative floor does not apply to them. The reason is explicit: there is some imported publisher evidence, but it is not yet independently verified to belong to the correct Sleeper player.
+
+The baseline file shows exact consensus value matches between several near-name pairs with sharply different scoring histories: Chris Gonzalez / Christian Gonzalez (both CV 172; only Christian has 36 games in the actual 2024–26 window), Carl Davis / Carlton Davis III (both CV 153; only Carlton has 35 games), Marcel Jones / Marcus Jones (both CV 174; only Marcus has 39 games), and Jonathan Cooper / Jonathon Cooper (both CV 151; only Jonathon has 36 games). Identical CVs alone do **not** prove an erroneous source identity, but combined with shared surnames/near first names and zero scoring, they justify guarding this entire fuzzy-matching path. Those protections now require exact canonical source identity in ambiguous IDP matches.
+
+The appropriate follow-up is a read-only post-fix source audit, not a name-specific price change. If a publisher explicitly lists a different-name defensive player, preserve that sourced player. If the source does not uniquely identify a Sleeper ID, conservatively omit that source match.
+
 ## Remaining evidence limitations
 
 - Myles Garrett: 20.55 current-year league PPG from **2 games**, alongside 36 games in the 2024–26 actual aggregate; review the game-count qualification, not the value by fiat.

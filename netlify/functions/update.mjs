@@ -2,6 +2,7 @@ import { refreshAllSources } from "./consensus-source-overrides.mjs";
 import { buildConsensusComposite } from "./consensus-composite-v3.mjs";
 import { buildFreshnessSnapshot,ageFreshness } from "./consensus-source-freshness.mjs";
 import { getStore } from "@netlify/blobs";
+import { findUnverifiedChartRegression } from "./consensus-source-promotion-guard.mjs";
 
 const SNAPSHOT_STORE="fleeced-consensus-lkg";
 const SNAPSHOT_KEY="validated-sources-v1";
@@ -52,6 +53,26 @@ export default async (req)=>{
   const refresh=await refreshAllSources();
   const candidate=buildConsensusPayload(refresh,players);
   const previous=await readLastGood();
+  // Source extraction may be valid while its revision is not authoritative:
+  // falling back to pinned IDP Show /1/ after a verified later chart must
+  // preserve the complete known-good consensus rather than create a value dip.
+  const canRecover=!!previous?.sources?.["The IDP Show Combined IDP"]&&
+    !!previous?.sources?.["The IDP Show Combined Offense"]&&
+    !!previous?.composite?.byId&&Object.keys(previous.composite.byId).length>0;
+  const revisionRegression=canRecover
+    ?findUnverifiedChartRegression(candidate.summary.results,previous.sourceManifest)
+    :null;
+  if(revisionRegression){
+    candidate.withheld=true;
+    candidate.summary.results=candidate.summary.results.map(x=>x.source===revisionRegression.source
+      ?{...x,ok:false,status:"withheld-unverified-revision",error:revisionRegression.reason}
+      :x);
+    candidate.summary.successful=candidate.summary.results.filter(x=>x.ok).length;
+    candidate.summary.failed=candidate.summary.results.length-candidate.summary.successful;
+    candidate.integrity={...candidate.integrity,all_sources_valid:false,
+      failed_sources:[...new Set([...(candidate.integrity.failed_sources||[]),revisionRegression.source])],
+      reason:revisionRegression.reason};
+  }
 
   if(!candidate.withheld){
     for(const [name,snapshot] of Object.entries(candidate.sources)){

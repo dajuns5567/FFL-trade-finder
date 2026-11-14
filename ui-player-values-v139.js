@@ -37,7 +37,7 @@ function historyLabel(id){
   const latest=Math.max(Number(state.sleeperHistory?.currentSeason)||0,...seasons.map(x=>Number(x.season)));
   const recent=seasons.filter(x=>Number(x.season)>=latest-2&&Number(x.season)<=latest&&Number(x.games)>0&&Number.isFinite(Number(x.ppg)));
   const totalGames=recent.reduce((sum,x)=>sum+Number(x.games),0);
-  const totalPoints=recent.reduce((sum,x)=>sum+(Number.isFinite(Number(x.points))?Number(x.points):Number(x.ppg)*Number(x.games)),0);
+  const totalPoints=recent.reduce((sum,x)=>sum+(x.points!=null&&Number.isFinite(Number(x.points))?Number(x.points):Number(x.ppg)*Number(x.games)),0);
   const actual3yr=totalGames>0?(totalPoints/totalGames).toFixed(1)+' actual '+(latest-2)+'–'+latest+' PPG ('+totalGames+' games) • ':'';
   // a.ppg is an evidence-weighted model input, not actual observed PPG.
   return recorded+actual3yr+Number(a.ppg||0).toFixed(1)+' valuation-weighted PPG • '+

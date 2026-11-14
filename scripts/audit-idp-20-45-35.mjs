@@ -35,14 +35,15 @@ try{
     up:arr.filter(x=>x.delta>0).length,down:arr.filter(x=>x.delta<0).length,
     over10pct:arr.filter(x=>Math.abs(x.percent)>=10).length,
     oldMedian:pct(arr.map(x=>x.old),.5),newMedian:pct(arr.map(x=>x.new),.5)});
-  const actualMismatch=points.filter(x=>x.observedV25!==x.new);
+  const actualMismatch=points.filter(x=>Math.abs(x.observedV25-x.new)>1);
+  const roundedInputDifferences=points.filter(x=>x.observedV25!==x.new).length;
   const byRole={};for(const r of ['EDGE','LB','INTERIOR','DB','OTHER'])byRole[r]=summary(points.filter(x=>x.role===r));
   const top=[...points].sort((a,b)=>b.old-a.old).slice(0,60);
   const watched=['David Bailey','Chris Jones','Nick Bosa','Will Anderson Jr.','Maxx Crosby','Quay Walker','Robert Spillane','Myles Garrett'];
   return {at:new Date().toISOString(),offenseWeightsObserved:window.offenseConsensusAnchorV50?.version||null,
    currentSourceCount:window.__fllConsensusRefresh?.successful||0,
    sourceSeason:window.state?.sleeperHistory?.completedWeek||null,
-   total:summary(points),runtimeV25Mismatches:actualMismatch.length,mismatchExamples:actualMismatch.slice(0,12),withConsensus:summary(points.filter(x=>x.withConsensus)),
+   total:summary(points),roundedInputDifferences,runtimeV25Mismatches:actualMismatch.length,mismatchExamples:actualMismatch.slice(0,12),withConsensus:summary(points.filter(x=>x.withConsensus)),
    noConsensus:summary(points.filter(x=>!x.withConsensus)),
    byRole,topTier:summary(top),watched:points.filter(x=>watched.some(t=>x.name?.toLowerCase()===t.toLowerCase())),
    biggestRelativeUp:[...points].sort((a,b)=>b.percent-a.percent).slice(0,20),

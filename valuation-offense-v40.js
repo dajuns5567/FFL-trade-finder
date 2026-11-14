@@ -18,6 +18,22 @@ function production50(c,a){
   return{value:clamp50(.72*c,c+reliability*(observed-c),1.28*c),
     seasons,reason:'qualified-sleeper-anchor',reliability};
 }
+// All offensive positions already have a role-aware age curve. NFL career
+// stage supplies a small, evidence-gated development adjustment to that curve.
+// Keep the agreed 5% age/development bucket separate from the 23% scoring
+// lookback and 12% league/dynasty context. Missing metadata stays neutral.
+function development50(id,baseAgeFactor,qualifyingSeasons){
+ const p=state.players?.[String(id)]||{};
+ const exp=finite50(p.years_exp),age=finite50(p.age);
+ const ageFactor=clamp50(.88,finite50(baseAgeFactor)??1,1.10);
+ if(exp==null||exp<0||exp>25)return{factor:ageFactor,stageAdjustment:0,evidence:0,age,yearsExp:null};
+ const stage=exp<=0?.45:exp<=2?1:exp<=4?.60:exp<=7?0:exp<=10?-.40:-.80;
+ const seasons=Math.max(0,Number(qualifyingSeasons)||0);
+ const evidence=seasons>0?.35+.65*Math.min(1,seasons/3):.15;
+ const stageAdjustment=stage>0?.025*stage*evidence:.025*stage;
+ return{factor:clamp50(.86,ageFactor+stageAdjustment,1.12),
+  stageAdjustment,age,yearsExp:exp,evidence:seasons>0?evidence:0};
+}
 function sourceStatus50(sourceNames){
   const records=state.rankings||{};
   const snapshots=sourceNames.filter(n=>!String(n).endsWith(' (not listed)')).map(name=>{
@@ -54,8 +70,8 @@ function rebuild50(z){
   const p=production50(c,a);
   const sourceStatus=sourceStatus50(Array.isArray(detail.offenseSources)?detail.offenseSources:[]);
   const ctx=clamp50(.90*c,finite50(z?.context)??c,1.15*c);
-  const ageFactor=clamp50(.88,finite50(z?.production?.ageFactor)??1,1.10);
-  const raw=.70*c+.18*p.value+.08*ctx+.04*c*ageFactor;
+  const development=development50(id,z?.production?.ageFactor,p.seasons);
+  const raw=.60*c+.23*p.value+.12*ctx+.05*c*development.factor;
   let constrained=clamp50(.90*c,raw,1.12*c);
   if(rank!=null&&rank<=24)constrained=Math.max(constrained,.95*c);
   if(rank!=null&&rank>220)constrained=Math.min(constrained,1.08*c);
@@ -78,11 +94,12 @@ function rebuild50(z){
       consensusSourceCountV50:Array.isArray(detail.offenseSources)?detail.offenseSources.filter(s=>!String(s).includes('(not listed)')).length:0,
       consensusNotListedPenaltyCountV50:Array.isArray(detail.offenseSources)?detail.offenseSources.filter(s=>String(s).includes('(not listed)')).length:0,
       ageYearsV50:finite50(state.players?.[id]?.age),
+      dynastyDevelopmentV50:development,
       productionHistoryReasonV50:p.reason,
       productionReliabilityV50:p.reliability??0,
       productionSeasonsV50:p.seasons,
-      modelWeights:{consensus:.70,scoringLookback:.18,
-        scarcityAndOtherContext:.08,ageContext:.04}}};
+      modelWeights:{consensus:.60,scoringLookback:.23,
+        scarcityAndOtherContext:.12,ageContext:.05}}};
 }
 masterRankings=function(){return previousMaster50().map(rebuild50)
   .sort((a,b)=>Number(b.value)-Number(a.value))};

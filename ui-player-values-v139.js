@@ -28,7 +28,7 @@ function historyLabel(id){
   if(!a||!a.qualifyingSeasons)return'No qualifying imported Sleeper scoring history';
   const current=(a.seasons||[]).find(x=>x.currentSeason&&Number(x.games)>0);
   const recorded=current&&Number.isFinite(Number(current.ppg))?
-   Number(current.ppg).toFixed(1)+' actual '+current.season+' PPG ('+current.games+' qualifying games) • ':'';
+   Number(current.ppg).toFixed(1)+' league-scored '+current.season+' PPG ('+current.games+' qualifying games) • ':'';
   // a.ppg is an evidence-weighted valuation input, NOT actual current-year
   // points per game. Rookies with missing historical seasons are especially
   // misleading if its scheduled-year denominator is presented as a real PPG.

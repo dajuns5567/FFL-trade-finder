@@ -1,0 +1,20 @@
+name: Offense agreed weighting and all-position development
+on:
+  pull_request:
+    paths:
+      - 'valuation-offense-v40.js'
+      - 'tests/offense-consensus-anchor-v50.test.mjs'
+      - 'tests/offense-sparse-history.test.mjs'
+      - '.github/workflows/offense-universal-development.yml'
+permissions:
+  contents: read
+jobs:
+  model-integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check valuation-offense-v40.js
+      - run: node --test tests/offense-consensus-anchor-v50.test.mjs tests/offense-sparse-history.test.mjs tests/offense-source-audit-v51.test.mjs

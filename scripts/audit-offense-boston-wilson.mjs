@@ -120,11 +120,51 @@ try{
    largestDecreases:[...impacted].sort((a,b)=>a.percent-b.percent).slice(0,18),
    preservedOverrides:productionCeiling.filter(x=>x.downstreamOverride).slice(0,15)
   };
+  // Audit the user-documented 60/23/12/5 offense formula separately from
+  // the disproven 70/18/8/4 runtime, on identical canonical source inputs.
+  const agreedRows=rows.filter(z=>z?.production?.offenseConsensusAnchorV50===true).map(z=>{
+    const id=String(z.x.id),c=Number(s.consensusComposite?.byId?.[id]);
+    const p=window.offenseConsensusAnchorV50.production(c,z.production?.correctedAudit||{});
+    const player=s.players?.[id]||{},exp=Number(player.years_exp);
+    const ageFactor=clamp(.88,Number(z.production?.ageFactor)||1,1.10);
+    const stage=!Number.isFinite(exp)||player.years_exp==null?0:exp<=0?.45:exp<=2?1:exp<=4?.60:exp<=7?0:exp<=10?-.40:-.80;
+    const evidence=p.seasons>0?.35+.65*Math.min(1,p.seasons/3):.15;
+    const adjustment=stage>0?.025*stage*evidence:.025*stage;
+    const development=clamp(.86,ageFactor+adjustment,1.12);
+    const context=clamp(.90*c,Number(z.context)||c,1.15*c);
+    let raw=clamp(.90*c,.60*c+.23*p.value+.12*context+.05*c*development,1.12*c);
+    const rank=Number(s.consensusComposite?.detailsById?.[id]?.offenseRank);
+    if(Number.isFinite(rank)&&rank<=24)raw=Math.max(raw,.95*c);
+    if(Number.isFinite(rank)&&rank>220)raw=Math.min(raw,1.08*c);
+    const newer=Number(window.assetCurveAudit?.(raw)?.curved??Math.round(raw));
+    const old=Number(z.value);
+    const baseRaw=Number(z.production.offenseTerminalRawV50);
+    const baseline=Number(window.assetCurveAudit?.(baseRaw)?.curved??NaN);
+    const downstreamOverride=!Number.isFinite(baseline)||Math.abs(baseline-old)>2;
+    return{id,name:player.full_name||id,pos:player.position,age:player.age||null,
+      yearsExp:player.years_exp??null,qualifyingSeasons:p.seasons,sourceCount:z.production.consensusSourceCountV50,
+      consensus:c,old,new:newer,delta:newer-old,percent:100*(newer-old)/Math.max(1,old),
+      downstreamOverride};
+  });
+  const meaningful=agreedRows.filter(x=>!x.downstreamOverride);
+  const absAgree=meaningful.map(x=>Math.abs(x.percent)).sort((a,b)=>a-b);
+  const qAgree=p=>absAgree[Math.min(absAgree.length-1,Math.floor(p*absAgree.length))]||0;
+  const agreedModel={weights:{consensus:.60,scoringLookback:.23,context:.12,development:.05},
+    total:agreedRows.length,unaffectedDownstreamOverrides:agreedRows.filter(x=>x.downstreamOverride).length,
+    medianAbsPct:qAgree(.5),p95AbsPct:qAgree(.95),maxAbsPct:absAgree.at(-1)||0,
+    over5Pct:meaningful.filter(x=>Math.abs(x.percent)>5).length,
+    over10Pct:meaningful.filter(x=>Math.abs(x.percent)>10).length,
+    increased:meaningful.filter(x=>x.delta>0).length,decreased:meaningful.filter(x=>x.delta<0).length,
+    byPosition:Object.fromEntries(['QB','RB','WR','TE'].map(pos=>[pos,{total:meaningful.filter(x=>x.pos===pos).length,
+      over5Pct:meaningful.filter(x=>x.pos===pos&&Math.abs(x.percent)>5).length}])),
+    controls:agreedRows.filter(x=>['Denzel Boston','Michael Wilson','Drake Maye','Patrick Mahomes','Jonah Coleman','Carnell Tate','Mike Evans'].includes(x.name)),
+    largestIncrease:[...meaningful].sort((a,b)=>b.percent-a.percent).slice(0,12),
+    largestDecrease:[...meaningful].sort((a,b)=>a.percent-b.percent).slice(0,12)};
   const nearby=Array.isArray(audit?.players)?audit.players.filter(r=>r.position==='WR'&&(r.observedSourceCount<=1||r.flags.includes('exact-coverage-fallback'))).slice(0,30).map(r=>({id:r.id,name:r.name,modelValue:r.modelValue,observedSourceCount:r.observedSourceCount,flags:r.flags})):[];
   return {at:new Date().toISOString(),sleeper:{generatedAt:s.sleeperHistory?.generatedAt,complete:s.sleeperHistory?.complete,week:s.sleeperHistory?.completedWeek},
    consensus:window.__fllConsensusRefresh||null,
    sourceNames:Object.entries(s.rankings||{}).map(([name,x])=>({name,kind:x.kind,players:Object.keys(x.data||{}).length})),
-   allOffense:audit?.summary||null,candidates:output,counterfactual,productionPremiumCap,missingOrSingleSourceWrExamples:nearby};
+   allOffense:audit?.summary||null,candidates:output,counterfactual,productionPremiumCap,agreedModel,missingOrSingleSourceWrExamples:nearby};
  });
  console.log('OFFENSE_EVIDENCE_REPORT '+JSON.stringify({url:target,report,pageErrors:errors},null,2));
  if(!report.candidates.some(x=>x.name.toLowerCase()==='denzel boston')||!report.candidates.some(x=>x.name.toLowerCase()==='michael wilson'))

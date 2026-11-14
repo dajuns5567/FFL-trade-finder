@@ -9,10 +9,17 @@ const positionsOf=p=>new Set((Array.isArray(p?.positions)?p.positions:[p?.positi
 // Ordinal publisher ranks must survive transient extraction omissions.
 // Reindex only a genuinely combined offense/IDP publisher when splitting its
 // single cross-position list into two independently valued channels.
-const reindex=(rows,splitCombined=false)=>[...(rows||[])]
- .filter(r=>Number.isFinite(Number(r?.rank))&&Number(r.rank)>0&&String(r?.player||"").trim())
- .sort((a,b)=>Number(a.rank)-Number(b.rank))
- .map((r,i)=>({...r,modelRank:splitCombined?i+1:Number(r.rank)}));
+const reindex=(rows,splitCombined=false)=>{
+ const listed=[...(rows||[])]
+  .filter(r=>Number.isFinite(Number(r?.rank))&&Number(r.rank)>0&&String(r?.player||"").trim())
+  .sort((a,b)=>Number(a.rank)-Number(b.rank));
+ const maxRank=Number(listed.at(-1)?.rank)||0;
+ // Existing sparse/small rankings keep the historical source-local ordinal
+ // semantics. Only dense, full-size ranked lists have enough rank evidence
+ // to preserve publisher ordinals safely across extraction omissions.
+ const usePublishedRank=!splitCombined&&listed.length>=100&&maxRank<=3*listed.length;
+ return listed.map((r,i)=>({...r,modelRank:usePublishedRank?Number(r.rank):i+1}));
+};
 function makeChannel(name,weight,rows,splitCombined=false){const indexed=reindex(rows,splitCombined),byName=new Map(),byCanonical=new Map(),byLast=new Map();for(const row of indexed){const key=norm(row.player),list=byName.get(key)||[];list.push(row);byName.set(key,list);const ck=canonical(row.player),cl=byCanonical.get(ck)||[];cl.push(row);byCanonical.set(ck,cl);const ps=parts(row.player),last=ps.at(-1);if(last){const a=byLast.get(last)||[];a.push(row);byLast.set(last,a)}}return{name,weight,rows:indexed,byName,byCanonical,byLast}}
 function channels(results){const offense=[],idp=[];for(const r of results||[]){if(!r?.valid)continue;const weight=r.reducedWeight?REDUCED:1;if(r.id==="combined-dynasty"){offense.push(makeChannel("The IDP Show Combined Offense",weight,(r.rankings||[]).filter(x=>String(x?.position||"").toUpperCase()!=="IDP"),true));idp.push(makeChannel("The IDP Show Combined IDP",weight,(r.rankings||[]).filter(x=>String(x?.position||"").toUpperCase()==="IDP"),true));continue}if(r.id==="draftsharks"){offense.push(makeChannel(r.source,weight,r.rankings||[]));continue}if(r.id?.includes("idp")){idp.push(makeChannel(r.source,weight,r.rankings));continue}offense.push(makeChannel(r.source,weight,r.rankings))}return{offense,idp}}
 function compatibleFirst(a,b){if(!a||!b)return false;if(a===b)return true;if(a[0]!==b[0])return false;const m=Math.min(a.length,b.length);return m>=3&&(a.slice(0,Math.min(4,m))===b.slice(0,Math.min(4,m))||a.startsWith(b)||b.startsWith(a))}

@@ -363,3 +363,88 @@ test('incomplete later-year cohort retains conservative original source fallback
  await win.draftPickRankingsV527.refresh(true);
  assert.equal(norm.canonicalValue(picks.at(-1)),900,'missing comparison cohort must not be synthesized');
 });
+
+
+test('2027–2029 discounted picks propagate to Player Values, Finder, Evaluator and current Trade History Hindsight without rewriting original trades',async()=>{
+ const normalization=readFileSync(new URL('../trade-value-normalization-v139.js',import.meta.url),'utf8');
+ const overlay=readFileSync(new URL('../draft-pick-rankings-v527.js',import.meta.url),'utf8');
+ const history=readFileSync(new URL('../value-history-v276.js',import.meta.url),'utf8');
+ const runtime=readFileSync(new URL('../trade-runtime-v130.js',import.meta.url),'utf8');
+ const years=[2027,2028,2029],rounds=[1,2,3];
+ const anchors={1:7000,2:1930,3:615};
+ const picks=years.flatMap(year=>rounds.flatMap(round=>Array.from({length:32},(_,i)=>({
+  type:'pick',id:'pick-'+year+'-'+round+'-'+(i+1),season:year,round,
+  original_owner:i+1,owner:i+1
+ }))));
+ const legacy=x=>({value:anchors[x.round],projectedSlot:16,source:'flat per-year source'});
+ const standings={status:'current',source:'sleeper-live-rosters',league_id:'1316867686394769408',
+  season:2026,standings_season:2026,completed_week:9,
+  teams:Array.from({length:32},(_,i)=>({roster_id:i+1,wins:9,losses:0,ties:0,
+   points_for:900+i,record_rank:1,points_rank:32-i,combined_rank:32-i,projected_slot:i+1}))};
+ const win={state:{league:{league_id:standings.league_id,season:2026},allAssets:picks},
+  draftPickProjection90:legacy,draftPickProjection92:legacy,
+  baseValue:()=>7000,pickValue:()=>7000,packageValue:()=>7000,
+  renderAll:()=>{},addEventListener:()=>{}};
+ const doc={readyState:'complete',hidden:false,
+  getElementById:()=>({id:'pickRankingHealthV527'}),createElement:()=>({}),
+  addEventListener:()=>{}};
+ const context={window:win,document:doc,localStorage:{getItem:()=>null,setItem:()=>{}},
+  fetch:async()=>({ok:true,json:async()=>structuredClone(standings)}),
+  setInterval:()=>0,console,Date,Number,String,JSON,Math,Promise,encodeURIComponent};
+ vm.runInNewContext(normalization,context,{filename:'trade-value-normalization-v139.js'});
+ vm.runInNewContext(overlay,context,{filename:'draft-pick-rankings-v527.js'});
+ await win.draftPickRankingsV527.refresh(true);
+ const norm=win.tradeValueNormalizationV130;
+ const sourceBetween=(a,b)=>history.slice(history.indexOf(a),history.indexOf(b,history.indexOf(a)));
+ const extract=[
+  sourceBetween('function currentPickRows(){','function currentTeamRows('),
+  sourceBetween('function currentEvaluatorValue(asset){','function tradeHistoryNearestDraftYear('),
+  sourceBetween('function historicalPickSnapshotRow(side,p){','function historicalPickProjectedSlot('),
+  sourceBetween('function completedHistoricalPick(asset){','function tradeResultScoreboard(')
+ ];
+ for(const chunk of extract)assert.ok(chunk.length>100&&chunk.length<4000,
+  'Trade History audit must target known live implementation, not an absent or changed helper');
+ const histCtx={window:win,state:win.state,Math,Number,String,Date,Map,Array,
+  activeNearestDraftYear:()=>2027,
+  retroactiveTradeHistoryPickValue:()=>{throw Error('historical reconstruction not expected for unexpired draft picks')}};
+ vm.runInNewContext(extract.join('\n'),histCtx,{filename:'value-history-v276-extracted-current-pricing.js'});
+ // These runtime entry points are consumed by the actual Finder and Evaluator;
+ // guard against replacing their canonical dependency with a stale pick curve.
+ assert.match(runtime,/const av=x=>Math\.max\(0,Number\(norm\(\)\.canonicalValue\?\.\(x\)\)\|\|0\)/);
+ assert.match(runtime,/const raw=xs=>\(xs\|\|\[\]\)\.reduce\(\(s,x\)=>s\+av\(x\),0\)/);
+ assert.match(runtime,/function generateFinder\(\)/);
+ assert.match(runtime,/function syncEval\(side\)/);
+ assert.match(runtime,/function assetMarkup\(x\)/);
+ assert.match(history,/function hindsightFair\(give,recv,trade\)\{return fairWithValue\(give,recv,a=>hindsightValue\(a,trade\)\)\}/);
+ assert.match(history,/function tradeHistoryEvaluatorValue\(asset,trade\)/);
+ const datedTrade={created:'2026-10-15T12:00:00.000Z'};
+ const baseline={then_picks:[{id:'pick-2029-2-1',value:2450,projected_slot:1}]};
+ const historicPick={season:2029,round:2,original_roster_id:1};
+ for(const round of rounds){
+  for(const rid of [1,4,16,32]){
+   const values=years.map(y=>{
+    const p=picks.find(a=>a.season===y&&a.round===round&&a.original_owner===rid);
+    const current=norm.canonicalValue(p);
+    assert.equal(win.baseValue(p),current,'Finder canonical asset lookup');
+    assert.equal(win.packageValue([p]),current,'Finder package totals');
+    assert.equal(norm.pickValue(p),current,'Evaluator current value');
+    assert.equal(norm.pickContext(p).value,current,'Player Values displayed current value');
+    assert.equal(win.draftPickProjection92(p).value,norm.sourceValue(p),'source projected slot valuation');
+    assert.equal(histCtx.currentEvaluatorValue(p),current,'Trade History live asset value');
+    assert.equal(histCtx.hindsightValue(p,datedTrade),current,'Hindsight current valuation');
+    return current;
+   });
+   assert.ok(values[0]>values[1]&&values[1]>values[2],
+    'round '+round+' slot '+rid+' must strictly decrease by future draft year in every current-value consumer');
+  }
+ }
+ const reported=histCtx.currentPickRows();
+ assert.equal(reported.length,picks.length);
+ for(const p of picks){
+  const row=reported.find(r=>r.id===p.id);
+  assert.equal(row.value,norm.canonicalValue(p),'Trade History current pick records must use canonical value');
+ }
+ assert.equal(histCtx.historicalPickValue(baseline,historicPick),2450,
+  'Original Trade History must preserve its captured pick value, even when today’s value is discounted');
+ assert.notEqual(histCtx.currentEvaluatorValue(picks.find(p=>p.id==='pick-2029-2-1')),2450);
+});

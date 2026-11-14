@@ -15,6 +15,9 @@ on:
     branches: [main]
     paths:
       - 'scripts/import-sleeper-history.mjs'
+      - 'scripts/audit-qualified-player-games.mjs'
+      - 'scripts/qualified-player-game-audit-finality.mjs'
+      - 'tests/sleeper-idp-audit-finality.test.mjs'
       - '.github/workflows/import-sleeper-history.yml'
       - 'netlify/functions/ppr-scoring.mjs'
       - 'netlify/functions/sleeper-imported-history.mjs'
@@ -39,6 +42,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+
+      - name: Verify source-scored finality boundary and strict mismatch detection
+        run: node --test tests/sleeper-idp-audit-finality.test.mjs
 
       - name: Import Sleeper history
         env:

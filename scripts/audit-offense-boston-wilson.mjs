@@ -87,7 +87,7 @@ try{
     largestIncreases:[...metrics].sort((a,b)=>b.percent-a.percent).slice(0,15),
     largestDecreases:[...metrics].sort((a,b)=>a.percent-b.percent).slice(0,15)};
   // Second counterfactual: keep the approved 70/18/8/4 model intact and
-  // reduce only the positive production premium ceiling from +28% to +12%.
+  // reduce only the established (3+ year) positive production premium ceiling from +28% to +20%.
   // Ignore rows whose current value has been overridden by downstream
   // no-consensus or eligibility safeguards; those must remain untouched.
   const productionCeiling=rows.filter(z=>z?.production?.offenseConsensusAnchorV50===true).map(z=>{
@@ -96,7 +96,7 @@ try{
     const baseline=Number(window.assetCurveAudit?.(baseRaw)?.curved??NaN);
     const downstreamOverride=!Number.isFinite(baseline)||Math.abs(baseline-Number(z.value))>2;
     const prod=window.offenseConsensusAnchorV50.production(consensus,z.production?.correctedAudit||{});
-    const cap=Math.min(prod.value,1.12*consensus);
+    const cap=prod.seasons>=3?Math.min(prod.value,1.20*consensus):prod.value;
     const ctx=clamp(.90*consensus,Number(z.context)||consensus,1.15*consensus);
     const age=clamp(.88,Number(z.production?.ageFactor)||1,1.10);
     let raw=clamp(.90*consensus,.70*consensus+.18*cap+.08*ctx+.04*consensus*age,1.12*consensus);
@@ -109,7 +109,7 @@ try{
   });
   const impacted=productionCeiling.filter(x=>!x.downstreamOverride);
   const magnitudes=impacted.map(x=>Math.abs(x.percent)).sort((a,b)=>a-b);
-  const productionPremiumCap={limit:'max positive scoring premium +12% of sourced dynasty consensus (was +28%)',
+  const productionPremiumCap={limit:'max +20% premium for 3+ qualifying seasons; unchanged +28% for 0-2 season players',
    total:productionCeiling.length,unaffectedDownstreamOverrides:productionCeiling.filter(x=>x.downstreamOverride).length,
    medianAbsoluteChangePct:magnitudes[Math.floor(magnitudes.length*.5)]||0,
    p95AbsoluteChangePct:magnitudes[Math.floor(magnitudes.length*.95)]||0,

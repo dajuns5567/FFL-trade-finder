@@ -108,3 +108,37 @@ test('source recency audit uses actual snapshot updated field, not guessed refre
   assert.equal(p.consensusSnapshotsV50.find(x=>x.source==='FantasyPros').snapshotUpdatedAt,'2026-11-10T00:00:00.000Z');
   assert.equal(p.consensusSnapshotsV50.find(x=>x.source==='No timestamp').ageDays,null);
 });
+
+test('established scoring premiums are bounded but all young-player and downside evidence stays unchanged',()=>{
+ const p=(observed,seasons,c=800)=>fixture([row('wr','WR',c,seasons,observed)]).sandbox.window.offenseConsensusAnchorV50.production(c,{value:observed,qualifyingSeasons:seasons});
+ assert.equal(p(4000,4).value,960,'four qualifying seasons cannot exceed consensus +20% on production alone');
+ assert.equal(p(4000,3).value,960,'three qualifying seasons have same established-history ceiling');
+ assert.equal(p(4000,2).value,1024,'two seasons preserve the pre-existing +28% ceiling');
+ assert.equal(p(4000,1).value,1024,'one season preserves the pre-existing rookie upside adjustment');
+ assert.equal(p(0,4).value,576,'established poor production still contributes negatively');
+ assert.equal(p(0,1).value,704,'single season negative evidence stays conservatively weighted');
+ assert.equal(p(null,0).value,800,'unavailable scoring remains neutral');
+});
+test('multi-source rookie consensus remains primary over comparable veteran scoring history',()=>{
+ // These numeric inputs are taken from a read-only Nov 14 preview audit.
+ // No names/IDs appear in the runtime model or change the general rule.
+ const r=[
+  row('emerging','WR',716,1,790.1549967308935,{age:22,ageFactor:1.07,context:795,rank:88,
+    sources:['FantasyPros','DraftSharks','The IDP Show Combined Offense','KTC','FanRanked']}),
+  row('established','WR',693,4,1074.9078392606834,{age:26,ageFactor:1.04,context:717,rank:98,
+    sources:['FantasyPros','DraftSharks','The IDP Show Combined Offense','KTC','FanRanked']})
+ ];
+ const {rows}=fixture(r),by=Object.fromEntries(rows.map(z=>[z.x.id,z]));
+ assert.ok(by.emerging.value>by.established.value,'stronger verified dynasty consensus must not lose to a large veteran-only production premium');
+ assert.equal(by.emerging.production.productionSeasonsV50,1);
+ assert.equal(by.established.production.productionSeasonsV50,4);
+ assert.ok(by.established.production.effectiveScoringValue<1.28*693);
+ for(const row of rows)assert.equal(row.production.modelWeights.consensus,.70,'retains the approved 70% consensus share');
+});
+test('all four offensive groups share the veteran premium rule and IDP is unchanged',()=>{
+ const rs=['QB','RB','WR','TE'].map((pos,i)=>row('o'+i,pos,900,4,5000));
+ rs.push(row('def','IDP',900,4,5000,{priorValue:1888}));
+ const {rows}=fixture(rs),lookup=Object.fromEntries(rows.map(z=>[z.x.id,z]));
+ for(let i=0;i<4;i++)assert.equal(lookup['o'+i].production.effectiveScoringValue,1080);
+ assert.equal(lookup.def.value,1888);
+});

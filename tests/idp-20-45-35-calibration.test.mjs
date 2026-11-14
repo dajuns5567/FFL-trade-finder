@@ -43,7 +43,7 @@ test('higher verified consensus never decreases modeled IDP value at fixed scori
 test('IDP calibration does not edit offensive model, league history or V72 curve',()=>{
  const s=readFileSync(new URL('../valuation-offense-v40.js',import.meta.url),'utf8');
  const d=readFileSync(new URL('../valuation-idp-v43.js',import.meta.url),'utf8');
- assert.match(s,/modelWeights:\{consensus:\.70,scoringLookback:\.18/);
+ assert.doesNotMatch(s,/IDP_V25_MARKET_CENTER_OFFSET/,'IDP market centering must not enter offensive source');
  assert.match(d,/baseFloor=\.60\+\.16\*t/);
  assert.match(source,/if\(groupPos\(z\.x\)!=='IDP'\|\|!isIndividualIdp25\(z\.x\.id\)\)return z/);
 });

@@ -137,7 +137,7 @@ masterRankCache=null;valueCache.clear();fitCache.clear();stageCache.clear();
     currentPpg:current?.ppg??null,confidence:a?.confidence??null,
     effectiveScoringFallback:z.production?.idpEffectiveFallbackScoringV73??null,
     unverifiedNoSourceNoProduction:z.production?.idpUnverifiedNoConsensusFallbackV73===true,
-    threeSeasonEvidence:(a?.seasons||[]).map(s=>({season:s.season,games:s.games,points:s.points,ppg:s.ppg,currentSeason:s.currentSeason}))};
+    qualifyingSeasonEvidence:(a?.seasons||[]).map(s=>({season:s.season,games:s.games,points:s.points,ppg:s.ppg,currentSeason:s.currentSeason}))};
    rows.push(item);
    const peers=byName.get(key)||[];peers.push(item);byName.set(key,peers);
    if(consensus==null&&qualified===0)flags.push({kind:'no-consensus-no-qualified-scoring',...item});

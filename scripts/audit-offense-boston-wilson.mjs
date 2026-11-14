@@ -39,7 +39,18 @@ try{
     sourceAudit:r,model:{value:model?.value??null,consensus:model?.consensus??null,
      coverageGate384:model?.coverageGate384||false,
      productionReason:model?.production?.productionHistoryReasonV50||null,
-     sourceCount:model?.production?.consensusSourceCountV50??null},
+     sourceCount:model?.production?.consensusSourceCountV50??null,
+     terminalRaw:model?.production?.offenseTerminalRawV50??null,
+     terminalExact:model?.production?.offenseTerminalExactV50??null,
+     productionReliability:model?.production?.productionReliabilityV50??null,
+     effectiveScoringValue:model?.production?.effectiveScoringValue??null,
+     terminalModelWeights:model?.production?.modelWeights??null,
+     productionAudit:model?.production?.correctedAudit?{
+       value:model.production.correctedAudit.value,
+       qualifyingSeasons:model.production.correctedAudit.qualifyingSeasons
+     }:null,
+     ageFactor:model?.production?.ageFactor??null,
+     context:model?.context??null},
     scoring:h?{qualifyingSeasons:h.qualifyingSeasons,ppg:h.ppg,confidence:h.confidence}:null};
   });
   const nearby=Array.isArray(audit?.players)?audit.players.filter(r=>r.position==='WR'&&(r.observedSourceCount<=1||r.flags.includes('exact-coverage-fallback'))).slice(0,30).map(r=>({id:r.id,name:r.name,modelValue:r.modelValue,observedSourceCount:r.observedSourceCount,flags:r.flags})):[];

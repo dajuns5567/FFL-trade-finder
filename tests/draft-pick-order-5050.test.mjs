@@ -252,7 +252,18 @@ test('verified 50/50 slots restore original V92 slope from a flat source cohort 
   for(const year of years)for(const r of rounds){
     const group=picks.filter(x=>x.season===year&&x.round===r);
     const values=group.map(norm.canonicalValue);
-    assert.equal(values[0],anchors[year][r],year+' round '+r+' original value anchor unchanged');
+    const priorYear=years[years.indexOf(year)-1];
+    if(!priorYear)assert.equal(values[0],anchors[year][r],year+' round '+r+' nearest-year value remains anchored');
+    else{
+      const preceding=picks.filter(x=>x.season===priorYear&&x.round===r).map(norm.canonicalValue);
+      for(let i=0;i<values.length;i++){
+        const cap=Math.max(5,Math.floor(preceding[i]*.88/5)*5);
+        assert.ok(values[i]<=cap,year+' round '+r+' slot '+(i+1)+' must retain V92 future-year discount');
+      }
+      assert.equal(values[0],Math.min(anchors[year][r],Math.max(5,Math.floor(preceding[0]*.88/5)*5)),
+        year+' round '+r+' cannot recover an undiscounted cached top pick');
+      assert.ok(values[0]<preceding[0],year+' round '+r+' must be below the prior draft');
+    }
     assert.ok(values[3]>values[6],year+' round '+r+' 1.04 must exceed 1.07');
     assert.ok(values[0]>values[31],year+' round '+r+' earliest pick must exceed latest');
     for(let i=1;i<values.length;i++)
@@ -300,4 +311,55 @@ test('real V139 canonical pricing and trade baseValue consume projected-slot cur
   assert.equal(v.canonicalValue(picks[0]),7000,'original nearest-year first-round anchor remains 7000');
   assert.ok(v.canonicalValue(picks[3])>v.canonicalValue(picks[6]),'1.04 must be worth more than 1.07');
   assert.ok(v.canonicalValue(picks[0])>v.canonicalValue(picks[21]),'1.01 must be worth more than 1.22');
+});
+
+test('future-year correction does not discount already discounted source cohorts twice',async()=>{
+ const src=readFileSync(new URL('../draft-pick-rankings-v527.js',import.meta.url),'utf8');
+ const picks=[2027,2028].flatMap(year=>Array.from({length:32},(_,i)=>({
+  type:'pick',id:'pick-'+year+'-2-'+(i+1),season:year,round:2,original_owner:i+1,owner:i+1
+ })));
+ const legacy=x=>({value:x.season===2027?2000-(x.original_owner-1)*10:1200-(x.original_owner-1)*5,projectedSlot:16});
+ const teams=Array.from({length:32},(_,i)=>({roster_id:i+1,wins:9,losses:0,ties:0,
+  points_for:900+i,record_rank:1,points_rank:32-i,combined_rank:32-i,projected_slot:i+1}));
+ const data={status:'current',source:'sleeper-live-rosters',league_id:'1316867686394769408',
+  season:2026,standings_season:2026,completed_week:9,teams};
+ const norm={pickContext:legacy,pickValue:x=>win.draftPickProjection92(x).value,
+  canonicalValue:x=>win.draftPickProjection92(x).value};
+ const doc={readyState:'complete',hidden:false,getElementById:()=>({id:'pickRankingHealthV527'}),
+  createElement:()=>({}),addEventListener:()=>{}};
+ const win={draftPickProjection90:legacy,draftPickProjection92:legacy,tradeValueNormalizationV139:norm,
+  state:{allAssets:picks,league:{league_id:data.league_id,season:2026}},
+  renderAll:()=>{},addEventListener:()=>{}};
+ const ctx={window:win,document:doc,localStorage:{getItem:()=>null,setItem:()=>{}},
+  fetch:async()=>({ok:true,json:async()=>structuredClone(data)}),
+  setInterval:()=>0,console,Date,Number,String,JSON,Math,Promise,encodeURIComponent};
+ vm.runInNewContext(src,ctx,{filename:'draft-pick-rankings-v527.js'});
+ await win.draftPickRankingsV527.refresh(true);
+ for(const pick of picks)
+  assert.equal(norm.canonicalValue(pick),legacy(pick).value,
+   'do not compound the discount when source future-year cohort is already conservative');
+});
+
+test('incomplete later-year cohort retains conservative original source fallback',async()=>{
+ const src=readFileSync(new URL('../draft-pick-rankings-v527.js',import.meta.url),'utf8');
+ const picks=[...Array.from({length:32},(_,i)=>({type:'pick',id:'pick-2027-2-'+(i+1),
+  season:2027,round:2,original_owner:i+1,owner:i+1})),
+  {type:'pick',id:'pick-2029-2-1',season:2029,round:2,original_owner:1,owner:1}];
+ const legacy=x=>({value:x.season===2029?900:1900,projectedSlot:16});
+ const teams=Array.from({length:32},(_,i)=>({roster_id:i+1,wins:9,losses:0,ties:0,
+  points_for:900+i,record_rank:1,points_rank:32-i,combined_rank:32-i,projected_slot:i+1}));
+ const data={status:'current',source:'sleeper-live-rosters',league_id:'1316867686394769408',
+  season:2026,standings_season:2026,completed_week:9,teams};
+ const norm={pickContext:legacy,pickValue:x=>win.draftPickProjection92(x).value,
+  canonicalValue:x=>win.draftPickProjection92(x).value};
+ const doc={readyState:'complete',hidden:false,getElementById:()=>({id:'pickRankingHealthV527'}),
+  createElement:()=>({}),addEventListener:()=>{}};
+ const win={draftPickProjection90:legacy,draftPickProjection92:legacy,tradeValueNormalizationV139:norm,
+  state:{allAssets:picks,league:{league_id:data.league_id,season:2026}},
+  renderAll:()=>{},addEventListener:()=>{}};
+ vm.runInNewContext(src,{window:win,document:doc,localStorage:{getItem:()=>null,setItem:()=>{}},
+  fetch:async()=>({ok:true,json:async()=>structuredClone(data)}),setInterval:()=>0,
+  console,Date,Number,String,JSON,Math,Promise,encodeURIComponent},{filename:'draft-pick-rankings-v527.js'});
+ await win.draftPickRankingsV527.refresh(true);
+ assert.equal(norm.canonicalValue(picks.at(-1)),900,'missing comparison cohort must not be synthesized');
 });

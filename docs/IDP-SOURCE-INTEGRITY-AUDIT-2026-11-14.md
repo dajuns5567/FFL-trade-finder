@@ -21,6 +21,18 @@ Read-only evidence: user-exported `ffl-full-valuation-audit-2026-11-14T20-58-44-
 
 Do not manually rank the five affected players, invent their consensus, or delete them from the eligible player universe. New ranking positions require a fresh combined build.
 
+## Near-name identity risk found during the follow-up audit
+
+The composite source parser previously allowed a publisher's fuzzy first-name match even when more than one *different Sleeper IDP identity* shared that surname and a compatible first-name prefix. Same-canonical-name identity guards (e.g. Chris Jones variants) were already strict, but the near-alias case was not. The following **potential** collision cohorts exist in the imported snapshot (the same displayed CV alone is not proof of a bad source match, because the IDP curve floors low-ranked source values):
+
+- Quinnen Williams (6118) / Quincy Williams (6214)
+- Christian Gonzalez (10881) / Chris Gonzalez (5404)
+- Carlton Davis III (5054) / Carl Davis (2395)
+- Jonathan Cooper (1574) / Jonathon Cooper (7765)
+- Marcus Jones (8359) / Marcel Jones (1187)
+
+The source composite now accepts a publisher's **exact canonical name** for each player as before, and preserves uniquely owned aliases. When different IDP Sleeper players could both plausibly own one fuzzy publisher row, it refuses to assign that row to a different-canonical player. It does **not** transfer the source value to a guessed identity. Offensive ownership logic and source values are unchanged. The new regression tests use synthetic candidates rather than hardcoding adjustments for the listed players.
+
 ## Remaining evidence limitations
 
 - Myles Garrett: 20.55 current-year league PPG from **2 games**, alongside 36 games in the 2024–26 actual aggregate; review the game-count qualification, not the value by fiat.

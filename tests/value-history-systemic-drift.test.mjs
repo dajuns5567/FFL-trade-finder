@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { summarizeDrift, corroboratesPending } from '../scripts/value-history-systemic-drift.mjs';
+import { summarizeDrift, corroboratesPending, scheduledArchiveDecision } from '../scripts/value-history-systemic-drift.mjs';
 
 const groups=['QB','RB','WR','TE','IDP'];
 function population(){
@@ -38,4 +38,30 @@ test('large missing-player populations cannot be treated as corroboration',()=>{
  const initial=population(),sample=initial.slice(0,100);
  assert.equal(corroboratesPending(initial,sample),false);
  assert.equal(summarizeDrift(initial,sample).flagged,false);
+});
+
+test('a 20 percent missing-player population is quarantined even if the remaining values match',()=>{
+ const old=population(),reduced=old.slice(0,640);
+ const outcome=summarizeDrift(old,reduced);
+ assert.equal(outcome.flagged,true);
+ assert.equal(outcome.reason,'population-coverage-collapse');
+ assert.equal(corroboratesPending(old,reduced),false);
+});
+test('archive decision requires an independent later capture from the same baseline and contract',()=>{
+ const a={t:'2026-11-13T01:00:00Z',rows:population()};
+ const rows=shift(a.rows,()=>1.04),b={t:'2026-11-13T05:00:00Z',rows,valuation_contract:'precision-idp-runtime-20260919'};
+ const pending={schema_version:1,previous:a.t,capturedAt:'2026-11-13T03:00:00Z',valuation_contract:b.valuation_contract,rows};
+ assert.equal(scheduledArchiveDecision(a,b,null).action,'quarantine');
+ assert.equal(scheduledArchiveDecision(a,b,pending).action,'archive-confirmed');
+ assert.equal(scheduledArchiveDecision(a,b,{...pending,previous:'2026-11-12T01:00:00Z'}).action,'quarantine');
+ assert.equal(scheduledArchiveDecision(a,b,{...pending,valuation_contract:'different'}).action,'quarantine');
+ assert.equal(scheduledArchiveDecision(a,b,{...pending,capturedAt:b.t}).action,'quarantine');
+ assert.equal(scheduledArchiveDecision(a,{...b,rows:a.rows},pending).action,'archive');
+});
+test('restored coverage needs fresh, complete corroboration; trimmed snapshots cannot confirm',()=>{
+ const a={t:'2026-11-13T01:00:00Z',rows:population()};
+ const reduced=shift(a.rows.slice(0,640),()=>.8);
+ const b={t:'2026-11-13T05:00:00Z',rows:reduced,valuation_contract:'x'};
+ const pending={schema_version:1,previous:a.t,capturedAt:'2026-11-13T03:00:00Z',valuation_contract:'x',rows:reduced};
+ assert.equal(scheduledArchiveDecision(a,b,pending).action,'quarantine');
 });

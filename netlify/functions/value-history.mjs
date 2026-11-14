@@ -1164,9 +1164,11 @@ export { monthKey, marketFromSnapshots, baselineFor, marketInsightsFromSnapshots
 export default async (req)=>{
   try{
     const url=new URL(req.url),s=safeStore();
-    // Internal editorial previews must be read-only even when the handler's
-    // ordinary GET path performs one-time legacy cleanup writes.
-    const readonlyPreview=req.method==='GET'&&url.searchParams.get('readonly_preview')==='1';
+    // Deploy Previews are experimental branches; never let their page loads
+    // overwrite the canonical league's shared history or run cleanup writes.
+    // Check both the request hostname and Netlify's runtime deploy context.
+    const isDeployPreview=/^deploy-preview-\d+--/i.test(url.hostname)||process.env.CONTEXT==='deploy-preview';
+    const readonlyPreview=isDeployPreview||(req.method==='GET'&&url.searchParams.get('readonly_preview')==='1');
     if(s&&!readonlyPreview){
       try{await scrubV346KtcContamination(s)}catch(e){console.warn('v346-history-scrub',e)}
       try{await scrubV348ConsensusContamination(s)}catch(e){console.warn('v348-history-scrub',e)}
@@ -1235,6 +1237,7 @@ export default async (req)=>{
       return json({player_id:playerId,points:result.points||[],scoring_milestones:null,history_state:result.source,snapshot_count:result.snapshotCount||0,partial:!!result.partial});
     }
     if(req.method!=='POST')return json({error:'method not allowed'},405);
+    if(isDeployPreview)return json({error:'deploy previews are read-only for canonical value history'},403);
     if(!s)return json({error:'live history store unavailable'},503);
     const body=await req.json().catch(()=>null);
     if(String(body?.league||'')!==LEAGUE)return json({error:'league mismatch'},400);

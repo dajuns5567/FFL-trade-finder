@@ -166,3 +166,30 @@ test('every imported current-only IDP uses the same confidence and evidence rule
  assert.equal(impacted.length,12,'the observed high-production cohort must be fully covered');
  assert.ok(impacted.includes('13363'),'Bailey is a member, not a special-cased exception');
 });
+
+test('higher evidence confidence helps genuine high-producing IDPs without blanket value inflation',()=>{
+ const src=fs.readFileSync('valuation-idp-v25-perf.js','utf8');
+ const begin=src.indexOf('function scoring25(id){'),end=src.indexOf('function context25(',begin);
+ assert.ok(begin>=0&&end>begin);
+ const code=src.slice(begin,end);
+ const distribution=[5,7,9,10,12,14,16,18];
+ const percentile=(arr,x)=>Math.max(.01,Math.min(.99,
+  (arr.filter(y=>y<x).length+.5*arr.filter(y=>y===x).length)/arr.length));
+ const run=(productionPpg,confidence)=>{
+  const context={
+   generation25:()=>{},scoreCache25:new Map(),
+   baseAudit25:()=>({qualifyingSeasons:1,historicalSeasons:0}),
+   metrics25:()=>({ppg:productionPpg,confidence,coverage:.188,seasons:1}),
+   distributions25:()=>({ppg:distribution,p50:11,p99:17.86,rolePpg:{}}),
+   role25:()=> 'EDGE',pct25:percentile,
+   clamp25:(min,x,max)=>Math.max(min,Math.min(x,max)),
+   Math,Number
+  };
+  return vm.runInNewContext(code+'\\nscoring25("representative-idp")',context);
+ };
+ const highEarly=run(20.625,.19),highVerified=run(20.625,.39);
+ assert.ok(highVerified.value>highEarly.value,'real high production benefits from more verified games');
+ const lowEarly=run(5,.19),lowVerified=run(5,.39);
+ assert.ok(lowVerified.value<=lowEarly.value,'more evidence of weak production must not inflate value');
+ assert.ok(highVerified.value>lowVerified.value,'IDP values remain sensitive to actual scoring');
+});

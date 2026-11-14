@@ -21,10 +21,51 @@ function rosterOwner(id){return state.allAssets.find(x=>x.type==='player'&&Strin
 function globalPlayerRows(q){const n=normText(q);if(!n)return[];return Object.entries(state.players||{}).filter(([id,p])=>p?.fantasy_positions?.length&&normText(playerName(id)).includes(n)).map(([id])=>({id,owner:rosterOwner(id)})).filter(x=>x.owner!=null).sort((a,b)=>Number(tv().playerValue?.({type:'player',id:b.id})||0)-Number(tv().playerValue?.({type:'player',id:a.id})||0)).slice(0,20)}
 function ensureGlobalEvalSearch(side){const sel=document.getElementById('eval'+side);if(!sel||document.getElementById('evalGlobalSearch'+side))return;const wrap=document.createElement('div');wrap.innerHTML=`<label>Search any league player</label><input id="evalGlobalSearch${side}" type="search" placeholder="Search any player before choosing a team…" autocomplete="off"><div id="evalGlobalResults${side}" class="tiny" style="margin:6px 0 10px"></div>`;sel.parentNode.insertBefore(wrap,sel);const input=wrap.querySelector('input'),results=wrap.querySelector(`#evalGlobalResults${side}`);input.addEventListener('input',()=>{results.innerHTML=globalPlayerRows(input.value).map(r=>`<button type="button" class="secondary small" data-pid="${r.id}" data-owner="${r.owner}" style="margin:2px">${esc(playerName(r.id))} • ${esc(teamName(r.owner))}</button>`).join('')});results.addEventListener('click',e=>{const b=e.target.closest('button[data-pid]');if(!b)return;sel.value=String(b.dataset.owner);sel.dispatchEvent(new Event('change',{bubbles:true}));setTimeout(()=>{const asset=state.allAssets.find(x=>x.type==='player'&&String(x.id)===String(b.dataset.pid));if(asset){state['assets'+side]=[{...asset}];renderAssets(side);if(typeof window.renderEvalChooser==='function')window.renderEvalChooser(side)}},0);input.value=playerName(b.dataset.pid);results.innerHTML=''})}
 function ensureFinderGlobalSearch(){const sel=document.getElementById('findTeam');if(!sel||document.getElementById('finderGlobalSearch'))return;const wrap=document.createElement('div');wrap.innerHTML='<label>Search any league player</label><input id="finderGlobalSearch" type="search" placeholder="Search any player…" autocomplete="off"><div id="finderGlobalResults" class="tiny" style="margin:6px 0"></div>';sel.parentNode.insertBefore(wrap,sel);const input=wrap.querySelector('input'),results=wrap.querySelector('#finderGlobalResults');input.addEventListener('input',()=>{results.innerHTML=globalPlayerRows(input.value).map(r=>`<button type="button" class="secondary small" data-pid="${r.id}" data-owner="${r.owner}" style="margin:2px">${esc(playerName(r.id))} • ${esc(teamName(r.owner))}</button>`).join('')});results.addEventListener('click',e=>{const b=e.target.closest('button[data-pid]');if(!b)return;sel.value=String(b.dataset.owner);sel.dispatchEvent(new Event('change',{bubbles:true}));setTimeout(()=>{const box=[...document.querySelectorAll('.shopCheck')].find(c=>String(c._asset?.id)===String(b.dataset.pid));if(box){box.checked=true;box.scrollIntoView({block:'center'})}},0);input.value=playerName(b.dataset.pid);results.innerHTML=''})}
-function historyLabel(id){const isIdp=groupPos({type:'player',id})==='IDP';if(isIdp&&typeof window.idpScoringAudit==='function'){const a=window.idpScoringAudit(id);if(!a||!a.qualifyingSeasons)return'No qualifying imported Sleeper scoring history';return `${a.ppg.toFixed(1)} PPG • ${a.qualifyingSeasons} qualifying season${a.qualifyingSeasons===1?'':'s'} • confidence ${(a.confidence*100).toFixed(0)}% • scoring component ${a.productionValue}`;}if(!isIdp&&typeof window.offenseScoringAudit==='function'){if(!state.sleeperHistory?.complete)return'Sleeper PPR scoring history unavailable on latest refresh';const a=window.offenseScoringAudit(id);if(!a||!a.qualifyingSeasons)return'No qualifying imported Sleeper PPR scoring history';return `${a.ppg.toFixed(1)} PPR PPG • ${a.qualifyingSeasons} qualifying season${a.qualifyingSeasons===1?'':'s'} • confidence ${(a.confidence*100).toFixed(0)}% • scoring component ${a.productionValue??'n/a'}`;}const rs=rawScore(id);if(!rs.seasons)return'No qualifying 8+ game season in the production window';return `${rs.ppg.toFixed(1)} PPG • ${rs.seasons} qualifying season${rs.seasons===1?'':'s'} • confidence ${(rs.confidence*100).toFixed(0)}%`}
+function historyLabel(id){
+ const isIdp=groupPos({type:'player',id})==='IDP';
+ if(isIdp&&typeof window.idpScoringAudit==='function'){
+  const a=window.idpScoringAudit(id);
+  if(!a||!a.qualifyingSeasons)return'No qualifying imported Sleeper scoring history';
+  const current=(a.seasons||[]).find(x=>x.currentSeason&&Number(x.games)>0);
+  const recorded=current&&Number.isFinite(Number(current.ppg))?
+   Number(current.ppg).toFixed(1)+' league-scored '+current.season+' PPG ('+current.games+' qualifying games) • ':'';
+  // a.ppg is an evidence-weighted valuation input, NOT actual current-year
+  // points per game. Rookies with missing historical seasons are especially
+  // misleading if its scheduled-year denominator is presented as a real PPG.
+  return recorded+Number(a.ppg||0).toFixed(1)+' valuation-weighted PPG • '+
+   a.qualifyingSeasons+' qualifying season'+(a.qualifyingSeasons===1?'':'s')+
+   ' • confidence '+(Number(a.confidence||0)*100).toFixed(0)+'% • scoring component '+a.productionValue;
+ }
+ if(!isIdp&&typeof window.offenseScoringAudit==='function'){
+  if(!state.sleeperHistory?.complete)return'Sleeper PPR scoring history unavailable on latest refresh';
+  const a=window.offenseScoringAudit(id);
+  if(!a||!a.qualifyingSeasons)return'No qualifying imported Sleeper PPR scoring history';
+  return `${a.ppg.toFixed(1)} PPR PPG • ${a.qualifyingSeasons} qualifying season${a.qualifyingSeasons===1?'':'s'} • confidence ${(a.confidence*100).toFixed(0)}% • scoring component ${a.productionValue??'n/a'}`;
+ }
+ const rs=rawScore(id);if(!rs.seasons)return'No qualifying 8+ game season in the production window';
+ return `${rs.ppg.toFixed(1)} PPG • ${rs.seasons} qualifying season${rs.seasons===1?'':'s'} • confidence ${(rs.confidence*100).toFixed(0)}%`;
+}
+const identityName=s=>normText(s);
+let identityPlayers=null,identityCounts=null;
+function idpIdentityLabel(id){
+ const p=state.players?.[String(id)]||{};
+ if(groupPos({type:'player',id})!=='IDP')return'';
+ if(identityPlayers!==state.players){
+  identityPlayers=state.players;
+  identityCounts=new Map();
+  for(const player of Object.values(state.players||{})){
+   const name=identityName(player.full_name||[player.first_name,player.last_name].filter(Boolean).join(' '));
+   if(name)identityCounts.set(name,(identityCounts.get(name)||0)+1);
+  }
+ }
+ const name=identityName(playerName(id));
+ if((identityCounts?.get(name)||0)<2)return'';
+ const role=String(p.position||(p.fantasy_positions||[])[0]||'IDP').toUpperCase();
+ return ' • Sleeper ID '+String(id)+' • '+role+(p.active===false?' • Inactive':'');
+}
 function rankedPlayers(){return ensureMaster?.()||[]}
 function positionalRanks(ranked){const counts={};const map=new Map();for(const z of ranked){const p=groupPos(z.x);counts[p]=(counts[p]||0)+1;map.set(String(z.x.id),counts[p])}return map}
-function playerRow(z,posRanks){const x=z.x,m=playerRankValue(x),p=state.players?.[x.id]||{},team=p.team||'FA',g=groupPos(x),v=Number(tv().playerValue?.(x)||0),pr=posRanks.get(String(x.id))||0;return `<div class="asset valueRow19" data-player-id="${esc(x.id)}" data-name="${normText(playerName(x.id))}"><div><button type="button" class="pv-history-link" data-pv-history="${esc(String(x.id))}" aria-label="Open ${esc(playerName(x.id))} value history"><span class="pv-history-name"><b>${m.rank}. ${esc(playerName(x.id))}</b><span class="pv-history-cue">View history ↗</span></span><small class="pv-history-meta">${g} • ${esc(team)} • CV ${m.consensus??'fallback'} • TV ${m.value} • Value ${fmt(v)} • overall #${m.rank} • ${g} #${pr}</small></button><small class="muted">${historyLabel(x.id)}</small></div></div>`}
+function playerRow(z,posRanks){const x=z.x,m=playerRankValue(x),p=state.players?.[x.id]||{},team=p.team||'FA',g=groupPos(x),v=Number(tv().playerValue?.(x)||0),pr=posRanks.get(String(x.id))||0;return `<div class="asset valueRow19" data-player-id="${esc(x.id)}" data-name="${normText(playerName(x.id))}"><div><button type="button" class="pv-history-link" data-pv-history="${esc(String(x.id))}" aria-label="Open ${esc(playerName(x.id))} value history"><span class="pv-history-name"><b>${m.rank}. ${esc(playerName(x.id))}</b><span class="pv-history-cue">View history ↗</span></span><small class="pv-history-meta">${g} • ${esc(team)} • CV ${m.consensus??'fallback'} • TV ${m.value} • Value ${fmt(v)} • overall #${m.rank} • ${g} #${pr}${esc(idpIdentityLabel(x.id))}</small></button><small class="muted">${historyLabel(x.id)}</small></div></div>`}
 function pickRows(q){const picks=(state.allAssets||[]).filter(x=>x?.type==='pick').map(a=>({a,source:Number(tv().sourceValue?.(a)||0),value:Number(tv().pickValue?.(a)||0),ctx:tv().pickContext?.(a)||{}})).filter(r=>!q||normText(`${r.a.name||''} ${r.a.season} r${r.a.round} ${r.ctx.originalTeam||''} ${r.ctx.currentOwnerTeam||''}`).includes(q)).sort((x,y)=>y.source-x.source||Number(x.a.season)-Number(y.a.season)||Number(x.a.round)-Number(y.a.round)||Number(x.ctx.projectedSlot||16)-Number(y.ctx.projectedSlot||16));return picks.map((r,i)=>{const a=r.a,c=r.ctx,slot=Math.max(1,Math.min(32,Math.round(Number(c.projectedSlot)||16)));return `<div class="asset"><div><b>${i+1}. ${esc(a.name||`${a.season} R${a.round}`)}</b><br><small>${a.season} R${a.round} • projected ${a.round}.${String(slot).padStart(2,'0')} • Value ${fmt(r.value)}</small><br><small class="muted">Original: ${esc(c.originalTeam||teamName(a.original_owner))} • Current owner: ${esc(c.currentOwnerTeam||teamName(a.owner))}</small></div></div>`}).join('')||'<div class="empty">No matching draft picks.</div>'}
 function setMode(next){mode=next;if(mode!=='OFFENSE')posFilter='ALL';renderAllValues()}
 function controls(){return `<div id="playerValueFilter" style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px">${[['ALL','All'],['OFFENSE','Offense'],['DEFENSE','Defense'],['ROOKIES','Rookies'],['DRAFT','Draft Picks']].map(([v,l])=>`<button type="button" class="${mode===v?'':'secondary '}small" data-value-filter="${v}">${l}</button>`).join('')}</div><div id="playerPositionFilter" style="${mode==='OFFENSE'?'display:flex':'display:none'};gap:8px;flex-wrap:wrap;margin:-4px 0 12px">${[['ALL','All Offense'],['QB','QB'],['RB','RB'],['WR','WR'],['TE','TE']].map(([v,l])=>`<button type="button" class="${posFilter===v?'':'secondary '}small" data-pos-filter="${v}">${l}</button>`).join('')}</div>`}

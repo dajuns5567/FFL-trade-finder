@@ -53,7 +53,7 @@ test('IDP display labels actual Sleeper PPG separately from model valuation PPG'
  '1430':{full_name:'Chris Jones',position:'DT',fantasy_positions:['DL'],active:false}};
  const window={idpScoringAudit:id=>id==='13363'?{
   ppg:7.2,qualifyingSeasons:1,confidence:.39,productionValue:310,
-  seasons:[{season:2026,games:8,currentSeason:true,ppg:21.36875}]
+  seasons:[{season:2026,games:8,currentSeason:true,ppg:21.36875,points:170.95},{season:2025,games:10,currentSeason:false,ppg:10,points:100},{season:2024,games:12,currentSeason:false,ppg:12,points:144},{season:2023,games:16,currentSeason:false,ppg:60,points:960}]
  }:null};
  const state={players};
  const ctx={window,state,groupPos:x=>'IDP',rawScore:()=>({}),playerName:id=>players[id].full_name,
@@ -61,6 +61,7 @@ test('IDP display labels actual Sleeper PPG separately from model valuation PPG'
 
  const out=vm.runInNewContext(source+"\n[historyLabel('13363'),idpIdentityLabel('1430'),idpIdentityLabel('3558')]",ctx);
  assert.match(out[0],/21\.4 league-scored 2026 PPG \(8 qualifying games\)/);
+ assert.match(out[0],/13\.8 actual 2024–2026 PPG \(30 games\)/);
  assert.match(out[0],/7\.2 valuation-weighted PPG/);
  assert.match(out[1],/Sleeper ID 1430/);
  assert.match(out[1],/Inactive/);

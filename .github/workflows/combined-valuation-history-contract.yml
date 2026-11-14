@@ -31,10 +31,11 @@ jobs:
           node --check valuation-idp-v43.js
           node --check ui-player-values-v139.js
           node --check value-history-v276.js
+          node --check trade-specific-max-value-v279.js
           node --check netlify/functions/value-history.mjs
       - name: Existing targeted and combined regression suites
         run: |
-          node --test tests/offense-consensus-anchor-v50.test.mjs tests/idp-unverified-fallback-v73.test.mjs tests/idp-source-integrity-audit-v73.test.mjs tests/idp-fuzzy-identity-ownership-v73.test.mjs tests/consensus-composite-v3.test.mjs tests/idp-20-45-35-calibration.test.mjs tests/idp-dynasty-development.test.mjs tests/idp-rookie-scoring-display.test.mjs tests/idp-v72-source-retention.test.mjs tests/value-history-preview-isolation.test.mjs tests/trade-history-ranked-unrostered-hindsight.test.mjs tests/trade-history-hindsight-live-sync.test.mjs tests/trade-history-live-sleeper.test.mjs tests/combined-cross-page-canonical-currency.test.mjs tests/combined-valuation-history-contract.test.mjs
+          node --test tests/offense-consensus-anchor-v50.test.mjs tests/idp-unverified-fallback-v73.test.mjs tests/idp-source-integrity-audit-v73.test.mjs tests/idp-fuzzy-identity-ownership-v73.test.mjs tests/consensus-composite-v3.test.mjs tests/idp-20-45-35-calibration.test.mjs tests/idp-dynasty-development.test.mjs tests/idp-rookie-scoring-display.test.mjs tests/idp-v72-source-retention.test.mjs tests/value-history-preview-isolation.test.mjs tests/trade-history-ranked-unrostered-hindsight.test.mjs tests/trade-history-original-pick-projection.test.mjs tests/targeted-max-value-search-stall.test.mjs tests/trade-history-hindsight-live-sync.test.mjs tests/trade-history-live-sleeper.test.mjs tests/combined-cross-page-canonical-currency.test.mjs tests/combined-valuation-history-contract.test.mjs
       - name: Remaining browser runtime syntax and historical hub checks
         run: |
           node scripts/site-runtime-syntax-audit.mjs

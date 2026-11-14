@@ -38,3 +38,7 @@ All source-changing PRs remain **drafts**. #463, #464 and #467 also modify `netl
 - `.github/workflows/final-offline-trade-browser-acceptance.yml`
 
 **Freeze canonical player formula edits unless new independently verified evidence demonstrates a regression.** Avoid manual player boosts or invented dynasty consensus.
+
+## Final real-league acceptance reported two additional issues (2026-11-14)
+
+The owner uploaded screenshots from the exact live-data Deploy Preview #466. Original Trade Analysis omitted a 2027 R1 historical projected slot, and Select All + Maximum Value Received + exact Jonathan Taylor target + Tier Up left Finder searching until the browser crashed. This integration-only branch now includes two **separately drafted subsystems** for acceptance: PR #468 (Trade History: verified 50/50 at-trade slot then archived dated snapshot projection with explicit provenance or an explicit unavailable message, never a guessed rank) and PR #470 (Finder: preindexed outgoing package structures and periodic event-loop yields instead of repeated full rescans). Historical pick *values*, ranking policy, and offensive/IDP valuation weights remain unchanged. Verify each independently before authorizing a separate release. Previous eight-green gate describes prior code commit, not this new integration commit; all checks must be rerun.

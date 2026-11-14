@@ -906,16 +906,27 @@ function historicalPickValue(side,p){
   const row=historicalPickSnapshotRow(side,p),n=Number(row?.value);
   return Number.isFinite(n)?Math.round(n):null;
 }
+function historicalPickProjectionEvidence(side,p,trade){
+ const after=Date.parse(trade?.created)>=Date.parse('2026-09-25T04:00:00.000Z');
+ if(after){
+  const candidate=trade?.ranking_at_trade?.slots?.[String(p?.original_roster_id)];
+  const n=Number(candidate);
+  if(candidate!=null&&Number.isInteger(n)&&n>=1&&n<=32)
+   return{slot:n,source:'verified-completed-week-5050'};
+ }
+ const snap=historicalPickSnapshotRow(side,p),candidate=snap?.projected_slot;
+ const n=Number(candidate);
+ if(candidate!=null&&Number.isInteger(n)&&n>=1&&n<=32)
+  return{slot:n,source:'archived-trade-time-snapshot'};
+ return{slot:null,source:'unavailable'};
+}
 function historicalPickProjectedSlot(side,p,trade){
-  // Preserve all prior editions. From Sep 25, 2026 onward the draft
-  // ORDER is taken from verified completed-week league results, never MIDA.
-  // Historical VALUE stays in then_picks and is not recalculated here.
-  if(Date.parse(trade?.created)>=Date.parse('2026-09-25T04:00:00.000Z')){
-    const n=Number(trade?.ranking_at_trade?.slots?.[String(p?.original_roster_id)]);
-    return Number.isInteger(n)&&n>=1&&n<=32?n:null;
-  }
-  const n=Math.round(Number(historicalPickSnapshotRow(side,p)?.projected_slot));
-  return n>=1&&n<=32?n:null;
+ return historicalPickProjectionEvidence(side,p,trade).slot;
+}
+function originalPickProjectionText(round,slot,source){
+ const label=projectedPickSlotText(round,slot,'at trade');
+ if(!label)return'Historical projected slot unavailable';
+ return source==='archived-trade-time-snapshot'?label+' (archived snapshot)':label;
 }
 function historicalPlayerValue(side,id){
   const row=(side?.then_players||[]).find(x=>String(x?.id)===String(id)),n=Number(row?.value);return Number.isFinite(n)?Math.round(n):null
@@ -945,7 +956,7 @@ function sideValueModel(side,trade){
   for(const p of side.picks||[]){
     const pickAsset=tradePickAsset(p,side.roster_id),recorded=historicalPickValue(side,p),then=recorded??retroactiveTradeHistoryPickValue(pickAsset,trade);
     if(then==null)atTradeComplete=false;
-    const ownership=historicalPickOwnershipLabel(p,trade),slotLabel=historicalDraftSlotLabel(p),projectedAtTrade=historicalPickProjectedSlot(side,p,trade),projectedAtTradeText=projectedPickSlotText(p.round,projectedAtTrade,'at trade');
+    const ownership=historicalPickOwnershipLabel(p,trade),slotLabel=historicalDraftSlotLabel(p),projection=historicalPickProjectionEvidence(side,p,trade),projectedAtTradeText=originalPickProjectionText(p.round,projection.slot,projection.source);
     atTradeItems.push({label:`Draft pick: ${p.season} R${p.round}`,meta:`${projectedAtTradeText?projectedAtTradeText+' • ':''}${ownership}`,kind:'pick',value:then});
     if(p.drafted_player_id){
       const drafted=tradePlayerAsset(p.drafted_player_id,side.roster_id),now=currentEvaluatorValue(drafted);if(now==null)currentComplete=false;
@@ -965,7 +976,7 @@ function tradeOutcomeAssets(side){
 }
 function tradeOriginalAssets(side,trade){
   const out=(side?.player_ids||[]).map(id=>tradePlayerAsset(id,side.roster_id));
-  for(const p of side?.picks||[]){const pick=tradePickAsset(p,side.roster_id);if(pick){const recorded=historicalPickValue(side,p),projectedSlot=historicalPickProjectedSlot(side,p,trade);if(recorded!=null)pick.historyRecordedValue=recorded;if(projectedSlot)pick.historyProjectedSlot=projectedSlot;out.push(pick)}}
+  for(const p of side?.picks||[]){const pick=tradePickAsset(p,side.roster_id);if(pick){const recorded=historicalPickValue(side,p),projection=historicalPickProjectionEvidence(side,p,trade);if(recorded!=null)pick.historyRecordedValue=recorded;if(projection.slot)pick.historyProjectedSlot=projection.slot;pick.historyProjectionSource=projection.source;out.push(pick)}}
   return out;
 }
 function tradeEvaluatorAnalysis(trade){
@@ -1084,7 +1095,7 @@ function evaluatorAssetRow(asset,trade){
   const value=tradeHistoryEvaluatorValue(asset,trade),label=asset?.type==='pick'?(asset.name||`${asset.season} R${asset.round}`):playerName(asset?.id);
   let meta='';
   if(asset?.type==='pick'){
-    const original=historicalTradeTeamName(trade,asset.original_owner),slotLabel=historicalDraftSlotLabel({season:asset.season,round:asset.round,draft_slot:asset.historyPick?.draft_slot}),used=asset.historyPick?.drafted_player_id?` • selected ${playerName(asset.historyPick.drafted_player_id)}${slotLabel?` at ${slotLabel}`:''}`:'',projectedAtTrade=projectedPickSlotText(asset.round,asset.historyProjectedSlot,'at trade');
+    const original=historicalTradeTeamName(trade,asset.original_owner),slotLabel=historicalDraftSlotLabel({season:asset.season,round:asset.round,draft_slot:asset.historyPick?.draft_slot}),used=asset.historyPick?.drafted_player_id?` • selected ${playerName(asset.historyPick.drafted_player_id)}${slotLabel?` at ${slotLabel}`:''}`:'',projectedAtTrade=originalPickProjectionText(asset.round,asset.historyProjectedSlot,asset.historyProjectionSource);
     meta=`Draft pick${projectedAtTrade?` • ${projectedAtTrade}`:''} • original: ${original}${used}`;
   }else meta=currentTradePlayerMeta(asset?.id);
   return`<div class="vh-eval-asset"><div><b>${esc(label)}</b><small>${esc(meta)}</small></div><strong>${value==null?'—':fmt(value)}</strong></div>`

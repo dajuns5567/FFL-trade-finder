@@ -60,7 +60,7 @@ test('IDP display labels actual Sleeper PPG separately from model valuation PPG'
   normText:x=>String(x).toLowerCase(),Number,Object,String,Map};
 
  const out=vm.runInNewContext(source+"\n[historyLabel('13363'),idpIdentityLabel('1430'),idpIdentityLabel('3558')]",ctx);
- assert.match(out[0],/21\.4 actual 2026 PPG \(8 qualifying games\)/);
+ assert.match(out[0],/21\.4 league-scored 2026 PPG \(8 qualifying games\)/);
  assert.match(out[0],/7\.2 valuation-weighted PPG/);
  assert.match(out[1],/Sleeper ID 1430/);
  assert.match(out[1],/Inactive/);

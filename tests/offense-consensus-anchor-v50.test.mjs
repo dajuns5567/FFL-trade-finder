@@ -10,9 +10,10 @@ function fixture(rows){
   for(const r of rows){if(r.c!=null)byId[r.id]=r.c;detailsById[r.id]={offenseRank:r.rank??100,offenseSources:r.sources??[]}}
   const master=rows.map(r=>({x:{id:r.id,type:'player',pos:r.pos},value:r.priorValue??500,
     context:r.context??r.c??500,production:{ageFactor:r.ageFactor??1,
-      correctedAudit:{value:r.production,qualifyingSeasons:r.seasons}}}));
+      correctedAudit:{value:r.production,rawValue:r.rawValue??r.production,qualifyingSeasons:r.seasons,
+        samples:r.games!=null?[{games:r.games,currentSeason:r.currentSeason??true}]:[]}}}));
   const sandbox={window:{assetCurveAudit:raw=>({exact:raw,curved:Math.round(raw)})},
-    state:{consensusComposite:{byId,detailsById},rankings:{'FantasyPros':{updated:'2026-11-10T00:00:00.000Z'},'KTC':{updated:'2026-01-01T00:00:00.000Z'}},players:Object.fromEntries(rows.map(r=>[r.id,{age:r.age??null,years_exp:r.yearsExp??null}]))},groupPos:x=>x.pos,
+    state:{sleeperHistory:{completedWeek:9},consensusComposite:{byId,detailsById},rankings:{'FantasyPros':{updated:'2026-11-10T00:00:00.000Z'},'KTC':{updated:'2026-01-01T00:00:00.000Z'}},players:Object.fromEntries(rows.map(r=>[r.id,{age:r.age??null,years_exp:r.yearsExp??null}]))},groupPos:x=>x.pos,
     masterRankings:()=>master,ensureMaster:()=>master,masterRankCache:null,
     playerRankValue:()=>({}),baseValue:()=>0,playerName:()=>'',pickValue:()=>30,
     valueCache:new Map(),fitCache:new Map(),stageCache:new Map()};
@@ -169,4 +170,46 @@ test('offense calibrated three-year cap applies equally to all QB RB WR TE and d
  const p=sandbox.window.offenseConsensusAnchorV50.production;
  assert.equal(p(800,{qualifyingSeasons:4,value:0}).value,576);
  assert.equal(p(800,{qualifyingSeasons:1,value:0}).value,800*(1-.12));
+});
+
+test('verified early-career eight-game production is discounted once, never twice',()=>{
+ const inputs=[
+  row('boston','WR',718,1,791.65,{age:22,yearsExp:0,games:9,currentSeason:true,rawValue:1012.62,context:797,ageFactor:1.07,rank:87}),
+  row('waddle','WR',706,4,944.91,{age:27,yearsExp:5,games:9,currentSeason:true,rawValue:944.91,context:736,ageFactor:1.04,rank:92}),
+  row('concepcion','WR',750,1,796.68,{age:22,yearsExp:0,games:8,currentSeason:true,rawValue:936.71,context:847,rank:76}),
+  row('ladd','WR',767,3,1056.82,{age:25,yearsExp:2,games:5,currentSeason:true,context:799,rank:71})
+ ];
+ const byId=Object.fromEntries(fixture(inputs).rows.map(z=>[z.x.id,z]));
+ assert.equal(byId.boston.production.earlyCareerVerifiedScoringV50,true);
+ assert.equal(byId.boston.production.effectiveScoringValue,821);
+ assert.equal(byId.concepcion.production.earlyCareerVerifiedScoringV50,true);
+ assert.equal(byId.waddle.production.earlyCareerVerifiedScoringV50,false);
+ assert.equal(byId.ladd.production.earlyCareerVerifiedScoringV50,false);
+ assert.ok(byId.boston.value>byId.waddle.value,
+   'stronger multi-source dynasty consensus and 9 verified games should withstand double scoring discount');
+ assert.ok(byId.ladd.value>byId.boston.value,'higher established dynasty consensus remains respected');
+});
+test('all offensive roles share verified early-career evidence gate; veterans and thin samples cannot qualify',()=>{
+ const rows=['QB','RB','WR','TE'].flatMap(pos=>[
+  row(pos+'-new',pos,700,1,710,{rawValue:1000,age:22,yearsExp:0,games:8,currentSeason:true}),
+  row(pos+'-few',pos,700,1,710,{rawValue:1000,age:22,yearsExp:0,games:7,currentSeason:true}),
+  row(pos+'-vet',pos,700,1,710,{rawValue:1000,age:30,yearsExp:8,games:9,currentSeason:true}),
+  row(pos+'-old',pos,700,1,710,{rawValue:1000,age:22,yearsExp:0,games:9,currentSeason:false}),
+  row(pos+'-unsupported',pos,700,1,710,{rawValue:1000,age:22,yearsExp:null,games:9,currentSeason:true})
+ ]);
+ const byId=Object.fromEntries(fixture(rows).rows.map(z=>[z.x.id,z]));
+ for(const pos of ['QB','RB','WR','TE']){
+  assert.equal(byId[pos+'-new'].production.earlyCareerVerifiedScoringV50,true);
+  for(const suffix of ['few','vet','old','unsupported'])
+   assert.equal(byId[pos+'-'+suffix].production.earlyCareerVerifiedScoringV50,false,pos+' '+suffix);
+ }
+});
+test('one-season evidence is capped and missing source or no-history fallback is unchanged',()=>{
+ const {sandbox}=fixture([]);
+ const p=sandbox.window.offenseConsensusAnchorV50.production;
+ const evidence={qualifyingSeasons:1,value:790,rawValue:25000,samples:[{games:9,currentSeason:true}]};
+ assert.equal(p(700,evidence,{age:22,years_exp:0},9).value,700*1.28);
+ assert.equal(p(700,evidence,{age:22,years_exp:0},7).usedRawCurrentSeasonEvidence,false);
+ assert.equal(p(700,evidence,{age:22,years_exp:0},9).reliability,.35);
+ assert.equal(p(700,{qualifyingSeasons:0,value:null},{age:22,years_exp:0},9).value,700);
 });

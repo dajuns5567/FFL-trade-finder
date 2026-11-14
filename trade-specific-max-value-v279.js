@@ -21,7 +21,28 @@ function selectedGive(){if(window.tradeSelectAllV165?.aliasActive?.())return[];r
 function addAssets(){const x=document.getElementById('tradeAssist97');return!!x?.checked}
 function unique(xs){const out=[],seen=new Set();for(const x of xs||[]){const k=`${x?.type}:${id(x)}`;if(!x||seen.has(k))continue;seen.add(k);out.push(x)}return out}
 function owned(owner){return(st().allAssets||[]).filter(x=>Number(x.owner)===Number(owner)&&(x.type==='player'||(x.type==='pick'&&Number(x.round)<=3)))}
-function combos(pool,maxLen=3){const a=unique(pool),out=[];for(let i=0;i<a.length;i++){out.push([a[i]]);if(maxLen<2)continue;for(let j=i+1;j<a.length;j++){out.push([a[i],a[j]]);if(maxLen<3)continue;for(let k=j+1;k<a.length;k++)out.push([a[i],a[j],a[k]])}}return out}
+// Single assets and every pair remain eligible. Triple combinations are
+// sampled across the full value spectrum rather than expanding an unbounded
+// N-choose-3 roster Cartesian set on the browser's main thread.
+function spreadTriples(pool,cap=36){
+ if(pool.length<=cap)return pool.slice();
+ const selected=[],used=new Set();
+ for(let i=0;i<cap;i++){const j=Math.round(i*(pool.length-1)/(cap-1));if(!used.has(j)){used.add(j);selected.push(pool[j])}}
+ return selected;
+}
+function combos(pool,maxLen=3){
+ const assets=unique(pool),out=[];
+ for(let i=0;i<assets.length;i++){
+  out.push([assets[i]]);
+  if(maxLen<2)continue;
+  for(let j=i+1;j<assets.length;j++)out.push([assets[i],assets[j]]);
+ }
+ if(maxLen>=3){
+  const tri=spreadTriples(assets.slice().sort((a,b)=>av(b)-av(a)),36);
+  for(let i=0;i<tri.length;i++)for(let j=i+1;j<tri.length;j++)for(let k=j+1;k<tri.length;k++)out.push([tri[i],tri[j],tri[k]]);
+ }
+ return out;
+}
 function outgoing(me){const chosen=selectedGive();if(!chosen.length)return combos(owned(me),3);const out=[chosen];if(addAssets()&&chosen.length<3){const used=new Set(chosen.map(x=>`${x.type}:${id(x)}`)),extras=owned(me).filter(x=>!used.has(`${x.type}:${id(x)}`)).sort((a,b)=>av(b)-av(a)).slice(0,8);for(const x of extras)out.push([...chosen,x]);if(chosen.length===1)for(let i=0;i<extras.length;i++)for(let j=i+1;j<extras.length&&out.length<20;j++)out.push([chosen[0],extras[i],extras[j]])}return uniquePackages(out)}
 function uniquePackages(list){const out=[],seen=new Set();for(const xs of list){const k=xs.map(x=>`${x.type}:${id(x)}`).sort().join('|');if(!seen.has(k)){seen.add(k);out.push(xs)}}return out}
 function incoming(owner,target){const extras=owned(owner).filter(x=>!(x.type==='player'&&id(x)===id(target))).sort((a,b)=>av(b)-av(a)).slice(0,20),out=[[target]];for(const x of extras)out.push([target,x]);for(let i=0;i<extras.length;i++)for(let j=i+1;j<extras.length;j++)out.push([target,extras[i],extras[j]]);return out}

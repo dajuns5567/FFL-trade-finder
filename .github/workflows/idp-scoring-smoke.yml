@@ -46,6 +46,33 @@ jobs:
           mkdir -p "$dir/$season"
           git show "FETCH_HEAD:data/sleeper/$season/season-stats.json" > "$dir/$season/season-stats.json"
           node scripts/audit-idp-sleeper-identity.mjs "$dir"
+      - name: Rehearse fresh Sleeper import without publishing or touching production
+        shell: bash
+        timeout-minutes: 8
+        env:
+          SLEEPER_DATA_DIR: /tmp/ffl-idp-fresh-preview
+          SLEEPER_HISTORY_DEPTH: '4'
+        run: |
+          set -euo pipefail
+          node scripts/import-sleeper-history.mjs > /tmp/idp-import-rehearsal.log
+          node scripts/audit-qualified-player-games.mjs > /tmp/idp-fresh-qualification.json
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const report=JSON.parse(fs.readFileSync('/tmp/idp-fresh-qualification.json'));
+          const manifest=JSON.parse(fs.readFileSync(process.env.SLEEPER_DATA_DIR+'/manifest.json'));
+          const n=Number(report.summary?.aggregateMismatches);
+          console.log(JSON.stringify({
+            report:'read-only fresh importer + strict IDP/offense audit',
+            currentSeason:manifest.currentSeason,
+            completedWeek:manifest.currentSeasonCompletedWeek,
+            generatedAt:manifest.generatedAt,
+            mismatches:n,
+            idpMismatches:report.summary?.idp?.aggregateMismatches,
+            offenseMismatches:report.summary?.offense?.aggregateMismatches
+          },null,2));
+          if(!Number.isFinite(n)||n!==0)throw Error('Fresh Sleeper qualification mismatches remain: '+n);
+          NODE
+          node scripts/audit-idp-sleeper-identity.mjs "$SLEEPER_DATA_DIR"
       - name: IDP Week 1 weighting invariants
         run: node --test tests/idp-week1-weighting.test.mjs
       - name: IDP weekly refresh and rank-stability contract

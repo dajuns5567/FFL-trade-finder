@@ -11,8 +11,9 @@ export function summarizeDrift(previousRows=[],nextRows=[]){
   const changes=rows.filter(r=>r.pos===pos&&old.get(String(r.id))?.pos===pos).map(r=>(Number(r.value)-Number(old.get(String(r.id)).value))/Number(old.get(String(r.id)).value)).filter(Number.isFinite);
   const med=median(changes),share5=changes.length?changes.filter(x=>Math.abs(x)>.05).length/changes.length:0;
   const share10=changes.length?changes.filter(x=>Math.abs(x)>.10).length/changes.length:0;
-  groups[pos]={count:changes.length,medianPct:Number((med*100).toFixed(2)),share5:Number(share5.toFixed(4)),share10:Number(share10.toFixed(4))};
-  if(changes.length>=40&&Math.abs(med)>=.025&&share5>=.30)largeGroups.push({pos,direction:Math.sign(med)});
+  const share2_5=changes.length?changes.filter(x=>Math.abs(x)>=.025).length/changes.length:0;
+  groups[pos]={count:changes.length,medianPct:Number((med*100).toFixed(2)),share5:Number(share5.toFixed(4)),share2_5:Number(share2_5.toFixed(4)),share10:Number(share10.toFixed(4))};
+  if(changes.length>=40&&Math.abs(med)>=.025&&(share5>=.30||share2_5>=.70))largeGroups.push({pos,direction:Math.sign(med)});
  }
  const rising=largeGroups.filter(g=>g.direction>0).length,falling=largeGroups.filter(g=>g.direction<0).length;
  const idp=groups.IDP;

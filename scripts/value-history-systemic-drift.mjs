@@ -1,6 +1,5 @@
-// Guards the durable archive against one-off, market-wide valuation swings.
-// A candidate is quarantined for one cycle, then automatically admitted only
-// if an independent scheduled capture corroborates its new baseline.
+// Observe significant market changes without delaying real player valuations.
+// Only verifiable snapshot-integrity failures may block archival.
 const POSITIONS=['QB','RB','WR','TE','IDP'];
 function median(values){if(!values.length)return 0;const a=[...values].sort((x,y)=>x-y);const m=Math.floor(a.length/2);return a.length%2?a[m]:(a[m-1]+a[m])/2}
 export function summarizeDrift(previousRows=[],nextRows=[]){
@@ -24,34 +23,30 @@ export function summarizeDrift(previousRows=[],nextRows=[]){
  const flagged=populationShock||(shared>=500&&(broad||idpShock));
  return{flagged,reason:flagged?(populationShock?'population-coverage-collapse':idpShock?'idp-population-shock':'multi-position-coherent-shift'):null,shared,coverage:Number(coverage.toFixed(4)),groups};
 }
-export function corroboratesPending(pendingRows=[],candidateRows=[]){
- const old=new Map(pendingRows.filter(r=>r?.id!=null&&Number(r.value)>0).map(r=>[String(r.id),r]));
- const comparisons=candidateRows.filter(r=>old.has(String(r?.id))&&old.get(String(r.id)).pos===r.pos).map(r=>Math.abs(Number(r.value)-Number(old.get(String(r.id)).value))/Number(old.get(String(r.id)).value)).filter(Number.isFinite);
- const coverage=comparisons.length/Math.max(1,Math.max(pendingRows.length,candidateRows.length));
- return comparisons.length>=500&&coverage>=.95&&median(comparisons)<=.012&&comparisons.filter(x=>x>.03).length/comparisons.length<=.15;
-}
-
-/**
- * Pure decision boundary: no GitHub writes until source freshness, monotonicity
- * and independent corroboration have been established. A pending candidate is
- * only eligible when it was created from the *same* archived baseline and the
- * new capture was made later, under the same valuation contract.
- */
-export function scheduledArchiveDecision(previous,candidate,pending=null){
+// Fail only on concrete corruption or material loss of the previously tracked population.
+// Rank moves, price magnitudes and synchronized shifts are NEVER rejection criteria.
+export function scheduledArchiveDecision(previous,candidate){
  const drift=summarizeDrift(previous?.rows||[],candidate?.rows||[]);
- const nextTime=Date.parse(candidate?.t||'');
- const priorTime=Date.parse(previous?.t||'');
- const pendingTime=Date.parse(pending?.capturedAt||'');
- const pendingValid=!!pending&&pending.schema_version===1&&
-   pending.previous===previous?.t&&
-   pending.valuation_contract===candidate?.valuation_contract&&
-   Number.isFinite(pendingTime)&&Number.isFinite(nextTime)&&pendingTime>priorTime&&nextTime>pendingTime&&
-   Array.isArray(pending.rows)&&pending.rows.length>=700;
- const corroborated=drift.flagged&&drift.reason!=='population-coverage-collapse'&&pendingValid&&corroboratesPending(pending.rows,candidate.rows);
+ const rows=Array.isArray(candidate?.rows)?candidate.rows:[];
+ const prior=Array.isArray(previous?.rows)?previous.rows:[];
+ const identities=new Set();
+ const invalid=rows.some(r=>{
+  const id=String(r?.id??'').trim();
+  const value=Number(r?.value);
+  if(!id||!Number.isFinite(value)||value<=0||identities.has(id))return true;
+  identities.add(id);
+  return false;
+ });
+ const priorIds=new Set(prior.map(r=>String(r?.id??'')));
+ const retained=rows.filter(r=>priorIds.has(String(r?.id??''))).length;
+ const retention=priorIds.size?retained/priorIds.size:1;
+ const incomplete=priorIds.size>=700&&retention<.90;
+ const integrityReason=invalid?'invalid-or-duplicate-player-row':incomplete?'population-coverage-collapse':null;
  return {
-   action:drift.flagged?(corroborated?'archive-confirmed':'quarantine'):'archive',
-   drift,corroborated:!!corroborated,
-   previousPendingValid:!!pendingValid,
-   pendingStale:!!pending&&!pendingValid
+  action:integrityReason?'quarantine':'archive',
+  integrityReason,
+  retained,retention:Number(retention.toFixed(4)),
+  // Informational only: never gates an otherwise valid market movement.
+  drift,marketMovementObserved:!!(drift.flagged&&drift.reason!=='population-coverage-collapse')
  };
 }

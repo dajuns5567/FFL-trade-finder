@@ -22,4 +22,5 @@ jobs:
       - name: Validate runtime syntax and explicit fallback test
         run: |
           node --check valuation-idp-v25-perf.js
-          node --test tests/idp-unverified-fallback-v73.test.mjs tests/idp-source-integrity-audit-v73.test.mjs tests/idp-20-45-35-calibration.test.mjs tests/idp-dynasty-development.test.mjs tests/idp-scored-universe-retention.test.mjs tests/idp-v72-source-retention.test.mjs
+          node --check netlify/functions/consensus-composite-v3.mjs
+          node --test tests/idp-unverified-fallback-v73.test.mjs tests/idp-source-integrity-audit-v73.test.mjs tests/idp-fuzzy-identity-ownership-v73.test.mjs tests/consensus-composite-v3.test.mjs tests/idp-20-45-35-calibration.test.mjs tests/idp-dynasty-development.test.mjs tests/idp-scored-universe-retention.test.mjs tests/idp-v72-source-retention.test.mjs

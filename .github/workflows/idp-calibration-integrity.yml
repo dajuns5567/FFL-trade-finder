@@ -4,6 +4,7 @@ on:
     paths:
       - 'valuation-idp-v25-perf.js'
       - 'tests/idp-20-45-35-calibration.test.mjs'
+      - 'tests/idp-dynasty-development.test.mjs'
       - 'tests/idp-valuation-refresh-contract.test.mjs'
       - '.github/workflows/idp-calibration-integrity.yml'
 permissions:
@@ -17,4 +18,4 @@ jobs:
         with:
           node-version: '22'
       - run: node --check valuation-idp-v25-perf.js
-      - run: node --test tests/idp-20-45-35-calibration.test.mjs tests/idp-valuation-refresh-contract.test.mjs
+      - run: node --test tests/idp-20-45-35-calibration.test.mjs tests/idp-dynasty-development.test.mjs tests/idp-valuation-refresh-contract.test.mjs

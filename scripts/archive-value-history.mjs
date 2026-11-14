@@ -2,7 +2,7 @@ import { getStore } from '@netlify/blobs';
 import { readFileSync } from 'node:fs';
 import { emptyMonthBundle, parseMonthBundleText } from './value-history-archive-utils.mjs';
 import { readSnapshotInventory } from './archive-blob-inventory.mjs';
-import { summarizeDrift, corroboratesPending } from './value-history-systemic-drift.mjs';
+import { scheduledArchiveDecision } from './value-history-systemic-drift.mjs';
 const token=process.env.GITHUB_TOKEN;
 const repository=process.env.GITHUB_REPOSITORY||'dajuns5567/FFL-trade-finder';
 const sourceBase=process.env.VALUE_HISTORY_SOURCE_URL||'https://subtle-genie-6167c5.netlify.app/.netlify/functions/value-history';
@@ -109,23 +109,23 @@ if(scheduledSnapshotFile&&incoming.length===1&&incoming[0].source==='scheduled')
   if(previous?.content){
     const prior=JSON.parse(previous.content);
     const candidate=incoming[0];
-    const drift=summarizeDrift(prior.rows||[],candidate.rows||[]);
     const pendingPath=`${root}/pending-systemic-drift.json`;
     const pendingFile=await readFile(pendingPath);
     let pending=null;
     try{pending=pendingFile?.content?JSON.parse(pendingFile.content):null}catch{}
-    if(drift.flagged){
-      const corroborated=corroboratesPending(pending?.rows||[],candidate.rows||[]);
-      console.log(JSON.stringify({event:'scheduled-value-history-drift',drift,corroborated,previous:lastScheduled.t,pending:pending?.capturedAt||null}));
-      if(!corroborated){
-        const record={schema_version:1,capturedAt:candidate.t,previous:lastScheduled.t,diagnostic:drift,rows:candidate.rows.map(r=>({id:r.id,pos:r.pos,value:r.value}))};
-        await putFile(pendingPath,JSON.stringify(record,null,2)+'\n','Quarantine uncorroborated Value History systemic shift',pendingFile?.sha);
-        console.warn('Scheduled history systemic shift quarantined; next independent scheduled run will automatically recheck. Prior archive preserved.');
-        process.exit(0);
-      }
+    const decision=scheduledArchiveDecision(prior,candidate,pending);
+    if(decision.drift.flagged||decision.pendingStale){
+      console.log(JSON.stringify({event:'scheduled-value-history-drift',...decision,previous:lastScheduled.t,pending:pending?.capturedAt||null}));
     }
-    if(pending?.rows?.length){
-      await putFile(pendingPath,JSON.stringify({schema_version:1,resolvedAt:candidate.t,corroborated:drift.flagged,diagnostic:drift},null,2)+'\n','Resolve pending Value History systemic shift',pendingFile.sha);
+    if(decision.action==='quarantine'){
+      const record={schema_version:1,capturedAt:candidate.t,previous:lastScheduled.t,valuation_contract:candidate.valuation_contract,
+        diagnostic:decision.drift,rows:candidate.rows.map(r=>({id:r.id,pos:r.pos,value:r.value}))};
+      await putFile(pendingPath,JSON.stringify(record,null,2)+'\\n','Quarantine uncorroborated Value History systemic shift',pendingFile?.sha);
+      console.warn('Scheduled history systemic shift quarantined; next independent scheduled run will automatically recheck. Prior archive preserved.');
+      process.exit(0);
+    }
+    if(pendingFile?.sha&&pending?.rows?.length){
+      await putFile(pendingPath,JSON.stringify({schema_version:1,resolvedAt:candidate.t,corroborated:decision.corroborated,diagnostic:decision.drift},null,2)+'\\n','Resolve pending Value History systemic shift',pendingFile.sha);
     }
   }
 }

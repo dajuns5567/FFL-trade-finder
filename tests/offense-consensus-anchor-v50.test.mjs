@@ -145,3 +145,28 @@ test('missing dynasty source and verified coverage fallback keep exact previous 
  const covered={x:{id:'has-slot',pos:'RB'},value:455,coverageGate384:true,production:{ageFactor:1}};
  assert.equal(sandbox.window.offenseConsensusAnchorV50.rebuild(covered),covered);
 });
+
+test('established production premiums remain subordinate to sourced dynasty consensus',()=>{
+ const rows=[
+  row('emerging','WR',716,1,790,{age:22,yearsExp:0,ageFactor:1.07,context:795,rank:88,
+   sources:['FantasyPros','DraftSharks','The IDP Show Combined Offense','KTC','FanRanked']}),
+  row('veteran','WR',693,4,1075,{age:26,yearsExp:3,ageFactor:1.04,context:717,rank:98,
+   sources:['FantasyPros','DraftSharks','The IDP Show Combined Offense','KTC','FanRanked']})
+ ];
+ const {rows:actual,sandbox}=fixture(rows);
+ const m=Object.fromEntries(actual.map(z=>[z.x.id,z]));
+ assert.ok(m.emerging.value>m.veteran.value,'confirmed higher 5-source dynasty consensus should not be overturned solely by 4-year scoring premium');
+ assert.equal(sandbox.window.offenseConsensusAnchorV50.production(693,{qualifyingSeasons:4,value:1075}).value,693*1.2);
+ assert.equal(sandbox.window.offenseConsensusAnchorV50.production(693,{qualifyingSeasons:2,value:1075}).value,693*1.28);
+ assert.equal(sandbox.window.offenseConsensusAnchorV50.production(693,{qualifyingSeasons:0,value:1075}).value,693);
+});
+test('offense calibrated three-year cap applies equally to all QB RB WR TE and does not disturb downside',()=>{
+ for(const pos of ['QB','RB','WR','TE']){
+  const {rows}=fixture([row(pos,pos,800,3,5000,{age:26,yearsExp:4})]);
+  assert.equal(rows[0].production.effectiveScoringValue,960);
+ }
+ const {sandbox}=fixture([]);
+ const p=sandbox.window.offenseConsensusAnchorV50.production;
+ assert.equal(p(800,{qualifyingSeasons:4,value:0}).value,576);
+ assert.equal(p(800,{qualifyingSeasons:1,value:0}).value,800*(1-.12));
+});

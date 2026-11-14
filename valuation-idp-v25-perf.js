@@ -88,8 +88,16 @@ function blend25(c,scoreValue,contextValue){
 }
 function model25(z){
  if(groupPos(z.x)!=='IDP'||!isIndividualIdp25(z.x.id))return z;
- const c=Number(z.consensus),score=scoring25(z.x.id),ctx=context25(z.x.id,score),blend=blend25(c,score.value,ctx.value);
- return{...z,value:blend.value,consensus:Number.isFinite(c)&&c>0?Math.round(c):z.consensus,context:Math.round(ctx.value),production:{...score,leagueContext:ctx,idpV25MarketCenterOffset:IDP_V25_MARKET_CENTER_OFFSET,idpV25RawBlend:blend.raw},fallback:blend.fallback};
+ const c=Number(z.consensus),score=scoring25(z.x.id),ctx=context25(z.x.id,score);
+// A missing dynasty source and ZERO qualified Sleeper seasons must not be
+// represented by the model's neutral 520-point scoring prior. Use the
+// already-existing verified-scoring minimum (180) for this cohort only.
+// A prospect with real dynasty consensus, or any actual qualifying scoring,
+// continues through the unchanged 20/45/35 model and historical confidence.
+const unverifiedFallback=!(c>0)&&!(Number(score.a?.qualifyingSeasons)>0);
+const effectiveScoringValue=unverifiedFallback?Math.min(score.value,180):score.value;
+const blend=blend25(c,effectiveScoringValue,ctx.value);
+ return{...z,value:blend.value,consensus:Number.isFinite(c)&&c>0?Math.round(c):z.consensus,context:Math.round(ctx.value),production:{...score,leagueContext:ctx,idpV25MarketCenterOffset:IDP_V25_MARKET_CENTER_OFFSET,idpV25RawBlend:blend.raw,idpUnverifiedNoConsensusFallbackV73:unverifiedFallback,idpEffectiveFallbackScoringV73:effectiveScoringValue},fallback:blend.fallback};
 }
 masterRankings=function(){return priorMaster25().map(model25).sort((a,b)=>b.value-a.value)};
 ensureMaster=function(){return masterRankCache||(masterRankCache=masterRankings())};

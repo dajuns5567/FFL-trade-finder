@@ -274,10 +274,30 @@ test('single-source rank gaps do not cause synthetic market-wide increases',()=>
  }
 });
 test('publisher ranking changes still immediately change dynasty consensus values',()=>{
- const players=[{id:'starter',name:'Live Starter',positions:['WR']}];
- const other=result('B','b',[{player:'Live Starter',rank:160,position:'WR'}]);
- const before=buildConsensusComposite([result('A','a',[{player:'Live Starter',rank:210,position:'WR'}]),other],players);
- const after=buildConsensusComposite([result('A','a',[{player:'Live Starter',rank:15,position:'WR'}]),other],players);
- assert.ok(after.byId.starter>before.byId.starter);
- assert.ok(after.detailsById.starter.offenseRank<before.detailsById.starter.offenseRank);
+ const players=Array.from({length:200},(_,i)=>({id:'rank-'+i,name:'Ranked Player '+i,positions:['WR']}));
+ const rows=players.map((p,i)=>({player:p.name,rank:i+1,position:'WR'}));
+ const other=result('B','b',rows);
+ const before=buildConsensusComposite([result('A','a',rows),other],players);
+ const revised=rows.map(r=>r.player==='Ranked Player 100'?{...r,rank:3}:r);
+ const after=buildConsensusComposite([result('A','a',revised),other],players);
+ assert.ok(after.byId['rank-100']>before.byId['rank-100']);
+ assert.ok(after.detailsById['rank-100'].offenseRank<before.detailsById['rank-100'].offenseRank);
+});
+test('small intentionally sparse ranking lists retain their established ordinal semantics',()=>{
+ const rows=[{player:'First Player',rank:50,position:'WR'},{player:'Second Player',rank:90,position:'WR'}];
+ const c=buildConsensusComposite([result('A','a',rows),result('B','b',rows)],[
+  {id:'a',name:'First Player',positions:['WR']},{id:'b',name:'Second Player',positions:['WR']}
+ ]);
+ assert.equal(c.detailsById.a.offenseRank,1);
+ assert.equal(c.detailsById.b.offenseRank,2);
+});
+test('large IDP-only ranked source is not reindexed when early extraction rows disappear',()=>{
+ const players=Array.from({length:240},(_,i)=>({id:'idp-'+i,name:'Linebacker Player '+i,positions:['LB']}));
+ const rows=players.map((p,i)=>({player:p.name,rank:i+1,position:'LB'}));
+ const first=result('IDP A','idp-a',rows),second=result('IDP B','idp-b',rows);
+ const original=buildConsensusComposite([first,second],players);
+ const trimmed=buildConsensusComposite([{...first,rankings:rows.slice(35)},second],players);
+ for(let i=35;i<players.length;i++){
+  assert.equal(trimmed.byId[players[i].id],original.byId[players[i].id]);
+ }
 });

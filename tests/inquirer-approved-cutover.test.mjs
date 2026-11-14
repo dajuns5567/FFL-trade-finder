@@ -24,7 +24,7 @@ test('production cutover requires exact owner-approved site, context and queue s
  assert.match(scheduler,/inquirer-cutover-background/);
  assert.match(scheduler,/publishingEnabled!=='true'/);
  assert.match(config,/e\.CONTEXT==='deploy-preview'/);
- assert.match(config,/\['448','450','452'\]/);
+ assert.match(config,/\['448','450','452','455'\]/);
  assert.match(config,/e\.CONTEXT==='production'/,'approved canonical production builds remain enabled');
  assert.match(config,/site&&\(production\|\|preview\)/,'production remains site scoped');
 });

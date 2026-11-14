@@ -14,10 +14,11 @@ const reindex=(rows,splitCombined=false)=>{
   .filter(r=>Number.isFinite(Number(r?.rank))&&Number(r.rank)>0&&String(r?.player||"").trim())
   .sort((a,b)=>Number(a.rank)-Number(b.rank));
  const maxRank=Number(listed.at(-1)?.rank)||0;
+ const uniqueRanks=new Set(listed.map(r=>Number(r.rank))).size;
  // Existing sparse/small rankings keep the historical source-local ordinal
  // semantics. Only dense, full-size ranked lists have enough rank evidence
  // to preserve publisher ordinals safely across extraction omissions.
- const usePublishedRank=!splitCombined&&listed.length>=100&&maxRank<=3*listed.length;
+ const usePublishedRank=!splitCombined&&listed.length>=100&&maxRank<=3*listed.length&&uniqueRanks>=.95*listed.length;
  return listed.map((r,i)=>({...r,modelRank:usePublishedRank?Number(r.rank):i+1}));
 };
 function makeChannel(name,weight,rows,splitCombined=false){const indexed=reindex(rows,splitCombined),byName=new Map(),byCanonical=new Map(),byLast=new Map();for(const row of indexed){const key=norm(row.player),list=byName.get(key)||[];list.push(row);byName.set(key,list);const ck=canonical(row.player),cl=byCanonical.get(ck)||[];cl.push(row);byCanonical.set(ck,cl);const ps=parts(row.player),last=ps.at(-1);if(last){const a=byLast.get(last)||[];a.push(row);byLast.set(last,a)}}return{name,weight,rows:indexed,byName,byCanonical,byLast}}

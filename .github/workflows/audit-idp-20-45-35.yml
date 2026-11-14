@@ -1,0 +1,23 @@
+name: Audit IDP 20-45-35 model on current scoring
+on:
+  push:
+    branches:
+      - audit/idp-20-45-35-current-population
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --ignore-scripts --no-audit --no-fund
+      - run: npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - run: node scripts/audit-idp-20-45-35.mjs
+        env:
+          IDP_AUDIT_URL: https://deploy-preview-460--precious-dango-fb4633.netlify.app

@@ -2,6 +2,7 @@ import { getStore } from '@netlify/blobs';
 import { readFileSync } from 'node:fs';
 import { emptyMonthBundle, parseMonthBundleText } from './value-history-archive-utils.mjs';
 import { readSnapshotInventory } from './archive-blob-inventory.mjs';
+import { summarizeDrift, corroboratesPending } from './value-history-systemic-drift.mjs';
 const token=process.env.GITHUB_TOKEN;
 const repository=process.env.GITHUB_REPOSITORY||'dajuns5567/FFL-trade-finder';
 const sourceBase=process.env.VALUE_HISTORY_SOURCE_URL||'https://subtle-genie-6167c5.netlify.app/.netlify/functions/value-history';
@@ -97,6 +98,38 @@ if(scheduledSnapshotFile){
   payload={schema_version:1,league_id:'1316867686394769408',source:'scheduled-local-browser',snapshot_count:1,snapshots:[snap]};
 }else payload=await snapshotsFromBlobStore()||await snapshotsFromHttpExport();
 const incoming=(payload.snapshots||[]).filter(validSnapshot).filter(s=>!existing.has(String(s.t))).sort((a,b)=>String(a.t).localeCompare(String(b.t)));
+// Scheduled history can run several times a day. A coherent shift across
+// hundreds of players (or an IDP-wide shock) should not be archived as market
+// movement without independent corroboration. Quarantine one capture; the
+// next separately executed scheduled observation automatically confirms or
+// replaces it. No manual intervention or retroactive rewriting of history.
+if(scheduledSnapshotFile&&incoming.length===1&&incoming[0].source==='scheduled'){
+  const lastScheduled=[...(index.items||[])].reverse().find(x=>x.source==='scheduled'&&x.path);
+  const previous=lastScheduled?await readFile(lastScheduled.path):null;
+  if(previous?.content){
+    const prior=JSON.parse(previous.content);
+    const candidate=incoming[0];
+    const drift=summarizeDrift(prior.rows||[],candidate.rows||[]);
+    const pendingPath=`${root}/pending-systemic-drift.json`;
+    const pendingFile=await readFile(pendingPath);
+    let pending=null;
+    try{pending=pendingFile?.content?JSON.parse(pendingFile.content):null}catch{}
+    if(drift.flagged){
+      const corroborated=corroboratesPending(pending?.rows||[],candidate.rows||[]);
+      console.log(JSON.stringify({event:'scheduled-value-history-drift',drift,corroborated,previous:lastScheduled.t,pending:pending?.capturedAt||null}));
+      if(!corroborated){
+        const record={schema_version:1,capturedAt:candidate.t,previous:lastScheduled.t,diagnostic:drift,rows:candidate.rows.map(r=>({id:r.id,pos:r.pos,value:r.value}))};
+        await putFile(pendingPath,JSON.stringify(record,null,2)+'\\n','Quarantine uncorroborated Value History systemic shift',pendingFile?.sha);
+        console.warn('Scheduled history systemic shift quarantined; next independent scheduled run will automatically recheck. Prior archive preserved.');
+        process.exit(0);
+      }
+    }
+    if(pending?.rows?.length){
+      await putFile(pendingPath,JSON.stringify({schema_version:1,resolvedAt:candidate.t,corroborated:drift.flagged,diagnostic:drift},null,2)+'\\n','Resolve pending Value History systemic shift',pendingFile.sha);
+    }
+  }
+}
+
 if(!incoming.length){
   console.log(`No new Value History snapshots to archive. Source=${payload.source||'unknown'} source_count=${Number(payload.snapshot_count)||0} archive_count=${(index.items||[]).length}.`);
   process.exit(0)

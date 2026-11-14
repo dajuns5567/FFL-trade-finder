@@ -11,6 +11,7 @@ on:
       - 'tests/idp-valuation-refresh-contract.test.mjs'
       - 'scripts/import-sleeper-history.mjs'
       - 'scripts/audit-qualified-player-games.mjs'
+      - 'scripts/audit-idp-sleeper-identity.mjs'
       - 'scripts/qualified-player-game-audit-finality.mjs'
       - 'tests/sleeper-idp-audit-finality.test.mjs'
       - 'sleeper-history-client-v22.js'
@@ -32,6 +33,19 @@ jobs:
         run: node --test tests/ppr-history.test.mjs
       - name: Sleeper finalized-week scoring audit regression
         run: node --test tests/sleeper-idp-audit-finality.test.mjs
+      - name: Read-only duplicate-ID and current scoring evidence audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --depth=1 origin sleeper-data
+          dir=/tmp/ffl-idp-source
+          mkdir -p "$dir"
+          git show FETCH_HEAD:data/sleeper/players.json > "$dir/players.json"
+          git show FETCH_HEAD:data/sleeper/manifest.json > "$dir/manifest.json"
+          season=$(node -e "const fs=require('fs');console.log(JSON.parse(fs.readFileSync(process.argv[1])).currentSeason)" "$dir/manifest.json")
+          mkdir -p "$dir/$season"
+          git show "FETCH_HEAD:data/sleeper/$season/season-stats.json" > "$dir/$season/season-stats.json"
+          node scripts/audit-idp-sleeper-identity.mjs "$dir"
       - name: IDP Week 1 weighting invariants
         run: node --test tests/idp-week1-weighting.test.mjs
       - name: IDP weekly refresh and rank-stability contract

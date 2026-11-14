@@ -37,7 +37,7 @@ test('a second independent and consistent capture automatically corroborates the
 test('large missing-player populations cannot be treated as corroboration',()=>{
  const initial=population(),sample=initial.slice(0,100);
  assert.equal(corroboratesPending(initial,sample),false);
- assert.equal(summarizeDrift(initial,sample).flagged,false);
+ assert.equal(summarizeDrift(initial,sample).flagged,true);
 });
 
 test('a 20 percent missing-player population is quarantined even if the remaining values match',()=>{

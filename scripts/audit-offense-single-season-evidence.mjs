@@ -14,7 +14,7 @@ const data=await page.evaluate(()=>{
  const developed=z.production.dynastyDevelopmentV50?.factor??1;
  const previousP=Number(z.production.effectiveScoringValue);
  // Only compare a positive raw single-season production read with at least 8 verified games.
- const eligible=seasons===1&&games>=8&&Number.isFinite(raw)&&raw>0&&c>0;
+ const eligible=seasons===1&&games>=8&&games<=Number(s.sleeperHistory?.completedWeek||0)&&a.samples?.[0]?.currentSeason===true&&Number(p.years_exp)<=1&&p.years_exp!=null&&Number(p.age)<=25&&c>=500&&Number.isFinite(raw)&&raw>c;
  const reliability=raw<c?.12:.35;
  const proposedP=eligible?clamp(.72*c,c+reliability*(raw-c),1.28*c):previousP;
  const valueCtx=Number(z.context)||c;
@@ -23,8 +23,8 @@ const data=await page.evaluate(()=>{
  if(Number.isFinite(rank)&&rank<=24)rawTerminal=Math.max(rawTerminal,.95*c);
  if(Number.isFinite(rank)&&rank>220)rawTerminal=Math.min(rawTerminal,1.08*c);
  const audit=window.assetCurveAudit(rawTerminal);
- const newValue=Math.max(1,Math.round(audit.curved));
  const old=Number(z.value);
+ const newValue=eligible?Math.max(1,Math.round(audit.curved)):old;
  return{id,name:p.full_name||id,pos:p.position,age:p.age,experience:p.years_exp,c,consensusRank:rank,
   games,seasons,corrected,raw,confidence:a.confidence,existingP:previousP,proposedP,old,newValue,
   delta:newValue-old,percent:100*(newValue-old)/Math.max(1,old),eligible};

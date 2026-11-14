@@ -301,3 +301,15 @@ test('large IDP-only ranked source is not reindexed when early extraction rows d
   assert.equal(trimmed.byId[players[i].id],original.byId[players[i].id]);
  }
 });
+
+test('position-specific repeating publisher ranks retain the established source-local ordering',()=>{
+ // A publisher may expose e.g. LB1, DB1, DL1 rather than one global rank list.
+ // These ranks are not safe evidence for preserving original overall slots.
+ const positions=['LB','DB','DL'];
+ const players=Array.from({length:120},(_,i)=>({id:'idp-pos-'+i,name:'Ranked Defender '+i,positions:[positions[i%3]]}));
+ const rows=players.map((p,i)=>({player:p.name,rank:Math.floor(i/3)+1,position:positions[i%3]}));
+ const composite=buildConsensusComposite([result('Position ranks','idp-position-ranks',rows)],players);
+ assert.equal(composite.detailsById['idp-pos-119'].idpRank,180); // single-source floor retained
+ // The observed rank for early source rows is still rank 1, not a new global tier.
+ assert.equal(composite.detailsById['idp-pos-0'].idpRank,180);
+});

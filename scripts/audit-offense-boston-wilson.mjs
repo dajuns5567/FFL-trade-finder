@@ -124,7 +124,8 @@ try{
   // the disproven 70/18/8/4 runtime, on identical canonical source inputs.
   const agreedRows=rows.filter(z=>z?.production?.offenseConsensusAnchorV50===true).map(z=>{
     const id=String(z.x.id),c=Number(s.consensusComposite?.byId?.[id]);
-    const p=window.offenseConsensusAnchorV50.production(c,z.production?.correctedAudit||{});
+    const base=window.offenseConsensusAnchorV50.production(c,z.production?.correctedAudit||{});
+    const p={...base,value:base.seasons>=3?Math.min(base.value,1.20*c):base.value};
     const player=s.players?.[id]||{},exp=Number(player.years_exp);
     const ageFactor=clamp(.88,Number(z.production?.ageFactor)||1,1.10);
     const stage=!Number.isFinite(exp)||player.years_exp==null?0:exp<=0?.45:exp<=2?1:exp<=4?.60:exp<=7?0:exp<=10?-.40:-.80;
@@ -149,7 +150,7 @@ try{
   const meaningful=agreedRows.filter(x=>!x.downstreamOverride);
   const absAgree=meaningful.map(x=>Math.abs(x.percent)).sort((a,b)=>a-b);
   const qAgree=p=>absAgree[Math.min(absAgree.length-1,Math.floor(p*absAgree.length))]||0;
-  const agreedModel={weights:{consensus:.60,scoringLookback:.23,context:.12,development:.05},
+  const agreedModel={weights:{consensus:.60,scoringLookback:.23,context:.12,development:.05},establishedScoringCap:1.20,
     total:agreedRows.length,unaffectedDownstreamOverrides:agreedRows.filter(x=>x.downstreamOverride).length,
     medianAbsPct:qAgree(.5),p95AbsPct:qAgree(.95),maxAbsPct:absAgree.at(-1)||0,
     over5Pct:meaningful.filter(x=>Math.abs(x.percent)>5).length,

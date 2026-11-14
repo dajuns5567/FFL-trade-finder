@@ -18,6 +18,6 @@ jobs:
       - run: npm install --ignore-scripts --no-audit --no-fund
       - run: npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
       - run: npx playwright install --with-deps chromium
-      - run: node scripts/audit-idp-v72-source-impact.mjs
+      - run: node scripts/audit-idp-show-provenance.mjs
         env:
           IDP_AUDIT_URL: https://deploy-preview-462--precious-dango-fb4633.netlify.app

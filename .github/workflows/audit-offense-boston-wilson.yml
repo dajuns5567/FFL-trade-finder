@@ -20,4 +20,4 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: node scripts/audit-offense-boston-wilson.mjs
         env:
-          OFFENSE_AUDIT_URL: https://deploy-preview-461--precious-dango-fb4633.netlify.app
+          OFFENSE_AUDIT_URL: https://deploy-preview-460--precious-dango-fb4633.netlify.app

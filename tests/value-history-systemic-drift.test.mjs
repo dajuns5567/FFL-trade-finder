@@ -1,77 +1,58 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { summarizeDrift, corroboratesPending, scheduledArchiveDecision } from '../scripts/value-history-systemic-drift.mjs';
+import {summarizeDrift,scheduledArchiveDecision} from '../scripts/value-history-systemic-drift.mjs';
+const positions=['QB','RB','WR','TE','IDP'];
+const population=()=>positions.flatMap((pos,p)=>Array.from({length:160},(_,i)=>({id:String(1000+p*200+i),pos,value:2000+10*i,overall:p*160+i+1})));
+const shifted=(rows,fn)=>rows.map(r=>({...r,value:Math.round(r.value*fn(r))}));
+const snap=(rows,t='2026-11-14T00:00:00.000Z')=>({t,rows,valuation_contract:'precision-idp-runtime-20260919'});
 
-const groups=['QB','RB','WR','TE','IDP'];
-function population(){
- return groups.flatMap((pos,p)=>Array.from({length:160},(_,i)=>({id:String(1000+p*200+i),pos,value:2000+10*i})));
-}
-const shift=(rows,fn)=>rows.map(row=>({...row,value:Math.round(row.value*fn(row))}));
-
-test('routine player-level moves pass without suppressing legitimate price discovery',()=>{
- const initial=population();
- const after=shift(initial,r=>r.id==='1000'?1.6:1.002);
- assert.equal(summarizeDrift(initial,after).flagged,false);
+test('major individual 60 percent gain archives immediately',()=>{
+ const a=population(),b=shifted(a,r=>r.id==='1000'?1.60:1);
+ assert.equal(scheduledArchiveDecision(snap(a),snap(b)).action,'archive');
 });
-test('synchronized 4 percent moves across offense and IDP are quarantined',()=>{
- const initial=population();
- const after=shift(initial,()=>1.04);
- const result=summarizeDrift(initial,after);
- assert.equal(result.flagged,true);
- assert.equal(result.reason,'multi-position-coherent-shift');
+test('a synchronous 40 percent rise across all positions archives immediately',()=>{
+ const a=population(),b=shifted(a,()=>1.40);
+ const decision=scheduledArchiveDecision(snap(a),snap(b));
+ assert.equal(decision.action,'archive');
+ assert.equal(decision.marketMovementObserved,true);
+ assert.equal(decision.integrityReason,null);
 });
-test('IDP-wide 12 percent shift is quarantined independently of offense',()=>{
- const initial=population();
- const after=shift(initial,r=>r.pos==='IDP'?.87:1);
- const result=summarizeDrift(initial,after);
- assert.equal(result.flagged,true);
- assert.equal(result.reason,'idp-population-shock');
+test('a 35 percent IDP-wide decrease archives immediately',()=>{
+ const a=population(),b=shifted(a,r=>r.pos==='IDP'?.65:1);
+ const decision=scheduledArchiveDecision(snap(a),snap(b));
+ assert.equal(decision.action,'archive');
+ assert.equal(decision.marketMovementObserved,true);
 });
-test('a second independent and consistent capture automatically corroborates the new baseline',()=>{
- const initial=population();
- const after=shift(initial,()=>1.04);
- const repeat=shift(after,()=>1.003);
- assert.equal(corroboratesPending(after,repeat),true);
- assert.equal(corroboratesPending(after,initial),false);
+test('legitimate directional reversal also archives immediately with no confirmation requirement',()=>{
+ const a=population(),high=shifted(a,()=>1.4);
+ assert.equal(scheduledArchiveDecision(snap(a),snap(high)).action,'archive');
+ assert.equal(scheduledArchiveDecision(snap(high),snap(a)).action,'archive');
 });
-test('large missing-player populations cannot be treated as corroboration',()=>{
- const initial=population(),sample=initial.slice(0,100);
- assert.equal(corroboratesPending(initial,sample),false);
- assert.equal(summarizeDrift(initial,sample).flagged,true);
+test('ordinary value changes are not flagged or rejected',()=>{
+ const a=population(),b=shifted(a,r=>r.id==='1000'?1.07:1.002);
+ assert.equal(summarizeDrift(a,b).flagged,false);
+ assert.equal(scheduledArchiveDecision(snap(a),snap(b)).action,'archive');
 });
-
-test('a 20 percent missing-player population is quarantined even if the remaining values match',()=>{
- const old=population(),reduced=old.slice(0,640);
- const outcome=summarizeDrift(old,reduced);
- assert.equal(outcome.flagged,true);
- assert.equal(outcome.reason,'population-coverage-collapse');
- assert.equal(corroboratesPending(old,reduced),false);
+test('a 20 percent loss of tracked players is blocked independently of value changes',()=>{
+ const a=population(),b=a.slice(0,640);
+ const d=scheduledArchiveDecision(snap(a),snap(b));
+ assert.equal(d.action,'quarantine');
+ assert.equal(d.integrityReason,'population-coverage-collapse');
 });
-test('archive decision requires an independent later capture from the same baseline and contract',()=>{
- const a={t:'2026-11-13T01:00:00Z',rows:population()};
- const rows=shift(a.rows,()=>1.04),b={t:'2026-11-13T05:00:00Z',rows,valuation_contract:'precision-idp-runtime-20260919'};
- const pending={schema_version:1,previous:a.t,capturedAt:'2026-11-13T03:00:00Z',valuation_contract:b.valuation_contract,rows};
- assert.equal(scheduledArchiveDecision(a,b,null).action,'quarantine');
- assert.equal(scheduledArchiveDecision(a,b,pending).action,'archive-confirmed');
- assert.equal(scheduledArchiveDecision(a,b,{...pending,previous:'2026-11-12T01:00:00Z'}).action,'quarantine');
- assert.equal(scheduledArchiveDecision(a,b,{...pending,valuation_contract:'different'}).action,'quarantine');
- assert.equal(scheduledArchiveDecision(a,b,{...pending,capturedAt:b.t}).action,'quarantine');
- assert.equal(scheduledArchiveDecision(a,{...b,rows:a.rows},pending).action,'archive');
+test('missing player population remains blocked even when prices move naturally',()=>{
+ const a=population(),b=shifted(a.slice(0,640),()=>1.2);
+ assert.equal(scheduledArchiveDecision(snap(a),snap(b)).action,'quarantine');
 });
-test('restored coverage needs fresh, complete corroboration; trimmed snapshots cannot confirm',()=>{
- const a={t:'2026-11-13T01:00:00Z',rows:population()};
- const reduced=shift(a.rows.slice(0,640),()=>.8);
- const b={t:'2026-11-13T05:00:00Z',rows:reduced,valuation_contract:'x'};
- const pending={schema_version:1,previous:a.t,capturedAt:'2026-11-13T03:00:00Z',valuation_contract:'x',rows:reduced};
- assert.equal(scheduledArchiveDecision(a,b,pending).action,'quarantine');
+test('single missing players do not block a valid market shift',()=>{
+ const a=population(),b=shifted(a.slice(0,795),()=>1.25);
+ assert.equal(scheduledArchiveDecision(snap(a),snap(b)).action,'archive');
 });
-
-test('two consistent truncated captures never authorize a large player-population loss',()=>{
- const full=population(),missing=shift(full.slice(0,710),()=>1.05);
- const baseline={t:'2026-11-13T00:00:00Z',rows:full};
- const pending={schema_version:1,previous:baseline.t,capturedAt:'2026-11-13T03:00:00Z',valuation_contract:'precision-idp-runtime-20260919',rows:missing};
- const newest={t:'2026-11-13T06:00:00Z',valuation_contract:pending.valuation_contract,rows:missing};
- const decision=scheduledArchiveDecision(baseline,newest,pending);
- assert.equal(decision.drift.reason,'population-coverage-collapse');
- assert.equal(decision.action,'quarantine');
+test('nonfinite and duplicate player values fail integrity checks',()=>{
+ const a=population();
+ assert.equal(scheduledArchiveDecision(snap(a),snap([...a.slice(0,-1),{...a.at(-1),value:Infinity}])).integrityReason,'invalid-or-duplicate-player-row');
+ assert.equal(scheduledArchiveDecision(snap(a),snap([...a,a[0]])).action,'quarantine');
+});
+test('scoring/ranking magnitude cannot be used as an arbitrary cap',()=>{
+ const a=population(),b=shifted(a,()=>3);
+ assert.equal(scheduledArchiveDecision(snap(a),snap(b)).action,'archive');
 });

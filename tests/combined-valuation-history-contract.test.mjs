@@ -9,7 +9,7 @@ const history=fs.readFileSync('value-history-v276.js','utf8');
 const endpoint=fs.readFileSync('netlify/functions/value-history.mjs','utf8');
 
 test('offense career-stage evidence correction and IDP V72 precision coexist',()=>{
- assert.match(offense,/correctedAudit\.rawValue/);
+ assert.match(offense,/const audited=finite50\(a\?\.value\),raw=finite50\(a\?\.rawValue\)/);
  assert.match(idp,/idpOverallTradeCurveExactV72:baseline\*servedFactor\+retention\.bonus/);
  assert.match(display,/valuation-weighted PPG/);
  assert.match(display,/actual3yr/);

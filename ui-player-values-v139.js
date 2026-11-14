@@ -25,7 +25,12 @@ function historyLabel(id){
  const isIdp=groupPos({type:'player',id})==='IDP';
  if(isIdp&&typeof window.idpScoringAudit==='function'){
   const a=window.idpScoringAudit(id);
-  if(!a||!a.qualifyingSeasons)return'No qualifying imported Sleeper scoring history';
+  if(!a||!a.qualifyingSeasons){
+    const z=rankedPlayers().find(row=>String(row?.x?.id)===String(id));
+    if(z?.production?.idpUnverifiedNoConsensusFallbackV73===true)
+      return'No qualifying Sleeper IDP production or confirmed dynasty source • conservative model-scoring floor '+z.production.idpEffectiveFallbackScoringV73+' (no unverified production credit)';
+    return'No qualifying imported Sleeper scoring history';
+  }
   const current=(a.seasons||[]).find(x=>x.currentSeason&&Number(x.games)>0);
   const recorded=current&&Number.isFinite(Number(current.ppg))?
    Number(current.ppg).toFixed(1)+' league-scored '+current.season+' PPG ('+current.games+' qualifying games) • ':'';

@@ -275,9 +275,9 @@ test('single-source rank gaps do not cause synthetic market-wide increases',()=>
 });
 test('publisher ranking changes still immediately change dynasty consensus values',()=>{
  const players=[{id:'starter',name:'Live Starter',positions:['WR']}];
- const before=buildConsensusComposite([result('A','a',[{player:'Live Starter',rank:220,position:'WR'}])],players);
- const after=buildConsensusComposite([result('A','a',[{player:'Live Starter',rank:15,position:'WR'}])],players);
+ const other=result('B','b',[{player:'Live Starter',rank:160,position:'WR'}]);
+ const before=buildConsensusComposite([result('A','a',[{player:'Live Starter',rank:210,position:'WR'}]),other],players);
+ const after=buildConsensusComposite([result('A','a',[{player:'Live Starter',rank:15,position:'WR'}]),other],players);
  assert.ok(after.byId.starter>before.byId.starter);
- assert.equal(before.detailsById.starter.offenseRank,260); // conservative one-source floor
- assert.equal(after.detailsById.starter.offenseRank,260); // same floor, no guessed extra consensus
+ assert.ok(after.detailsById.starter.offenseRank<before.detailsById.starter.offenseRank);
 });

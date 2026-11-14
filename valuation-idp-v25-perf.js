@@ -115,6 +115,46 @@ window.idpV25EligibilityAudit=function(){const allowed=new Set(['DL','DE','DT','
 window.idpV25PositionSetAudit=function(){const a=window.idpV25PropagationAudit();const meaningful=a.rows.filter(r=>Number.isFinite(r.v25)&&(Number(r.consensus)>180||Number(r.weightedPpg)>=8||Number(r.confidence)>=.42));const norm=id=>{const p=state.players?.[String(id)]||{},vals=[p.position,...(Array.isArray(p.fantasy_positions)?p.fantasy_positions:[])].filter(Boolean).map(v=>String(v).toUpperCase());return [...new Set(vals)].sort().join('+')||'NONE'};const map={};for(const r of meaningful){const set=norm(r.id);(map[set]??=[]).push(r)}const summarize=rows=>{const vals=rows.map(r=>r.v25).filter(Number.isFinite).sort((x,y)=>x-y),q=p=>q25(vals,p);return{n:rows.length,p25:q(.25),median:q(.5),p75:q(.75),p90:q(.9),max:vals.at(-1)||null}};return{criteria:'same meaningful-evidence filter; no forced role mapping',positionSets:Object.fromEntries(Object.entries(map).sort((a,b)=>b[1].length-a[1].length).map(([k,v])=>[k,{...summarize(v),top:[...v].sort((x,y)=>y.v25-x.v25).slice(0,8).map(x=>({name:x.name,pos:x.position,consensus:x.consensus,scoring:x.scoring,v25:x.v25,ppg:x.weightedPpg,conf:x.confidence}))}]))}};
 window.idpScoringAudit=function(nameOrId){generation25();const q=String(nameOrId||'').toLowerCase(),id=state.players?.[nameOrId]?String(nameOrId):(()=>{const matches=Object.keys(state.players||{}).filter(pid=>playerName(pid).toLowerCase()===q);return matches.length===1?matches[0]:null})();if(!id)return null;const base=baseAudit25(id),score=scoring25(id),ctx=context25(id,score),c=Number(base?.consensus);return{...base,consensus:Number.isFinite(c)?c:null,finalValue:blend25(c,score.value,ctx.value).value,productionValue:Math.round(score.value),otherContextValue:Math.round(ctx.value),tackleRate:Number(ctx.tackleRate.toFixed(2)),spikeRate:Number(ctx.spikeRate.toFixed(2)),tacklePercentile:Number((ctx.tacklePct*100).toFixed(1)),spikePercentile:Number((ctx.spikePct*100).toFixed(1)),ageContext:Number((ctx.age*100).toFixed(0)),v25RuntimeTrace:{weightedPpg:score.m?.ppg??null,confidence:score.m?.confidence??null,coverage:score.m?.coverage??null,seasons:score.m?.seasons??null,ppgPercentile:score.ppgPct??null,relativeAboveP50:score.relative??null,rawStrength:score.raw??null,postConfidenceStrength:score.strength??null,benchmarkP50:score.benchmarkP50??null,benchmarkP99:score.benchmarkP99??null,benchmarkN:score.benchmarkN??null,benchmarkTopPpg:distributions25().topPpg,playerOnlyBenchmark:distributions25().playerOnlyBenchmark,productionValue:score.value??null,sourceSeasons:(score.a?.seasons||[]).map(s=>({season:s.season,games:s.games,assignedWeight:s.assignedWeight,currentSeason:s.currentSeason,ppg:s.ppg}))},modelWeights:{consensus:.20,scoringLookback:.45,otherLeagueDynastyContext:.35,marketCenterOffset:IDP_V25_MARKET_CENTER_OFFSET,zeroConsensusFallback:'legacy-40-scoring-20-context'}}};
 masterRankCache=null;valueCache.clear();fitCache.clear();stageCache.clear();
+
+ // Read-only IDP source/identity/scoring audit. Does not edit the market.
+ window.idpSourceIntegrityAuditV73=function(){
+  const master=ensureMaster(),rows=[],flags=[],byName=new Map();
+  const canonical=n=>String(n||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+(jr|sr|ii|iii|iv|v)$/,'');
+  for(let i=0;i<master.length;i++){
+   const z=master[i],id=String(z?.x?.id||'');
+   if(!z?.x||groupPos(z.x)!=='IDP'||!isIndividualIdp25(id))continue;
+   const p=state.players?.[id]||{},name=playerName(id),key=canonical(name);
+   const a=baseAudit25(id),detail=state.consensusComposite?.detailsById?.[id]||{};
+   const observedSources=(Array.isArray(detail.idpSources)?detail.idpSources:[])
+    .filter(s=>!String(s).endsWith(' (not listed)'));
+   const consensus=Number(z.consensus)>0?Number(z.consensus):null;
+   const qualified=Number(a?.qualifyingSeasons)||0;
+   const current=(a?.seasons||[]).find(s=>s.currentSeason&&Number(s.games)>0)||null;
+   const item={id,name,position:p.position||null,team:p.team||null,age:p.age??null,
+    yearsExp:p.years_exp??null,overallRank:i+1,value:z.value,consensus,
+    sourceCount:new Set(observedSources).size,sources:[...new Set(observedSources)],
+    qualifyingSeasons:qualified,currentGames:current?.games??null,
+    currentPpg:current?.ppg??null,confidence:a?.confidence??null,
+    effectiveScoringFallback:z.production?.idpEffectiveFallbackScoringV73??null,
+    unverifiedNoSourceNoProduction:z.production?.idpUnverifiedNoConsensusFallbackV73===true,
+    threeSeasonEvidence:(a?.seasons||[]).map(s=>({season:s.season,games:s.games,points:s.points,ppg:s.ppg,currentSeason:s.currentSeason}))};
+   rows.push(item);
+   const peers=byName.get(key)||[];peers.push(item);byName.set(key,peers);
+   if(consensus==null&&qualified===0)flags.push({kind:'no-consensus-no-qualified-scoring',...item});
+   if(consensus==null&&qualified>0)flags.push({kind:'verified-scoring-consensus-missing',...item});
+   if(consensus!=null&&qualified===0&&!p.team)flags.push({kind:'publisher-consensus-no-scoring-or-team',...item});
+   if(current&&Number(current.games)<4&&Number(current.ppg)>18)flags.push({kind:'small-current-scoring-sample',...item});
+  }
+  for(const [key,peers]of byName)if(key&&peers.length>1)
+   flags.push({kind:'same-canonical-idp-name',canonical:key,ids:peers.map(p=>p.id),
+    players:peers.map(p=>({id:p.id,team:p.team,position:p.position,consensus:p.consensus}))});
+  return{version:73,readOnly:true,generatedAt:new Date().toISOString(),
+   summary:{rankedIdp:rows.length,withConsensus:rows.filter(r=>r.consensus!=null).length,
+    missingConsensusWithVerifiedScoring:rows.filter(r=>r.consensus==null&&r.qualifyingSeasons>0).length,
+    missingConsensusAndScoring:rows.filter(r=>r.consensus==null&&r.qualifyingSeasons===0).length,
+    publisherConsensusWithoutScoring:rows.filter(r=>r.consensus!=null&&r.qualifyingSeasons===0).length,
+    flagged:flags.length},flags,rows};
+ };
 const card=document.querySelector('#settings .card');if(card){const n=document.createElement('div');n.className='notice success';n.innerHTML='V25 IDP calibration staged: <b>20% consensus + 45% actual Sleeper scoring lookback + 35% other league/dynasty context</b>, market-centered by 80.15 for positive-consensus IDPs. Zero-consensus players retain the prior fallback. The 35% context uses age plus small tackle-volume and spike-play-frequency signals (sacks, interceptions, forced fumbles, recoveries and pass defenses) from the same imported Sleeper history. All history-dependent pieces refresh with Update. Missing qualifying years shrink confidence toward neutral rather than transferring their full weight to a short sample.';card.appendChild(n)}
 })();
 

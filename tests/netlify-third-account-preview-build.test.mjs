@@ -20,6 +20,7 @@ test('only authorized production and allowlisted PR previews build on the curren
  const dest='fa33dfe4-8293-441e-8da0-25cc66fc984c';
  assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'deploy-preview',reviewId:'450'}),1);
  assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'deploy-preview',reviewId:'452'}),1);
+ assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'deploy-preview',reviewId:'455'}),1);
  assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'deploy-preview',reviewId:'448'}),1);
  assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'deploy-preview',reviewId:'451'}),0);
  assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'production',reviewId:'450'}),1);
@@ -37,7 +38,7 @@ test('previous accounts skip builds even for deploy-preview context',()=>{
 
 test('production cutover is site-scoped and does not expand deploy preview allowlist',()=>{
  assert.match(config,/e\.CONTEXT==='deploy-preview'/);
- assert.match(config,/\['448','450','452'\]/);
+ assert.match(config,/\['448','450','452','455'\]/);
  assert.match(config,/e\.CONTEXT==='production'/);
  assert.match(config,/site&&\(production\|\|preview\)/);
 });

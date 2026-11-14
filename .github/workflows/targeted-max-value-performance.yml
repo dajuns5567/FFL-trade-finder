@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'trade-specific-max-value-v279.js'
+      - 'scripts/v311-pipeline-identity-v319-smoke.cjs'
       - 'tests/targeted-max-value-search-stall.test.mjs'
       - '.github/workflows/targeted-max-value-performance.yml'
   push:
@@ -23,6 +24,7 @@ jobs:
         run: |
           node --check trade-specific-max-value-v279.js
           node --test tests/targeted-max-value-search-stall.test.mjs
+          node scripts/v311-pipeline-identity-v319-smoke.cjs
       - name: Existing specific-player and value-adjustment functionality
         run: |
           node scripts/specific-max-tier-routing-structure-v324-smoke.cjs

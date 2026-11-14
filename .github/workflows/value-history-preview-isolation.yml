@@ -1,0 +1,29 @@
+name: Value History preview isolation
+
+on:
+  pull_request:
+    paths:
+      - 'value-history-v276.js'
+      - 'netlify/functions/value-history.mjs'
+      - 'tests/value-history-preview-isolation.test.mjs'
+      - '.github/workflows/value-history-preview-isolation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preview-history-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate history client and endpoint syntax
+        run: |
+          node --check value-history-v276.js
+          node --check netlify/functions/value-history.mjs
+      - name: Test Deploy Preview history write isolation
+        run: node --test tests/value-history-preview-isolation.test.mjs

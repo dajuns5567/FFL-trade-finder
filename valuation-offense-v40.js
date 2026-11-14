@@ -8,9 +8,25 @@ const previousMaster50=masterRankings;
 const OFF50=new Set(['QB','RB','WR','TE']);
 const finite50=v=>v==null||v===''?null:(Number.isFinite(Number(v))?Number(v):null);
 const clamp50=(lo,x,hi)=>Math.max(lo,Math.min(hi,x));
-function production50(c,a){
+function production50(c,a,player=null,completedWeek=null){
   const seasons=Math.max(0,finite50(a?.qualifyingSeasons)??0);
-  const observed=finite50(a?.value);
+  const audited=finite50(a?.value),raw=finite50(a?.rawValue),
+        sample=a?.samples?.[0]||{},games=finite50(sample.games),
+        age=finite50(player?.age),yearsExp=finite50(player?.years_exp),
+        week=finite50(completedWeek);
+  // In the canonical Sleeper scoring audit, the 1-year corrected estimate
+  // already shrinks positive production for limited history. The terminal V50
+  // applies its own 35% one-season reliability factor; for corroborated
+  // early-career samples this otherwise discounts the same evidence twice.
+  // Use the *actual-statistics-based* raw scoring estimate once, retaining
+  // V50's 35% reliability and 128%-of-consensus upper bound. Require 8+
+  // CURRENT-season games, completed-week coverage, verified early career,
+  // and legitimate consensus. Veterans and short/incomplete samples retain
+  // the existing corrected estimate.
+  const verifiedEarlyCareer=seasons===1&&c>=500&&yearsExp!=null&&yearsExp>=0&&yearsExp<=1&&
+    age!=null&&age>=18&&age<=25&&sample.currentSeason===true&&games!=null&&
+    games>=8&&week!=null&&week>=games&&raw!=null&&raw>c;
+  const observed=verifiedEarlyCareer?raw:audited;
   if(!seasons||observed==null)return{value:c,seasons,reason:'neutral-missing-history'};
   // One qualified season is weak evidence, not a complete dynasty verdict.
   // Two seasons earn more weight; long-term production remains a secondary anchor.
@@ -22,7 +38,8 @@ function production50(c,a){
   // younger / sparse-history treatment and the existing downside floor.
   const upper=seasons>=3?1.20*c:1.28*c;
   return{value:clamp50(.72*c,c+reliability*(observed-c),upper),
-    seasons,reason:'qualified-sleeper-anchor',reliability};
+    seasons,reason:verifiedEarlyCareer?'verified-early-career-single-confidence':'qualified-sleeper-anchor',reliability,
+    usedRawCurrentSeasonEvidence:verifiedEarlyCareer};
 }
 // All offensive positions already have a role-aware age curve. NFL career
 // stage supplies a small, evidence-gated development adjustment to that curve.
@@ -73,7 +90,7 @@ function rebuild50(z){
   const detail=state.consensusComposite?.detailsById?.[id]||{};
   const rank=finite50(detail.offenseRank);
   const a=z?.production?.correctedAudit||{};
-  const p=production50(c,a);
+  const p=production50(c,a,state.players?.[id],state.sleeperHistory?.completedWeek);
   const sourceStatus=sourceStatus50(Array.isArray(detail.offenseSources)?detail.offenseSources:[]);
   const ctx=clamp50(.90*c,finite50(z?.context)??c,1.15*c);
   const development=development50(id,z?.production?.ageFactor,p.seasons);
@@ -103,6 +120,7 @@ function rebuild50(z){
       dynastyDevelopmentV50:development,
       productionHistoryReasonV50:p.reason,
       productionReliabilityV50:p.reliability??0,
+      earlyCareerVerifiedScoringV50:p.usedRawCurrentSeasonEvidence===true,
       productionSeasonsV50:p.seasons,
       modelWeights:{consensus:.60,scoringLookback:.23,
         scarcityAndOtherContext:.12,ageContext:.05}}};

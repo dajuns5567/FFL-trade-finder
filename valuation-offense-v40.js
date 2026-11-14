@@ -15,7 +15,13 @@ function production50(c,a){
   // One qualified season is weak evidence, not a complete dynasty verdict.
   // Two seasons earn more weight; long-term production remains a secondary anchor.
   const reliability=seasons===1?(observed<c?.12:.35):seasons===2?.60:1;
-  return{value:clamp50(.72*c,c+reliability*(observed-c),1.28*c),
+  // Multi-year production remains corroborating evidence, not a second
+  // market price. A +28% production premium on established veterans can
+  // overwhelm stronger current multi-source dynasty consensus; cap that
+  // positive premium at +20% only for 3+ qualifying seasons. Preserve all
+  // younger / sparse-history treatment and the existing downside floor.
+  const upper=seasons>=3?1.20*c:1.28*c;
+  return{value:clamp50(.72*c,c+reliability*(observed-c),upper),
     seasons,reason:'qualified-sleeper-anchor',reliability};
 }
 // All offensive positions already have a role-aware age curve. NFL career

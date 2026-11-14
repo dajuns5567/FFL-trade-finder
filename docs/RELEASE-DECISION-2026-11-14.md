@@ -7,7 +7,7 @@
 - Full 1,036-player post-V73 read-only consensus/production/ranking audit: no confirmed value/rank inversions, duplicate Sleeper IDs, missing zero-evidence safeguards, or canonical-value mismatches.
 - 2026-11-14 final offline Chromium run for PR #466 at `6b1a328cff012dfd99cd95c468a184d9c1c44205` → **PASS** (`Final offline Chromium trade acceptance (draft only)`, Actions #43649097390): 93 scripts load; zero missing JS/CSS; 30 unique ownership-correct trade candidate packages; 42 complete simulated recommendations with valid owners and finite fairness; 12/12 cross-page value/History tests. External/writable requests were blocked. **This is an offline, synthetic league-data browser acceptance, not a signed-in live-Preview transaction.**
 - Combined valuation/history contract, original Market Intelligence recovery, IDP audited 20/45/35 calibration, integrated IDP identity and development, IDP scoring smoke, Finder runtime smoke on same commit → PASS.
-- Isolated PR #469 deployment safety: Inquirer editorial revision 6 and Finder runtime smoke both PASS at `1188c5e0dc8dad0bd6363f27116a6ef2c272f040`. The Inquirer smoke on PR #466 was still in progress at the last review; do not infer it passed until the check is terminal.
+- Isolated PR #469 deployment safety: Inquirer editorial revision 6 and Finder runtime smoke both PASS at `1188c5e0dc8dad0bd6363f27116a6ef2c272f040`. The Inquirer smoke on PR #466 has now **PASSED**. At code commit `6b1a328cff012dfd99cd95c468a184d9c1c44205` all **eight of eight** required GitHub Actions workflows completed successfully, including both long-running Inquirer editorial revision 6 and Finder runtime smoke. This subsequent documentation-only commit does not change executable code.
 - Canonical Netlify **Deploy Preview**, never production: `https://deploy-preview-466--precious-dango-fb4633.netlify.app` is ready for build `6b1a328c` (Netlify deploy `6af8e2be88e18661a8e4c42a`).
 
 ## Dependency and overlap map — do not merge PR #466 as one release
@@ -24,7 +24,7 @@ All source-changing PRs remain **drafts**. #463, #464 and #467 also modify `netl
 
 ## Browser and release gates not yet satisfied
 
-1. Confirm every required workflow on exact release candidate HEAD is green, including the long-running Inquirer season smoke, without skipping/relaxing editorial guards.
+1. **Complete at validated code commit `6b1a328c`:** all eight required workflows green, including full Inquirer season smoke. Confirm again after any future executable code change, without skipping or relaxing editorial guards.
 2. Record evidence from an authenticated **read-only** visit to exact Deploy Preview #466 for real Sleeper league scoring and trades, covering Boston, Turner, Warner, IDP-source collisions, nearest/future draft picks, Finder, Evaluator, Hindsight, and Value History UI. The offline controlled-fixture Chromium tests are not a substitute for the real league.
 3. Review weekly Inquirer publication lifecycle **separately** from valuation: do not enable production publishing or change publication policy in a valuation release.
 4. Obtain explicit owner authorization **for each release/production deploy**; the earlier instruction to proceed with audits was not authorization to merge. Do not trigger production automatically through GitHub merges.

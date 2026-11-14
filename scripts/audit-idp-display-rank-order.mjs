@@ -16,6 +16,10 @@ try{
   const rows=window.ensureMaster(),id='11667',index=rows.findIndex(z=>String(z.x.id)===id);
   const z=rows[index],raw=Number(z?.value),hit=window.playerRankValue({type:'player',id});
   const greater=rows.filter(x=>Number(x.value)>raw).length,equals=rows.filter(x=>Number(x.value)===raw).length;
+  const pval=Number(z.marketPrecisionValueV386),pGreater=rows.filter(x=>Number(x.marketPrecisionValueV386)>pval).length;
+  const pSort=[...rows].sort((a,b)=>Number(b.marketPrecisionValueV386)-Number(a.marketPrecisionValueV386));
+  const pRank=pSort.findIndex(x=>String(x.x.id)===id)+1;
+  const pInversions=rows.slice(1).filter((x,i)=>Number(x.marketPrecisionValueV386)>Number(rows[i].marketPrecisionValueV386)+1e-6).length;
   const sorted=[...rows].sort((a,b)=>Number(b.value)-Number(a.value));
   const correct=sorted.findIndex(x=>String(x.x.id)===id)+1;
   const higher=rows.filter(x=>Number(x.value)>raw);
@@ -23,13 +27,14 @@ try{
   const prev=rows.slice(index-7,index+8).map((x,i)=>({index:index-7+i+1,name:window.state.players?.[x.x.id]?.full_name,id:x.x.id,tv:x.value}));
   const before=sorted.slice(correct-6,correct+7).map((x,i)=>({rank:correct-5+i,name:window.state.players?.[x.x.id]?.full_name,id:x.x.id,tv:x.value}));
   const rowText=[...document.querySelectorAll('[data-player-id]')].filter(e=>e.dataset.playerId===id).map(e=>e.innerText.slice(0,300));
-  return{total:rows.length,modelRank:index+1,rankLookup:hit,raw,greater,equals,expectedRank:correct,
+  return{total:rows.length,modelRank:index+1,rankLookup:hit,raw,greater,equals,expectedRank:correct,precisionValue:pval,precisionGreater:pGreater,precisionExpectedRank:pRank,precisionOrderInversions:pInversions,
    inversions:inversions.length,inversionExamples:inversions.slice(0,15).map(x=>({rank:x.i,previous:x.prior.value,following:x.next.value,previousName:window.state.players?.[x.prior.x.id]?.full_name,followingName:window.state.players?.[x.next.x.id]?.full_name})),
    currentNeighbors:prev,valueNeighbors:before,displayText:rowText,
    masterFirst20:rows.slice(0,20).map(x=>({name:window.state.players?.[x.x.id]?.full_name,value:x.value}))};
  });
  console.log('TURNER_DISPLAY_ORDER_AUDIT '+JSON.stringify({target:target.name,url:target.url,result:out,errors},null,2));
  if(errors.length)throw Error(errors.join(';'));
+ if(target.name==='new'&&(out.precisionOrderInversions!==0||out.modelRank!==out.precisionExpectedRank||out.modelRank>=141))throw Error('Rendered rank still inconsistent with authoritative precision sorting');
  await page.close();
  }
 }finally{await browser.close()}

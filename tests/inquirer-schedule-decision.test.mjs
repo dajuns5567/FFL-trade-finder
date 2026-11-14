@@ -13,6 +13,21 @@ test('automatic poll skips a published or unchanged held edition',()=>{
  assert.equal(inquirerScheduleDecision({nfl,revision,status:{state:'completed',available:true,season:2026,week:5,editorial_revision:29}}).queue,false);
  assert.equal(inquirerScheduleDecision({nfl,revision,status:{state:'editorial-hold',season:2026,week:5,editorial_revision:29}}).queue,false);
 });
+test('Week 10 editorial revision cannot republish completed Week 9',()=>{
+ const nfl={season:2026,week:10};
+ const locked={state:'completed',available:true,season:2026,week:9,editorial_revision:109};
+ const unchanged=inquirerScheduleDecision({nfl,revision:109,status:locked});
+ const updated=inquirerScheduleDecision({nfl,revision:110,status:locked});
+ assert.equal(unchanged.queue,false);
+ assert.equal(updated.queue,false,'new editorial revision must preserve completed Week 9');
+ assert.match(updated.reason,/already published/);
+ const next=inquirerScheduleDecision({nfl:{season:2026,week:11},revision:110,status:locked});
+ assert.equal(next.queue,true,'once Week 10 is final the next week must queue');
+ assert.equal(next.finishedWeek,10);
+ const held={...locked,state:'editorial-hold',available:false};
+ assert.equal(inquirerScheduleDecision({nfl,revision:110,status:held}).queue,true,
+  'revision bump still retries a held Week 9');
+});
 test('automatic poll avoids duplicate concurrent generation and resumes stale jobs',()=>{
  const now=Date.parse('2026-10-20T10:00:00Z');
  const running={state:'running',started_at:'2026-10-20T09:50:00Z'};
@@ -133,7 +148,7 @@ test('backlogged Weeks 6, 7 and 8 each enqueue after the preceding week is commi
 });
 
 
-test('current deployment policy builds only authorized PR previews, never production or retired sites',async()=>{
+test('current deployment policy builds only authorized production and PR previews on the current site',async()=>{
  const {spawnSync}=await import('node:child_process');
  const config=readFileSync(new URL('../netlify.toml',import.meta.url),'utf8');
  const literal=config.match(/^\s*ignore = (".*")$/m)?.[1];
@@ -143,10 +158,12 @@ test('current deployment policy builds only authorized PR previews, never produc
   env:{...process.env,SITE_ID,SITE_NAME,CONTEXT,REVIEW_ID},encoding:'utf8'}).status;
  const site='fa33dfe4-8293-441e-8da0-25cc66fc984c';
  assert.equal(code(site,'','deploy-preview','450'),1,'authorized PR #450 preview builds');
+ assert.equal(code(site,'','deploy-preview','453'),1,'authorized PR #453 preview builds');
+ assert.equal(code(site,'','deploy-preview','452'),0,'unallowlisted PR #452 stays separate');
  assert.equal(code(site,'','deploy-preview','448'),1,'authorized PR #448 preview builds');
  assert.equal(code(site,'','deploy-preview','451'),0,'unapproved preview is skipped');
- assert.equal(code(site,'','production','450'),0,'production deploy remains blocked');
- assert.equal(code('','precious-dango-fb4633','production','450'),0,'site-name path also blocks production');
+ assert.equal(code(site,'','production','450'),1,'authorized canonical production builds');
+ assert.equal(code('','precious-dango-fb4633','production','450'),1,'canonical site-name production builds');
  assert.equal(code(site,'','branch-deploy','450'),0,'branch deploys stay blocked');
  assert.equal(code('8776d155-bc7b-4dcd-bafc-3d70d3d51800','transcendent-manatee-2f0123','deploy-preview','450'),0,'old site never builds');
  assert.equal(code('3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f','gleaming-dodol-8dbc4a','deploy-preview','450'),0,'retired site never builds');

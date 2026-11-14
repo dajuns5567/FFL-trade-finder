@@ -44,15 +44,9 @@ export function buildConsensusPayload(refresh,players=[],updatedAt=new Date().to
   return {ok:true,sources:integrityReady?sources:{},composite,withheld:!integrityReady,integrity:{all_sources_valid:integrityReady,failed_sources:failedSources,reason:integrityReady?null:`Consensus replacement withheld because ${failedSources.length?failedSources.join(', '):'one or more required sources'} did not validate; prior validated source set remains in use`},summary:{total:results.length,successful,failed:results.length-successful,results:diagnostics},updatedAt};
 }
 
-export default async (req)=>{
-  if(req.method==="OPTIONS")return json({ok:true});
-  if(req.method!=="POST")return json({ok:false,error:"POST required"},405);
-  let body={};try{body=await req.json()}catch{return json({ok:false,error:"Invalid JSON"},400)}
-  const players=Array.isArray(body.players)?body.players:[];
-  if(!players.length)return json({ok:false,error:"No player list supplied"},400);
-  const refresh=await refreshAllSources();
-  const candidate=buildConsensusPayload(refresh,players);
-  const previous=await readLastGood();
+// Pure post-fetch decision: only a complete prior validated consensus can
+// protect against an unverified chart revision going backwards.
+export function applyPublisherRevisionGate(candidate,previous){
   // Source extraction may be valid while its revision is not authoritative:
   // falling back to pinned IDP Show /1/ after a verified later chart must
   // preserve the complete known-good consensus rather than create a value dip.
@@ -73,6 +67,19 @@ export default async (req)=>{
       failed_sources:[...new Set([...(candidate.integrity.failed_sources||[]),revisionRegression.source])],
       reason:revisionRegression.reason};
   }
+  return revisionRegression;
+}
+
+export default async (req)=>{
+  if(req.method==="OPTIONS")return json({ok:true});
+  if(req.method!=="POST")return json({ok:false,error:"POST required"},405);
+  let body={};try{body=await req.json()}catch{return json({ok:false,error:"Invalid JSON"},400)}
+  const players=Array.isArray(body.players)?body.players:[];
+  if(!players.length)return json({ok:false,error:"No player list supplied"},400);
+  const refresh=await refreshAllSources();
+  const candidate=buildConsensusPayload(refresh,players);
+  const previous=await readLastGood();
+  applyPublisherRevisionGate(candidate,previous);
 
   if(!candidate.withheld){
     for(const [name,snapshot] of Object.entries(candidate.sources)){

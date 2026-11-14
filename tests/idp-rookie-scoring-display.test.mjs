@@ -70,3 +70,29 @@ test('IDP display labels actual Sleeper PPG separately from model valuation PPG'
 test('consensus payload includes Sleeper primary and fantasy positions plus team identity',()=>{
  assert.match(index,/position:p\.position\|\|\(p\.fantasy_positions\|\|\[\]\)\[0\],positions:p\.fantasy_positions\|\|\[\],team:p\.team\|\|null/);
 });
+
+test('every IDP audit lookup refuses ambiguous Chris Jones names yet accepts exact Sleeper IDs',()=>{
+ for(const path of ['valuation-idp-v21.js','valuation-idp-v25.js','valuation-idp-v25-perf.js']){
+  const source=fs.readFileSync(path,'utf8');
+  const start=source.indexOf('window.idpScoringAudit=function(nameOrId){');
+  assert.ok(start>=0,path+' defines a scoring audit');
+  const first=source.indexOf('const q=String(nameOrId',start);
+  const end=source.indexOf('if(!id)return null;',first);
+  assert.ok(first>start&&end>first,path+' resolves the scoring identity');
+  const resolution=source.slice(first,end);
+  const ctx={
+   state:{players:{'3558':{},'1430':{},'13363':{}}},
+   playerName:id=>({'3558':'Chris Jones','1430':'Chris Jones','13363':'David Bailey'})[id],
+   String,Object
+  };
+  const resolve=query=>vm.runInNewContext(
+   '(function(nameOrId){'+resolution+'return id;})('+JSON.stringify(query)+')',ctx);
+  assert.equal(resolve('Chris Jones'),null,path+' cannot select the first Chris Jones by guess');
+  assert.equal(resolve('3558'),'3558',path+' accepts unique KC player ID');
+  assert.equal(resolve('1430'),'1430',path+' accepts distinct Chris Jones ID');
+  assert.equal(resolve('David Bailey'),'13363',path+' permits an unambiguous name');
+ }
+ const site=fs.readFileSync('netlify/functions/site-v17.mjs','utf8');
+ assert.match(site,/valuation-idp-v25-perf\.js\?v=20261114-idp-identity/,
+  'all pages must load the refreshed identity-safe scoring audit');
+});

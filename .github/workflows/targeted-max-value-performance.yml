@@ -1,0 +1,31 @@
+name: Targeted Maximum Value Finder performance
+on:
+  pull_request:
+    paths:
+      - 'trade-specific-max-value-v279.js'
+      - 'tests/targeted-max-value-search-stall.test.mjs'
+      - '.github/workflows/targeted-max-value-performance.yml'
+  push:
+    branches:
+      - fix/targeted-max-value-search-stall
+permissions:
+  contents: read
+jobs:
+  specific-max-value-performance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Static checks and exact 32-team Select All / Tier Up fixture
+        run: |
+          node --check trade-specific-max-value-v279.js
+          node --test tests/targeted-max-value-search-stall.test.mjs
+      - name: Existing specific-player and value-adjustment functionality
+        run: |
+          node scripts/specific-max-tier-routing-structure-v324-smoke.cjs
+          node scripts/specific-player-simple-package-v325-smoke.cjs
+          node scripts/specific-player-family-diversity-v327-smoke.cjs
+          node scripts/blank-specific-runtime-v326-smoke.cjs

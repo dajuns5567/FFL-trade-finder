@@ -65,3 +65,13 @@ test('restored coverage needs fresh, complete corroboration; trimmed snapshots c
  const pending={schema_version:1,previous:a.t,capturedAt:'2026-11-13T03:00:00Z',valuation_contract:'x',rows:reduced};
  assert.equal(scheduledArchiveDecision(a,b,pending).action,'quarantine');
 });
+
+test('two consistent truncated captures never authorize a large player-population loss',()=>{
+ const full=population(),missing=shift(full.slice(0,710),()=>1.05);
+ const baseline={t:'2026-11-13T00:00:00Z',rows:full};
+ const pending={schema_version:1,previous:baseline.t,capturedAt:'2026-11-13T03:00:00Z',valuation_contract:'precision-idp-runtime-20260919',rows:missing};
+ const newest={t:'2026-11-13T06:00:00Z',valuation_contract:pending.valuation_contract,rows:missing};
+ const decision=scheduledArchiveDecision(baseline,newest,pending);
+ assert.equal(decision.drift.reason,'population-coverage-collapse');
+ assert.equal(decision.action,'quarantine');
+});

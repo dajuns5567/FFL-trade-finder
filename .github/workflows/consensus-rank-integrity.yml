@@ -16,6 +16,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - run: npm install --ignore-scripts --no-audit --no-fund
       - run: node --check netlify/functions/consensus-composite-v3.mjs
       - run: node --test tests/consensus-composite-v3.test.mjs
       - run: node --test tests/consensus-source-freshness.test.mjs

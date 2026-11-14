@@ -47,10 +47,35 @@ function scoring25(id){
  else{const ppgPct=pct25(d.ppg,m.ppg),relative=clamp25(0,(m.ppg-d.p50)/(d.p99-d.p50),1.10),historicalSeasons=Number(a?.historicalSeasons||0),confidenceApplied=role==='EDGE'&&historicalSeasons>=2&&ppgPct>=.90?Math.max(m.confidence,.60):m.confidence,raw=.55*ppgPct+.45*relative,strength=.45+confidenceApplied*(raw-.45),overallValue=clamp25(180,180+1270*Math.pow(clamp25(.08,strength,1),2.70),1500);let value=overallValue,roleValue=null,roleBlend=0;if(role==='LB'){const xs=d.rolePpg?.LB||[];if(xs.length){const rp50=q25(xs,.50),rp99=Math.max(rp50+.01,q25(xs,.99)),rpct=pct25(xs,m.ppg),rrel=clamp25(0,(m.ppg-rp50)/(rp99-rp50),1.10),rraw=.55*rpct+.45*rrel,rstrength=.45+confidenceApplied*(rraw-.45);roleValue=clamp25(180,180+1270*Math.pow(clamp25(.08,rstrength,1),2.70),1500);roleBlend=.20;value=.80*overallValue+.20*roleValue}}out={value,a,m,ppgPct,relative,raw,strength,role,confidenceApplied,overallValue,roleValue,roleBlend,benchmarkP50:d.p50,benchmarkP99:d.p99,benchmarkN:d.ppg.length}}
  scoreCache25.set(id,out);return out;
 }
+// Dynasty development belongs in context for every defensive role, not just
+// EDGE. Age and NFL experience establish runway; verified playing evidence
+// determines how much of the *positive* developmental projection is trusted.
+// Never substitute invented future scoring for qualified Sleeper production.
+function development25(age,yearsExp,confidence,qualifyingSeasons){
+ const ageKnown=Number.isFinite(age)&&age>=18&&age<=45;
+ const expKnown=Number.isFinite(yearsExp)&&yearsExp>=0&&yearsExp<=25;
+ if(!ageKnown&&!expKnown)return{index:.5,ageIndex:.5,careerStage:.5,evidence:0,runway:.5};
+ const ageIndex=!ageKnown?.5:age<=23?1:age<=25?.90:age<=27?.80:age<=29?.67:age<=31?.52:age<=33?.35:.20;
+ const careerStage=!expKnown?.5:yearsExp<=1?.65:yearsExp<=3?.88:yearsExp<=6?.84:yearsExp<=9?.67:.45;
+ const runway=ageKnown&&expKnown?.70*ageIndex+.30*careerStage:ageKnown?ageIndex:careerStage;
+ const evidence=Math.max(0,Math.min(1,Number(confidence)||0));
+ const supported=Number(qualifyingSeasons)>0;
+ const upwardReliability=supported?.30+.70*evidence:.15;
+ const index=runway>.5?.5+(runway-.5)*upwardReliability:runway;
+ return{index:clamp25(.1,index,1),ageIndex,careerStage,evidence:supported?evidence:0,runway};
+}
 function context25(id,score){
- generation25();id=String(id);if(contextCache25.has(id))return contextCache25.get(id);const d=distributions25(),m=score.m,conf=m.confidence||0,tPct=d.tackles.length?pct25(d.tackles,m.tackleRate):.5,sPct=d.spikes.length?pct25(d.spikes,m.spikeRate):.5;
- const tackle=.5+conf*(tPct-.5),spike=.5+conf*(sPct-.5),age=ageScore25(id),index=.35*tackle+.45*spike+.20*age;
- const value=430+420*clamp25(.05,index,.95),out={value,tacklePct:tPct,spikePct:sPct,tackleRate:m.tackleRate,spikeRate:m.spikeRate,age,index};contextCache25.set(id,out);return out;
+ generation25();id=String(id);if(contextCache25.has(id))return contextCache25.get(id);
+ const d=distributions25(),m=score.m,conf=m.confidence||0,tPct=d.tackles.length?pct25(d.tackles,m.tackleRate):.5,sPct=d.spikes.length?pct25(d.spikes,m.spikeRate):.5;
+ const tackle=.5+conf*(tPct-.5),spike=.5+conf*(sPct-.5),p=state.players?.[id]||{};
+ const expRaw=p.years_exp,yearsExp=expRaw==null||expRaw===''?null:Number(expRaw);
+ const development=development25(age25(id),yearsExp,m.confidence,score.a?.qualifyingSeasons);
+ // In the 35% IDP context bucket, scoring-derived tackles and spikes receive
+ // 20% each; the remaining 60% is dynasty runway with evidence restraint.
+ // The 20/45/35 global mix and the existing scoring component stay unchanged.
+ const index=.20*tackle+.20*spike+.60*development.index;
+ const value=430+420*clamp25(.05,index,.95),out={value,tacklePct:tPct,spikePct:sPct,tackleRate:m.tackleRate,spikeRate:m.spikeRate,age:development.ageIndex,yearsExp:Number.isFinite(yearsExp)?yearsExp:null,development,index};
+ contextCache25.set(id,out);return out;
 }
 function blend25(c,scoreValue,contextValue){
  if(!Number.isFinite(c)||c<=0){

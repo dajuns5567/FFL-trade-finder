@@ -86,11 +86,45 @@ try{
     boston,wilson,
     largestIncreases:[...metrics].sort((a,b)=>b.percent-a.percent).slice(0,15),
     largestDecreases:[...metrics].sort((a,b)=>a.percent-b.percent).slice(0,15)};
+  // Second counterfactual: keep the approved 70/18/8/4 model intact and
+  // reduce only the positive production premium ceiling from +28% to +12%.
+  // Ignore rows whose current value has been overridden by downstream
+  // no-consensus or eligibility safeguards; those must remain untouched.
+  const productionCeiling=rows.filter(z=>z?.production?.offenseConsensusAnchorV50===true).map(z=>{
+    const id=String(z.x.id),consensus=Number(s.consensusComposite?.byId?.[id]);
+    const baseRaw=Number(z.production?.offenseTerminalRawV50);
+    const baseline=Number(window.assetCurveAudit?.(baseRaw)?.curved??NaN);
+    const downstreamOverride=!Number.isFinite(baseline)||Math.abs(baseline-Number(z.value))>2;
+    const prod=window.offenseConsensusAnchorV50.production(consensus,z.production?.correctedAudit||{});
+    const cap=Math.min(prod.value,1.12*consensus);
+    const ctx=clamp(.90*consensus,Number(z.context)||consensus,1.15*consensus);
+    const age=clamp(.88,Number(z.production?.ageFactor)||1,1.10);
+    let raw=clamp(.90*consensus,.70*consensus+.18*cap+.08*ctx+.04*consensus*age,1.12*consensus);
+    const rank=Number(s.consensusComposite?.detailsById?.[id]?.offenseRank);
+    if(Number.isFinite(rank)&&rank<=24)raw=Math.max(raw,.95*consensus);
+    if(Number.isFinite(rank)&&rank>220)raw=Math.min(raw,1.08*consensus);
+    const next=downstreamOverride?Number(z.value):Number(window.assetCurveAudit?.(raw)?.curved??Math.round(raw));
+    return {id,name:s.players?.[id]?.full_name||id,position:s.players?.[id]?.position,sourceCount:(s.consensusComposite?.detailsById?.[id]?.offenseSources||[]).filter(x=>!x.includes('(not listed)')).length,
+     old:Number(z.value),new:next,downstreamOverride,delta:next-Number(z.value),percent:100*(next-Number(z.value))/Math.max(1,Number(z.value))};
+  });
+  const impacted=productionCeiling.filter(x=>!x.downstreamOverride);
+  const magnitudes=impacted.map(x=>Math.abs(x.percent)).sort((a,b)=>a-b);
+  const productionPremiumCap={limit:'max positive scoring premium +12% of sourced dynasty consensus (was +28%)',
+   total:productionCeiling.length,unaffectedDownstreamOverrides:productionCeiling.filter(x=>x.downstreamOverride).length,
+   medianAbsoluteChangePct:magnitudes[Math.floor(magnitudes.length*.5)]||0,
+   p95AbsoluteChangePct:magnitudes[Math.floor(magnitudes.length*.95)]||0,
+   maxAbsoluteChangePct:magnitudes.at(-1)||0,
+   increased:impacted.filter(x=>x.delta>0).length,decreased:impacted.filter(x=>x.delta<0).length,
+   boston:productionCeiling.find(x=>x.name==='Denzel Boston'),
+   wilson:productionCeiling.find(x=>x.name==='Michael Wilson'),
+   largestDecreases:[...impacted].sort((a,b)=>a.percent-b.percent).slice(0,18),
+   preservedOverrides:productionCeiling.filter(x=>x.downstreamOverride).slice(0,15)
+  };
   const nearby=Array.isArray(audit?.players)?audit.players.filter(r=>r.position==='WR'&&(r.observedSourceCount<=1||r.flags.includes('exact-coverage-fallback'))).slice(0,30).map(r=>({id:r.id,name:r.name,modelValue:r.modelValue,observedSourceCount:r.observedSourceCount,flags:r.flags})):[];
   return {at:new Date().toISOString(),sleeper:{generatedAt:s.sleeperHistory?.generatedAt,complete:s.sleeperHistory?.complete,week:s.sleeperHistory?.completedWeek},
    consensus:window.__fllConsensusRefresh||null,
    sourceNames:Object.entries(s.rankings||{}).map(([name,x])=>({name,kind:x.kind,players:Object.keys(x.data||{}).length})),
-   allOffense:audit?.summary||null,candidates:output,counterfactual,missingOrSingleSourceWrExamples:nearby};
+   allOffense:audit?.summary||null,candidates:output,counterfactual,productionPremiumCap,missingOrSingleSourceWrExamples:nearby};
  });
  console.log('OFFENSE_EVIDENCE_REPORT '+JSON.stringify({url:target,report,pageErrors:errors},null,2));
  if(!report.candidates.some(x=>x.name.toLowerCase()==='denzel boston')||!report.candidates.some(x=>x.name.toLowerCase()==='michael wilson'))

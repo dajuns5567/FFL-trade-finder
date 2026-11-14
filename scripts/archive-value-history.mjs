@@ -98,34 +98,19 @@ if(scheduledSnapshotFile){
   payload={schema_version:1,league_id:'1316867686394769408',source:'scheduled-local-browser',snapshot_count:1,snapshots:[snap]};
 }else payload=await snapshotsFromBlobStore()||await snapshotsFromHttpExport();
 const incoming=(payload.snapshots||[]).filter(validSnapshot).filter(s=>!existing.has(String(s.t))).sort((a,b)=>String(a.t).localeCompare(String(b.t)));
-// Scheduled history can run several times a day. A coherent shift across
-// hundreds of players (or an IDP-wide shock) should not be archived as market
-// movement without independent corroboration. Quarantine one capture; the
-// next separately executed scheduled observation automatically confirms or
-// replaces it. No manual intervention or retroactive rewriting of history.
+// Report synchronized market moves, but never delay valid value changes.
+// Reject only objectively corrupt rows or a materially incomplete population.
 if(scheduledSnapshotFile&&incoming.length===1&&incoming[0].source==='scheduled'){
   const lastScheduled=[...(index.items||[])].reverse().find(x=>x.source==='scheduled'&&x.path);
   const previous=lastScheduled?await readFile(lastScheduled.path):null;
   if(previous?.content){
-    const prior=JSON.parse(previous.content);
-    const candidate=incoming[0];
-    const pendingPath=`${root}/pending-systemic-drift.json`;
-    const pendingFile=await readFile(pendingPath);
-    let pending=null;
-    try{pending=pendingFile?.content?JSON.parse(pendingFile.content):null}catch{}
-    const decision=scheduledArchiveDecision(prior,candidate,pending);
-    if(decision.drift.flagged||decision.pendingStale){
-      console.log(JSON.stringify({event:'scheduled-value-history-drift',...decision,previous:lastScheduled.t,pending:pending?.capturedAt||null}));
+    const candidate=incoming[0],prior=JSON.parse(previous.content);
+    const decision=scheduledArchiveDecision(prior,candidate);
+    if(decision.marketMovementObserved||decision.action==='quarantine'){
+      console.log(JSON.stringify({event:'scheduled-value-history-integrity',...decision,previous:lastScheduled.t,candidate:candidate.t}));
     }
     if(decision.action==='quarantine'){
-      const record={schema_version:1,capturedAt:candidate.t,previous:lastScheduled.t,valuation_contract:candidate.valuation_contract,
-        diagnostic:decision.drift,rows:candidate.rows.map(r=>({id:r.id,pos:r.pos,value:r.value}))};
-      await putFile(pendingPath,JSON.stringify(record,null,2)+'\n','Quarantine uncorroborated Value History systemic shift',pendingFile?.sha);
-      console.warn('Scheduled history systemic shift quarantined; next independent scheduled run will automatically recheck. Prior archive preserved.');
-      process.exit(0);
-    }
-    if(pendingFile?.sha&&pending?.rows?.length){
-      await putFile(pendingPath,JSON.stringify({schema_version:1,resolvedAt:candidate.t,corroborated:decision.corroborated,diagnostic:decision.drift},null,2)+'\n','Resolve pending Value History systemic shift',pendingFile.sha);
+      throw new Error(`Scheduled Value History snapshot rejected for verified integrity failure: ${decision.integrityReason}; retained=${decision.retained} (${decision.retention}). No data archived.`);
     }
   }
 }

@@ -21,6 +21,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Install declared function dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund --no-package-lock
       - name: Syntax validation
         run: |
           node --check valuation-offense-v40.js

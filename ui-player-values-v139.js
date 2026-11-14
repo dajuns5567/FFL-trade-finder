@@ -29,10 +29,18 @@ function historyLabel(id){
   const current=(a.seasons||[]).find(x=>x.currentSeason&&Number(x.games)>0);
   const recorded=current&&Number.isFinite(Number(current.ppg))?
    Number(current.ppg).toFixed(1)+' league-scored '+current.season+' PPG ('+current.games+' qualifying games) • ':'';
-  // a.ppg is an evidence-weighted valuation input, NOT actual current-year
-  // points per game. Rookies with missing historical seasons are especially
-  // misleading if its scheduled-year denominator is presented as a real PPG.
-  return recorded+Number(a.ppg||0).toFixed(1)+' valuation-weighted PPG • '+
+  // Actual three-calendar-season PPG is a games-weighted aggregate of verified
+  // Sleeper regular-season points, NOT the valuation model's weighted PPG.
+  // Use the three most recent calendar years in the import plan (2024–2026
+  // during 2026). Do not count older 2023 evidence in this display.
+  const seasons=(a.seasons||[]).filter(x=>Number.isFinite(Number(x.season)));
+  const latest=Math.max(Number(state.sleeperHistory?.currentSeason)||0,...seasons.map(x=>Number(x.season)));
+  const recent=seasons.filter(x=>Number(x.season)>=latest-2&&Number(x.season)<=latest&&Number(x.games)>0&&Number.isFinite(Number(x.ppg)));
+  const totalGames=recent.reduce((sum,x)=>sum+Number(x.games),0);
+  const totalPoints=recent.reduce((sum,x)=>sum+(Number.isFinite(Number(x.points))?Number(x.points):Number(x.ppg)*Number(x.games)),0);
+  const actual3yr=totalGames>0?(totalPoints/totalGames).toFixed(1)+' actual '+(latest-2)+'–'+latest+' PPG ('+totalGames+' games) • ':'';
+  // a.ppg is an evidence-weighted model input, not actual observed PPG.
+  return recorded+actual3yr+Number(a.ppg||0).toFixed(1)+' valuation-weighted PPG • '+
    a.qualifyingSeasons+' qualifying season'+(a.qualifyingSeasons===1?'':'s')+
    ' • confidence '+(Number(a.confidence||0)*100).toFixed(0)+'% • scoring component '+a.productionValue;
  }

@@ -1,0 +1,1318 @@
+{
+  "schema_version": 1,
+  "snapshot": "sleeper-data/data/sleeper/{2023,2024,2025,2026}/season-stats.json",
+  "description": "All 2026 IDPs with games and no 8+ game historical season across 2023-2025; scoring inputs observed from canonical Sleeper importer, not inferred player valuations.",
+  "record_count": 262,
+  "records": [
+    {
+      "id": "3272",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 3
+    },
+    {
+      "id": "5055",
+      "qualifiedGames": 3,
+      "sleeperIdpPoints": 45
+    },
+    {
+      "id": "5098",
+      "qualifiedGames": 2,
+      "sleeperIdpPoints": 6
+    },
+    {
+      "id": "5222",
+      "qualifiedGames": 3,
+      "sleeperIdpPoints": 23
+    },
+    {
+      "id": "5328",
+      "qualifiedGames": 2,
+      "sleeperIdpPoints": 14
+    },
+    {
+      "id": "5361",
+      "qualifiedGames": 2,
+      "sleeperIdpPoints": 21
+    },
+    {
+      "id": "5439",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 2
+    },
+    {
+      "id": "6348",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 49
+    },
+    {
+      "id": "6427",
+      "qualifiedGames": 4,
+      "sleeperIdpPoints": 2
+    },
+    {
+      "id": "6612",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 0
+    },
+    {
+      "id": "6864",
+      "qualifiedGames": 5,
+      "sleeperIdpPoints": 12
+    },
+    {
+      "id": "6928",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 13
+    },
+    {
+      "id": "7036",
+      "qualifiedGames": 2,
+      "sleeperIdpPoints": 19
+    },
+    {
+      "id": "7039",
+      "qualifiedGames": 6,
+      "sleeperIdpPoints": 2
+    },
+    {
+      "id": "7053",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 7
+    },
+    {
+      "id": "7200",
+      "qualifiedGames": 3,
+      "sleeperIdpPoints": 13
+    },
+    {
+      "id": "7807",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 13
+    },
+    {
+      "id": "7812",
+      "qualifiedGames": 3,
+      "sleeperIdpPoints": 3
+    },
+    {
+      "id": "7821",
+      "qualifiedGames": 3,
+      "sleeperIdpPoints": 7
+    },
+    {
+      "id": "7834",
+      "qualifiedGames": 7,
+      "sleeperIdpPoints": 2
+    },
+    {
+      "id": "7880",
+      "qualifiedGames": 2,
+      "sleeperIdpPoints": 8
+    },
+    {
+      "id": "8000",
+      "qualifiedGames": 4,
+      "sleeperIdpPoints": 28
+    },
+    {
+      "id": "8001",
+      "qualifiedGames": 7,
+      "sleeperIdpPoints": 27
+    },
+    {
+      "id": "8344",
+      "qualifiedGames": 5,
+      "sleeperIdpPoints": 12
+    },
+    {
+      "id": "8349",
+      "qualifiedGames": 7,
+      "sleeperIdpPoints": 74
+    },
+    {
+      "id": "8367",
+      "qualifiedGames": 6,
+      "sleeperIdpPoints": 32
+    },
+    {
+      "id": "8519",
+      "qualifiedGames": 2,
+      "sleeperIdpPoints": 9
+    },
+    {
+      "id": "8520",
+      "qualifiedGames": 3,
+      "sleeperIdpPoints": 24
+    },
+    {
+      "id": "8618",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 3
+    },
+    {
+      "id": "8654",
+      "qualifiedGames": 2,
+      "sleeperIdpPoints": 6
+    },
+    {
+      "id": "8702",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 1
+    },
+    {
+      "id": "8710",
+      "qualifiedGames": 6,
+      "sleeperIdpPoints": 31
+    },
+    {
+      "id": "8714",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 7
+    },
+    {
+      "id": "8726",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 0
+    },
+    {
+      "id": "8736",
+      "qualifiedGames": 4,
+      "sleeperIdpPoints": 26
+    },
+    {
+      "id": "10220",
+      "qualifiedGames": 2,
+      "sleeperIdpPoints": 2
+    },
+    {
+      "id": "10234",
+      "qualifiedGames": 2,
+      "sleeperIdpPoints": 2
+    },
+    {
+      "id": "10966",
+      "qualifiedGames": 2,
+      "sleeperIdpPoints": 2
+    },
+    {
+      "id": "10973",
+      "qualifiedGames": 3,
+      "sleeperIdpPoints": 9
+    },
+    {
+      "id": "10982",
+      "qualifiedGames": 3,
+      "sleeperIdpPoints": 16
+    },
+    {
+      "id": "11000",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 3
+    },
+    {
+      "id": "11006",
+      "qualifiedGames": 4,
+      "sleeperIdpPoints": 20
+    },
+    {
+      "id": "11011",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 9
+    },
+    {
+      "id": "11021",
+      "qualifiedGames": 2,
+      "sleeperIdpPoints": 2
+    },
+    {
+      "id": "11029",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 2
+    },
+    {
+      "id": "11032",
+      "qualifiedGames": 4,
+      "sleeperIdpPoints": 29
+    },
+    {
+      "id": "11035",
+      "qualifiedGames": 3,
+      "sleeperIdpPoints": 4
+    },
+    {
+      "id": "11050",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 7
+    },
+    {
+      "id": "11066",
+      "qualifiedGames": 6,
+      "sleeperIdpPoints": 26
+    },
+    {
+      "id": "11068",
+      "qualifiedGames": 4,
+      "sleeperIdpPoints": 2
+    },
+    {
+      "id": "11098",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 5
+    },
+    {
+      "id": "11193",
+      "qualifiedGames": 9,
+      "sleeperIdpPoints": 67
+    },
+    {
+      "id": "11299",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 3
+    },
+    {
+      "id": "11336",
+      "qualifiedGames": 2,
+      "sleeperIdpPoints": 5
+    },
+    {
+      "id": "11429",
+      "qualifiedGames": 4,
+      "sleeperIdpPoints": 22
+    },
+    {
+      "id": "11441",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 3
+    },
+    {
+      "id": "11689",
+      "qualifiedGames": 5,
+      "sleeperIdpPoints": 27
+    },
+    {
+      "id": "11712",
+      "qualifiedGames": 4,
+      "sleeperIdpPoints": 64
+    },
+    {
+      "id": "11721",
+      "qualifiedGames": 3,
+      "sleeperIdpPoints": 6
+    },
+    {
+      "id": "11730",
+      "qualifiedGames": 2,
+      "sleeperIdpPoints": 15
+    },
+    {
+      "id": "11752",
+      "qualifiedGames": 5,
+      "sleeperIdpPoints": 89
+    },
+    {
+      "id": "11753",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 50
+    },
+    {
+      "id": "11755",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 3
+    },
+    {
+      "id": "11759",
+      "qualifiedGames": 2,
+      "sleeperIdpPoints": 11
+    },
+    {
+      "id": "11761",
+      "qualifiedGames": 5,
+      "sleeperIdpPoints": 27
+    },
+    {
+      "id": "11763",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 4
+    },
+    {
+      "id": "11765",
+      "qualifiedGames": 4,
+      "sleeperIdpPoints": 53
+    },
+    {
+      "id": "11769",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 1
+    },
+    {
+      "id": "11791",
+      "qualifiedGames": 3,
+      "sleeperIdpPoints": 2
+    },
+    {
+      "id": "11795",
+      "qualifiedGames": 5,
+      "sleeperIdpPoints": 10
+    },
+    {
+      "id": "11796",
+      "qualifiedGames": 7,
+      "sleeperIdpPoints": 49
+    },
+    {
+      "id": "11828",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 0
+    },
+    {
+      "id": "11830",
+      "qualifiedGames": 4,
+      "sleeperIdpPoints": 21
+    },
+    {
+      "id": "11847",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 1
+    },
+    {
+      "id": "11893",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 3
+    },
+    {
+      "id": "11942",
+      "qualifiedGames": 3,
+      "sleeperIdpPoints": 3
+    },
+    {
+      "id": "12035",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 6
+    },
+    {
+      "id": "12048",
+      "qualifiedGames": 7,
+      "sleeperIdpPoints": 2
+    },
+    {
+      "id": "12058",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 7
+    },
+    {
+      "id": "12132",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 74
+    },
+    {
+      "id": "12137",
+      "qualifiedGames": 6,
+      "sleeperIdpPoints": 66
+    },
+    {
+      "id": "12155",
+      "qualifiedGames": 3,
+      "sleeperIdpPoints": 16
+    },
+    {
+      "id": "12380",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 8
+    },
+    {
+      "id": "12496",
+      "qualifiedGames": 3,
+      "sleeperIdpPoints": 2
+    },
+    {
+      "id": "12505",
+      "qualifiedGames": 7,
+      "sleeperIdpPoints": 2
+    },
+    {
+      "id": "12530",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 82
+    },
+    {
+      "id": "12552",
+      "qualifiedGames": 7,
+      "sleeperIdpPoints": 41
+    },
+    {
+      "id": "12559",
+      "qualifiedGames": 5,
+      "sleeperIdpPoints": 32
+    },
+    {
+      "id": "12580",
+      "qualifiedGames": 7,
+      "sleeperIdpPoints": 31
+    },
+    {
+      "id": "12583",
+      "qualifiedGames": 7,
+      "sleeperIdpPoints": 23
+    },
+    {
+      "id": "12588",
+      "qualifiedGames": 6,
+      "sleeperIdpPoints": 84
+    },
+    {
+      "id": "12594",
+      "qualifiedGames": 9,
+      "sleeperIdpPoints": 67
+    },
+    {
+      "id": "12601",
+      "qualifiedGames": 9,
+      "sleeperIdpPoints": 85
+    },
+    {
+      "id": "12609",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 8
+    },
+    {
+      "id": "12616",
+      "qualifiedGames": 3,
+      "sleeperIdpPoints": 16
+    },
+    {
+      "id": "12618",
+      "qualifiedGames": 7,
+      "sleeperIdpPoints": 27
+    },
+    {
+      "id": "12625",
+      "qualifiedGames": 7,
+      "sleeperIdpPoints": 82
+    },
+    {
+      "id": "12628",
+      "qualifiedGames": 7,
+      "sleeperIdpPoints": 24
+    },
+    {
+      "id": "12632",
+      "qualifiedGames": 2,
+      "sleeperIdpPoints": 14
+    },
+    {
+      "id": "12636",
+      "qualifiedGames": 9,
+      "sleeperIdpPoints": 59
+    },
+    {
+      "id": "12644",
+      "qualifiedGames": 9,
+      "sleeperIdpPoints": 54
+    },
+    {
+      "id": "12645",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 69
+    },
+    {
+      "id": "12647",
+      "qualifiedGames": 4,
+      "sleeperIdpPoints": 17
+    },
+    {
+      "id": "12650",
+      "qualifiedGames": 5,
+      "sleeperIdpPoints": 46
+    },
+    {
+      "id": "12651",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 0
+    },
+    {
+      "id": "12667",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 7
+    },
+    {
+      "id": "12668",
+      "qualifiedGames": 5,
+      "sleeperIdpPoints": 52
+    },
+    {
+      "id": "12672",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 5
+    },
+    {
+      "id": "12675",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 45
+    },
+    {
+      "id": "12676",
+      "qualifiedGames": 6,
+      "sleeperIdpPoints": 7
+    },
+    {
+      "id": "12680",
+      "qualifiedGames": 7,
+      "sleeperIdpPoints": 15
+    },
+    {
+      "id": "12682",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 4
+    },
+    {
+      "id": "12684",
+      "qualifiedGames": 3,
+      "sleeperIdpPoints": 31
+    },
+    {
+      "id": "12689",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 6
+    },
+    {
+      "id": "12691",
+      "qualifiedGames": 4,
+      "sleeperIdpPoints": 8
+    },
+    {
+      "id": "12696",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 1
+    },
+    {
+      "id": "12702",
+      "qualifiedGames": 4,
+      "sleeperIdpPoints": 50
+    },
+    {
+      "id": "12708",
+      "qualifiedGames": 2,
+      "sleeperIdpPoints": 7
+    },
+    {
+      "id": "12710",
+      "qualifiedGames": 5,
+      "sleeperIdpPoints": 18
+    },
+    {
+      "id": "12720",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 37
+    },
+    {
+      "id": "12723",
+      "qualifiedGames": 3,
+      "sleeperIdpPoints": 34
+    },
+    {
+      "id": "12730",
+      "qualifiedGames": 2,
+      "sleeperIdpPoints": 17
+    },
+    {
+      "id": "12742",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 4
+    },
+    {
+      "id": "12801",
+      "qualifiedGames": 5,
+      "sleeperIdpPoints": 15
+    },
+    {
+      "id": "12835",
+      "qualifiedGames": 2,
+      "sleeperIdpPoints": 16
+    },
+    {
+      "id": "12844",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 3
+    },
+    {
+      "id": "12855",
+      "qualifiedGames": 2,
+      "sleeperIdpPoints": 14
+    },
+    {
+      "id": "12900",
+      "qualifiedGames": 7,
+      "sleeperIdpPoints": 34
+    },
+    {
+      "id": "12917",
+      "qualifiedGames": 5,
+      "sleeperIdpPoints": 36
+    },
+    {
+      "id": "12919",
+      "qualifiedGames": 4,
+      "sleeperIdpPoints": 6
+    },
+    {
+      "id": "12927",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 12
+    },
+    {
+      "id": "12937",
+      "qualifiedGames": 2,
+      "sleeperIdpPoints": 0
+    },
+    {
+      "id": "12957",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 21
+    },
+    {
+      "id": "13000",
+      "qualifiedGames": 2,
+      "sleeperIdpPoints": 12
+    },
+    {
+      "id": "13028",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 5
+    },
+    {
+      "id": "13037",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 1
+    },
+    {
+      "id": "13048",
+      "qualifiedGames": 6,
+      "sleeperIdpPoints": 24
+    },
+    {
+      "id": "13073",
+      "qualifiedGames": 6,
+      "sleeperIdpPoints": 28
+    },
+    {
+      "id": "13094",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 5
+    },
+    {
+      "id": "13104",
+      "qualifiedGames": 9,
+      "sleeperIdpPoints": 62
+    },
+    {
+      "id": "13130",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 4
+    },
+    {
+      "id": "13131",
+      "qualifiedGames": 2,
+      "sleeperIdpPoints": 19
+    },
+    {
+      "id": "13137",
+      "qualifiedGames": 3,
+      "sleeperIdpPoints": 5
+    },
+    {
+      "id": "13156",
+      "qualifiedGames": 2,
+      "sleeperIdpPoints": 4
+    },
+    {
+      "id": "13165",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 2
+    },
+    {
+      "id": "13172",
+      "qualifiedGames": 5,
+      "sleeperIdpPoints": 32
+    },
+    {
+      "id": "13181",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 4
+    },
+    {
+      "id": "13196",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 8
+    },
+    {
+      "id": "13209",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 3
+    },
+    {
+      "id": "13224",
+      "qualifiedGames": 4,
+      "sleeperIdpPoints": 29
+    },
+    {
+      "id": "13279",
+      "qualifiedGames": 7,
+      "sleeperIdpPoints": 2
+    },
+    {
+      "id": "13285",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 6
+    },
+    {
+      "id": "13293",
+      "qualifiedGames": 5,
+      "sleeperIdpPoints": 1
+    },
+    {
+      "id": "13294",
+      "qualifiedGames": 9,
+      "sleeperIdpPoints": 4
+    },
+    {
+      "id": "13296",
+      "qualifiedGames": 5,
+      "sleeperIdpPoints": 2
+    },
+    {
+      "id": "13311",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 2
+    },
+    {
+      "id": "13317",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 4
+    },
+    {
+      "id": "13322",
+      "qualifiedGames": 7,
+      "sleeperIdpPoints": 2
+    },
+    {
+      "id": "13338",
+      "qualifiedGames": 7,
+      "sleeperIdpPoints": 2
+    },
+    {
+      "id": "13340",
+      "qualifiedGames": 7,
+      "sleeperIdpPoints": 29
+    },
+    {
+      "id": "13341",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 71
+    },
+    {
+      "id": "13346",
+      "qualifiedGames": 9,
+      "sleeperIdpPoints": 4
+    },
+    {
+      "id": "13358",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 1
+    },
+    {
+      "id": "13359",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 34
+    },
+    {
+      "id": "13360",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 61
+    },
+    {
+      "id": "13361",
+      "qualifiedGames": 7,
+      "sleeperIdpPoints": 27
+    },
+    {
+      "id": "13362",
+      "qualifiedGames": 7,
+      "sleeperIdpPoints": 23
+    },
+    {
+      "id": "13363",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 165
+    },
+    {
+      "id": "13364",
+      "qualifiedGames": 7,
+      "sleeperIdpPoints": 24
+    },
+    {
+      "id": "13365",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 131
+    },
+    {
+      "id": "13366",
+      "qualifiedGames": 7,
+      "sleeperIdpPoints": 15
+    },
+    {
+      "id": "13367",
+      "qualifiedGames": 2,
+      "sleeperIdpPoints": 12
+    },
+    {
+      "id": "13368",
+      "qualifiedGames": 3,
+      "sleeperIdpPoints": 15
+    },
+    {
+      "id": "13369",
+      "qualifiedGames": 9,
+      "sleeperIdpPoints": 109
+    },
+    {
+      "id": "13370",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 86
+    },
+    {
+      "id": "13371",
+      "qualifiedGames": 9,
+      "sleeperIdpPoints": 117
+    },
+    {
+      "id": "13372",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 25
+    },
+    {
+      "id": "13373",
+      "qualifiedGames": 4,
+      "sleeperIdpPoints": 31
+    },
+    {
+      "id": "13374",
+      "qualifiedGames": 3,
+      "sleeperIdpPoints": 10
+    },
+    {
+      "id": "13375",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 136
+    },
+    {
+      "id": "13376",
+      "qualifiedGames": 9,
+      "sleeperIdpPoints": 115
+    },
+    {
+      "id": "13377",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 185
+    },
+    {
+      "id": "13379",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 139
+    },
+    {
+      "id": "13381",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 67
+    },
+    {
+      "id": "13382",
+      "qualifiedGames": 9,
+      "sleeperIdpPoints": 87
+    },
+    {
+      "id": "13384",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 67
+    },
+    {
+      "id": "13385",
+      "qualifiedGames": 5,
+      "sleeperIdpPoints": 71
+    },
+    {
+      "id": "13386",
+      "qualifiedGames": 3,
+      "sleeperIdpPoints": 8
+    },
+    {
+      "id": "13387",
+      "qualifiedGames": 4,
+      "sleeperIdpPoints": 7
+    },
+    {
+      "id": "13388",
+      "qualifiedGames": 4,
+      "sleeperIdpPoints": 47
+    },
+    {
+      "id": "13389",
+      "qualifiedGames": 6,
+      "sleeperIdpPoints": 20
+    },
+    {
+      "id": "13390",
+      "qualifiedGames": 6,
+      "sleeperIdpPoints": 23
+    },
+    {
+      "id": "13391",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 3
+    },
+    {
+      "id": "13395",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 26
+    },
+    {
+      "id": "13397",
+      "qualifiedGames": 4,
+      "sleeperIdpPoints": 32
+    },
+    {
+      "id": "13398",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 87
+    },
+    {
+      "id": "13399",
+      "qualifiedGames": 7,
+      "sleeperIdpPoints": 51
+    },
+    {
+      "id": "13406",
+      "qualifiedGames": 2,
+      "sleeperIdpPoints": 10
+    },
+    {
+      "id": "13411",
+      "qualifiedGames": 2,
+      "sleeperIdpPoints": 2
+    },
+    {
+      "id": "13420",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 2
+    },
+    {
+      "id": "13424",
+      "qualifiedGames": 6,
+      "sleeperIdpPoints": 2
+    },
+    {
+      "id": "13425",
+      "qualifiedGames": 3,
+      "sleeperIdpPoints": 4
+    },
+    {
+      "id": "13445",
+      "qualifiedGames": 5,
+      "sleeperIdpPoints": 15
+    },
+    {
+      "id": "13453",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 142
+    },
+    {
+      "id": "13454",
+      "qualifiedGames": 7,
+      "sleeperIdpPoints": 66
+    },
+    {
+      "id": "13455",
+      "qualifiedGames": 6,
+      "sleeperIdpPoints": 34
+    },
+    {
+      "id": "13457",
+      "qualifiedGames": 9,
+      "sleeperIdpPoints": 81
+    },
+    {
+      "id": "13458",
+      "qualifiedGames": 6,
+      "sleeperIdpPoints": 32
+    },
+    {
+      "id": "13460",
+      "qualifiedGames": 9,
+      "sleeperIdpPoints": 21
+    },
+    {
+      "id": "13464",
+      "qualifiedGames": 7,
+      "sleeperIdpPoints": 13
+    },
+    {
+      "id": "13468",
+      "qualifiedGames": 9,
+      "sleeperIdpPoints": 23
+    },
+    {
+      "id": "13469",
+      "qualifiedGames": 3,
+      "sleeperIdpPoints": 17
+    },
+    {
+      "id": "13470",
+      "qualifiedGames": 5,
+      "sleeperIdpPoints": 53
+    },
+    {
+      "id": "13472",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 4
+    },
+    {
+      "id": "13474",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 13
+    },
+    {
+      "id": "13476",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 4
+    },
+    {
+      "id": "13479",
+      "qualifiedGames": 2,
+      "sleeperIdpPoints": 7
+    },
+    {
+      "id": "13480",
+      "qualifiedGames": 9,
+      "sleeperIdpPoints": 17
+    },
+    {
+      "id": "13481",
+      "qualifiedGames": 7,
+      "sleeperIdpPoints": 40
+    },
+    {
+      "id": "13482",
+      "qualifiedGames": 9,
+      "sleeperIdpPoints": 133
+    },
+    {
+      "id": "13485",
+      "qualifiedGames": 7,
+      "sleeperIdpPoints": 82
+    },
+    {
+      "id": "13488",
+      "qualifiedGames": 4,
+      "sleeperIdpPoints": 12
+    },
+    {
+      "id": "13489",
+      "qualifiedGames": 7,
+      "sleeperIdpPoints": 67
+    },
+    {
+      "id": "13490",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 2
+    },
+    {
+      "id": "13492",
+      "qualifiedGames": 9,
+      "sleeperIdpPoints": 71
+    },
+    {
+      "id": "13494",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 18
+    },
+    {
+      "id": "13501",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 63
+    },
+    {
+      "id": "13504",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 56
+    },
+    {
+      "id": "13508",
+      "qualifiedGames": 7,
+      "sleeperIdpPoints": 84
+    },
+    {
+      "id": "13510",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 5
+    },
+    {
+      "id": "13514",
+      "qualifiedGames": 4,
+      "sleeperIdpPoints": 19
+    },
+    {
+      "id": "13517",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 89
+    },
+    {
+      "id": "13518",
+      "qualifiedGames": 3,
+      "sleeperIdpPoints": 5
+    },
+    {
+      "id": "13520",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 82
+    },
+    {
+      "id": "13522",
+      "qualifiedGames": 7,
+      "sleeperIdpPoints": 66
+    },
+    {
+      "id": "13527",
+      "qualifiedGames": 6,
+      "sleeperIdpPoints": 26
+    },
+    {
+      "id": "13532",
+      "qualifiedGames": 3,
+      "sleeperIdpPoints": 13
+    },
+    {
+      "id": "13540",
+      "qualifiedGames": 2,
+      "sleeperIdpPoints": 0
+    },
+    {
+      "id": "13542",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 2
+    },
+    {
+      "id": "13547",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 33
+    },
+    {
+      "id": "13548",
+      "qualifiedGames": 3,
+      "sleeperIdpPoints": 6
+    },
+    {
+      "id": "13555",
+      "qualifiedGames": 9,
+      "sleeperIdpPoints": 82
+    },
+    {
+      "id": "13558",
+      "qualifiedGames": 3,
+      "sleeperIdpPoints": 18
+    },
+    {
+      "id": "13562",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 2
+    },
+    {
+      "id": "13568",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 3
+    },
+    {
+      "id": "13573",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 3
+    },
+    {
+      "id": "13576",
+      "qualifiedGames": 5,
+      "sleeperIdpPoints": 43
+    },
+    {
+      "id": "13581",
+      "qualifiedGames": 4,
+      "sleeperIdpPoints": 2
+    },
+    {
+      "id": "13586",
+      "qualifiedGames": 2,
+      "sleeperIdpPoints": 3
+    },
+    {
+      "id": "13633",
+      "qualifiedGames": 2,
+      "sleeperIdpPoints": 4
+    },
+    {
+      "id": "13650",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 7
+    },
+    {
+      "id": "13656",
+      "qualifiedGames": 4,
+      "sleeperIdpPoints": 14
+    },
+    {
+      "id": "13664",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 0
+    },
+    {
+      "id": "13706",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 31
+    },
+    {
+      "id": "13733",
+      "qualifiedGames": 5,
+      "sleeperIdpPoints": 20
+    },
+    {
+      "id": "13793",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 9
+    },
+    {
+      "id": "13808",
+      "qualifiedGames": 8,
+      "sleeperIdpPoints": 45
+    },
+    {
+      "id": "13819",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 9
+    },
+    {
+      "id": "13823",
+      "qualifiedGames": 3,
+      "sleeperIdpPoints": 14
+    },
+    {
+      "id": "13856",
+      "qualifiedGames": 1,
+      "sleeperIdpPoints": 0
+    },
+    {
+      "id": "13934",
+      "qualifiedGames": 2,
+      "sleeperIdpPoints": 4
+    },
+    {
+      "id": "13965",
+      "qualifiedGames": 3,
+      "sleeperIdpPoints": 17
+    }
+  ]
+}

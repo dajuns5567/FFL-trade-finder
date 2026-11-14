@@ -9,6 +9,10 @@ on:
       - 'modeled-player-values-v319.js'
       - 'netlify/functions/consensus-composite-v3.mjs'
       - 'tests/idp-valuation-refresh-contract.test.mjs'
+      - 'ui-player-values-v139.js'
+      - 'index.html'
+      - 'tests/idp-rookie-scoring-display.test.mjs'
+      - 'tests/consensus-composite-v3.test.mjs'
       - 'scripts/import-sleeper-history.mjs'
       - 'scripts/audit-qualified-player-games.mjs'
       - 'scripts/audit-idp-sleeper-identity.mjs'
@@ -75,6 +79,10 @@ jobs:
           node scripts/audit-idp-sleeper-identity.mjs "$SLEEPER_DATA_DIR"
       - name: IDP Week 1 weighting invariants
         run: node --test tests/idp-week1-weighting.test.mjs
+      - name: IDP rookies, scoring display and duplicate identity safety
+        run: |
+          node --test tests/idp-rookie-scoring-display.test.mjs
+          node --test tests/consensus-composite-v3.test.mjs
       - name: IDP weekly refresh and rank-stability contract
         run: node --test tests/idp-valuation-refresh-contract.test.mjs
       - name: Scoring pipeline syntax

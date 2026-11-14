@@ -2,6 +2,7 @@ import { getStore } from '@netlify/blobs';
 import { readFileSync } from 'node:fs';
 import { emptyMonthBundle, parseMonthBundleText } from './value-history-archive-utils.mjs';
 import { readSnapshotInventory } from './archive-blob-inventory.mjs';
+import { scheduledArchiveDecision, compareSnapshotProvenance } from './value-history-systemic-drift.mjs';
 const token=process.env.GITHUB_TOKEN;
 const repository=process.env.GITHUB_REPOSITORY||'dajuns5567/FFL-trade-finder';
 const sourceBase=process.env.VALUE_HISTORY_SOURCE_URL||'https://subtle-genie-6167c5.netlify.app/.netlify/functions/value-history';
@@ -97,6 +98,25 @@ if(scheduledSnapshotFile){
   payload={schema_version:1,league_id:'1316867686394769408',source:'scheduled-local-browser',snapshot_count:1,snapshots:[snap]};
 }else payload=await snapshotsFromBlobStore()||await snapshotsFromHttpExport();
 const incoming=(payload.snapshots||[]).filter(validSnapshot).filter(s=>!existing.has(String(s.t))).sort((a,b)=>String(a.t).localeCompare(String(b.t)));
+// Report synchronized market moves, but never delay valid value changes.
+// Reject only objectively corrupt rows or a materially incomplete population.
+if(scheduledSnapshotFile&&incoming.length===1&&incoming[0].source==='scheduled'){
+  const lastScheduled=[...(index.items||[])].reverse().find(x=>x.source==='scheduled'&&x.path);
+  const previous=lastScheduled?await readFile(lastScheduled.path):null;
+  if(previous?.content){
+    const candidate=incoming[0],prior=JSON.parse(previous.content);
+    const decision=scheduledArchiveDecision(prior,candidate);
+    const provenance=compareSnapshotProvenance(prior,candidate);
+    console.log(JSON.stringify({event:'value-history-input-provenance',previous:lastScheduled.t,candidate:candidate.t,...provenance}));
+    if(decision.marketMovementObserved||decision.action==='quarantine'){
+      console.log(JSON.stringify({event:'scheduled-value-history-integrity',...decision,previous:lastScheduled.t,candidate:candidate.t}));
+    }
+    if(decision.action==='quarantine'){
+      throw new Error(`Scheduled Value History snapshot rejected for verified integrity failure: ${decision.integrityReason}; retained=${decision.retained} (${decision.retention}). No data archived.`);
+    }
+  }
+}
+
 if(!incoming.length){
   console.log(`No new Value History snapshots to archive. Source=${payload.source||'unknown'} source_count=${Number(payload.snapshot_count)||0} archive_count=${(index.items||[]).length}.`);
   process.exit(0)

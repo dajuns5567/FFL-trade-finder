@@ -185,7 +185,31 @@ try{
       if(!Number.isFinite(canonicalValue)||canonicalValue!==Number(r.value))valueParityMismatches.push({id:String(r.id),history:Number(r.value),canonical:canonicalValue});
       if(valueParityMismatches.length>=20)break;
     }
-    return {rows,picks,teams,refresh:window.__fllValueRefresh||null,modeledReady:window.modeledPlayerValuesV319?.ready===true,modeledVersion:Number(window.modeledPlayerValuesV319?.meta?.version)||0,valueParityMismatches,status:String(document.getElementById('updateStatus')?.textContent||'')};
+    // Keep input evidence with every scheduled observation. Value moves are not
+    // suppressed: this identifies whether a revision, scoring import or publisher
+    // ranking set changed between two archived points.
+    const digest=data=>{
+      let hash=2166136261;
+      const pairs=Object.entries(data||{}).sort(([a],[b])=>a.localeCompare(b));
+      for(const [name,rank] of pairs){
+        const entry=String(name)+':'+String(rank)+'|';
+        for(let i=0;i<entry.length;i++){hash^=entry.charCodeAt(i);hash=Math.imul(hash,16777619)}
+      }
+      return(hash>>>0).toString(36);
+    };
+    const rankings=window.state?.rankings||{};
+    const consensusSources=Object.entries(rankings).map(([source,entry])=>({
+      source,rankedPlayers:Object.keys(entry?.data||{}).length,
+      rankingDigest:digest(entry?.data)
+    })).sort((a,b)=>a.source.localeCompare(b.source));
+    const sleeper=window.state?.sleeperHistory||{};
+    const inputEvidence={
+      scoringGeneratedAt:sleeper.generatedAt||null,
+      scoringCompletedWeek:Number(sleeper.completedWeek)||0,
+      scoringMode:sleeper.weightPlan?.mode||null,
+      consensusSources
+    };
+    return {rows,picks,teams,inputEvidence,refresh:window.__fllValueRefresh||null,modeledReady:window.modeledPlayerValuesV319?.ready===true,modeledVersion:Number(window.modeledPlayerValuesV319?.meta?.version)||0,valueParityMismatches,status:String(document.getElementById('updateStatus')?.textContent||'')};
   });
   const sameRows=(a,b)=>{
     if(!Array.isArray(a)||!Array.isArray(b)||a.length!==b.length)return false;
@@ -200,7 +224,7 @@ try{
     const first=await captureCurrent();
     await page.waitForTimeout(1500);
     const second=await captureCurrent();
-    const stable=sameRows(first.rows,second.rows)&&first.modeledVersion===second.modeledVersion&&second.refresh?.inFlight===false&&second.refresh?.phase==='complete'&&second.modeledReady===true&&!second.valueParityMismatches?.length&&!/loading|updating|refreshing/i.test(second.status||'');
+    const stable=sameRows(first.rows,second.rows)&&JSON.stringify(first.inputEvidence)===JSON.stringify(second.inputEvidence)&&first.modeledVersion===second.modeledVersion&&second.refresh?.inFlight===false&&second.refresh?.phase==='complete'&&second.modeledReady===true&&!second.valueParityMismatches?.length&&!/loading|updating|refreshing/i.test(second.status||'');
     if(stable){captured=second;break}
     if(attempt<3)await page.waitForTimeout(2000);
   }
@@ -210,11 +234,13 @@ try{
   if(captured.valueParityMismatches?.length)throw new Error(`Scheduled capture diverged from canonical Player Values scale: ${JSON.stringify(captured.valueParityMismatches)}`);
 
   const t=new Date().toISOString(),fp=fingerprint(captured.rows,captured.picks,captured.teams);
-  const snap={version:5,league,t,fingerprint:fp,source:'scheduled',valuation_contract:SCHEDULED_VALUATION_CONTRACT,rows:captured.rows,picks:captured.picks,teams:captured.teams};
+  const snap={version:5,league,t,fingerprint:fp,source:'scheduled',valuation_contract:SCHEDULED_VALUATION_CONTRACT,
+    inputEvidence:{...captured.inputEvidence,githubCommit:process.env.GITHUB_SHA||null},
+    rows:captured.rows,picks:captured.picks,teams:captured.teams};
   mkdirSync(join(process.cwd(),'.tmp'),{recursive:true});
   writeFileSync(snapshotFile,JSON.stringify(snap,null,2)+'\n');
 
-  console.log(JSON.stringify({ok:true,runtime:'github-main-local',readiness,canonicalParity:'exact',modeledVersion:captured.modeledVersion,pageErrors:pageErrors.length,failedRequests:failedRequests.length,snapshot:{t,source:'scheduled',count:captured.rows.length,fingerprint:fp}},null,2));
+  console.log(JSON.stringify({ok:true,runtime:'github-main-local',readiness,canonicalParity:'exact',modeledVersion:captured.modeledVersion,pageErrors:pageErrors.length,failedRequests:failedRequests.length,snapshot:{t,source:'scheduled',count:captured.rows.length,fingerprint:fp,inputEvidence:snap.inputEvidence}},null,2));
 }finally{
   await browser.close();
   await new Promise(resolve=>server.close(resolve));

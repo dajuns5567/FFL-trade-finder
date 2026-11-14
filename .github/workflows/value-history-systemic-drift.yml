@@ -1,0 +1,25 @@
+name: Value History systemic drift integrity
+on:
+  pull_request:
+    paths:
+      - 'scripts/value-history-systemic-drift.mjs'
+      - 'scripts/archive-value-history.mjs'
+      - 'scripts/value-history-headless-refresh.mjs'
+      - 'tests/value-history-input-evidence.test.mjs'
+      - 'tests/value-history-systemic-drift.test.mjs'
+      - '.github/workflows/value-history-systemic-drift.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check scripts/value-history-systemic-drift.mjs
+      - run: node --check scripts/archive-value-history.mjs
+      - run: node --check scripts/value-history-headless-refresh.mjs
+      - run: node --test tests/value-history-systemic-drift.test.mjs tests/value-history-input-evidence.test.mjs

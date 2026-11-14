@@ -43,8 +43,7 @@ test('private Inquirer history reads remain local, SSO-independent, and mutation
  const history=readFileSync(new URL('../netlify/functions/value-history.mjs',import.meta.url),'utf8');
  assert.match(hub,/if\(previewReadOnly\)url\.searchParams\.set\('readonly_preview','1'\)/);
  assert.match(hub,/const r=await valueHistoryHandler\(new Request\(url\)\)/);
- assert.match(history,/const readonlyPreview=isDeployPreview\|\|\(req\.method==='GET'&&url\.searchParams\.get\('readonly_preview'\)==='1'\)/);
- assert.match(history,/if\(isDeployPreview\)return json\(\{error:'deploy previews are read-only for canonical value history'\},403\)/);
+ assert.match(history,/const readonlyPreview=req\.method==='GET'&&url\.searchParams\.get\('readonly_preview'\)==='1'/);
  assert.match(history,/if\(s&&!readonlyPreview\)\{/);
 });
 

@@ -257,3 +257,34 @@ test("IDP ranks and valuations still use the exact unmodified IDP aggregation",(
   assert.deepEqual(d.offenseRobustWeights,[]);
   assert.deepEqual(d.offenseOutlierAdjustments,[]);
 });
+
+test("IDP source trace explains each listed rank, omission penalty and weight without changing values",()=>{
+ const first=result("The IDP Show Combined","combined-dynasty",[
+  {player:"Test Edge",position:"IDP",rank:1},
+  ...Array.from({length:49},(_,i)=>({player:"Other IDP "+i,position:"IDP",rank:i+2}))
+ ]);
+ const second=result("DraftSharks IDP","draftsharks-idp",[
+  {player:"Test Edge",position:"LB",rank:1},
+  ...Array.from({length:49},(_,i)=>({player:"Peer IDP "+i,position:"LB",rank:i+2}))
+ ]);
+ const third=result("RotoWire IDP","rotowire-idp",Array.from({length:75},(_,i)=>({
+  player:"Third IDP "+i,position:"LB",rank:i+1
+ })));
+ const d=buildConsensusComposite([first,second,third],
+  [{id:"edge",name:"Test Edge",positions:["LB"]}]).detailsById.edge;
+ assert.equal(d.idpObservedSourceCount,2);
+ assert.equal(d.idpSingleSource,false);
+ assert.deepEqual(d.idpSourceEvidence.slice(0,2).map(x=>[x.source,x.rank,x.weight,x.listed]),[
+  ["The IDP Show Combined IDP",1,1,true],["DraftSharks IDP",1,1,true]
+ ]);
+ assert.ok(d.idpSourceEvidence.at(-1).source.includes("(not listed)"));
+ assert.equal(d.idpSourceEvidence.at(-1).listed,false);
+ const rank=d.idpSourceEvidence.reduce((s,x)=>s+x.rank*x.weight,0)/
+  d.idpSourceEvidence.reduce((s,x)=>s+x.weight,0);
+ assert.ok(Math.abs(rank-d.idpRank)<1e-10);
+ const alone=buildConsensusComposite([first],[{id:"edge",name:"Test Edge",positions:["LB"]}]).detailsById.edge;
+ assert.equal(alone.idpSingleSource,true);
+ assert.equal(alone.idpObservedSourceCount,1);
+ assert.equal(alone.idpRank,180);
+ assert.deepEqual(alone.idpSourceEvidence.map(x=>x.rank),[1]);
+});

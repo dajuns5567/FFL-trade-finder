@@ -812,12 +812,30 @@ function tradePickAsset(p,receiver){
   return{type:'pick',id:`pick-${season}-${round}-${original}`,season,round,owner:Number(receiver)||0,original_owner:original,name:`${season} R${round}`,source:'sleeper-history',historyPick:{drafted_player_id:p?.drafted_player_id||null,draft_slot:p?.draft_slot||null,pick_no:p?.pick_no||null,draft_id:p?.draft_id||null}};
 }
 function tradePlayerAsset(id,receiver){return{type:'player',id:String(id),owner:Number(receiver)||0,name:playerName(id)}}
+// The current player ranking includes unrostered assets with valid dynasty
+// consensus or Sleeper evidence. Those players still have a market value in
+// Player Values, Finder and Evaluator. Hindsight must not turn that value into
+// zero just because the player is currently a free agent rather than rostered.
+// Cache the ranked ID set per canonical master array reference for trade-feed
+// rendering, which may evaluate hundreds of old player assets.
+let hindsightRankedMasterRef=null,hindsightRankedIds=null;
+function isCurrentRankedPlayerForHindsight(id){
+  const master=ranked();
+  if(master!==hindsightRankedMasterRef){
+    hindsightRankedMasterRef=master;
+    hindsightRankedIds=new Set((master||[])
+      .filter(z=>z?.x?.type==='player')
+      .map(z=>String(z.x.id)));
+  }
+  return hindsightRankedIds.has(String(id));
+}
 function currentEvaluatorValue(asset){
   if(!asset)return null;
   try{
     if(asset.type==='player'){
       const pool=Array.isArray(state?.allAssets)?state.allAssets:[];
-      if(pool.length&&!pool.some(a=>a?.type==='player'&&String(a.id)===String(asset.id)))return 0;
+      if(pool.length&&!pool.some(a=>a?.type==='player'&&String(a.id)===String(asset.id))&&
+          !isCurrentRankedPlayerForHindsight(asset.id))return 0;
     }
     const canonical=window.tradeValueNormalizationV130?.canonicalValue;
     if(typeof canonical==='function'){const n=Number(canonical(asset));return Number.isFinite(n)?Math.round(n):null}

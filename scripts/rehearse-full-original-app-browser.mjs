@@ -224,12 +224,27 @@ try{
    return{supported:true};
  });
  assert(targetRun.supported,'Offline clicked specific-player Max Value path unavailable');
- await page.waitForFunction(()=>{
-   const stats=window.tradeSpecificMaxValueV279?.sourceIntegrityStats?.().lastSearchStats;
-   const html=document.getElementById('finderResults')?.textContent||'';
-   return !!stats&&Date.now()>=window.__offlineTargetStarted&&
-     !html.includes('Searching maximum-value trades');
- },null,{timeout:14000});
+ try{
+  await page.waitForFunction(()=>{
+    const stats=window.tradeSpecificMaxValueV279?.sourceIntegrityStats?.().lastSearchStats;
+    const html=document.getElementById('finderResults')?.textContent||'';
+    return !!stats&&Date.now()>=window.__offlineTargetStarted&&
+      !html.includes('Searching maximum-value trades');
+  },null,{timeout:14000});
+ }catch(e){
+  const diag=await page.evaluate(()=>({
+   active:window.tradeSpecificMaxValueV279?.isActive?.(),
+   target:document.getElementById('desiredPlayerSearch')?.value,
+   mode:document.getElementById('findMode')?.value,
+   team:document.getElementById('findTeam')?.value,
+   intent:document.getElementById('tradeTier94')?.value,
+   selected:window.tradeSpecificBlankRouterV325?.selected?.().length,
+   stats:window.tradeSpecificMaxValueV279?.sourceIntegrityStats?.(),
+   html:document.getElementById('finderResults')?.textContent?.slice(0,500),
+   elapsed:Date.now()-window.__offlineTargetStarted
+  }));
+  throw new Error('Clicked Finder target path did not complete: '+JSON.stringify(diag),{cause:e});
+ }
  const targeted=await page.evaluate(()=>{
    const stats=window.tradeSpecificMaxValueV279.sourceIntegrityStats().lastSearchStats;
    const content=document.getElementById('finderResults')?.textContent||'';

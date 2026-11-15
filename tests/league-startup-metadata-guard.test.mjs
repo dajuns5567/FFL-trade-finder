@@ -61,7 +61,7 @@ function legacyHarness(loaded=false){
       1:{fantasy_positions:['QB']},2:{fantasy_positions:['WR']},3:{fantasy_positions:['LB']}
     }:{}
   };
-  const ctx={state,Number,String,Array,Math,
+  const ctx={state,Number,String,Array,Math,Map,masterRankCache:null,
     baseValue:()=>{valueCalls++;return 1000},
     pickValue:()=>300
   };
@@ -77,6 +77,8 @@ test('legacy ui-v18 overrides cannot value every league roster before Sleeper me
   };
   assert.equal(h.stage(1).label,'Contender');
   assert.equal(h.called(),3,'legacy league-wide ranking still runs normally once metadata exists');
+  for(let i=0;i<32;i++)h.stage(i%2?1:2);
+  assert.equal(h.called(),3,'32 repeated stage lookups reuse one unchanged league-wide score snapshot');
 });
 test('legacy reference ranking renderer does not call ensureMaster before position readiness',()=>{
   const start=legacyUi.indexOf('function renderReferenceRankings()');

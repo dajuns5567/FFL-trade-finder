@@ -1194,7 +1194,7 @@ export default async (req)=>{
     // Deploy Previews are experimental branches; never let their page loads
     // overwrite the canonical league's shared history or run cleanup writes.
     // Check both the request hostname and Netlify's runtime deploy context.
-    const isDeployPreview=/^deploy-preview-\d+--/i.test(url.hostname)||process.env.CONTEXT==='deploy-preview';
+    const isDeployPreview=/^(?:deploy-preview-\d+|[a-f0-9]{24})--precious-dango-fb4633\.netlify\.app$/i.test(url.hostname)||process.env.CONTEXT==='deploy-preview';
     const readonlyPreview=isDeployPreview||(req.method==='GET'&&url.searchParams.get('readonly_preview')==='1');
     if(s&&!readonlyPreview){
       try{await scrubV346KtcContamination(s)}catch(e){console.warn('v346-history-scrub',e)}

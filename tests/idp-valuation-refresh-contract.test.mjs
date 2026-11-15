@@ -74,7 +74,7 @@ test('one-rank modeled promotion cannot create a giant V319 canonical jump',()=>
   const ctx={
     console,
     window:null,
-    state:{allAssets:players,players:Object.fromEntries(players.map((x,i)=>[x.id,{fantasy_positions:[i===0?'RB':'LB'],full_name:'Test player '+x.id}]))},
+    state:{allAssets:players,players:Object.fromEntries(players.map((x,i)=>[x.id,{fantasy_positions:[i===0?'RB':'LB'],full_name:'Test player '+x.id}])),consensusComposite:{byId:{'1':1500}}},
     ensureMaster:()=>master,
     tradeValueNormalizationV130:normalization,
     tradeValueNormalizationV139:normalization,

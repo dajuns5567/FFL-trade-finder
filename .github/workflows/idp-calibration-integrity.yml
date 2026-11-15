@@ -1,0 +1,21 @@
+name: IDP audited 20-45-35 calibration
+on:
+  pull_request:
+    paths:
+      - 'valuation-idp-v25-perf.js'
+      - 'tests/idp-20-45-35-calibration.test.mjs'
+      - 'tests/idp-dynasty-development.test.mjs'
+      - 'tests/idp-valuation-refresh-contract.test.mjs'
+      - '.github/workflows/idp-calibration-integrity.yml'
+permissions:
+  contents: read
+jobs:
+  calibration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check valuation-idp-v25-perf.js
+      - run: node --test tests/idp-20-45-35-calibration.test.mjs tests/idp-dynasty-development.test.mjs tests/idp-valuation-refresh-contract.test.mjs

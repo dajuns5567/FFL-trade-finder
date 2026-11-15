@@ -509,7 +509,7 @@ function renderConsensusDiagnostics(summary){
 
 async function refreshConsensus(){
   const players=Object.entries(state.players||{}).filter(([id,p])=>p?.fantasy_positions?.length)
-    .map(([id,p])=>({id,name:[p.first_name,p.last_name].filter(Boolean).join(" ")||p.full_name||id,position:(p.fantasy_positions||[])[0]}));
+    .map(([id,p])=>({id,name:[p.first_name,p.last_name].filter(Boolean).join(" ")||p.full_name||id,position:p.position||(p.fantasy_positions||[])[0],positions:p.fantasy_positions||[],team:p.team||null,active:p.active??null}));
   const urls=["/.netlify/functions/update","/api/update"];
   let lastError=null;
   for(const url of urls){

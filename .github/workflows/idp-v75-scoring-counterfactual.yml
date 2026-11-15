@@ -1,0 +1,45 @@
+name: IDP V75 scoring-scale audit (draft experiment, read-only)
+on:
+  pull_request:
+    paths:
+      - 'valuation-idp-v25-perf.js'
+      - 'tests/idp-v75-scoring-bucket.test.mjs'
+      - 'scripts/audit-idp-v75-scoring-counterfactual.mjs'
+      - 'scripts/audit-idp-source-repeatability.mjs'
+      - 'scripts/verify-idp-v75-preview-exact.mjs'
+      - '.github/workflows/idp-v75-scoring-counterfactual.yml'
+permissions:
+  contents: read
+jobs:
+  seven-source-scoring:
+    if: github.event.pull_request.number == 475
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact IDP scoring bucket and source-identity regressions
+        run: |
+          node --check valuation-idp-v25-perf.js
+          node --check scripts/audit-idp-v75-scoring-counterfactual.mjs
+          node --test tests/idp-v75-scoring-bucket.test.mjs
+          node --test tests/idp-20-45-35-calibration.test.mjs
+      - name: Install read-only dynasty source adapters and Chromium
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund --no-package-lock
+          npm install --no-save --ignore-scripts --no-audit --no-fund --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Compare same seven validated dynasty sources against unchanged PR 466
+        run: node scripts/audit-idp-v75-scoring-counterfactual.mjs
+      - name: Regression-check canonical trade and history consumers remain shared
+        run: |
+          node --test tests/combined-valuation-history-contract.test.mjs tests/idp-v72-source-retention.test.mjs
+          node scripts/v311-pipeline-identity-v319-smoke.cjs
+          node scripts/v319-values-v311-integration-smoke.cjs
+          node scripts/value-adjustment-monotonic-v311-smoke.cjs
+      - name: Read-only exact V75 deployed preview source integrity
+        run: node scripts/verify-idp-v75-preview-exact.mjs
+      - name: Confirm repeatable exact source rank lists in consecutive fetches
+        run: node scripts/audit-idp-source-repeatability.mjs

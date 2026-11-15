@@ -11,9 +11,35 @@ function ageScore25(id){const a=age25(id);if(!Number.isFinite(a))return .5;if(a<
 function breakdownQty25(sample,keys){let n=0;for(const k of keys){const b=sample?.breakdown?.[k];if(b&&Number.isFinite(Number(b.qty)))n+=Number(b.qty)}return n}
 function historyMetrics25(a){
  const samples=Array.isArray(a?.seasons)?a.seasons:[],coverage=samples.reduce((s,x)=>s+Number(x.assignedWeight||0),0);if(!samples.length||coverage<=0)return{ppg:0,tackleRate:0,spikeRate:0,confidence:0,coverage:0,seasons:0};
+ // A two-game current-season sample cannot carry the same seasonal weight
+ // as eight verified games. Preserve the past three regular seasons as an
+ // anchor, shifting share toward a sufficiently sampled current breakout.
+ // This is a league-wide, games-only rule; never a player or role adjustment.
+ const current=samples.find(x=>x.currentSeason&&Number(x.games)>0),historicalWeight=current?coverage-Number(current.assignedWeight||0):0;
+ const currentGames=Number(current?.games||0);
+ // Stable, piecewise linear maturity curve: do not change a four-game
+ // season's preexisting 33.53% share, and gradually reach 55% at 8 games.
+ const currentShare=current&&historicalWeight>0
+  ?currentGames<=4
+   ?.10+(.33529411764705885-.10)*clamp25(0,(currentGames-2)/2,1)
+   :.33529411764705885+(.55-.33529411764705885)*clamp25(0,(currentGames-4)/4,1)
+  :null;
+ const legacyPpg=samples.reduce((total,row)=>total+Number(row.ppg||0)*Number(row.assignedWeight||0),0)/coverage;
  let ppg=0,tackles=0,spikes=0;
- for(const s of samples){const w=Number(s.assignedWeight||0),g=Math.max(1,Number(s.games||0));ppg+=Number(s.ppg||0)*w;tackles+=((breakdownQty25(s,['idp_tkl_solo'])+breakdownQty25(s,['idp_tkl_ast']))/g)*w;spikes+=((breakdownQty25(s,['idp_sack'])+breakdownQty25(s,['idp_int'])+breakdownQty25(s,['idp_ff'])+breakdownQty25(s,['idp_fum_rec'])+breakdownQty25(s,['idp_pass_def']))/g)*w}
- return{ppg:ppg/coverage,tackleRate:tackles/coverage,spikeRate:spikes/coverage,confidence:clamp25(0,Number(a.confidence||0),1),coverage,seasons:Number(a.qualifyingSeasons||samples.length)};
+ for(const s of samples){
+  const base=Number(s.assignedWeight||0);
+  const w=currentShare===null?base/coverage:
+   s===current?currentShare:(1-currentShare)*base/historicalWeight;
+  const g=Math.max(1,Number(s.games||0));
+  ppg+=Number(s.ppg||0)*w;
+  tackles+=((breakdownQty25(s,['idp_tkl_solo'])+breakdownQty25(s,['idp_tkl_ast']))/g)*w;
+  spikes+=((breakdownQty25(s,['idp_sack'])+breakdownQty25(s,['idp_int'])+breakdownQty25(s,['idp_ff'])+breakdownQty25(s,['idp_fum_rec'])+breakdownQty25(s,['idp_pass_def']))/g)*w;
+ }
+ // Changes to a completed year cannot move the scoring anchor by more
+ // than 1.5 league PPG in one full refresh. This is a uniform sample-size
+ // volatility guard rather than a player-specific dynasty price control.
+ const weightedPpg=clamp25(legacyPpg-1.5,ppg,legacyPpg+1.5);
+ return{ppg:weightedPpg,tackleRate:tackles,spikeRate:spikes,confidence:clamp25(0,Number(a.confidence||0),1),coverage:1,seasons:Number(a.qualifyingSeasons||samples.length),currentSeasonGames:current?currentGames:null,currentSeasonWeight:currentShare??null,uncappedPpg:ppg,legacyPpg,weightBasis:'games-matured-season-with-1.5ppg-history-anchor-guard'};
 }
 function historicalBenchmarkMetrics25(a){
  const samples=(Array.isArray(a?.seasons)?a.seasons:[]).filter(s=>!s.currentSeason).sort((x,y)=>Number(y.season)-Number(x.season)).slice(0,3),weights=[.60,.30,.10];

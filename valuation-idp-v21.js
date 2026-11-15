@@ -97,6 +97,22 @@ function realScore24(id,kind){
  return{seasons:samples.length,historicalSeasons:historical.length,ppg,premiumPpg,confidence,weightCoverage:evidenceCoverage,calculationWeight:calcWeight,plannedWeight,currentAssignedWeight:currentAssigned,currentPlannedShare,currentEffectiveShare,weightAmplification:currentPlannedShare>0?currentEffectiveShare/currentPlannedShare:1,verifiedRookieCoverage,evidenceConfidenceFloor,samples,weightPlan:plan,idpNoGameHistoricalInvariant:kind==='idp'&&plan.mode==='in-season'&&!currentSample};
 }
 function percentile24(arr,x){if(!arr.length)return.5;const a=arr.slice().sort((m,n)=>m-n);let below=0,equal=0;for(const v of a){if(v<x)below++;else if(v===x)equal++}return clamp24(.01,(below+.5*equal)/a.length,.99)}
+// Reuse one sorted Sleeper IDP scoring distribution across players.
+// Exact same (below + 0.5 * ties) percentile as percentile24, but O(log n)
+// per lookup instead of sorting the same distribution for every IDP.
+const idpPercentileSorted24=new WeakMap();
+function idpPercentile24(arr,x){
+ if(!arr.length)return .5;
+ let sorted=idpPercentileSorted24.get(arr);
+ if(!sorted){sorted=arr.slice().sort((a,b)=>a-b);idpPercentileSorted24.set(arr,sorted)}
+ let lo=0,hi=sorted.length;
+ while(lo<hi){const mid=(lo+hi)>>1;if(sorted[mid]<x)lo=mid+1;else hi=mid}
+ const below=lo;
+ hi=sorted.length;
+ while(lo<hi){const mid=(lo+hi)>>1;if(sorted[mid]<=x)lo=mid+1;else hi=mid}
+ const equal=lo-below;
+ return clamp24(.01,(below+.5*equal)/sorted.length,.99);
+}
 let distCache24=null,distStatsRef24=null,distPlanKey24='';
 function distributions24(){
  const planKey=JSON.stringify(state.sleeperHistory?.weightPlan||{});if(distCache24&&distStatsRef24===state.stats&&distPlanKey24===planKey)return distCache24;
@@ -104,7 +120,7 @@ function distributions24(){
  for(const id of ids){const pos=groupPos({type:'player',id});if(pos==='IDP'){const rs=realScore24(id,'idp');if(rs.seasons){out.IDP.ppg.push(rs.ppg);out.IDP.premium.push(rs.premiumPpg)}}else if(out[pos]){const rs=realScore24(id,'offense');if(rs.seasons)out[pos].ppg.push(rs.ppg)}}
  distStatsRef24=state.stats;distPlanKey24=planKey;distCache24=out;return out;
 }
-function idpProductionComponent24(id){const rs=realScore24(id,'idp'),d=distributions24().IDP;if(!rs.seasons)return{value:480,rs,ppgPct:null,premiumPct:null,effectivePct:.50};const ppgPct=percentile24(d.ppg,rs.ppg),premiumPct=percentile24(d.premium,rs.premiumPpg),rawPct=.84*ppgPct+.16*premiumPct,effectivePct=.50+rs.confidence*(rawPct-.50);const value=120+1900*Math.pow(clamp24(.03,effectivePct,.99),3.65);return{value,rs,ppgPct,premiumPct,effectivePct}}
+function idpProductionComponent24(id){const rs=realScore24(id,'idp'),d=distributions24().IDP;if(!rs.seasons)return{value:480,rs,ppgPct:null,premiumPct:null,effectivePct:.50};const ppgPct=idpPercentile24(d.ppg,rs.ppg),premiumPct=idpPercentile24(d.premium,rs.premiumPpg),rawPct=.84*ppgPct+.16*premiumPct,effectivePct=.50+rs.confidence*(rawPct-.50);const value=120+1900*Math.pow(clamp24(.03,effectivePct,.99),3.65);return{value,rs,ppgPct,premiumPct,effectivePct}}
 function offenseProductionComponent24(id,pos){const rs=realScore24(id,'offense'),d=distributions24()[pos]?.ppg||[];if(!rs.seasons)return{value:null,rs,ppgPct:null,effectivePct:.50};const ppgPct=percentile24(d,rs.ppg),effectivePct=.50+rs.confidence*(ppgPct-.50);const base={QB:1050,RB:900,WR:900,TE:760}[pos]||850,spread={QB:1450,RB:1250,WR:1200,TE:1050}[pos]||1100;const value=base*.35+spread*Math.pow(clamp24(.03,effectivePct,.99),2.15);return{value,rs,ppgPct,effectivePct}}
 function otherIdpContext24(id,rs){const sample=rs.historicalSeasons>=3?1:rs.historicalSeasons===2?.96:rs.historicalSeasons===1?.90:.86;return 500*idpAgeFactor24(id)*sample}
 function offenseOtherContext24(id,pos,c,detail){let scarcity=1;if(pos==='QB'){const r=Number(detail?.offenseRank);scarcity=Number.isFinite(r)&&r<=24?1.20:Number.isFinite(r)&&r<=72?1.16:1.12}else if(pos==='RB'){const r=Number(detail?.offenseRank);scarcity=Number.isFinite(r)&&r<=80?1.18:Number.isFinite(r)&&r<=180?1.14:1.10}else if(pos==='WR')scarcity=1.03;else if(pos==='TE')scarcity=1.01;return c*scarcity*offenseAgeFactor24(id,pos)}

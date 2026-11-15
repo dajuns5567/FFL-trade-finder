@@ -17,8 +17,14 @@ function historyMetrics25(a){
  // This is a league-wide, games-only rule; never a player or role adjustment.
  const current=samples.find(x=>x.currentSeason&&Number(x.games)>0),historicalWeight=current?coverage-Number(current.assignedWeight||0):0;
  const currentGames=Number(current?.games||0);
+ // Stable, piecewise linear maturity curve: do not change a four-game
+ // season's preexisting 33.53% share, and gradually reach 55% at 8 games.
  const currentShare=current&&historicalWeight>0
-  ?.10+.45*clamp25(0,(currentGames-2)/6,1):null;
+  ?currentGames<=4
+   ?.10+(.33529411764705885-.10)*clamp25(0,(currentGames-2)/2,1)
+   :.33529411764705885+(.55-.33529411764705885)*clamp25(0,(currentGames-4)/4,1)
+  :null;
+ const legacyPpg=samples.reduce((total,row)=>total+Number(row.ppg||0)*Number(row.assignedWeight||0),0)/coverage;
  let ppg=0,tackles=0,spikes=0;
  for(const s of samples){
   const base=Number(s.assignedWeight||0);
@@ -29,7 +35,11 @@ function historyMetrics25(a){
   tackles+=((breakdownQty25(s,['idp_tkl_solo'])+breakdownQty25(s,['idp_tkl_ast']))/g)*w;
   spikes+=((breakdownQty25(s,['idp_sack'])+breakdownQty25(s,['idp_int'])+breakdownQty25(s,['idp_ff'])+breakdownQty25(s,['idp_fum_rec'])+breakdownQty25(s,['idp_pass_def']))/g)*w;
  }
- return{ppg,tackleRate:tackles,spikeRate:spikes,confidence:clamp25(0,Number(a.confidence||0),1),coverage:1,seasons:Number(a.qualifyingSeasons||samples.length),currentSeasonGames:current?currentGames:null,currentSeasonWeight:currentShare??null,weightBasis:'qualified-games-2026-with-regular-season-history-anchor'};
+ // Changes to a completed year cannot move the scoring anchor by more
+ // than 1.5 league PPG in one full refresh. This is a uniform sample-size
+ // volatility guard rather than a player-specific dynasty price control.
+ const weightedPpg=clamp25(legacyPpg-1.5,ppg,legacyPpg+1.5);
+ return{ppg:weightedPpg,tackleRate:tackles,spikeRate:spikes,confidence:clamp25(0,Number(a.confidence||0),1),coverage:1,seasons:Number(a.qualifyingSeasons||samples.length),currentSeasonGames:current?currentGames:null,currentSeasonWeight:currentShare??null,uncappedPpg:ppg,legacyPpg,weightBasis:'games-matured-season-with-1.5ppg-history-anchor-guard'};
 }
 function historicalBenchmarkMetrics25(a){
  const samples=(Array.isArray(a?.seasons)?a.seasons:[]).filter(s=>!s.currentSeason).sort((x,y)=>Number(y.season)-Number(x.season)).slice(0,3),weights=[.60,.30,.10];

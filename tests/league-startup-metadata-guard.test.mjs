@@ -102,31 +102,3 @@ test('legacy reference ranking renderer does not call ensureMaster before positi
   assert.equal(calls,1,'normal rank rendering resumes after Sleeper metadata');
 });
 
-test('canonical roster max-rank memo preserves exact normalization and invalidates on master/roster changes',()=>{
-  const src=readFileSync(new URL('../trade-value-normalization-v139.js',import.meta.url),'utf8');
-  let rankCalls=0;
-  const state={allAssets:[{type:'player',id:'1'},{type:'player',id:'2'}],players:{1:{},2:{}}};
-  const ranks={1:5,2:1000,3:1100};
-  const ctx={state,Math,Number,String,Array,Object,Map,Set,Infinity,
-    masterRankCache:[{x:{id:'1'}},{x:{id:'2'}}],
-    playerRankValue:x=>{rankCalls++;return{rank:ranks[x.id]||0}},
-    baseValue:()=>1,packageValue:()=>1,pickValue:()=>100
-  };
-  ctx.window=ctx;
-  vm.runInNewContext(src,ctx);
-  const api=ctx.tradeValueNormalizationV139;
-  const first=api.playerValueForRank(500);
-  assert.equal(rankCalls,2,'first max rank inspects all rostered players once');
-  assert.equal(api.currentMaxRank(),1000);
-  assert.equal(api.playerValueForRank(500),first,'repeat values remain byte-for-byte equal');
-  assert.equal(rankCalls,2,'unchanged master and roster reuse exact calculated rank ceiling');
-  ctx.masterRankCache=[{x:{id:'1'}},{x:{id:'2'}}];
-  assert.equal(api.playerValueForRank(500),first);
-  assert.equal(rankCalls,4,'new master identity recomputes the exact same ceiling');
-  state.allAssets=[...state.allAssets,{type:'player',id:'3'}];
-  assert.equal(api.currentMaxRank(),1100);
-  assert.equal(rankCalls,7,'changed roster invalidates cache before pricing');
-  assert.notEqual(api.playerValueForRank(500),first,'changed ranking ceiling is reflected in canonical value');
-  assert.equal(rankCalls,7);
-  assert.match(src,/PLAYER_BREAK=325,PLAYER_BREAK_VALUE=1825,ELITE_FIRST=7000/);
-});

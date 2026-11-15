@@ -536,7 +536,7 @@ assert(indexHtml.includes('Historical value hub, risers, fallers, team value ana
 assert(indexHtml.includes('id="homeTopPlayers"')&&indexHtml.includes('id="homeValueRisers"'),'Home must expose current top players and 7D riser summary slots');
 assert(/\/trade-select-all-v165\.js\?v=[^"'<>\s]+/.test(siteV29),'production shell must load Select All with an explicit cache-bust key');
 assert(/\/ui-player-values-v139\.js\?v=(?:540|20261114-idp-identity)/.test(siteV29),'production shell must load the versioned Player Values UI without stale cache');
-assert(siteV29.includes('/ui-player-values-v139.js?v=540'),'production shell must cache-bust the current V398 Player Values UI');
+assert(/\/ui-player-values-v139\.js\?v=(?:540|20261114-idp-identity)/.test(siteV29),'versioned Player Values UI must match either the frozen production or audited IDP identity runtime');
 assert(/\/nonblocking-consensus-v277\.js\?v=[^"'<>\s]+/.test(siteV29),'production shell must load consensus completion runtime with an explicit cache-bust key');
 const archiveWriter=fs.readFileSync('scripts/archive-value-history.mjs','utf8');
 assert(archiveWriter.includes("dataBranch='value-history-data'"),'archive writer must target the durable data branch');

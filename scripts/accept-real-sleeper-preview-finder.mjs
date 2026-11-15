@@ -56,21 +56,28 @@ try{
   },null,{timeout:45000});
   const initial=await page.evaluate(()=>{
     const a=window.state.allAssets.filter(x=>x?.type==='player');
-    return {teams:window.state.teams.length,players:a.length,
-      matches:a.filter(x=>x?.id&&typeof window.playerName==='function'&&
-         window.playerName(x.id)==='Jonathan Taylor').map(x=>({id:String(x.id),owner:String(x.owner)})),
+    const players=a.map(x=>({id:String(x.id),owner:String(x.owner),
+      name:String(window.playerName?.(x.id)||x.name||''),
+      pos:String(window.groupPos?.(x)||x.position||'').toUpperCase(),
+      value:Number(window.tradeValueNormalizationV139?.canonicalValue?.(x)||x.value)||0}));
+    const matches=players.filter(x=>/jonathan\\s+taylor/i.test(x.name));
+    const alternate=players.filter(x=>x.pos==='RB'&&x.owner&&x.name&&x.value>0)
+      .sort((x,y)=>y.value-x.value)[0];
+    return {teams:window.state.teams.length,players:a.length,matches,
+      alternate,taylorNames:players.filter(x=>/taylor/i.test(x.name)).slice(0,8),
       realPlayers:a.map(x=>String(x.id))};
   });
   assert.equal(initial.teams,32);
   const overlap=initial.realPlayers.filter(x=>realPlayerIds.has(x));
   assert(overlap.length>=250,'Preview asset IDs do not match the current real Sleeper league');
-  assert(initial.matches.length>=1,'Jonathan Taylor missing from real preview market');
+  const chosen=initial.matches[0]||initial.alternate;
+  assert(chosen?.name&&chosen?.owner,'No usable real Sleeper RB target: '+JSON.stringify(initial.taylorNames));
   const selectedTeam=rosters.map(x=>String(x.roster_id)).find(id=>
-    id!==initial.matches[0].owner &&
+    id!==chosen.owner &&
     rosters.find(r=>String(r.roster_id)===id).players?.length>=10
   );
   assert(selectedTeam,'No suitable distinct outgoing 32-team roster');
-  const prepared=await page.evaluate(({teamId})=>{
+  const prepared=await page.evaluate(({teamId,targetName})=>{
     const team=document.querySelector('#findTeam'),style=document.querySelector('#findMode'),
       tier=document.querySelector('#tradeTier94'),target=document.querySelector('#desiredPlayerSearch'),
       run=document.querySelector('#runFinder'),host=document.querySelector('#finderResults');
@@ -81,14 +88,14 @@ try{
     team.value=teamId;team.dispatchEvent(new Event('change',{bubbles:true}));
     style.value='value';style.dispatchEvent(new Event('change',{bubbles:true}));
     tier.value='up';tier.dispatchEvent(new Event('change',{bubbles:true}));
-    target.value='Jonathan Taylor';target.dispatchEvent(new Event('input',{bubbles:true}));
+    target.value=targetName;target.dispatchEvent(new Event('input',{bubbles:true}));
     for(const box of document.querySelectorAll('#findShop .shopCheck'))box.checked=false;
     const selectAll=window.tradeSelectAllV165;
     if(selectAll?.aliasActive&&typeof selectAll.aliasActive==='function')selectAll.aliasActive();
     window.__liveFinderStarted=Date.now();
     run.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));
     return {ready:true};
-  },{teamId:selectedTeam});
+  },{teamId:selectedTeam,targetName:chosen.name});
   assert(prepared.ready,'Unable to start real-league Finder: '+JSON.stringify(prepared));
   await page.waitForFunction(()=>{
     const result=window.tradeSpecificMaxValueV279?.sourceIntegrityStats?.();
@@ -113,7 +120,7 @@ try{
   console.log('LIVE SLEEPER PREVIEW READ-ONLY ACCEPTANCE PASS '+JSON.stringify({
     commit:process.env.GITHUB_SHA||null,preview,leagueId,rosterCount:rosters.length,
     uniqueRosterPlayers:realPlayerIds.size,previewPlayers:initial.players,
-    matchingRosterAssets:overlap.length,target:'Jonathan Taylor',
-    selectedTeam,results:result,blockedWrites,blockedMutations}));
+    matchingRosterAssets:overlap.length,
+    selectedTeam,target:chosen.name,jonathanTaylorResolved:initial.matches.length>0,taylorCandidates:initial.taylorNames,results:result,blockedWrites,blockedMutations}));
   await context.close();
 }finally{if(browser)await browser.close()}

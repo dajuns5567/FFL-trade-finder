@@ -41,7 +41,7 @@ ctx.window=ctx;
 ctx.state={
  league:{scoring_settings:{bonus_rec_te:1}},
  players:Object.fromEntries(players.map(p=>[p.id,{team:'NFL',fantasy_positions:[p.pos]}])),
- teams:[{id:1},{id:2}],allAssets:[...players,...picks],assetsA:[],assetsB:[]
+ teams:[{id:1},{id:2}],allAssets:[...players,...picks],consensusComposite:{byId:Object.fromEntries(players.map((p,i)=>[p.id,Math.max(100,2000-i*20)]))},assetsA:[],assetsB:[]
 };
 ctx.playerRankValue=a=>({rank:Number(a?.rank||a?.id)||9999});
 ctx.playerName=id=>'P'+id;

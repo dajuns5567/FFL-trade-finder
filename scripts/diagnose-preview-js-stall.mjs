@@ -32,7 +32,7 @@ try{
    body=body.replace(c,"masterRankings=function(){console.log('[V25_PROFILE] master start '+performance.now());const v=priorMaster25();console.log('[V25_PROFILE] prior returned '+performance.now()+' count '+v.length);const mapped=v.map((z,i)=>{if(i%100===0)console.log('[V25_PROFILE] mapped '+i+' at '+performance.now());return model25(z)});console.log('[V25_PROFILE] master complete '+performance.now());return mapped.sort((a,b)=>b.value-a.value)};");
    return route.fulfill({response,body,contentType:'text/javascript'});
   }
-  const skip=mode==='full'?false:mode==='idp-v21'?name==='valuation-idp-v21.js':
+  const skip=(mode==='full'||mode==='v25-profile')?false:mode==='idp-v21'?name==='valuation-idp-v21.js':
    mode==='idp-v25'?name==='valuation-idp-v25-perf.js':
    mode==='idp-early'?(/^valuation-idp-v(?:21|25-perf|26|27-perf|28-perf|29|32|33)\.js$/.test(name)):
    mode==='idp-late'?(/^valuation-idp-v(?:35|36|4[3-8])\.js$/.test(name)):

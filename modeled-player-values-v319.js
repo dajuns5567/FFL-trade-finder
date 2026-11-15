@@ -50,8 +50,30 @@ function rosterMetadataReady(){
   }
   return matched>=Math.min(inspected,8)&&skilled;
 }
+// Position metadata alone does not mean the dynasty rankings exist. The
+// consensus refresh runs in the background after Sleeper core load; otherwise
+// the zero-consensus offense fallback can briefly rank IDPs above elite QBs.
+// Require actual ID-matched dynasty consensus coverage before publishing a
+// canonical rank/currency snapshot. Valid last-known-good composite is allowed.
+function dynastyConsensusReady(){
+  const st=window.state,byId=st?.consensusComposite?.byId;
+  if(!byId||typeof byId!=='object')return false;
+  let offense=0,covered=0;
+  for(const a of st.allAssets||[]){
+    if(a?.type!=='player')continue;
+    const ps=st.players?.[String(a.id)]?.fantasy_positions||[];
+    if(!ps.some(p=>['QB','RB','WR','TE'].includes(p)))continue;
+    offense++;
+    const v=Number(byId[String(a.id)]);
+    if(Number.isFinite(v)&&v>0)covered++;
+  }
+  return offense>0&&covered>=Math.min(8,offense);
+}
 function build(force=false){
-  if(!rosterMetadataReady())return false;
+  if(!rosterMetadataReady()||!dynastyConsensusReady()){
+    meta={...meta,ready:false,reason:'awaiting-validated-dynasty-consensus'};
+    return false;
+  }
   let arr=[];
   try{arr=window.ensureMaster?.()||[]}catch(_){arr=[]}
   if(!Array.isArray(arr)||!arr.length)return false;
@@ -173,7 +195,7 @@ function queueForcedRefresh(){
   queuedForcedRefresh=true;
   setTimeout(()=>{
     queuedForcedRefresh=false;
-    if(rosterMetadataReady())refresh(true);
+    if(rosterMetadataReady()&&dynastyConsensusReady())refresh(true);
   },0);
 }
 function schedule(){
@@ -191,7 +213,7 @@ function schedule(){
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
 window.modeledPlayerValuesV319={
   MIN,MAX,BAND_ENDS,BLEND,MIN_RATIO,MAX_RATIO,
-  build,install,refresh,rosterMetadataReady,playerValue,canonicalValue,
+  build,install,refresh,rosterMetadataReady,dynastyConsensusReady,playerValue,canonicalValue,
   snapshot(){return new Map(map)},
   get meta(){return{...meta}},
   get ready(){return installed&&meta.ready},

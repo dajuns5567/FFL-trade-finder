@@ -3,32 +3,52 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 const source=fs.readFileSync(new URL('../valuation-idp-v25-perf.js',import.meta.url),'utf8');
-const a=source.indexOf('function calibratedScoring25('),b=source.indexOf('function model25(',a);
-assert(a>0&&b>a);
-const ctx={Number,Math,clamp25:(lo,v,hi)=>Math.max(lo,Math.min(v,hi))};
-vm.runInNewContext(source.slice(a,b),ctx);
-const score=(v,seasons=3)=>ctx.calibratedScoring25({value:v,a:{qualifyingSeasons:seasons}});
-test('V75 preserves zero-history and missing-data scoring without optimistic invented evidence',()=>{
- for(const v of [180,520,900])assert.equal(score(v,0),v);
- assert.equal(score(180,3),180);
- assert.equal(score(1450,3),1100);
+const begin=source.indexOf('function historyMetrics25(');
+const end=source.indexOf('function historicalBenchmarkMetrics25(',begin);
+assert(begin>0&&end>begin);
+const ctx={
+ Math,Number,Array,clamp25:(a,x,b)=>Math.max(a,Math.min(x,b)),
+ breakdownQty25:()=>0
+};
+vm.runInNewContext(source.slice(begin,end),ctx);
+const calc=(currentGames,currentPpg=20)=>{
+ const history=[
+  {season:2026,currentSeason:true,games:currentGames,ppg:currentPpg,assignedWeight:.33529411764705885},
+  {season:2025,currentSeason:false,games:17,ppg:10,assignedWeight:.4062091503267974},
+  {season:2024,currentSeason:false,games:15,ppg:10,assignedWeight:.25849673202614375}
+ ];
+ return ctx.historyMetrics25({seasons:history,confidence:1,qualifyingSeasons:3});
+};
+test('a two-game season receives less weight than eight games despite identical importer assignedWeight',()=>{
+ assert.equal(calc(2).currentSeasonWeight,.1);
+ assert.equal(calc(8).currentSeasonWeight,.55);
+ assert.equal(calc(2).ppg,11);
+ assert.equal(calc(8).ppg,15.5);
 });
-test('V75 scores are strictly monotone for verified Sleeper history, preserving player scoring order',()=>{
- let prior=-Infinity;
- for(let v=180;v<=1450;v+=5){const calibrated=score(v);assert(calibrated>=prior);prior=calibrated;}
- assert(score(560)>score(180));
- assert(score(1307)>score(560));
- assert(score(1450)>score(1307));
+test('current-season sample reliability grows continuously and never exceeds .55',()=>{
+ let prev=-Infinity;
+ for(let games=1;games<=17;games++){
+  const x=calc(games);
+  assert(x.currentSeasonWeight>=.1&&x.currentSeasonWeight<=.55);
+  assert(x.currentSeasonWeight>=prev);
+  prev=x.currentSeasonWeight;
+ }
 });
-test('V75 does not modify 20/45/35 dynasty valuation coefficients or offset',()=>{
+test('current PPG cannot erase the actual historical regular season anchor',()=>{
+ const x=calc(8,25);
+ assert(Math.abs(x.ppg-(.55*25+.45*10))<1e-9);
+ assert.equal(x.seasons,3);
+ assert.equal(x.confidence,1);
+});
+test('no current season or no historical comparator never invents missing data',()=>{
+ const one=ctx.historyMetrics25({seasons:[{season:2025,currentSeason:false,games:14,ppg:11,assignedWeight:1}],confidence:.8,qualifyingSeasons:1});
+ assert.equal(one.ppg,11);assert.equal(one.currentSeasonWeight,null);
+ const onlyCurrent=ctx.historyMetrics25({seasons:[{season:2026,currentSeason:true,games:2,ppg:20,assignedWeight:.335}],confidence:.2,qualifyingSeasons:1});
+ assert.equal(onlyCurrent.ppg,20);assert.equal(onlyCurrent.currentSeasonWeight,null);
+});
+test('V75 scoring uses verified season games only; 20/45/35 coefficients remain unchanged',()=>{
  assert.match(source,/const raw=\.20\*c\+\.45\*scoreValue\+\.35\*contextValue-IDP_V25_MARKET_CENTER_OFFSET/);
- assert.match(source,/const IDP_V25_MARKET_CENTER_OFFSET=80\.15/);
- assert.match(source,/const effectiveScoringValue=unverifiedFallback\?Math\.min\(score\.value,180\):calibratedScoring25\(score\)/);
- assert.match(source,/idpV75RawScoringValue:score\.value/);
-});
-test('sampled young emergent production and established elite scoring use the same transformation',()=>{
- const young=score(559.8962623172233),elite=score(1450);
- assert(young>559.8962623172233);
- assert(elite<1450);
- assert(elite-young<450);
+ assert.match(source,/IDP_V25_MARKET_CENTER_OFFSET=80\.15/);
+ assert.match(source,/const effectiveScoringValue=unverifiedFallback\?Math\.min\(score\.value,180\):score\.value/);
+ assert.doesNotMatch(source,/calibratedScoring25/);
 });

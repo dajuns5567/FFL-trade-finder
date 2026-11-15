@@ -220,7 +220,10 @@ try{
    team.value='1';style.value='value';intent.value='up';input.value='Jonathan Taylor';
    document.querySelectorAll('#findShop .shopCheck').forEach(x=>{x.checked=false});
    window.__offlineTargetStarted=Date.now();
-   document.getElementById('runFinder').click();
+   // Offline startup lacks authorized league API data and leaves the native
+   // button disabled. Dispatch a real bubbling click event to exercise the
+   // registered capture router without falsely assuming an enabled UI.
+   document.getElementById('runFinder').dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));
    return{supported:true};
  });
  assert(targetRun.supported,'Offline clicked specific-player Max Value path unavailable');

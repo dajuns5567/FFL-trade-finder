@@ -208,5 +208,5 @@ if(refresh.successful!==7||refresh.total!==7){
   };
   console.log('FFL_FULL_PLAYER_RANK_AUDIT '+JSON.stringify(report));
   console.log('FFL_FULL_PLAYER_RANK_AUDIT_PASS');
- }}finally{await browser.close()}
+ }finally{await browser.close()}
 }

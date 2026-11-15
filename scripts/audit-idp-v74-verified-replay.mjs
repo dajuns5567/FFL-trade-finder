@@ -86,7 +86,16 @@ if(refresh.successful!==7||refresh.total!==7){
       qualifyingSeasons:Number(z.production?.a?.qualifyingSeasons)||0,
       evidenceConfidence:Number(z.production?.m?.confidence)||0,
       v74OriginalFactor:Number(z.production?.idpV74OriginalCompressionFactor)||null,
-      v74CareerFloor:Number(z.production?.idpV74VerifiedCareerFloor)||null};
+      v74CareerFloor:Number(z.production?.idpV74VerifiedCareerFloor)||null,
+      v25Scoring:Number(z.production?.value)||null,
+      v25Context:Number(z.context)||null,
+      v25Development:z.production?.leagueContext?.development||null,
+      age:Number(st.players?.[id]?.age)||null,
+      yearsExp:Number(st.players?.[id]?.years_exp)||null,
+      sampledScoringSeasons:z.production?.a?.seasons?.map(v=>({year:v.season,games:v.games,ppg:v.ppg,weight:v.assignedWeight})).slice(0,4)||[],
+      consensusIdpValue:Number(st.consensusComposite?.detailsById?.[id]?.idpValue)||null,
+      sourceRanks:st.consensusComposite?.detailsById?.[id]?.idpSourceRanks||null,
+      sourceDetail:st.consensusComposite?.detailsById?.[id]||null};
 
    });
    // Counterfactual uses the ORIGINAL pre-V72 modeled IDP price recorded
@@ -159,6 +168,18 @@ if(refresh.successful!==7||refresh.total!==7){
    .sort((a,b)=>(b.modelAfter-b.modelBefore)-(a.modelAfter-a.modelBefore));
   const named=['Will Anderson Jr.','Myles Garrett','Dallas Turner','T.J. Watt','Maxx Crosby','Aidan Hutchinson']
    .map(name=>delta.find(x=>x.name===name)).filter(Boolean);
+  const focus=['Dallas Turner','Myles Garrett','Will Anderson Jr.','T.J. Watt','Aidan Hutchinson','Maxx Crosby','Greg Rousseau','Chase Young','Nik Bonitto','Brian Branch','Kyle Hamilton','Jeffery Simmons','Carson Schwesinger'];
+  console.log('IDP_DYNASTY_WEIGHTS_AUDIT '+JSON.stringify({
+    model:'20% consensus, 45% league scoring, 35% context; additional V72/V74 compression',
+    audited:new Date().toISOString(),
+    players:focus.map(n=>candidate.ranked.find(x=>x.name===n)).filter(Boolean).map(x=>({
+      name:x.name,id:x.id,overall:x.overall,idpRank:x.positional,age:x.age,yearsExp:x.yearsExp,
+      dynastyConsensus:x.consensus,sourceIdpValue:x.consensusIdpValue,
+      sourceEvidence:x.sourceDetail,scoring:x.v25Scoring,context:x.v25Context,
+      development:x.v25Development,seasons:x.sampledScoringSeasons,
+      preV72:x.v72Baseline,v72Factor:x.v72Factor,final:x.modeled
+    }))
+  }));
   console.log('IDP_V74_COUNTERFACTUAL_PASS '+JSON.stringify({
    verifiedSourceCount:7,ranked:candidate.ranked.length,changedIdp,unchangedNoEvidence,
    offenseModelChanges:0,curve:'frozen-rank-to-9999',

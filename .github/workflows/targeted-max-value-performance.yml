@@ -12,6 +12,7 @@ on:
       - 'trade-specific-max-tier-add-v300.js'
       - 'trade-specific-tier-up-v282.js'
       - 'trade-finder-v256-compiled.js'
+      - 'trade-finder-style-loader-v209.js'
       - 'tests/finder-add-assets-complements.test.mjs'
       - 'netlify/functions/site-v29.mjs'
       - '.github/workflows/targeted-max-value-performance.yml'
@@ -38,6 +39,7 @@ jobs:
           node --check trade-specific-max-tier-add-v300.js
           node --check trade-specific-tier-up-v282.js
           node --check trade-finder-v256-compiled.js
+          node --check trade-finder-style-loader-v209.js
           node --test tests/targeted-max-value-search-stall.test.mjs tests/finder-natural-filter-matrix.test.mjs tests/finder-add-assets-complements.test.mjs
           node scripts/v311-pipeline-identity-v319-smoke.cjs
       - name: Existing specific-player and value-adjustment functionality

@@ -126,6 +126,32 @@ try{
       model:x.modeled,market:x.marketIdpRank,age:x.age}))
   });
  }
+ // Paired source-agreement uncertainty: do not interpret a one-rank mean
+ // improvement as strong evidence without accounting for cohort volatility.
+ const before=new Map(captures[0].ranked.map(x=>[x.id,x]));
+ const eligible=captures[1].ranked.filter(x=>x.position==='IDP'&&x.actualSources>=2&&x.marketIdpRank>0)
+  .map(x=>({id:x.id,name:x.name,age:x.age,
+   improvement:Math.abs(before.get(x.id).idpRank-x.marketIdpRank)-Math.abs(x.idpRank-x.marketIdpRank)}));
+ const mean=arr=>arr.length?arr.reduce((a,b)=>a+b,0)/arr.length:null;
+ // Fixed-seed paired bootstrap for a reproducible CI; no randomness outside this test.
+ let seed=7152026;const rand=()=>{seed=(1664525*seed+1013904223)>>>0;return seed/4294967296};
+ const draws=[];
+ for(let b=0;b<1500;b++){
+  let total=0;
+  for(let i=0;i<eligible.length;i++)total+=eligible[Math.floor(rand()*eligible.length)].improvement;
+  draws.push(total/eligible.length);
+ }
+ draws.sort((a,b)=>a-b);
+ const bootstrap={n:eligible.length,meanErrorReduction:+mean(eligible.map(x=>x.improvement)).toFixed(3),
+  lower95:+draws[Math.floor(.025*draws.length)].toFixed(3),
+  upper95:+draws[Math.floor(.975*draws.length)].toFixed(3),
+  younger25:{n:eligible.filter(x=>x.age>0&&x.age<=25).length,
+   meanErrorReduction:mean(eligible.filter(x=>x.age>0&&x.age<=25).map(x=>x.improvement))},
+  older29:{n:eligible.filter(x=>x.age>=29).length,
+   meanErrorReduction:mean(eligible.filter(x=>x.age>=29).map(x=>x.improvement))},
+  individualLargestBenefit:eligible.slice().sort((a,b)=>b.improvement-a.improvement).slice(0,12),
+  individualLargestHarm:eligible.slice().sort((a,b)=>a.improvement-b.improvement).slice(0,12)};
+ console.log('IDP_V80_PAIRED_CONSENSUS_UNCERTAINTY '+JSON.stringify(bootstrap));
  console.log('IDP_V80_SOURCE_MATCHED_ACCEPTANCE '+JSON.stringify(metrics));
  console.log('IDP_V80_SOURCE_MATCHED_AUDIT_PASS');
 }finally{await browser.close()}

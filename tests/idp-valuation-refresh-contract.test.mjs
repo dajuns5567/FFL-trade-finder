@@ -92,7 +92,8 @@ test('one-rank modeled promotion cannot create a giant V319 canonical jump',()=>
   const before=ctx.modeledPlayerValuesV319.playerValue({type:'player',id:targetId});
 
   const i=master.findIndex(z=>z.x.id===targetId);
-  const target={...master[i],value:master[i].value+30,marketPrecisionValueV386:master[i].marketPrecisionValueV386+30};
+  // The adjacent position is exactly 2 model points ahead; +3 is an actual one-slot promotion.
+  const target={...master[i],value:master[i].value+3,marketPrecisionValueV386:master[i].marketPrecisionValueV386+3};
   const prior=master[i-1];
   master=[...master.slice(0,i-1),target,prior,...master.slice(i+1)];
   assert(ctx.modeledPlayerValuesV319.refresh(true),'V319 did not refresh after modeled movement');

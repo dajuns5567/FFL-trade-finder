@@ -73,3 +73,16 @@ The repository already lists two additional purportedly dynasty-specific IDP end
 These providers cannot be silently counted as substitutes. Do not invent, infer, or import dynasty rankings from their source names alone. The available verified IDP-dynasty population remains The IDP Show Combined plus the 250-row DraftSharks dynasty feed, with only **67 IDPs supported by two actually matched sources** in the controlled candidate snapshot.
 
 A larger consensus-covered IDP universe requires additional **verified current dynasty-specific data** or a safely maintained publisher-specific parser, not a reversion to a redraft/general-season cheat sheet. Until then, the V77 draft remains blocked from release despite clean parser and model regression tests.
+
+## November 15 follow-up: active league roster preservation and zero-consensus risk
+
+The source-matched browser audit now explicitly reads `state.rosters[*].players` from the same 32-team Sleeper snapshot. Results:
+
+- **544 of 544** current rostered players were ranked before and after the source change. Zero rostered players disappeared or appeared solely due to dynasty source correction.
+- **153 rostered IDPs** were evaluated for actual publisher matches: **59** with at least two verified dynasty-source matches, **68** with one, and **26** with zero. Of the 26 source-unsupported rostered defenders, **5** also had zero qualifying Sleeper production history.
+- **No top-30 IDP** lacked a verified listed dynasty source in the observed candidate snapshot.
+- Examples of ranked, rostered players with zero verified source matches despite historical production include Marlon Humphrey, Byron Murphy Jr., Denzel Ward, Alex Anzalone, Demario Davis and Sauce Gardner. Their presence is retained by the existing production-history or conservative fallback; it is **not** evidence of an invented consensus ranking.
+
+**New guardrails:** unverified season-format IDP rows are quarantined from reusable published dynasty-source snapshots, not merely omitted from the composite; legacy last-known-good data without explicit dynasty-provenance markers is rejected as a fallback when source refresh fails. Tests enforce that validated extraction and dynasty eligibility are different facts, and that old general-season cheat sheets can never re-enter the consensus via the cache.
+
+Release decision remains **not accepted** despite current technical test passes. The 67 two-source players overall and the 59 two-source rostered defenders are insufficient independent coverage for a high-confidence wholesale replacement of the approved preview. All 544 rostered assets remain identifiable, but lack of actual market data for the 26 unsupported IDPs remains a material uncertainty, not a license to guess.

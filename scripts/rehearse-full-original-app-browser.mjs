@@ -183,7 +183,72 @@ try{
  assert(fullRecommendation.count>0,'No complete recommendations generated from controlled rosters and fairness contract');
  assert(fullRecommendation.validOwners,'Recommendation crossed asset or partner ownership boundaries');
  assert(fullRecommendation.nonempty&&fullRecommendation.finite,'Recommendation missing packages or finite fairness metrics');
- const result={browser:'chromium',functional,trade_intent_dom_event:intentCheck,valuation,packageCheck,recommendationFixture,fullRecommendation,root_rendered:true,body_length:body.length,script_tags:scripts,served_js_files:servedScripts.size,failed_js_css:failedResponses.length,local_asset_requests:served,external_or_write_requests_denied:denied,html_bytes:Buffer.byteLength(html),publishers_executed:0,production_credentials_used:false};
+
+ // Exercise the *real clicked Finder route* and DOM with a full-sized, mixed
+ // 32-team synthetic league. No outbound data calls or archive writes occur.
+ // The previous search implementation could spin indefinitely even while
+ // unit-level package checks passed; use a hard browser deadline.
+ const targetRun=await page.evaluate(()=>{
+   const f=window.tradeSpecificMaxValueV279,host=document.getElementById('finderResults');
+   const team=document.getElementById('findTeam'),style=document.getElementById('findMode'),
+     intent=document.getElementById('tradeTier94'),input=document.getElementById('desiredPlayerSearch');
+   if(!f?.run||!host||!team||!style||!intent||!input)return{supported:false};
+   const old={state:window.state,playerName:window.playerName,playerRankValue:window.playerRankValue,
+     value:window.tradeValueNormalizationV139?.canonicalValue,
+     fair:window.section1V130?.fair,team:team.value,style:style.value,intent:intent.value,input:input.value};
+   window.__offlineTargetFixture=old;
+   const send=Array.from({length:95},(_,i)=>({id:'load-send-'+i,type:'player',owner:1,name:'Send '+i,
+     value:300+i*95,rank:200+i,position:'RB'}));
+   const target={id:'load-jonathan-taylor',type:'player',owner:2,name:'Jonathan Taylor',
+     value:7900,rank:8,position:'RB'};
+   const receive=Array.from({length:24},(_,i)=>({id:'load-recv-'+i,type:'player',owner:2,
+     name:'Receive '+i,value:650+i*260,rank:90+i,position:'RB'}));
+   window.state={...(old.state||{}),teams:Array.from({length:32},(_,i)=>({id:i+1,name:'Team '+(i+1)})),
+     allAssets:[...send,target,...receive],players:{}};
+   window.playerName=id=>id==='load-jonathan-taylor'?'Jonathan Taylor':String(id);
+   window.playerRankValue=a=>({rank:Number(a?.rank)||9999});
+   window.tradeValueNormalizationV139.canonicalValue=a=>Number(a?.value)||0;
+   window.section1V130=window.section1V130||{};
+   window.section1V130.fair=(a,b)=>{
+     let sum=0;for(let i=0;i<20000;i++)sum+=i%7;
+     const av=xs=>xs.reduce((v,x)=>v+(Number(x.value)||0),0);
+     const left=av(a),right=av(b);
+     return{score:83,rejected:false,edgeEffective:Math.max(100,right-left),aRaw:left,bRaw:right,
+       aAdj:0,bAdj:0,aEffective:left,bEffective:right+100+sum%2};
+   };
+   if(![...team.options].some(o=>o.value==='1'))team.add(new Option('Test Team 1','1'));
+   team.value='1';style.value='value';intent.value='up';input.value='Jonathan Taylor';
+   document.querySelectorAll('#findShop .shopCheck').forEach(x=>{x.checked=false});
+   window.__offlineTargetStarted=Date.now();
+   document.getElementById('runFinder').click();
+   return{supported:true};
+ });
+ assert(targetRun.supported,'Offline clicked specific-player Max Value path unavailable');
+ await page.waitForFunction(()=>{
+   const stats=window.tradeSpecificMaxValueV279?.sourceIntegrityStats?.().lastSearchStats;
+   const html=document.getElementById('finderResults')?.textContent||'';
+   return !!stats&&Date.now()>=window.__offlineTargetStarted&&
+     !html.includes('Searching maximum-value trades');
+ },null,{timeout:14000});
+ const targeted=await page.evaluate(()=>{
+   const stats=window.tradeSpecificMaxValueV279.sourceIntegrityStats().lastSearchStats;
+   const content=document.getElementById('finderResults')?.textContent||'';
+   const old=window.__offlineTargetFixture;
+   window.state=old.state;window.playerName=old.playerName;window.playerRankValue=old.playerRankValue;
+   window.tradeValueNormalizationV139.canonicalValue=old.value;
+   if(old.fair===undefined)delete window.section1V130.fair;else window.section1V130.fair=old.fair;
+   document.getElementById('findTeam').value=old.team;
+   document.getElementById('findMode').value=old.style;
+   document.getElementById('tradeTier94').value=old.intent;
+   document.getElementById('desiredPlayerSearch').value=old.input;
+   delete window.__offlineTargetFixture;
+   return{...stats,spinnerCleared:!content.includes('Searching maximum-value trades'),content:content.slice(0,140)};
+ });
+ assert(targeted.spinnerCleared,'Live click event left the targeted Finder spinning');
+ assert(targeted.elapsedMs<12500,'Targeted Finder did not respect runtime deadline');
+ assert(targeted.fairnessChecks<=2200&&targeted.examined<=9000,'Budgeted Finder exceeded work limits');
+ assert(targeted.receiveScans<=72,'Targeted Finder did not bound receiving packages');
+ const result={browser:'chromium',functional,trade_intent_dom_event:intentCheck,valuation,packageCheck,recommendationFixture,fullRecommendation,targeted,root_rendered:true,body_length:body.length,script_tags:scripts,served_js_files:servedScripts.size,failed_js_css:failedResponses.length,local_asset_requests:served,external_or_write_requests_denied:denied,html_bytes:Buffer.byteLength(html),publishers_executed:0,production_credentials_used:false};
  console.log('FULL FLEECED BROWSER REHEARSAL PASS '+JSON.stringify(result));
  await context.close();
 }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}

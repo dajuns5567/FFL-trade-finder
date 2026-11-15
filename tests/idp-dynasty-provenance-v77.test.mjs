@@ -5,7 +5,7 @@ import {CONSENSUS_SOURCES} from '../netlify/functions/consensus-adapters.mjs';
 import {refreshDraftSharksIdp} from '../netlify/functions/draftsharks-idp-adapter.mjs';
 import {refreshRotowireIdp} from '../netlify/functions/rotowire-idp-adapter.mjs';
 import {buildConsensusComposite} from '../netlify/functions/consensus-composite-v3.mjs';
-import {buildConsensusPayload} from '../netlify/functions/update.mjs';
+import {buildConsensusPayload,verifiedDynastyLkg} from '../netlify/functions/update.mjs';
 
 const draft=fs.readFileSync(new URL('../netlify/functions/draftsharks-idp-adapter.mjs',import.meta.url),'utf8');
 const rotowire=fs.readFileSync(new URL('../netlify/functions/rotowire-idp-adapter.mjs',import.meta.url),'utf8');
@@ -76,4 +76,37 @@ test('seven successful source parsers do not imply every source is dynasty eligi
  assert.equal(complete.sources['RotoWire IDP'],undefined,'redraft-like rows cannot appear in promoted source data');
  assert.ok(complete.sources['DraftSharks IDP'],'verified dynasty source remains available for diagnostics');
  assert.equal(first.summary.results.find(x=>x.source==='DraftSharks IDP').dynastySourceUrl,eligible.dynastySourceUrl);
+});
+
+test('reject legacy last-known-good market snapshots with absent provenance markers',()=>{
+ const old={sources:{
+  'The IDP Show Combined IDP':{kind:'idp',data:{'elite defender':1}},
+  'DraftSharks IDP':{kind:'idp',data:{'elite defender':2}},
+  'RotoWire IDP':{kind:'idp',data:{'elite defender':3}}
+ },composite:{byId:{d:150}},sourceManifest:[
+  {source:'The IDP Show Combined',status:'fresh'},
+  {source:'DraftSharks IDP',status:'fresh'},
+  {source:'RotoWire IDP',status:'fresh'}
+ ]};
+ assert.equal(verifiedDynastyLkg(old),false);
+ assert.equal(verifiedDynastyLkg({...old,sourceManifest:undefined}),false);
+});
+test('accept a complete provenance-marked dynasty last-known-good and reject any contaminated cached source',()=>{
+ const safe={
+  sources:{
+   'The IDP Show Combined IDP':{kind:'idp',data:{'elite defender':1}},
+   'DraftSharks IDP':{kind:'idp',data:{'elite defender':2}},
+   'FantasyPros':{kind:'offense',data:{'elite quarterback':1}}
+  },
+  sourceManifest:[
+   {source:'The IDP Show Combined',dynasty_consensus_eligible:true},
+   {source:'DraftSharks IDP',dynasty_consensus_eligible:true,
+    dynasty_source_url:'https://www.draftsharks.com/dynasty-rankings/idp'},
+   {source:'RotoWire IDP',dynasty_consensus_eligible:false}
+  ]
+ };
+ assert.equal(verifiedDynastyLkg(safe),true);
+ assert.equal(verifiedDynastyLkg({...safe,sources:{...safe.sources,'RotoWire IDP':{kind:'idp'}}}),false);
+ assert.equal(verifiedDynastyLkg({...safe,sourceManifest:safe.sourceManifest.filter(x=>x.source!=='DraftSharks IDP')}),false);
+ assert.equal(verifiedDynastyLkg({...safe,sourceManifest:safe.sourceManifest.map(x=>x.source==='DraftSharks IDP'?{...x,dynasty_source_url:'https://www.draftsharks.com/rankings/idp/superflex'}:x)}),false);
 });

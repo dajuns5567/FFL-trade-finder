@@ -125,6 +125,18 @@ function blend25(c,scoreValue,contextValue){
  const centered=clamp25(c*.45,raw,Math.max(c*2.15,c+760));
  return{value:Math.max(1,Math.round(centered)),raw,fallback:false};
 }
+// Experimental, read-only-review V75. The fixed 20/45/35 IDP blend
+// currently combines a 180..1450 production component with a much narrower
+// career context component, magnifying veterans' historical scoring despite
+// stronger verified young-player consensus and future runway. This smooth,
+// strictly monotone calibration retains the scoring order and all coefficients.
+// Missing qualifying Sleeper production keeps its existing conservative prior.
+function calibratedScoring25(score){
+ const raw=Number(score?.value);
+ if(!(Number(score?.a?.qualifyingSeasons)>0)||!Number.isFinite(raw))return raw;
+ const fraction=clamp25(0,(raw-180)/1270,1);
+ return 180+920*Math.pow(fraction,.30);
+}
 function model25(z){
  if(groupPos(z.x)!=='IDP'||!isIndividualIdp25(z.x.id))return z;
  const c=Number(z.consensus),score=scoring25(z.x.id),ctx=context25(z.x.id,score);
@@ -134,9 +146,9 @@ function model25(z){
 // A prospect with real dynasty consensus, or any actual qualifying scoring,
 // continues through the unchanged 20/45/35 model and historical confidence.
 const unverifiedFallback=!(c>0)&&!(Number(score.a?.qualifyingSeasons)>0);
-const effectiveScoringValue=unverifiedFallback?Math.min(score.value,180):score.value;
+const effectiveScoringValue=unverifiedFallback?Math.min(score.value,180):calibratedScoring25(score);
 const blend=blend25(c,effectiveScoringValue,ctx.value);
- return{...z,value:blend.value,consensus:Number.isFinite(c)&&c>0?Math.round(c):z.consensus,context:Math.round(ctx.value),production:{...score,leagueContext:ctx,idpV25MarketCenterOffset:IDP_V25_MARKET_CENTER_OFFSET,idpV25RawBlend:blend.raw,idpUnverifiedNoConsensusFallbackV73:unverifiedFallback,idpEffectiveFallbackScoringV73:effectiveScoringValue},fallback:blend.fallback};
+ return{...z,value:blend.value,consensus:Number.isFinite(c)&&c>0?Math.round(c):z.consensus,context:Math.round(ctx.value),production:{...score,leagueContext:ctx,idpV25MarketCenterOffset:IDP_V25_MARKET_CENTER_OFFSET,idpV25RawBlend:blend.raw,idpUnverifiedNoConsensusFallbackV73:unverifiedFallback,idpEffectiveFallbackScoringV73:effectiveScoringValue,idpV75RawScoringValue:score.value,idpV75CalibratedScoringValue:effectiveScoringValue,idpV75ScoringCalibrated:Number(score.a?.qualifyingSeasons)>0},fallback:blend.fallback};
 }
 masterRankings=function(){return priorMaster25().map(model25).sort((a,b)=>b.value-a.value)};
 ensureMaster=function(){return masterRankCache||(masterRankCache=masterRankings())};

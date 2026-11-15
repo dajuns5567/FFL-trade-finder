@@ -1,0 +1,27 @@
+name: IDP scoring unit sensitivity versus dynasty market (read-only)
+on:
+  pull_request:
+    paths:
+      - 'scripts/audit-idp-v79-scoring-scale.mjs'
+      - '.github/workflows/idp-v79-scoring-scale.yml'
+permissions:
+  contents: read
+jobs:
+  scoring-sensitivity:
+    if: github.event.pull_request.number == 480
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Read-only sensitivity script syntax
+        run: node --check scripts/audit-idp-v79-scoring-scale.mjs
+      - name: Install source adapters and isolated Chromium
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund --no-package-lock
+          npm install --no-save --ignore-scripts --no-audit --no-fund --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Four-component-scale same-source 32-team counterfactual
+        run: node scripts/audit-idp-v79-scoring-scale.mjs

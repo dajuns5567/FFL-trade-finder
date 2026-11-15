@@ -108,7 +108,7 @@ for(const engine of engines){
  });
  test('select-all aliases are not treated as an oversized manual selection by '+engine[0],()=>{
   const f=loadedEngine(engine,{selectAll:true});
-  assert.equal(f.engine.active(),false);
+  assert.equal(f.engine.active(),engine[0]==='trade-specific-tier-up-v282.js', 'Tier Up may handle blank target searches, but must not treat Select All as a manual selection');
  });
 }
 test('all Finder pathways use the shared complementary generator without touching player valuations',()=>{

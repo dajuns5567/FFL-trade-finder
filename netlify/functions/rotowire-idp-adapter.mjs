@@ -82,7 +82,7 @@ export async function refreshRotowireIdp(opts={}){
     const valid=rows.length>=MIN_VALID_ROWS&&uniqueRanks.size===rows.length&&contiguous&&rows.every(row=>normalizePlayerName(row.player));
     return {
       source:"RotoWire IDP",id:"rotowire-idp",status:valid?"refreshed":"failed",valid,
-      format:"2026-idp-cheatsheet",reducedWeight:true,
+      format:"2026-idp-cheatsheet",dynastyVerified:false,dynastySourceUrl:null,dynastySourceEligibility:"unverified-general-season-cheatsheet",reducedWeight:true,
       players_extracted:rows.length,unique_player_names:uniquePlayers.size,ranking_rows:rows.length,rankings:rows,
       timestamp:now,stage:valid?"validated":"extract",
       error:valid?null:`RotoWire IDP validation failed: ${rows.length} rows, max rank ${maxRank}, contiguous=${contiguous}`,
@@ -92,7 +92,7 @@ export async function refreshRotowireIdp(opts={}){
   }catch(error){
     return {
       source:"RotoWire IDP",id:"rotowire-idp",status:"failed",valid:false,
-      format:"2026-idp-cheatsheet",reducedWeight:true,
+      format:"2026-idp-cheatsheet",dynastyVerified:false,dynastySourceUrl:null,dynastySourceEligibility:"unverified-general-season-cheatsheet",reducedWeight:true,
       players_extracted:0,ranking_rows:0,rankings:[],timestamp:now,
       stage:"fetch",error:String(error?.message||error),urls:[ROTOWIRE_IDP_URL]
     };

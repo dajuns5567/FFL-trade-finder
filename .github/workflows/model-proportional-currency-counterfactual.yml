@@ -1,0 +1,31 @@
+name: Read-only model-proportional currency preview counterfactual (draft only)
+on:
+  pull_request:
+    paths:
+      - 'modeled-player-values-v319.js'
+      - 'scripts/audit-model-proportional-currency-preview.mjs'
+      - '.github/workflows/model-proportional-currency-counterfactual.yml'
+permissions:
+  contents: read
+jobs:
+  currency-counterfactual:
+    if: github.event.pull_request.number == 472
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax-check candidate + read-only browser test
+        run: |
+          node --check modeled-player-values-v319.js
+          node --check scripts/audit-model-proportional-currency-preview.mjs
+          node --test tests/model-v319-metadata-boot-guard.test.mjs
+          node --test tests/idp-valuation-refresh-contract.test.mjs
+      - name: Install isolated Chromium for exact PR 466 preview
+        run: |
+          npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright
+          npx playwright install --with-deps chromium
+      - name: Verify 32-team full player currency vs unchanged modeled ranks and pick values
+        run: node scripts/audit-model-proportional-currency-preview.mjs

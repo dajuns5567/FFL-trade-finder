@@ -60,3 +60,16 @@ A safe release requires:
 4. Retain fully green PR #466 HEAD `4804e2002f61956707893ed5a07138ab66e5e0d1` as the untouched rollback baseline.
 
 Full numerical details and exact observed ranks are also in the read-only CI workflow named **IDP V77 seven-source dynasty provenance impact** on PR #478.
+
+## Alternate dynasty-IDP source viability (read-only integration)
+
+The repository already lists two additional purportedly dynasty-specific IDP endpoints, but the current generic parser could not verify usable rank lists:
+
+| Configured source | Read-only adapter result | Decision |
+|---|---|---|
+| PFF IDP, `/news/fantasy-football-dynasty-idp-rankings` | Invalid; one extracted row was a 404 warning rather than a player | Not eligible |
+| Dynasty Dealer IDP, `/rankings/idp` | Invalid; zero rows parsed | Not eligible |
+
+These providers cannot be silently counted as substitutes. Do not invent, infer, or import dynasty rankings from their source names alone. The available verified IDP-dynasty population remains The IDP Show Combined plus the 250-row DraftSharks dynasty feed, with only **67 IDPs supported by two actually matched sources** in the controlled candidate snapshot.
+
+A larger consensus-covered IDP universe requires additional **verified current dynasty-specific data** or a safely maintained publisher-specific parser, not a reversion to a redraft/general-season cheat sheet. Until then, the V77 draft remains blocked from release despite clean parser and model regression tests.

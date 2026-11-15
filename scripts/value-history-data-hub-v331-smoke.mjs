@@ -61,7 +61,18 @@ const ktcPlayers=Array.from({length:320},(_,i)=>({playerName:`Player ${i+1}`,pos
 const ktcParsed=extractKtcSuperflexRankings(`<script type="application/json" id="ktc-players">${JSON.stringify(ktcPlayers)}</script><script>var playersArray = JSON.parse(document.getElementById('ktc-players').textContent);</script>`);
 assert(ktcParsed.rows.length===320,'KTC embedded JSON parser must recover the complete player universe');
 assert(ktcParsed.rows[0].rank===1&&ktcParsed.rows.at(-1).rank===320,'KTC embedded JSON ranks are not preserved');
-assert(!m.marketRows.find(x=>x.id==='rook')?.delta365,'new player should not receive fabricated pre-entry 365-day history');
+assert(m.marketRows.find(x=>x.id==='rook')?.delta365===1600,'rookie should compare against actual first observed value');
+assert(m.marketRows.find(x=>x.id==='rook')?.delta365From===snaps[2].t,'late-entry historical coverage must disclose its date');
+assert(m.marketRows.find(x=>x.id==='rook')?.delta365Available===true,'shortened one-year coverage must be explicit');
+assert(m.periods['ALL'].valueRisers.some(x=>x.id==='rook'&&x.delta===1600),'all-time movers must include verified late entrants');
+const idpSnaps=[snap(0,[P('off',4000,50)]),snap(3,[P('off',4100,49),P('idp1',3000,120,'IDP',28)]),snap(20,[P('off',4400,46),P('idp1',3500,95,'IDP',20),P('idp2',2200,160,'IDP',60)]),snap(56,[P('off',4600,43),P('idp1',3800,85,'IDP',16),P('idp2',2300,155,'IDP',55)])];
+const im=marketFromSnapshots(idpSnaps),idp1=im.marketRows.find(x=>x.id==='idp1'),idp2=im.marketRows.find(x=>x.id==='idp2');
+assert(idp1.delta365===800&&idp1.deltaAll===800&&idp1.deltaAllFrom===idpSnaps[1].t,'IDP first verified snapshot must anchor 1Y and ALL');
+assert(idp1.delta365Available&&idp1.deltaAllAvailable,'missing initial baseline must be labeled');
+assert(idp2.delta365===100&&idp2.deltaAllFrom===idpSnaps[2].t,'later IDP must not inherit another IDP baseline');
+assert(im.periods['1Y'].valueRisers.some(x=>x.id==='idp1'),'1Y movers must include verified IDP history');
+assert(im.periods.ALL.posRankRisers.some(x=>x.id==='idp1'),'all-time positional movers must include IDP history');
+assert(im.marketRows.find(x=>x.id==='off').delta365Available===false,'original offense baseline must remain unchanged');
 
 const ui=fs.readFileSync('value-history-v276.js','utf8');
 for(const needle of [
@@ -133,6 +144,8 @@ for(const needle of [
   'posRankFallers',
   'Value 1Y',
   'Value All',
+  'available history',
+  'historyHint(r',
   'Overall Δ 7D',
   'Pos Δ 1W',
   'Pos Δ All',

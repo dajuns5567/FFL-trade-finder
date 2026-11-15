@@ -189,11 +189,38 @@ if(refresh.successful!==7||refresh.total!==7){
   };
   const top=rows.filter(x=>x.idpRank<=40);
   const pct=(n,d)=>d?+(100*n/d).toFixed(1):0;
+  const cred=rows.filter(x=>x.consensusRank!==null);
+  const bySupport=n=>{
+    const group=cred.filter(x=>x.independentSources>=n);
+    return{count:group.length,
+      majorDisagreement20:group.filter(x=>Math.abs(x.marketDisagreement)>=20).length,
+      majorDisagreement40:group.filter(x=>Math.abs(x.marketDisagreement)>=40).length,
+      modelFarAboveMarket20:group.filter(x=>x.marketDisagreement<=-20).length,
+      modelFarBelowMarket20:group.filter(x=>x.marketDisagreement>=20).length};
+  };
+  const rankChangeStats={
+   rankChangeOver10:sourceChanges.filter(x=>Math.abs(x.change)>10).length,
+   rankChangeOver20:sourceChanges.filter(x=>Math.abs(x.change)>20).length,
+   rankChangeOver40:sourceChanges.filter(x=>Math.abs(x.change)>40).length
+  };
+  const focus=['Dallas Turner','Will Anderson Jr.','Myles Garrett','T.J. Watt','Greg Rousseau','Aidan Hutchinson'];
+  const normalize=x=>String(x||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const rawSources=refresh.results.filter(r=>r.id==='combined-dynasty'||String(r.id||'').includes('idp')).map(r=>{
+    const all=[...(r.rankings||[])].filter(x=>String(x?.player||'').trim());
+    const channel=r.id==='combined-dynasty'?all.filter(x=>String(x.position||'').toUpperCase()==='IDP'):all;
+    const indexed=channel.sort((a,b)=>Number(a.rank)-Number(b.rank));
+    return{source:r.source,id:r.id,rows:indexed.length,players:focus.map(name=>{
+      const matches=indexed.map((row,i)=>({...row,channelRank:i+1})).filter(x=>normalize(x.player)===normalize(name));
+      return{name,listed:matches.length===1,rank:matches.length===1?Number(matches[0].rank):null,
+       channelRank:matches.length===1?matches[0].channelRank:null,duplicate:matches.length>1};
+    })};
+  });
   const report={
    sourceCount:status.length,sourceStatus:status,rostered:current.ranked.length,
    idps:idps.length,offense:current.ranked.length-idps.length,
    changes:sourceChanges.length,offenseModelChanges,unchangedNoHistory:noHistory,
-   uncorroboratedIdps:missing,
+   uncorroboratedIdps:missing,consensusCoverage:{twoOrMore:bySupport(2),threeOrMore:bySupport(3)},
+   rankChangeStats,rawSourceEvidence:rawSources,
    idpOverallTopRankCounts:{v74:rankCounts(legacy),v75:rankCounts(current)},
    idpTop40ScoringCap:{number:top.filter(x=>x.scoringAtCeiling).length,percent:pct(top.filter(x=>x.scoringAtCeiling).length,top.length)},
    idpScoringCapCount:scoringTop.length,scoringCapLeaders:scoringTop.sort((a,b)=>a.idpRank-b.idpRank).slice(0,25),

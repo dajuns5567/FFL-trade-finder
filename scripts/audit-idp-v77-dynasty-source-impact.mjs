@@ -48,8 +48,8 @@ if(refresh.successful!==7||refresh.total!==7){
  const candidatePayload=buildConsensusPayload(refresh,players);
  assert.equal(candidatePayload.integrity.all_sources_valid,true);
  assert.equal(baselinePayload.integrity.all_sources_valid,true);
- assert.equal(payload.integrity.all_sources_valid,true);
- assert(Object.keys(payload.composite?.byId||{}).length>150,'Composite evidence insufficient');
+ assert(Object.keys(baselinePayload.composite?.byId||{}).length>150,'Prior market evidence insufficient');
+ assert(Object.keys(candidatePayload.composite?.byId||{}).length>150,'Verified dynasty market evidence insufficient');
  const bodies=[JSON.stringify(baselinePayload),JSON.stringify(candidatePayload)];
  const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
  async function capture(useFix,site=current){

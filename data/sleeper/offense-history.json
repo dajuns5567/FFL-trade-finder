@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-11-15T01:53:15.599Z",
+  "generatedAt": "2026-11-15T09:21:40.531Z",
   "source": "Sleeper importer snapshot",
   "currentSeason": 2026,
   "completedWeek": 9,
@@ -1524,14 +1524,6 @@
         "nullSlots": [],
         "slots": [
           {
-            "id": "401873052",
-            "state": "final",
-            "teams": [
-              "NYG",
-              "WSH"
-            ]
-          },
-          {
             "id": "401873053",
             "state": "blocking",
             "teams": [
@@ -1625,6 +1617,14 @@
             "teams": [
               "CIN",
               "PIT"
+            ]
+          },
+          {
+            "id": "401873052",
+            "state": "final",
+            "teams": [
+              "NYG",
+              "WSH"
             ]
           },
           {

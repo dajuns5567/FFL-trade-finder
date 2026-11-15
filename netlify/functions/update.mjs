@@ -37,7 +37,7 @@ export function buildConsensusPayload(refresh,players=[],updatedAt=new Date().to
     }
     addSnapshot(sources,result.source,result,result.rankings,result.id?.includes("idp")?"idp":"offense",updatedAt);
   }
-  const diagnostics=results.map(result=>({source:result.source,ok:!!result.valid,status:result.valid?"refreshed":"failed",stage:result.stage||null,url:Array.isArray(result.urls)?result.urls[0]||null:null,players_extracted:Number(result.players_extracted||0),ranking_rows:Number(result.ranking_rows||0),error:result.valid?null:(result.error||null),timestamp:result.timestamp||null,fetch_timestamp:result.timestamp||null,publisher_updated_at:null,market_observation:result.marketObservation||null,source_provenance:result.diagnostics?.source_provenance||null,...(result.reducedWeight?{reducedWeight:true}:{})}));
+  const diagnostics=results.map(result=>({source:result.source,ok:!!result.valid,dynastyConsensusEligible:result.id==="combined-dynasty"||!String(result.id||"").includes("idp")||result.dynastyVerified===true,dynastySourceUrl:result.dynastySourceUrl||null,status:result.valid?"refreshed":"failed",stage:result.stage||null,url:Array.isArray(result.urls)?result.urls[0]||null:null,players_extracted:Number(result.players_extracted||0),ranking_rows:Number(result.ranking_rows||0),error:result.valid?null:(result.error||null),timestamp:result.timestamp||null,fetch_timestamp:result.timestamp||null,publisher_updated_at:null,market_observation:result.marketObservation||null,source_provenance:result.diagnostics?.source_provenance||null,...(result.reducedWeight?{reducedWeight:true}:{})}));
   const successful=diagnostics.filter(result=>result.ok).length,failedSources=diagnostics.filter(result=>!result.ok).map(result=>result.source),integrityReady=results.length>=7&&failedSources.length===0;
   const composite=integrityReady?buildConsensusComposite(results,players):{byId:{},byName:{},detailsById:{},sourceCounts:{offense:0,idp:0},ambiguousNames:[]};
   return {ok:true,sources:integrityReady?sources:{},composite,withheld:!integrityReady,integrity:{all_sources_valid:integrityReady,failed_sources:failedSources,reason:integrityReady?null:`Consensus replacement withheld because ${failedSources.length?failedSources.join(', '):'one or more required sources'} did not validate; prior validated source set remains in use`},summary:{total:results.length,successful,failed:results.length-successful,results:diagnostics},updatedAt};
@@ -58,12 +58,14 @@ export default async (req)=>{
       const old=previous?.sources?.[name]||null;
       snapshot.freshness=buildFreshnessSnapshot(snapshot,old,candidate.updatedAt);
     }
-    const promoted={sources:candidate.sources,composite:candidate.composite,updatedAt:candidate.updatedAt,sourceManifest:candidate.summary.results.map(x=>({source:x.source,status:"fresh",snapshot_timestamp:x.timestamp||candidate.updatedAt,attempt_timestamp:x.timestamp||candidate.updatedAt,players_extracted:x.players_extracted,ranking_rows:x.ranking_rows,publisher_updated_at:null,source_freshness:(x.source==="The IDP Show Combined"?candidate.sources["The IDP Show Combined Offense"]?.freshness:candidate.sources[x.source]?.freshness)||null,market_observation:x.market_observation||null,source_provenance:x.source_provenance||null}))};
+    const promoted={sources:candidate.sources,composite:candidate.composite,updatedAt:candidate.updatedAt,sourceManifest:candidate.summary.results.map(x=>({source:x.source,status:"fresh",snapshot_timestamp:x.timestamp||candidate.updatedAt,attempt_timestamp:x.timestamp||candidate.updatedAt,players_extracted:x.players_extracted,ranking_rows:x.ranking_rows,publisher_updated_at:null,source_freshness:(x.source==="The IDP Show Combined"?candidate.sources["The IDP Show Combined Offense"]?.freshness:candidate.sources[x.source]?.freshness)||null,market_observation:x.market_observation||null,source_provenance:x.source_provenance||null,dynasty_consensus_eligible:x.dynastyConsensusEligible,dynasty_source_url:x.dynastySourceUrl||null}))};
     await writeLastGood(promoted);
     const summary={...candidate.summary,results:candidate.summary.results.map(x=>({...x,
       source_freshness:(x.source==="The IDP Show Combined"?candidate.sources["The IDP Show Combined Offense"]?.freshness:candidate.sources[x.source]?.freshness)||null,
       market_observation:x.market_observation||null,
-      source_provenance:x.source_provenance||null
+      source_provenance:x.source_provenance||null,
+      dynasty_consensus_eligible:x.dynastyConsensusEligible,
+      dynasty_source_url:x.dynastySourceUrl||null
     }))};
     return json({...candidate,summary,promotion:{promoted:true,using_last_known_good:false},sourceManifest:promoted.sourceManifest});
   }

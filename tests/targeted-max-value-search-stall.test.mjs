@@ -80,7 +80,7 @@ test('every Max Value package still contains the target and no equity/consensus 
 
 test('assembled preview loads the updated Finder script rather than the stale browser cache key',()=>{
  assert.match(site,/trade-specific-max-value-v279\.js\?v=443/);
- assert.match(site,/trade-specific-player-v232\.js\?v=440/);
+ assert.match(site,/trade-specific-player-v232\.js\?v=441/);
 });
 
 test('adversarial expensive full-league fairness cannot leave the search spinner indefinitely',async()=>{

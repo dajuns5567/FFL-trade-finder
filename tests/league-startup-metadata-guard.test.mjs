@@ -44,3 +44,58 @@ test('missing team remains unchanged and no change to valuation model or team sc
  assert.equal(a.calculate(500).label,'Unknown');
  assert.match(source.slice(start,end),/score=top\*\.72\+depth\*\.10\+picks\*\.04\+pct\*220-\(avg-25\)\*30/);
 });
+
+const legacyUi=readFileSync(new URL('../ui-v18.js',import.meta.url),'utf8');
+const legacyStageStart=legacyUi.indexOf('function playerMetadataReadyV18()');
+const legacyStageEnd=legacyUi.indexOf('function evaluatorAssets(',legacyStageStart);
+assert.ok(legacyStageStart>0&&legacyStageEnd>legacyStageStart,'legacy UI stage and readiness gate must exist');
+
+function legacyHarness(loaded=false){
+  let valueCalls=0;
+  const roster={players:['1','2','3'],settings:{wins:6,losses:4}};
+  const state={
+    allAssets:[{type:'player',id:'1'},{type:'player',id:'2'},{type:'player',id:'3'}],
+    teams:[{id:1,roster},{id:2,roster:{players:[],settings:{wins:3,losses:7}}}],
+    draftPicks:[],
+    players:loaded?{
+      1:{fantasy_positions:['QB']},2:{fantasy_positions:['WR']},3:{fantasy_positions:['LB']}
+    }:{}
+  };
+  const ctx={state,Number,String,Array,Math,
+    baseValue:()=>{valueCalls++;return 1000},
+    pickValue:()=>300
+  };
+  vm.runInNewContext(legacyUi.slice(legacyStageStart,legacyStageEnd),ctx);
+  return{state,stage:ctx.teamStage,called:()=>valueCalls};
+}
+test('legacy ui-v18 overrides cannot value every league roster before Sleeper metadata',()=>{
+  const h=legacyHarness(false);
+  for(let i=0;i<32;i++)assert.equal(h.stage(1).label,'Loading player data');
+  assert.equal(h.called(),0);
+  h.state.players={
+    1:{fantasy_positions:['QB']},2:{fantasy_positions:['WR']},3:{fantasy_positions:['LB']}
+  };
+  assert.equal(h.stage(1).label,'Contender');
+  assert.equal(h.called(),3,'legacy league-wide ranking still runs normally once metadata exists');
+});
+test('legacy reference ranking renderer does not call ensureMaster before position readiness',()=>{
+  const start=legacyUi.indexOf('function renderReferenceRankings()');
+  const end=legacyUi.indexOf('const priorRenderAll=',start);
+  assert.ok(start>0&&end>start);
+  const host={textContent:'',innerHTML:''};
+  const state={allAssets:[{type:'player',id:'1'}],players:{}};
+  let calls=0;
+  const ctx={state,Number,String,Array,Math,
+    document:{getElementById:()=>host},
+    ensureMaster:()=>{calls++;return[]},
+  };
+  vm.runInNewContext(
+    legacyUi.slice(legacyStageStart,legacyUi.indexOf('function teamPower(',legacyStageStart))+
+    '\n'+legacyUi.slice(start,end),ctx);
+  ctx.renderReferenceRankings();
+  assert.equal(calls,0);
+  assert.match(host.textContent,/Loading player data/);
+  state.players['1']={fantasy_positions:['QB']};
+  ctx.renderReferenceRankings();
+  assert.equal(calls,1,'normal rank rendering resumes after Sleeper metadata');
+});

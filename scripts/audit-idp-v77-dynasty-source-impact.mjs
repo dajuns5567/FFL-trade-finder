@@ -158,6 +158,24 @@ if(refresh.successful!==7||refresh.total!==7){
   const rosteredIds=new Set(candidate.rosteredPlayerIds||[]);
   const lostRostered=removed.filter(x=>rosteredIds.has(x.id));
   const addedRostered=added.filter(x=>rosteredIds.has(x.id));
+  assert.equal(lostRostered.length,0,'source refresh removed a rostered player from canonical ranking');
+  const rosteredIdps=candidate.ranked.filter(x=>x.position==='IDP'&&rosteredIds.has(x.id));
+  const rosteredWithSources=rosteredIdps.map(x=>({
+   name:x.name,id:x.id,rank:x.positional,overall:x.overall,
+   actualSources:x.idpSourceNames.filter(v=>!String(v).endsWith(' (not listed)')).length,
+   scoringSeasons:x.qualifyingSeasons,
+   consensus:x.consensus
+  }));
+  const rosteredSourceCoverage={
+   idps:rosteredWithSources.length,
+   noListedDynastySource:rosteredWithSources.filter(x=>x.actualSources===0).length,
+   oneListedDynastySource:rosteredWithSources.filter(x=>x.actualSources===1).length,
+   twoOrMoreDynastySources:rosteredWithSources.filter(x=>x.actualSources>=2).length,
+   noSourceNoQualifiedHistory:rosteredWithSources.filter(x=>x.actualSources===0&&x.scoringSeasons===0).length,
+   top30NoSource:rosteredWithSources.filter(x=>x.rank<=30&&x.actualSources===0),
+   highestNoSourceWithHistory:rosteredWithSources.filter(x=>x.actualSources===0&&x.scoringSeasons>0).slice(0,20)
+  };
+  console.log('IDP_V77_ROSTER_SOURCE_COVERAGE '+JSON.stringify(rosteredSourceCoverage));
   console.log('IDP_V77_ROSTER_COVERAGE '+JSON.stringify({
    allRostered:rosteredIds.size,oldRankedRostered:baseline.ranked.filter(x=>rosteredIds.has(x.id)).length,
    newRankedRostered:candidate.ranked.filter(x=>rosteredIds.has(x.id)).length,
@@ -196,7 +214,7 @@ if(refresh.successful!==7||refresh.total!==7){
     'Jared Verse','Jack Campbell','George Karlaftis','David Bailey'];
   const changed=rows.filter(x=>x.movement!==0),withConsensus=rows.filter(x=>x.sources.filter(z=>!z.endsWith(' (not listed)')).length>=2);
   const report={
-    ranked:candidate.ranked.length,oldRanked:baseline.ranked.length,idps:idps.length,offenseChanges,scoreChanges,contextChanges,added,removed,rosterIntegrity:{rostered:rosteredIds.size,lostRostered,addedRostered},
+    ranked:candidate.ranked.length,oldRanked:baseline.ranked.length,idps:idps.length,offenseChanges,scoreChanges,contextChanges,added,removed,rosterIntegrity:{rostered:rosteredIds.size,lostRostered,addedRostered,sourceCoverage:rosteredSourceCoverage},
     sourceIntegrity:{oldDraftValid:legacyDraft.valid,newDynastyDraftValid:activeDraft.valid,
       dynastyDraftRows:activeDraft.rankings.length,oldSourceUrl:legacyDraft.urls?.[0],
       dynastySourceUrl:activeDraft.urls?.[0],rotowireExcluded:unverifiedRotoWire===0},

@@ -148,9 +148,14 @@ if(refresh.successful!==7||refresh.total!==7){
  try{
   const baseline=await capture(false),candidate=await capture(true);
   assert(baseline.ranked.length>900&&candidate.ranked.length>900);
-  assert.equal(baseline.ranked.length,candidate.ranked.length);
-  assert.deepEqual(baseline.ranked.map(x=>x.id).sort(),candidate.ranked.map(x=>x.id).sort(),'player universe changed');
+  // A genuinely different dynasty publisher may cover additional real players.
+  // Report additions/removals explicitly rather than assuming source lists are
+  // identical or silently discarding the missing low-consensus candidates.
   const oldById=new Map(baseline.ranked.map(x=>[x.id,x]));
+  const candidateIds=new Set(candidate.ranked.map(x=>x.id));
+  const added=candidate.ranked.filter(x=>!oldById.has(x.id)).map(x=>({name:x.name,id:x.id,position:x.position}));
+  const removed=baseline.ranked.filter(x=>!candidateIds.has(x.id)).map(x=>({name:x.name,id:x.id,position:x.position}));
+
   const oldGroups=[25,50,100,150,250].map(n=>({n,baseline:baseline.ranked.slice(0,n).filter(x=>x.position==='IDP').length,
    candidate:candidate.ranked.slice(0,n).filter(x=>x.position==='IDP').length}));
   const rows=[],idps=candidate.ranked.filter(x=>x.position==='IDP');
@@ -158,9 +163,10 @@ if(refresh.successful!==7||refresh.total!==7){
   for(const x of candidate.ranked){
     const before=oldById.get(x.id);
     if(x.position!=='IDP'){
-      if(x.modeled!==before.modeled)offenseChanges++;
+      if(!before||x.modeled!==before.modeled)offenseChanges++;
       continue;
     }
+    if(!before)continue;
     if(x.v25Scoring!==before.v25Scoring)scoreChanges++;
     if(x.v25Context!==before.v25Context)contextChanges++;
     if(x.idpSourceNames.some(v=>v.startsWith('RotoWire IDP')))unverifiedRotoWire++;
@@ -182,7 +188,7 @@ if(refresh.successful!==7||refresh.total!==7){
     'Jared Verse','Jack Campbell','George Karlaftis','David Bailey'];
   const changed=rows.filter(x=>x.movement!==0),withConsensus=rows.filter(x=>x.sources.filter(z=>!z.endsWith(' (not listed)')).length>=2);
   const report={
-    ranked:candidate.ranked.length,idps:idps.length,offenseChanges,scoreChanges,contextChanges,
+    ranked:candidate.ranked.length,oldRanked:baseline.ranked.length,idps:idps.length,offenseChanges,scoreChanges,contextChanges,added,removed,
     sourceIntegrity:{oldDraftValid:legacyDraft.valid,newDynastyDraftValid:activeDraft.valid,
       dynastyDraftRows:activeDraft.rankings.length,oldSourceUrl:legacyDraft.urls?.[0],
       dynastySourceUrl:activeDraft.urls?.[0],rotowireExcluded:unverifiedRotoWire===0},

@@ -364,6 +364,7 @@ assert(ui.includes('Current outcome detail'),'Hindsight must present current out
 assert(ui.includes('.vh-trade-list{display:grid;gap:16px}')&&ui.includes('.vh-trade-card{border:1px solid color-mix(in srgb,#e4b53f 42%,var(--line))'),'completed trades must keep clear separation while using compact spacing and the current thin gold border');
 assert(ui.includes('.vh-trade-card{border:1px solid color-mix(in srgb,#e4b53f 42%,var(--line))'),'completed trade cards need distinct thin gold outer borders');
 assert(!ui.includes('nearest-year retroactive frame'),'retroactive pick-frame mechanics must remain hidden from user-facing text');
+assert(!/\$\{r\.delta365Available\}\?' <small>available history<\/small>'/.test(ui),'Full Market History must keep yearly delta cells numeric only');
 assert(ui.includes('vh-driver-heading')&&ui.includes('Biggest positive drivers')&&ui.includes('Biggest negative drivers'),'Track My Team driver headings must use Fleeced themed headers');
 assert(ui.includes('vh-driver-chart')&&ui.includes('View history ↗')&&ui.includes('data-vh-player'),'Track My Team drivers must link to player Value History with the on-brand View history action');
 assert(ui.includes('vh-history-cue')&&ui.includes('View history ↗'),'Full Market History must show inline View history cues');

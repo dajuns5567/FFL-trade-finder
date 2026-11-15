@@ -7,7 +7,7 @@ import { buildConsensusComposite } from '../netlify/functions/consensus-composit
 function idpSource(id,targetRank){
   const rows=[];
   for(let i=1;i<=220;i++)rows.push({rank:i,player:i===targetRank?'Target Defender':`${id} Dummy ${i}`,position:'IDP'});
-  return{id,source:id,valid:true,rankings:rows};
+  return{id,source:id,valid:true,dynastyVerified:true,rankings:rows};
 }
 function consensusAt(rank){
   const players=[{id:'target',name:'Target Defender',position:'LB',positions:['LB']}];

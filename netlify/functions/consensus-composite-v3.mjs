@@ -8,7 +8,13 @@ const parts=s=>canonical(s).split(" ").filter(Boolean);
 const positionsOf=p=>new Set((Array.isArray(p?.positions)?p.positions:[p?.position]).filter(Boolean).map(x=>String(x).toUpperCase()));
 const reindex=rows=>[...(rows||[])].filter(r=>Number.isFinite(Number(r?.rank))&&String(r?.player||"").trim()).sort((a,b)=>Number(a.rank)-Number(b.rank)).map((r,i)=>({...r,modelRank:i+1}));
 function makeChannel(name,weight,rows){const indexed=reindex(rows),byName=new Map(),byCanonical=new Map(),byLast=new Map();for(const row of indexed){const key=norm(row.player),list=byName.get(key)||[];list.push(row);byName.set(key,list);const ck=canonical(row.player),cl=byCanonical.get(ck)||[];cl.push(row);byCanonical.set(ck,cl);const ps=parts(row.player),last=ps.at(-1);if(last){const a=byLast.get(last)||[];a.push(row);byLast.set(last,a)}}return{name,weight,rows:indexed,byName,byCanonical,byLast}}
-function channels(results){const offense=[],idp=[];for(const r of results||[]){if(!r?.valid)continue;const weight=r.reducedWeight?REDUCED:1;if(r.id==="combined-dynasty"){offense.push(makeChannel("The IDP Show Combined Offense",weight,(r.rankings||[]).filter(x=>String(x?.position||"").toUpperCase()!=="IDP")));idp.push(makeChannel("The IDP Show Combined IDP",weight,(r.rankings||[]).filter(x=>String(x?.position||"").toUpperCase()==="IDP")));continue}if(r.id==="draftsharks"){offense.push(makeChannel(r.source,weight,r.rankings||[]));continue}if(r.id?.includes("idp")){idp.push(makeChannel(r.source,weight,r.rankings));continue}offense.push(makeChannel(r.source,weight,r.rankings))}return{offense,idp}}
+function channels(results){const offense=[],idp=[];for(const r of results||[]){if(!r?.valid)continue;const weight=r.reducedWeight?REDUCED:1;if(r.id==="combined-dynasty"){offense.push(makeChannel("The IDP Show Combined Offense",weight,(r.rankings||[]).filter(x=>String(x?.position||"").toUpperCase()!=="IDP")));idp.push(makeChannel("The IDP Show Combined IDP",weight,(r.rankings||[]).filter(x=>String(x?.position||"").toUpperCase()==="IDP")));continue}if(r.id==="draftsharks"){offense.push(makeChannel(r.source,weight,r.rankings||[]));continue}if(r.id?.includes("idp")){
+  // Verified extraction is not evidence of dynasty scope. The provider URL
+  // must explicitly represent dynasty IDP rankings; general-season cheat
+  // sheets may be parsed for diagnostics but cannot enter dynasty consensus.
+  if(r.dynastyVerified!==true)continue;
+  idp.push(makeChannel(r.source,weight,r.rankings));continue
+ }offense.push(makeChannel(r.source,weight,r.rankings))}return{offense,idp}}
 function compatibleFirst(a,b){if(!a||!b)return false;if(a===b)return true;if(a[0]!==b[0])return false;const m=Math.min(a.length,b.length);return m>=3&&(a.slice(0,Math.min(4,m))===b.slice(0,Math.min(4,m))||a.startsWith(b)||b.startsWith(a))}
 function idpPositionMatch(position,positions){
  const rp=String(position||'').toUpperCase();

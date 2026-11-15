@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { buildConsensusComposite } from "../netlify/functions/consensus-composite-v3.mjs";
 
-const result=(source,id,rows,reducedWeight=false)=>({source,id,valid:true,rankings:rows,reducedWeight});
+const result=(source,id,rows,reducedWeight=false)=>({source,id,valid:true,rankings:rows,reducedWeight,dynastyVerified:id.includes("idp")});
 
 test("keeps IDP rank/value separate from offensive rank/value",()=>{
   const results=[
@@ -299,4 +299,33 @@ test('position alone disambiguates different same-name IDP roles without guessin
  const data=buildConsensusComposite(results,players);
  assert.ok(data.byId.cb>0);
  assert.equal(data.byId.dt,undefined);
+});
+
+
+test('valid generic-season IDP cheat sheet is never treated as dynasty consensus',()=>{
+ const player=[{id:'defender',name:'Elite Defender',positions:['LB']}];
+ const general={source:'RotoWire IDP',id:'rotowire-idp',valid:true,dynastyVerified:false,reducedWeight:true,
+  rankings:[{player:'Elite Defender',rank:1,position:'IDP'}]};
+ const alone=buildConsensusComposite([general],player);
+ assert.equal(alone.byId.defender,undefined,'redraft-like data must never become dynasty value');
+ assert.equal(alone.sourceCounts.idp,0);
+ const validDynasty={...general,source:'Verified Dynasty IDP',id:'draftsharks-idp',dynastyVerified:true,reducedWeight:false};
+ const allowed=buildConsensusComposite([validDynasty,general],player);
+ assert.equal(allowed.sourceCounts.idp,1);
+ assert.ok(allowed.byId.defender>0);
+ assert.deepEqual(allowed.detailsById.defender.idpSources,['Verified Dynasty IDP']);
+});
+test('unlabeled IDP source is unverified even when its rows are contiguous and plausible',()=>{
+ const player=[{id:'defender',name:'Elite Defender',positions:['LB']}];
+ const raw={source:'Unlabeled IDP',id:'unlabeled-idp',valid:true,rankings:[{player:'Elite Defender',rank:1,position:'LB'}]};
+ const c=buildConsensusComposite([raw],player);
+ assert.equal(c.sourceCounts.idp,0);
+ assert.equal(c.byId.defender,undefined);
+});
+test('verified combined dynasty source remains eligible for IDP consensus',()=>{
+ const player=[{id:'defender',name:'Elite Defender',positions:['LB']}];
+ const a=buildConsensusComposite([{id:'combined-dynasty',source:'The IDP Show Combined',valid:true,
+  rankings:[{player:'Elite Defender',rank:1,position:'IDP'}]}],player);
+ assert.equal(a.sourceCounts.idp,1);
+ assert.ok(a.byId.defender>0);
 });

@@ -7,6 +7,12 @@ on:
       - 'tests/targeted-max-value-search-stall.test.mjs'
       - 'tests/finder-natural-filter-matrix.test.mjs'
       - 'trade-specific-player-v232.js'
+      - 'trade-add-assets-complement-v1.js'
+      - 'trade-specific-add-assets-v282.js'
+      - 'trade-specific-max-tier-add-v300.js'
+      - 'trade-specific-tier-up-v282.js'
+      - 'trade-finder-v256-compiled.js'
+      - 'tests/finder-add-assets-complements.test.mjs'
       - 'netlify/functions/site-v29.mjs'
       - '.github/workflows/targeted-max-value-performance.yml'
   push:
@@ -27,7 +33,12 @@ jobs:
         run: |
           node --check trade-specific-max-value-v279.js
           node --check trade-specific-player-v232.js
-          node --test tests/targeted-max-value-search-stall.test.mjs tests/finder-natural-filter-matrix.test.mjs
+          node --check trade-add-assets-complement-v1.js
+          node --check trade-specific-add-assets-v282.js
+          node --check trade-specific-max-tier-add-v300.js
+          node --check trade-specific-tier-up-v282.js
+          node --check trade-finder-v256-compiled.js
+          node --test tests/targeted-max-value-search-stall.test.mjs tests/finder-natural-filter-matrix.test.mjs tests/finder-add-assets-complements.test.mjs
           node scripts/v311-pipeline-identity-v319-smoke.cjs
       - name: Existing specific-player and value-adjustment functionality
         run: |

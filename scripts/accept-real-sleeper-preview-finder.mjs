@@ -11,7 +11,7 @@ const leagueId='1316867686394769408';
 // Diagnostic-only timeout: never leave a read-only acceptance job silently hung.
 let lastStage='initializing';
 const markStage=label=>{lastStage=label;console.log('[live-preview-audit] '+label+' '+new Date().toISOString())};
-const watchdog=setTimeout(()=>{console.error('[live-preview-audit] STALLED at '+lastStage+' after 180s');process.exit(124)},180000);
+const watchdog=setTimeout(()=>{console.error('[live-preview-audit] STALLED at '+lastStage+' after 90s');process.exit(124)},90000);
 watchdog.unref();
 markStage('fetching Sleeper league and rosters');
 const timeout=ms=>AbortSignal.timeout(ms);
@@ -77,6 +77,37 @@ try{
     },8000);
   });
   const page=await context.newPage();
+  // Test-only CPU sampling on the renderer: when the page becomes unresponsive,
+  // we need an actual stack hotspot, not a guessed valuation root cause.
+  try{
+    const cdp=await context.newCDPSession(page);
+    await cdp.send('Profiler.enable');
+    await cdp.send('Profiler.setSamplingInterval',{interval:1000});
+    await cdp.send('Profiler.start');
+    const timer=setTimeout(async()=>{
+      try{
+        const done=await Promise.race([
+          cdp.send('Profiler.stop'),
+          new Promise((_,reject)=>setTimeout(()=>reject(Error('CDP profiler unresponsive')),9000))
+        ]);
+        const profile=done?.profile||{},nodes=new Map((profile.nodes||[]).map(n=>[n.id,n]));
+        const counts=new Map();
+        for(const id of profile.samples||[]){
+          const frame=nodes.get(id)?.callFrame||{},label=
+            String(frame.functionName||'(anonymous)')+' @ '+
+            String(frame.url||'(inline)').slice(-105)+':'+String(frame.lineNumber??'?');
+          counts.set(label,(counts.get(label)||0)+1);
+        }
+        const top=[...counts].sort((a,b)=>b[1]-a[1]).slice(0,25)
+          .map(([frame,samples])=>({frame,samples}));
+        console.log('[live-preview-audit] CPU_PROFILE '+JSON.stringify({
+          sampleCount:profile.samples?.length||0,nodes:profile.nodes?.length||0,top
+        }));
+      }catch(e){console.error('[live-preview-audit] CPU_PROFILE_ERROR '+String(e?.message||e))}
+    },24000);
+    timer.unref?.();
+  }catch(e){console.error('[live-preview-audit] CPU_PROFILE_SETUP_ERROR '+String(e?.message||e))}
+
   page.on('console',message=>{
     const t=message.text();
     if(t.startsWith('[ffl-boot]'))console.log('[live-preview-audit] '+t.slice(0,400));

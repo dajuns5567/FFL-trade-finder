@@ -11,9 +11,25 @@ function ageScore25(id){const a=age25(id);if(!Number.isFinite(a))return .5;if(a<
 function breakdownQty25(sample,keys){let n=0;for(const k of keys){const b=sample?.breakdown?.[k];if(b&&Number.isFinite(Number(b.qty)))n+=Number(b.qty)}return n}
 function historyMetrics25(a){
  const samples=Array.isArray(a?.seasons)?a.seasons:[],coverage=samples.reduce((s,x)=>s+Number(x.assignedWeight||0),0);if(!samples.length||coverage<=0)return{ppg:0,tackleRate:0,spikeRate:0,confidence:0,coverage:0,seasons:0};
+ // A two-game current-season sample cannot carry the same seasonal weight
+ // as eight verified games. Preserve the past three regular seasons as an
+ // anchor, shifting share toward a sufficiently sampled current breakout.
+ // This is a league-wide, games-only rule; never a player or role adjustment.
+ const current=samples.find(x=>x.currentSeason&&Number(x.games)>0),historicalWeight=current?coverage-Number(current.assignedWeight||0):0;
+ const currentGames=Number(current?.games||0);
+ const currentShare=current&&historicalWeight>0
+  ?.10+.45*clamp25(0,(currentGames-2)/6,1):null;
  let ppg=0,tackles=0,spikes=0;
- for(const s of samples){const w=Number(s.assignedWeight||0),g=Math.max(1,Number(s.games||0));ppg+=Number(s.ppg||0)*w;tackles+=((breakdownQty25(s,['idp_tkl_solo'])+breakdownQty25(s,['idp_tkl_ast']))/g)*w;spikes+=((breakdownQty25(s,['idp_sack'])+breakdownQty25(s,['idp_int'])+breakdownQty25(s,['idp_ff'])+breakdownQty25(s,['idp_fum_rec'])+breakdownQty25(s,['idp_pass_def']))/g)*w}
- return{ppg:ppg/coverage,tackleRate:tackles/coverage,spikeRate:spikes/coverage,confidence:clamp25(0,Number(a.confidence||0),1),coverage,seasons:Number(a.qualifyingSeasons||samples.length)};
+ for(const s of samples){
+  const base=Number(s.assignedWeight||0);
+  const w=currentShare===null?base/coverage:
+   s===current?currentShare:(1-currentShare)*base/historicalWeight;
+  const g=Math.max(1,Number(s.games||0));
+  ppg+=Number(s.ppg||0)*w;
+  tackles+=((breakdownQty25(s,['idp_tkl_solo'])+breakdownQty25(s,['idp_tkl_ast']))/g)*w;
+  spikes+=((breakdownQty25(s,['idp_sack'])+breakdownQty25(s,['idp_int'])+breakdownQty25(s,['idp_ff'])+breakdownQty25(s,['idp_fum_rec'])+breakdownQty25(s,['idp_pass_def']))/g)*w;
+ }
+ return{ppg,tackleRate:tackles,spikeRate:spikes,confidence:clamp25(0,Number(a.confidence||0),1),coverage:1,seasons:Number(a.qualifyingSeasons||samples.length),currentSeasonGames:current?currentGames:null,currentSeasonWeight:currentShare??null,weightBasis:'qualified-games-2026-with-regular-season-history-anchor'};
 }
 function historicalBenchmarkMetrics25(a){
  const samples=(Array.isArray(a?.seasons)?a.seasons:[]).filter(s=>!s.currentSeason).sort((x,y)=>Number(y.season)-Number(x.season)).slice(0,3),weights=[.60,.30,.10];
@@ -125,18 +141,6 @@ function blend25(c,scoreValue,contextValue){
  const centered=clamp25(c*.45,raw,Math.max(c*2.15,c+760));
  return{value:Math.max(1,Math.round(centered)),raw,fallback:false};
 }
-// Experimental, read-only-review V75. The fixed 20/45/35 IDP blend
-// currently combines a 180..1450 production component with a much narrower
-// career context component, magnifying veterans' historical scoring despite
-// stronger verified young-player consensus and future runway. This smooth,
-// strictly monotone calibration retains the scoring order and all coefficients.
-// Missing qualifying Sleeper production keeps its existing conservative prior.
-function calibratedScoring25(score){
- const raw=Number(score?.value);
- if(!(Number(score?.a?.qualifyingSeasons)>0)||!Number.isFinite(raw))return raw;
- const fraction=clamp25(0,(raw-180)/1270,1);
- return 180+920*Math.pow(fraction,.30);
-}
 function model25(z){
  if(groupPos(z.x)!=='IDP'||!isIndividualIdp25(z.x.id))return z;
  const c=Number(z.consensus),score=scoring25(z.x.id),ctx=context25(z.x.id,score);
@@ -146,9 +150,9 @@ function model25(z){
 // A prospect with real dynasty consensus, or any actual qualifying scoring,
 // continues through the unchanged 20/45/35 model and historical confidence.
 const unverifiedFallback=!(c>0)&&!(Number(score.a?.qualifyingSeasons)>0);
-const effectiveScoringValue=unverifiedFallback?Math.min(score.value,180):calibratedScoring25(score);
+const effectiveScoringValue=unverifiedFallback?Math.min(score.value,180):score.value;
 const blend=blend25(c,effectiveScoringValue,ctx.value);
- return{...z,value:blend.value,consensus:Number.isFinite(c)&&c>0?Math.round(c):z.consensus,context:Math.round(ctx.value),production:{...score,leagueContext:ctx,idpV25MarketCenterOffset:IDP_V25_MARKET_CENTER_OFFSET,idpV25RawBlend:blend.raw,idpUnverifiedNoConsensusFallbackV73:unverifiedFallback,idpEffectiveFallbackScoringV73:effectiveScoringValue,idpV75RawScoringValue:score.value,idpV75CalibratedScoringValue:effectiveScoringValue,idpV75ScoringCalibrated:Number(score.a?.qualifyingSeasons)>0},fallback:blend.fallback};
+ return{...z,value:blend.value,consensus:Number.isFinite(c)&&c>0?Math.round(c):z.consensus,context:Math.round(ctx.value),production:{...score,leagueContext:ctx,idpV25MarketCenterOffset:IDP_V25_MARKET_CENTER_OFFSET,idpV25RawBlend:blend.raw,idpUnverifiedNoConsensusFallbackV73:unverifiedFallback,idpEffectiveFallbackScoringV73:effectiveScoringValue},fallback:blend.fallback};
 }
 masterRankings=function(){return priorMaster25().map(model25).sort((a,b)=>b.value-a.value)};
 ensureMaster=function(){return masterRankCache||(masterRankCache=masterRankings())};

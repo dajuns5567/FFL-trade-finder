@@ -139,9 +139,11 @@ const v540OldManual='function manualGivePackages(me,chosen){const out=[chosen];'
 const v540NewManual='function manualGivePackages(me,chosen){if(chosen?.length&&addAssetsIfNeededEnabled()&&window.tradeAddAssetsComplementV1?.build)return window.tradeAddAssetsComplementV1.build(chosen,(st().allAssets||[]).filter(x=>Number(x.owner)===me&&(x.type===\'player\'||(x.type===\'pick\'&&Number(x.round)<=3))),av,pos,{maxExtras:10,maxPairs:12});const out=[chosen];';
 if(src.split(v540OldManual).length!==2){console.error('V540 Finder guard failed: manual extras baseline mismatch');return}
 src=src.replace(v540OldManual,v540NewManual);
-const v540OldOrdering='ordered=sprinkleTwoPlayerForTwo(ordered,tier);return ordered}const diversified=';
-const v540NewOrdering='ordered=sprinkleTwoPlayerForTwo(ordered,tier);if(addBackfill&&window.tradeAddAssetsComplementV1?.diversify)ordered=window.tradeAddAssetsComplementV1.diversify(ordered,selectedGive(),MAX_RESULTS);return ordered}const diversified=';
-if(src.split(v540OldOrdering).length!==2){console.error('V540 Finder guard failed: regular manual-result ordering mismatch');return}
+const v540OldOrdering='ordered=sprinkleTwoPlayerForTwo(ordered,tier);return ordered';
+const v540NewOrdering='ordered=sprinkleTwoPlayerForTwo(ordered,tier);if(addBackfill&&window.tradeAddAssetsComplementV1?.diversify)ordered=window.tradeAddAssetsComplementV1.diversify(ordered,selectedGive(),MAX_RESULTS);return ordered';
+// Two tails exist: ordinary non-blank first, blank second. Alter ONLY the
+// first; the blank finder source must retain its frozen behaviour.
+if(src.split(v540OldOrdering).length!==3){console.error('V540 Finder guard failed: expected two source-ordering tails, found',src.split(v540OldOrdering).length-1);return}
 src=src.replace(v540OldOrdering,v540NewOrdering);
 
 src=src.replaceAll("V197 Finder","V209 Finder")

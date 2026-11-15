@@ -15,7 +15,12 @@ function playerMetadataReadyV18(){
     matched++;
     if(positions.some(p=>["QB","RB","WR","TE"].includes(p)))offense=true;
   }
-  return matched>=Math.min(checked,8)&&offense;
+  if(!(matched>=Math.min(checked,8)&&offense))return false;
+  // Even after /players/nfl resolves, the canonical V319 model must finish
+  // constructing its roster price map before legacy UI requests 32 team sums.
+  // Otherwise the fallback V139 pricing path re-scans 544 ranks per player.
+  if(typeof window!=='undefined'&&window.modeledPlayerValuesV319&&!window.modeledPlayerValuesV319.ready)return false;
+  return true;
 }
 function teamPower(t){
   const vals=(t?.roster?.players||[]).map(id=>baseValue({type:"player",id:String(id)})).sort((a,b)=>b-a);

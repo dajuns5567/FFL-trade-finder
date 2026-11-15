@@ -1,0 +1,33 @@
+name: IDP V78 verified one-source confidence counterfactual (draft)
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/consensus-composite-v3.mjs'
+      - 'tests/consensus-composite-v3.test.mjs'
+      - 'tests/fixtures/idp-v78-prior-consensus-composite.mjs'
+      - 'scripts/audit-idp-v78-one-source-confidence.mjs'
+      - '.github/workflows/idp-v78-one-source-audit.yml'
+permissions:
+  contents: read
+jobs:
+  verified-one-source:
+    if: github.event.pull_request.number == 479
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate source-only IDP confidence change and regression
+        run: |
+          node --check netlify/functions/consensus-composite-v3.mjs
+          node --check scripts/audit-idp-v78-one-source-confidence.mjs
+          node --test tests/consensus-composite-v3.test.mjs tests/idp-dynasty-provenance-v77.test.mjs
+      - name: Install read-only source adapter and Chromium
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund --no-package-lock
+          npm install --no-save --ignore-scripts --no-audit --no-fund --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Seven-source full 32-team one-source market calibration counterfactual
+        run: node scripts/audit-idp-v78-one-source-confidence.mjs

@@ -19,7 +19,7 @@ const make=loaded=>{
   };
   const ctx={
     Math,Number,Array,String,Map,Set,Object,Infinity,console,
-    state:{allAssets:[...roster,...picks],players},
+    state:{allAssets:[...roster,...picks],players,consensusComposite:{byId:{'1':1500,'2':1200},detailsById:{'1':{offenseRank:1},'2':{offenseRank:2}}}},
     tradeValueNormalizationV139:normalization,tradeValueNormalizationV130:normalization,
     ensureMaster:()=>{calls.rank++;return master;},
     document:{readyState:'complete',getElementById:k=>k==='updateStatus'?{}:null,
@@ -89,4 +89,30 @@ test('source-preserved value curve is unchanged and no consensus/IDP weighting i
   assert.match(src,/const BLEND=\.28,MIN_RATIO=\.45,MAX_RATIO=2\.25/);
   assert.match(src,/const s=start,e=end,startVal=legacyValue\(s,maxRank\),endVal=legacyValue\(e,maxRank\)/);
   assert.doesNotMatch(src,/consensusWeight|IDP_V25_MARKET_CENTER_OFFSET|idpOverallTradeCurveFactorV72/);
+});
+
+test('verified consensus is required before ranking readiness, even when Sleeper player metadata is complete',()=>{
+ const x=make(true);
+ x.ctx.state.consensusComposite=null;
+ x.drain();
+ assert.equal(x.ctx.modeledPlayerValuesV319.ready,false);
+ assert.equal(x.ctx.modeledPlayerValuesV319.dynastyConsensusReady(),false);
+ assert.equal(x.calls.rank,0,'must not run rank model before dynasty sources exist');
+ x.ctx.state.consensusComposite={byId:{'1':1500,'2':1200}};
+ x.observers[0]();
+ x.drain();
+ assert.equal(x.ctx.modeledPlayerValuesV319.ready,true);
+ assert.equal(x.ctx.modeledPlayerValuesV319.meta.count,3);
+ assert.equal(x.ctx.tradeValueNormalizationV139.canonicalValue(x.picks[0]),3500);
+});
+
+test('partial dynasty source coverage cannot publish fallback overall and IDP ranks',()=>{
+ const x=make(true);
+ x.ctx.state.consensusComposite={byId:{'1':1500}};
+ x.drain();
+ assert.equal(x.ctx.modeledPlayerValuesV319.ready,false);
+ assert.equal(x.calls.rank,0);
+ x.ctx.state.consensusComposite.byId['2']=1200;
+ x.ctx.modeledPlayerValuesV319.install();
+ assert.equal(x.ctx.modeledPlayerValuesV319.ready,true);
 });

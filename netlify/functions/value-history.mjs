@@ -616,21 +616,25 @@ function marketFromSnapshots(snaps){
     '1Y':baselineFor(ordered,latestMs,365)||first,
     'ALL':first
   };
-  const firstSeen=new Map();
+  const firstSeen=new Map(),firstInYear=new Map(),yearStartMs=Date.parse(bases['1Y']?.t);
   for(const snap of ordered)for(const row of snap.rows||[]){
     const id=String(row?.id||'');
-    if(id&&!firstSeen.has(id))firstSeen.set(id,{t:snap.t,row});
+    if(!id)continue;
+    if(!firstSeen.has(id))firstSeen.set(id,{t:snap.t,row});
+    // A 1Y fallback must be inside the actual 1Y baseline period.
+    // Do not resurrect a pre-window price when an asset disappears and returns.
+    if(Date.parse(snap.t)>=yearStartMs&&!firstInYear.has(id))firstInYear.set(id,{t:snap.t,row});
   }
   const periods={};
   for(const [label,base] of Object.entries(bases)){
-    const p=marketPeriod(latest,base,(label==='1Y'||label==='ALL')?firstSeen:null);
+    const p=marketPeriod(latest,base,label==='1Y'?firstInYear:label==='ALL'?firstSeen:null);
     periods[label]={valueRisers:p.valueRisers,valueFallers:p.valueFallers,rankRisers:p.rankRisers,rankFallers:p.rankFallers,posRankRisers:p.posRankRisers,posRankFallers:p.posRankFallers,baseline:base?.t||null};
   }
-  const m1=marketPeriod(latest,bases['1D']).metrics,m7=marketPeriod(latest,bases['7D']).metrics,m30=marketPeriod(latest,bases['30D']).metrics,m365=marketPeriod(latest,bases['1Y'],firstSeen).metrics,mAll=marketPeriod(latest,bases['ALL'],firstSeen).metrics;
+  const m1=marketPeriod(latest,bases['1D']).metrics,m7=marketPeriod(latest,bases['7D']).metrics,m30=marketPeriod(latest,bases['30D']).metrics,m365=marketPeriod(latest,bases['1Y'],firstInYear).metrics,mAll=marketPeriod(latest,bases['ALL'],firstSeen).metrics;
   const latestMap=rowMap(latest);
   const marketRows=[...latestMap.values()].map(r=>{
     const id=String(r.id),d1=m1.get(id),d7=m7.get(id),d30=m30.get(id),d365=m365.get(id),dAll=mAll.get(id);
-    return{id,value:r.value,overall:r.overall,pos:r.pos,posRank:r.posRank,delta1:d1?.delta??null,delta7:d7?.delta??null,delta30:d30?.delta??null,delta365:d365?.delta??null,deltaAll:dAll?.delta??null,delta365From:d365?.baseline_t??null,deltaAllFrom:dAll?.baseline_t??null,delta365Available:d365?.available_history??false,deltaAllAvailable:dAll?.available_history??false,posRankDelta1:d1?.posRankDelta??null,posRankDelta7:d7?.posRankDelta??null,posRankDelta30:d30?.posRankDelta??null,posRankDelta365:d365?.posRankDelta??null,posRankDeltaAll:dAll?.posRankDelta??null,overallDelta7:d7?.overallDelta??null,overallDelta30:d30?.overallDelta??null};
+    return{id,value:r.value,overall:r.overall,pos:r.pos,posRank:r.posRank,delta1:d1?.delta??null,delta7:d7?.delta??null,delta30:d30?.delta??null,delta365:d365?.delta??null,deltaAll:dAll?.delta??null,delta365From:d365?.baseline_t??null,deltaAllFrom:dAll?.baseline_t??null,delta365Available:(d365?.available_history??false)||(!((latestMs-firstMs)>=365*86400000)&&d365!=null),deltaAllAvailable:dAll?.available_history??false,posRankDelta1:d1?.posRankDelta??null,posRankDelta7:d7?.posRankDelta??null,posRankDelta30:d30?.posRankDelta??null,posRankDelta365:d365?.posRankDelta??null,posRankDeltaAll:dAll?.posRankDelta??null,overallDelta7:d7?.overallDelta??null,overallDelta30:d30?.overallDelta??null};
   }).sort((a,b)=>b.value-a.value);
   return{
     tracking_since:first.t,latest:latest.t,snapshot_count:ordered.length,periods,marketRows,

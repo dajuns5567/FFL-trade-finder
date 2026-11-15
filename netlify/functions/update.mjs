@@ -35,6 +35,10 @@ export function buildConsensusPayload(refresh,players=[],updatedAt=new Date().to
       addSnapshot(sources,"The IDP Show Combined IDP",result,idp,"idp",updatedAt);
       continue;
     }
+    // A valid general-season IDP cheat sheet may be visible in diagnostics,
+    // but it must never be stored as a reusable dynasty-market source. This
+    // also prevents read-only dashboards from displaying it as dynasty data.
+    if(String(result.id||'').includes('idp')&&result.dynastyVerified!==true)continue;
     addSnapshot(sources,result.source,result,result.rankings,result.id?.includes("idp")?"idp":"offense",updatedAt);
   }
   const diagnostics=results.map(result=>({source:result.source,ok:!!result.valid,dynastyConsensusEligible:result.id==="combined-dynasty"||!String(result.id||"").includes("idp")||result.dynastyVerified===true,dynastySourceUrl:result.dynastySourceUrl||null,status:result.valid?"refreshed":"failed",stage:result.stage||null,url:Array.isArray(result.urls)?result.urls[0]||null:null,players_extracted:Number(result.players_extracted||0),ranking_rows:Number(result.ranking_rows||0),error:result.valid?null:(result.error||null),timestamp:result.timestamp||null,fetch_timestamp:result.timestamp||null,publisher_updated_at:null,market_observation:result.marketObservation||null,source_provenance:result.diagnostics?.source_provenance||null,...(result.reducedWeight?{reducedWeight:true}:{})}));

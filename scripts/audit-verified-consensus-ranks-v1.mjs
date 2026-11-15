@@ -78,8 +78,24 @@ if(refresh.successful!==7||refresh.total!==7){
       modeled:Number(z.value),marketPrecision:Number(z.marketPrecisionValueV386)||null,
       consensus:Number(z.consensus)||null,
       canonical:Number(window.tradeValueNormalizationV139.canonicalValue({type:'player',id})),
-      sourceCount:st.consensusComposite?.detailsById?.[id]?.offenseSources?.length||0};
+      sourceCount:st.consensusComposite?.detailsById?.[id]?.offenseSources?.length||0,
+      idpSourceNames:st.consensusComposite?.detailsById?.[id]?.idpSources||[],
+      v72Baseline:Number(z.production?.idpOverallTradeCurveBaselineV72)||null,
+      v72Factor:Number(z.production?.idpOverallTradeCurveFactorV72)||null,
+      v72SourceRetentionBonus:Number(z.production?.idpV72SourceRetentionBonus)||0,
+      v25RawBlend:Number(z.production?.idpV25RawBlend)||null,
+      modelScoring:Number(z.production?.value)||null};
+
    });
+   // Counterfactual uses the ORIGINAL pre-V72 modeled IDP price recorded
+   // by the active model, not an invented per-player adjustment. Offensive
+   // precision, all consensus snapshots and every other system stay fixed.
+   const preSort=ranked.map(row=>({id:row.id,prior:row.overall,
+     basis:row.position==='IDP'&&row.v72Baseline>0
+      ?row.v72Baseline:(row.marketPrecision||row.modeled)}))
+      .sort((a,b)=>b.basis-a.basis||a.prior-b.prior);
+   const beforeV72=new Map(preSort.map((r,i)=>[r.id,i+1]));
+   for(const row of ranked)row.overallBeforeV72=beforeV72.get(row.id);
    return{ranked,sourceComplete:window.__fllConsensusRefresh,
      modelMeta:window.modeledPlayerValuesV319.meta,teams:st.teams.length,
      consensusSize:Object.keys(st.consensusComposite?.byId||{}).length,

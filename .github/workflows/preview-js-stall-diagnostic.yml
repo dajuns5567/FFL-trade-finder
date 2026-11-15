@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        mode: [idp-v21, idp-v25, idp-early, idp-late]
+        mode: [full, idp-v25]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

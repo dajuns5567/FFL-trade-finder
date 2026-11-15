@@ -7,7 +7,7 @@ const preview=process.env.FFL_PREVIEW_URL||
 const mode=process.env.FFL_DIAG_MODE||'idp-v21';
 const origin=new URL(preview).origin;
 assert(/^https:\/\/(?:deploy-preview-466|[a-f0-9]{24})--precious-dango-fb4633\.netlify\.app$/.test(origin),'Only dedicated PR #466 preview permitted');
-assert(['idp-v21','idp-v25','idp-early','idp-late','all-valuation','idp-family','offense-family','late-ranking'].includes(mode),'Unsupported test-only isolation mode');
+assert(['full','idp-v21','idp-v25','idp-early','idp-late','all-valuation','idp-family','offense-family','late-ranking'].includes(mode),'Unsupported test-only isolation mode');
 let phase='init',blocked=[],errors=[];
 const watchdog=setTimeout(()=>{
  console.error('STARTUP_ISOLATION_STALL '+JSON.stringify({mode,phase,blocked,errors}));
@@ -22,7 +22,7 @@ try{
   if(!['GET','HEAD'].includes(request.method()))return route.abort('blockedbyclient');
   if(u.hostname.endsWith('.netlify.app')&&u.origin!==origin)return route.abort('blockedbyclient');
   if(u.protocol!=='https:')return route.abort('blockedbyclient');
-  const skip=mode==='idp-v21'?name==='valuation-idp-v21.js':
+  const skip=mode==='full'?false:mode==='idp-v21'?name==='valuation-idp-v21.js':
    mode==='idp-v25'?name==='valuation-idp-v25-perf.js':
    mode==='idp-early'?(/^valuation-idp-v(?:21|25-perf|26|27-perf|28-perf|29|32|33)\.js$/.test(name)):
    mode==='idp-late'?(/^valuation-idp-v(?:35|36|4[3-8])\.js$/.test(name)):

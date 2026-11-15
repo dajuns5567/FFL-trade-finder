@@ -8,6 +8,12 @@ const origin=new URL(preview).origin;
 assert(/^https:\/\/(?:deploy-preview-466|[a-z0-9]+)--precious-dango-fb4633\.netlify\.app$/.test(origin),
   'Refusing a non-PR-466 Netlify origin');
 const leagueId='1316867686394769408';
+// Diagnostic-only timeout: never leave a read-only acceptance job silently hung.
+let lastStage='initializing';
+const markStage=label=>{lastStage=label;console.log('[live-preview-audit] '+label+' '+new Date().toISOString())};
+const watchdog=setTimeout(()=>{console.error('[live-preview-audit] STALLED at '+lastStage+' after 180s');process.exit(124)},180000);
+watchdog.unref();
+markStage('fetching Sleeper league and rosters');
 const timeout=ms=>AbortSignal.timeout(ms);
 async function getJson(url){
   const r=await fetch(url,{signal:timeout(18000),headers:{accept:'application/json'}});
@@ -18,6 +24,7 @@ const [league,rosters]=await Promise.all([
   getJson('https://api.sleeper.app/v1/league/'+leagueId),
   getJson('https://api.sleeper.app/v1/league/'+leagueId+'/rosters')
 ]);
+markStage('Sleeper API loaded; validating 32-team roster');
 assert.equal(String(league.league_id),leagueId,'Wrong live league ID');
 assert.equal(Number(league.total_rosters),32,'Real Sleeper league does not contain 32 teams');
 assert.equal(rosters.length,32,'Incomplete real Sleeper rosters');
@@ -27,6 +34,7 @@ assert(realPlayerIds.size>250,'Suspiciously incomplete 32-team player roster sna
 
 let browser,blockedWrites=0,blockedMutations=0,failedAssets=[];
 try{
+  markStage('launching isolated read-only Chromium');
   browser=await chromium.launch({headless:true,args:['--no-sandbox']});
   const context=await browser.newContext({serviceWorkers:'block'});
   await context.route('**/*',route=>{
@@ -48,12 +56,15 @@ try{
   page.on('response',r=>{
     if(r.status()>=400&&/\.(?:js|css)(?:\?|$)/.test(r.url()))failedAssets.push({status:r.status(),url:r.url()});
   });
+  markStage('opening exact Netlify preview');
   await page.goto(preview,{waitUntil:'domcontentloaded',timeout:35000});
+  markStage('waiting for preview teams/assets');
   await page.waitForFunction(()=>{
     const state=window.state;
     return Array.isArray(state?.teams)&&state.teams.length===32&&
       Array.isArray(state?.allAssets)&&state.allAssets.filter(x=>x?.type==='player').length>250;
   },null,{timeout:45000});
+  markStage('teams/assets loaded; waiting for player metadata');
   // Teams/assets can populate before the Sleeper player metadata dictionary.
   // A premature lookup reads numeric IDs as names and classifies every player as IDP.
   await page.waitForFunction(()=>{
@@ -64,6 +75,7 @@ try{
       return !!(p?.full_name||p?.first_name)&&Array.isArray(p?.fantasy_positions)&&p.fantasy_positions.includes('RB');
     });
   },null,{timeout:45000});
+  markStage('metadata loaded; reading canonical roster values');
   const initial=await page.evaluate(()=>{
     const a=window.state.allAssets.filter(x=>x?.type==='player');
     const players=a.map(x=>({id:String(x.id),owner:String(x.owner),
@@ -87,6 +99,7 @@ try{
     rosters.find(r=>String(r.roster_id)===id).players?.length>=10
   );
   assert(selectedTeam,'No suitable distinct outgoing 32-team roster');
+  markStage('preparing bounded Finder search');
   const prepared=await page.evaluate(({teamId,targetName})=>{
     const team=document.querySelector('#findTeam'),style=document.querySelector('#findMode'),
       tier=document.querySelector('#tradeTier94'),target=document.querySelector('#desiredPlayerSearch'),
@@ -107,6 +120,7 @@ try{
     return {ready:true};
   },{teamId:selectedTeam,targetName:chosen.name});
   assert(prepared.ready,'Unable to start real-league Finder: '+JSON.stringify(prepared));
+  markStage('Finder search initiated; waiting for result');
   await page.waitForFunction(()=>{
     const result=window.tradeSpecificMaxValueV279?.sourceIntegrityStats?.();
     const last=result?.lastSearchStats;
@@ -127,6 +141,7 @@ try{
   assert(result.elapsedMs<=20000,'Actual league Finder exceeded acceptance timeout');
   assert(result.bounded,'Actual league Finder exceeded bounded examination budget');
   assert.deepEqual(failedAssets,[],'Preview JS/CSS asset failure');
+  markStage('Finder acceptance assertions passed');
   console.log('LIVE SLEEPER PREVIEW READ-ONLY ACCEPTANCE PASS '+JSON.stringify({
     commit:process.env.GITHUB_SHA||null,preview,leagueId,rosterCount:rosters.length,
     uniqueRosterPlayers:realPlayerIds.size,previewPlayers:initial.players,

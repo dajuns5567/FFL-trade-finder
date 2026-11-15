@@ -77,10 +77,27 @@ function distributions25(){
  for(const r of rows){const k=role25(r.id),x=Number(r.m?.ppg);if(rolePpg[k]&&Number.isFinite(x))rolePpg[k].push(x)}
  cache25={rows,ppg,tackles,spikes,p50,p99,rolePpg,historicalBenchmark:true,topPpg,playerOnlyBenchmark:{n:playerPpg.length,p50:playerP50,p99:playerP99}};return cache25;
 }
+// V76 scoring-only trial. Verified elite score values currently saturate at
+// 1450; use a continuous upper tail without changing the ordinary score,
+// unknown-history fallback, consensus, career context, or 20/45/35 blend.
+function scoringTail25(value,weightedPpg,historicalP99){
+ const v=Number(value);
+ if(!Number.isFinite(v)||v<=900)return value;
+ const smooth=900+400*(1-Math.exp(-(v-900)/400));
+ const excess=Math.max(0,(Number(weightedPpg)||0)-(Number(historicalP99)||0));
+ const evidenceBonus=v>=1449?14*excess/(3+excess):0;
+ return smooth+evidenceBonus;
+}
 function scoring25(id){
  generation25();id=String(id);if(scoreCache25.has(id))return scoreCache25.get(id);const a=baseAudit25(id),m=metrics25(id,a),d=distributions25(),role=role25(id);let out;
  if(!a?.qualifyingSeasons||!d.ppg.length)out={value:520,a,m,ppgPct:null,relative:null,strength:.45,role};
  else{const ppgPct=pct25(d.ppg,m.ppg),relative=clamp25(0,(m.ppg-d.p50)/(d.p99-d.p50),1.10),historicalSeasons=Number(a?.historicalSeasons||0),confidenceApplied=role==='EDGE'&&historicalSeasons>=2&&ppgPct>=.90?Math.max(m.confidence,.60):m.confidence,raw=.55*ppgPct+.45*relative,strength=.45+confidenceApplied*(raw-.45),overallValue=clamp25(180,180+1270*Math.pow(clamp25(.08,strength,1),2.70),1500);let value=overallValue,roleValue=null,roleBlend=0;if(role==='LB'){const xs=d.rolePpg?.LB||[];if(xs.length){const rp50=q25(xs,.50),rp99=Math.max(rp50+.01,q25(xs,.99)),rpct=pct25(xs,m.ppg),rrel=clamp25(0,(m.ppg-rp50)/(rp99-rp50),1.10),rraw=.55*rpct+.45*rrel,rstrength=.45+confidenceApplied*(rraw-.45);roleValue=clamp25(180,180+1270*Math.pow(clamp25(.08,rstrength,1),2.70),1500);roleBlend=.20;value=.80*overallValue+.20*roleValue}}out={value,a,m,ppgPct,relative,raw,strength,role,confidenceApplied,overallValue,roleValue,roleBlend,benchmarkP50:d.p50,benchmarkP99:d.p99,benchmarkN:d.ppg.length}}
+ if(Number(a?.qualifyingSeasons)>0&&Number(out.value)>900){
+   const rawScore=out.value;
+   out={...out,value:scoringTail25(rawScore,m.ppg,d.p99),
+    rawProductionScoreV76:rawScore,calibratedProductionScoreV76:true,
+    scoringTailMethodV76:'smooth-diminishing-returns-above-900'};
+ }
  scoreCache25.set(id,out);return out;
 }
 // Dynasty development belongs in context for every defensive role, not just

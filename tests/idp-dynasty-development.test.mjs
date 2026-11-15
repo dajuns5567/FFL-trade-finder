@@ -15,7 +15,7 @@ test('all IDP roles use one development function rather than role-specific boost
  const contextStart=src.indexOf('function context25('),contextEnd=src.indexOf('function blend25(',contextStart);
  const context=src.slice(contextStart,contextEnd);
  assert.match(context,/development25\(age25\(id\),yearsExp,m\.confidence,score\.a\?\.qualifyingSeasons\)/);
- assert.match(context,/index=\.20\*tackle\+\.20\*spike\+\.60\*development\.index/);
+ assert.match(context,/index=\.65\*development\.index\+\.25\*trajectory\.index\+\.10\*continuity\.index/);
  assert.doesNotMatch(context,/role25\(|'EDGE'|'LB'|'DB'/);
  assert.match(context,/yearsExp:Number\.isFinite\(yearsExp\)\?yearsExp:null/);
 });

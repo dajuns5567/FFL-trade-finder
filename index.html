@@ -357,8 +357,17 @@ function teamFit(x,teamId){
   fitCache.set(key,z);return z;
 }
 function teamStage(teamId){
-  if(stageCache.has(teamId))return stageCache.get(teamId);
   const t=state.teams.find(x=>x.id===Number(teamId));if(!t)return{label:"Unknown",score:0};
+  // Roster IDs arrive before Sleeper's /players/nfl dictionary. Do not run
+  // a 32-team global valuation from renderLeague while all positions are unknown.
+  // This provisional UI state is never cached; the later metadata-driven
+  // renderAll() calculates the identical contender/rebuilder stages as before.
+  const metadataReady=(t.roster.players||[]).some(id=>{
+    const p=state.players[String(id)];
+    return Array.isArray(p?.fantasy_positions)&&p.fantasy_positions.length>0;
+  });
+  if(!metadataReady)return{label:"Loading player data",score:0};
+  if(stageCache.has(teamId))return stageCache.get(teamId);
   const vals=(t.roster.players||[]).map(id=>baseValue({type:"player",id})).sort((a,b)=>b-a);
   const top=vals.slice(0,10).reduce((a,b)=>a+b,0),depth=vals.slice(10,20).reduce((a,b)=>a+b,0),picks=state.allAssets.filter(x=>x.type==="pick"&&x.owner===Number(teamId)).reduce((a,b)=>a+pickValue(b),0);
   const ages=(t.roster.players||[]).map(id=>Number(state.players[id]?.age)).filter(x=>x>0),avg=ages.length?ages.reduce((a,b)=>a+b,0)/ages.length:25;

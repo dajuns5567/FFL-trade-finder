@@ -153,7 +153,11 @@ try{
       ' | Sleeper responses: '+JSON.stringify(playerDataRequests)+
       ' | browser errors: '+JSON.stringify(runtimeErrors));
   });
-  markStage('metadata loaded; reading canonical roster values');
+  // Metadata alone does not certify the active canonical modeled price map.
+  // Accept live Finder only once V319 has completed its full roster validation.
+  await page.waitForFunction(()=>window.modeledPlayerValuesV319?.ready===true,
+    null,{timeout:25000,polling:500});
+  markStage('metadata and V319 canonical model ready; reading roster values');
   const initial=await page.evaluate(()=>{
     const a=window.state.allAssets.filter(x=>x?.type==='player');
     const players=a.map(x=>({id:String(x.id),owner:String(x.owner),
@@ -219,6 +223,7 @@ try{
   assert(result.elapsedMs<=20000,'Actual league Finder exceeded acceptance timeout');
   assert(result.bounded,'Actual league Finder exceeded bounded examination budget');
   assert.deepEqual(failedAssets,[],'Preview JS/CSS asset failure');
+  assert.deepEqual(runtimeErrors,[],'Browser JavaScript errors during live 32-team valuation/Finder acceptance');
   markStage('Finder acceptance assertions passed');
   console.log('LIVE SLEEPER PREVIEW READ-ONLY ACCEPTANCE PASS '+JSON.stringify({
     commit:process.env.GITHUB_SHA||null,preview,leagueId,rosterCount:rosters.length,

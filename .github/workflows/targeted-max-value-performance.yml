@@ -1,0 +1,50 @@
+name: Targeted Maximum Value Finder performance
+on:
+  pull_request:
+    paths:
+      - 'trade-specific-max-value-v279.js'
+      - 'scripts/v311-pipeline-identity-v319-smoke.cjs'
+      - 'tests/targeted-max-value-search-stall.test.mjs'
+      - 'tests/finder-natural-filter-matrix.test.mjs'
+      - 'trade-specific-player-v232.js'
+      - 'trade-add-assets-complement-v1.js'
+      - 'trade-specific-add-assets-v282.js'
+      - 'trade-specific-max-tier-add-v300.js'
+      - 'trade-specific-tier-up-v282.js'
+      - 'trade-finder-v256-compiled.js'
+      - 'trade-finder-style-loader-v209.js'
+      - 'tests/finder-add-assets-complements.test.mjs'
+      - 'netlify/functions/site-v29.mjs'
+      - '.github/workflows/targeted-max-value-performance.yml'
+  push:
+    branches:
+      - fix/targeted-max-value-search-stall
+permissions:
+  contents: read
+jobs:
+  specific-max-value-performance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Static checks and exact 32-team Select All / Tier Up fixture
+        run: |
+          node --check trade-specific-max-value-v279.js
+          node --check trade-specific-player-v232.js
+          node --check trade-add-assets-complement-v1.js
+          node --check trade-specific-add-assets-v282.js
+          node --check trade-specific-max-tier-add-v300.js
+          node --check trade-specific-tier-up-v282.js
+          node --check trade-finder-v256-compiled.js
+          node --check trade-finder-style-loader-v209.js
+          node --test tests/targeted-max-value-search-stall.test.mjs tests/finder-natural-filter-matrix.test.mjs tests/finder-add-assets-complements.test.mjs
+          node scripts/v311-pipeline-identity-v319-smoke.cjs
+      - name: Existing specific-player and value-adjustment functionality
+        run: |
+          node scripts/specific-max-tier-routing-structure-v324-smoke.cjs
+          node scripts/specific-player-simple-package-v325-smoke.cjs
+          node scripts/specific-player-family-diversity-v327-smoke.cjs
+          node scripts/blank-specific-runtime-v326-smoke.cjs

@@ -160,9 +160,17 @@ function model25(z){
 // A prospect with real dynasty consensus, or any actual qualifying scoring,
 // continues through the unchanged 20/45/35 model and historical confidence.
 const unverifiedFallback=!(c>0)&&!(Number(score.a?.qualifyingSeasons)>0);
-const effectiveScoringValue=unverifiedFallback?Math.min(score.value,180):score.value;
+// Calibrate the verified IDP scoring component into the common dynasty
+// model's numerical currency without changing its 45% blend coefficient.
+// Seven-source, same-Sleeper full-league sensitivity selected a conservative
+// 90% of the excess above the model's existing 180-point scoring floor.
+// Zero qualified production, no-market fallbacks, consensus and career context
+// retain their exact prior evidence and contribution.
+const scoringVerified=Number(score.a?.qualifyingSeasons)>0;
+const effectiveScoringValue=unverifiedFallback?Math.min(score.value,180):
+ scoringVerified?180+.90*(score.value-180):score.value;
 const blend=blend25(c,effectiveScoringValue,ctx.value);
- return{...z,value:blend.value,consensus:Number.isFinite(c)&&c>0?Math.round(c):z.consensus,context:Math.round(ctx.value),production:{...score,leagueContext:ctx,idpV25MarketCenterOffset:IDP_V25_MARKET_CENTER_OFFSET,idpV25RawBlend:blend.raw,idpUnverifiedNoConsensusFallbackV73:unverifiedFallback,idpEffectiveFallbackScoringV73:effectiveScoringValue},fallback:blend.fallback};
+ return{...z,value:blend.value,consensus:Number.isFinite(c)&&c>0?Math.round(c):z.consensus,context:Math.round(ctx.value),production:{...score,leagueContext:ctx,idpV25MarketCenterOffset:IDP_V25_MARKET_CENTER_OFFSET,idpV25RawBlend:blend.raw,idpUnverifiedNoConsensusFallbackV73:unverifiedFallback,idpEffectiveFallbackScoringV73:effectiveScoringValue,idpV80RawScoringComponent:score.value,idpV80CalibratedScoringComponent:effectiveScoringValue,idpV80ScoringScale:scoringVerified?.90:null,idpV80ScoringFloor:scoringVerified?180:null},fallback:blend.fallback};
 }
 masterRankings=function(){return priorMaster25().map(model25).sort((a,b)=>b.value-a.value)};
 ensureMaster=function(){return masterRankCache||(masterRankCache=masterRankings())};

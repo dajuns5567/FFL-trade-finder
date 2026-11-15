@@ -5,7 +5,7 @@ import {CONSENSUS_SOURCES} from '../netlify/functions/consensus-adapters.mjs';
 import {refreshDraftSharksIdp} from '../netlify/functions/draftsharks-idp-adapter.mjs';
 import {refreshRotowireIdp} from '../netlify/functions/rotowire-idp-adapter.mjs';
 import {buildConsensusComposite} from '../netlify/functions/consensus-composite-v3.mjs';
-import {buildConsensusPayload,verifiedDynastyLkg} from '../netlify/functions/update.mjs';
+import {buildConsensusPayload,verifiedDynastyLkg,isPreviewOnlyConsensusRequest} from '../netlify/functions/update.mjs';
 
 const draft=fs.readFileSync(new URL('../netlify/functions/draftsharks-idp-adapter.mjs',import.meta.url),'utf8');
 const rotowire=fs.readFileSync(new URL('../netlify/functions/rotowire-idp-adapter.mjs',import.meta.url),'utf8');
@@ -109,4 +109,13 @@ test('accept a complete provenance-marked dynasty last-known-good and reject any
  assert.equal(verifiedDynastyLkg({...safe,sources:{...safe.sources,'RotoWire IDP':{kind:'idp'}}}),false);
  assert.equal(verifiedDynastyLkg({...safe,sourceManifest:safe.sourceManifest.filter(x=>x.source!=='DraftSharks IDP')}),false);
  assert.equal(verifiedDynastyLkg({...safe,sourceManifest:safe.sourceManifest.map(x=>x.source==='DraftSharks IDP'?{...x,dynasty_source_url:'https://www.draftsharks.com/rankings/idp/superflex'}:x)}),false);
+});
+
+test('Netlify PR deploy preview never promotes experimental dynasty sources into shared LKG',()=>{
+ const check=(url,env)=>isPreviewOnlyConsensusRequest({url},env);
+ assert.equal(check('https://deploy-preview-466--precious-dango-fb4633.netlify.app/.netlify/functions/update',{}),true);
+ assert.equal(check('https://precious-dango-fb4633.netlify.app/.netlify/functions/update',{CONTEXT:'deploy-preview'}),true);
+ assert.equal(check('https://precious-dango-fb4633.netlify.app/.netlify/functions/update',{DEPLOY_CONTEXT:'deploy-preview'}),true);
+ assert.equal(check('https://precious-dango-fb4633.netlify.app/.netlify/functions/update',{CONTEXT:'production'}),false);
+ assert.equal(check('https://precious-dango-fb4633.netlify.app/.netlify/functions/update',{}),false);
 });

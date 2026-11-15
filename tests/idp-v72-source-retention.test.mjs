@@ -54,8 +54,8 @@ test('downstream original V72 curve and role shields remain present and only IDP
 });
 
 test('V72 final full precision includes the verified retention bonus consumed by global ranking',()=>{
- assert.match(source,/idpV72PreSourceRetentionExact:baseline\*servedFactor/);
- assert.match(source,/idpOverallTradeCurveExactV72:baseline\*servedFactor\+retention\.bonus/);
+ assert.match(source,/idpV72PreSourceRetentionExact:baseline\*finalFactor/);
+ assert.match(source,/idpOverallTradeCurveExactV72:baseline\*finalFactor\+retention\.bonus/);
  const precisionSource=readFileSync(new URL('../combined-market-precision-v386.js',import.meta.url),'utf8');
  assert.match(precisionSource,/const exact=num\(p\.idpOverallTradeCurveExactV72\)/);
  assert.match(precisionSource,/\.sort\(\(a,b\)=>Number\(b\.marketPrecisionValueV386\)-Number\(a\.marketPrecisionValueV386\)/);
@@ -76,4 +76,50 @@ test('final master ranks reflect the IDP bonus, while the underlying V72 pre-bon
  assert.equal(result[0].value,446);
  assert.equal(result[0].marketPrecisionValueV386,445.8);
  assert.equal(result[0].production.idpV72PreSourceRetention,430);
+});
+
+function career({sources=['The IDP Show Combined IDP','DraftSharks IDP','RotoWire IDP'],seasons=4,confidence=1}={}){
+ state.consensusComposite.detailsById.x={idpValue:639,idpSources:sources};
+ return sandbox.verifiedCareerRetentionV74({production:{
+  a:{qualifyingSeasons:seasons},m:{confidence}
+ }},'x');
+}
+test('four verified scoring seasons and three real dynasty sources retain 88 percent before V72',()=>{
+ const result=career();
+ assert.equal(result.floor,.88);
+ assert.equal(result.sourceCount,3);
+ assert.equal(result.seasons,4);
+ assert.equal(result.reliability,1);
+});
+test('one, zero, or unverified sources never obtain invented career protection',()=>{
+ for(const opts of [
+  {sources:[]},{sources:['The IDP Show Combined IDP']},
+  {sources:['The IDP Show Combined IDP','RotoWire IDP (not listed)']},
+  {seasons:0},{confidence:0}
+ ])assert.equal(career(opts).floor,0);
+});
+test('evidence floor rises continuously with independent sources, qualifying seasons and confidence',()=>{
+ const low=career({sources:['The IDP Show Combined IDP','DraftSharks IDP'],seasons:1,confidence:.4});
+ const medium=career({sources:['The IDP Show Combined IDP','DraftSharks IDP'],seasons:2,confidence:.7});
+ const high=career();
+ assert(low.floor>.76&&low.floor<medium.floor);
+ assert(medium.floor<high.floor&&high.floor===.88);
+ assert.equal(career({sources:['The IDP Show Combined IDP','DraftSharks IDP','DraftSharks IDP']}).sourceCount,2);
+});
+test('V74 applies only within IDP V72 and preserves the full-precision ranking correction',()=>{
+ assert.match(source,/if\(groupPos\(z\.x\)!=='IDP'\)return z/);
+ assert.match(source,/finalFactor=Math\.max\(servedFactor,Math\.min\(careerRetention\.floor,servedFactor\*1\.17\)\)/);
+ assert.match(source,/idpV74OriginalCompressionFactor:Number\(servedFactor\.toFixed\(3\)\)/);
+ assert.match(source,/idpV74VerifiedCareerSeasons:careerRetention\.seasons/);
+ assert.match(source,/idpOverallTradeCurveExactV72:baseline\*finalFactor\+retention\.bonus/);
+});
+
+test('V74 validated IDP retention is bounded to 17 percent of the previous continuous curve',()=>{
+ assert.match(source,/servedFactor\*1\.17/);
+ const verified=career();
+ for(const oldFactor of [.56,.60,.67,.697,.72,.76,.88,.95]){
+  const adjusted=Math.max(oldFactor,Math.min(verified.floor,oldFactor*1.17));
+  assert(adjusted>=oldFactor);
+  assert(adjusted<=oldFactor*1.17+1e-9);
+ }
 });

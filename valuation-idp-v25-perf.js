@@ -34,7 +34,17 @@ function metrics25(id,a){generation25();id=String(id);if(metricsCache25.has(id))
 function isIndividualIdp25(id){const p=state.players?.[String(id)]||{},vals=[p.position,...(Array.isArray(p.fantasy_positions)?p.fantasy_positions:[])].filter(Boolean).map(v=>String(v).toUpperCase()),allowed=new Set(['DL','DE','DT','EDGE','NT','LB','ILB','MLB','OLB','DB','CB','S','SS','FS']);return vals.some(v=>allowed.has(v))}
 function distributions25(){
  generation25();if(cache25)return cache25;
- const rows=[];for(const id of Object.keys(state.players||{})){if(groupPos({type:'player',id})!=='IDP'||!isIndividualIdp25(id))continue;const a=baseAudit25(id);if(!a?.qualifyingSeasons)continue;const m=historicalBenchmarkMetrics25(a);if(m)rows.push({id,a,m})}
+ // A qualifying score in priorAudit25 requires a Sleeper regular-season row.
+ // Iterate the union of observed scoring IDs instead of 12k+ NFL metadata IDs.
+ // Preserve the dictionary's original insertion order for stable tied percentiles.
+ const scoringIds=new Set();
+ for(const year of Object.values(state.stats||{}))for(const id of Object.keys(year||{}))scoringIds.add(String(id));
+ const rows=[];
+ for(const id of Object.keys(state.players||{})){
+  if(!scoringIds.has(id)||groupPos({type:'player',id})!=='IDP'||!isIndividualIdp25(id))continue;
+  const a=baseAudit25(id);if(!a?.qualifyingSeasons)continue;
+  const m=historicalBenchmarkMetrics25(a);if(m)rows.push({id,a,m});
+ }
  const ppg=rows.map(r=>r.m.ppg),tackles=rows.map(r=>r.m.tackleRate),spikes=rows.map(r=>r.m.spikeRate),p50=q25(ppg,.50),p99=Math.max(p50+.01,q25(ppg,.99));
  const topPpg=[...rows].sort((a,b)=>b.m.ppg-a.m.ppg).slice(0,30).map(r=>({id:r.id,name:playerName(r.id),position:state.players?.[r.id]?.position||null,historicalBenchmarkPpg:r.m.ppg,qualifyingSeasons:r.a?.qualifyingSeasons??null,confidence:r.a?.confidence??null,seasons:(r.a?.seasons||[]).filter(s=>!s.currentSeason).sort((a,b)=>Number(b.season)-Number(a.season)).slice(0,3).map(s=>({season:s.season,games:s.games,ppg:s.ppg,assignedWeight:s.assignedWeight,points:s.points}))}));
  const playerRows=rows.filter(r=>String(state.players?.[r.id]?.position||'').toUpperCase()!=='DEF'),playerPpg=playerRows.map(r=>r.m.ppg),playerP50=q25(playerPpg,.50),playerP99=Math.max(playerP50+.01,q25(playerPpg,.99)),rolePpg={EDGE:[],LB:[],DB:[],INTERIOR:[]};

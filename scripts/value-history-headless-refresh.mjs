@@ -179,13 +179,25 @@ try{
     try{picks=typeof vh.currentPickRows==='function'?vh.currentPickRows():[]}catch{}
     try{teams=typeof vh.currentTeamRows==='function'?vh.currentTeamRows(rows):[]}catch{}
     const canonical=window.tradeValueNormalizationV139||window.tradeValueNormalizationV130||{};
+    // The old fixed valuation_contract tag was identical through many
+    // revisions. Capture the exact publisher-input fingerprints and runner
+    // commit so future jumps can be traced without guessing a player's rank.
+    const sourceManifest=Object.entries(window.state?.rankings||{}).map(([name,src])=>{
+      const data=src?.data||{},keys=Object.keys(data).sort();
+      let h=2166136261;
+      for(const key of keys){
+        const chunk=key+':'+JSON.stringify(data[key])+'|';
+        for(let i=0;i<chunk.length;i++){h^=chunk.charCodeAt(i);h=Math.imul(h,16777619)}
+      }
+      return{name,count:Number(src?.playerCount)||keys.length,hash:(h>>>0).toString(36)};
+    }).sort((a,b)=>a.name.localeCompare(b.name));
     const valueParityMismatches=[];
     for(const r of rows){
       const canonicalValue=Math.round(Number(canonical.playerValue?.({type:'player',id:String(r.id)})||0));
       if(!Number.isFinite(canonicalValue)||canonicalValue!==Number(r.value))valueParityMismatches.push({id:String(r.id),history:Number(r.value),canonical:canonicalValue});
       if(valueParityMismatches.length>=20)break;
     }
-    return {rows,picks,teams,refresh:window.__fllValueRefresh||null,modeledReady:window.modeledPlayerValuesV319?.ready===true,modeledVersion:Number(window.modeledPlayerValuesV319?.meta?.version)||0,valueParityMismatches,status:String(document.getElementById('updateStatus')?.textContent||'')};
+    return {rows,picks,teams,sourceManifest,refresh:window.__fllValueRefresh||null,modeledReady:window.modeledPlayerValuesV319?.ready===true,modeledVersion:Number(window.modeledPlayerValuesV319?.meta?.version)||0,valueParityMismatches,status:String(document.getElementById('updateStatus')?.textContent||'')};
   });
   const sameRows=(a,b)=>{
     if(!Array.isArray(a)||!Array.isArray(b)||a.length!==b.length)return false;
@@ -200,7 +212,7 @@ try{
     const first=await captureCurrent();
     await page.waitForTimeout(1500);
     const second=await captureCurrent();
-    const stable=sameRows(first.rows,second.rows)&&first.modeledVersion===second.modeledVersion&&second.refresh?.inFlight===false&&second.refresh?.phase==='complete'&&second.modeledReady===true&&!second.valueParityMismatches?.length&&!/loading|updating|refreshing/i.test(second.status||'');
+    const stable=sameRows(first.rows,second.rows)&&JSON.stringify(first.sourceManifest)===JSON.stringify(second.sourceManifest)&&first.modeledVersion===second.modeledVersion&&second.refresh?.inFlight===false&&second.refresh?.phase==='complete'&&second.modeledReady===true&&!second.valueParityMismatches?.length&&!/loading|updating|refreshing/i.test(second.status||'');
     if(stable){captured=second;break}
     if(attempt<3)await page.waitForTimeout(2000);
   }
@@ -210,7 +222,7 @@ try{
   if(captured.valueParityMismatches?.length)throw new Error(`Scheduled capture diverged from canonical Player Values scale: ${JSON.stringify(captured.valueParityMismatches)}`);
 
   const t=new Date().toISOString(),fp=fingerprint(captured.rows,captured.picks,captured.teams);
-  const snap={version:5,league,t,fingerprint:fp,source:'scheduled',valuation_contract:SCHEDULED_VALUATION_CONTRACT,rows:captured.rows,picks:captured.picks,teams:captured.teams};
+  const snap={version:5,league,t,fingerprint:fp,source:'scheduled',valuation_contract:SCHEDULED_VALUATION_CONTRACT,provenance:{git_commit:process.env.GITHUB_SHA||null,modeled_version:captured.modeledVersion,consensus_sources:Number(readiness.consensusMarker?.successful)||0,source_manifest:captured.sourceManifest,canonical_parity:'exact'},rows:captured.rows,picks:captured.picks,teams:captured.teams};
   mkdirSync(join(process.cwd(),'.tmp'),{recursive:true});
   writeFileSync(snapshotFile,JSON.stringify(snap,null,2)+'\n');
 

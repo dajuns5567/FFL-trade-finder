@@ -53,7 +53,33 @@ try{
     if(url.protocol!=='https:'){blockedMutations++;return route.abort('blockedbyclient')}
     return route.continue();
   });
+  // Diagnostic-only early browser instrumentation. It does not change the
+  // fetch result or any ranking data, and is limited to the read-only PR preview.
+  await context.addInitScript(()=>{
+    const originalJson=Response.prototype.json;
+    Response.prototype.json=async function(...args){
+      const url=this.url||'';
+      if(/api\\.sleeper\\.app\\/v1\\/(?:players\\/nfl|stats\\/nfl|league\\/)/.test(url))
+        console.info('[ffl-boot] JSON_BEGIN '+url.slice(0,140));
+      const value=await originalJson.apply(this,args);
+      if(/api\\.sleeper\\.app\\/v1\\/(?:players\\/nfl|stats\\/nfl|league\\/)/.test(url))
+        console.info('[ffl-boot] JSON_DONE '+url.slice(0,140)+
+          ' entries='+String(value&&typeof value==='object'?Object.keys(value).length:'not-object'));
+      return value;
+    };
+    setInterval(()=>{
+      const st=window.state||{};
+      const ps=st.players||{};
+      console.info('[ffl-boot] HEARTBEAT teams='+String(st.teams?.length||0)+
+        ' players='+String(Object.keys(ps).length)+
+        ' modelReady='+String(window.modeledPlayerValuesV319?.ready||false));
+    },8000);
+  });
   const page=await context.newPage();
+  page.on('console',message=>{
+    const t=message.text();
+    if(t.startsWith('[ffl-boot]'))console.log('[live-preview-audit] '+t.slice(0,400));
+  });
   page.on('response',r=>{
     if(r.status()>=400&&/\.(?:js|css)(?:\?|$)/.test(r.url()))failedAssets.push({status:r.status(),url:r.url()});
     if(/api\.sleeper\.app\/v1\/players\/nfl(?:\?|$)/.test(r.url())){

@@ -72,7 +72,13 @@ assert(idp1.delta365Available&&idp1.deltaAllAvailable,'missing initial baseline 
 assert(idp2.delta365===100&&idp2.deltaAllFrom===idpSnaps[2].t,'later IDP must not inherit another IDP baseline');
 assert(im.periods['1Y'].valueRisers.some(x=>x.id==='idp1'),'1Y movers must include verified IDP history');
 assert(im.periods.ALL.posRankRisers.some(x=>x.id==='idp1'),'all-time positional movers must include IDP history');
-assert(im.marketRows.find(x=>x.id==='off').delta365Available===false,'original offense baseline must remain unchanged');
+assert(im.marketRows.find(x=>x.id==='off').delta365===600&&im.marketRows.find(x=>x.id==='off').delta365Available===true,'offense must preserve original delta while accurately disclosing less than 365 days of tracking');
+const reentry=[snap(0,[P('reentry',1000,160,'IDP',60)]),snap(35,[P('off',4000,75)]),snap(100,[P('reentry',2000,120,'IDP',40)]),snap(400,[P('reentry',2700,90,'IDP',30),P('off',4200,70)])];
+const rm=marketFromSnapshots(reentry),rr=rm.marketRows.find(x=>x.id==='reentry');
+assert(rr.delta365===700&&rr.delta365From===reentry[2].t,'1Y value must never use pre-window player history when re-entering after the 365D baseline');
+assert(rr.deltaAll===1700&&rr.deltaAllFrom===reentry[0].t,'all-time value must still use the first archived observation');
+assert(rm.periods['1Y'].valueRisers.some(x=>x.id==='reentry'&&x.delta===700),'1Y movers must share corrected in-window baseline');
+assert(rm.periods.ALL.valueRisers.some(x=>x.id==='reentry'&&x.delta===1700),'all-time movers must retain full first-observation history');
 
 const ui=fs.readFileSync('value-history-v276.js','utf8');
 for(const needle of [

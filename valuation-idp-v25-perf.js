@@ -64,17 +64,46 @@ function development25(age,yearsExp,confidence,qualifyingSeasons){
  const index=runway>.5?.5+(runway-.5)*upwardReliability:runway;
  return{index:clamp25(.1,index,1),ageIndex,careerStage,evidence:supported?evidence:0,runway};
 }
+// Context uses independent, observable dynasty signals. Production PPG remains
+// exclusively in the 45% scoring bucket; its *direction of change* is a bounded
+// corroboration of career development, never another absolute PPG ranking.
+function trajectory25(a,confidence){
+ const seasons=(Array.isArray(a?.seasons)?a.seasons:[])
+  .filter(s=>Number(s?.games)>= (s?.currentSeason?6:4)&&Number(s?.ppg)>0&&Number.isFinite(Number(s?.season)))
+  .sort((x,y)=>Number(y.season)-Number(x.season));
+ if(seasons.length<2)return{index:.5,evidence:false,reason:'insufficient-comparable-seasons',change:null};
+ const [recent,previous]=seasons;
+ if(Number(recent.season)-Number(previous.season)>2)return{index:.5,evidence:false,reason:'noncontiguous-seasons',change:null};
+ const change=clamp25(-.60,(Number(recent.ppg)-Number(previous.ppg))/Math.max(8,Number(previous.ppg)),.60);
+ const sample=Math.min(1,(Number(recent.games)+Number(previous.games))/16);
+ const reliability=clamp25(0,Number(confidence)||0,1)*sample;
+ return{index:clamp25(.35,.5+.35*change*reliability,.65),evidence:true,reason:'verified-season-direction',change,sample,reliability,
+  recentSeason:Number(recent.season),previousSeason:Number(previous.season)};
+}
+// Games played over multiple prior seasons are only an availability/role
+// continuity proxy. They cannot certify a starting job or talent grade.
+function continuity25(a,confidence){
+ const seasons=(Array.isArray(a?.seasons)?a.seasons:[]).filter(s=>!s.currentSeason&&Number(s.games)>=8);
+ const reliable=seasons.length>=2;
+ const index=reliable?.5+.10*Math.min(1,seasons.length/3)*clamp25(0,Number(confidence)||0,1):.5;
+ return{index,evidence:reliable,verifiedHistoricalSeasons:seasons.length,reason:reliable?'multi-season-availability':'insufficient-role-evidence'};
+}
 function context25(id,score){
  generation25();id=String(id);if(contextCache25.has(id))return contextCache25.get(id);
- const d=distributions25(),m=score.m,conf=m.confidence||0,tPct=d.tackles.length?pct25(d.tackles,m.tackleRate):.5,sPct=d.spikes.length?pct25(d.spikes,m.spikeRate):.5;
- const tackle=.5+conf*(tPct-.5),spike=.5+conf*(sPct-.5),p=state.players?.[id]||{};
- const expRaw=p.years_exp,yearsExp=expRaw==null||expRaw===''?null:Number(expRaw);
+ const m=score.m||{},p=state.players?.[id]||{},expRaw=p.years_exp;
+ const yearsExp=expRaw==null||expRaw===''?null:Number(expRaw);
  const development=development25(age25(id),yearsExp,m.confidence,score.a?.qualifyingSeasons);
- // In the 35% IDP context bucket, scoring-derived tackles and spikes receive
- // 20% each; the remaining 60% is dynasty runway with evidence restraint.
- // The 20/45/35 global mix and the existing scoring component stay unchanged.
- const index=.20*tackle+.20*spike+.60*development.index;
- const value=430+420*clamp25(.05,index,.95),out={value,tacklePct:tPct,spikePct:sPct,tackleRate:m.tackleRate,spikeRate:m.spikeRate,age:development.ageIndex,yearsExp:Number.isFinite(yearsExp)?yearsExp:null,development,index};
+ const trajectory=trajectory25(score.a,m.confidence);
+ const continuity=continuity25(score.a,m.confidence);
+ // In the unchanged 35% global IDP context bucket: 65% age/career runway,
+ // 25% evidenced career trajectory, 10% availability continuity.
+ // No extra tackles/sacks PPG percentile, unknown scouting grades or assumed roles.
+ const index=.65*development.index+.25*trajectory.index+.10*continuity.index;
+ const value=430+420*clamp25(.05,index,.95),out={
+  value,index,development,trajectory,continuity,
+  age:development.ageIndex,yearsExp:Number.isFinite(yearsExp)?yearsExp:null,
+  roleEvidence:'seasonal games proxy only; no verified snaps/depth-chart data'
+ };
  contextCache25.set(id,out);return out;
 }
 function blend25(c,scoreValue,contextValue){

@@ -33,6 +33,12 @@ jobs:
           node --check value-history-v276.js
           node --check trade-specific-max-value-v279.js
           node --check trade-specific-player-v232.js
+          node --check trade-add-assets-complement-v1.js
+          node --check trade-specific-add-assets-v282.js
+          node --check trade-specific-max-tier-add-v300.js
+          node --check trade-specific-tier-up-v282.js
+          node --check trade-finder-v256-compiled.js
+          node --check trade-finder-style-loader-v209.js
           node --check scripts/archive-value-history.mjs
           node --check scripts/value-history-headless-refresh.mjs
           node --check scripts/value-history-snapshot-integrity.mjs
@@ -40,10 +46,11 @@ jobs:
           node --check netlify/functions/value-history.mjs
       - name: Existing targeted and combined regression suites
         run: |
-          node --test tests/offense-consensus-anchor-v50.test.mjs tests/idp-unverified-fallback-v73.test.mjs tests/idp-source-integrity-audit-v73.test.mjs tests/idp-fuzzy-identity-ownership-v73.test.mjs tests/consensus-composite-v3.test.mjs tests/idp-20-45-35-calibration.test.mjs tests/idp-dynasty-development.test.mjs tests/idp-rookie-scoring-display.test.mjs tests/idp-v72-source-retention.test.mjs tests/value-history-preview-isolation.test.mjs tests/trade-history-ranked-unrostered-hindsight.test.mjs tests/trade-history-original-pick-projection.test.mjs tests/targeted-max-value-search-stall.test.mjs tests/trade-history-hindsight-live-sync.test.mjs tests/trade-history-live-sleeper.test.mjs tests/targeted-max-value-search-stall.test.mjs tests/finder-natural-filter-matrix.test.mjs tests/value-history-snapshot-source-stability.test.mjs tests/combined-cross-page-canonical-currency.test.mjs tests/combined-valuation-history-contract.test.mjs
+          node --test tests/offense-consensus-anchor-v50.test.mjs tests/idp-unverified-fallback-v73.test.mjs tests/idp-source-integrity-audit-v73.test.mjs tests/idp-fuzzy-identity-ownership-v73.test.mjs tests/consensus-composite-v3.test.mjs tests/idp-20-45-35-calibration.test.mjs tests/idp-dynasty-development.test.mjs tests/idp-rookie-scoring-display.test.mjs tests/idp-v72-source-retention.test.mjs tests/value-history-preview-isolation.test.mjs tests/trade-history-ranked-unrostered-hindsight.test.mjs tests/trade-history-original-pick-projection.test.mjs tests/targeted-max-value-search-stall.test.mjs tests/trade-history-hindsight-live-sync.test.mjs tests/trade-history-live-sleeper.test.mjs tests/targeted-max-value-search-stall.test.mjs tests/finder-natural-filter-matrix.test.mjs tests/finder-add-assets-complements.test.mjs tests/value-history-snapshot-source-stability.test.mjs tests/combined-cross-page-canonical-currency.test.mjs tests/combined-valuation-history-contract.test.mjs
       - name: Remaining browser runtime syntax and historical hub checks
         run: |
           node scripts/site-runtime-syntax-audit.mjs
+          node scripts/finder-runtime-compiled-smoke-v257.cjs
           node --test tests/market-intelligence-original-recovery.test.mjs
           node scripts/value-history-data-hub-v331-smoke.mjs
           node --check scripts/value-history-headless-refresh.mjs

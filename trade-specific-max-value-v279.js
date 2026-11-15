@@ -43,7 +43,7 @@ function combos(pool,maxLen=3){
  }
  return out;
 }
-function outgoing(me){const chosen=selectedGive();if(!chosen.length)return combos(owned(me),3);const out=[chosen];if(addAssets()&&chosen.length<3){const used=new Set(chosen.map(x=>`${x.type}:${id(x)}`)),extras=owned(me).filter(x=>!used.has(`${x.type}:${id(x)}`)).sort((a,b)=>av(b)-av(a)).slice(0,8);for(const x of extras)out.push([...chosen,x]);if(chosen.length===1)for(let i=0;i<extras.length;i++)for(let j=i+1;j<extras.length&&out.length<20;j++)out.push([chosen[0],extras[i],extras[j]])}return uniquePackages(out)}
+function outgoing(me){const chosen=selectedGive();if(!chosen.length)return combos(owned(me),3);if(addAssets()&&window.tradeAddAssetsComplementV1?.build)return window.tradeAddAssetsComplementV1.build(chosen,owned(me),av,pos,{maxExtras:18,maxPairs:64});const out=[chosen];if(addAssets()&&chosen.length<3){const used=new Set(chosen.map(x=>`${x.type}:${id(x)}`)),extras=owned(me).filter(x=>!used.has(`${x.type}:${id(x)}`)).sort((a,b)=>av(b)-av(a)).slice(0,8);for(const x of extras)out.push([...chosen,x]);if(chosen.length===1)for(let i=0;i<extras.length;i++)for(let j=i+1;j<extras.length&&out.length<20;j++)out.push([chosen[0],extras[i],extras[j]])}return uniquePackages(out)}
 function uniquePackages(list){const out=[],seen=new Set();for(const xs of list){const k=xs.map(x=>`${x.type}:${id(x)}`).sort().join('|');if(!seen.has(k)){seen.add(k);out.push(xs)}}return out}
 function incoming(owner,target){const extras=owned(owner).filter(x=>!(x.type==='player'&&id(x)===id(target))).sort((a,b)=>av(b)-av(a)).slice(0,20),out=[[target]];for(const x of extras)out.push([target,x]);for(let i=0;i<extras.length;i++)for(let j=i+1;j<extras.length;j++)out.push([target,extras[i],extras[j]]);return out}
 function positions(){const checked=[...document.querySelectorAll('#tradePos97 .trade97-pos:checked,.trade97-pos:checked')].map(x=>String(x.value||'').toUpperCase());if(checked.includes('ANY')||!checked.length)return['ANY'];return[...new Set(checked)]}
@@ -145,7 +145,7 @@ async function run(){
  const result=[],seen=new Set(),finish=()=>{
   if(my!==token)return;
   result.sort((a,b)=>b.maximumValueScore-a.maximumValueScore||(Number(b.f.edgeEffective)||0)-(Number(a.f.edgeEffective)||0));
-  active=diversifyTieredResults(result,tier,140);visible=Math.min(5,active.length);
+  active=diversifyTieredResults(result,tier,140);if(selectedGive().length&&addAssets()&&window.tradeAddAssetsComplementV1?.diversify)active=window.tradeAddAssetsComplementV1.diversify(active,selectedGive(),140);visible=Math.min(5,active.length);
   draw(host);
   if(capped){
    const note=document.createElement('div');

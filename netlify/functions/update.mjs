@@ -70,6 +70,16 @@ export function verifiedDynastyLkg(previous){
   }
   return true;
 }
+// Deploy Preview must remain a read-only valuation environment even when
+// it successfully fetches new legitimate dynasty sources. Netlify Blobs can
+// be shared across site deploy contexts: never let a test preview promote its
+// experimental source snapshot into production last-known-good data.
+export function isPreviewOnlyConsensusRequest(req,env=process.env){
+ const context=String(env.CONTEXT||env.DEPLOY_CONTEXT||'').toLowerCase();
+ if(context==='deploy-preview')return true;
+ try{return /^deploy-preview-[0-9]+--/.test(new URL(req.url).hostname)}
+ catch{return false}
+}
 export default async (req)=>{
   if(req.method==="OPTIONS")return json({ok:true});
   if(req.method!=="POST")return json({ok:false,error:"POST required"},405);
@@ -86,7 +96,8 @@ export default async (req)=>{
       snapshot.freshness=buildFreshnessSnapshot(snapshot,old,candidate.updatedAt);
     }
     const promoted={sources:candidate.sources,composite:candidate.composite,updatedAt:candidate.updatedAt,sourceManifest:candidate.summary.results.map(x=>({source:x.source,status:"fresh",snapshot_timestamp:x.timestamp||candidate.updatedAt,attempt_timestamp:x.timestamp||candidate.updatedAt,players_extracted:x.players_extracted,ranking_rows:x.ranking_rows,publisher_updated_at:null,source_freshness:(x.source==="The IDP Show Combined"?candidate.sources["The IDP Show Combined Offense"]?.freshness:candidate.sources[x.source]?.freshness)||null,market_observation:x.market_observation||null,source_provenance:x.source_provenance||null,dynasty_consensus_eligible:x.dynastyConsensusEligible,dynasty_source_url:x.dynastySourceUrl||null}))};
-    await writeLastGood(promoted);
+    const isolatedPreview=isPreviewOnlyConsensusRequest(req);
+    if(!isolatedPreview)await writeLastGood(promoted);
     const summary={...candidate.summary,results:candidate.summary.results.map(x=>({...x,
       source_freshness:(x.source==="The IDP Show Combined"?candidate.sources["The IDP Show Combined Offense"]?.freshness:candidate.sources[x.source]?.freshness)||null,
       market_observation:x.market_observation||null,
@@ -94,7 +105,7 @@ export default async (req)=>{
       dynasty_consensus_eligible:x.dynastyConsensusEligible,
       dynasty_source_url:x.dynastySourceUrl||null
     }))};
-    return json({...candidate,summary,promotion:{promoted:true,using_last_known_good:false},sourceManifest:promoted.sourceManifest});
+    return json({...candidate,summary,promotion:{promoted:!isolatedPreview,preview_readonly:isolatedPreview,using_last_known_good:false},sourceManifest:promoted.sourceManifest});
   }
 
   const priorDynastySafe=verifiedDynastyLkg(previous);

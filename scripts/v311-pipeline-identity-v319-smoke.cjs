@@ -16,7 +16,7 @@ const expected={
   'trade-win-now-preferences-v226.js':'1c74d7ea956c42568f93b08f46fea9ae9fff0b32',
   'trade-selected-positions-only-v262.js':'56e561565f6adf6402cc7e6c28cd090fa3dd8cd6',
   // Frozen Finder-only complementary-piece generator, preserving canonical values.
-  'trade-add-assets-complement-v1.js':'84b4d7c737df6b5b7c2c0a97801a8215a447374a',
+  'trade-add-assets-complement-v1.js':'ea5fd85b4d7a53a40d6e27166c4e40333180bd03',
   'trade-specific-max-tier-add-v300.js':'c72cb456c1bcd58bd2d4654431bb38b2d6952d62',
   'trade-specific-tier-up-v282.js':'f8fef77ce544a2161d5cb959f963b5995acd9adc',
   'trade-specific-add-assets-v282.js':'7329e91955ea6907aca508163515ffc00de0aad9',

@@ -1,0 +1,32 @@
+name: IDP V77 seven-source dynasty provenance impact (draft)
+on:
+  pull_request:
+    paths:
+      - 'scripts/audit-idp-v77-dynasty-source-impact.mjs'
+      - 'tests/fixtures/idp-v77-prior-draftsharks-adapter.mjs'
+      - 'tests/fixtures/idp-v77-prior-consensus-composite.mjs'
+      - '.github/workflows/idp-v77-dynasty-impact.yml'
+permissions:
+  contents: read
+jobs:
+  exact-source-comparison:
+    if: github.event.pull_request.number == 478
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate immutable baseline fixtures and read-only audit syntax
+        run: |
+          node --check scripts/audit-idp-v77-dynasty-source-impact.mjs
+          node --check tests/fixtures/idp-v77-prior-consensus-composite.mjs
+          node --check tests/fixtures/idp-v77-prior-draftsharks-adapter.mjs
+      - name: Install source adapters and browser test dependencies
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund --no-package-lock
+          npm install --no-save --ignore-scripts --no-audit --no-fund --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Compare old non-dynasty source vs verified dynasty source with identical real Sleeper data
+        run: node scripts/audit-idp-v77-dynasty-source-impact.mjs

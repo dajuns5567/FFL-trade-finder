@@ -122,6 +122,6 @@ test('all Finder pathways use the shared complementary generator without touchin
   assert.match(src,/section1V130\?\.fair|const fair=\(a,b\)=>window\.section1V130/,'existing fairness source absent: '+path);
  }
  const html=read('netlify/functions/site-v29.mjs');
- assert.match(html,/trade-add-assets-complement-v1\.js\?v=1/);
+ assert.match(html,/trade-add-assets-complement-v1\.js\?v=2/);
  assert.ok(html.indexOf('trade-add-assets-complement-v1.js')<html.indexOf('trade-specific-max-tier-add-v300.js'),'load complement module before capture routers');
 });

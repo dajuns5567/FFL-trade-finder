@@ -59,12 +59,13 @@ try{
     const originalJson=Response.prototype.json;
     Response.prototype.json=async function(...args){
       const url=this.url||'';
-      if(/api\\.sleeper\\.app\\/v1\\/(?:players\\/nfl|stats\\/nfl|league\\/)/.test(url))
-        console.info('[ffl-boot] JSON_BEGIN '+url.slice(0,140));
+      const inspect=url.includes('api.sleeper.app/v1/players/nfl')||
+        url.includes('api.sleeper.app/v1/stats/nfl/')||
+        url.includes('api.sleeper.app/v1/league/');
+      if(inspect)console.info('[ffl-boot] JSON_BEGIN '+url.slice(0,140));
       const value=await originalJson.apply(this,args);
-      if(/api\\.sleeper\\.app\\/v1\\/(?:players\\/nfl|stats\\/nfl|league\\/)/.test(url))
-        console.info('[ffl-boot] JSON_DONE '+url.slice(0,140)+
-          ' entries='+String(value&&typeof value==='object'?Object.keys(value).length:'not-object'));
+      if(inspect)console.info('[ffl-boot] JSON_DONE '+url.slice(0,140)+
+        ' entries='+String(value&&typeof value==='object'?Object.keys(value).length:'not-object'));
       return value;
     };
     setInterval(()=>{

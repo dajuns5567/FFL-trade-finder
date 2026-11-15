@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-11-15T17:06:57.379Z",
+  "generatedAt": "2026-11-15T21:47:17.836Z",
   "source": "Sleeper importer snapshot",
   "currentSeason": 2026,
   "completedWeek": 9,
@@ -332,6 +332,22 @@
         "BUF"
       ],
       "10": [
+        "DET",
+        "NE",
+        "ATL",
+        "KC",
+        "CLE",
+        "HOU",
+        "GB",
+        "MIN",
+        "TEN",
+        "JAX",
+        "IND",
+        "MIA",
+        "NO",
+        "CAR",
+        "NYJ",
+        "BUF",
         "NYG",
         "WSH"
       ]
@@ -1517,76 +1533,12 @@
       },
       "10": {
         "scheduledGames": 14,
-        "finalGames": 1,
+        "finalGames": 9,
         "ignoredGames": 0,
-        "blockingGames": 13,
+        "blockingGames": 5,
         "complete": false,
         "nullSlots": [],
         "slots": [
-          {
-            "id": "401873053",
-            "state": "blocking",
-            "teams": [
-              "DET",
-              "NE"
-            ]
-          },
-          {
-            "id": "401873058",
-            "state": "blocking",
-            "teams": [
-              "ATL",
-              "KC"
-            ]
-          },
-          {
-            "id": "401873056",
-            "state": "blocking",
-            "teams": [
-              "CLE",
-              "HOU"
-            ]
-          },
-          {
-            "id": "401873060",
-            "state": "blocking",
-            "teams": [
-              "GB",
-              "MIN"
-            ]
-          },
-          {
-            "id": "401873057",
-            "state": "blocking",
-            "teams": [
-              "TEN",
-              "JAX"
-            ]
-          },
-          {
-            "id": "401873059",
-            "state": "blocking",
-            "teams": [
-              "IND",
-              "MIA"
-            ]
-          },
-          {
-            "id": "401873055",
-            "state": "blocking",
-            "teams": [
-              "NO",
-              "CAR"
-            ]
-          },
-          {
-            "id": "401873054",
-            "state": "blocking",
-            "teams": [
-              "NYJ",
-              "BUF"
-            ]
-          },
           {
             "id": "401873062",
             "state": "blocking",
@@ -1609,6 +1561,70 @@
             "teams": [
               "DAL",
               "SF"
+            ]
+          },
+          {
+            "id": "401873053",
+            "state": "final",
+            "teams": [
+              "DET",
+              "NE"
+            ]
+          },
+          {
+            "id": "401873058",
+            "state": "final",
+            "teams": [
+              "ATL",
+              "KC"
+            ]
+          },
+          {
+            "id": "401873056",
+            "state": "final",
+            "teams": [
+              "CLE",
+              "HOU"
+            ]
+          },
+          {
+            "id": "401873060",
+            "state": "final",
+            "teams": [
+              "GB",
+              "MIN"
+            ]
+          },
+          {
+            "id": "401873057",
+            "state": "final",
+            "teams": [
+              "TEN",
+              "JAX"
+            ]
+          },
+          {
+            "id": "401873059",
+            "state": "final",
+            "teams": [
+              "IND",
+              "MIA"
+            ]
+          },
+          {
+            "id": "401873055",
+            "state": "final",
+            "teams": [
+              "NO",
+              "CAR"
+            ]
+          },
+          {
+            "id": "401873054",
+            "state": "final",
+            "teams": [
+              "NYJ",
+              "BUF"
             ]
           },
           {
@@ -1639,9 +1655,9 @@
       }
     },
     "diagnostics": {
-      "finalGames": 137,
-      "qualifiedPlayerGames": 9014,
-      "rejectedPlayerGames": 10443,
+      "finalGames": 145,
+      "qualifiedPlayerGames": 9205,
+      "rejectedPlayerGames": 11390,
       "ignoredGames": 0
     }
   },
@@ -14961,45 +14977,6 @@
       "rush_td": 1,
       "h1_rush_yd": 1,
       "rush_rz_att": 1
-    },
-    "7607": {
-      "gp": 1,
-      "_ppr_native_weeks": 1,
-      "_ppr_reconstructed_weeks": 0,
-      "h1_rec_yd": 7,
-      "rush_lng": 3,
-      "pos_rank_std": 60,
-      "tm_def_snp": 70,
-      "rec_ypt": 7,
-      "pos_rank_half_ppr": 60,
-      "pass_rush_yd": 7,
-      "pts_std": 1.4,
-      "rec_lng": 7,
-      "tm_st_snp": 27,
-      "rec": 1,
-      "q1_rec_yd": 7,
-      "rec_yar": 5,
-      "rec_fd": 1,
-      "rush_att": 3,
-      "rec_5_9": 1,
-      "rush_ypa": 2.33,
-      "q1_rush_yd": 1,
-      "tm_off_snp": 63,
-      "pos_rank_ppr": 59,
-      "rec_rz_tgt": 1,
-      "off_snp": 16,
-      "rush_yac": 3,
-      "h1_rush_yd": 1,
-      "pts_half_ppr": 1.9,
-      "rec_air_yd": 2,
-      "rec_ypr": 7,
-      "rush_rec_yd": 14,
-      "rush_yd": 7,
-      "bonus_rec_rb": 1,
-      "rec_tgt": 1,
-      "pts_ppr": 2.4,
-      "rec_yd": 7,
-      "bonus_fd_rb": 1
     },
     "7608": {
       "gp": 1,
@@ -32961,23 +32938,6 @@
       "penalty": 3,
       "penalty_yd": 25
     },
-    "12380": {
-      "gp": 1,
-      "_ppr_native_weeks": 0,
-      "_ppr_reconstructed_weeks": 0,
-      "def_snp": 36,
-      "idp_tkl": 5,
-      "idp_tkl_ast": 2,
-      "idp_tkl_solo": 3,
-      "pos_rank_half_ppr": 999,
-      "pos_rank_ppr": 999,
-      "pos_rank_std": 999,
-      "pts_idp": 8,
-      "st_snp": 13,
-      "tm_def_snp": 51,
-      "tm_off_snp": 82,
-      "tm_st_snp": 27
-    },
     "12427": {
       "gp": 8,
       "_ppr_native_weeks": 0,
@@ -46405,9 +46365,9 @@
   "pprMethod": "Sleeper raw weekly stats aggregated with native pts_ppr when supplied; otherwise deterministic standard-PPR reconstruction from Sleeper raw stat fields.",
   "seasonDiagnostics": {
     "2023": {
-      "players": 885,
-      "withPpr": 730,
-      "withGames": 885
+      "players": 883,
+      "withPpr": 728,
+      "withGames": 883
     },
     "2024": {
       "players": 960,
@@ -46415,16 +46375,16 @@
       "withGames": 960
     },
     "2025": {
-      "players": 1049,
-      "withPpr": 563,
-      "withGames": 1049
+      "players": 1048,
+      "withPpr": 562,
+      "withGames": 1048
     },
     "2026": {
-      "players": 1549,
-      "withPpr": 531,
-      "withGames": 1549,
+      "players": 1547,
+      "withPpr": 530,
+      "withGames": 1547,
       "currentSeasonQualified": true,
-      "compactPlayers": 1549
+      "compactPlayers": 1547
     }
   },
   "stats": {
@@ -54452,26 +54412,6 @@
         "rec_yd": 368,
         "bonus_fd_te": 19
       },
-      "7607": {
-        "pts_ppr": 49.599999999999994,
-        "gp": 10,
-        "off_snp": 179,
-        "rush_att": 21,
-        "rec_tgt": 25,
-        "rec_0_4": 10,
-        "rec_td": 1,
-        "idp_tkl": 1,
-        "rush_fd": 7,
-        "idp_tkl_solo": 1,
-        "rec": 21,
-        "rec_fd": 4,
-        "rec_5_9": 9,
-        "rec_10_19": 1,
-        "rush_yd": 139,
-        "bonus_rec_rb": 21,
-        "rec_yd": 87,
-        "bonus_fd_rb": 11
-      },
       "7608": {
         "pts_ppr": 111.69999999999999,
         "gp": 11,
@@ -59278,19 +59218,6 @@
         "bonus_tkl_10p": 2,
         "idp_ff": 1,
         "idp_tkl_ast": 25
-      },
-      "10972": {
-        "pts_ppr": 3,
-        "gp": 9,
-        "def_snp": 360,
-        "idp_tkl": 48,
-        "idp_tkl_loss": 3,
-        "idp_tkl_solo": 37,
-        "idp_pass_def": 6,
-        "bonus_tkl_10p": 1,
-        "idp_fum_rec": 1,
-        "idp_ff": 1,
-        "idp_tkl_ast": 11
       },
       "10985": {
         "pts_ppr": 2,
@@ -84794,27 +84721,6 @@
         "rec_yd": 40,
         "bonus_fd_te": 3
       },
-      "7607": {
-        "pts_ppr": 91.60000000000001,
-        "gp": 10,
-        "off_snp": 352,
-        "rush_att": 81,
-        "rec_tgt": 42,
-        "rec_0_4": 8,
-        "rush_td": 1,
-        "idp_tkl": 1,
-        "rush_fd": 17,
-        "idp_tkl_solo": 1,
-        "rec": 30,
-        "rec_fd": 11,
-        "kr_yd": 27,
-        "rec_5_9": 11,
-        "rec_10_19": 11,
-        "rush_yd": 310,
-        "bonus_rec_rb": 30,
-        "rec_yd": 246,
-        "bonus_fd_rb": 28
-      },
       "7611": {
         "pts_ppr": 178.8,
         "gp": 14,
@@ -101563,20 +101469,6 @@
         "rec_yd": 235,
         "bonus_fd_te": 11
       },
-      "7607": {
-        "pts_ppr": 2.4,
-        "gp": 1,
-        "off_snp": 16,
-        "rush_att": 3,
-        "rec_tgt": 1,
-        "rec": 1,
-        "rec_fd": 1,
-        "rec_5_9": 1,
-        "rush_yd": 7,
-        "bonus_rec_rb": 1,
-        "rec_yd": 7,
-        "bonus_fd_rb": 1
-      },
       "7608": {
         "pts_ppr": 2.5,
         "gp": 1,
@@ -109111,13 +109003,6 @@
       "12208": {
         "gp": 9,
         "off_snp": 480
-      },
-      "12380": {
-        "gp": 1,
-        "def_snp": 36,
-        "idp_tkl": 5,
-        "idp_tkl_solo": 3,
-        "idp_tkl_ast": 2
       },
       "12427": {
         "gp": 8,

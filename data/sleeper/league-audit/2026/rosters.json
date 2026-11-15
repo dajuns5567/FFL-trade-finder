@@ -204,13 +204,13 @@
       "11564",
       "12485",
       "12517",
+      "13075",
       "13296",
       "13414",
       "2216",
       "5871",
       "5995",
       "6790",
-      "7049",
       "7627",
       "9756"
     ],
@@ -235,12 +235,12 @@
     },
     "starters": [
       "5995",
-      "9756",
       "13296",
+      "13075",
       "13414",
       "11564",
       "7627",
-      "5871"
+      "10914"
     ],
     "taxi": [
       "12485"
@@ -348,7 +348,7 @@
       "p_nick_10892": "The Holy Spirit",
       "p_nick_9753": "Better than Kyren",
       "p_nick_96": "20 ppg",
-      "p_nick_13394": "Parker Washington 2.0",
+      "p_nick_13394": "Parker Washington Sr.",
       "p_nick_3286": "Pearsalls replacement",
       "p_nick_12718": "Puka 2.0",
       "p_nick_13322": "Lovelands Replacement",
@@ -758,7 +758,7 @@
     },
     "starters": [
       "9224",
-      "11635",
+      "0",
       "9500",
       "8155",
       "9228",
@@ -1610,6 +1610,7 @@
       "p_nick_12471": "RB1",
       "p_nick_7553": "At",
       "p_nick_9757": "RB1",
+      "p_nick_13337": "Fleeced",
       "p_nick_4199": "The Real AJ",
       "p_nick_8161": "17th ranked trending player",
       "p_nick_8131": "Likely not playing",

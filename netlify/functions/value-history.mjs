@@ -583,13 +583,19 @@ function deltaRow(latest,base){
     fromValue:Number(base.value),fromOverall:Number(base.overall),fromPosRank:Number(base.posRank)
   };
 }
-function metricsAgainst(latestSnap,baseSnap){
+function metricsAgainst(latestSnap,baseSnap,firstSeen=null){
   const latest=rowMap(latestSnap),base=rowMap(baseSnap),out=new Map();
-  for(const [id,row] of latest){const d=deltaRow(row,base.get(id));if(d)out.set(id,d)}
+  for(const [id,row] of latest){
+    const archived=base.get(id),fallback=!archived?firstSeen?.get(id):null,prior=archived||fallback?.row;
+    // A first observation is a baseline, never an invented movement.
+    if(!prior||String(fallback?.t||baseSnap?.t)===String(latestSnap?.t))continue;
+    const d=deltaRow(row,prior);
+    if(d){d.baseline_t=archived?baseSnap?.t:fallback.t;d.available_history=!archived;out.set(id,d)}
+  }
   return out;
 }
-function marketPeriod(latest,base){
-  const metrics=metricsAgainst(latest,base),rows=[...metrics.values()];
+function marketPeriod(latest,base,firstSeen=null){
+  const metrics=metricsAgainst(latest,base,firstSeen),rows=[...metrics.values()];
   const valueRisers=rows.filter(x=>x.delta>0).sort((a,b)=>b.delta-a.delta||b.value-a.value);
   const valueFallers=rows.filter(x=>x.delta<0).sort((a,b)=>a.delta-b.delta||b.value-a.value);
   const rankRisers=rows.filter(x=>x.overallDelta>0).sort((a,b)=>b.overallDelta-a.overallDelta||b.value-a.value);
@@ -610,16 +616,25 @@ function marketFromSnapshots(snaps){
     '1Y':baselineFor(ordered,latestMs,365)||first,
     'ALL':first
   };
+  const firstSeen=new Map(),firstInYear=new Map(),yearStartMs=Date.parse(bases['1Y']?.t);
+  for(const snap of ordered)for(const row of snap.rows||[]){
+    const id=String(row?.id||'');
+    if(!id)continue;
+    if(!firstSeen.has(id))firstSeen.set(id,{t:snap.t,row});
+    // A 1Y fallback must be inside the actual 1Y baseline period.
+    // Do not resurrect a pre-window price when an asset disappears and returns.
+    if(Date.parse(snap.t)>=yearStartMs&&!firstInYear.has(id))firstInYear.set(id,{t:snap.t,row});
+  }
   const periods={};
   for(const [label,base] of Object.entries(bases)){
-    const p=marketPeriod(latest,base);
+    const p=marketPeriod(latest,base,label==='1Y'?firstInYear:label==='ALL'?firstSeen:null);
     periods[label]={valueRisers:p.valueRisers,valueFallers:p.valueFallers,rankRisers:p.rankRisers,rankFallers:p.rankFallers,posRankRisers:p.posRankRisers,posRankFallers:p.posRankFallers,baseline:base?.t||null};
   }
-  const m1=marketPeriod(latest,bases['1D']).metrics,m7=marketPeriod(latest,bases['7D']).metrics,m30=marketPeriod(latest,bases['30D']).metrics,m365=marketPeriod(latest,bases['1Y']).metrics,mAll=marketPeriod(latest,bases['ALL']).metrics;
+  const m1=marketPeriod(latest,bases['1D']).metrics,m7=marketPeriod(latest,bases['7D']).metrics,m30=marketPeriod(latest,bases['30D']).metrics,m365=marketPeriod(latest,bases['1Y'],firstInYear).metrics,mAll=marketPeriod(latest,bases['ALL'],firstSeen).metrics;
   const latestMap=rowMap(latest);
   const marketRows=[...latestMap.values()].map(r=>{
     const id=String(r.id),d1=m1.get(id),d7=m7.get(id),d30=m30.get(id),d365=m365.get(id),dAll=mAll.get(id);
-    return{id,value:r.value,overall:r.overall,pos:r.pos,posRank:r.posRank,delta1:d1?.delta??null,delta7:d7?.delta??null,delta30:d30?.delta??null,delta365:d365?.delta??null,deltaAll:dAll?.delta??null,posRankDelta1:d1?.posRankDelta??null,posRankDelta7:d7?.posRankDelta??null,posRankDelta30:d30?.posRankDelta??null,posRankDelta365:d365?.posRankDelta??null,posRankDeltaAll:dAll?.posRankDelta??null,overallDelta7:d7?.overallDelta??null,overallDelta30:d30?.overallDelta??null};
+    return{id,value:r.value,overall:r.overall,pos:r.pos,posRank:r.posRank,delta1:d1?.delta??null,delta7:d7?.delta??null,delta30:d30?.delta??null,delta365:d365?.delta??null,deltaAll:dAll?.delta??null,delta365From:d365?.baseline_t??null,deltaAllFrom:dAll?.baseline_t??null,delta365Available:(d365?.available_history??false)||(!((latestMs-firstMs)>=365*86400000)&&d365!=null),deltaAllAvailable:dAll?.available_history??false,posRankDelta1:d1?.posRankDelta??null,posRankDelta7:d7?.posRankDelta??null,posRankDelta30:d30?.posRankDelta??null,posRankDelta365:d365?.posRankDelta??null,posRankDeltaAll:dAll?.posRankDelta??null,overallDelta7:d7?.overallDelta??null,overallDelta30:d30?.overallDelta??null};
   }).sort((a,b)=>b.value-a.value);
   return{
     tracking_since:first.t,latest:latest.t,snapshot_count:ordered.length,periods,marketRows,
@@ -654,19 +669,31 @@ async function getMarketSummary(s){
     return marketFromSnapshots([]);
   }
   const latestItem=timed[timed.length-1],latestMs=new Date(latestItem.t).getTime(),wanted=[timed[0],archiveItemAtOrBefore(timed,latestMs-1*86400000),archiveItemAtOrBefore(timed,latestMs-7*86400000),archiveItemAtOrBefore(timed,latestMs-30*86400000),archiveItemAtOrBefore(timed,latestMs-90*86400000),archiveItemAtOrBefore(timed,latestMs-365*86400000),latestItem].filter(Boolean);
+  // Sparse authentic samples discover the first tracked defensive cohort and
+  // later entrants without downloading the entire multi-month archive.
+  const historyStart=Date.parse(timed[0].t),sampledBuckets=new Set();
+  for(const item of timed){
+    const ms=Date.parse(item.t),age=(ms-historyStart)/86400000;
+    if(!Number.isFinite(age)||age<0||age>90)continue;
+    const bucket=age<10?'day-'+Math.floor(age):'week-'+Math.floor((age-10)/7);
+    if(sampledBuckets.has(bucket))continue;
+    sampledBuckets.add(bucket);wanted.push(item);
+  }
   const unique=[],seen=new Set();for(const item of wanted){const k=`${item.source}:${item.key||item.path||item.t}`;if(!seen.has(k)){seen.add(k);unique.push(item)}}
   const snaps=[];
-  for(const item of unique){
-    let snap=null;
-    if(item.source==='archive')snap=await archiveSnapshot(item);
-    else if(s){try{snap=await s.get(item.key,{type:'json'})}catch{}}
-    // A timestamp can exist in both stores. If the live blob is missing/corrupt,
-    // fall back to the durable GitHub archive instead of failing the whole market.
-    if((!snap?.t||!Array.isArray(snap.rows))&&item.source==='local'){
-      const archived=(arch.items||[]).find(x=>String(x?.t||'')===String(item.t||''));
-      if(archived)snap=await archiveSnapshot(archived);
-    }
-    if(snap?.t&&Array.isArray(snap.rows))snaps.push(snap);
+  // Batch the extra archive reads; no speculative values or archive writes.
+  for(let i=0;i<unique.length;i+=5){
+    const group=await Promise.all(unique.slice(i,i+5).map(async item=>{
+      let snap=null;
+      if(item.source==='archive')snap=await archiveSnapshot(item);
+      else if(s){try{snap=await s.get(item.key,{type:'json'})}catch{}}
+      if((!snap?.t||!Array.isArray(snap.rows))&&item.source==='local'){
+        const archived=(arch.items||[]).find(x=>String(x?.t||'')===String(item.t||''));
+        if(archived)snap=await archiveSnapshot(archived);
+      }
+      return snap?.t&&Array.isArray(snap.rows)?snap:null;
+    }));
+    snaps.push(...group.filter(Boolean));
   }
   snaps.sort((a,b)=>String(a.t).localeCompare(String(b.t)));
   const market=marketFromSnapshots(snaps);market.snapshot_count=timed.length;market.archive_snapshot_count=(arch.items||[]).length;market.local_snapshot_count=(local.items||[]).length;return market;

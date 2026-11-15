@@ -108,8 +108,18 @@ test('evidence floor rises continuously with independent sources, qualifying sea
 });
 test('V74 applies only within IDP V72 and preserves the full-precision ranking correction',()=>{
  assert.match(source,/if\(groupPos\(z\.x\)!=='IDP'\)return z/);
- assert.match(source,/finalFactor=Math\.max\(servedFactor,careerRetention\.floor\)/);
+ assert.match(source,/finalFactor=Math\.max\(servedFactor,Math\.min\(careerRetention\.floor,servedFactor\*1\.17\)\)/);
  assert.match(source,/idpV74OriginalCompressionFactor:Number\(servedFactor\.toFixed\(3\)\)/);
  assert.match(source,/idpV74VerifiedCareerSeasons:careerRetention\.seasons/);
  assert.match(source,/idpOverallTradeCurveExactV72:baseline\*finalFactor\+retention\.bonus/);
+});
+
+test('V74 validated IDP retention is bounded to 17 percent of the previous continuous curve',()=>{
+ assert.match(source,/servedFactor\*1\.17/);
+ const verified=career();
+ for(const oldFactor of [.56,.60,.67,.697,.72,.76,.88,.95]){
+  const adjusted=Math.max(oldFactor,Math.min(verified.floor,oldFactor*1.17));
+  assert(adjusted>=oldFactor);
+  assert(adjusted<=oldFactor*1.17+1e-9);
+ }
 });

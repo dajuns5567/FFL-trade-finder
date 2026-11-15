@@ -69,7 +69,7 @@ function choosePairs(extras,valueOf,positionOf=defaultPos,maxPairs=64){
  return selected;
 }
 function build(chosen,owned,valueOf,positionOf=defaultPos,{maxExtras=18,maxPairs=64,maxAssets=3}={}){
- if(!Array.isArray(chosen)||!chosen.length)return[];
+ if(!Array.isArray(chosen)||!chosen.length||chosen.length>maxAssets)return[];
  const result=[chosen.slice()],seen=new Set([key(chosen)]);
  if(chosen.length>=maxAssets)return result;
  const extras=sampleExtras(owned,chosen,valueOf,positionOf,maxExtras);

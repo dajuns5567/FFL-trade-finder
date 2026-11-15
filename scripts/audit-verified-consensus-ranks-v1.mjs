@@ -10,6 +10,7 @@ import {refreshAllSources} from '../netlify/functions/consensus-source-overrides
 import {buildConsensusPayload} from '../netlify/functions/update.mjs';
 
 const current='https://deploy-preview-466--precious-dango-fb4633.netlify.app/';
+const idpOnly='https://deploy-preview-464--precious-dango-fb4633.netlify.app/';
 const sourceFix={
   '/modeled-player-values-v319.js':readFileSync(new URL('../modeled-player-values-v319.js',import.meta.url),'utf8'),
   '/nonblocking-consensus-v277.js':readFileSync(new URL('../nonblocking-consensus-v277.js',import.meta.url),'utf8'),
@@ -37,10 +38,10 @@ if(refresh.successful!==7||refresh.total!==7){
  assert(Object.keys(payload.composite?.byId||{}).length>150,'Composite evidence insufficient');
  const body=JSON.stringify(payload);
  const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
- async function capture(useFix){
+ async function capture(useFix,site=current){
   const context=await browser.newContext({serviceWorkers:'block'});
   const errors=[],blocked=[],substitutions=[];
-  const origin=new URL(current).origin;
+  const origin=new URL(site).origin;
   await context.route('**/*',route=>{
    const req=route.request(),u=new URL(req.url());
    if(req.method()==='POST'&&(u.pathname==='/.netlify/functions/update'||u.pathname==='/api/update')&&u.origin===origin)
@@ -58,8 +59,8 @@ if(refresh.successful!==7||refresh.total!==7){
   });
   const page=await context.newPage();
   page.on('pageerror',e=>errors.push(String(e.message||e)));
-  console.log('SOURCE_MATCHED_STAGE '+(useFix?'fix':'baseline')+' loading');
-  await page.goto(current,{waitUntil:'domcontentloaded',timeout:30000});
+  console.log('SOURCE_MATCHED_STAGE '+(site===idpOnly?'idp-only':useFix?'fix':'baseline')+' loading');
+  await page.goto(site,{waitUntil:'domcontentloaded',timeout:30000});
   await page.waitForFunction(()=>{
    const st=window.state||{};
    return st.teams?.length===32&&
@@ -90,7 +91,7 @@ if(refresh.successful!==7||refresh.total!==7){
       denzelBoston:ranked.find(x=>x.name==='Denzel Boston')}
    };
   });
-  console.log('SOURCE_MATCHED_CAPTURE '+JSON.stringify({version:useFix?'fix':'baseline',
+  console.log('SOURCE_MATCHED_CAPTURE '+JSON.stringify({version:site===idpOnly?'idp-only':useFix?'fix':'baseline',
    ...snapshot.ranks,consensusSize:snapshot.consensusSize,modelMeta:snapshot.modelMeta,
    blockedWrites:blocked.length,substitutions,errors}));
   await context.close();
@@ -106,6 +107,24 @@ if(refresh.successful!==7||refresh.total!==7){
    'Source gate must NOT change player valuation formula');
   assert.deepEqual(candidate.ranked.map(x=>x.canonical),baseline.ranked.map(x=>x.canonical),
    'Source gate must NOT change canonical rank-based values');
+  // Compare the prior IDP-only model with identical live dynasty source rows.
+  // This directly separates an offense-model integration rank shift from an
+  // IDP input/weight change; this third snapshot is diagnostic, not a release.
+  try{
+   const older=await capture(false,idpOnly);
+   const controls=['joshAllen','willAnderson','mylesGarrett','dallasTurner','denzelBoston'];
+   const diff=Object.fromEntries(controls.map(name=>[name,{
+    idpOnly:older.ranks[name]||null,
+    combined:candidate.ranks[name]||null,
+    overallMovement:(older.ranks[name]&&candidate.ranks[name])
+      ?candidate.ranks[name].overall-older.ranks[name].overall:null
+   }]));
+   console.log('SOURCE_MATCHED_VERSION_DIFF '+JSON.stringify({
+    matchedSources:'same seven-source snapshot',
+    olderRanked:older.ranked.length,combinedRanked:candidate.ranked.length,
+    diff
+   }));
+  }catch(e){console.error('SOURCE_MATCHED_PRIOR_PREVIEW_UNAVAILABLE '+String(e?.message||e))}
   console.log('SOURCE_MATCHED_RANKINGS_PASS '+JSON.stringify({
    consensusSize:candidate.consensusSize,ranked:candidate.ranked.length,
    sourceIntegrity:'all-seven-live-valid',

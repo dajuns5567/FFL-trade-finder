@@ -85,9 +85,9 @@ test('partial dictionary and missing offensive positions never promote incorrect
 });
 
 test('experimental player currency uses actual modeled magnitude without changing offense/IDP weight math',()=>{
-  assert.match(src,/MAX\\*\\(raw\\/topModeled\\)/);
-  assert.match(src,/currencyBasis:'modeled-terminal-precision-proportional'/);
-  assert.match(src,/if\\(raw>previousModeled\\+1e-7\\)return false/);
+  assert.ok(src.includes('MAX*(raw/topModeled)'));
+  assert.ok(src.includes("currencyBasis:'modeled-terminal-precision-proportional'"));
+  assert.ok(src.includes('if(raw>previousModeled+1e-7)return false'));
   assert.doesNotMatch(src,/consensusWeight|IDP_V25_MARKET_CENTER_OFFSET|idpOverallTradeCurveFactorV72/);
 });
 

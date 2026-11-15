@@ -84,9 +84,45 @@ test('partial dictionary and missing offensive positions never promote incorrect
   assert.equal(x.ctx.modeledPlayerValuesV319.ready,true);
 });
 
-test('source-preserved value curve is unchanged and no consensus/IDP weighting is altered',()=>{
-  assert.match(src,/const BAND_ENDS=\[12,24,48,80,120,180,260\]/);
-  assert.match(src,/const BLEND=\.28,MIN_RATIO=\.45,MAX_RATIO=2\.25/);
-  assert.match(src,/const s=start,e=end,startVal=legacyValue\(s,maxRank\),endVal=legacyValue\(e,maxRank\)/);
+test('experimental player currency uses actual modeled magnitude without changing offense/IDP weight math',()=>{
+  assert.match(src,/MAX\\*\\(raw\\/topModeled\\)/);
+  assert.match(src,/currencyBasis:'modeled-terminal-precision-proportional'/);
+  assert.match(src,/if\\(raw>previousModeled\\+1e-7\\)return false/);
   assert.doesNotMatch(src,/consensusWeight|IDP_V25_MARKET_CENTER_OFFSET|idpOverallTradeCurveFactorV72/);
+});
+
+test('modeled strengths retain their proportional gaps on the canonical currency',()=>{
+  const x=make(true);x.drain();
+  const vals=x.roster.map(a=>x.ctx.tradeValueNormalizationV139.canonicalValue(a));
+  assert.equal(vals[0],9999);
+  assert.equal(vals[1],Math.round(9999*1350/1500));
+  assert.equal(vals[2],Math.round(9999*1200/1500));
+  assert.ok(vals[0]>vals[1]&&vals[1]>vals[2]);
+  assert.equal(x.ctx.modeledPlayerValuesV319.meta.currencyBasis,'modeled-terminal-precision-proportional');
+});
+
+test('illustrative screenshot strengths are not inflated simply by ranking position',()=>{
+  const x=make(true);
+  x.master[0].value=2159;x.master[0].marketPrecisionValueV386=2159;
+  x.master[1].value=682;x.master[1].marketPrecisionValueV386=682;
+  x.master[2].value=676;x.master[2].marketPrecisionValueV386=676;
+  x.drain();
+  const vals=x.roster.map(a=>x.ctx.tradeValueNormalizationV139.canonicalValue(a));
+  assert.equal(vals[0],9999);
+  assert.equal(vals[1],Math.round(9999*682/2159));
+  assert.equal(vals[2],Math.round(9999*676/2159));
+  assert.ok(vals[1]<4000,'one-third modeled strength cannot become 63% of leader');
+  assert.equal(x.ctx.tradeValueNormalizationV139.canonicalValue(x.picks[0]),3500,'draft pick valuation untouched');
+});
+
+test('missing modeled data uses conservative floor and exact ties stay equal',()=>{
+  const x=make(true);
+  x.master[0].marketPrecisionValueV386=1500;
+  x.master[1].marketPrecisionValueV386=1500;
+  x.master[2].marketPrecisionValueV386=0;x.master[2].value=0;
+  x.drain();
+  const vals=x.roster.map(a=>x.ctx.tradeValueNormalizationV139.canonicalValue(a));
+  assert.equal(vals[0],9999);
+  assert.equal(vals[1],9999);
+  assert.equal(vals[2],120);
 });

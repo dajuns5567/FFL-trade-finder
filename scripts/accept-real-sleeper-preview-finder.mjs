@@ -33,6 +33,7 @@ const realPlayerIds=new Set(rosters.flatMap(x=>x.players||[]).map(String));
 assert(realPlayerIds.size>250,'Suspiciously incomplete 32-team player roster snapshot');
 
 let browser,blockedWrites=0,blockedMutations=0,failedAssets=[];
+const playerDataRequests=[], runtimeErrors=[];
 try{
   markStage('launching isolated read-only Chromium');
   browser=await chromium.launch({headless:true,args:['--no-sandbox']});
@@ -55,6 +56,21 @@ try{
   const page=await context.newPage();
   page.on('response',r=>{
     if(r.status()>=400&&/\.(?:js|css)(?:\?|$)/.test(r.url()))failedAssets.push({status:r.status(),url:r.url()});
+    if(/api\.sleeper\.app\/v1\/players\/nfl(?:\?|$)/.test(r.url())){
+      const entry={status:r.status(),url:r.url(),time:new Date().toISOString()};
+      playerDataRequests.push(entry);
+      console.log('[live-preview-audit] Sleeper metadata response '+JSON.stringify(entry));
+    }
+  });
+  page.on('requestfailed',request=>{
+    if(/api\.sleeper\.app\/v1\/players\/nfl(?:\?|$)/.test(request.url())){
+      const entry={failed:request.failure()?.errorText||'unknown',url:request.url()};
+      playerDataRequests.push(entry);
+      console.error('[live-preview-audit] Sleeper metadata request failed '+JSON.stringify(entry));
+    }
+  });
+  page.on('pageerror',e=>{
+    if(runtimeErrors.length<8){runtimeErrors.push(String(e.message||e));console.error('[live-preview-audit] pageerror '+String(e.message||e).slice(0,700))}
   });
   markStage('opening exact Netlify preview');
   await page.goto(preview,{waitUntil:'domcontentloaded',timeout:35000});
@@ -74,7 +90,11 @@ try{
       const p=players[String(x.id)];
       return !!(p?.full_name||p?.first_name)&&Array.isArray(p?.fantasy_positions)&&p.fantasy_positions.includes('RB');
     });
-  },null,{timeout:45000});
+  },null,{timeout:35000,polling:1000}).catch(e=>{
+    throw Error('Sleeper preview player metadata readiness failed: '+String(e.message||e)+
+      ' | Sleeper responses: '+JSON.stringify(playerDataRequests)+
+      ' | browser errors: '+JSON.stringify(runtimeErrors));
+  });
   markStage('metadata loaded; reading canonical roster values');
   const initial=await page.evaluate(()=>{
     const a=window.state.allAssets.filter(x=>x?.type==='player');

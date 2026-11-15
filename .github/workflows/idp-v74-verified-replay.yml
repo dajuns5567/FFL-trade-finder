@@ -1,0 +1,34 @@
+name: IDP V74 verified career retention counterfactual (draft)
+on:
+  pull_request:
+    paths:
+      - 'valuation-idp-v43.js'
+      - 'tests/idp-v72-source-retention.test.mjs'
+      - 'scripts/audit-idp-v74-verified-replay.mjs'
+      - 'scripts/audit-idp-consensus-divergence-v75.mjs'
+      - '.github/workflows/idp-v74-verified-replay.yml'
+permissions:
+  contents: read
+jobs:
+  v74-idp-only:
+    if: github.event.pull_request.number == 474
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax and exact IDP evidence-retention unit regressions
+        run: |
+          node --check valuation-idp-v43.js
+          node --check scripts/audit-idp-v74-verified-replay.mjs
+          node --check scripts/audit-idp-consensus-divergence-v75.mjs
+          node --test tests/idp-v72-source-retention.test.mjs
+      - name: Install declared source adapters and isolated test browser
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund --no-package-lock
+          npm install --no-save --ignore-scripts --no-audit --no-fund --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Read-only seven-source IDP model versus dynasty consensus rank divergence
+        run: node scripts/audit-idp-consensus-divergence-v75.mjs

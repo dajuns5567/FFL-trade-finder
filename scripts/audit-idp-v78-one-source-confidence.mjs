@@ -191,4 +191,3 @@ const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
   assert.equal(report.contextChanged,0);
   console.log('IDP_V78_AUDIT_PASS');
  }finally{await browser.close()}
-}

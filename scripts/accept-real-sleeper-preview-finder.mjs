@@ -60,7 +60,7 @@ try{
       name:String(window.playerName?.(x.id)||x.name||''),
       pos:String(window.groupPos?.(x)||x.position||'').toUpperCase(),
       value:Number(window.tradeValueNormalizationV139?.canonicalValue?.(x)||x.value)||0}));
-    const matches=players.filter(x=>/jonathan\\s+taylor/i.test(x.name));
+    const matches=players.filter(x=>/jonathan\s+taylor/i.test(x.name));
     const alternate=players.filter(x=>x.pos==='RB'&&x.owner&&x.name&&x.value>0)
       .sort((x,y)=>y.value-x.value)[0];
     return {teams:window.state.teams.length,players:a.length,matches,

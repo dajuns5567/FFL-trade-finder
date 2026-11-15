@@ -144,11 +144,18 @@ const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
   const old=new Map(a.ranked.map(x=>[x.id,x]));
   const rostered=new Set(b.rosteredPlayerIds);
   const idps=b.ranked.filter(x=>x.position==='IDP'),rows=[];
-  let unchangedOffense=0,unchangedScoring=0,unchangedContext=0;
+  let unchangedOffense=0,unchangedScoring=0,unchangedContext=0;const dualRoleChanges=[];
   for(const x of b.ranked){
    const v=old.get(x.id);
    if(x.position!=='IDP'){
     if(x.modeled===v.modeled)unchangedOffense++;
+    else {
+      const dual=x.sourceDetail?.kind==='dual'||v.sourceDetail?.kind==='dual';
+      assert(dual,'offensive-only model changed under IDP confidence rule: '+x.name);
+      dualRoleChanges.push({name:x.name,id:x.id,position:x.position,
+       before:v.modeled,after:x.modeled,
+       priorConsensus:v.consensus,updatedConsensus:x.consensus});
+    }
     continue;
    }
    if(x.v25Scoring===v.v25Scoring)unchangedScoring++;
@@ -162,7 +169,7 @@ const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
      marketValueBefore:v.consensus,marketValueAfter:x.consensus,
      qualifyingSeasons:x.qualifyingSeasons,age:x.age});
   }
-  assert.equal(unchangedOffense,b.ranked.filter(x=>x.position!=='IDP').length);
+  assert.equal(unchangedOffense+dualRoleChanges.length,b.ranked.filter(x=>x.position!=='IDP').length);
   assert.equal(unchangedScoring,idps.length);
   assert.equal(unchangedContext,idps.length);
   const changed=rows.filter(x=>x.change!==0);
@@ -174,7 +181,7 @@ const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
     'T.J. Watt','Greg Rousseau','Carson Schwesinger','Cedric Gray','Jack Campbell','David Bailey']
     .map(n=>rows.find(x=>x.name===n)).filter(Boolean);
   const report={ranked:b.ranked.length,idps:idps.length,rostered:rostered.size,
-    idpConsensusChanged:idpChanges.length,offenseModelChanged:0,
+    idpConsensusChanged:idpChanges.length,offenseOnlyModelChanged:0,dualRoleChanges,
     scoreChanged:idps.length-unchangedScoring,contextChanged:idps.length-unchangedContext,
     rankedOneSource:cohort(1).length,rankedTwoSources:rows.filter(x=>x.sourceCount>=2).length,
     oneSourceRooster:cohort(1).filter(x=>x.rostered).length,

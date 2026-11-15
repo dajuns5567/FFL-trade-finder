@@ -63,30 +63,14 @@ assert(api?.ready,'V319 modeled player adapter did not become ready');
 assert(api.meta.count===players.length,'V319 modeled map count mismatch');
 assert(norm.canonicalValue(picks[0])===pickBefore,'V319 changed draft-pick value');
 
-function legacy(rank,maxRank=907){
- const MIN=120,MAX=9999,PLAYER_BREAK=325,PLAYER_BREAK_VALUE=1825,round5=n=>Math.round(Number(n||0)/5)*5;
- const r=clamp(1,Number(rank)||1,maxRank);
- if(r===1)return MAX;
- if(r<=PLAYER_BREAK){const t=(r-1)/(PLAYER_BREAK-1);return round5(PLAYER_BREAK_VALUE+(MAX-PLAYER_BREAK_VALUE)*Math.pow(Math.max(0,1-Math.pow(t,.56)),1.4))}
- const span=Math.max(1,maxRank-PLAYER_BREAK),t=(r-PLAYER_BREAK)/span;
- return round5(clamp(MIN,MIN+(PLAYER_BREAK_VALUE-MIN)*Math.pow(Math.max(0,1-Math.pow(t,.7)),1.5),PLAYER_BREAK_VALUE));
-}
-function median(xs){const a=xs.filter(x=>Number.isFinite(x)&&x>0).slice().sort((a,b)=>a-b);if(!a.length)return 1;const m=a.length>>1;return a.length%2?a[m]:(a[m-1]+a[m])/2}
 function expected(){
- const MIN=120,MAX=9999,B=[12,24,48,80,120,180,260],BL=.28,LO=.45,HI=2.25;
- const arr=master,n=arr.length,maxRank=Math.max(907,n),vals=arr.map(z=>Number(z.value)||0),ends=[...B.filter(x=>x<n),n],out=new Map();
- let start=1;
- for(const end of ends){
-  const s=start,e=end,sv=legacy(s,maxRank),ev=legacy(e,maxRank);
-  if(s===e){out.set(String(arr[s-1].x.id),Math.round(clamp(MIN,sv,MAX)));start=e+1;continue}
-  const mg=[],bg=[];
-  for(let r=s;r<e;r++){mg.push(Math.max(0,vals[r-1]-vals[r]));bg.push(Math.max(.0001,legacy(r,maxRank)-legacy(r+1,maxRank)))}
-  const med=median(mg),w=bg.map((g,i)=>g*((1-BL)+BL*clamp(LO,mg[i]/Math.max(med,.0001),HI))),tot=w.reduce((a,b)=>a+b,0)||1,span=Math.max(0,sv-ev);
-  let cur=sv;out.set(String(arr[s-1].x.id),Math.round(clamp(MIN,cur,MAX)));
-  for(let i=0;i<w.length;i++){cur-=span*(w[i]/tot);const rank=s+i+1;let v=Math.round(clamp(MIN,cur,MAX));if(rank===e)v=Math.round(clamp(MIN,ev,MAX));out.set(String(arr[rank-1].x.id),v)}
-  start=e+1;
+ const out=new Map(),top=Number(master[0]?.marketPrecisionValueV386??master[0]?.value);
+ assert(top>0,'test model must have a valid top precision anchor');
+ for(const z of master){
+  const raw=Number(z.marketPrecisionValueV386??z.value);
+  out.set(String(z.x.id),Math.round(clamp(120,9999*(raw/top),9999)));
  }
- out.set(String(arr[0].x.id),MAX);return out;
+ return out;
 }
 const exp=expected();
 let prev=Infinity;
@@ -116,5 +100,5 @@ vm.runInContext(fs.readFileSync('trade-finder-v256-compiled.js','utf8'),ctx,{fil
  const f=ctx.section1V130.fair([players[0]],[players[16]]);
  assert(f.aRaw===norm.canonicalValue(players[0]),'V311 Evaluator/fair outgoing total did not use V319 number');
  assert(f.bRaw===norm.canonicalValue(players[16]),'V311 Evaluator/fair incoming total did not use V319 number');
- console.log('V319 exact modeled values + frozen V311 Finder/Evaluator integration smoke passed');
+ console.log('V319 model-proportional canonical currency + frozen V311 Finder/Evaluator integration smoke passed');
 })().catch(e=>{console.error(e);process.exit(1)});

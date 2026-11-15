@@ -10,7 +10,8 @@ const endpoint=fs.readFileSync('netlify/functions/value-history.mjs','utf8');
 
 test('offense career-stage evidence correction and IDP V72 precision coexist',()=>{
  assert.match(offense,/const audited=finite50\(a\?\.value\),raw=finite50\(a\?\.rawValue\)/);
- assert.match(idp,/idpOverallTradeCurveExactV72:baseline\*servedFactor\+retention\.bonus/);
+ assert.match(idp,/idpOverallTradeCurveExactV72:baseline\*finalFactor\+retention\.bonus/);
+ assert.match(idp,/finalFactor=Math\.max\(servedFactor,Math\.min\(careerRetention\.floor,servedFactor\*1\.17\)\)/);
  assert.match(display,/valuation-weighted PPG/);
  assert.match(display,/actual3yr/);
 });

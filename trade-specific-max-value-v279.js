@@ -118,8 +118,86 @@ function assetRow(x){if(x.type==='pick'){const label=typeof window.pickDisplay90
 function side(title,xs,f,send){const total=send?f.aRaw:f.bRaw,adj=send?f.aAdj:f.bAdj,eff=send?f.aEffective:f.bEffective;return`<div class="trade95-side"><div class="trade95-side-title">${title}</div>${xs.map(assetRow).join('')}<div class="trade95-total"><span>RAW ASSET TOTAL</span><b>${fmt(total)}</b></div>${adj>0?`<div class="trade97-adjust"><span>VALUE ADJUSTMENT</span><b>+${fmt(adj)}</b></div><div class="trade97-effective"><span>TRADE-ADJUSTED TOTAL</span><b>${fmt(eff)}</b></div>`:''}</div>`}
 function card(r,i){const f=r.f,label=f.score>=82?'Fair':'Negotiable';return`<div class="result trade95-card"><div class="trade95-head"><div><b>#${i+1} ${esc(teamName(r.other))}</b><div class="trade95-sub">Specific target: ${esc(pname(r.target))} • Maximum value received</div></div><div class="trade95-score">${Math.round(f.score)}<span>/100</span><div>${label}</div></div></div><div class="trade95-grid">${side('YOU RECEIVE',r.recv,f,false)}${side('YOU SEND',r.give,f,true)}</div><div class="trade95-summary"><div><b>${label}</b><span>Effective value edge +${fmt(Math.max(0,Number(f.edgeEffective)||0))}</span><span>Partner fit ${Math.round(r.fit)}/100</span></div></div><button class="secondary small rationaleBtn">Trade rationale</button><div class="rationaleBody" hidden><ul><li>Every incoming package contains ${esc(pname(r.target))}.</li><li>Maximum Value Received prioritizes qualifying positive-edge trades rather than 100/100 fairness.</li><li>Only trades within the existing 75–90 Maximum Value fairness window and with a positive effective edge are eligible.</li><li>Player values, pick values, ownership and the fairness formula are unchanged.</li></ul></div></div>`}
 function draw(host){host.innerHTML=active.length?active.slice(0,visible).map(card).join(''):'<div class="empty">No specific-player trade met the current Maximum Value Received requirements.</div>';if(visible<active.length){const b=document.createElement('button');b.className='secondary';b.style.cssText='margin:12px auto 4px;display:block';b.textContent=`Load more trades (${active.length-visible} more)`;b.onclick=()=>{visible=Math.min(active.length,visible+5);draw(host)};host.appendChild(b)}}
-async function run(){const my=++token,host=document.getElementById('finderResults'),me=Number(document.getElementById('findTeam')?.value),needle=targetText();if(!host||!needle)return;if(!me){host.innerHTML='<div class="empty">Choose your team before finding trades.</div>';return}const target=(st().allAssets||[]).find(x=>x?.type==='player'&&Number(x.owner)!==me&&q(pname(x))===needle);if(!target){host.innerHTML='<div class="empty">That player could not be matched exactly to a rostered player.</div>';return}host.innerHTML=`<div class="empty">Searching maximum-value trades for ${esc(pname(target))}…</div>`;await new Promise(r=>setTimeout(r,0));const tier=String(document.getElementById('tradeTier94')?.value||'neutral'),w=positions(),gs=outgoing(me).map(xs=>({xs,v:raw(xs)})).filter(g=>g.v>0),rs=incoming(Number(target.owner),target).map(xs=>({xs,v:raw(xs)})).filter(r=>r.v>0);const buckets=new Map([[1,[]],[2,[]],[3,[]]]);for(const g of gs)(buckets.get(g.xs.length)||buckets.get(3)).push(g);for(const a of buckets.values())a.sort((x,y)=>x.v-y.v);const result=[],seen=new Set();let checks=0,examined=0,receiveScans=0;for(const recv of rs){if(my!==token)return;for(const n of[1,2,3]){const a=buckets.get(n)||[];if(!a.length)continue;let candidates;const cap=n===1?120:n===2?220:180;candidates=structureCandidates(a,recv.v,n,cap);for(const g of candidates){if(++examined%320===0){await new Promise(r=>setTimeout(r,0));if(my!==token)return}if(!g||!tierOK(g.xs,recv.xs,tier,w))continue;const k=packageKey(g.xs)+'>'+packageKey(recv.xs);if(seen.has(k))continue;seen.add(k);const f=fair(g.xs,recv.xs);checks++;if(!f||f.rejected||!candidateOK(f))continue;const pf=fit(me,Number(target.owner),g.xs,recv.xs);result.push({other:Number(target.owner),target,give:g.xs,recv:recv.xs,f,fit:pf,maximumValueScore:score(f,pf,g.xs,recv.xs,tier)});if(checks%400===0)await new Promise(r=>setTimeout(r,0))}}if(++receiveScans%4===0){await new Promise(r=>setTimeout(r,0));if(my!==token)return}}
- result.sort((a,b)=>b.maximumValueScore-a.maximumValueScore||(Number(b.f.edgeEffective)||0)-(Number(a.f.edgeEffective)||0));active=diversifyTieredResults(result,tier,140);visible=Math.min(5,active.length);draw(host)}
+// Finite search budgets make filter selection predictable even when the
+// canonical league fairness model is expensive. Search broad diverse families
+// first; a budget never loosens trade eligibility, valuation or fairness.
+const TARGET_SEARCH_MAX_MS=9000;
+const TARGET_SEARCH_MAX_FAIR=2200;
+const TARGET_SEARCH_MAX_EXAMINED=9000;
+let lastSearchStats=null;
+function boundedIncoming(rs){
+ if(rs.length<=72)return rs;
+ const single=rs.filter(r=>r.xs.length===1);
+ const pair=rs.filter(r=>r.xs.length===2);
+ const triple=rs.filter(r=>r.xs.length>=3).slice().sort((a,b)=>a.v-b.v);
+ return [...single,...spreadTriples(pair,20),...spreadTriples(triple,51)].slice(0,72);
+}
+async function run(){
+ const my=++token,host=document.getElementById('finderResults'),
+  me=Number(document.getElementById('findTeam')?.value),needle=targetText();
+ if(!host||!needle)return;
+ if(!me){host.innerHTML='<div class="empty">Choose your team before finding trades.</div>';return}
+ const target=(st().allAssets||[]).find(x=>x?.type==='player'&&Number(x.owner)!==me&&q(pname(x))===needle);
+ if(!target){host.innerHTML='<div class="empty">That player could not be matched exactly to a rostered player.</div>';return}
+ host.innerHTML=`<div class="empty">Searching maximum-value trades for ${esc(pname(target))}…</div>`;
+ const started=Date.now(),deadline=started+TARGET_SEARCH_MAX_MS;
+ let fairnessChecks=0,examined=0,receiveScans=0,capped=false;
+ const result=[],seen=new Set(),finish=()=>{
+  if(my!==token)return;
+  result.sort((a,b)=>b.maximumValueScore-a.maximumValueScore||(Number(b.f.edgeEffective)||0)-(Number(a.f.edgeEffective)||0));
+  active=diversifyTieredResults(result,tier,140);visible=Math.min(5,active.length);
+  draw(host);
+  if(capped){
+   const note=document.createElement('div');
+   note.className='tiny muted';
+   note.textContent='Showing qualifying trades from a bounded search. Refine filters for more possibilities.';
+   host.appendChild(note);
+  }
+ };
+ let tier='neutral';
+ try{
+  await new Promise(r=>setTimeout(r,0));
+  if(my!==token)return;
+  tier=String(document.getElementById('tradeTier94')?.value||'neutral');
+  const w=positions(),gs=outgoing(me).map(xs=>({xs,v:raw(xs)})).filter(g=>g.v>0),
+   rs=boundedIncoming(incoming(Number(target.owner),target).map(xs=>({xs,v:raw(xs)})).filter(r=>r.v>0));
+  const buckets=new Map([[1,[]],[2,[]],[3,[]]]);
+  for(const g of gs)(buckets.get(g.xs.length)||buckets.get(3)).push(g);
+  for(const bucket of buckets.values())bucket.sort((x,y)=>x.v-y.v);
+  search:for(const recv of rs){
+   if(my!==token)return;
+   for(const n of[1,2,3]){
+    const bucket=buckets.get(n)||[];
+    if(!bucket.length)continue;
+    const candidates=structureCandidates(bucket,recv.v,n,n===1?24:n===2?44:40);
+    for(const g of candidates){
+     examined++;
+     if(examined%64===0){
+      await new Promise(r=>setTimeout(r,0));
+      if(my!==token)return;
+     }
+     if(examined>=TARGET_SEARCH_MAX_EXAMINED||fairnessChecks>=TARGET_SEARCH_MAX_FAIR||Date.now()>=deadline){
+      capped=true;break search;
+     }
+     if(!g||!tierOK(g.xs,recv.xs,tier,w))continue;
+     const k=packageKey(g.xs)+'>'+packageKey(recv.xs);
+     if(seen.has(k))continue;
+     seen.add(k);
+     fairnessChecks++;
+     const f=fair(g.xs,recv.xs);
+     if(!f||f.rejected||!candidateOK(f))continue;
+     const pf=fit(me,Number(target.owner),g.xs,recv.xs);
+     result.push({other:Number(target.owner),target,give:g.xs,recv:recv.xs,f,fit:pf,maximumValueScore:score(f,pf,g.xs,recv.xs,tier)});
+    }
+   }
+   receiveScans++;
+  }
+ }finally{
+  lastSearchStats={elapsedMs:Date.now()-started,examined,fairnessChecks,receiveScans,results:result.length,capped};
+  finish();
+ }
+}
+
 document.addEventListener('click',e=>{const b=e.target.closest?.('#runFinder');if(!b||!isActive())return;e.preventDefault();e.stopImmediatePropagation();run().catch(err=>{console.error('V309 specific maximum value search failed',err);const h=document.getElementById('finderResults');if(h)h.innerHTML='<div class="empty">Specific-player Maximum Value search stopped unexpectedly.</div>'})},true);
-window.tradeSpecificMaxValueV279={run,isActive,structureCandidates,diversifyTieredResults,outgoingCenterKey,outgoingFamilyKey,familyRoundRobin,sourceIntegrityStats:()=>({structureIndexBuilds})};
+window.tradeSpecificMaxValueV279={run,isActive,structureCandidates,diversifyTieredResults,outgoingCenterKey,outgoingFamilyKey,familyRoundRobin,sourceIntegrityStats:()=>({structureIndexBuilds,lastSearchStats})};
 })();

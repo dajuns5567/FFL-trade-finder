@@ -61,6 +61,10 @@ test('real select-all + Jonathan Taylor target + maximum value + tier up complet
  assert.ok(getYields()>0,'search should yield to browser even when candidate screens reject rows');
  assert.ok(elements.finderResults.innerHTML.includes('No specific-player trade met')||elements.finderResults.innerHTML.includes('Jonathan Taylor'));
  assert.ok(api.sourceIntegrityStats().structureIndexBuilds<=3,'at most one index for each 1/2/3-asset outgoing bucket');
+ const stats=api.sourceIntegrityStats().lastSearchStats;
+ assert.ok(stats&&stats.elapsedMs<12000);
+ assert.ok(stats.fairnessChecks<=2200&&stats.examined<=9000,'live search must enforce hard work limits');
+ assert.ok(stats.receiveScans<=72,'live search must bound incoming packages');
  assert.equal(target.owner,2);
 });
 test('every Max Value package still contains the target and no equity/consensus formula is replaced',()=>{
@@ -75,6 +79,27 @@ test('every Max Value package still contains the target and no equity/consensus 
 });
 
 test('assembled preview loads the updated Finder script rather than the stale browser cache key',()=>{
- assert.match(site,/trade-specific-max-value-v279\.js\?v=441/);
+ assert.match(site,/trade-specific-max-value-v279\.js\?v=442/);
  assert.match(site,/trade-specific-player-v232\.js\?v=440/);
+});
+
+test('adversarial expensive full-league fairness cannot leave the search spinner indefinitely',async()=>{
+ const f=runtime({outgoingCount:95,targetExtras:20});
+ let actualCalls=0;
+ f.win.section1V130.fair=(give,recv)=>{
+  actualCalls++;
+  let checksum=0;
+  for(let i=0;i<20000;i++)checksum+=i%7;
+  return {score:83,edgeEffective:110+checksum%2,aRaw:1000,bRaw:1100,aAdj:0,bAdj:0,aEffective:1000,bEffective:1110,rejected:false};
+ };
+ const started=Date.now();
+ await Promise.race([f.api.run(),new Promise((_,reject)=>setTimeout(()=>reject(Error('live Finder still stuck after 12s')),12000))]);
+ const stats=f.api.sourceIntegrityStats().lastSearchStats;
+ assert.ok(stats.elapsedMs<=11000,'hard deadline must terminate a slow real fairness engine');
+ assert.ok(stats.fairnessChecks<=2200);
+ assert.ok(stats.examined<=9000);
+ assert.ok(stats.receiveScans<=72);
+ assert.equal(actualCalls,stats.fairnessChecks);
+ assert.doesNotMatch(f.elements.finderResults.innerHTML,/Searching maximum-value trades/);
+ assert.ok(Date.now()-started<=12000);
 });

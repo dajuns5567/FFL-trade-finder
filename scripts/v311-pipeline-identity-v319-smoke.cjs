@@ -19,7 +19,7 @@ const expected={
   'trade-specific-tier-up-v282.js':'7459ff61db4b4479635dedc05a66ada53ce0a904',
   'trade-specific-add-assets-v282.js':'f356f8913914ef136a2a0909f17d01e97a4a14a0',
   // Reviewed targeted Maximum Value performance-only revision: indexed packages and cooperative yielding, no valuation or fairness edits.
-  'trade-specific-max-value-v279.js':'22eac5a8bbf966836e5e5c8fec95f72dbc092e31',
+  'trade-specific-max-value-v279.js':'b2d40b4dbf36abfa145b4678e9df8408adeef5b1',
   'trade-specific-player-v232.js':'eb162d2f29aa387f072d16e7f3d7c8248612a8fd',
   'pick-display-sync-v279.js':'ac0e5102c969139fade368410209ae44a6b78eff',
   'trade-recommended-pick-ownership-v301.js':'383c4cccc512d8f57692ab81a5e45102179fad02'

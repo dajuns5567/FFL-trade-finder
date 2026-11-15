@@ -70,8 +70,11 @@ test("offensive ranking trace exposes source ranks and omission penalties withou
     [["Ranker A",10],["Ranker B",12]]);
   assert.equal(trace.filter(x=>!x.listed).length,1);
   assert.ok(trace[2].source.includes("(not listed)"));
-  // Existing single-source IDP coverage floor is 180, not raw source rank 1.
-  assert.equal(c.detailsById.lb.idpRank,180);
+  // One legitimate dynasty IDP source retains 35% of the actual published
+  // advantage against rank-180, rather than flattening every rank to 180.
+  assert.equal(c.detailsById.lb.idpRank,117.35);
+  assert.equal(c.detailsById.lb.idpSingleSourceReliability,.35);
+  assert.equal(c.detailsById.lb.idpSingleSourceUnadjustedRank,1);
   assert.equal(c.detailsById.lb.offenseSourceEvidence.length,0);
   assert.ok(Math.abs(trace.reduce((s,x)=>s+x.rank*x.weight,0)/
     trace.reduce((s,x)=>s+x.weight,0)-c.detailsById.denzel.offenseRank)<1e-10);
@@ -328,4 +331,31 @@ test('verified combined dynasty source remains eligible for IDP consensus',()=>{
   rankings:[{player:'Elite Defender',rank:1,position:'IDP'}]}],player);
  assert.equal(a.sourceCounts.idp,1);
  assert.ok(a.byId.defender>0);
+});
+
+test('one verified dynasty IDP source retains ordered rank signal, discounted toward conservative 180',()=>{
+ const rows=[1,15,75,150,180,220].map((rank,i)=>({rank,player:'Defender '+rank,position:'LB'}));
+ const results=[result('Verified IDP','verified-idp',rows)];
+ const players=rows.map(x=>({id:'id'+x.rank,name:x.player,positions:['LB']}));
+ const c=buildConsensusComposite(results,players);
+ const effective=rows.map(x=>c.detailsById['id'+x.rank].idpRank);
+ assert.deepEqual(effective,[117.35,122.25,143.25,169.5,180,220]);
+ for(let i=1;i<effective.length;i++)assert(effective[i]>effective[i-1]);
+ assert.equal(c.detailsById.id1.idpSingleSourceReliability,.35);
+ assert.equal(c.detailsById.id1.idpSingleSourceUnadjustedRank,1);
+});
+test('two verified dynasty IDP publishers take precedence without one-source adjustment',()=>{
+ const rows=[result('IDP one','one-idp',[{player:'Defender',rank:4,position:'LB'}]),
+ result('IDP two','two-idp',[{player:'Defender',rank:5,position:'LB'}])];
+ const c=buildConsensusComposite(rows,[{id:'d',name:'Defender',positions:['LB']}]);
+ assert.equal(c.detailsById.d.idpRank,1); // reindexed independent lists have one named row each
+ assert.equal(c.detailsById.d.idpSingleSourceReliability,null);
+ assert.equal(c.detailsById.d.idpSingleSourceUnadjustedRank,null);
+});
+test('no dynasty publisher creates no consensus; generic redraft feed cannot boost a player',()=>{
+ const p=[{id:'d',name:'Defender',positions:['LB']}];
+ const invalid={id:'rotowire-idp',source:'Generic IDP',valid:true,dynastyVerified:false,rankings:[{rank:1,player:'Defender',position:'LB'}]};
+ const c=buildConsensusComposite([invalid],p);
+ assert.equal(c.byId.d,undefined);
+ assert.equal(c.detailsById.d,undefined);
 });

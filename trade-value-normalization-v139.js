@@ -11,7 +11,22 @@ const stateRef=()=>{try{return typeof state!=='undefined'&&state?state:(window.s
 const assets=()=>Array.from(stateRef().allAssets||[]);
 const rankOf=a=>{try{return Math.max(1,Number(window.playerRankValue?.(a)?.rank)||0)}catch(_){return 0}};
 function sourceProjectionFn(){return window.draftPickProjection92||window.draftPickProjection90||window.draftPickProjection86||null}
-function currentMaxRank(){const rs=assets().filter(x=>x?.type==='player').map(rankOf).filter(Boolean);return Math.max(907,...rs)}
+// A roster-wide max-rank scan is invariant while the canonical ranking
+// snapshot and roster dictionary are unchanged. Without this memo, each
+// individual player value re-scans every other rostered player on boot.
+let maxRankSnapshot139=null;
+function currentMaxRank(){
+ const st=stateRef(),roster=st.allAssets||[];
+ const master=typeof masterRankCache==='undefined'?null:masterRankCache;
+ const lookup=window.playerRankValue;
+ if(master&&maxRankSnapshot139&&maxRankSnapshot139.master===master&&maxRankSnapshot139.roster===roster&&maxRankSnapshot139.players===st.players&&maxRankSnapshot139.lookup===lookup&&maxRankSnapshot139.length===roster.length)
+  return maxRankSnapshot139.maxRank;
+ const rs=assets().filter(x=>x?.type==='player').map(rankOf).filter(Boolean);
+ const maxRank=Math.max(907,...rs);
+ const readyMaster=typeof masterRankCache==='undefined'?null:masterRankCache;
+ maxRankSnapshot139=readyMaster?{master:readyMaster,roster,players:st.players,lookup,length:roster.length,maxRank}:null;
+ return maxRank;
+}
 function playerValueForRank(rank,maxRank=currentMaxRank()){
  const r=clamp(1,Number(rank)||1,maxRank);
  if(r===1)return MAX;

@@ -57,8 +57,8 @@ try{
   const initial=await page.evaluate(()=>{
     const a=window.state.allAssets.filter(x=>x?.type==='player');
     const players=a.map(x=>({id:String(x.id),owner:String(x.owner),
-      name:String(window.playerName?.(x.id)||x.name||''),
-      pos:String(window.groupPos?.(x)||x.position||'').toUpperCase(),
+      name:String((typeof playerName==='function'?playerName(x.id):'')||window.playerName?.(x.id)||x.name||''),
+      pos:String((typeof groupPos==='function'?groupPos(x):'')||window.groupPos?.(x)||x.position||'').toUpperCase(),
       value:Number(window.tradeValueNormalizationV139?.canonicalValue?.(x)||x.value)||0}));
     const matches=players.filter(x=>/jonathan\s+taylor/i.test(x.name));
     const alternate=players.filter(x=>x.pos==='RB'&&x.owner&&x.name&&x.value>0)

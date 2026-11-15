@@ -58,68 +58,36 @@ function build(force=false){
   if(!force&&arr===lastMaster&&meta.ready)return true;
 
   const n=arr.length,maxRank=Math.max(907,n),vals=arr.map(modeled);
-  const ends=[...BAND_ENDS.filter(x=>x<n),n],next=new Map();
-  let start=1;
-  for(const end of ends){
-    const s=start,e=end,startVal=legacyValue(s,maxRank),endVal=legacyValue(e,maxRank);
-    if(s===e){
-      const id=String(arr[s-1]?.x?.id??'');
-      if(!id)return false;
-      next.set(id,Math.round(clamp(MIN,startVal,MAX)));
-      start=e+1;continue;
-    }
-    const modeledGaps=[],baseGaps=[];
-    for(let r=s;r<e;r++){
-      modeledGaps.push(Math.max(0,vals[r-1]-vals[r]));
-      baseGaps.push(Math.max(.0001,legacyValue(r,maxRank)-legacyValue(r+1,maxRank)));
-    }
-    const localMedian=median(modeledGaps);
-    const weights=baseGaps.map((g,i)=>{
-      const ratio=clamp(MIN_RATIO,modeledGaps[i]/Math.max(localMedian,.0001),MAX_RATIO);
-      return g*((1-BLEND)+BLEND*ratio);
-    });
-    const total=weights.reduce((a,b)=>a+b,0)||1,span=Math.max(0,startVal-endVal);
-    let cur=startVal;
-    const firstId=String(arr[s-1]?.x?.id??'');
-    if(!firstId)return false;
-    next.set(firstId,Math.round(clamp(MIN,cur,MAX)));
-    for(let i=0;i<weights.length;i++){
-      cur-=span*(weights[i]/total);
-      const rank=s+i+1,id=String(arr[rank-1]?.x?.id??'');
-      if(!id)return false;
-      let out=Math.round(clamp(MIN,cur,MAX));
-      if(rank===e)out=Math.round(clamp(MIN,endVal,MAX));
-      next.set(id,out);
-    }
-    // Exact calculated ties should not receive different canonical values solely
-    // from stable array order. Keep intentional V319 band boundaries intact.
-    for(let r=s;r<=e;){
-      let j=r;
-      while(j<e&&vals[j]===vals[r-1])j++;
-      if(j>r){
-        let sum=0,count=0;
-        for(let k=r;k<=j;k++){const id=String(arr[k-1]?.x?.id??''),v=Number(next.get(id));if(Number.isFinite(v)){sum+=v;count++}}
-        if(count){const tied=Math.round(sum/count);for(let k=r;k<=j;k++){const id=String(arr[k-1]?.x?.id??'');next.set(id,tied)}}
-      }
-      r=j+1;
-    }
-    start=e+1;
+  // The source model already sorts the entire league on full terminal precision.
+  // Convert those actual dynasty-value magnitudes to the canonical currency,
+  // anchored to the strongest verified modeled player at MAX. A rank-based
+  // transfer function invents large apparent values for low-model-value
+  // players and compresses real offense/IDP dynasty differences.
+  //
+  // This is a currency-only mapping: no position, identity, fantasy scoring,
+  // consensus, development, rank ordering, or draft-pick source changes.
+  const topModeled=vals[0];
+  if(!Number.isFinite(topModeled)||topModeled<=0)return false;
+  const next=new Map();
+  let previousModeled=Infinity,previousCurrency=Infinity;
+  for(let i=0;i<n;i++){
+    const id=String(arr[i]?.x?.id??''),raw=vals[i];
+    if(!id||!Number.isFinite(raw)||raw<0)return false;
+    // Refuse a stale or unordered precision snapshot instead of silently
+    // repricing it using a guessed synthetic ranking.
+    if(raw>previousModeled+1e-7)return false;
+    const value=Math.round(clamp(MIN,MAX*(raw/topModeled),MAX));
+    if(value>previousCurrency)return false;
+    if(next.has(id))return false;
+    next.set(id,value);
+    previousModeled=raw;
+    previousCurrency=value;
   }
-  const topId=String(arr[0]?.x?.id??'');
-  if(!topId)return false;
-  next.set(topId,MAX);
-  if(next.size!==arr.length||!completeRoster(next))return false;
-
-  let prev=Infinity;
-  for(const z of arr){
-    const v=Number(next.get(String(z?.x?.id??'')));
-    if(!Number.isFinite(v)||v>prev)return false;
-    prev=v;
-  }
+  if(next.size!==n||!completeRoster(next))return false;
 
   map=next;
   lastMaster=arr;
-  meta={ready:true,count:next.size,version:meta.version+1,maxRank,blend:BLEND,minRatio:MIN_RATIO,maxRatio:MAX_RATIO};
+  meta={ready:true,count:next.size,version:meta.version+1,maxRank,blend:0,minRatio:null,maxRatio:null,currencyBasis:'modeled-terminal-precision-proportional',topModeled};
   return true;
 }
 function playerValue(a){

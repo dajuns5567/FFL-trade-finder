@@ -47,3 +47,38 @@ test('IDP calibration does not edit offensive model, league history or V72 curve
  assert.match(d,/baseFloor=\.60\+\.16\*t/);
  assert.match(source,/if\(groupPos\(z\.x\)!=='IDP'\|\|!isIndividualIdp25\(z\.x\.id\)\)return z/);
 });
+
+test('Player Values IDP audit never reads removed context percentile or tackle fields',()=>{
+ const begin=source.indexOf('window.idpScoringAudit=function(');
+ const finish=source.indexOf('\nmasterRankCache=null;',begin);
+ assert.ok(begin>0&&finish>begin,'extract live audit implementation');
+ assert.doesNotMatch(source.slice(begin,finish),/ctx\.(?:tackleRate|spikeRate|tacklePct|spikePct)\.toFixed/);
+ const st={players:{'123':{full_name:'Sample Defender',fantasy_positions:['LB']}}};
+ let present=true;
+ const ctx={
+  Math,Number,Object,String,Array,
+  state:st,generation25:()=>{},
+  baseAudit25:()=>({qualifyingSeasons:1,confidence:.8,consensus:500}),
+  scoring25:()=>({value:600,m:present?{tackleRate:2.375,spikeRate:.812,ppg:14,confidence:.8,coverage:1,seasons:1}:null,a:{seasons:[]}}),
+  context25:()=>({value:710,age:.65,development:{index:.7}}),
+  blend25:()=>({value:515}),
+  distributions25:()=>({topPpg:[],playerOnlyBenchmark:{n:0}}),
+  playerName:()=> 'Sample Defender',
+  IDP_V25_MARKET_CENTER_OFFSET:80.15
+ };
+ ctx.window=ctx;
+ vm.runInNewContext(source.slice(begin,finish),ctx);
+ const actual=ctx.idpScoringAudit('123');
+ assert.equal(actual.productionValue,600);
+ assert.equal(actual.otherContextValue,710);
+ assert.equal(actual.tackleRate,2.38);
+ assert.equal(actual.spikeRate,.81);
+ assert.equal(actual.tacklePercentile,null,'uncomputed percentile must remain unavailable');
+ assert.equal(actual.spikePercentile,null);
+ assert.equal(actual.ageContext,65);
+ present=false;
+ const sparse=ctx.idpScoringAudit('123');
+ assert.equal(sparse.tackleRate,null);
+ assert.equal(sparse.spikeRate,null);
+ assert.equal(sparse.v25RuntimeTrace.weightedPpg,null);
+});

@@ -334,11 +334,12 @@ test('verified combined dynasty source remains eligible for IDP consensus',()=>{
 });
 
 test('one verified dynasty IDP source retains ordered rank signal, discounted toward conservative 180',()=>{
- const rows=[1,15,75,150,180,220].map((rank,i)=>({rank,player:'Defender '+rank,position:'LB'}));
+ const special=new Set([1,15,75,150,180,220]);
+ const rows=Array.from({length:220},(_,i)=>({rank:i+1,player:special.has(i+1)?'Defender '+(i+1):'Unused '+(i+1),position:'LB'}));
  const results=[result('Verified IDP','verified-idp',rows)];
- const players=rows.map(x=>({id:'id'+x.rank,name:x.player,positions:['LB']}));
+ const players=[...special].map(rank=>({id:'id'+rank,name:'Defender '+rank,positions:['LB']}));
  const c=buildConsensusComposite(results,players);
- const effective=rows.map(x=>c.detailsById['id'+x.rank].idpRank);
+ const effective=[...special].map(rank=>c.detailsById['id'+rank].idpRank);
  assert.deepEqual(effective,[117.35,122.25,143.25,169.5,180,220]);
  for(let i=1;i<effective.length;i++)assert(effective[i]>effective[i-1]);
  assert.equal(c.detailsById.id1.idpSingleSourceReliability,.35);

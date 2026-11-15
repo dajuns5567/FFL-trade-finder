@@ -1,0 +1,33 @@
+name: Read-only preview valuation startup isolation (diagnostic only)
+on:
+  pull_request:
+    paths:
+      - 'scripts/diagnose-preview-js-stall.mjs'
+      - '.github/workflows/preview-js-stall-diagnostic.yml'
+permissions:
+  contents: read
+jobs:
+  startup-isolation:
+    if: github.event.pull_request.number == 466
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [idp-v21, all-valuation]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check diagnostic syntax before Chromium
+        run: node --check scripts/diagnose-preview-js-stall.mjs
+      - name: Install isolated browser
+        run: |
+          npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright
+          npx playwright install --with-deps chromium
+      - name: Read-only metadata readiness with test-only valuation module suppression
+        env:
+          FFL_PREVIEW_URL: https://6af9fe630d94ed59bc3b328d--precious-dango-fb4633.netlify.app/
+          FFL_DIAG_MODE: ${{ matrix.mode }}
+        run: node scripts/diagnose-preview-js-stall.mjs

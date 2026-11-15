@@ -19,7 +19,12 @@ async function capture(override){
   if(!['GET','HEAD'].includes(req.method())){blockedWrites++;return route.abort('blockedbyclient')}
   if(u.protocol!=='https:'||(u.hostname.endsWith('.netlify.app')&&u.origin!==origin))
    return route.abort('blockedbyclient');
-  if(u.origin===origin&&/\\/(?:api\\/update|\\.netlify\\/functions\\/(?:update|inquirer-publish|inquirer-preview-on-deploy|inquirer-publish-scheduled))/.test(u.pathname))
+  if(u.origin===origin&&(
+    u.pathname==='/api/update'||
+    u.pathname.startsWith('/.netlify/functions/update')||
+    u.pathname.startsWith('/.netlify/functions/inquirer-publish')||
+    u.pathname.startsWith('/.netlify/functions/inquirer-preview-on-deploy')))
+
    return route.abort('blockedbyclient');
   if(override&&u.origin===origin&&u.pathname==='/modeled-player-values-v319.js'){
    substitutions++;

@@ -29,7 +29,7 @@ try{
    if(!body.includes(a)||!body.includes(b)||!body.includes(c))throw Error('Unexpected V25 source format in diagnostic');
    body=body.replace(a,"function distributions25(){console.log('[V25_PROFILE] dist start '+performance.now());");
    body=body.replace(b,"console.log('[V25_PROFILE] dist complete '+performance.now()+' rows '+rows.length);cache25={rows,ppg,tackles,spikes");
-   body=body.replace(c,"masterRankings=function(){console.log('[V25_PROFILE] master start '+performance.now());const v=priorMaster25();console.log('[V25_PROFILE] prior returned '+performance.now()+' count '+v.length);const mapped=v.map((z,i)=>{if(i%100===0)console.log('[V25_PROFILE] mapped '+i+' at '+performance.now());return model25(z)});console.log('[V25_PROFILE] master complete '+performance.now());return mapped.sort((a,b)=>b.value-a.value)};");
+   body=body.replace(c,"let v25ProfileCalls=0;masterRankings=function(){const n=++v25ProfileCalls;if(n===1||n===20||n===100)console.log('[V25_PROFILE] callstack '+n+' '+new Error().stack);if(n===1||n%100===0)console.log('[V25_PROFILE] master start '+performance.now());const v=priorMaster25();if(n===1||n%100===0)console.log('[V25_PROFILE] prior returned '+performance.now()+' count '+v.length);const mapped=v.map((z,i)=>{if(n===1&&i%100===0)console.log('[V25_PROFILE] mapped '+i+' at '+performance.now());return model25(z)});if(n===1||n%100===0)console.log('[V25_PROFILE] master complete '+performance.now());return mapped.sort((a,b)=>b.value-a.value)};");
    return route.fulfill({response,body,contentType:'text/javascript'});
   }
   const skip=(mode==='full'||mode==='v25-profile')?false:mode==='idp-v21'?name==='valuation-idp-v21.js':

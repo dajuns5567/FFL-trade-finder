@@ -54,6 +54,16 @@ try{
     return Array.isArray(state?.teams)&&state.teams.length===32&&
       Array.isArray(state?.allAssets)&&state.allAssets.filter(x=>x?.type==='player').length>250;
   },null,{timeout:45000});
+  // Teams/assets can populate before the Sleeper player metadata dictionary.
+  // A premature lookup reads numeric IDs as names and classifies every player as IDP.
+  await page.waitForFunction(()=>{
+    const players=window.state?.players||{};
+    const rows=(window.state?.allAssets||[]).filter(x=>x?.type==='player');
+    return Object.keys(players).length>250&&rows.some(x=>{
+      const p=players[String(x.id)];
+      return !!(p?.full_name||p?.first_name)&&Array.isArray(p?.fantasy_positions)&&p.fantasy_positions.includes('RB');
+    });
+  },null,{timeout:45000});
   const initial=await page.evaluate(()=>{
     const a=window.state.allAssets.filter(x=>x?.type==='player');
     const players=a.map(x=>({id:String(x.id),owner:String(x.owner),

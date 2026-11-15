@@ -5,6 +5,7 @@ import {CONSENSUS_SOURCES} from '../netlify/functions/consensus-adapters.mjs';
 import {refreshDraftSharksIdp} from '../netlify/functions/draftsharks-idp-adapter.mjs';
 import {refreshRotowireIdp} from '../netlify/functions/rotowire-idp-adapter.mjs';
 import {buildConsensusComposite} from '../netlify/functions/consensus-composite-v3.mjs';
+import {buildConsensusPayload} from '../netlify/functions/update.mjs';
 
 const draft=fs.readFileSync(new URL('../netlify/functions/draftsharks-idp-adapter.mjs',import.meta.url),'utf8');
 const rotowire=fs.readFileSync(new URL('../netlify/functions/rotowire-idp-adapter.mjs',import.meta.url),'utf8');
@@ -52,4 +53,18 @@ test('no general-season IDP URLs can enter the verified dynasty adapter source m
  assert.match(rotowire,/dynastyVerified:false/);
  assert.match(rotowire,/cheatsheet-idp[.]php/);
  assert.match(draft,/dynastyVerified:true/);
+});
+
+test('seven successful source parsers do not imply every source is dynasty eligible',()=>{
+ const players=[{id:'d',name:'Elite Defender',positions:['LB']}];
+ const eligible={id:'draftsharks-idp',source:'DraftSharks IDP',valid:true,dynastyVerified:true,
+  dynastySourceUrl:'https://www.draftsharks.com/dynasty-rankings/idp',rankings:[{rank:1,player:'Elite Defender',position:'IDP'}]};
+ const excluded={id:'rotowire-idp',source:'RotoWire IDP',valid:true,dynastyVerified:false,
+  dynastySourceUrl:null,rankings:[{rank:1,player:'Elite Defender',position:'IDP'}]};
+ const first=buildConsensusPayload({results:[eligible,excluded]},players);
+ assert.equal(first.summary.results.length,2);
+ assert.equal(first.summary.results.find(x=>x.source==='DraftSharks IDP').dynastyConsensusEligible,true);
+ assert.equal(first.summary.results.find(x=>x.source==='RotoWire IDP').dynastyConsensusEligible,false);
+ assert.equal(first.summary.results.find(x=>x.source==='RotoWire IDP').dynastySourceUrl,null);
+ assert.equal(first.summary.results.find(x=>x.source==='DraftSharks IDP').dynastySourceUrl,eligible.dynastySourceUrl);
 });

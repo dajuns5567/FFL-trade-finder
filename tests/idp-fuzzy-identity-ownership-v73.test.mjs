@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {buildConsensusComposite} from '../netlify/functions/consensus-composite-v3.mjs';
-const idp=(rows)=>({id:'idp-source',source:'IDP publisher',valid:true,rankings:rows});
+const idp=(rows)=>({id:'idp-source',source:'Verified Dynasty IDP publisher',valid:true,dynastyVerified:true,rankings:rows});
 const row=(player,rank=5,position='LB',team)=>({player,rank,position,...(team?{team}: {})});
 const player=(id,name,position='LB',team)=>({id,name,positions:[position],position,team:team||null});
 

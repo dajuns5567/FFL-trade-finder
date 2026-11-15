@@ -1,5 +1,22 @@
 (()=>{
 function esc2(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+// Sleeper rosters arrive before /players/nfl. This legacy UI overrides the
+// index.html teamStage guard, so its own rendering and ranking entry points
+// must not trigger global valuations until player positions are identifiable.
+function playerMetadataReadyV18(){
+  const roster=(state.allAssets||[]).filter(x=>x?.type==="player");
+  if(!roster.length||!state.players)return false;
+  let checked=0,matched=0,offense=false;
+  for(const asset of roster){
+    if(checked>=24)break;
+    checked++;
+    const positions=state.players[String(asset.id)]?.fantasy_positions;
+    if(!Array.isArray(positions)||!positions.length)continue;
+    matched++;
+    if(positions.some(p=>["QB","RB","WR","TE"].includes(p)))offense=true;
+  }
+  return matched>=Math.min(checked,8)&&offense;
+}
 function teamPower(t){
   const vals=(t?.roster?.players||[]).map(id=>baseValue({type:"player",id:String(id)})).sort((a,b)=>b-a);
   const top=vals.slice(0,12).reduce((a,b)=>a+b,0),depth=vals.slice(12,24).reduce((a,b)=>a+b,0);
@@ -9,6 +26,7 @@ function teamPower(t){
 }
 teamStage=function(teamId){
   const teams=state.teams||[],target=teams.find(t=>Number(t.id)===Number(teamId));if(!target)return{label:"Unknown",score:0};
+  if(!playerMetadataReadyV18())return{label:"Loading player data",score:0};
   const ranked=teams.map(t=>({id:Number(t.id),score:teamPower(t)})).sort((a,b)=>b.score-a.score);
   const idx=ranked.findIndex(x=>x.id===Number(teamId)),n=Math.max(1,ranked.length),pct=idx/(n-1||1),score=ranked[idx]?.score||0;
   if(pct<=.24)return{label:"Contender",score};
@@ -58,6 +76,7 @@ function rowFor(z,n){
 }
 function renderReferenceRankings(){
   const off=document.getElementById("topOffense"),idp=document.getElementById("topIdp");if(!off||!idp)return;
+  if(!playerMetadataReadyV18()){off.textContent="Loading player data…";idp.textContent="Loading player data…";return;}
   const ranked=ensureMaster();
   const offense=ranked.filter(z=>groupPos(z.x)!=="IDP").slice(0,100),defense=ranked.filter(z=>groupPos(z.x)==="IDP").slice(0,50);
   off.innerHTML=offense.map((z,i)=>rowFor(z,i+1)).join("")||"<div class='empty'>No values loaded.</div>";

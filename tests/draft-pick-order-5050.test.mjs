@@ -118,7 +118,8 @@ test('existing trade snapshot values remain untouched by the post-cutover rankin
   const frontend=readFileSync(new URL('../value-history-v276.js',import.meta.url),'utf8');
   assert.match(backend,/trade\.ranking_at_trade=slots\?/);
   assert.match(frontend,/trade\?\.ranking_at_trade\?\.slots/);
-  assert.match(frontend,/historicalPickSnapshotRow\(side,p\)\?\.projected_slot/);
+  assert.match(frontend,/const snap=historicalPickSnapshotRow\(side,p\),candidate=snap\?\.projected_slot/);
+  assert.match(frontend,/return historicalPickProjectionEvidence\(side,p,trade\)\.slot/);
   assert.match(frontend,/Date\.parse\('2026-09-25T04:00:00\.000Z'\)/);
   assert.match(backend,/then_picks:thenPicks\.values/);
   assert.match(frontend,/value:then/);

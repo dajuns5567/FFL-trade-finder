@@ -1,6 +1,9 @@
 (()=>{
 'use strict';
 const API='/.netlify/functions/value-history',SIGNAL_API='/.netlify/functions/player-signals';
+// Experimental deploy previews may read archival history but must never
+// persist their branch-specific ranks into the canonical shared timeline.
+const isValueHistoryDeployPreview=()=>/^(?:deploy-preview-\d+|[a-f0-9]{24})--precious-dango-fb4633\.netlify\.app$/i.test(location.hostname);
 let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,marketInsightsCache=null,marketSignalCache=null,marketInsightsPending=null,marketSignalsPending=null,marketIntelPeriod='7D',marketVolatilityPool='ALL',currentPlayerId=null,trackedTeamId=null,playerHistoryTeamId=null,currentView='market',marketSort={key:'value',dir:-1},teamNetSort={key:'value',dir:-1},teamAttributionPeriod='7D',tradeHistoryCache=null,tradeHistoryCacheAt=0,tradeTeamFilter='',tradeYearFilter='',tradeMonthFilter='',marketPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D'},teamPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D',posRankRisers:'30D',posRankFallers:'30D'},marketPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL'},teamPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL',posRankRisers:'ALL',posRankFallers:'ALL'},playerScoringCache=new Map(),playerScoringPending=new Map(),teamNetCache=new Map(),tradeDetailState=new Map();
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
@@ -511,7 +514,13 @@ function hasValidatedKtcSnapshot(){for(const [name,src] of Object.entries(state?
 function snapshotPreconditions(){
   if(!window.state||!state.players||Object.keys(state.players).length<100)return false;
   if(window.__fllValueRefresh?.inFlight)return false;
-  if(window.__fllConsensusRefresh?.complete!==true)return false;
+  // A completed refresh can be a FAILED/partial refresh. The previous
+  // check accepted complete=true even when fewer than seven dynasty
+  // publishers had successfully refreshed, permanently recording transitory
+  // fallback values as if they were reliable market movements.
+  const consensus=window.__fllConsensusRefresh;
+  if(consensus?.complete!==true||consensus?.ok!==true||Number(consensus?.successful)<7)return false;
+  if(window.__fllValueRefresh?.phase!=='complete')return false;
   if(window.modeledPlayerValuesV319&&window.modeledPlayerValuesV319.ready!==true)return false;
   if(state.sleeperHistory&&state.sleeperHistory.complete!==true)return false;
   const text=String(document.getElementById('updateStatus')?.textContent||'').toLowerCase();
@@ -535,12 +544,27 @@ function snapshotSourceFromUrl(){
   try{return new URLSearchParams(location.search).get('vh_source')==='scheduled'?'scheduled':'page-load'}catch{return'page-load'}
 }
 async function recordSnapshot(source=pendingSnapshotSource){
+  if(isValueHistoryDeployPreview())return false;
   try{
-    if(!snapshotPreconditions()||!scheduledRefreshReady()){scheduleSnapshot(2000,source);return false}
+    if(!snapshotPreconditions()||!scheduledRefreshReady()){
+      if(window.__fllConsensusRefresh?.complete===true&&window.__fllConsensusRefresh?.ok!==true){
+        window.__vhLastSnapshot={ok:false,reason:'consensus-refresh-incomplete'};
+        console.warn('Value History snapshot skipped: consensus sources incomplete; no fallback values archived');
+        return false;
+      }
+      scheduleSnapshot(2000,source);return false
+    }
     const firstRows=currentRows();
     if(firstRows.length<100){scheduleSnapshot(2000,source);return false}
     await new Promise(r=>setTimeout(r,1200));
-    if(!snapshotPreconditions()||!scheduledRefreshReady()){scheduleSnapshot(2000,source);return false}
+    if(!snapshotPreconditions()||!scheduledRefreshReady()){
+      if(window.__fllConsensusRefresh?.complete===true&&window.__fllConsensusRefresh?.ok!==true){
+        window.__vhLastSnapshot={ok:false,reason:'consensus-refresh-incomplete'};
+        console.warn('Value History snapshot skipped: consensus sources incomplete; no fallback values archived');
+        return false;
+      }
+      scheduleSnapshot(2000,source);return false
+    }
     const rows=currentRows();
     if(rows.length<100||!sameSnapshotRows(firstRows,rows)){scheduleSnapshot(2000,source);return false}
     let picks=[],teams=[];
@@ -565,7 +589,7 @@ async function recordSnapshot(source=pendingSnapshotSource){
     scheduleSnapshot(3000,source);return false
   }
 }
-function scheduleSnapshot(delay=60000,source=pendingSnapshotSource){pendingSnapshotSource=source;clearTimeout(snapshotTimer);snapshotTimer=setTimeout(()=>{if('requestIdleCallback'in window)requestIdleCallback(()=>recordSnapshot(source),{timeout:5000});else recordSnapshot(source)},delay)}
+function scheduleSnapshot(delay=60000,source=pendingSnapshotSource){if(isValueHistoryDeployPreview())return;pendingSnapshotSource=source;clearTimeout(snapshotTimer);snapshotTimer=setTimeout(()=>{if('requestIdleCallback'in window)requestIdleCallback(()=>recordSnapshot(source),{timeout:5000});else recordSnapshot(source)},delay)}
 
 function initUI(){
   if(uiReady)return;uiReady=true;
@@ -808,12 +832,30 @@ function tradePickAsset(p,receiver){
   return{type:'pick',id:`pick-${season}-${round}-${original}`,season,round,owner:Number(receiver)||0,original_owner:original,name:`${season} R${round}`,source:'sleeper-history',historyPick:{drafted_player_id:p?.drafted_player_id||null,draft_slot:p?.draft_slot||null,pick_no:p?.pick_no||null,draft_id:p?.draft_id||null}};
 }
 function tradePlayerAsset(id,receiver){return{type:'player',id:String(id),owner:Number(receiver)||0,name:playerName(id)}}
+// The current player ranking includes unrostered assets with valid dynasty
+// consensus or Sleeper evidence. Those players still have a market value in
+// Player Values, Finder and Evaluator. Hindsight must not turn that value into
+// zero just because the player is currently a free agent rather than rostered.
+// Cache the ranked ID set per canonical master array reference for trade-feed
+// rendering, which may evaluate hundreds of old player assets.
+let hindsightRankedMasterRef=null,hindsightRankedIds=null;
+function isCurrentRankedPlayerForHindsight(id){
+  const master=ranked();
+  if(master!==hindsightRankedMasterRef){
+    hindsightRankedMasterRef=master;
+    hindsightRankedIds=new Set((master||[])
+      .filter(z=>z?.x?.type==='player')
+      .map(z=>String(z.x.id)));
+  }
+  return hindsightRankedIds.has(String(id));
+}
 function currentEvaluatorValue(asset){
   if(!asset)return null;
   try{
     if(asset.type==='player'){
       const pool=Array.isArray(state?.allAssets)?state.allAssets:[];
-      if(pool.length&&!pool.some(a=>a?.type==='player'&&String(a.id)===String(asset.id)))return 0;
+      if(pool.length&&!pool.some(a=>a?.type==='player'&&String(a.id)===String(asset.id))&&
+          !isCurrentRankedPlayerForHindsight(asset.id))return 0;
     }
     const canonical=window.tradeValueNormalizationV130?.canonicalValue;
     if(typeof canonical==='function'){const n=Number(canonical(asset));return Number.isFinite(n)?Math.round(n):null}
@@ -884,16 +926,27 @@ function historicalPickValue(side,p){
   const row=historicalPickSnapshotRow(side,p),n=Number(row?.value);
   return Number.isFinite(n)?Math.round(n):null;
 }
+function historicalPickProjectionEvidence(side,p,trade){
+ const after=Date.parse(trade?.created)>=Date.parse('2026-09-25T04:00:00.000Z');
+ if(after){
+  const candidate=trade?.ranking_at_trade?.slots?.[String(p?.original_roster_id)];
+  const n=Number(candidate);
+  if(candidate!=null&&Number.isInteger(n)&&n>=1&&n<=32)
+   return{slot:n,source:'verified-completed-week-5050'};
+ }
+ const snap=historicalPickSnapshotRow(side,p),candidate=snap?.projected_slot;
+ const n=Number(candidate);
+ if(candidate!=null&&Number.isInteger(n)&&n>=1&&n<=32)
+  return{slot:n,source:'archived-trade-time-snapshot'};
+ return{slot:null,source:'unavailable'};
+}
 function historicalPickProjectedSlot(side,p,trade){
-  // Preserve all prior editions. From Sep 25, 2026 onward the draft
-  // ORDER is taken from verified completed-week league results, never MIDA.
-  // Historical VALUE stays in then_picks and is not recalculated here.
-  if(Date.parse(trade?.created)>=Date.parse('2026-09-25T04:00:00.000Z')){
-    const n=Number(trade?.ranking_at_trade?.slots?.[String(p?.original_roster_id)]);
-    return Number.isInteger(n)&&n>=1&&n<=32?n:null;
-  }
-  const n=Math.round(Number(historicalPickSnapshotRow(side,p)?.projected_slot));
-  return n>=1&&n<=32?n:null;
+ return historicalPickProjectionEvidence(side,p,trade).slot;
+}
+function originalPickProjectionText(round,slot,source){
+ const label=projectedPickSlotText(round,slot,'at trade');
+ if(!label)return'Historical projected slot unavailable';
+ return source==='archived-trade-time-snapshot'?label+' (archived snapshot)':label;
 }
 function historicalPlayerValue(side,id){
   const row=(side?.then_players||[]).find(x=>String(x?.id)===String(id)),n=Number(row?.value);return Number.isFinite(n)?Math.round(n):null
@@ -923,7 +976,7 @@ function sideValueModel(side,trade){
   for(const p of side.picks||[]){
     const pickAsset=tradePickAsset(p,side.roster_id),recorded=historicalPickValue(side,p),then=recorded??retroactiveTradeHistoryPickValue(pickAsset,trade);
     if(then==null)atTradeComplete=false;
-    const ownership=historicalPickOwnershipLabel(p,trade),slotLabel=historicalDraftSlotLabel(p),projectedAtTrade=historicalPickProjectedSlot(side,p,trade),projectedAtTradeText=projectedPickSlotText(p.round,projectedAtTrade,'at trade');
+    const ownership=historicalPickOwnershipLabel(p,trade),slotLabel=historicalDraftSlotLabel(p),projection=historicalPickProjectionEvidence(side,p,trade),projectedAtTradeText=originalPickProjectionText(p.round,projection.slot,projection.source);
     atTradeItems.push({label:`Draft pick: ${p.season} R${p.round}`,meta:`${projectedAtTradeText?projectedAtTradeText+' • ':''}${ownership}`,kind:'pick',value:then});
     if(p.drafted_player_id){
       const drafted=tradePlayerAsset(p.drafted_player_id,side.roster_id),now=currentEvaluatorValue(drafted);if(now==null)currentComplete=false;
@@ -943,7 +996,7 @@ function tradeOutcomeAssets(side){
 }
 function tradeOriginalAssets(side,trade){
   const out=(side?.player_ids||[]).map(id=>tradePlayerAsset(id,side.roster_id));
-  for(const p of side?.picks||[]){const pick=tradePickAsset(p,side.roster_id);if(pick){const recorded=historicalPickValue(side,p),projectedSlot=historicalPickProjectedSlot(side,p,trade);if(recorded!=null)pick.historyRecordedValue=recorded;if(projectedSlot)pick.historyProjectedSlot=projectedSlot;out.push(pick)}}
+  for(const p of side?.picks||[]){const pick=tradePickAsset(p,side.roster_id);if(pick){const recorded=historicalPickValue(side,p),projection=historicalPickProjectionEvidence(side,p,trade);if(recorded!=null)pick.historyRecordedValue=recorded;if(projection.slot)pick.historyProjectedSlot=projection.slot;pick.historyProjectionSource=projection.source;out.push(pick)}}
   return out;
 }
 function tradeEvaluatorAnalysis(trade){
@@ -1062,7 +1115,7 @@ function evaluatorAssetRow(asset,trade){
   const value=tradeHistoryEvaluatorValue(asset,trade),label=asset?.type==='pick'?(asset.name||`${asset.season} R${asset.round}`):playerName(asset?.id);
   let meta='';
   if(asset?.type==='pick'){
-    const original=historicalTradeTeamName(trade,asset.original_owner),slotLabel=historicalDraftSlotLabel({season:asset.season,round:asset.round,draft_slot:asset.historyPick?.draft_slot}),used=asset.historyPick?.drafted_player_id?` • selected ${playerName(asset.historyPick.drafted_player_id)}${slotLabel?` at ${slotLabel}`:''}`:'',projectedAtTrade=projectedPickSlotText(asset.round,asset.historyProjectedSlot,'at trade');
+    const original=historicalTradeTeamName(trade,asset.original_owner),slotLabel=historicalDraftSlotLabel({season:asset.season,round:asset.round,draft_slot:asset.historyPick?.draft_slot}),used=asset.historyPick?.drafted_player_id?` • selected ${playerName(asset.historyPick.drafted_player_id)}${slotLabel?` at ${slotLabel}`:''}`:'',projectedAtTrade=originalPickProjectionText(asset.round,asset.historyProjectedSlot,asset.historyProjectionSource);
     meta=`Draft pick${projectedAtTrade?` • ${projectedAtTrade}`:''} • original: ${original}${used}`;
   }else meta=currentTradePlayerMeta(asset?.id);
   return`<div class="vh-eval-asset"><div><b>${esc(label)}</b><small>${esc(meta)}</small></div><strong>${value==null?'—':fmt(value)}</strong></div>`
@@ -1597,8 +1650,9 @@ function renderFullMarketHistory(){
   renderMarketTable();
 }
 function marketTableRowsMarkup(rows){
+  const historyHint=(r,key)=>r[key+'From']?('Compared since '+dateShort(r[key+'From'])+(key==='delta365'&&r[key+'Available']?' (available verified history; not a full year)':key==='deltaAll'&&r[key+'Available']?' (first verified player observation)':'')):'No verified historical baseline for this player';
   const arrow=r=>Number(r.overallDelta7)>0?'<span class="vh-rank-arrow vh-up" title="Overall rank improved in the last 7 days">▲</span>':Number(r.overallDelta7)<0?'<span class="vh-rank-arrow vh-down" title="Overall rank fell in the last 7 days">▼</span>':'';
-  return`<div class="vh-table-wrap"><table class="vh-table"><thead><tr><th data-vh-sort="name">Player</th><th data-vh-sort="value">Value</th><th data-vh-sort="delta1">Value Δ 1D</th><th data-vh-sort="delta7">Value 7D</th><th data-vh-sort="delta30">Value 30D</th><th data-vh-sort="delta365">Value 1Y</th><th data-vh-sort="deltaAll">Value All</th><th data-vh-sort="overall">Overall</th><th data-vh-sort="overallDelta7">Overall Δ 7D</th><th data-vh-sort="posRank">Pos Rank</th><th data-vh-sort="posRankDelta1">Pos Δ 1D</th><th data-vh-sort="posRankDelta7">Pos Δ 1W</th><th data-vh-sort="posRankDelta30">Pos Δ 30D</th><th data-vh-sort="posRankDeltaAll">Pos Δ All</th></tr></thead><tbody>${rows.map(r=>`<tr><td><button class="vh-player-link" data-vh-player="${esc(r.id)}" aria-label="Open ${esc(playerName(r.id))} value history"><span class="vh-player-name-line"><b>${esc(playerName(r.id))}</b><span class="vh-history-cue">View history ↗</span></span><small>${esc(r.pos)} • ${esc(String(state.players?.[String(r.id)]?.team||'FA').toUpperCase())}</small></button></td><td>${fmt(r.value)}</td><td class="${deltaClass(r.delta1)}">${r.delta1==null?'—':signed(r.delta1)}</td><td class="${deltaClass(r.delta7)}">${r.delta7==null?'—':signed(r.delta7)}</td><td class="${deltaClass(r.delta30)}">${r.delta30==null?'—':signed(r.delta30)}</td><td class="${deltaClass(r.delta365)}">${r.delta365==null?'—':signed(r.delta365)}</td><td class="${deltaClass(r.deltaAll)}">${r.deltaAll==null?'—':signed(r.deltaAll)}</td><td><span class="vh-overall-cell">#${r.overall}${arrow(r)}</span></td><td class="${deltaClass(r.overallDelta7)}">${r.overallDelta7==null?'—':signed(r.overallDelta7)}</td><td>${esc(r.pos)} #${r.posRank}</td><td class="${deltaClass(r.posRankDelta1)}">${r.posRankDelta1==null?'—':signed(r.posRankDelta1)}</td><td class="${deltaClass(r.posRankDelta7)}">${r.posRankDelta7==null?'—':signed(r.posRankDelta7)}</td><td class="${deltaClass(r.posRankDelta30)}">${r.posRankDelta30==null?'—':signed(r.posRankDelta30)}</td><td class="${deltaClass(r.posRankDeltaAll)}">${r.posRankDeltaAll==null?'—':signed(r.posRankDeltaAll)}</td></tr>`).join('')}</tbody></table></div>`;
+  return`<div class="vh-table-wrap"><table class="vh-table"><thead><tr><th data-vh-sort="name">Player</th><th data-vh-sort="value">Value</th><th data-vh-sort="delta1">Value Δ 1D</th><th data-vh-sort="delta7">Value 7D</th><th data-vh-sort="delta30">Value 30D</th><th data-vh-sort="delta365" title="Shows available verified history where fewer than 365 days have been tracked">Value 1Y</th><th data-vh-sort="deltaAll" title="Historical change since the first verified available observation">Value All</th><th data-vh-sort="overall">Overall</th><th data-vh-sort="overallDelta7">Overall Δ 7D</th><th data-vh-sort="posRank">Pos Rank</th><th data-vh-sort="posRankDelta1">Pos Δ 1D</th><th data-vh-sort="posRankDelta7">Pos Δ 1W</th><th data-vh-sort="posRankDelta30">Pos Δ 30D</th><th data-vh-sort="posRankDeltaAll">Pos Δ All</th></tr></thead><tbody>${rows.map(r=>`<tr><td><button class="vh-player-link" data-vh-player="${esc(r.id)}" aria-label="Open ${esc(playerName(r.id))} value history"><span class="vh-player-name-line"><b>${esc(playerName(r.id))}</b><span class="vh-history-cue">View history ↗</span></span><small>${esc(r.pos)} • ${esc(String(state.players?.[String(r.id)]?.team||'FA').toUpperCase())}</small></button></td><td>${fmt(r.value)}</td><td class="${deltaClass(r.delta1)}">${r.delta1==null?'—':signed(r.delta1)}</td><td class="${deltaClass(r.delta7)}">${r.delta7==null?'—':signed(r.delta7)}</td><td class="${deltaClass(r.delta30)}">${r.delta30==null?'—':signed(r.delta30)}</td><td class="${deltaClass(r.delta365)}" title="${esc(historyHint(r,'delta365'))}">${r.delta365==null?'—':signed(r.delta365)}</td><td class="${deltaClass(r.deltaAll)}" title="${esc(historyHint(r,'deltaAll'))}">${r.deltaAll==null?'—':signed(r.deltaAll)}</td><td><span class="vh-overall-cell">#${r.overall}${arrow(r)}</span></td><td class="${deltaClass(r.overallDelta7)}">${r.overallDelta7==null?'—':signed(r.overallDelta7)}</td><td>${esc(r.pos)} #${r.posRank}</td><td class="${deltaClass(r.posRankDelta1)}">${r.posRankDelta1==null?'—':signed(r.posRankDelta1)}</td><td class="${deltaClass(r.posRankDelta7)}">${r.posRankDelta7==null?'—':signed(r.posRankDelta7)}</td><td class="${deltaClass(r.posRankDelta30)}">${r.posRankDelta30==null?'—':signed(r.posRankDelta30)}</td><td class="${deltaClass(r.posRankDeltaAll)}">${r.posRankDeltaAll==null?'—':signed(r.posRankDeltaAll)}</td></tr>`).join('')}</tbody></table></div>`;
 }
 function sortedMarketRows(rows,query=''){
   const q=norm(query),out=(rows||[]).filter(r=>!q||norm(playerName(r.id)).includes(q)).slice(),key=marketSort.key,dir=marketSort.dir;
@@ -1978,10 +2032,18 @@ function renderPlayerProfile(id,allPts,period='ALL'){
   const box=document.getElementById('vhContent');if(!box)return;
   if(!allPts.length){box.innerHTML=`<div class="vh-profile-back"><button class="secondary small" data-vh-dashboard>← Market dashboard</button></div><div class="vh-card"><div class="vh-empty">No historical observations recorded yet for ${esc(playerName(id))}. Their history begins with the first completed snapshot in which Sleeper makes them available to the current valuation database.</div></div>`;return}
   const meta=livePlayerMeta(id),pts=periodPoints(allPts,period),first=pts[0],last=pts[pts.length-1],delta=Number(last.value)-Number(first.value),pct=Number(first.value)?delta/Number(first.value)*100:0,vals=pts.map(p=>Number(p.value)),pmin=Math.min(...vals),pmax=Math.max(...vals),allVals=allPts.map(p=>Number(p.value)),allMin=Math.min(...allVals),allMax=Math.max(...allVals),bestOverall=Math.min(...allPts.map(p=>Number(p.overall))),bestPos=Math.min(...allPts.map(p=>Number(p.posRank))),lowestPos=Math.max(...allPts.map(p=>Number(p.posRank))),highPoint=allPts.find(p=>Number(p.value)===allMax),lowPoint=allPts.find(p=>Number(p.value)===allMin),bestOverallPoint=allPts.find(p=>Number(p.overall)===bestOverall),scoring=playerScoringCache.get(String(id))||null,scoringLoading=!playerScoringCache.has(String(id));
+  const archivedLast=allPts[allPts.length-1],previewRankMismatch=isValueHistoryDeployPreview()&&(
+    (meta.overall!=null&&Number(meta.overall)!==Number(archivedLast.overall))||
+    (meta.posRank!=null&&Number(meta.posRank)!==Number(archivedLast.posRank))||
+    (meta.value>0&&Number(meta.value)!==Number(archivedLast.value)));
+  const previewSnapshotNote=previewRankMismatch?
+    '<div class="notice" role="status">Live Deploy Preview: current value/rank above use this build; charts below show recorded historical snapshots from a different valuation version. Preview ranks are not saved to the canonical history.</div>':
+    isValueHistoryDeployPreview()?'<div class="tiny muted">Historical charts show archived snapshots; this Deploy Preview does not write new observations.</div>':'';
   const latestMs=new Date(allPts[allPts.length-1].t).getTime(),rank30=allPts.filter(p=>new Date(p.t).getTime()>=latestMs-30*86400000),rankBase=rank30[0]||allPts[0],rankLast=rank30[rank30.length-1]||allPts[allPts.length-1],overallMove=Number(rankBase.overall)-Number(rankLast.overall),posMove=Number(rankBase.posRank)-Number(rankLast.posRank);
   const status=document.getElementById('vhStatus');if(status)status.textContent=`Tracked since ${dateShort(allPts[0].t)} • ${fmt(allPts.length)} player observations`;
   box.innerHTML=`
   <div id="vhProfileData" data-points="${esc(JSON.stringify(allPts))}" hidden></div>
+  ${previewSnapshotNote}
   <div class="vh-profile-back"><button class="secondary small" data-vh-dashboard>← Market dashboard</button></div>
   <div class="vh-card">
     <div class="vh-profile-info">

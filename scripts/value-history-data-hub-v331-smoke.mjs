@@ -61,7 +61,24 @@ const ktcPlayers=Array.from({length:320},(_,i)=>({playerName:`Player ${i+1}`,pos
 const ktcParsed=extractKtcSuperflexRankings(`<script type="application/json" id="ktc-players">${JSON.stringify(ktcPlayers)}</script><script>var playersArray = JSON.parse(document.getElementById('ktc-players').textContent);</script>`);
 assert(ktcParsed.rows.length===320,'KTC embedded JSON parser must recover the complete player universe');
 assert(ktcParsed.rows[0].rank===1&&ktcParsed.rows.at(-1).rank===320,'KTC embedded JSON ranks are not preserved');
-assert(!m.marketRows.find(x=>x.id==='rook')?.delta365,'new player should not receive fabricated pre-entry 365-day history');
+assert(m.marketRows.find(x=>x.id==='rook')?.delta365===1600,'rookie should compare against actual first observed value');
+assert(m.marketRows.find(x=>x.id==='rook')?.delta365From===snaps[2].t,'late-entry historical coverage must disclose its date');
+assert(m.marketRows.find(x=>x.id==='rook')?.delta365Available===true,'shortened one-year coverage must be explicit');
+assert(m.periods['ALL'].valueRisers.some(x=>x.id==='rook'&&x.delta===1600),'all-time movers must include verified late entrants');
+const idpSnaps=[snap(0,[P('off',4000,50)]),snap(3,[P('off',4100,49),P('idp1',3000,120,'IDP',28)]),snap(20,[P('off',4400,46),P('idp1',3500,95,'IDP',20),P('idp2',2200,160,'IDP',60)]),snap(56,[P('off',4600,43),P('idp1',3800,85,'IDP',16),P('idp2',2300,155,'IDP',55)])];
+const im=marketFromSnapshots(idpSnaps),idp1=im.marketRows.find(x=>x.id==='idp1'),idp2=im.marketRows.find(x=>x.id==='idp2');
+assert(idp1.delta365===800&&idp1.deltaAll===800&&idp1.deltaAllFrom===idpSnaps[1].t,'IDP first verified snapshot must anchor 1Y and ALL');
+assert(idp1.delta365Available&&idp1.deltaAllAvailable,'missing initial baseline must be labeled');
+assert(idp2.delta365===100&&idp2.deltaAllFrom===idpSnaps[2].t,'later IDP must not inherit another IDP baseline');
+assert(im.periods['1Y'].valueRisers.some(x=>x.id==='idp1'),'1Y movers must include verified IDP history');
+assert(im.periods.ALL.posRankRisers.some(x=>x.id==='idp1'),'all-time positional movers must include IDP history');
+assert(im.marketRows.find(x=>x.id==='off').delta365===600&&im.marketRows.find(x=>x.id==='off').delta365Available===true,'offense must preserve original delta while accurately disclosing less than 365 days of tracking');
+const reentry=[snap(0,[P('reentry',1000,160,'IDP',60)]),snap(35,[P('off',4000,75)]),snap(100,[P('reentry',2000,120,'IDP',40)]),snap(400,[P('reentry',2700,90,'IDP',30),P('off',4200,70)])];
+const rm=marketFromSnapshots(reentry),rr=rm.marketRows.find(x=>x.id==='reentry');
+assert(rr.delta365===700&&rr.delta365From===reentry[2].t,'1Y value must never use pre-window player history when re-entering after the 365D baseline');
+assert(rr.deltaAll===1700&&rr.deltaAllFrom===reentry[0].t,'all-time value must still use the first archived observation');
+assert(rm.periods['1Y'].valueRisers.some(x=>x.id==='reentry'&&x.delta===700),'1Y movers must share corrected in-window baseline');
+assert(rm.periods.ALL.valueRisers.some(x=>x.id==='reentry'&&x.delta===1700),'all-time movers must retain full first-observation history');
 
 const ui=fs.readFileSync('value-history-v276.js','utf8');
 for(const needle of [
@@ -133,6 +150,8 @@ for(const needle of [
   'posRankFallers',
   'Value 1Y',
   'Value All',
+  'available history',
+  'historyHint(r',
   'Overall Δ 7D',
   'Pos Δ 1W',
   'Pos Δ All',
@@ -345,6 +364,7 @@ assert(ui.includes('Current outcome detail'),'Hindsight must present current out
 assert(ui.includes('.vh-trade-list{display:grid;gap:16px}')&&ui.includes('.vh-trade-card{border:1px solid color-mix(in srgb,#e4b53f 42%,var(--line))'),'completed trades must keep clear separation while using compact spacing and the current thin gold border');
 assert(ui.includes('.vh-trade-card{border:1px solid color-mix(in srgb,#e4b53f 42%,var(--line))'),'completed trade cards need distinct thin gold outer borders');
 assert(!ui.includes('nearest-year retroactive frame'),'retroactive pick-frame mechanics must remain hidden from user-facing text');
+assert(!/\$\{r\.delta365Available\}\?' <small>available history<\/small>'/.test(ui),'Full Market History must keep yearly delta cells numeric only');
 assert(ui.includes('vh-driver-heading')&&ui.includes('Biggest positive drivers')&&ui.includes('Biggest negative drivers'),'Track My Team driver headings must use Fleeced themed headers');
 assert(ui.includes('vh-driver-chart')&&ui.includes('View history ↗')&&ui.includes('data-vh-player'),'Track My Team drivers must link to player Value History with the on-brand View history action');
 assert(ui.includes('vh-history-cue')&&ui.includes('View history ↗'),'Full Market History must show inline View history cues');
@@ -515,7 +535,8 @@ assert(indexHtml.includes('Review real trades, analysis at the time of trade, an
 assert(indexHtml.includes('Historical value hub, risers, fallers, team value analysis, and more'),'Home Value History description must match');
 assert(indexHtml.includes('id="homeTopPlayers"')&&indexHtml.includes('id="homeValueRisers"'),'Home must expose current top players and 7D riser summary slots');
 assert(/\/trade-select-all-v165\.js\?v=[^"'<>\s]+/.test(siteV29),'production shell must load Select All with an explicit cache-bust key');
-assert(siteV29.includes('/ui-player-values-v139.js?v=540'),'production shell must cache-bust the current V398 Player Values UI');
+assert(/\/ui-player-values-v139\.js\?v=(?:540|20261114-idp-identity)/.test(siteV29),'production shell must load the versioned Player Values UI without stale cache');
+assert(/\/ui-player-values-v139\.js\?v=(?:540|20261114-idp-identity)/.test(siteV29),'versioned Player Values UI must match either the frozen production or audited IDP identity runtime');
 assert(/\/nonblocking-consensus-v277\.js\?v=[^"'<>\s]+/.test(siteV29),'production shell must load consensus completion runtime with an explicit cache-bust key');
 const archiveWriter=fs.readFileSync('scripts/archive-value-history.mjs','utf8');
 assert(archiveWriter.includes("dataBranch='value-history-data'"),'archive writer must target the durable data branch');

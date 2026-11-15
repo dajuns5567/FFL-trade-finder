@@ -1,0 +1,34 @@
+name: IDP V77 source-provenance preview contract (GET-only)
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/consensus-composite-v3.mjs'
+      - 'netlify/functions/draftsharks-idp-adapter.mjs'
+      - 'netlify/functions/rotowire-idp-adapter.mjs'
+      - 'netlify/functions/update.mjs'
+      - 'tests/idp-dynasty-provenance-v77.test.mjs'
+      - 'scripts/verify-idp-v77-preview-exact.mjs'
+      - '.github/workflows/idp-v77-preview-contract.yml'
+permissions:
+  contents: read
+jobs:
+  source-integrity:
+    if: github.event.pull_request.number == 466
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Netlify function package dependencies without scripts
+        run: npm install --ignore-scripts --no-audit --no-fund --no-package-lock
+      - name: Verify dynasty-only source eligibility and read-only preview gate
+        run: |
+          node --check netlify/functions/update.mjs
+          node --check scripts/verify-idp-v77-preview-exact.mjs
+          node --test tests/consensus-composite-v3.test.mjs tests/idp-dynasty-provenance-v77.test.mjs
+          node --test tests/idp-20-45-35-calibration.test.mjs tests/idp-valuation-refresh-contract.test.mjs
+          node scripts/v319-values-v311-integration-smoke.cjs
+      - name: GET-only check of exact served rank-model scripts in PR466
+        run: node scripts/verify-idp-v77-preview-exact.mjs

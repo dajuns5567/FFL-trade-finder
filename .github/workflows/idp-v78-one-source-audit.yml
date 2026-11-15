@@ -19,6 +19,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Install dependencies required by dynasty-source payload fixtures
+        run: npm install --ignore-scripts --no-audit --no-fund --no-package-lock
       - name: Validate source-only IDP confidence change and regression
         run: |
           node --check netlify/functions/consensus-composite-v3.mjs

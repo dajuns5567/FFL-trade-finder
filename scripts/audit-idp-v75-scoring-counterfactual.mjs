@@ -88,6 +88,7 @@ if(refresh.successful!==7||refresh.total!==7){
       v74OriginalFactor:Number(z.production?.idpV74OriginalCompressionFactor)||null,
       v74CareerFloor:Number(z.production?.idpV74VerifiedCareerFloor)||null,
       v25Scoring:Number(z.production?.value)||null,
+      v75EffectiveScoring:Number(z.production?.idpV75CalibratedScoringValue)||null,
       v25Context:Number(z.context)||null,
       v25Development:z.production?.leagueContext?.development||null,
       age:Number(st.players?.[id]?.age)||null,
@@ -152,7 +153,7 @@ if(refresh.successful!==7||refresh.total!==7){
     const old=prevById.get(x.id);return {n:x.name,id:x.id,age:x.age,
      consensusRank:x.sourceDetail?.idpRank,oldIdp:old.positional,newIdp:x.positional,
      oldOverall:old.overall,newOverall:x.overall,
-     oldRawScore:old.v25Scoring,newEffectiveScore:x.v25Scoring,
+     oldRawScore:old.v25Scoring,newEffectiveScore:x.v75EffectiveScoring,
      oldModel:old.modeled,newModel:x.modeled,context:x.v25Context,consensus:x.consensus};
    }),
    largestGains:changed.map(x=>({...x,from:prevById.get(x.id)?.positional,delta:x.positional-prevById.get(x.id)?.positional}))

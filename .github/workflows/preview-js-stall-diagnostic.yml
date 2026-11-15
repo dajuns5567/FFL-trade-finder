@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        mode: [idp-family, offense-family, late-ranking]
+        mode: [idp-v21, idp-v25, idp-early, idp-late]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -28,6 +28,6 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Read-only metadata readiness with test-only valuation module suppression
         env:
-          FFL_PREVIEW_URL: https://6af9fe630d94ed59bc3b328d--precious-dango-fb4633.netlify.app/
+          FFL_PREVIEW_URL: https://deploy-preview-466--precious-dango-fb4633.netlify.app/
           FFL_DIAG_MODE: ${{ matrix.mode }}
         run: node scripts/diagnose-preview-js-stall.mjs

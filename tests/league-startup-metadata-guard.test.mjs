@@ -62,11 +62,13 @@ function legacyHarness(loaded=false){
     }:{}
   };
   const ctx={state,Number,String,Array,Math,Map,masterRankCache:null,
+    modeledPlayerValuesV319:{ready:loaded},
     baseValue:()=>{valueCalls++;return 1000},
     pickValue:()=>300
   };
+  ctx.window=ctx;
   vm.runInNewContext(legacyUi.slice(legacyStageStart,legacyStageEnd),ctx);
-  return{state,stage:ctx.teamStage,called:()=>valueCalls};
+  return{state,ctx,stage:ctx.teamStage,called:()=>valueCalls};
 }
 test('legacy ui-v18 overrides cannot value every league roster before Sleeper metadata',()=>{
   const h=legacyHarness(false);
@@ -75,8 +77,11 @@ test('legacy ui-v18 overrides cannot value every league roster before Sleeper me
   h.state.players={
     1:{fantasy_positions:['QB']},2:{fantasy_positions:['WR']},3:{fantasy_positions:['LB']}
   };
+  assert.equal(h.stage(1).label,'Loading player data','dictionary alone cannot force expensive pre-model pricing');
+  assert.equal(h.called(),0);
+  h.ctx.modeledPlayerValuesV319.ready=true;
   assert.equal(h.stage(1).label,'Contender');
-  assert.equal(h.called(),3,'legacy league-wide ranking still runs normally once metadata exists');
+  assert.equal(h.called(),3,'legacy league-wide ranking still runs normally once model is ready');
   for(let i=0;i<32;i++)h.stage(i%2?1:2);
   assert.equal(h.called(),3,'32 repeated stage lookups reuse one unchanged league-wide score snapshot');
 });

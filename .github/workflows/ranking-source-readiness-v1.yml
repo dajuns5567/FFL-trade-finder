@@ -1,0 +1,34 @@
+name: Ranking source readiness contract (draft only)
+on:
+  pull_request:
+    paths:
+      - 'modeled-player-values-v319.js'
+      - 'nonblocking-consensus-v277.js'
+      - 'ui-player-values-v139.js'
+      - 'tests/model-v319-metadata-boot-guard.test.mjs'
+      - 'tests/idp-valuation-refresh-contract.test.mjs'
+      - 'tests/ranking-source-readiness-v1.test.mjs'
+      - 'scripts/v319-values-v311-integration-smoke.cjs'
+      - '.github/workflows/ranking-source-readiness-v1.yml'
+permissions:
+  contents: read
+jobs:
+  ranking-readiness:
+    if: github.event.pull_request.number == 473
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check only affected source and tests
+        run: |
+          node --check modeled-player-values-v319.js
+          node --check nonblocking-consensus-v277.js
+          node --check ui-player-values-v139.js
+          node --check tests/ranking-source-readiness-v1.test.mjs
+      - name: Verify cold/warm source readiness and immutable rank-to-currency curve
+        run: node --test tests/ranking-source-readiness-v1.test.mjs tests/model-v319-metadata-boot-guard.test.mjs tests/idp-valuation-refresh-contract.test.mjs
+      - name: Verify frozen V311 Finder and Evaluator integration through V319 rank scale
+        run: node scripts/v319-values-v311-integration-smoke.cjs

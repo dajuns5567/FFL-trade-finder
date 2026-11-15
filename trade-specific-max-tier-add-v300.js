@@ -28,7 +28,7 @@ function outgoing(me){
  const chosen=selectedGive(),helper=window.tradeAddAssetsComplementV1;
  if(typeof helper?.build==='function')return helper.build(chosen,owned(me),av,pos,{maxExtras:18,maxPairs:64});
  const out=[],seen=new Set();addPkg(out,seen,chosen);if(chosen.length>=3)return out;
- const used=new Set(chosen.map(x=>`${x.type}:${id(x)}`)),extras=owned(me).filter(x=>!used.has(`${x.type}:${id(x)}`)).sort((a,b)=>av(b)-av(a).slice(0,18);
+ const used=new Set(chosen.map(x=>`${x.type}:${id(x)}`)),extras=owned(me).filter(x=>!used.has(`${x.type}:${id(x)}`)).sort((a,b)=>av(b)-av(a)).slice(0,18);
  for(const x of extras)addPkg(out,seen,[...chosen,x]);return out;
 }
 function incoming(owner,target){const extras=owned(owner).filter(x=>!(x.type==='player'&&id(x)===id(target))).sort((a,b)=>av(b)-av(a)),out=[],seen=new Set();addPkg(out,seen,[target]);for(const x of extras)addPkg(out,seen,[target,x]);for(let i=0;i<extras.length;i++)for(let j=i+1;j<extras.length;j++)addPkg(out,seen,[target,extras[i],extras[j]]);return out}

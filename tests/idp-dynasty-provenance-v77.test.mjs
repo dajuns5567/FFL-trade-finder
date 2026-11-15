@@ -66,5 +66,14 @@ test('seven successful source parsers do not imply every source is dynasty eligi
  assert.equal(first.summary.results.find(x=>x.source==='DraftSharks IDP').dynastyConsensusEligible,true);
  assert.equal(first.summary.results.find(x=>x.source==='RotoWire IDP').dynastyConsensusEligible,false);
  assert.equal(first.summary.results.find(x=>x.source==='RotoWire IDP').dynastySourceUrl,null);
+ assert.equal(first.sources['RotoWire IDP'],undefined,'unverified cheat sheet must not be cached as dynasty');
+ assert.equal(first.sources['DraftSharks IDP'],undefined,'incomplete source set should not create a dynasty snapshot');
+ const complete=buildConsensusPayload({results:[eligible,excluded,...Array.from({length:5},(_,i)=>({
+  source:'Verified Offense '+i,id:'off-'+i,valid:true,
+  rankings:[{rank:1,player:'Elite Offender',position:'QB'}]
+ }))]},players);
+ assert.equal(complete.integrity.all_sources_valid,true);
+ assert.equal(complete.sources['RotoWire IDP'],undefined,'redraft-like rows cannot appear in promoted source data');
+ assert.ok(complete.sources['DraftSharks IDP'],'verified dynasty source remains available for diagnostics');
  assert.equal(first.summary.results.find(x=>x.source==='DraftSharks IDP').dynastySourceUrl,eligible.dynastySourceUrl);
 });

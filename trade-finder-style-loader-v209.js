@@ -132,6 +132,18 @@ const finalTailCount=src.split(finalTail).length-1;
 if(finalTailCount!==2){console.error('V209 guard failed: expected 2 final ordering tails, found',finalTailCount);return}
 src=src.split(finalTail).join("ordered=diversifyThreeAssetOverlap(ordered,tier);ordered=sprinkleTwoPlayerForTwo(ordered,tier);return ordered");
 
+// Finder-only complementary outgoing-package integration: apply to the
+// source transformation itself so the compiled V256 runtime stays exactly
+// reproducible by CI. Canonical valuation and fairness functions are untouched.
+const v540OldManual='function manualGivePackages(me,chosen){const out=[chosen];';
+const v540NewManual='function manualGivePackages(me,chosen){if(chosen?.length&&addAssetsIfNeededEnabled()&&window.tradeAddAssetsComplementV1?.build)return window.tradeAddAssetsComplementV1.build(chosen,(st().allAssets||[]).filter(x=>Number(x.owner)===me&&(x.type===\'player\'||(x.type===\'pick\'&&Number(x.round)<=3))),av,pos,{maxExtras:10,maxPairs:12});const out=[chosen];';
+if(src.split(v540OldManual).length!==2){console.error('V540 Finder guard failed: manual extras baseline mismatch');return}
+src=src.replace(v540OldManual,v540NewManual);
+const v540OldOrdering='ordered=sprinkleTwoPlayerForTwo(ordered,tier);return ordered}const diversified=';
+const v540NewOrdering='ordered=sprinkleTwoPlayerForTwo(ordered,tier);if(addBackfill&&window.tradeAddAssetsComplementV1?.diversify)ordered=window.tradeAddAssetsComplementV1.diversify(ordered,selectedGive(),MAX_RESULTS);return ordered}const diversified=';
+if(src.split(v540OldOrdering).length!==2){console.error('V540 Finder guard failed: regular manual-result ordering mismatch');return}
+src=src.replace(v540OldOrdering,v540NewOrdering);
+
 src=src.replaceAll("V197 Finder","V209 Finder")
        .replace("version:'v197',base:'v196'","version:'v209',base:'v208'")
        .replace('trade-finder-v150-v197-runtime.js','trade-finder-v150-v209-runtime.js');

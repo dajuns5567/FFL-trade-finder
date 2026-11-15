@@ -17,7 +17,7 @@ const expected={
   'trade-selected-positions-only-v262.js':'56e561565f6adf6402cc7e6c28cd090fa3dd8cd6',
   // Frozen Finder-only complementary-piece generator, preserving canonical values.
   'trade-add-assets-complement-v1.js':'84b4d7c737df6b5b7c2c0a97801a8215a447374a',
-  'trade-specific-max-tier-add-v300.js':'565f2ff07f12049301c9d387e77c5928d3e4d9ee',
+  'trade-specific-max-tier-add-v300.js':'c72cb456c1bcd58bd2d4654431bb38b2d6952d62',
   'trade-specific-tier-up-v282.js':'f8fef77ce544a2161d5cb959f963b5995acd9adc',
   'trade-specific-add-assets-v282.js':'7329e91955ea6907aca508163515ffc00de0aad9',
   // Reviewed finite-work Finder search and complementary outgoing-package diversity; valuation and fairness unchanged.

@@ -67,7 +67,7 @@ try{
     const actualSources=(source.idpSources||[]).filter(s=>!String(s).endsWith(' (not listed)')).length;
     return{id,name,position,overall:i+1,idpRank:position==='IDP'?idpRank:null,
      modeled:Number(z.value),consensus:Number(z.consensus)||null,marketIdpRank:Number(source.idpRank)||null,
-     actualSources,age:Number(st.players?.[id]?.age)||null,
+     actualSources,sourceNames:(source.idpSources||[]).filter(s=>!String(s).endsWith(' (not listed)')),age:Number(st.players?.[id]?.age)||null,
      scoring:Number(z.production?.value)||null,context:Number(z.context)||null,
      seasons:Number(z.production?.a?.qualifyingSeasons)||0};
    }),rostered:[...new Set((st.rosters||[]).flatMap(r=>r.players||[]).map(String))]};
@@ -123,7 +123,7 @@ try{
      'Aidan Hutchinson','Carson Schwesinger','Jack Campbell','David Bailey']
     .map(n=>rows.find(x=>x.name===n)).filter(Boolean)
     .map(x=>({name:x.name,overall:x.overall,idp:x.idpRank,prior:x.baseline.idpRank,
-      model:x.modeled,market:x.marketIdpRank,age:x.age,verifiedSources:x.actualSources,scoring:x.scoring,context:x.context,qualifiedSeasons:x.seasons}))
+      model:x.modeled,market:x.marketIdpRank,age:x.age,verifiedSources:x.actualSources,verifiedSourceNames:x.sourceNames,scoring:x.scoring,context:x.context,qualifiedSeasons:x.seasons}))
   });
  }
  // Paired source-agreement uncertainty: do not interpret a one-rank mean

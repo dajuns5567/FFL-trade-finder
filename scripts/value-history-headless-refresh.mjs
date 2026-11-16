@@ -8,6 +8,7 @@ import picksHandler from '../netlify/functions/picks.mjs';
 
 const snapshotFile=process.env.VALUE_HISTORY_SNAPSHOT_FILE||'.tmp/value-history-scheduled.json';
 const SCHEDULED_VALUATION_CONTRACT='precision-idp-runtime-20260919';
+const acceptedValuationModel=value=>String(value||'').trim()==='idp-v77-v85-v86-dynasty'?'idp-v77-v85-v86-dynasty':null;
 const league='1316867686394769408';
 
 function fingerprint(rows,picks=[],teams=[]){
@@ -46,7 +47,9 @@ async function valueHistory(req){
   if(String(payload.league)!==league||rows.length<100)return json({ok:false,error:'Scheduled snapshot payload incomplete'},400);
   if(payload.source!=='scheduled')return json({ok:false,error:'Scheduled local collector only accepts source=scheduled'},400);
   const t=new Date().toISOString(),fp=fingerprint(rows,picks,teams);
-  const snap={version:5,league,t,fingerprint:fp,source:'scheduled',valuation_contract:SCHEDULED_VALUATION_CONTRACT,rows,picks,teams};
+  const valuationModel=acceptedValuationModel(payload.valuation_model);
+  if(!valuationModel)return json({ok:false,error:'scheduled capture missing approved valuation-model evidence'},409);
+  const snap={version:5,league,t,fingerprint:fp,source:'scheduled',valuation_contract:SCHEDULED_VALUATION_CONTRACT,valuation_model:valuationModel,rows,picks,teams};
   mkdirSync(join(process.cwd(),'.tmp'),{recursive:true});
   writeFileSync(snapshotFile,JSON.stringify(snap,null,2)+'\n');
   return json({ok:true,t,fingerprint:fp,source:'scheduled',count:rows.length});
@@ -197,7 +200,7 @@ try{
       if(!Number.isFinite(canonicalValue)||canonicalValue!==Number(r.value))valueParityMismatches.push({id:String(r.id),history:Number(r.value),canonical:canonicalValue});
       if(valueParityMismatches.length>=20)break;
     }
-    return {rows,picks,teams,sourceManifest,refresh:window.__fllValueRefresh||null,modeledReady:window.modeledPlayerValuesV319?.ready===true,modeledVersion:Number(window.modeledPlayerValuesV319?.meta?.version)||0,valueParityMismatches,status:String(document.getElementById('updateStatus')?.textContent||'')};
+    return {rows,picks,teams,sourceManifest,valuationModel:window.valueHistoryModelV90||null,refresh:window.__fllValueRefresh||null,modeledReady:window.modeledPlayerValuesV319?.ready===true,modeledVersion:Number(window.modeledPlayerValuesV319?.meta?.version)||0,valueParityMismatches,status:String(document.getElementById('updateStatus')?.textContent||'')};
   });
   const sameRows=(a,b)=>{
     if(!Array.isArray(a)||!Array.isArray(b)||a.length!==b.length)return false;
@@ -212,17 +215,19 @@ try{
     const first=await captureCurrent();
     await page.waitForTimeout(1500);
     const second=await captureCurrent();
-    const stable=sameRows(first.rows,second.rows)&&JSON.stringify(first.sourceManifest)===JSON.stringify(second.sourceManifest)&&first.modeledVersion===second.modeledVersion&&second.refresh?.inFlight===false&&second.refresh?.phase==='complete'&&second.modeledReady===true&&!second.valueParityMismatches?.length&&!/loading|updating|refreshing/i.test(second.status||'');
+    const stable=sameRows(first.rows,second.rows)&&JSON.stringify(first.sourceManifest)===JSON.stringify(second.sourceManifest)&&first.modeledVersion===second.modeledVersion&&first.valuationModel===second.valuationModel&&second.refresh?.inFlight===false&&second.refresh?.phase==='complete'&&second.modeledReady===true&&!second.valueParityMismatches?.length&&!/loading|updating|refreshing/i.test(second.status||'');
     if(stable){captured=second;break}
     if(attempt<3)await page.waitForTimeout(2000);
   }
   if(!captured)throw new Error('Scheduled capture never reached a stable canonical player-row state');
+  const valuationModel=acceptedValuationModel(captured.valuationModel);
+  if(!valuationModel)throw new Error('Scheduled capture lacks the approved live valuation model contract');
   if(!Array.isArray(captured.rows)||captured.rows.length<700)throw new Error(`Scheduled capture returned only ${captured.rows?.length||0} player rows`);
   if(captured.rows.some(r=>!Number.isFinite(Number(r?.value))||!Number.isFinite(Number(r?.overall))))throw new Error('Scheduled capture contains non-finite player values/ranks');
   if(captured.valueParityMismatches?.length)throw new Error(`Scheduled capture diverged from canonical Player Values scale: ${JSON.stringify(captured.valueParityMismatches)}`);
 
   const t=new Date().toISOString(),fp=fingerprint(captured.rows,captured.picks,captured.teams);
-  const snap={version:5,league,t,fingerprint:fp,source:'scheduled',valuation_contract:SCHEDULED_VALUATION_CONTRACT,provenance:{git_commit:process.env.GITHUB_SHA||null,modeled_version:captured.modeledVersion,consensus_sources:Number(readiness.consensusMarker?.successful)||0,source_manifest:captured.sourceManifest,canonical_parity:'exact'},rows:captured.rows,picks:captured.picks,teams:captured.teams};
+  const snap={version:5,league,t,fingerprint:fp,source:'scheduled',valuation_contract:SCHEDULED_VALUATION_CONTRACT,valuation_model:valuationModel,provenance:{git_commit:process.env.GITHUB_SHA||null,modeled_version:captured.modeledVersion,consensus_sources:Number(readiness.consensusMarker?.successful)||0,source_manifest:captured.sourceManifest,canonical_parity:'exact'},rows:captured.rows,picks:captured.picks,teams:captured.teams};
   mkdirSync(join(process.cwd(),'.tmp'),{recursive:true});
   writeFileSync(snapshotFile,JSON.stringify(snap,null,2)+'\n');
 

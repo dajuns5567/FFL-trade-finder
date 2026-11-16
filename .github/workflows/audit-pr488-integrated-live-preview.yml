@@ -1,0 +1,27 @@
+name: Audit exact integrated PR488 Deploy Preview (read-only)
+on:
+  pull_request:
+    paths:
+      - 'scripts/audit-pr488-integrated-live-preview.mjs'
+      - '.github/workflows/audit-pr488-integrated-live-preview.yml'
+permissions:
+  contents: read
+jobs:
+  integrated-live-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 11
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify audited script syntax and exact selected preview
+        run: |
+          node --check scripts/audit-pr488-integrated-live-preview.mjs
+          grep -F "https://deploy-preview-488--precious-dango-fb4633.netlify.app" scripts/audit-pr488-integrated-live-preview.mjs
+      - name: Install isolated browser test tooling (no production deploy)
+        run: |
+          npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright
+          npx playwright install --with-deps chromium
+      - name: Test actual PR488 page, real Sleeper 32 teams, IDPs, Finder and history
+        run: node scripts/audit-pr488-integrated-live-preview.mjs

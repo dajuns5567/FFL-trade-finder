@@ -1,0 +1,29 @@
+name: Historical IDP V74 to V75 top-100 regression audit (draft)
+on:
+  pull_request:
+    paths:
+      - 'scripts/audit-idp-v74-v75-top100-regression.mjs'
+      - 'tests/fixtures/idp-v74-before-games-maturity-model.js'
+      - '.github/workflows/idp-v74-v75-top100-regression.yml'
+permissions:
+  contents: read
+jobs:
+  historical-readonly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate historical audit source syntax
+        run: |
+          node --check scripts/audit-idp-v74-v75-top100-regression.mjs
+          node --check tests/fixtures/idp-v74-before-games-maturity-model.js
+      - name: Install seven-source dynasty adapter and isolated Chromium
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund --no-package-lock
+          npm install --no-save --ignore-scripts --no-audit --no-fund --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Compare exact 32-team V74 and V75 IDP models, no writes
+        run: node scripts/audit-idp-v74-v75-top100-regression.mjs

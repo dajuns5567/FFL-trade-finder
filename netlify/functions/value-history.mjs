@@ -215,8 +215,11 @@ function comparableMarketEra(snaps){
   .slice().sort((a,b)=>String(a.t).localeCompare(String(b.t)));
  if(!ordered.length)return{snaps:[],model:null,changedAt:null,priorModel:null};
  const model=valuationModelId(ordered.at(-1));
- // Before the first explicit model tag, retain the exact historical behavior.
- if(!model)return{snaps:ordered,model:null,changedAt:null,priorModel:null};
+ // An entirely unversioned archive keeps its historical behavior. But an
+ // unversioned snapshot after a tagged one is NOT evidence that it shares
+ // that model: isolate that suffix to avoid fabricated market movement.
+ if(!model&&!ordered.some(s=>valuationModelId(s)!==null))
+  return{snaps:ordered,model:null,changedAt:null,priorModel:null};
  let first=ordered.length-1;
  while(first>0&&valuationModelId(ordered[first-1])===model)first--;
  return{snaps:ordered.slice(first),model,

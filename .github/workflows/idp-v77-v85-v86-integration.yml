@@ -1,0 +1,47 @@
+name: IDP V77/V85/V86 integration acceptance (draft, no deploy)
+on:
+  pull_request:
+    paths:
+      - 'valuation-idp-v25-perf.js'
+      - 'valuation-idp-v36.js'
+      - 'netlify/functions/consensus-composite-v3.mjs'
+      - 'netlify/functions/draftsharks-idp-adapter.mjs'
+      - 'netlify/functions/rotowire-idp-adapter.mjs'
+      - 'netlify/functions/update.mjs'
+      - 'tests/idp-v75-scoring-bucket.test.mjs'
+      - 'tests/idp-v65-monotonic-development-v85.test.mjs'
+      - 'scripts/audit-idp-v86-v85-full-league.mjs'
+      - '.github/workflows/idp-v77-v85-v86-integration.yml'
+permissions:
+  contents: read
+jobs:
+  integration-idp-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install declared adapter dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund --no-package-lock
+      - name: IDP-only source syntax and unit/regression coverage
+        run: |
+          node --check valuation-idp-v25-perf.js
+          node --check valuation-idp-v36.js
+          node --check netlify/functions/consensus-composite-v3.mjs
+          node --check netlify/functions/draftsharks-idp-adapter.mjs
+          node --check netlify/functions/rotowire-idp-adapter.mjs
+          node --check scripts/audit-idp-v86-v85-full-league.mjs
+          node --test tests/idp-dynasty-provenance-v77.test.mjs tests/consensus-composite-v3.test.mjs tests/idp-v75-scoring-bucket.test.mjs tests/idp-v65-monotonic-development-v85.test.mjs tests/idp-20-45-35-calibration.test.mjs tests/idp-v72-source-retention.test.mjs
+      - name: Preserve canonical player identity, values and history contracts
+        run: |
+          node scripts/v311-pipeline-identity-v319-smoke.cjs
+          node scripts/v319-values-v311-integration-smoke.cjs
+          node --test tests/combined-valuation-history-contract.test.mjs
+      - name: Install browser test dependency (preview only)
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Exact full-league same-source model acceptance, all writes blocked
+        run: node scripts/audit-idp-v86-v85-full-league.mjs

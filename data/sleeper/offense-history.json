@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-11-15T21:47:17.836Z",
+  "generatedAt": "2026-11-16T02:02:26.607Z",
   "source": "Sleeper importer snapshot",
   "currentSeason": 2026,
   "completedWeek": 9,
@@ -348,6 +348,12 @@
         "CAR",
         "NYJ",
         "BUF",
+        "LV",
+        "SEA",
+        "ARI",
+        "LAR",
+        "DAL",
+        "SF",
         "NYG",
         "WSH"
       ]
@@ -1533,34 +1539,18 @@
       },
       "10": {
         "scheduledGames": 14,
-        "finalGames": 9,
+        "finalGames": 12,
         "ignoredGames": 0,
-        "blockingGames": 5,
+        "blockingGames": 2,
         "complete": false,
         "nullSlots": [],
         "slots": [
           {
-            "id": "401873062",
+            "id": "401873064",
             "state": "blocking",
             "teams": [
-              "LV",
-              "SEA"
-            ]
-          },
-          {
-            "id": "401873061",
-            "state": "blocking",
-            "teams": [
-              "ARI",
-              "LAR"
-            ]
-          },
-          {
-            "id": "401873063",
-            "state": "blocking",
-            "teams": [
-              "DAL",
-              "SF"
+              "CIN",
+              "PIT"
             ]
           },
           {
@@ -1628,11 +1618,27 @@
             ]
           },
           {
-            "id": "401873064",
-            "state": "blocking",
+            "id": "401873062",
+            "state": "final",
             "teams": [
-              "CIN",
-              "PIT"
+              "LV",
+              "SEA"
+            ]
+          },
+          {
+            "id": "401873061",
+            "state": "final",
+            "teams": [
+              "ARI",
+              "LAR"
+            ]
+          },
+          {
+            "id": "401873063",
+            "state": "final",
+            "teams": [
+              "DAL",
+              "SF"
             ]
           },
           {
@@ -1655,9 +1661,9 @@
       }
     },
     "diagnostics": {
-      "finalGames": 145,
-      "qualifiedPlayerGames": 9205,
-      "rejectedPlayerGames": 11390,
+      "finalGames": 148,
+      "qualifiedPlayerGames": 9283,
+      "rejectedPlayerGames": 11763,
       "ignoredGames": 0
     }
   },

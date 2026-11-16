@@ -236,6 +236,50 @@ test('completed trades are never attributed to repricing across a valuation-mode
  assert.equal(annotations.get(snapshots[1].t),undefined);
 });
 
+test('null player market movement does not masquerade as zero-valued team coverage',()=>{
+ const begin=client.indexOf('function currentTeamNetStandings(){'),
+   end=client.indexOf('function teamNetNeighbors(){',begin);
+ assert(begin>=0&&end>begin,'canonical team standings function missing');
+ const context={
+  Map,Number,Math,String,Array,Object,
+  state:{
+   teams:[{id:'1'},{id:'2'}],
+   allAssets:[
+    {type:'player',id:'p1',owner:'1'},
+    {type:'player',id:'p2',owner:'2'}
+   ]
+  },
+  currentRows:()=>[{id:'p1',value:1000},{id:'p2',value:1100}],
+  teamName:id=>'Team '+id,
+  marketCache:{marketRows:[
+   {id:'p1',delta7:null,delta30:null},
+   {id:'p2',delta7:15,delta30:-10}
+  ]}
+ };
+ vm.createContext(context);
+ vm.runInContext(client.slice(begin,end),context,{filename:'current-team-net-coverage-v90.js'});
+ let standings=context.currentTeamNetStandings();
+ const a=standings.find(t=>t.id==='1'),b=standings.find(t=>t.id==='2');
+ assert.equal(a.coverage7,0);
+ assert.equal(a.coverage30,0);
+ assert.equal(a.delta7,null);
+ assert.equal(a.delta30,null);
+ assert.equal(a.rankDelta7,null,'missing opponent evidence invalidates league-wide change');
+ assert.equal(a.rankDelta30,null,'missing opponent evidence invalidates league-wide change');
+ assert.equal(b.coverage7,1);
+ assert.equal(b.coverage30,1);
+ assert.equal(b.delta7,15);
+ assert.equal(b.delta30,-10);
+ context.marketCache.marketRows[0]={id:'p1',delta7:0,delta30:0};
+ standings=context.currentTeamNetStandings();
+ assert(standings.every(t=>t.coverage7===1&&t.coverage30===1),
+  'genuine zero deltas are available data, not missing history');
+ assert.equal(standings.find(t=>t.id==='1').delta7,0);
+ assert(standings.every(t=>Number.isFinite(t.rankDelta7)&&Number.isFinite(t.rankDelta30)));
+ assert.match(client,/owned.has\(String\(r.id\)\)&&r\?\.\[key\]!=null&&Number.isFinite\(Number\(r\[key\]\)\)/,
+  'team attribution must not count absent values as actual movement');
+});
+
 test('scheduled local and GitHub archive captures cannot silently lose their explicit valuation model',()=>{
  assert.match(client,/window.valueHistoryModelV90=HISTORY_VALUATION_MODEL/);
  assert.match(scheduled,/valuationModel:window.valueHistoryModelV90\|\|null/);

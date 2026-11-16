@@ -1812,10 +1812,10 @@ function currentTeamNetStandings(){
   for(const a of state.allAssets||[]){
     if(a?.type!=='player')continue;const owner=String(a.owner||''),bucket=totals.get(owner);if(!bucket)continue;
     const id=String(a.id),value=valueById.get(id)||0,m=marketById.get(id);bucket.value+=value;bucket.count++;
-    if(Number.isFinite(Number(m?.delta7))){bucket.delta7+=Number(m.delta7);bucket.known7++}
-    if(Number.isFinite(Number(m?.delta30))){bucket.delta30+=Number(m.delta30);bucket.known30++}
+    if(m?.delta7!=null&&Number.isFinite(Number(m.delta7))){bucket.delta7+=Number(m.delta7);bucket.known7++}
+    if(m?.delta30!=null&&Number.isFinite(Number(m.delta30))){bucket.delta30+=Number(m.delta30);bucket.known30++}
   }
-  const all=[...totals].map(([id,x])=>({id,name:teamName(id),value:Math.round(x.value),delta7:Math.round(x.delta7),delta30:Math.round(x.delta30),coverage7:x.count?x.known7/x.count:0,coverage30:x.count?x.known30/x.count:0}));
+  const all=[...totals].map(([id,x])=>({id,name:teamName(id),value:Math.round(x.value),delta7:x.known7?Math.round(x.delta7):null,delta30:x.known30?Math.round(x.delta30):null,coverage7:x.count?x.known7/x.count:0,coverage30:x.count?x.known30/x.count:0}));
   all.sort((a,b)=>b.value-a.value||a.name.localeCompare(b.name));all.forEach((x,i)=>x.rank=i+1);
   const rankBaseline=(period)=>{
     const coverageKey=period==='7D'?'coverage7':'coverage30',deltaKey=period==='7D'?'delta7':'delta30';
@@ -1911,7 +1911,7 @@ function teamTradeNetEvents(teamId,netData,period){
   return out.sort((a,b)=>String(b.trade.created).localeCompare(String(a.trade.created)));
 }
 function teamAttributionCard(owned,netData,teamId){
-  const period=teamAttributionPeriod==='30D'?'30D':'7D',key=period==='30D'?'delta30':'delta7',rows=(marketCache?.marketRows||[]).filter(r=>owned.has(String(r.id))&&Number.isFinite(Number(r?.[key]))).map(r=>({...r,move:Number(r[key])}));
+  const period=teamAttributionPeriod==='30D'?'30D':'7D',key=period==='30D'?'delta30':'delta7',rows=(marketCache?.marketRows||[]).filter(r=>owned.has(String(r.id))&&r?.[key]!=null&&Number.isFinite(Number(r[key]))).map(r=>({...r,move:Number(r[key])}));
   const gains=rows.filter(r=>r.move>0).sort((a,b)=>b.move-a.move).slice(0,5),losses=rows.filter(r=>r.move<0).sort((a,b)=>a.move-b.move).slice(0,5),net=rows.reduce((n,r)=>n+r.move,0),up=gains.reduce((n,r)=>n+r.move,0),down=losses.reduce((n,r)=>n+r.move,0),tradeEvents=teamTradeNetEvents(teamId,netData,period);
   const driver=list=>list.length?list.map(r=>`<div class="vh-driver-row"><div class="vh-driver-main"><div><a href="#" class="vh-driver-name" data-vh-player="${esc(String(r.id))}">${esc(playerName(r.id))}</a><small>${esc(r.pos)} #${r.posRank} • Current value ${fmt(r.value)}</small></div><button type="button" class="vh-player-link vh-driver-chart" data-vh-player="${esc(String(r.id))}"><span class="vh-history-cue">View history ↗</span></button></div><div class="${deltaClass(r.move)}"><b>${signed(r.move)}</b></div></div>`).join(''):'<div class="vh-empty">No qualifying movement in this period.</div>';
   const tradeRows=tradeEvents.length?tradeEvents.map(e=>`<div class="vh-team-trade-event"><div class="vh-team-trade-event-main"><span class="vh-trade-event-badge">Trade</span><div><b>${esc(dateShort(e.trade.created))} • vs. ${esc(e.counterpart)}</b><small>Linked to recorded team net-value point: ${esc(dateTime(e.point.t))}</small></div></div><div class="vh-team-trade-event-value"><small>Team net value</small><b>${fmt(e.point.value)}</b><span class="${deltaClass(e.change)}">${signed(e.change)} from prior team snapshot</span></div><button type="button" class="secondary small" data-vh-open-trade-history data-vh-trade-team="${esc(String(teamId))}">View trade</button></div>`).join(''):`<div class="vh-empty">No completed trades in this period are bracketed by authoritative team net-value snapshots yet.</div>`;

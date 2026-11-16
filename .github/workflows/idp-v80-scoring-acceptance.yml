@@ -1,0 +1,39 @@
+name: IDP V80 exact scoring-unit and full-league acceptance (draft)
+on:
+  pull_request:
+    paths:
+      - 'valuation-idp-v25-perf.js'
+      - 'tests/idp-v80-scoring-units.test.mjs'
+      - 'tests/idp-v75-scoring-bucket.test.mjs'
+      - 'tests/fixtures/idp-v80-before-scoring-model.js'
+      - 'scripts/audit-idp-v80-exact-source.mjs'
+      - '.github/workflows/idp-v80-scoring-acceptance.yml'
+permissions:
+  contents: read
+jobs:
+  idp-only:
+    if: github.event.pull_request.number == 481
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax and all affected fixed-weight and scoring-source regressions
+        run: |
+          node --check valuation-idp-v25-perf.js
+          node --check scripts/audit-idp-v80-exact-source.mjs
+          node --test tests/idp-v80-scoring-units.test.mjs tests/idp-v75-scoring-bucket.test.mjs tests/idp-20-45-35-calibration.test.mjs
+      - name: Install dynasty adapter deps and isolated Chromium
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund --no-package-lock
+          npm install --no-save --ignore-scripts --no-audit --no-fund --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Compare exact V75 and V80 source on same seven verified dynasty feeds
+        run: node scripts/audit-idp-v80-exact-source.mjs
+      - name: Verify canonical Finder, Evaluator, rank currency and history contract
+        run: |
+          node scripts/v311-pipeline-identity-v319-smoke.cjs
+          node scripts/v319-values-v311-integration-smoke.cjs
+          node --test tests/combined-valuation-history-contract.test.mjs

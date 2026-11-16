@@ -52,7 +52,9 @@ test('no current season or no historical comparator never invents missing data',
 test('V75 scoring uses verified season games only; 20/45/35 coefficients remain unchanged',()=>{
  assert.match(source,/const raw=\.20\*c\+\.45\*scoreValue\+\.35\*contextValue-IDP_V25_MARKET_CENTER_OFFSET/);
  assert.match(source,/IDP_V25_MARKET_CENTER_OFFSET=80\.15/);
- assert.match(source,/const effectiveScoringValue=unverifiedFallback\?Math\.min\(score\.value,180\):score\.value/);
+ assert.match(source,/const effectiveScoringValue=unverifiedFallback\?Math\.min\(score\.value,180\):/);
+ assert.match(source,/scoringVerified\?180\+\.90\*\(score\.value-180\):score\.value/);
+ assert.match(source,/idpV80RawScoringComponent:score\.value/);
  assert.doesNotMatch(source,/calibratedScoring25/);
 });
 

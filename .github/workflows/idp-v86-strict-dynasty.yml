@@ -1,0 +1,31 @@
+name: V86 verified IDP dynasty-source sensitivity (research only)
+on:
+  pull_request:
+    paths:
+      - 'tests/fixtures/idp-v86-verified-snap-model.js'
+      - 'tests/fixtures/idp-v85-monotonic-model.js'
+      - 'scripts/audit-idp-v86-strict-dynasty-sources.mjs'
+      - '.github/workflows/idp-v86-strict-dynasty.yml'
+permissions:
+  contents: read
+jobs:
+  two-source-dynasty-verified:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify research fixtures and scope
+        run: |
+          node --check tests/fixtures/idp-v86-verified-snap-model.js
+          node --check tests/fixtures/idp-v85-monotonic-model.js
+          node --check scripts/audit-idp-v86-strict-dynasty-sources.mjs
+      - name: Install two-source dynasty adapter and isolated Chromium
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund --no-package-lock
+          npm install --no-save --ignore-scripts --no-audit --no-fund --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Full-league two verified dynasty IDP publishers, no writes
+        run: node scripts/audit-idp-v86-strict-dynasty-sources.mjs

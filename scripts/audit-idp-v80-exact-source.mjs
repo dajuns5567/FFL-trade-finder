@@ -27,14 +27,21 @@ console.log('IDP_V79_SOURCE_STATUS '+JSON.stringify(refresh.results.map(r=>({
  name:r.source,valid:r.valid,rows:r.rankings?.length||0,dynasty:r.dynastyVerified??null
 }))));
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
-const factors=['V75-existing','V80-candidate'];
+// Read-only counterfactual: 1.5 PPG guard unchanged before 5 current games,
+// linearly matures toward 3.0 at eight games. No player-specific override.
+const relaxedHistorySource=newSource.replace(
+ 'const weightedPpg=clamp25(legacyPpg-1.5,ppg,legacyPpg+1.5);',
+ 'const guard25=current&&historicalWeight>0?1.5+1.5*clamp25(0,(currentGames-5)/3,1):1.5; const weightedPpg=clamp25(legacyPpg-guard25,ppg,legacyPpg+guard25);'
+);
+assert.notEqual(relaxedHistorySource,newSource,'expected exact model-guard substitution');
+const factors=['V75-existing','V80-candidate','V81-history-guard-counterfactual'];
 const captures=[];
 try{
  for(const factor of factors){
   const context=await browser.newContext({serviceWorkers:'block'});
   const errors=[],blocked=[];
   const origin=new URL(preview).origin;
-  const substitute=factor==='V75-existing'?oldSource:newSource;
+  const substitute=factor==='V75-existing'?oldSource:factor==='V80-candidate'?newSource:relaxedHistorySource;
   await context.route('**/*',route=>{
    const request=route.request(),u=new URL(request.url());
    if(request.method()==='POST'&&u.origin===origin&&
@@ -68,7 +75,7 @@ try{
     return{id,name,position,overall:i+1,idpRank:position==='IDP'?idpRank:null,
      modeled:Number(z.value),consensus:Number(z.consensus)||null,marketIdpRank:Number(source.idpRank)||null,
      actualSources,sourceNames:(source.idpSources||[]).filter(s=>!String(s).endsWith(' (not listed)')),age:Number(st.players?.[id]?.age)||null,
-     scoring:Number(z.production?.value)||null,context:Number(z.context)||null,
+     scoring:Number(z.production?.value)||null,context:Number(z.context)||null,weightedPpg:z.production?.m?.ppg??null,legacyPpg:z.production?.m?.legacyPpg??null,uncappedPpg:z.production?.m?.uncappedPpg??null,currentGames:z.production?.m?.currentSeasonGames??null,
      seasons:Number(z.production?.a?.qualifyingSeasons)||0};
    }),rostered:[...new Set((st.rosters||[]).flatMap(r=>r.players||[]).map(String))]};
   });
@@ -123,9 +130,42 @@ try{
      'Aidan Hutchinson','Carson Schwesinger','Jack Campbell','David Bailey']
     .map(n=>rows.find(x=>x.name===n)).filter(Boolean)
     .map(x=>({name:x.name,overall:x.overall,idp:x.idpRank,prior:x.baseline.idpRank,
-      model:x.modeled,market:x.marketIdpRank,age:x.age,verifiedSources:x.actualSources,verifiedSourceNames:x.sourceNames,scoring:x.scoring,context:x.context,qualifiedSeasons:x.seasons}))
+      model:x.modeled,market:x.marketIdpRank,age:x.age,verifiedSources:x.actualSources,verifiedSourceNames:x.sourceNames,scoring:x.scoring,context:x.context,weightedPpg:x.weightedPpg,legacyPpg:x.legacyPpg,uncappedPpg:x.uncappedPpg,currentGames:x.currentGames,qualifiedSeasons:x.seasons}))
   });
  }
+ // Exact-source 1.5 -> mature 3.0 PPG guard sensitivity, against V80.
+ // Keep offense, player universe, market-source eligibility, and career context fixed.
+ const v80=new Map(captures[1].ranked.map(x=>[x.id,x]));
+ const v81=captures[2].ranked.filter(x=>x.position==='IDP');
+ const changes=v81.map(x=>{const old=v80.get(x.id);return{
+  name:x.name,id:x.id,age:x.age,market:x.marketIdpRank,sources:x.actualSources,
+  currentGames:x.currentGames,legacyPpg:x.legacyPpg,uncappedPpg:x.uncappedPpg,
+  oldWeightedPpg:old.weightedPpg,newWeightedPpg:x.weightedPpg,
+  ppgDelta:Number(((x.weightedPpg??0)-(old.weightedPpg??0)).toFixed(3)),
+  priorOverall:old.overall,newOverall:x.overall,priorIdp:old.idpRank,newIdp:x.idpRank,
+  valueDelta:x.modeled-old.modeled
+ }});
+ const changed=changes.filter(x=>x.ppgDelta!==0);
+ const marketMatched=changes.filter(x=>x.sources>=2&&x.market>0);
+ const accuracy=xs=>({n:xs.length,
+  priorMAE:xs.length?Number((xs.reduce((a,x)=>a+Math.abs(x.priorIdp-x.market),0)/xs.length).toFixed(3)):null,
+  newMAE:xs.length?Number((xs.reduce((a,x)=>a+Math.abs(x.newIdp-x.market),0)/xs.length).toFixed(3)):null
+ });
+ const guardAudit={count:changes.length,affected:changed.length,
+  maxAbsolutePpgShift:Math.max(0,...changed.map(x=>Math.abs(x.ppgDelta))),
+  verifiedTwoSource:accuracy(marketMatched),
+  matureEightGames:accuracy(marketMatched.filter(x=>x.currentGames>=8)),
+  younger25:accuracy(marketMatched.filter(x=>x.age<=25)),
+  veterans29plus:accuracy(marketMatched.filter(x=>x.age>=29)),
+  largestIncreases:changed.slice().sort((a,b)=>b.ppgDelta-a.ppgDelta).slice(0,15),
+  largestDecreases:changed.slice().sort((a,b)=>a.ppgDelta-b.ppgDelta).slice(0,15),
+  featured:changes.filter(x=>['Maxx Crosby','Dallas Turner','Myles Garrett','Will Anderson Jr.','George Karlaftis','Aidan Hutchinson','Jared Verse','David Bailey'].includes(x.name))
+ };
+ assert(guardAudit.maxAbsolutePpgShift<=1.50001,'guard sensitivity exceeded a 1.5-PPG delta');
+ console.log('IDP_V81_HISTORY_GUARD_SENSITIVITY '+JSON.stringify(guardAudit));
+ console.log('IDP_V81_DECISION '+JSON.stringify({status:'research-only',
+  recommendation:'require league-wide validated dynasty benefit before changing production model',
+  noAutomaticPromotion:true}));
  // Paired source-agreement uncertainty: do not interpret a one-rank mean
  // improvement as strong evidence without accounting for cohort volatility.
  const before=new Map(captures[0].ranked.map(x=>[x.id,x]));

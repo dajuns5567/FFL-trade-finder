@@ -360,6 +360,8 @@ try{
   assert(surfaceChecks.every(x=>x.clicked&&x.section&&x.hidden===false&&x.textLength>25),
     'Page navigation / visible core tab rendering regression: '+JSON.stringify(surfaceChecks));
   assert(marketNavigation.clicked&&marketNavigation.visible,'Market Dashboard entry cannot open Value History');
+  assert(!/Valuation model changed on 9\/22\/2026/i.test(marketNavigation.marketHeader),
+    'Legacy September scheduled-capture metadata mislabeled as valuation-model change');
   assert.deepEqual(runtimeErrors,[],'New JavaScript errors after cross-page navigation');
   console.log('PR488_LIVE_PAGE_SURFACE_ACCEPTANCE '+JSON.stringify({surfaceChecks,marketNavigation}));
 

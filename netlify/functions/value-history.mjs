@@ -206,9 +206,11 @@ async function readSnapshotsBounded(s,items,batchSize=25){
 // are never deleted, rewritten, or used as inferred valuation benchmarks.
 function valuationModelId(snapshot){
  const raw=String(snapshot?.valuation_model||'').trim();
- if(/^[a-z0-9][a-z0-9._:-]{2,95}$/i.test(raw))return raw;
- const scheduled=String(snapshot?.valuation_contract||'').trim();
- return /^[a-z0-9][a-z0-9._:-]{2,95}$/i.test(scheduled)?'scheduled:'+scheduled:null;
+ // Scheduled capture-contract strings describe the collector, NOT the model.
+ // Inferring a model revision from historical valuation_contract metadata
+ // fabricates September "model changes" in pre-V90 archives. Only an
+ // explicitly supplied, well-formed valuation_model can establish an era.
+ return /^[a-z0-9][a-z0-9._:-]{2,95}$/i.test(raw)?raw:null;
 }
 function comparableMarketEra(snaps){
  const ordered=(snaps||[]).filter(x=>x?.t&&Array.isArray(x?.rows))

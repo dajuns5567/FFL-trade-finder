@@ -3,6 +3,8 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
+import {refreshAllSources} from '../netlify/functions/consensus-source-overrides.mjs';
+import {buildConsensusPayload} from '../netlify/functions/update.mjs';
 import {chromium} from 'playwright';
 
 const preview='https://deploy-preview-488--precious-dango-fb4633.netlify.app';
@@ -33,6 +35,22 @@ assert.equal(new Set(rosters.map(x=>Number(x.roster_id))).size,32,'Duplicate Sle
 const realPlayerIds=new Set(rosters.flatMap(x=>x.players||[]).map(String));
 assert(realPlayerIds.size>250,'Suspiciously incomplete 32-team player roster snapshot');
 
+// Local-only consensus replacement: never submit a network POST to Netlify.
+// The initial test intentionally blocked every POST but then tested an
+// incomplete master before all dynasty sources were available.
+markStage('building verified seven-source consensus feed locally');
+const dictionary=await getJson('https://api.sleeper.app/v1/players/nfl');
+const players=Object.entries(dictionary).filter(([,p])=>p?.fantasy_positions?.length)
+ .map(([id,p])=>({id,name:[p.first_name,p.last_name].filter(Boolean).join(' ')||p.full_name||id,
+  position:p.position||(p.fantasy_positions||[])[0],positions:p.fantasy_positions||[],team:p.team||null}));
+const refresh=await refreshAllSources({timeoutMs:15000});
+assert.equal(refresh.successful,7,'all seven ranked publishers must refresh');
+const payload=buildConsensusPayload(refresh,players);
+assert(payload.integrity.all_sources_valid,'dynasty consensus payload integrity');
+assert.equal(payload.composite.sourceCounts.idp,2,'exclude seasonal IDP rankings from dynasty consensus');
+const consensusResponseBody=JSON.stringify(payload);
+markStage('verified consensus loaded; preparing isolated no-write browser');
+
 let browser,blockedWrites=0,blockedMutations=0,failedAssets=[];
 const playerDataRequests=[], runtimeErrors=[];
 try{
@@ -41,6 +59,10 @@ try{
   const context=await browser.newContext({serviceWorkers:'block'});
   await context.route('**/*',route=>{
     const request=route.request(),url=new URL(request.url());
+    if(request.method()==='POST'&&url.origin===origin&&
+       (url.pathname==='/api/update'||url.pathname==='/.netlify/functions/update')){
+      return route.fulfill({status:200,contentType:'application/json',body:consensusResponseBody});
+    }
     if(request.method()!=='GET'&&request.method()!=='HEAD'){
       blockedWrites++;return route.abort('blockedbyclient');
     }
@@ -158,6 +180,10 @@ try{
   // Accept live Finder only once V319 has completed its full roster validation.
   await page.waitForFunction(()=>window.modeledPlayerValuesV319?.ready===true,
     null,{timeout:25000,polling:500});
+  markStage('waiting for verified seven-source consensus acceptance');
+  await page.waitForFunction(()=>window.__fllConsensusRefresh?.complete===true&&
+    window.__fllConsensusRefresh?.ok===true&&window.modeledPlayerValuesV319?.ready===true,
+    null,{timeout:100000,polling:600});
   markStage('metadata and V319 canonical model ready; reading roster values');
   const initial=await page.evaluate(()=>{
     const a=window.state.allAssets.filter(x=>x?.type==='player');
@@ -290,7 +316,7 @@ try{
   console.log('PR488_LIVE_PRE_ASSERT '+JSON.stringify({teams:live.teams,playerCount:live.playerCount,idps:live.idps,offense:live.offense,masterCount:live.masterCount,top100IDP:live.top100IDP,turner:live.turner,historyModel:live.historyModel,historyRows:live.historyRows,ui:live.ui,errors:live.errors,packageChecks:live.packageChecks}));
   assert.equal(live.teams,32,'Preview lost league teams');
   assert(live.playerCount>=500&&live.idps>=100&&live.offense>=250,'Live league roster incomplete');
-  assert(live.masterCount>=950,'Master rankings incomplete');
+  assert(live.masterCount>=950,'Verified dynasty consensus master rankings incomplete');
   assert(live.top100IDP>=7&&live.top100IDP<=25,'IDP top100 balance outside broad evidence interval');
   assert(live.turner&&live.turner.idp>0&&live.turner.idp<75,'Dallas Turner missing or improperly indexed');
   assert.deepEqual(live.errors,[],'Real canonical roster valuation parity regression');

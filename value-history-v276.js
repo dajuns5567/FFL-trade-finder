@@ -1789,6 +1789,7 @@ function teamNetPointTradeMap(teamId,points){
   const trades=(tradeHistoryCache.trades||[]).filter(t=>(t.roster_ids||[]).map(String).includes(id));
   for(let i=1;i<auth.length;i++){
     const prev=auth[i-1],cur=auth[i],a=new Date(prev.t).getTime(),b=new Date(cur.t).getTime();
+    if(chartEraChange(prev,cur))continue; // Never attribute a model repricing to a trade.
     if(!Number.isFinite(a)||!Number.isFinite(b))continue;
     const events=trades.filter(t=>{const tm=new Date(t?.created||0).getTime();return Number.isFinite(tm)&&tm>a&&tm<=b}).map(t=>({id:String(t.id||''),date:dateShort(t.created),counterparts:(t.roster_ids||[]).map(String).filter(x=>x!==id).map(x=>historicalTradeTeamName(t,x)).join(' / ')||'another team'}));
     if(events.length)map.set(String(cur.t),{events,change:Math.round(Number(cur.value)-Number(prev.value))});
@@ -1902,7 +1903,9 @@ function teamTradeNetEvents(teamId,netData,period){
     let idx=-1;
     for(let i=1;i<pts.length;i++){const prevMs=new Date(pts[i-1].t).getTime(),curMs=new Date(pts[i].t).getTime();if(tm>prevMs&&tm<=curMs){idx=i;break}}
     if(idx<1)continue;
-    const point=pts[idx],prev=pts[idx-1],others=(trade.roster_ids||[]).map(String).filter(x=>x!==id).map(x=>historicalTradeTeamName(trade,x));
+    const point=pts[idx],prev=pts[idx-1];
+    if(chartEraChange(prev,point))continue; // Exclude incomparable price transitions.
+    const others=(trade.roster_ids||[]).map(String).filter(x=>x!==id).map(x=>historicalTradeTeamName(trade,x));
     out.push({trade,point,prev,change:Math.round(Number(point.value)-Number(prev.value)),counterpart:others.join(' / ')||'another team'});
   }
   return out.sort((a,b)=>String(b.trade.created).localeCompare(String(a.trade.created)));

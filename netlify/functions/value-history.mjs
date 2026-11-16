@@ -1303,7 +1303,7 @@ export default async (req)=>{
     const valuationModel=/^idp-v77-v85-v86-dynasty$/.test(suppliedModel)?suppliedModel:null;
     const snapshot={version:5,league:LEAGUE,t,fingerprint:fp,source,
       valuation_contract:source==='scheduled'?SCHEDULED_VALUATION_CONTRACT:null,
-      valuation_model:source==='scheduled'?null:valuationModel,rows,picks,teams};
+      valuation_model:valuationModel,rows,picks,teams};
     await retry(()=>s.setJSON(key,snapshot),120);
     await appendIndex(s,key,t);
     await retry(()=>s.setJSON(LATEST_KEY,{version:3,t,fingerprint:fp,key,count:rows.length,source}),120);

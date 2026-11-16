@@ -12,6 +12,8 @@ const preview='https://deploy-preview-466--precious-dango-fb4633.netlify.app/';
 const source=readFileSync(new URL('../tests/fixtures/idp-v74-before-games-maturity-model.js',import.meta.url),'utf8');
 assert(source.includes('function historyMetrics25(')&&!source.includes('currentShare=current&&historicalWeight>0'));
 const v75Source=readFileSync(new URL('../valuation-idp-v25-perf.js',import.meta.url),'utf8');
+const v85Source=readFileSync(new URL('../tests/fixtures/idp-v85-monotonic-v65.js',import.meta.url),'utf8');
+assert(v85Source.includes('appliedBonus=bonus*taper'));
 assert(v75Source.includes("weightBasis:'games-matured-season-with-1.5ppg-history-anchor-guard'"));
 let v86Source=v75Source;
 const replaceV86=(original,replacement)=>{
@@ -67,7 +69,7 @@ assert(payload.integrity.all_sources_valid,'require source integrity');
 const body=JSON.stringify(payload),browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 const captures=[];
 try{
- for(const variant of ['V74-historical-scoring','V75-approved-preview','V86-evidenced-opportunity']){
+ for(const variant of ['V74-historical-scoring','V75-approved-preview','V86-evidenced-opportunity','V86-plus-V85']){
   const context=await browser.newContext({serviceWorkers:'block'});
   const errors=[],blockedWrites=[];
   const origin=new URL(preview).origin;
@@ -81,8 +83,10 @@ try{
     return route.abort('blockedbyclient');
    if(u.origin===origin&&u.pathname==='/valuation-idp-v25-perf.js'){
     if(variant==='V74-historical-scoring')return route.fulfill({status:200,contentType:'text/javascript',body:source});
-    if(variant==='V86-evidenced-opportunity')return route.fulfill({status:200,contentType:'text/javascript',body:v86Source});
+    if(variant==='V86-evidenced-opportunity'||variant==='V86-plus-V85')return route.fulfill({status:200,contentType:'text/javascript',body:v86Source});
    }
+   if(variant==='V86-plus-V85'&&u.origin===origin&&u.pathname==='/valuation-idp-v36.js')
+    return route.fulfill({status:200,contentType:'text/javascript',body:v85Source});
    return route.continue();
   });
   const page=await context.newPage();
@@ -225,5 +229,42 @@ try{
   offenseDiff,consensusDiff,contextDiff,missingHistoryDiff,noWrites:true,researchOnly:true};
  console.log('IDP_V86_OPPORTUNITY_CAUSAL_AUDIT '+JSON.stringify(resultV86));
  console.log('IDP_V86_OPPORTUNITY_CAUSAL_AUDIT_PASS');
+ const combined=captures[3],combinedById=new Map(combined.ranked.map(x=>[x.id,x]));
+ assert.deepEqual(combined.ranked.map(x=>x.id).sort(),approved.ranked.map(x=>x.id).sort(),'V86+V85 player universe');
+ let offenseDelta=0,contextDelta=0,consensusDelta=0,scoringDeltaFromV86=0,zeroEvidenceDelta=0;
+ const combinedRows=[];
+ for(const row of combined.ranked){
+  const base=oldById.get(row.id),onlyV86=proposed.ranked.find(x=>x.id===row.id);
+  if(row.group!=='IDP'){if(base.value!==row.value)offenseDelta++;continue;}
+  if(base.context!==row.context)contextDelta++;
+  if(base.consensus!==row.consensus)consensusDelta++;
+  if(onlyV86.scoring!==row.scoring)scoringDeltaFromV86++;
+  if(row.qualifiers===0&&base.value!==row.value)zeroEvidenceDelta++;
+  combinedRows.push({id:row.id,name:row.name,priorOverall:base.overall,newOverall:row.overall,
+   priorIdp:base.idpRank,newIdp:row.idpRank,priorValue:base.value,newValue:row.value,
+   v86OnlyValue:onlyV86.value,delta:row.value-base.value,
+   consensus:row.consensus,market:row.marketRank,sources:row.dynastySources.length,
+   v65Factor:row.v65Factor});
+ }
+ assert.equal(offenseDelta,0,'V86+V85 changed offense');
+ assert.equal(contextDelta,0,'V86+V85 changed dynasty context');
+ assert.equal(consensusDelta,0,'V86+V85 changed consensus');
+ assert.equal(scoringDeltaFromV86,0,'V85 changed V86 scoring');
+ assert.equal(zeroEvidenceDelta,0,'V86+V85 moved zero-history IDP values');
+ const comboMatched=combinedRows.filter(x=>x.sources>=2&&Number(x.market)>0);
+ const comboSummary={n:combinedRows.length,countsV74:priorCounts,countsV75:newCounts,
+  countsV86:counts(proposed.ranked),countsV86V85:counts(combined.ranked),
+  changedComparedToV75:combinedRows.filter(x=>x.delta!==0).length,
+  increased:combinedRows.filter(x=>x.delta>0).length,decreased:combinedRows.filter(x=>x.delta<0).length,
+  verified:{n:comboMatched.length,v75MAE:mae(comboMatched,'priorIdp'),v86plusV85MAE:mae(comboMatched,'newIdp')},
+  players:combinedRows.filter(x=>['Dallas Turner','Maxx Crosby','Myles Garrett','Will Anderson Jr.','Aidan Hutchinson',
+   'Greg Rousseau','Blake Cashman','George Karlaftis','Amani Hooker','Quentin Lake',
+   'Tuli Tuipulotu','Chase Young','Nakobe Dean','Arvell Reese','David Bailey'].includes(x.name)),
+  joined:combinedRows.filter(x=>x.priorOverall>100&&x.newOverall<=100),
+  left:combinedRows.filter(x=>x.priorOverall<=100&&x.newOverall>100),
+  offenseDelta,contextDelta,consensusDelta,scoringDeltaFromV86,zeroEvidenceDelta};
+ console.log('IDP_V86_PLUS_V85_COMBINED_ACCEPTANCE '+JSON.stringify(comboSummary));
+ console.log('IDP_V86_PLUS_V85_COMBINED_ACCEPTANCE_PASS');
+
 
 }finally{await browser.close()}

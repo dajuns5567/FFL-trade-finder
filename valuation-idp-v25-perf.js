@@ -9,7 +9,7 @@ function age25(id){const p=state.players?.[id]||{},a=Number(p.age);if(Number.isF
 function role25(id){const p=state.players?.[String(id)]||{},primary=String(p.position||'').toUpperCase(),vals=[primary,...(Array.isArray(p.fantasy_positions)?p.fantasy_positions:[])].filter(Boolean).map(v=>String(v).toUpperCase());if(['DT','NT'].includes(primary))return'INTERIOR';if(vals.some(v=>['DE','EDGE','DL'].includes(v)))return'EDGE';if(vals.some(v=>['LB','ILB','MLB','OLB'].includes(v)))return'LB';if(vals.some(v=>['S','SS','FS','CB','DB'].includes(v)))return'DB';return'OTHER'}
 function ageScore25(id){const a=age25(id);if(!Number.isFinite(a))return .5;if(a<=23)return 1;if(a<=25)return .9;if(a<=27)return .8;if(a<=29)return .67;if(a<=31)return .52;if(a<=33)return .35;return .2}
 function breakdownQty25(sample,keys){let n=0;for(const k of keys){const b=sample?.breakdown?.[k];if(b&&Number.isFinite(Number(b.qty)))n+=Number(b.qty)}return n}
-function historyMetrics25(a){
+function historyMetrics25(a,id){
  const samples=Array.isArray(a?.seasons)?a.seasons:[],coverage=samples.reduce((s,x)=>s+Number(x.assignedWeight||0),0);if(!samples.length||coverage<=0)return{ppg:0,tackleRate:0,spikeRate:0,confidence:0,coverage:0,seasons:0};
  // A two-game current-season sample cannot carry the same seasonal weight
  // as eight verified games. Preserve the past three regular seasons as an
@@ -19,11 +19,37 @@ function historyMetrics25(a){
  const currentGames=Number(current?.games||0);
  // Stable, piecewise linear maturity curve: do not change a four-game
  // season's preexisting 33.53% share, and gradually reach 55% at 8 games.
- const currentShare=current&&historicalWeight>0
+ const v75CurrentShare=current&&historicalWeight>0
   ?currentGames<=4
    ?.10+(.33529411764705885-.10)*clamp25(0,(currentGames-2)/2,1)
    :.33529411764705885+(.55-.33529411764705885)*clamp25(0,(currentGames-4)/4,1)
   :null;
+ // Current-season weighting above 33.53% needs independent opportunity evidence.
+ // Source: verified Sleeper defensive snaps. No guesses or player exceptions.
+ const currentShare=(()=>{
+  if(v75CurrentShare===null||currentGames<=4)return v75CurrentShare;
+  const baseShare=Math.min(v75CurrentShare,.33529411764705885);
+  const prior=samples.filter(x=>!x.currentSeason&&Number(x.games)>=8)
+   .sort((x,y)=>Number(y.season)-Number(x.season))[0];
+  if(prior&&Number(current.ppg)<=Number(prior.ppg))return v75CurrentShare;
+  if(!prior||currentGames<6||Number(current.ppg)<12)return baseShare;
+  const statsFor=year=>{const row=state.stats?.[year]?.[String(id)]||{};
+   return row.stats&&typeof row.stats==='object'?row.stats:row;};
+  const now=statsFor(current.season),was=statsFor(prior.season);
+  const snaps=Number(now.def_snp),past=Number(was.def_snp),team=Number(now.tm_def_snp);
+  if(!Number.isFinite(snaps)||!Number.isFinite(past)||!Number.isFinite(team)
+   ||snaps<250||past<200||team<snaps)return baseShare;
+  const priorRate=past/Number(prior.games),nowRate=snaps/currentGames;
+  const snapGain=priorRate>0?nowRate/priorRate-1:0;
+  const ppgGain=Number(current.ppg)-Number(prior.ppg);
+  if(snaps/team<.65||snapGain<.15||ppgGain<3||Number(current.ppg)<1.20*Number(prior.ppg))
+   return baseShare;
+  const snapEvidence=clamp25(0,(snapGain-.15)/.15,1);
+  const scoringEvidence=clamp25(0,(ppgGain-3)/2,1);
+  const gamesEvidence=clamp25(0,(currentGames-5)/3,1);
+  const support=Math.min(snapEvidence,scoringEvidence,gamesEvidence);
+  return baseShare+(v75CurrentShare-baseShare)*support;
+ })();
  const legacyPpg=samples.reduce((total,row)=>total+Number(row.ppg||0)*Number(row.assignedWeight||0),0)/coverage;
  let ppg=0,tackles=0,spikes=0;
  for(const s of samples){
@@ -39,7 +65,7 @@ function historyMetrics25(a){
  // than 1.5 league PPG in one full refresh. This is a uniform sample-size
  // volatility guard rather than a player-specific dynasty price control.
  const weightedPpg=clamp25(legacyPpg-1.5,ppg,legacyPpg+1.5);
- return{ppg:weightedPpg,tackleRate:tackles,spikeRate:spikes,confidence:clamp25(0,Number(a.confidence||0),1),coverage:1,seasons:Number(a.qualifyingSeasons||samples.length),currentSeasonGames:current?currentGames:null,currentSeasonWeight:currentShare??null,uncappedPpg:ppg,legacyPpg,weightBasis:'games-matured-season-with-1.5ppg-history-anchor-guard'};
+ return{ppg:weightedPpg,tackleRate:tackles,spikeRate:spikes,confidence:clamp25(0,Number(a.confidence||0),1),coverage:1,seasons:Number(a.qualifyingSeasons||samples.length),currentSeasonGames:current?currentGames:null,currentSeasonWeight:currentShare??null,uncappedPpg:ppg,legacyPpg,weightBasis:'games-matured-and-defensive-snap-supported-55pct-with-1.5ppg-guard',v75CurrentSeasonWeight:v75CurrentShare};
 }
 function historicalBenchmarkMetrics25(a){
  const samples=(Array.isArray(a?.seasons)?a.seasons:[]).filter(s=>!s.currentSeason).sort((x,y)=>Number(y.season)-Number(x.season)).slice(0,3),weights=[.60,.30,.10];
@@ -56,7 +82,7 @@ function generation25(){
  return key;
 }
 function baseAudit25(id){generation25();id=String(id);if(baseAuditCache25.has(id))return baseAuditCache25.get(id);const a=typeof priorAudit25==='function'?priorAudit25(id):null;baseAuditCache25.set(id,a);return a}
-function metrics25(id,a){generation25();id=String(id);if(metricsCache25.has(id))return metricsCache25.get(id);const m=historyMetrics25(a);metricsCache25.set(id,m);return m}
+function metrics25(id,a){generation25();id=String(id);if(metricsCache25.has(id))return metricsCache25.get(id);const m=historyMetrics25(a,id);metricsCache25.set(id,m);return m}
 function isIndividualIdp25(id){const p=state.players?.[String(id)]||{},vals=[p.position,...(Array.isArray(p.fantasy_positions)?p.fantasy_positions:[])].filter(Boolean).map(v=>String(v).toUpperCase()),allowed=new Set(['DL','DE','DT','EDGE','NT','LB','ILB','MLB','OLB','DB','CB','S','SS','FS']);return vals.some(v=>allowed.has(v))}
 function distributions25(){
  generation25();if(cache25)return cache25;

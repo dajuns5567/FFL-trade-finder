@@ -1,0 +1,38 @@
+name: IDP V86 verified snap maturity plus V85 monotonic acceptance (draft)
+on:
+  pull_request:
+    paths:
+      - 'valuation-idp-v25-perf.js'
+      - 'valuation-idp-v36.js'
+      - 'tests/idp-v75-scoring-bucket.test.mjs'
+      - 'tests/idp-v65-monotonic-development-v85.test.mjs'
+      - 'scripts/audit-idp-v86-v85-full-league.mjs'
+      - '.github/workflows/idp-v86-v85-acceptance.yml'
+permissions:
+  contents: read
+jobs:
+  idp-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax and isolated IDP source regression tests
+        run: |
+          node --check valuation-idp-v25-perf.js
+          node --check valuation-idp-v36.js
+          node --test tests/idp-v75-scoring-bucket.test.mjs tests/idp-v65-monotonic-development-v85.test.mjs tests/idp-20-45-35-calibration.test.mjs tests/idp-v72-source-retention.test.mjs
+      - name: Verify canonical value and history integration
+        run: |
+          node scripts/v311-pipeline-identity-v319-smoke.cjs
+          node scripts/v319-values-v311-integration-smoke.cjs
+          node --test tests/combined-valuation-history-contract.test.mjs
+      - name: Install seven-source adapter and isolated Chromium
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund --no-package-lock
+          npm install --no-save --ignore-scripts --no-audit --no-fund --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Compare exact approved preview and V86 plus V85 candidate with no writes
+        run: node scripts/audit-idp-v86-v85-full-league.mjs

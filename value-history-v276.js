@@ -1615,6 +1615,10 @@ function renderMarketIntelligence(){
   const host=document.getElementById('vhMarketIntelligence');if(host)host.innerHTML=marketIntelligenceMarkup();
 }
 
+function modelEraNote(m){
+  if(!m?.model_change_at)return'';
+  return`<div class="notice" role="status">Valuation model changed on ${esc(dateTime(m.model_change_at))}. Historical snapshots remain available in player charts; Market Movers and historical change columns use comparable observations recorded under the current model. New 1D/7D trends become available as fresh snapshots accumulate.</div>`;
+}
 function renderMarketDashboard(){
   const box=document.getElementById('vhContent');if(!box||!marketCache)return;
   const m=marketCache,status=document.getElementById('vhStatus');
@@ -1622,6 +1626,7 @@ function renderMarketDashboard(){
   const vr=marketPeriods.valueRisers,vf=marketPeriods.valueFallers,rr=marketPeriods.rankRisers,rf=marketPeriods.rankFallers;
   const vpR=m.periods?.[vr]||{},vpF=m.periods?.[vf]||{},rpR=m.periods?.[rr]||{},rpF=m.periods?.[rf]||{};
   box.innerHTML=`
+  ${modelEraNote(m)}
   <div class="vh-market-jump">
     <button type="button" data-vh-market-jump="vhMarketMovers">Movers</button>
     <button type="button" data-vh-market-jump="vhPositionIndexes">Position Indexes</button>
@@ -1649,7 +1654,7 @@ function renderFullMarketHistory(){
   const box=document.getElementById('vhContent');if(!box||!marketCache)return;
   const m=marketCache,status=document.getElementById('vhStatus');
   if(status)status.textContent=m.latest?`Tracking since ${dateShort(m.tracking_since)} • Latest snapshot ${dateTime(m.latest)} • ${fmt(m.snapshot_count)} snapshots`:'Initializing first historical snapshot…';
-  box.innerHTML=`<details class="vh-card vh-market-table" open><summary><span>Full Market Value History</span><span class="vh-details-state"><span class="vh-state-open">Open</span><span class="vh-state-close">Close</span></span></summary><div class="vh-sub" style="margin-top:10px">Full Market History Table — sort the complete current market by value or historical movement. Select any player to open their Player Value History.</div><input id="vhMarketSearch" type="search" placeholder="Filter market table…" style="margin:0 0 10px"><div id="vhMarketTable"></div></details>`;
+  box.innerHTML=`${modelEraNote(m)}<details class="vh-card vh-market-table" open><summary><span>Full Market Value History</span><span class="vh-details-state"><span class="vh-state-open">Open</span><span class="vh-state-close">Close</span></span></summary><div class="vh-sub" style="margin-top:10px">Full Market History Table — sort the complete current market by value or historical movement. Select any player to open their Player Value History.</div><input id="vhMarketSearch" type="search" placeholder="Filter market table…" style="margin:0 0 10px"><div id="vhMarketTable"></div></details>`;
   document.getElementById('vhMarketSearch')?.addEventListener('input',renderMarketTable);
   renderMarketTable();
 }

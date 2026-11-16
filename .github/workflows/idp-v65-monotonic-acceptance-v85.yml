@@ -1,0 +1,25 @@
+name: IDP V85 monotonic development acceptance (draft)
+on:
+  pull_request:
+    paths:
+      - 'valuation-idp-v36.js'
+      - 'tests/idp-v65-monotonic-development-v85.test.mjs'
+      - '.github/workflows/idp-v65-monotonic-acceptance-v85.yml'
+permissions:
+  contents: read
+jobs:
+  monotonic-idp-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source syntax and V65-specific downstream monotonic regression
+        run: |
+          node --check valuation-idp-v36.js
+          node --test tests/idp-v65-monotonic-development-v85.test.mjs
+      - name: Preserve existing IDP career-context and calibration contracts
+        run: |
+          node --test tests/idp-dynasty-context-trajectory.test.mjs tests/idp-20-45-35-calibration.test.mjs

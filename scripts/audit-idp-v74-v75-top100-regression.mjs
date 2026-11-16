@@ -30,6 +30,7 @@ const evidenceV86=[
  "  const baseShare=Math.min(v75CurrentShare,.33529411764705885);",
  "  const prior=samples.filter(x=>!x.currentSeason&&Number(x.games)>=8)",
  "   .sort((x,y)=>Number(y.season)-Number(x.season))[0];",
+ "  if(prior&&Number(current.ppg)<=Number(prior.ppg))return v75CurrentShare;",
  "  if(!prior||currentGames<6||Number(current.ppg)<12)return baseShare;",
  "  const statsFor=year=>{const row=state.stats?.[year]?.[String(id)]||{};",
  "   return row.stats&&typeof row.stats==='object'?row.stats:row;};",

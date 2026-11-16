@@ -89,6 +89,18 @@ try{
   },null,{timeout:100000});
   const snapshot=await page.evaluate(()=>{
    const st=window.state,master=window.ensureMaster();let idpRank=0;
+   const allStats=st.stats||{},opportunityKeys=new Set(),opportunityExampleRows=[];
+   const scoreIds=new Set(master.filter(z=>window.groupPos(z.x)==='IDP').map(z=>String(z.x.id)));
+   for(const [year,byId] of Object.entries(allStats))for(const [id,row] of Object.entries(byId||{})){
+    if(!scoreIds.has(String(id)))continue;
+    const raw=row?.stats&&typeof row.stats==='object'?row.stats:row;
+    if(!raw||typeof raw!=='object')continue;
+    const keys=Object.keys(raw).filter(k=>/snap|snp|play_count|pct_play|defensive.*play|def.*pct|starts/i.test(k));
+    for(const k of keys)opportunityKeys.add(k);
+    if(keys.length&&['11667','5991','3973','8385','8289'].includes(String(id)))
+     opportunityExampleRows.push({year,id,fields:Object.fromEntries(keys.map(k=>[k,raw[k]]))});
+   }
+   const opportunityEvidence={keyNames:[...opportunityKeys].sort(),exampleRows:opportunityExampleRows};
    return{ranked:master.map((z,i)=>{
     const id=String(z.x.id),name=window.playerName(id),position=window.groupPos(z.x);
     if(position==='IDP')idpRank++;
@@ -103,12 +115,13 @@ try{
      evidenceSeasons:['Dallas Turner','Maxx Crosby','Myles Garrett','Will Anderson Jr.','George Karlaftis','Aidan Hutchinson','Jared Verse','David Bailey'].includes(name)?
       (z.production?.a?.seasons||[]).map(s=>({year:s.season,current:s.currentSeason,games:s.games,ppg:s.ppg,points:s.points,weight:s.assignedWeight})):null,
      seasons:Number(z.production?.a?.qualifyingSeasons)||0};
-   }),rostered:[...new Set((st.rosters||[]).flatMap(r=>r.players||[]).map(String))]};
+   }),rostered:[...new Set((st.rosters||[]).flatMap(r=>r.players||[]).map(String))],opportunityEvidence};
   });
   assert.equal(errors.length,0,'browser error: '+errors.slice(0,3));
   assert(snapshot.ranked.length>950,'incomplete ranking universe');
   captures.push({factor,...snapshot});
   console.log('IDP_V80_CAPTURE '+JSON.stringify({factor,ranked:snapshot.ranked.length,idps:snapshot.ranked.filter(x=>x.position==='IDP').length,blockedOtherWrites:blocked.length}));
+  if(factor==='V80-candidate')console.log('IDP_OPPORTUNITY_EVIDENCE_AVAILABILITY '+JSON.stringify(snapshot.opportunityEvidence));
   await context.close();
  }
  const base=captures[0],old=new Map(base.ranked.map(x=>[x.id,x]));

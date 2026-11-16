@@ -42,6 +42,32 @@ test('historical snapshots without model marker retain exact old comparable hist
  assert.equal(pointsFromSnapshots(xs,'11667').length,2);
 });
 
+test('legacy scheduled collection contract is NOT a model revision',()=>{
+ const raw=[
+  snap('2026-09-22T04:54:19Z',400,2000),
+  {...snap('2026-09-23T05:00:00Z',410,2030),source:'scheduled',
+    valuation_contract:'precision-idp-runtime-20260919'},
+  snap('2026-10-01T09:00:00Z',420,2050),
+  {...snap('2026-11-16T14:39:50Z',430,2020),source:'scheduled',
+    valuation_contract:'precision-idp-runtime-20260919'}
+ ];
+ const era=comparableMarketEra(raw);
+ assert.equal(era.model,null,'older snapshots have no verified valuation model');
+ assert.equal(era.changedAt,null,'do not announce a September model release');
+ assert.equal(era.snaps.length,4,'retain all unversioned historical market observations');
+ const m=marketFromSnapshots(raw);
+ assert.equal(m.model_change_at,null);
+ assert.equal(m.comparable_snapshot_count,4);
+ assert.equal(m.marketRows.find(x=>x.id==='11667').deltaAll,30);
+ const later=[...raw,{...snap('2026-11-17T00:00:00Z',900,2100,model),
+    source:'scheduled',valuation_contract:'precision-idp-runtime-20260919'}];
+ const tagged=comparableMarketEra(later);
+ assert.equal(tagged.model,model);
+ assert.equal(tagged.changedAt,later.at(-1).t,'first explicit model capture starts the new era');
+ assert.equal(tagged.snaps.length,1,'older market observations remain in archive but not market-mover baseline');
+ assert.equal(pointsFromSnapshots(later,'11667').length,5,'raw player history must be preserved');
+});
+
 test('first versioned snapshot begins a new market era, without deleting historical player points',()=>{
  const xs=[
   snap('2026-11-01T00:00:00Z',400,2000),
@@ -193,8 +219,8 @@ test('SVG player, rank, and team-net charts break lines across model changes wit
 });
 
 test('scheduled historical contract is distinct from client model and has no invented publisher freshness',()=>{
- assert.equal(valuationModelId({valuation_contract:'precision-idp-runtime-20260919'}),
- 'scheduled:precision-idp-runtime-20260919');
+ assert.equal(valuationModelId({valuation_contract:'precision-idp-runtime-20260919'}),null,
+  'scheduled collection provenance cannot establish a valuation-model version');
  assert.equal(valuationModelId({valuation_model:'  unknown / bad  '}),null);
  assert.match(server,/valuation_model:valuationModel,rows,picks,teams/);
  assert.match(server,/if\(isDeployPreview\)return json\(\{error:'deploy previews are read-only for canonical value history'\},403\)/);

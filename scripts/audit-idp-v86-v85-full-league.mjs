@@ -88,9 +88,10 @@ try{
       const assets=(st.allAssets||[]).filter(a=>a?.type==='player');
       const idpAssets=assets.filter(a=>window.groupPos(a)==='IDP');
       const offenseAssets=assets.filter(a=>window.groupPos(a)!=='IDP');
-      const mismatches=[],checked=assets.length;
+      const mismatches=[],checked=assets.length,assetValues=[];
       for(const a of assets){
         const canonical=Number(norm?.canonicalValue?.(a));
+        assetValues.push({id:String(a.id),group:window.groupPos(a),canonical,rank:Number(window.playerRankValue?.(a)?.rank)||null});
         const mapped=Number(v319?.playerValue?.(a));
         const globalBase=Number(window.baseValue?.(a));
         const engine=window.tradeEngine96||window.tradeEngine98||window.tradeEngine99;
@@ -113,7 +114,7 @@ try{
       const rankIds=new Set(m.filter(z=>z.x?.type==='player').map(z=>String(z.x.id)));
       return {checked,idps:idpAssets.length,offense:offenseAssets.length,
         missingFromMaster:assets.filter(a=>!rankIds.has(String(a.id))).map(a=>String(a.id)).slice(0,15),
-        mismatchCount:mismatches.length,mismatches:mismatches.slice(0,20),
+        mismatchCount:mismatches.length,mismatches:mismatches.slice(0,20),assetValues,
         packageChecks,modeledReady:v319?.ready===true};
     })())
    };
@@ -134,6 +135,31 @@ try{
   await context.close();
  }
  const [before,after]=captures,old=new Map(before.ranked.map(x=>[x.id,x]));
+ const priorValues=new Map(before.consumer.assetValues.map(x=>[x.id,x]));
+ const displayChanges=after.consumer.assetValues.map(x=>{
+  const prev=priorValues.get(x.id);
+  assert(prev&&prev.group===x.group,'consumer player identity/position changed '+x.id);
+  return {...x,priorCanonical:prev.canonical,priorOverallRank:prev.rank,
+   canonicalDelta:x.canonical-prev.canonical,rankDelta:x.rank-prev.rank};
+ });
+ const groupImpact=group=>{
+  const r=displayChanges.filter(x=>x.group===group),changed=r.filter(x=>x.canonicalDelta!==0);
+  const abs=changed.map(x=>Math.abs(x.canonicalDelta)).sort((a,b)=>a-b);
+  return{n:r.length,changed:changed.length,shareChanged:r.length?Number((changed.length/r.length).toFixed(4)):0,
+   meanAbsoluteAll:r.length?Number((r.reduce((s,x)=>s+Math.abs(x.canonicalDelta),0)/r.length).toFixed(3)):0,
+   maxAbsolute:abs.at(-1)||0,
+   p95AbsoluteChanged:abs.length?abs[Math.floor((abs.length-1)*.95)]:0,
+   biggest:changed.slice().sort((a,b)=>Math.abs(b.canonicalDelta)-Math.abs(a.canonicalDelta)).slice(0,15)};
+ };
+ const spillover={offense:groupImpact('WR'),idp:groupImpact('IDP'),
+  allOffense:((r)=>{
+   const changed=r.filter(x=>x.canonicalDelta!==0);
+   const abs=r.map(x=>Math.abs(x.canonicalDelta)).sort((a,b)=>a-b);
+   return{n:r.length,changed:changed.length,maxAbsolute:abs.at(-1)||0,
+    meanAbsolute:Number((abs.reduce((a,x)=>a+x,0)/r.length).toFixed(3)),
+    topChanged:changed.slice().sort((a,b)=>Math.abs(b.canonicalDelta)-Math.abs(a.canonicalDelta)).slice(0,20)}
+  })(displayChanges.filter(x=>x.group!=='IDP'))};
+ console.log('IDP_V86_INTEGRATED_DISPLAY_CURRENCY_SPILLOVER '+JSON.stringify(spillover));
  assert.deepEqual(after.ranked.map(x=>x.id).sort(),before.ranked.map(x=>x.id).sort(),
   'ranking universe remains identical');
  assert.deepEqual(after.rosterIds.slice().sort(),before.rosterIds.slice().sort(),

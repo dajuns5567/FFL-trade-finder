@@ -721,7 +721,7 @@ function showChartHover(hit,index,tip,wrap,wrapRect,e){
     data.kind==='rank'?
     `<b>${esc(p.date)}</b><div>${esc(data.label)} <strong>#${esc(p.rank)}</strong></div>`:
     `<b>${esc(p.date)}</b><div>Value <strong>${esc(p.value)}</strong></div><div>Overall #${esc(p.overall)} • ${esc(p.pos)} #${esc(p.posRank)}</div>`;
-  if(p.valuation_model&&data.kind==='value')tip.innerHTML+=`<div class="muted">Valuation model: ${esc(p.valuation_model)}</div>`;
+  if(p.valuation_model)tip.innerHTML+=`<div class="muted">Valuation model: ${esc(p.valuation_model)}</div>`;
   const svg=hit.ownerSVGElement,svgRect=svg.getBoundingClientRect(),
     px=(svgRect.left-wrapRect.left)+(p.x/data.W)*svgRect.width,
     py=(svgRect.top-wrapRect.top)+(p.y/Number(svg.viewBox.baseVal.height||1))*svgRect.height;

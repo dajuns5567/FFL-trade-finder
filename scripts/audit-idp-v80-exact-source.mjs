@@ -56,14 +56,46 @@ for(const [before,after] of [
  assert(breakoutSource.includes(before),'V82 expected exact original source: '+before);
  breakoutSource=breakoutSource.replace(before,after);
 }
-const factors=['V75-existing','V80-candidate','V81-history-guard-counterfactual','V82-evidenced-breakout-counterfactual'];
+// V83: verified defensive snaps establish actual opportunity expansion.
+// Only enhance an already-measured current PPG breakout; never project
+// missing stats, infer snaps from games, or make any player-specific exception.
+const opportunityFunction83=[
+ 'function opportunityCorrection83(id,a,m){',
+ ' const seasons=Array.isArray(a?.seasons)?a.seasons:[];',
+ ' const current=seasons.find(s=>s.currentSeason&&Number(s.games)>=8);',
+ ' const prior=seasons.filter(s=>!s.currentSeason&&Number(s.games)>=8).sort((a,b)=>Number(b.season)-Number(a.season))[0];',
+ ' if(!current||!prior||Number(current.ppg)<12||Number(current.ppg)-Number(prior.ppg)<3||Number(current.ppg)<1.20*Number(prior.ppg))return null;',
+ ' const snapRow=y=>{const x=state.stats?.[y]?.[String(id)]||{};return x.stats&&typeof x.stats==="object"?x.stats:x;};',
+ ' const curr=snapRow(current.season),prev=snapRow(prior.season);',
+ ' const cs=Number(curr.def_snp),ps=Number(prev.def_snp),team=Number(curr.tm_def_snp);',
+ ' if(!Number.isFinite(cs)||cs<300||!Number.isFinite(ps)||ps<200||!Number.isFinite(team)||team<cs)return null;',
+ ' const share=cs/team;',
+ ' if(share<.65)return null;',
+ ' const currentRate=cs/Number(current.games),previousRate=ps/Number(prior.games),ratio=currentRate/previousRate;',
+ ' if(!Number.isFinite(ratio)||ratio<1.20)return null;',
+ ' const reliability=clamp25(0,(ratio-1)/.55,1)*clamp25(0,(Number(current.games)-4)/4,1);',
+ ' const uplift=clamp25(0,(Number(current.ppg)-Number(m.ppg))*.60*reliability,1.6);',
+ ' if(!(uplift>0))return null;',
+ ' return{adjustedPpg:Number(m.ppg)+uplift,uplift,ratio,share,currentRate,previousRate,',
+ '  currentGames:Number(current.games),priorGames:Number(prior.games),currentPpg:Number(current.ppg),priorPpg:Number(prior.ppg),verifiedSnaps:[ps,cs]};',
+ '}'
+].join('\n');
+let opportunitySource=newSource.replace('function scoring25(id){',opportunityFunction83+'\nfunction scoring25(id){');
+assert.notEqual(opportunitySource,newSource,'V83 correction function missing');
+const v83Original='const a=baseAudit25(id),m=metrics25(id,a),d=distributions25(),role=role25(id);let out;';
+const v83Updated='const a=baseAudit25(id),m={...metrics25(id,a)},d=distributions25(),role=role25(id);const opportunityV83=opportunityCorrection83(id,a,m);if(opportunityV83)m.ppg=opportunityV83.adjustedPpg;let out;';
+assert(opportunitySource.includes(v83Original),'V83 scoring location missing');
+opportunitySource=opportunitySource.replace(v83Original,v83Updated);
+assert(opportunitySource.includes(' scoreCache25.set(id,out);return out;'),'V83 audit location missing');
+opportunitySource=opportunitySource.replace(' scoreCache25.set(id,out);return out;',' out.opportunityV83=opportunityV83;\n scoreCache25.set(id,out);return out;');
+const factors=['V75-existing','V80-candidate','V81-history-guard-counterfactual','V82-evidenced-breakout-counterfactual','V83-verified-snap-opportunity'];
 const captures=[];
 try{
  for(const factor of factors){
   const context=await browser.newContext({serviceWorkers:'block'});
   const errors=[],blocked=[];
   const origin=new URL(preview).origin;
-  const substitute=factor==='V75-existing'?oldSource:factor==='V80-candidate'?newSource:factor==='V81-history-guard-counterfactual'?relaxedHistorySource:breakoutSource;
+  const substitute=factor==='V75-existing'?oldSource:factor==='V80-candidate'?newSource:factor==='V81-history-guard-counterfactual'?relaxedHistorySource:factor==='V82-evidenced-breakout-counterfactual'?breakoutSource:opportunitySource;
   await context.route('**/*',route=>{
    const request=route.request(),u=new URL(request.url());
    if(request.method()==='POST'&&u.origin===origin&&
@@ -111,7 +143,7 @@ try{
      actualSources,sourceNames:(source.idpSources||[]).filter(s=>!String(s).endsWith(' (not listed)')),age:Number(st.players?.[id]?.age)||null,
      scoring:Number(z.production?.value)||null,context:Number(z.context)||null,weightedPpg:z.production?.m?.ppg??null,legacyPpg:z.production?.m?.legacyPpg??null,uncappedPpg:z.production?.m?.uncappedPpg??null,currentGames:z.production?.m?.currentSeasonGames??null,
      scoreConfidence:z.production?.m?.confidence??null,scoringPercentile:z.production?.ppgPct??null,
-     scoreRelative:z.production?.relative??null,
+     scoreRelative:z.production?.relative??null,opportunityV83:z.production?.opportunityV83??null,
      evidenceSeasons:['Dallas Turner','Maxx Crosby','Myles Garrett','Will Anderson Jr.','George Karlaftis','Aidan Hutchinson','Jared Verse','David Bailey'].includes(name)?
       (z.production?.a?.seasons||[]).map(s=>({year:s.season,current:s.currentSeason,games:s.games,ppg:s.ppg,points:s.points,weight:s.assignedWeight})):null,
      seasons:Number(z.production?.a?.qualifyingSeasons)||0};
@@ -234,6 +266,29 @@ try{
  console.log('IDP_V82_BREAKOUT_CONTEXT_SENSITIVITY '+JSON.stringify(breakoutAudit));
  console.log('IDP_V82_DECISION '+JSON.stringify({status:'research-only-not-accepted',noAutomaticPromotion:true,
   requires:'validate two-source consensus alignment, short-sample stability, and individual breakout evidence before release'}));
+ const snapRows=captures[4].ranked.filter(x=>x.position==='IDP').map(x=>{
+  const prior=v80.get(x.id);
+  return{name:x.name,id:x.id,age:x.age,market:x.marketIdpRank,sources:x.actualSources,
+   beforeRank:prior.idpRank,afterRank:x.idpRank,beforeOverall:prior.overall,afterOverall:x.overall,
+   beforeValue:prior.modeled,afterValue:x.modeled,delta:x.modeled-prior.modeled,
+   beforePpg:prior.weightedPpg,afterPpg:x.weightedPpg,opportunity:x.opportunityV83};
+ });
+ const snapsMatched=snapRows.filter(x=>x.sources>=2&&x.market>0);
+ const snapErr=rows=>({n:rows.length,
+  oldMAE:rows.length?Number((rows.reduce((s,x)=>s+Math.abs(x.beforeRank-x.market),0)/rows.length).toFixed(3)):null,
+  newMAE:rows.length?Number((rows.reduce((s,x)=>s+Math.abs(x.afterRank-x.market),0)/rows.length).toFixed(3)):null});
+ const snapAudit={population:snapRows.length,qualified:snapRows.filter(x=>x.opportunity).length,
+  changed:snapRows.filter(x=>x.delta!==0).length,
+  matched:snapErr(snapsMatched),younger25:snapErr(snapsMatched.filter(x=>x.age<=25)),
+  veteran29plus:snapErr(snapsMatched.filter(x=>x.age>=29)),
+  qualifiers:snapRows.filter(x=>x.opportunity).sort((a,b)=>b.delta-a.delta).slice(0,80),
+  featured:snapRows.filter(x=>['Dallas Turner','Maxx Crosby','George Karlaftis','Blake Cashman','Myles Garrett','Aidan Hutchinson','David Bailey','Jared Verse'].includes(x.name))};
+ assert.equal(captures[4].ranked.length,captures[1].ranked.length,'V83 player universe moved');
+ assert(snapRows.every(x=>Number.isFinite(x.afterValue)),'V83 invalid currency');
+ assert(snapRows.filter(x=>x.opportunity).every(x=>x.opportunity.currentGames>=8&&x.opportunity.verifiedSnaps[0]>=200),'V83 inadequate snap evidence');
+ console.log('IDP_V83_VERIFIED_SNAPS_COUNTERFACTUAL '+JSON.stringify(snapAudit));
+ console.log('IDP_V83_RELEASE_DECISION '+JSON.stringify({status:'research-only',automaticPromotion:false,
+  reason:'source-matched cohort and audited snap evidence required before any actual valuation-model changes'}));
  // Paired source-agreement uncertainty: do not interpret a one-rank mean
  // improvement as strong evidence without accounting for cohort volatility.
  const before=new Map(captures[0].ranked.map(x=>[x.id,x]));

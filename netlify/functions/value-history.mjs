@@ -201,11 +201,33 @@ async function readSnapshotsBounded(s,items,batchSize=25){
   snaps.sort((a,b)=>String(a.t).localeCompare(String(b.t)));
   return snaps;
 }
+// Model revisions are tracked as observation metadata, never as a price
+// correction. Unattributed legacy history stays intact; historical snapshots
+// are never deleted, rewritten, or used as inferred valuation benchmarks.
+function valuationModelId(snapshot){
+ const raw=String(snapshot?.valuation_model||'').trim();
+ if(/^[a-z0-9][a-z0-9._:-]{2,95}$/i.test(raw))return raw;
+ const scheduled=String(snapshot?.valuation_contract||'').trim();
+ return /^[a-z0-9][a-z0-9._:-]{2,95}$/i.test(scheduled)?'scheduled:'+scheduled:null;
+}
+function comparableMarketEra(snaps){
+ const ordered=(snaps||[]).filter(x=>x?.t&&Array.isArray(x?.rows))
+  .slice().sort((a,b)=>String(a.t).localeCompare(String(b.t)));
+ if(!ordered.length)return{snaps:[],model:null,changedAt:null,priorModel:null};
+ const model=valuationModelId(ordered.at(-1));
+ // Before the first explicit model tag, retain the exact historical behavior.
+ if(!model)return{snaps:ordered,model:null,changedAt:null,priorModel:null};
+ let first=ordered.length-1;
+ while(first>0&&valuationModelId(ordered[first-1])===model)first--;
+ return{snaps:ordered.slice(first),model,
+  changedAt:first>0?ordered[first].t:null,
+  priorModel:first>0?valuationModelId(ordered[first-1]):null};
+}
 function pointsFromSnapshots(snaps,playerId){
   const points=[];
   for(const snap of snaps){
     const row=snap?.rows?.find?.(r=>String(r.id)===playerId);
-    if(row)points.push({t:snap.t,value:row.value,overall:row.overall,pos:row.pos,posRank:row.posRank});
+    if(row)points.push({t:snap.t,value:row.value,overall:row.overall,pos:row.pos,posRank:row.posRank,valuation_model:valuationModelId(snap)});
   }
   points.sort((a,b)=>String(a.t).localeCompare(String(b.t)));
   return points;
@@ -524,8 +546,9 @@ async function getAllTeamWeekMovement(s,asOf=null){
   if(s){try{indexed=await allItems(s);localSnaps=indexed.items.length?await readSnapshotsBounded(s,indexed.items,25):[]}catch(e){indexed={items:[],source:'unavailable',error:String(e?.message||e)}}}
   const snaps=snapshotsThroughEdition(mergeSnapshots(archiveSnaps,localSnaps).filter(x=>x?.t&&Array.isArray(x?.teams)&&x.teams.length),asOf);
   if(!snaps.length)return{teams:[],player_deltas:[],source:indexed.source,snapshotCount:0,trackingSince:null,latest:null};
-  const latest=snaps[snaps.length-1],latestMs=new Date(latest.t).getTime(),targetMs=latestMs-7*86400000;
-  let base=snaps[0];for(const snap of snaps){const ms=new Date(snap.t).getTime();if(Number.isFinite(ms)&&ms<=targetMs)base=snap;else if(Number.isFinite(ms)&&ms>targetMs)break}
+  const modelEra=comparableMarketEra(snaps),active=modelEra.snaps;
+  const latest=active[active.length-1],latestMs=new Date(latest.t).getTime(),targetMs=latestMs-7*86400000;
+  let base=active[0];for(const snap of active){const ms=new Date(snap.t).getTime();if(Number.isFinite(ms)&&ms<=targetMs)base=snap;else if(Number.isFinite(ms)&&ms>targetMs)break}
   const exactSeven=new Date(base.t).getTime()<=targetMs,baseMap=new Map((base.teams||[]).map(x=>[String(x?.id||''),x])),out=[];
   for(const row of latest.teams||[]){
     const id=String(row?.id||''),value=Number(row?.value),prior=baseMap.get(id),baseValue=Number(prior?.value);
@@ -558,7 +581,7 @@ async function getAllTeamWeekMovement(s,asOf=null){
   playerDeltas.sort((a,b)=>Math.abs(Number(b.delta))-Math.abs(Number(a.delta))||Number(b.delta)-Number(a.delta)||String(a.player_id).localeCompare(String(b.player_id)));
 
   const source=archiveSnaps.length?(localSnaps.length?'github-archive+netlify-live':'github-archive'):'netlify-live';
-  return{teams:out,player_deltas:playerDeltas,source,snapshotCount:snaps.length,trackingSince:snaps[0].t,latest:latest.t,baseline:base.t,period:exactSeven?'7D':'AVAILABLE'};
+  return{teams:out,player_deltas:playerDeltas,source,snapshotCount:snaps.length,trackingSince:active[0].t,latest:latest.t,valuation_model:modelEra.model,model_change_at:modelEra.changedAt,baseline:base.t,period:exactSeven?'7D':'AVAILABLE'};
 }
 function rowMap(snap){return new Map((snap?.rows||[]).map(r=>[String(r.id),r]))}
 function baselineFor(snaps,latestMs,days){
@@ -607,17 +630,18 @@ function marketPeriod(latest,base,firstSeen=null){
 function marketFromSnapshots(snaps){
   const ordered=(snaps||[]).filter(s=>s?.t&&Array.isArray(s?.rows)).slice().sort((a,b)=>String(a.t).localeCompare(String(b.t)));
   if(!ordered.length)return{tracking_since:null,latest:null,snapshot_count:0,periods:{'1D':{},'7D':{},'30D':{},'90D':{},'1Y':{},'ALL':{}},marketRows:[],has1:false,has7:false,has30:false,has90:false,has365:false};
-  const first=ordered[0],latest=ordered[ordered.length-1],latestMs=new Date(latest.t).getTime(),firstMs=new Date(first.t).getTime();
+  const modelEra=comparableMarketEra(ordered),active=modelEra.snaps;
+  const first=active[0],latest=active[active.length-1],latestMs=new Date(latest.t).getTime(),firstMs=new Date(first.t).getTime();
   const bases={
-    '1D':baselineFor(ordered,latestMs,1)||first,
-    '7D':baselineFor(ordered,latestMs,7)||first,
-    '30D':baselineFor(ordered,latestMs,30)||first,
-    '90D':baselineFor(ordered,latestMs,90)||first,
-    '1Y':baselineFor(ordered,latestMs,365)||first,
+    '1D':baselineFor(active,latestMs,1)||first,
+    '7D':baselineFor(active,latestMs,7)||first,
+    '30D':baselineFor(active,latestMs,30)||first,
+    '90D':baselineFor(active,latestMs,90)||first,
+    '1Y':baselineFor(active,latestMs,365)||first,
     'ALL':first
   };
   const firstSeen=new Map(),firstInYear=new Map(),yearStartMs=Date.parse(bases['1Y']?.t);
-  for(const snap of ordered)for(const row of snap.rows||[]){
+  for(const snap of active)for(const row of snap.rows||[]){
     const id=String(row?.id||'');
     if(!id)continue;
     if(!firstSeen.has(id))firstSeen.set(id,{t:snap.t,row});
@@ -637,7 +661,8 @@ function marketFromSnapshots(snaps){
     return{id,value:r.value,overall:r.overall,pos:r.pos,posRank:r.posRank,delta1:d1?.delta??null,delta7:d7?.delta??null,delta30:d30?.delta??null,delta365:d365?.delta??null,deltaAll:dAll?.delta??null,delta365From:d365?.baseline_t??null,deltaAllFrom:dAll?.baseline_t??null,delta365Available:(d365?.available_history??false)||(!((latestMs-firstMs)>=365*86400000)&&d365!=null),deltaAllAvailable:dAll?.available_history??false,posRankDelta1:d1?.posRankDelta??null,posRankDelta7:d7?.posRankDelta??null,posRankDelta30:d30?.posRankDelta??null,posRankDelta365:d365?.posRankDelta??null,posRankDeltaAll:dAll?.posRankDelta??null,overallDelta7:d7?.overallDelta??null,overallDelta30:d30?.overallDelta??null};
   }).sort((a,b)=>b.value-a.value);
   return{
-    tracking_since:first.t,latest:latest.t,snapshot_count:ordered.length,periods,marketRows,
+    tracking_since:first.t,latest:latest.t,snapshot_count:ordered.length,comparable_snapshot_count:active.length,
+    valuation_model:modelEra.model,model_change_at:modelEra.changedAt,prior_valuation_model:modelEra.priorModel,periods,marketRows,
     has1:latestMs-firstMs>=1*86400000,
     has7:latestMs-firstMs>=7*86400000,
     has30:latestMs-firstMs>=30*86400000,
@@ -824,15 +849,16 @@ function marketInsightRange(snaps,label,historySnaps=snaps){
 }
 function marketInsightsFromSnapshots(snaps){
   const ordered=(snaps||[]).filter(s=>s?.t&&Array.isArray(s?.rows)).slice().sort((a,b)=>String(a.t).localeCompare(String(b.t)));
-  if(ordered.length<2)return{available:false,snapshot_count:ordered.length,through:ordered.at(-1)?.t||null,ranges:{}};
+  const modelEra=comparableMarketEra(ordered),active=modelEra.snaps;
+  if(active.length<2)return{available:false,snapshot_count:ordered.length,comparable_snapshot_count:active.length,valuation_model:modelEra.model,model_change_at:modelEra.changedAt,through:active.at(-1)?.t||null,ranges:{}};
   const defs={1:1,7:7,30:30,90:90,365:365},ranges={};
   for(const [daysKey,days] of Object.entries(defs)){
     const label=daysKey==='365'?'1Y':daysKey+'D';
-    ranges[label]=marketInsightRange(marketInsightWindow(ordered,label,days),label,ordered);
+    ranges[label]=marketInsightRange(marketInsightWindow(active,label,days),label,active);
   }
-  ranges.ALL=marketInsightRange(ordered,'ALL');
+  ranges.ALL=marketInsightRange(active,'ALL');
   const all=ranges.ALL;
-  return{available:true,snapshot_count:ordered.length,tracking_since:ordered[0].t,through:ordered.at(-1).t,ranges,position_indexes:all.position_indexes,new_highs:all.new_highs,new_lows:all.new_lows,volatility:all.volatility};
+  return{available:true,snapshot_count:ordered.length,comparable_snapshot_count:active.length,valuation_model:modelEra.model,model_change_at:modelEra.changedAt,tracking_since:active[0].t,through:active.at(-1).t,ranges,position_indexes:all.position_indexes,new_highs:all.new_highs,new_lows:all.new_lows,volatility:all.volatility};
 }
 async function getMarketInsights(s){
   const now=Date.now();if(marketInsightsCache&&now-marketInsightsCacheAt<300000)return marketInsightsCache;
@@ -1273,11 +1299,15 @@ export default async (req)=>{
     rows.sort((a,b)=>a.id.localeCompare(b.id));picks.sort((a,b)=>a.id.localeCompare(b.id));
     const fp=fingerprint(rows,picks,teams);
     const t=new Date().toISOString(),key=`snapshots/${t.replace(/[:.]/g,'-')}.json`;
-    const snapshot={version:5,league:LEAGUE,t,fingerprint:fp,source,valuation_contract:source==='scheduled'?SCHEDULED_VALUATION_CONTRACT:null,rows,picks,teams};
+    const suppliedModel=String(body?.valuation_model||'').trim();
+    const valuationModel=/^idp-v77-v85-v86-dynasty$/.test(suppliedModel)?suppliedModel:null;
+    const snapshot={version:5,league:LEAGUE,t,fingerprint:fp,source,
+      valuation_contract:source==='scheduled'?SCHEDULED_VALUATION_CONTRACT:null,
+      valuation_model:source==='scheduled'?null:valuationModel,rows,picks,teams};
     await retry(()=>s.setJSON(key,snapshot),120);
     await appendIndex(s,key,t);
     await retry(()=>s.setJSON(LATEST_KEY,{version:3,t,fingerprint:fp,key,count:rows.length,source}),120);
-    return json({ok:true,stored:true,t,source,count:rows.length,pick_count:picks.length,team_count:teams.length});
+    return json({ok:true,stored:true,t,source,valuation_model:valuationModelId(snapshot),count:rows.length,pick_count:picks.length,team_count:teams.length});
   }catch(e){
     console.error('value-history',e);
     return json({error:'history unavailable'},503);

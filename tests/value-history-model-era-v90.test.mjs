@@ -91,6 +91,37 @@ test('another model change creates another safe baseline rather than cross-versi
  assert.equal(marketFromSnapshots(xs).marketRows[0].deltaAll,null);
 });
 
+test('unattributed snapshot after tagged model cannot revive cross-version market movements',()=>{
+ const xs=[
+  snap('2026-11-01T00:00:00Z',400,2000),
+  snap('2026-11-03T00:00:00Z',900,2100,model),
+  snap('2026-11-04T00:00:00Z',890,2130),
+  snap('2026-11-05T00:00:00Z',895,2140)
+ ];
+ const era=comparableMarketEra(xs);
+ assert.equal(era.model,null,'unknown must stay unknown');
+ assert.equal(era.changedAt,xs[2].t,'model-unknown boundary identified');
+ assert.equal(era.priorModel,model);
+ assert.equal(era.snaps.length,2,'do not compare with preceding known model');
+ const data=marketFromSnapshots(xs);
+ assert.equal(data.comparable_snapshot_count,2);
+ assert.equal(data.marketRows.find(x=>x.id==='11667').deltaAll,5);
+ assert.equal(data.marketRows.find(x=>x.id==='7532').deltaAll,10);
+ assert.deepEqual(Array.from(pointsFromSnapshots(xs,'11667'),x=>x.value),[400,900,890,895],
+   'all historical points remain intact');
+});
+
+test('single unattributed observation after a known model has no manufactured market delta',()=>{
+ const xs=[
+  snap('2026-11-02T00:00:00Z',400,2000,model),
+  snap('2026-11-03T00:00:00Z',900,2200)
+ ];
+ const data=marketFromSnapshots(xs);
+ assert.equal(data.model_change_at,xs[1].t);
+ assert.equal(data.comparable_snapshot_count,1);
+ assert.equal(data.marketRows.find(x=>x.id==='11667').deltaAll,null);
+});
+ 
 test('market intelligence comparisons stay inside the latest annotated valuation era',()=>{
  const fn=section('function marketInsightsFromSnapshots(snaps){','async function getMarketInsights(s){');
  const captured=[];
@@ -137,6 +168,8 @@ test('client submits contract and labels instead of pretending model-version jum
  assert.match(client,/valuation_model:HISTORY_VALUATION_MODEL/);
  assert.match(client,/Valuation model changed — movement not comparable/);
  assert.match(client,/modelBoundaryNote/);
+ assert.match(client,/latest.valuation_model\|\|prev.valuation_model/);
+ assert.match(client,/a.valuation_model\|\|b.valuation_model/);
  assert.match(client,/history includes a valuation-model change/i);
  assert.match(client,/modelBoundary\?'Model change':signed\(r.dv\)/);
  assert.match(client,/isValueHistoryDeployPreview\(\)\)return false/);

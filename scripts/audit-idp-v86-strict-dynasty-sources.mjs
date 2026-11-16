@@ -69,6 +69,47 @@ const publisherAudit=refresh.results.filter(r=>r.id==='combined-dynasty'||r.id?.
   })};
 });
 console.log('IDP_V86_VERIFIED_PUBLISHER_RANKS '+JSON.stringify(publisherAudit));
+
+const idpShowRaw=refresh.results.find(x=>x.id==='combined-dynasty');
+const draftRaw=refresh.results.find(x=>x.id==='draftsharks-idp');
+assert(idpShowRaw?.valid&&draftRaw?.valid,'publisher pair not valid');
+const idpShowOnly=(idpShowRaw.rankings||[]).filter(x=>x.position==='IDP').sort((a,b)=>Number(a.rank)-Number(b.rank));
+const draftOnly=(draftRaw.rankings||[]).sort((a,b)=>Number(a.rank)-Number(b.rank));
+const rankEntries=rows=>{
+ const map=new Map();
+ rows.forEach((r,i)=>{
+  const key=normName(r.player);if(!key)return;
+  const a=map.get(key)||[];a.push({position:i+1,originalRank:r.rank,player:r.player,sourcePosition:r.sourcePosition||r.position||null,team:r.team||null});
+  map.set(key,a);
+ });return map;
+};
+const first=rankEntries(idpShowOnly),second=rankEntries(draftOnly);
+const joined=[];
+for(const [name,entries] of first){
+ const matched=second.get(name);
+ if(entries.length!==1||matched?.length!==1)continue;
+ const a=entries[0],b=matched[0];
+ joined.push({name:a.player,idpShowIdpRank:a.position,idpShowCombinedRank:a.originalRank,
+  draftSharksIdpRank:b.position,draftSharksOriginalRank:b.originalRank,delta:b.position-a.position});
+}
+const abs=xs=>xs.reduce((a,x)=>a+Math.abs(x.delta),0)/Math.max(1,xs.length);
+const conflicts=joined.filter(x=>Math.abs(x.delta)>=35);
+const nearTop=joined.filter(x=>x.idpShowIdpRank<=25);
+const agreement=joined.filter(x=>Math.abs(x.delta)<=10);
+console.log('IDP_V89_TWO_PUBLISHER_RANK_DISAGREEMENT '+JSON.stringify({
+ idpShowIdpEntries:idpShowOnly.length,idpShowCombinedEntries:(idpShowRaw.rankings||[]).length,
+ draftSharksIdpEntries:draftOnly.length,
+ sourceNote:'The IDP Show is filtered from a top-250 combined offense+defense chart; only visible IDPs receive positional ranks; DraftSharks lists 250 IDPs',
+ unambiguouslyMatched:joined.length,
+ absoluteMeanRankGap:+abs(joined).toFixed(2),
+ nearTop:{n:nearTop.length,meanAbsoluteGap:+abs(nearTop).toFixed(2)},
+ disagreements35Plus:conflicts.length,
+ agreementWithin10:agreement.length,
+ largestConflicts:joined.slice().sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta)).slice(0,25),
+ caseDallasTurner:joined.find(x=>normName(x.name)===normName('Dallas Turner'))||null,
+ action:'audit only; do not assume which dynasty publisher is more current or correct'
+}));
+
 console.log('IDP_V88_SOURCE_PROVENANCE '+JSON.stringify(refresh.results.filter(x=>x.id==='combined-dynasty'||String(x.id).includes('idp')).map(x=>({
  id:x.id,source:x.source,valid:x.valid,format:x.format,dynastyVerified:x.dynastyVerified??null,
  sourceUrl:x.dynastySourceUrl||x.urls?.[0]||null,extractionTime:x.timestamp||null,

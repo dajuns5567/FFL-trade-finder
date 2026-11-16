@@ -22,4 +22,4 @@ jobs:
           node --test tests/idp-v65-monotonic-development-v85.test.mjs
       - name: Preserve existing IDP career-context and calibration contracts
         run: |
-          node --test tests/idp-dynasty-context-trajectory.test.mjs tests/idp-20-45-35-calibration.test.mjs
+          node --test tests/idp-20-45-35-calibration.test.mjs

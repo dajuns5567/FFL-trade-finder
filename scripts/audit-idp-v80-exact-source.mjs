@@ -76,6 +76,10 @@ try{
      modeled:Number(z.value),consensus:Number(z.consensus)||null,marketIdpRank:Number(source.idpRank)||null,
      actualSources,sourceNames:(source.idpSources||[]).filter(s=>!String(s).endsWith(' (not listed)')),age:Number(st.players?.[id]?.age)||null,
      scoring:Number(z.production?.value)||null,context:Number(z.context)||null,weightedPpg:z.production?.m?.ppg??null,legacyPpg:z.production?.m?.legacyPpg??null,uncappedPpg:z.production?.m?.uncappedPpg??null,currentGames:z.production?.m?.currentSeasonGames??null,
+     scoreConfidence:z.production?.m?.confidence??null,scoringPercentile:z.production?.ppgPct??null,
+     scoreRelative:z.production?.relative??null,
+     evidenceSeasons:['Dallas Turner','Maxx Crosby','Myles Garrett','Will Anderson Jr.','George Karlaftis','Aidan Hutchinson','Jared Verse','David Bailey'].includes(name)?
+      (z.production?.a?.seasons||[]).map(s=>({year:s.season,current:s.currentSeason,games:s.games,ppg:s.ppg,points:s.points,weight:s.assignedWeight})):null,
      seasons:Number(z.production?.a?.qualifyingSeasons)||0};
    }),rostered:[...new Set((st.rosters||[]).flatMap(r=>r.players||[]).map(String))]};
   });
@@ -130,7 +134,7 @@ try{
      'Aidan Hutchinson','Carson Schwesinger','Jack Campbell','David Bailey']
     .map(n=>rows.find(x=>x.name===n)).filter(Boolean)
     .map(x=>({name:x.name,overall:x.overall,idp:x.idpRank,prior:x.baseline.idpRank,
-      model:x.modeled,market:x.marketIdpRank,age:x.age,verifiedSources:x.actualSources,verifiedSourceNames:x.sourceNames,scoring:x.scoring,context:x.context,weightedPpg:x.weightedPpg,legacyPpg:x.legacyPpg,uncappedPpg:x.uncappedPpg,currentGames:x.currentGames,qualifiedSeasons:x.seasons}))
+      model:x.modeled,market:x.marketIdpRank,age:x.age,verifiedSources:x.actualSources,verifiedSourceNames:x.sourceNames,scoring:x.scoring,context:x.context,weightedPpg:x.weightedPpg,legacyPpg:x.legacyPpg,uncappedPpg:x.uncappedPpg,currentGames:x.currentGames,qualifiedSeasons:x.seasons,scoreConfidence:x.scoreConfidence,scoringPercentile:x.scoringPercentile,scoreRelative:x.scoreRelative,evidenceSeasons:x.evidenceSeasons}))
   });
  }
  // Exact-source 1.5 -> mature 3.0 PPG guard sensitivity, against V80.
@@ -139,7 +143,7 @@ try{
  const v81=captures[2].ranked.filter(x=>x.position==='IDP');
  const changes=v81.map(x=>{const old=v80.get(x.id);return{
   name:x.name,id:x.id,age:x.age,market:x.marketIdpRank,sources:x.actualSources,
-  currentGames:x.currentGames,legacyPpg:x.legacyPpg,uncappedPpg:x.uncappedPpg,
+  currentGames:x.currentGames,legacyPpg:x.legacyPpg,uncappedPpg:x.uncappedPpg,scoreConfidence:x.scoreConfidence,evidenceSeasons:x.evidenceSeasons,
   oldWeightedPpg:old.weightedPpg,newWeightedPpg:x.weightedPpg,
   ppgDelta:Number(((x.weightedPpg??0)-(old.weightedPpg??0)).toFixed(3)),
   priorOverall:old.overall,newOverall:x.overall,priorIdp:old.idpRank,newIdp:x.idpRank,

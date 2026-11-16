@@ -27,7 +27,7 @@ test('a two-game season receives less weight than eight games despite identical 
  assert.equal(calc(8).v75CurrentSeasonWeight,.55);
  assert(Math.abs(calc(2).ppg-(calc(2).legacyPpg-1.5))<1e-9,'a two-game season cannot erase more than 1.5 PPG of verified history');
  assert(Math.abs(calc(8).uncappedPpg-(.33529411764705885*20+(1-.33529411764705885)*10))<1e-10);
- assert(Math.abs(calc(8).ppg-(calc(8).legacyPpg+1.5))<1e-9,'3-year weighted PPG is protected by 1.5 limit');
+ assert(Math.abs(calc(8).ppg-calc(8).legacyPpg)<1e-9,'without verified opportunity growth, historical PPG remains the anchor');
  assert(Math.abs(calc(4).currentSeasonWeight-.33529411764705885)<1e-10);
 });
 test('without verified snaps mature current-season share stabilizes at historical season share',()=>{

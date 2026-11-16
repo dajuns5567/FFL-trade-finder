@@ -69,6 +69,13 @@ const publisherAudit=refresh.results.filter(r=>r.id==='combined-dynasty'||r.id?.
   })};
 });
 console.log('IDP_V86_VERIFIED_PUBLISHER_RANKS '+JSON.stringify(publisherAudit));
+console.log('IDP_V88_SOURCE_PROVENANCE '+JSON.stringify(refresh.results.filter(x=>x.id==='combined-dynasty'||String(x.id).includes('idp')).map(x=>({
+ id:x.id,source:x.source,valid:x.valid,format:x.format,dynastyVerified:x.dynastyVerified??null,
+ sourceUrl:x.dynastySourceUrl||x.urls?.[0]||null,extractionTime:x.timestamp||null,
+ provenance:x.diagnostics?.source_provenance||null,
+ sourceEmbed:x.diagnostics?.embed_url||null,
+ validatedRows:x.ranking_rows||0,publisherDate:x.publisher_updated_at??null
+}))));
 
 const body=JSON.stringify(payload),browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 const captures=[];

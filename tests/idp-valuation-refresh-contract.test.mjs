@@ -7,7 +7,7 @@ import { buildConsensusComposite } from '../netlify/functions/consensus-composit
 function idpSource(id,targetRank){
   const rows=[];
   for(let i=1;i<=220;i++)rows.push({rank:i,player:i===targetRank?'Target Defender':`${id} Dummy ${i}`,position:'IDP'});
-  return{id,source:id,valid:true,rankings:rows};
+  return{id,source:id,valid:true,dynastyVerified:true,rankings:rows};
 }
 function consensusAt(rank){
   const players=[{id:'target',name:'Target Defender',position:'LB',positions:['LB']}];
@@ -74,7 +74,7 @@ test('one-rank modeled promotion cannot create a giant V319 canonical jump',()=>
   const ctx={
     console,
     window:null,
-    state:{allAssets:players},
+    state:{allAssets:players,players:Object.fromEntries(players.map((x,i)=>[x.id,{fantasy_positions:[i===0?'RB':'LB'],full_name:'Test player '+x.id}]))},
     ensureMaster:()=>master,
     tradeValueNormalizationV130:normalization,
     tradeValueNormalizationV139:normalization,

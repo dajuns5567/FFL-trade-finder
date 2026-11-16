@@ -35,14 +35,51 @@ export function buildConsensusPayload(refresh,players=[],updatedAt=new Date().to
       addSnapshot(sources,"The IDP Show Combined IDP",result,idp,"idp",updatedAt);
       continue;
     }
+    // A valid general-season IDP cheat sheet may be visible in diagnostics,
+    // but it must never be stored as a reusable dynasty-market source. This
+    // also prevents read-only dashboards from displaying it as dynasty data.
+    if(String(result.id||'').includes('idp')&&result.dynastyVerified!==true)continue;
     addSnapshot(sources,result.source,result,result.rankings,result.id?.includes("idp")?"idp":"offense",updatedAt);
   }
-  const diagnostics=results.map(result=>({source:result.source,ok:!!result.valid,status:result.valid?"refreshed":"failed",stage:result.stage||null,url:Array.isArray(result.urls)?result.urls[0]||null:null,players_extracted:Number(result.players_extracted||0),ranking_rows:Number(result.ranking_rows||0),error:result.valid?null:(result.error||null),timestamp:result.timestamp||null,fetch_timestamp:result.timestamp||null,publisher_updated_at:null,market_observation:result.marketObservation||null,source_provenance:result.diagnostics?.source_provenance||null,...(result.reducedWeight?{reducedWeight:true}:{})}));
+  const diagnostics=results.map(result=>({source:result.source,ok:!!result.valid,dynastyConsensusEligible:result.id==="combined-dynasty"||!String(result.id||"").includes("idp")||result.dynastyVerified===true,dynastySourceUrl:result.dynastySourceUrl||null,status:result.valid?"refreshed":"failed",stage:result.stage||null,url:Array.isArray(result.urls)?result.urls[0]||null:null,players_extracted:Number(result.players_extracted||0),ranking_rows:Number(result.ranking_rows||0),error:result.valid?null:(result.error||null),timestamp:result.timestamp||null,fetch_timestamp:result.timestamp||null,publisher_updated_at:null,market_observation:result.marketObservation||null,source_provenance:result.diagnostics?.source_provenance||null,...(result.reducedWeight?{reducedWeight:true}:{})}));
   const successful=diagnostics.filter(result=>result.ok).length,failedSources=diagnostics.filter(result=>!result.ok).map(result=>result.source),integrityReady=results.length>=7&&failedSources.length===0;
   const composite=integrityReady?buildConsensusComposite(results,players):{byId:{},byName:{},detailsById:{},sourceCounts:{offense:0,idp:0},ambiguousNames:[]};
   return {ok:true,sources:integrityReady?sources:{},composite,withheld:!integrityReady,integrity:{all_sources_valid:integrityReady,failed_sources:failedSources,reason:integrityReady?null:`Consensus replacement withheld because ${failedSources.length?failedSources.join(', '):'one or more required sources'} did not validate; prior validated source set remains in use`},summary:{total:results.length,successful,failed:results.length-successful,results:diagnostics},updatedAt};
 }
 
+// An earlier last-known-good snapshot may predate the dynasty provenance
+// gate and contain ordinary-season IDP rankings. Do not reintroduce those
+// rankings merely because a new source fetch temporarily failed.
+export function verifiedDynastyLkg(previous){
+  const sources=previous?.sources,manifest=previous?.sourceManifest;
+  if(!sources||typeof sources!=='object'||!Array.isArray(manifest))return false;
+  const idp=Object.entries(sources).filter(([,v])=>v?.kind==='idp');
+  if(idp.length<2)return false; // Current required IDP market: two independent dynasty feeds
+  const byName=new Map(manifest.map(x=>[x?.source,x]));
+  for(const [name] of idp){
+    const sourceName=name==='The IDP Show Combined IDP'?'The IDP Show Combined':name;
+    const entry=byName.get(sourceName);
+    if(entry?.dynasty_consensus_eligible!==true)return false;
+    if(sourceName!=='The IDP Show Combined'){
+      const url=String(entry?.dynasty_source_url||'');
+      if(!url.startsWith('https://')||!url.includes('dynasty'))return false;
+    }
+  }
+  for(const entry of manifest){
+    if(entry?.dynasty_consensus_eligible===false&&sources[entry.source])return false;
+  }
+  return true;
+}
+// Deploy Preview must remain a read-only valuation environment even when
+// it successfully fetches new legitimate dynasty sources. Netlify Blobs can
+// be shared across site deploy contexts: never let a test preview promote its
+// experimental source snapshot into production last-known-good data.
+export function isPreviewOnlyConsensusRequest(req,env=process.env){
+ const context=String(env.CONTEXT||env.DEPLOY_CONTEXT||'').toLowerCase();
+ if(context==='deploy-preview')return true;
+ try{return /^deploy-preview-[0-9]+--/.test(new URL(req.url).hostname)}
+ catch{return false}
+}
 export default async (req)=>{
   if(req.method==="OPTIONS")return json({ok:true});
   if(req.method!=="POST")return json({ok:false,error:"POST required"},405);
@@ -58,18 +95,22 @@ export default async (req)=>{
       const old=previous?.sources?.[name]||null;
       snapshot.freshness=buildFreshnessSnapshot(snapshot,old,candidate.updatedAt);
     }
-    const promoted={sources:candidate.sources,composite:candidate.composite,updatedAt:candidate.updatedAt,sourceManifest:candidate.summary.results.map(x=>({source:x.source,status:"fresh",snapshot_timestamp:x.timestamp||candidate.updatedAt,attempt_timestamp:x.timestamp||candidate.updatedAt,players_extracted:x.players_extracted,ranking_rows:x.ranking_rows,publisher_updated_at:null,source_freshness:(x.source==="The IDP Show Combined"?candidate.sources["The IDP Show Combined Offense"]?.freshness:candidate.sources[x.source]?.freshness)||null,market_observation:x.market_observation||null,source_provenance:x.source_provenance||null}))};
-    await writeLastGood(promoted);
+    const promoted={sources:candidate.sources,composite:candidate.composite,updatedAt:candidate.updatedAt,sourceManifest:candidate.summary.results.map(x=>({source:x.source,status:"fresh",snapshot_timestamp:x.timestamp||candidate.updatedAt,attempt_timestamp:x.timestamp||candidate.updatedAt,players_extracted:x.players_extracted,ranking_rows:x.ranking_rows,publisher_updated_at:null,source_freshness:(x.source==="The IDP Show Combined"?candidate.sources["The IDP Show Combined Offense"]?.freshness:candidate.sources[x.source]?.freshness)||null,market_observation:x.market_observation||null,source_provenance:x.source_provenance||null,dynasty_consensus_eligible:x.dynastyConsensusEligible,dynasty_source_url:x.dynastySourceUrl||null}))};
+    const isolatedPreview=isPreviewOnlyConsensusRequest(req);
+    if(!isolatedPreview)await writeLastGood(promoted);
     const summary={...candidate.summary,results:candidate.summary.results.map(x=>({...x,
       source_freshness:(x.source==="The IDP Show Combined"?candidate.sources["The IDP Show Combined Offense"]?.freshness:candidate.sources[x.source]?.freshness)||null,
       market_observation:x.market_observation||null,
-      source_provenance:x.source_provenance||null
+      source_provenance:x.source_provenance||null,
+      dynasty_consensus_eligible:x.dynastyConsensusEligible,
+      dynasty_source_url:x.dynastySourceUrl||null
     }))};
-    return json({...candidate,summary,promotion:{promoted:true,using_last_known_good:false},sourceManifest:promoted.sourceManifest});
+    return json({...candidate,summary,promotion:{promoted:!isolatedPreview,preview_readonly:isolatedPreview,using_last_known_good:false},sourceManifest:promoted.sourceManifest});
   }
 
-  const priorSources=previous?.sources&&Object.keys(previous.sources).length?previous.sources:null;
-  const priorComposite=previous?.composite||null;
+  const priorDynastySafe=verifiedDynastyLkg(previous);
+  const priorSources=priorDynastySafe&&previous?.sources&&Object.keys(previous.sources).length?previous.sources:null;
+  const priorComposite=priorDynastySafe?previous?.composite||null:null;
   const priorManifest=Array.isArray(previous?.sourceManifest)?previous.sourceManifest:[];
   const attemptBySource=new Map((candidate.summary.results||[]).map(x=>[x.source,x]));
   const manifest=(candidate.summary.results||[]).map(x=>{
@@ -78,6 +119,6 @@ export default async (req)=>{
     return{source:x.source,status:old?"last-known-good":"unavailable",snapshot_timestamp:old?.snapshot_timestamp||null,attempt_timestamp:x.timestamp||candidate.updatedAt,players_extracted:old?.players_extracted??null,ranking_rows:old?.ranking_rows??null,publisher_updated_at:old?.publisher_updated_at||null,source_freshness:old?.source_freshness||null,market_observation:old?.market_observation||null,source_provenance:old?.source_provenance||null,error:x.error||"Live refresh failed"};
   });
   const summary={...candidate.summary,successful:candidate.summary.results.filter(x=>x.ok).length,results:manifest.map(x=>({source:x.source,ok:x.status==="fresh-not-promoted",status:x.status,players_extracted:x.players_extracted,ranking_rows:x.ranking_rows,timestamp:x.attempt_timestamp,snapshot_timestamp:x.snapshot_timestamp,source_freshness:x.source_freshness||null,market_observation:x.market_observation||null,source_provenance:x.source_provenance||null,publisher_updated_at:x.publisher_updated_at||null,error:x.error||null}))};
-  return json({...candidate,sources:priorSources||{},composite:priorComposite||candidate.composite,summary,sourceManifest:manifest,promotion:{promoted:false,using_last_known_good:!!priorSources,last_good_updated_at:previous?.updatedAt||null},integrity:{...candidate.integrity,reason:priorSources?`${candidate.integrity.reason}; complete last-known-good consensus from ${previous.updatedAt} remains active`:`${candidate.integrity.reason}; no persisted last-known-good consensus is available yet`}});
+  return json({...candidate,sources:priorSources||{},composite:priorComposite||candidate.composite,summary,sourceManifest:manifest,promotion:{promoted:false,using_last_known_good:!!priorSources,prior_snapshot_rejected_for_dynasty_provenance:!!previous&&!priorDynastySafe,last_good_updated_at:previous?.updatedAt||null},integrity:{...candidate.integrity,reason:priorSources?`${candidate.integrity.reason}; complete last-known-good consensus from ${previous.updatedAt} remains active`:`${candidate.integrity.reason}; no persisted last-known-good consensus is available yet`}});
 };
 function json(body,status=200){return new Response(JSON.stringify(body),{status,headers:{"content-type":"application/json; charset=utf-8","cache-control":"no-store"}})}

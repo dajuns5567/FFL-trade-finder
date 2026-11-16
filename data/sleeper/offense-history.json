@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-11-16T02:02:26.607Z",
+  "generatedAt": "2026-11-16T09:38:22.146Z",
   "source": "Sleeper importer snapshot",
   "currentSeason": 2026,
   "completedWeek": 9,
@@ -332,6 +332,8 @@
         "BUF"
       ],
       "10": [
+        "NYG",
+        "WSH",
         "DET",
         "NE",
         "ATL",
@@ -354,8 +356,8 @@
         "LAR",
         "DAL",
         "SF",
-        "NYG",
-        "WSH"
+        "CIN",
+        "PIT"
       ]
     },
     "weekFinalityByWeek": {
@@ -1539,18 +1541,26 @@
       },
       "10": {
         "scheduledGames": 14,
-        "finalGames": 12,
+        "finalGames": 13,
         "ignoredGames": 0,
-        "blockingGames": 2,
+        "blockingGames": 1,
         "complete": false,
         "nullSlots": [],
         "slots": [
           {
-            "id": "401873064",
+            "id": "401873065",
             "state": "blocking",
             "teams": [
-              "CIN",
-              "PIT"
+              "BAL",
+              "LAC"
+            ]
+          },
+          {
+            "id": "401873052",
+            "state": "final",
+            "teams": [
+              "NYG",
+              "WSH"
             ]
           },
           {
@@ -1642,28 +1652,20 @@
             ]
           },
           {
-            "id": "401873052",
+            "id": "401873064",
             "state": "final",
             "teams": [
-              "NYG",
-              "WSH"
-            ]
-          },
-          {
-            "id": "401873065",
-            "state": "blocking",
-            "teams": [
-              "BAL",
-              "LAC"
+              "CIN",
+              "PIT"
             ]
           }
         ]
       }
     },
     "diagnostics": {
-      "finalGames": 148,
-      "qualifiedPlayerGames": 9283,
-      "rejectedPlayerGames": 11763,
+      "finalGames": 149,
+      "qualifiedPlayerGames": 9310,
+      "rejectedPlayerGames": 11881,
       "ignoredGames": 0
     }
   },

@@ -1799,7 +1799,7 @@ function teamNetChart(points){
   if(!pts.length)return'<div class="vh-empty">Net-value history will appear after a completed Value History snapshot.</div>';
   const tradeMap=teamNetPointTradeMap(trackedTeamId,pts),vals=pts.map(p=>Number(p.value)),min=Math.min(...vals),max=Math.max(...vals),pad=Math.max(200,(max-min)*.12),lo=Math.max(0,min-pad),hi=max+pad,W=900,H=142,L=70,R=18,T=12,B=30,n=Math.max(1,pts.length-1),
     x=i=>L+(W-L-R)*(i/n),y=v=>T+(H-T-B)*(1-(Number(v)-lo)/Math.max(1,hi-lo)),first=pts[0],last=pts[pts.length-1],
-    path=chartTraceIndices(pts,'value',160).map((i,j)=>`${j?'L':'M'} ${x(i).toFixed(1)} ${y(pts[i].value).toFixed(1)}`).join(' '),
+    path=chartEraPath(pts,'value',160,x,y),
     markers=[0,pts.length-1].filter((i,k,a)=>a.indexOf(i)===k).map(i=>`<circle class="vh-net-dot" cx="${x(i).toFixed(1)}" cy="${y(pts[i].value).toFixed(1)}" r="3" pointer-events="none"/>`).join(''),
     hover=chartHoverLayer(pts,'net',{W,H,L,R,T,B,y,field:'value',tradeMap,label:'Overall Net Value'});
   return`<div class="vh-net-chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Overall Net Value history"><line class="vh-net-axis" x1="${L}" y1="${H-B}" x2="${W-R}" y2="${H-B}"/><line class="vh-net-axis" x1="${L}" y1="${T}" x2="${L}" y2="${H-B}"/><text class="vh-net-axis-text" x="${L-8}" y="${T+4}" text-anchor="end">${fmt(Math.round(hi))}</text><text class="vh-net-axis-text" x="${L-8}" y="${H-B}" text-anchor="end">${fmt(Math.round(lo))}</text><text class="vh-net-axis-text" x="${L}" y="${H-8}">${esc(dateShort(first.t))}</text><text class="vh-net-axis-text" x="${W-R}" y="${H-8}" text-anchor="end">${esc(dateShort(last.t))}</text><path class="vh-net-line" d="${path}"/>${markers}${hover}</svg><div class="vh-chart-tooltip" style="display:none"></div></div>`;
@@ -1991,6 +1991,38 @@ function chartTraceIndices(rows,field,maxPoints){
   sampled.push(len-1);
   return sampled;
 }
+// A valuation-model change is a discontinuity, not a player-price move.
+// Preserve all original observations for hovering, but never draw a misleading
+// continuous stroke between two different (including known/unknown) models.
+function chartEraChange(a,b){
+ return Boolean((a?.valuation_model||b?.valuation_model)&&a?.valuation_model!==b?.valuation_model);
+}
+function chartEraPath(points,field,maxPoints,x,y){
+ if(!points.length)return'';
+ const chunks=[],ranges=[];
+ let start=0;
+ for(let i=1;i<points.length;i++)if(chartEraChange(points[i-1],points[i])){
+  ranges.push([start,i]);start=i;
+ }
+ ranges.push([start,points.length]);
+ for(const [from,end]of ranges){
+  const segment=points.slice(from,end);
+  const sample=chartTraceIndices(segment,field,maxPoints);
+  for(let j=0;j<sample.length;j++){
+   const i=from+sample[j];
+   chunks.push(`${j?'L':'M'} ${x(i).toFixed(1)} ${y(points[i][field]).toFixed(1)}`);
+  }
+ }
+ return chunks.join(' ');
+}
+function chartEraMarkers(points,x,y,cssClass,radius){
+ const indices=new Set([0,points.length-1]);
+ for(let i=1;i<points.length;i++)if(chartEraChange(points[i-1],points[i])){
+  indices.add(i-1);indices.add(i);
+ }
+ return[...indices].filter(i=>points[i]).sort((a,b)=>a-b).map(i=>
+  `<circle class="${cssClass}" cx="${x(i).toFixed(1)}" cy="${y(points[i].value).toFixed(1)}" r="${radius}" pointer-events="none"/>`).join('');
+}
 function chartHoverLayer(rows,kind,{W,H,L,R,T,B,y,field,tradeMap=null,label=''}){
   const count=rows.length,n=Math.max(1,count-1),width=W-L-R;
   const snapshots=rows.map((p,i)=>({
@@ -2016,7 +2048,7 @@ function rankSpark(points,field,axisLabel='Rank'){
     x=i=>L+(W-L-R)*(i/n),y=v=>T+(H-T-B)*((Number(v)-min)/spread),
     first=clean[0],last=clean[clean.length-1],
     dateLabel=t=>{try{return new Date(t).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}catch{return''}};
-  const path=chartTraceIndices(clean,field,90).map((i,j)=>`${j?'L':'M'} ${x(i).toFixed(1)} ${y(clean[i][field]).toFixed(1)}`).join(' '),
+  const path=chartEraPath(clean,field,90,x,y),
     markers=[0,clean.length-1].filter((i,k,a)=>a.indexOf(i)===k).map(i=>`<circle class="vh-rank-dot" cx="${x(i).toFixed(1)}" cy="${y(clean[i][field]).toFixed(1)}" r="3" pointer-events="none"/>`).join(''),
     hover=chartHoverLayer(clean,'rank',{W,H,L,R,T,B,y,field,label:axisLabel});
   return`<div class="vh-rank-chart" style="position:relative"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(axisLabel)} history"><line class="vh-axis" x1="${L}" y1="${T}" x2="${L}" y2="${H-B}"/><line class="vh-axis" x1="${L}" y1="${H-B}" x2="${W-R}" y2="${H-B}"/><text class="vh-axis-text" x="${L-7}" y="${T+4}" text-anchor="end">#${min}</text><text class="vh-axis-text" x="${L-7}" y="${H-B}" text-anchor="end">#${max}</text><text class="vh-axis-text" x="13" y="${(T+H-B)/2}" text-anchor="middle" transform="rotate(-90 13 ${(T+H-B)/2})">${esc(axisLabel)}</text><text class="vh-axis-text" x="${L}" y="${H-14}">${esc(dateLabel(first.t))}</text><text class="vh-axis-text" x="${W-R}" y="${H-14}" text-anchor="end">${esc(dateLabel(last.t))}</text><text class="vh-axis-text" x="${(L+W-R)/2}" y="${H-3}" text-anchor="middle">Date</text><path class="vh-rank-line" d="${path}"/>${markers}${hover}</svg><div class="vh-chart-tooltip" role="status" aria-live="polite"></div></div>`;
@@ -2024,7 +2056,7 @@ function rankSpark(points,field,axisLabel='Rank'){
 function valueChart(id,pts,allPts=pts){
   if(!pts.length)return`<div class="vh-empty">No historical observations recorded yet for ${esc(playerName(id))}. A point will appear after a completed value refresh is recorded.</div>`;
   const values=pts.map(p=>Number(p.value)).filter(Number.isFinite),min=Math.min(...values),max=Math.max(...values),pad=Math.max(100,(max-min)*.15),lo=Math.max(0,min-pad),hi=max+pad,W=900,H=380,L=74,R=24,T=34,B=72,n=Math.max(1,pts.length-1),x=i=>L+(W-L-R)*(i/n),y=v=>T+(H-T-B)*(1-(Number(v)-lo)/Math.max(1,hi-lo));
-  const path=chartTraceIndices(pts,'value',220).map((i,j)=>`${j?'L':'M'} ${x(i).toFixed(1)} ${y(pts[i].value).toFixed(1)}`).join(' '),
+  const path=chartEraPath(pts,'value',220,x,y),
     markers=[0,pts.length-1].filter((i,k,a)=>a.indexOf(i)===k).map(i=>`<circle class="vh-point-dot" cx="${x(i).toFixed(1)}" cy="${y(pts[i].value).toFixed(1)}" r="3.5"/>`).join(''),
     hover=chartHoverLayer(pts,'value',{W,H,L,R,T,B,y,field:'value',label:'Player Value'}),first=pts[0],last=pts[pts.length-1],
     prev=allPts.length>1?allPts[allPts.length-2]:null,latest=allPts[allPts.length-1],refreshBoundary=Boolean(prev&&(latest.valuation_model||prev.valuation_model)&&prev.valuation_model!==latest.valuation_model),

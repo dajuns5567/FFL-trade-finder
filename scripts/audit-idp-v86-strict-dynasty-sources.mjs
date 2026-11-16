@@ -26,6 +26,22 @@ assert(payload.integrity.all_sources_valid,'require source integrity');
 assert.equal(payload.composite.sourceCounts.idp,2,'require two verified dynasty IDP publishers only');
 assert(refresh.results.some(x=>x.source==='DraftSharks IDP'&&x.dynastyVerified===true),'require DraftSharks IDP dynasty feed');
 assert(refresh.results.some(x=>x.source==='RotoWire IDP'&&x.dynastyVerified===false),'reject seasonal RotoWire IDP feed');
+
+const publisherTargets=['Dallas Turner','Will Anderson Jr.','Myles Garrett','Maxx Crosby','George Karlaftis','Carson Schwesinger','Aidan Hutchinson','Blake Cashman'];
+const normName=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim().replace(/ (jr|sr|ii|iii|iv)$/,'');
+const publisherAudit=refresh.results.filter(r=>r.id==='combined-dynasty'||r.id?.includes('idp')).map(r=>{
+ const original=(r.rankings||[]).filter(x=>r.id!=='combined-dynasty'||String(x.position).toUpperCase()==='IDP')
+ .slice().sort((a,b)=>Number(a.rank)-Number(b.rank));
+ return{source:r.source,id:r.id,url:r.dynastySourceUrl||r.urls?.[0]||null,
+  dynastyVerified:r.dynastyVerified??null,extractionTimestamp:r.timestamp||null,
+  publisherUpdatedAt:r.publisher_updated_at||r.publisherUpdatedAt||r.marketObservation?.updatedAt||null,
+  size:original.length,targets:publisherTargets.map(name=>{
+   const i=original.findIndex(row=>normName(row.player)===normName(name));
+   return{name,rank:i>=0?i+1:null,publisherRank:i>=0?original[i].rank:null,position:i>=0?original[i].position:null};
+  })};
+});
+console.log('IDP_V86_VERIFIED_PUBLISHER_RANKS '+JSON.stringify(publisherAudit));
+
 const body=JSON.stringify(payload),browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 const captures=[];
 try{

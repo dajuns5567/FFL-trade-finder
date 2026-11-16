@@ -79,12 +79,55 @@ try{
       qualifiers:z.production?.a?.qualifyingSeasons??0};
     }),
     rosterIds:[...new Set((st.rosters||[]).flatMap(r=>r.players||[]).map(String))],
-    teams:st.teams.length
+    teams:st.teams.length,
+    // Live-consumer parity, not synthetic values. V319 is the canonical
+    // ranked master-scale adapter shared by Finder, Evaluator, and history.
+    consumer:((()=>{
+      const norm=window.tradeValueNormalizationV130||window.tradeValueNormalizationV139;
+      const v319=window.modeledPlayerValuesV319;
+      const assets=(st.allAssets||[]).filter(a=>a?.type==='player');
+      const idpAssets=assets.filter(a=>window.groupPos(a)==='IDP');
+      const offenseAssets=assets.filter(a=>window.groupPos(a)!=='IDP');
+      const mismatches=[],checked=assets.length;
+      for(const a of assets){
+        const canonical=Number(norm?.canonicalValue?.(a));
+        const mapped=Number(v319?.playerValue?.(a));
+        const globalBase=Number(window.baseValue?.(a));
+        const engine=window.tradeEngine96||window.tradeEngine98||window.tradeEngine99;
+        const engineValue=typeof engine?.assetValue==='function'?Number(engine.assetValue(a)):canonical;
+        if(!Number.isFinite(canonical)||canonical<120||canonical>9999
+          ||canonical!==mapped||canonical!==globalBase||canonical!==engineValue)
+          mismatches.push({id:String(a.id),group:window.groupPos(a),
+            canonical,mapped,globalBase,engineValue});
+      }
+      const idpPackage=idpAssets.slice(0,Math.min(3,idpAssets.length));
+      const offensePackage=offenseAssets.slice(0,Math.min(3,offenseAssets.length));
+      const packages=[idpPackage,offensePackage,[...idpPackage.slice(0,2),...offensePackage.slice(0,2)]];
+      const packageChecks=packages.map(items=>{
+        const expected=items.reduce((sum,a)=>sum+Number(norm?.canonicalValue?.(a)),0);
+        const canonical=Number(norm?.canonicalPackageValue?.(items));
+        const global=Number(window.packageValue?.(items));
+        return {n:items.length,expected,canonical,global,
+          pass:Number.isFinite(expected)&&expected===canonical&&expected===global};
+      });
+      const rankIds=new Set(m.filter(z=>z.x?.type==='player').map(z=>String(z.x.id)));
+      return {checked,idps:idpAssets.length,offense:offenseAssets.length,
+        missingFromMaster:assets.filter(a=>!rankIds.has(String(a.id))).map(a=>String(a.id)).slice(0,15),
+        mismatchCount:mismatches.length,mismatches:mismatches.slice(0,20),
+        packageChecks,modeledReady:v319?.ready===true};
+    })())
    };
   });
   assert.equal(errors.length,0,'no JS errors: '+errors.slice(0,3));
   assert(snap.ranked.length>950,'complete ranking population');
   assert.equal(snap.teams,32);
+  assert(snap.consumer.modeledReady,'live V319 modeled adapter not ready');
+  assert(snap.consumer.checked>=500,'insufficient real roster assets in consumer parity');
+  assert(snap.consumer.idps>=100,'insufficient rostered IDPs for consumer parity');
+  assert.equal(snap.consumer.missingFromMaster.length,0,'rostered canonical assets missing from master');
+  assert.equal(snap.consumer.mismatchCount,0,'Finder/Evaluator/market value source mismatch: '+JSON.stringify(snap.consumer.mismatches));
+  assert(snap.consumer.packageChecks.every(z=>z.pass),'live package value parity failed');
+  console.log('IDP_V86_INTEGRATED_CONSUMER_PARITY '+JSON.stringify({variant,consumer:snap.consumer}));
   captures.push({variant,...snap});
   console.log('IDP_V86_V85_CAPTURE '+JSON.stringify({variant,n:snap.ranked.length,
    idps:snap.ranked.filter(x=>x.group==='IDP').length,blockedWrites:blockedWrites.length}));

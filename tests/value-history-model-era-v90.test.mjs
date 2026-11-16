@@ -91,6 +91,38 @@ test('another model change creates another safe baseline rather than cross-versi
  assert.equal(marketFromSnapshots(xs).marketRows[0].deltaAll,null);
 });
 
+test('market intelligence comparisons stay inside the latest annotated valuation era',()=>{
+ const fn=section('function marketInsightsFromSnapshots(snaps){','async function getMarketInsights(s){');
+ const captured=[];
+ context.marketInsightWindow=(snapshots,label)=>snapshots;
+ context.marketInsightRange=(snapshots,label)=>{
+  captured.push({n:snapshots.length,label});
+  return{label,available:snapshots.length>=2,position_indexes:[],new_highs:[],new_lows:[],volatility:[],
+   snapshot_count:snapshots.length};
+ };
+ vm.runInContext(fn,context,{filename:'canonical-market-intelligence-v90.js'});
+ const rows=[
+  snap('2026-11-01T00:00:00Z',400,2000),
+  snap('2026-11-03T00:00:00Z',410,2030),
+  snap('2026-11-04T00:00:00Z',900,2100,model),
+  snap('2026-11-06T00:00:00Z',930,2090,model)
+ ];
+ const result=context.marketInsightsFromSnapshots(rows);
+ assert.equal(result.snapshot_count,4,'archival count is preserved');
+ assert.equal(result.comparable_snapshot_count,2,'the model-era subset drives insights');
+ assert.equal(result.valuation_model,model);
+ assert.equal(result.model_change_at,rows[2].t);
+ assert.equal(result.ranges.ALL.snapshot_count,2);
+ assert(captured.every(x=>x.n===2),'market insights must not mix valuation-model baselines');
+});
+
+test('team net and weekly movement retain real history and avoid cross-model deltas',()=>{
+ assert.match(server,/teamSnapshot:true,valuation_model:valuationModelId\(snap\)/);
+ assert.match(server,/teamSnapshot:false,valuation_model:valuationModelId\(snap\)/);
+ assert.match(server,/const modelEra=comparableMarketEra\(snaps\),active=modelEra.snaps/);
+ assert.match(server,/trackingSince:active\[0\]\.t/);
+});
+
 test('scheduled historical contract is distinct from client model and has no invented publisher freshness',()=>{
  assert.equal(valuationModelId({valuation_contract:'precision-idp-runtime-20260919'}),
  'scheduled:precision-idp-runtime-20260919');

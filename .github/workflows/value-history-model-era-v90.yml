@@ -21,6 +21,7 @@ jobs:
         run: |
           node --check netlify/functions/value-history.mjs
           node --check value-history-v276.js
+          node --check scripts/value-history-headless-refresh.mjs
           node --test tests/value-history-model-era-v90.test.mjs
       - name: Preserve existing history archive and cross-page valuation invariants
         run: |

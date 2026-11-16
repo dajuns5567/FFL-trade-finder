@@ -170,7 +170,7 @@ try{
     return{id,name,position,overall:i+1,idpRank:position==='IDP'?idpRank:null,
      modeled:Number(z.value),consensus:Number(z.consensus)||null,marketIdpRank:Number(source.idpRank)||null,
      actualSources,sourceNames:(source.idpSources||[]).filter(s=>!String(s).endsWith(' (not listed)')),age:Number(st.players?.[id]?.age)||null,
-     scoring:Number(z.production?.value)||null,context:Number(z.context)||null,weightedPpg:z.production?.m?.ppg??null,legacyPpg:z.production?.m?.legacyPpg??null,uncappedPpg:z.production?.m?.uncappedPpg??null,currentGames:z.production?.m?.currentSeasonGames??null,
+     scoring:Number(z.production?.value)||null,context:Number(z.context)||null,rawBlend:z.production?.idpV25RawBlend??null,effectiveScoring:z.production?.idpV80CalibratedScoringComponent??null,baseConsensus:Number(z.consensus)||null,fallback:z.fallback??null,weightedPpg:z.production?.m?.ppg??null,legacyPpg:z.production?.m?.legacyPpg??null,uncappedPpg:z.production?.m?.uncappedPpg??null,currentGames:z.production?.m?.currentSeasonGames??null,
      scoreConfidence:z.production?.m?.confidence??null,scoringPercentile:z.production?.ppgPct??null,
      scoreRelative:z.production?.relative??null,opportunityV83:z.production?.opportunityV83??null,opportunityEvidenceV84:z.production?.leagueContext?.opportunityEvidenceV84??null,
      evidenceSeasons:['Dallas Turner','Maxx Crosby','Myles Garrett','Will Anderson Jr.','George Karlaftis','Aidan Hutchinson','Jared Verse','David Bailey'].includes(name)?
@@ -324,6 +324,9 @@ try{
   return{id:x.id,name:x.name,age:x.age,sources:x.actualSources,market:x.marketIdpRank,
    beforeIdp:old.idpRank,afterIdp:x.idpRank,beforeOverall:old.overall,afterOverall:x.overall,
    beforeValue:old.modeled,afterValue:x.modeled,delta:x.modeled-old.modeled,
+   beforeContext:old.context,afterContext:x.context,beforeConsensus:old.consensus,afterConsensus:x.consensus,
+   beforeRawBlend:old.rawBlend,afterRawBlend:x.rawBlend,beforeEffectiveScoring:old.effectiveScoring,afterEffectiveScoring:x.effectiveScoring,
+   beforeFallback:old.fallback,afterFallback:x.fallback,
    beforeScoring:old.scoring,afterScoring:x.scoring,beforePpg:old.weightedPpg,afterPpg:x.weightedPpg,
    evidence:x.opportunityEvidenceV84};
  });
@@ -339,6 +342,8 @@ try{
   veteran29plus:ctxMAE(contextMatched.filter(x=>x.age>=29)),
   qualified:ctxRows.filter(x=>x.evidence).sort((a,b)=>b.delta-a.delta),
   featured:ctxRows.filter(x=>['Dallas Turner','Maxx Crosby','Myles Garrett','Aidan Hutchinson','George Karlaftis','Boye Mafe','David Bailey'].includes(x.name))};
+ const nonmonotonic=ctxRows.filter(x=>x.afterContext>x.beforeContext&&x.afterValue<x.beforeValue);
+ console.log('IDP_V84_MONOTONICITY_DIAGNOSTICS '+JSON.stringify({n:nonmonotonic.length,rows:nonmonotonic,modelStage:'V25 embedded raw blend compared with final modeled z.value'}));
  console.log('IDP_V84_ROLE_CONTEXT_COUNTERFACTUAL '+JSON.stringify(roleAudit));
  console.log('IDP_V84_RELEASE_DECISION '+JSON.stringify({status:'research-only-not-promoted',noAutomaticPromotion:true,
   reason:'verify snap-supported context changes against dynasty-market cohorts and all production controls'}));

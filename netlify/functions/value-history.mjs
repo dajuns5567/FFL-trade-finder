@@ -525,7 +525,7 @@ async function getTeamNetHistory(s,playerIds,teamId=''){
   for(const snap of snaps){
     const exact=tid?(snap?.teams||[]).find(t=>String(t?.id)===tid):null;
     if(exact&&Number.isFinite(Number(exact.value))){
-      points.push({t:snap.t,value:Math.round(Number(exact.value)),playerCount:Number(exact.player_count)||0,teamSnapshot:true});
+      points.push({t:snap.t,value:Math.round(Number(exact.value)),playerCount:Number(exact.player_count)||0,teamSnapshot:true,valuation_model:valuationModelId(snap)});
       continue;
     }
     if(!ids.length)continue;
@@ -535,7 +535,7 @@ async function getTeamNetHistory(s,playerIds,teamId=''){
       const n=Number(row?.value);if(!Number.isFinite(n))continue;
       value+=n;found++;
     }
-    points.push({t:snap.t,value:Math.round(value),playersFound:found,playerCount:ids.length,teamSnapshot:false});
+    points.push({t:snap.t,value:Math.round(value),playersFound:found,playerCount:ids.length,teamSnapshot:false,valuation_model:valuationModelId(snap)});
   }
   const source=archiveSnaps.length?(localSnaps.length?'github-archive+netlify-live':'github-archive'):'netlify-live';
   return{points,playerCount:points.length?Number(points[points.length-1]?.playerCount)||ids.length:ids.length,source,snapshotCount:snaps.length,partial:indexed.source==='unavailable'&&archiveSnaps.length>0};

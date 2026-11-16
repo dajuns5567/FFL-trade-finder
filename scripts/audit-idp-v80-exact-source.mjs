@@ -151,6 +151,45 @@ try{
    meanErrorReduction:mean(eligible.filter(x=>x.age>=29).map(x=>x.improvement))},
   individualLargestBenefit:eligible.slice().sort((a,b)=>b.improvement-a.improvement).slice(0,12),
   individualLargestHarm:eligible.slice().sort((a,b)=>a.improvement-b.improvement).slice(0,12)};
+ // Source-supported younger and older defenders must be evaluated separately.
+ // Report *signed* positional-rank error: positive means the model ranks a
+ // defender below verified dynasty consensus, negative means above market.
+ // Never interpret the sign for zero/one-source players as a market verdict.
+ const cohortDiagnostics={};
+ for(const [label,eligibleAge] of [
+  ['young25',age=>age>0&&age<=25],
+  ['prime26to28',age=>age>=26&&age<=28],
+  ['veteran29plus',age=>age>=29],
+ ]){
+  const baseRows=captures[0].ranked.filter(x=>x.position==='IDP'&&x.actualSources>=2&&
+   x.marketIdpRank>0&&eligibleAge(x.age));
+  const next=new Map(captures[1].ranked.map(x=>[x.id,x]));
+  const observations=baseRows.map(x=>{
+   const after=next.get(x.id),beforeError=x.idpRank-x.marketIdpRank,
+    afterError=after.idpRank-after.marketIdpRank;
+   return{name:x.name,age:x.age,marketRank:x.marketIdpRank,
+    priorIdpRank:x.idpRank,candidateIdpRank:after.idpRank,
+    beforeSignedError:beforeError,afterSignedError:afterError,
+    errorReduction:Math.abs(beforeError)-Math.abs(afterError)};
+  });
+  const meanOf=(xs,field)=>xs.length?Number((xs.reduce((sum,x)=>sum+x[field],0)/xs.length).toFixed(3)):null;
+  cohortDiagnostics[label]={
+   n:observations.length,
+   priorMeanSignedError:meanOf(observations,'beforeSignedError'),
+   candidateMeanSignedError:meanOf(observations,'afterSignedError'),
+   meanAbsoluteErrorReduction:meanOf(observations,'errorReduction'),
+   improved:observations.filter(x=>x.errorReduction>0).length,
+   harmed:observations.filter(x=>x.errorReduction<0).length,
+   worstCandidateOverranking:observations.slice().sort((a,b)=>a.afterSignedError-b.afterSignedError).slice(0,8),
+   worstCandidateUnderranking:observations.slice().sort((a,b)=>b.afterSignedError-a.afterSignedError).slice(0,8)
+  };
+ }
+ console.log('IDP_V80_DYNASTY_AGE_COHORT_DIAGNOSTICS '+JSON.stringify(cohortDiagnostics));
+ console.log('IDP_V80_RELEASE_DECISION '+JSON.stringify({
+  status:'research-only-not-accepted',
+  reason:'two-source dynasty coverage is sparse and unit-scale sensitivity cannot itself establish dynasty rank accuracy',
+  noAutomaticPromotion:true
+ }));
  console.log('IDP_V80_PAIRED_CONSENSUS_UNCERTAINTY '+JSON.stringify(bootstrap));
  console.log('IDP_V80_SOURCE_MATCHED_ACCEPTANCE '+JSON.stringify(metrics));
  console.log('IDP_V80_SOURCE_MATCHED_AUDIT_PASS');

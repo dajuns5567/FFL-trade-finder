@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs';
 
 const server=readFileSync(new URL('../netlify/functions/value-history.mjs',import.meta.url),'utf8');
 const client=readFileSync(new URL('../value-history-v276.js',import.meta.url),'utf8');
+const scheduled=readFileSync(new URL('../scripts/value-history-headless-refresh.mjs',import.meta.url),'utf8');
 const section=(start,end)=>{
  const i=server.indexOf(start),j=server.indexOf(end,i+start.length);
  assert(i>=0&&j>i,'missing exact canonical history function section: '+start);
@@ -198,6 +199,28 @@ test('scheduled historical contract is distinct from client model and has no inv
  assert.match(server,/valuation_model:valuationModel,rows,picks,teams/);
  assert.match(server,/if\(isDeployPreview\)return json\(\{error:'deploy previews are read-only for canonical value history'\},403\)/);
  assert.match(server,/source===?'scheduled'\?SCHEDULED_VALUATION_CONTRACT:null/);
+});
+
+test('scheduled local and GitHub archive captures cannot silently lose their explicit valuation model',()=>{
+ assert.match(client,/window.valueHistoryModelV90=HISTORY_VALUATION_MODEL/);
+ assert.match(scheduled,/valuationModel:window.valueHistoryModelV90\|\|null/);
+ assert.match(scheduled,/first.valuationModel===second.valuationModel/);
+ assert.match(scheduled,/acceptedValuationModel\(captured.valuationModel\)/);
+ assert.match(scheduled,/if\(!valuationModel\)throw new Error\('Scheduled capture lacks the approved live valuation model contract'\)/);
+ assert.match(scheduled,/acceptedValuationModel\(payload.valuation_model\)/);
+ assert.match(scheduled,/if\(!valuationModel\)return json\(\{ok:false,error:'scheduled capture missing approved valuation-model evidence'\},409\)/);
+ assert.equal((scheduled.match(/valuation_model:valuationModel/g)||[]).length,2,
+  'both local collector and direct headless archive must persist matching model identity');
+ assert.match(scheduled,/valuation_contract:SCHEDULED_VALUATION_CONTRACT,valuation_model:valuationModel/);
+ assert.match(scheduled,/writeFileSync\(snapshotFile,JSON.stringify\(snap,null,2\)/);
+ const declaration=scheduled.match(/const acceptedValuationModel=value=>[^;]+;/);
+ assert(declaration,'canonical accepted model filter not found');
+ const vmCtx={String};
+ vm.createContext(vmCtx);
+ vm.runInContext(declaration[0]+';globalVal=acceptedValuationModel;',vmCtx);
+ assert.equal(vmCtx.globalVal(model),model);
+ assert.equal(vmCtx.globalVal('other-model'),null);
+ assert.equal(vmCtx.globalVal(null),null);
 });
 
 test('client submits contract and labels instead of pretending model-version jumps are market gains',()=>{

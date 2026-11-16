@@ -4,6 +4,7 @@ const API='/.netlify/functions/value-history',SIGNAL_API='/.netlify/functions/pl
 // Version marker is valid only on the dependent V77/V85/V86 integration branch.
 // Never infer a publisher update time or rewrite existing history.
 const HISTORY_VALUATION_MODEL='idp-v77-v85-v86-dynasty';
+window.valueHistoryModelV90=HISTORY_VALUATION_MODEL;
 // Experimental deploy previews may read archival history but must never
 // persist their branch-specific ranks into the canonical shared timeline.
 const isValueHistoryDeployPreview=()=>/^(?:deploy-preview-\d+|[a-f0-9]{24})--precious-dango-fb4633\.netlify\.app$/i.test(location.hostname);

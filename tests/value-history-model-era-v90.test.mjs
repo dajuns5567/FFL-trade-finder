@@ -154,6 +154,43 @@ test('team net and weekly movement retain real history and avoid cross-model del
  assert.match(server,/trackingSince:active\[0\]\.t/);
 });
 
+test('SVG player, rank, and team-net charts break lines across model changes without losing points',()=>{
+ const from=client.indexOf('function chartTraceIndices('),to=client.indexOf('function chartHoverLayer(',from);
+ assert(from>=0&&to>from,'canonical rendering helpers missing');
+ const plotCtx={Number,Math,Array,Set,Boolean};
+ vm.createContext(plotCtx);
+ vm.runInContext(client.slice(from,to),plotCtx,{filename:'value-history-canonical-svg-era-helper.js'});
+ const x=i=>i*10,y=v=>v;
+ const legacy=[
+  {value:400,overall:100},
+  {value:405,overall:99}
+ ];
+ assert.equal((plotCtx.chartEraPath(legacy,'value',220,x,y).match(/M /g)||[]).length,1,
+  'legacy untagged history stays continuous');
+ const mixed=[
+  {value:400,overall:100},
+  {value:410,overall:99},
+  {value:900,overall:48,valuation_model:model},
+  {value:901,overall:47,valuation_model:model},
+  {value:500,overall:77}
+ ];
+ for(const field of ['value','overall']){
+  const path=plotCtx.chartEraPath(mixed,field,220,x,y);
+  assert.equal((path.match(/M /g)||[]).length,3,
+   'known/unknown boundaries must make new SVG move commands, not fake price lines');
+  assert.equal((path.match(/L /g)||[]).length,2,
+   'retain original same-model line segments');
+ }
+ const markers=plotCtx.chartEraMarkers(mixed,'value',x,y,'vh-point-dot',3.5);
+ assert.equal((markers.match(/<circle/g)||[]).length,6-0-1,
+  'draw endpoints around each model boundary and preserve visible isolated points');
+ assert.match(client,/path=chartEraPath\(clean,field,90,x,y\)/);
+ assert.match(client,/path=chartEraPath\(pts,'value',220,x,y\)/);
+ assert.match(client,/path=chartEraPath\(pts,'value',160,x,y\)/);
+ assert.match(client,/const snapshots=rows.map\(\(p,i\)=>\(\{/,
+  'all unsampled original points stay available for chart hover');
+});
+
 test('scheduled historical contract is distinct from client model and has no invented publisher freshness',()=>{
  assert.equal(valuationModelId({valuation_contract:'precision-idp-runtime-20260919'}),
  'scheduled:precision-idp-runtime-20260919');

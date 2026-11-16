@@ -287,6 +287,7 @@ try{
         rankings:!!document.getElementById('rankings')},
       historyPreviewGate:typeof window.isValueHistoryDeployPreview==='function'?window.isValueHistoryDeployPreview():null};
   });
+  console.log('PR488_LIVE_PRE_ASSERT '+JSON.stringify({teams:live.teams,playerCount:live.playerCount,idps:live.idps,offense:live.offense,masterCount:live.masterCount,top100IDP:live.top100IDP,turner:live.turner,historyModel:live.historyModel,historyRows:live.historyRows,ui:live.ui,errors:live.errors,packageChecks:live.packageChecks}));
   assert.equal(live.teams,32,'Preview lost league teams');
   assert(live.playerCount>=500&&live.idps>=100&&live.offense>=250,'Live league roster incomplete');
   assert(live.masterCount>=950,'Master rankings incomplete');

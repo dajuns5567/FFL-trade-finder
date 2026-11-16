@@ -127,7 +127,7 @@ test('scheduled historical contract is distinct from client model and has no inv
  assert.equal(valuationModelId({valuation_contract:'precision-idp-runtime-20260919'}),
  'scheduled:precision-idp-runtime-20260919');
  assert.equal(valuationModelId({valuation_model:'  unknown / bad  '}),null);
- assert.match(server,/valuation_model:source==='scheduled'\?null:valuationModel/);
+ assert.match(server,/valuation_model:valuationModel,rows,picks,teams/);
  assert.match(server,/if\(isDeployPreview\)return json\(\{error:'deploy previews are read-only for canonical value history'\},403\)/);
  assert.match(server,/source===?'scheduled'\?SCHEDULED_VALUATION_CONTRACT:null/);
 });

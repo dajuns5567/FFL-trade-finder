@@ -2031,12 +2031,14 @@ function valueChart(id,pts,allPts=pts){
 function recentChanges(pts){
   const rows=[];for(let i=pts.length-1;i>0&&rows.length<8;i--){const a=pts[i-1],b=pts[i],dv=Number(b.value)-Number(a.value),dr=Number(a.overall)-Number(b.overall),dp=Number(a.posRank)-Number(b.posRank);if(dv||dr||dp)rows.push({t:b.t,dv,dr,dp,value:b.value,overall:b.overall,pos:b.pos,posRank:b.posRank,modelBoundary:Boolean(b.valuation_model&&a.valuation_model!==b.valuation_model)})}
   if(!rows.length)return'<div class="vh-empty">No value or rank changes recorded yet.</div>';
-  return`<div class="vh-feed">${rows.map(r=>`<div class="vh-feed-row"><div><b>${esc(dateTime(r.t))}</b><div class="muted">Value ${fmt(r.value)} • Overall #${r.overall} • ${esc(r.pos)} #${r.posRank}</div></div><div style="text-align:right"><b class="${deltaClass(r.dv)}">${signed(r.dv)}</b><div class="muted">${r.dr?`${r.dr>0?'+':''}${r.dr} overall`:''}${r.dr&&r.dp?' • ':''}${r.dp?`${r.dp>0?'+':''}${r.dp} pos`:''}</div></div></div>`).join('')}</div>`;
+  return`<div class="vh-feed">${rows.map(r=>`<div class="vh-feed-row"><div><b>${esc(dateTime(r.t))}</b><div class="muted">Value ${fmt(r.value)} • Overall #${r.overall} • ${esc(r.pos)} #${r.posRank}</div></div><div style="text-align:right"><b class="${deltaClass(r.modelBoundary?0:r.dv)}">${r.modelBoundary?'Model change':signed(r.dv)}</b><div class="muted">${r.modelBoundary?'Separate valuation baseline':r.dr?`${r.dr>0?'+':''}${r.dr} overall`:''}${r.dr&&r.dp?' • ':''}${r.dp?`${r.dp>0?'+':''}${r.dp} pos`:''}</div></div></div>`).join('')}</div>`;
 }
 function renderPlayerProfile(id,allPts,period='ALL'){
   const box=document.getElementById('vhContent');if(!box)return;
   if(!allPts.length){box.innerHTML=`<div class="vh-profile-back"><button class="secondary small" data-vh-dashboard>← Market dashboard</button></div><div class="vh-card"><div class="vh-empty">No historical observations recorded yet for ${esc(playerName(id))}. Their history begins with the first completed snapshot in which Sleeper makes them available to the current valuation database.</div></div>`;return}
   const meta=livePlayerMeta(id),pts=periodPoints(allPts,period),first=pts[0],last=pts[pts.length-1],delta=Number(last.value)-Number(first.value),pct=Number(first.value)?delta/Number(first.value)*100:0,vals=pts.map(p=>Number(p.value)),pmin=Math.min(...vals),pmax=Math.max(...vals),allVals=allPts.map(p=>Number(p.value)),allMin=Math.min(...allVals),allMax=Math.max(...allVals),bestOverall=Math.min(...allPts.map(p=>Number(p.overall))),bestPos=Math.min(...allPts.map(p=>Number(p.posRank))),lowestPos=Math.max(...allPts.map(p=>Number(p.posRank))),highPoint=allPts.find(p=>Number(p.value)===allMax),lowPoint=allPts.find(p=>Number(p.value)===allMin),bestOverallPoint=allPts.find(p=>Number(p.overall)===bestOverall),scoring=playerScoringCache.get(String(id))||null,scoringLoading=!playerScoringCache.has(String(id));
+  const periodModelBoundary=pts.some((p,i)=>i>0&&p.valuation_model&&pts[i-1].valuation_model!==p.valuation_model);
+  const rank30ModelBoundary=allPts.some((p,i)=>i>0&&p.valuation_model&&allPts[i-1].valuation_model!==p.valuation_model&&new Date(p.t).getTime()>=new Date(allPts.at(-1).t).getTime()-30*86400000);
   const archivedLast=allPts[allPts.length-1],previewRankMismatch=isValueHistoryDeployPreview()&&(
     (meta.overall!=null&&Number(meta.overall)!==Number(archivedLast.overall))||
     (meta.posRank!=null&&Number(meta.posRank)!==Number(archivedLast.posRank))||
@@ -2067,7 +2069,7 @@ function renderPlayerProfile(id,allPts,period='ALL'){
   </div>
   <div class="vh-card vh-filter-card"><div class="vh-filter-label">History range</div><div class="vh-periods">${['1D','7D','30D','90D','1Y','ALL'].map(p=>`<button type="button" class="${p===period?'':'secondary '}small" data-vh-period="${p}">${p}</button>`).join('')}</div></div>
   <div class="vh-metrics">
-    <div class="vh-metric"><small>${period} Change</small><b class="${deltaClass(delta)}">${signed(delta)}</b><div class="tiny muted">${signedPct(pct)}</div></div>
+    <div class="vh-metric"><small>${period} Change</small><b class="${deltaClass(periodModelBoundary?0:delta)}">${periodModelBoundary?'—':signed(delta)}</b><div class="tiny muted">${periodModelBoundary?'Valuation model changed':signedPct(pct)}</div></div>
     <div class="vh-metric"><small>Value Range</small><b>${fmt(pmin)}–${fmt(pmax)}</b></div>
     <div class="vh-metric"><small>All-Time High</small><b>${fmt(allMax)}</b><div class="vh-metric-time">${highPoint?dateTime(highPoint.t):'—'}</div></div>
     <div class="vh-metric"><small>All-Time Low</small><b>${fmt(allMin)}</b><div class="vh-metric-time">${lowPoint?dateTime(lowPoint.t):'—'}</div></div>
@@ -2076,8 +2078,8 @@ function renderPlayerProfile(id,allPts,period='ALL'){
   </div>
   <div class="vh-card vh-chart-card"><h3 class="vh-section-heading">${period==='ALL'?'All-Time':period} Value History</h3>${valueChart(id,pts,allPts)}</div>
   <div class="vh-rank-grid">
-    <div class="vh-card"><h3 class="vh-section-heading">Overall Rank — Last 30 Days</h3><div class="vh-rank-stat"><span class="muted">#${rankBase.overall} → #${rankLast.overall}</span><b class="${deltaClass(overallMove)}">${overallMove>0?'+':''}${overallMove}</b></div>${rankSpark(rank30.length?rank30:[rankBase,rankLast],'overall','Overall rank')}</div>
-    <div class="vh-card"><h3 class="vh-section-heading">${esc(meta.pos)} Rank — Last 30 Days</h3><div class="vh-rank-stat"><span class="muted">#${rankBase.posRank} → #${rankLast.posRank}</span><b class="${deltaClass(posMove)}">${posMove>0?'+':''}${posMove}</b></div>${rankSpark(rank30.length?rank30:[rankBase,rankLast],'posRank',`${meta.pos} rank`)}</div>
+    <div class="vh-card"><h3 class="vh-section-heading">Overall Rank — Last 30 Days</h3><div class="vh-rank-stat"><span class="muted">#${rankBase.overall} → #${rankLast.overall}</span><b class="${deltaClass(rank30ModelBoundary?0:overallMove)}">${rank30ModelBoundary?'—':`${overallMove>0?'+':''}${overallMove}`}</b></div>${rankSpark(rank30.length?rank30:[rankBase,rankLast],'overall','Overall rank')}</div>
+    <div class="vh-card"><h3 class="vh-section-heading">${esc(meta.pos)} Rank — Last 30 Days</h3><div class="vh-rank-stat"><span class="muted">#${rankBase.posRank} → #${rankLast.posRank}</span><b class="${deltaClass(rank30ModelBoundary?0:posMove)}">${rank30ModelBoundary?'—':`${posMove>0?'+':''}${posMove}`}</b></div>${rankSpark(rank30.length?rank30:[rankBase,rankLast],'posRank',`${meta.pos} rank`)}</div>
   </div>
   <div class="vh-grid">
     <div class="vh-card" style="grid-column:span 2"><h3 class="vh-section-heading">Recent Changes</h3><div class="vh-sub">Latest recorded value or rank changes</div>${recentChanges(allPts)}</div>

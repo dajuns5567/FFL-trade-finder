@@ -205,7 +205,8 @@ try{
    rows.push({...row,delta:row.idpRank-before.idpRank,baseline:before});
   }
   assert.equal(offChanged,0,'offense-only modeled price moved');
-  assert.equal(ctxChanged,0,'career context changed');
+  if(curr.factor==='V84-context-only-snap-role')assert(ctxChanged>0,'V84 did not modify any evidenced dynasty context');
+  else assert.equal(ctxChanged,0,'career context changed outside context-only V84');
   assert.equal(sourceChanged,0,'verified dynasty consensus changed');
   assert.equal(missingHistoryChanged,0,'unknown scoring history gained model value');
   const cohorts=[2,3].map(n=>{

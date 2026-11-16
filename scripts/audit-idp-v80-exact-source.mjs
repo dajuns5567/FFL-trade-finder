@@ -119,11 +119,11 @@ try{
    over20RankMoves:rows.filter(x=>Math.abs(x.delta)>20).length,
    largestMovement:rows.slice().sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta)).slice(0,8)
     .map(x=>({name:x.name,oldRank:x.baseline.idpRank,newRank:x.idpRank,market:x.marketIdpRank,age:x.age})),
-   featured:['Will Anderson Jr.','Myles Garrett','T.J. Watt','Greg Rousseau','Dallas Turner',
+   featured:['Will Anderson Jr.','Myles Garrett','Maxx Crosby','T.J. Watt','Greg Rousseau','Dallas Turner',
      'Aidan Hutchinson','Carson Schwesinger','Jack Campbell','David Bailey']
     .map(n=>rows.find(x=>x.name===n)).filter(Boolean)
     .map(x=>({name:x.name,overall:x.overall,idp:x.idpRank,prior:x.baseline.idpRank,
-      model:x.modeled,market:x.marketIdpRank,age:x.age}))
+      model:x.modeled,market:x.marketIdpRank,age:x.age,verifiedSources:x.actualSources,scoring:x.scoring,context:x.context,qualifiedSeasons:x.seasons}))
   });
  }
  // Paired source-agreement uncertainty: do not interpret a one-rank mean

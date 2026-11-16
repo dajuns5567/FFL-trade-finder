@@ -62,6 +62,12 @@ try{
       v65Factor:z.production?.idpYoungProjectionFactorV65??1,
       v65Taper:z.production?.idpYoungProjectionBaselineTaperV85??null,
       v72Base:z.production?.idpOverallTradeCurveBaselineV72??null,
+      v72Factor:z.production?.idpOverallTradeCurveFactorV72??null,
+      v74CareerFloor:z.production?.idpV74VerifiedCareerFloor??null,
+      v72Retention:z.production?.idpV72SourceRetentionBonus??null,
+      scoringPPG:z.production?.m?.ppg??null,
+      scoringConfidence:z.production?.m?.confidence??null,
+      dynastySources:(d.idpSources||[]).filter(x=>!String(x).endsWith(' (not listed)')),
       marketRank:d.idpRank??null,
       qualifiers:z.production?.a?.qualifyingSeasons??0};
     }),
@@ -103,6 +109,31 @@ try{
  assert.equal(zeroHistoryChanged,0,'missing-history player gained value');
  assert.equal(loweredIdp,0,'V85 may not lower any IDP modeled value');
  const changed=idps.filter(x=>x.delta!==0);
+ const composition=ranked=>{
+  const countAt=n=>ranked.slice(0,n).filter(x=>x.group==='IDP').length;
+  const early=ranked.slice(0,100).filter(x=>x.group==='IDP');
+  const scoringBuckets={noHistory:0,oneSeason:0,twoSeasons:0,threePlus:0};
+  const sourceBuckets={zero:0,one:0,twoPlus:0};
+  for(const x of early){
+   if(x.qualifiers===0)scoringBuckets.noHistory++;
+   else if(x.qualifiers===1)scoringBuckets.oneSeason++;
+   else if(x.qualifiers===2)scoringBuckets.twoSeasons++;
+   else scoringBuckets.threePlus++;
+   if(!x.dynastySources.length)sourceBuckets.zero++;
+   else if(x.dynastySources.length===1)sourceBuckets.one++;
+   else sourceBuckets.twoPlus++;
+  }
+  return{top25:countAt(25),top50:countAt(50),top100:countAt(100),
+   top150:countAt(150),top250:countAt(250),scoringBuckets,sourceBuckets,
+   top100Idps:early.map(x=>({name:x.name,id:x.id,overall:x.overall,idp:x.idpRank,
+    value:x.value,market:x.marketRank,consensus:x.consensus,scoring:x.scoring,
+    weightedPpg:x.scoringPPG,confidence:x.scoringConfidence,context:x.context,
+    v72Base:x.v72Base,v72Factor:x.v72Factor,v74Floor:x.v74CareerFloor,
+    v72Retention:x.v72Retention,qualifiers:x.qualifiers,sourceCount:x.dynastySources.length}))};
+ };
+ const priorComposition=composition(before.ranked),candidateComposition=composition(after.ranked);
+ console.log('IDP_V85_TOP100_COMPOSITION '+JSON.stringify({approvedPreview:priorComposition,candidateV85:candidateComposition,
+  top100Delta:candidateComposition.top100-priorComposition.top100}));
  const featured=['Dallas Turner','Maxx Crosby','Will Anderson Jr.','Myles Garrett',
   'George Karlaftis','Carson Schwesinger','Aidan Hutchinson','David Bailey']
   .map(name=>idps.find(x=>x.name===name)).filter(Boolean);

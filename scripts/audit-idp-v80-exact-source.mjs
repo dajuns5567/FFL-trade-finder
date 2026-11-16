@@ -88,14 +88,43 @@ assert(opportunitySource.includes(v83Original),'V83 scoring location missing');
 opportunitySource=opportunitySource.replace(v83Original,v83Updated);
 assert(opportunitySource.includes(' scoreCache25.set(id,out);return out;'),'V83 audit location missing');
 opportunitySource=opportunitySource.replace(' scoreCache25.set(id,out);return out;',' out.opportunityV83=opportunityV83;\n scoreCache25.set(id,out);return out;');
-const factors=['V75-existing','V80-candidate','V81-history-guard-counterfactual','V82-evidenced-breakout-counterfactual','V83-verified-snap-opportunity'];
+// V84: role-expansion context only; do not alter PPG, scoring percentile,
+// fixed global IDP 20/45/35 weights, dynasty sources, or market currency.
+// Require THREE qualified playing-time seasons with sequential snap/game
+// improvement plus a verified current scoring breakout.
+const v84RoleFn=[
+ 'function verifiedRoleExpansion84(id,a){',
+ ' const samples=(Array.isArray(a?.seasons)?a.seasons:[]).filter(x=>Number(x.games)>=8).sort((a,b)=>Number(b.season)-Number(a.season));',
+ ' const cur=samples.find(x=>x.currentSeason),past=samples.filter(x=>!x.currentSeason);',
+ ' if(!cur||past.length<2||Number(cur.ppg)<12||Number(cur.ppg)<Number(past[0].ppg)*1.2||Number(cur.ppg)-Number(past[0].ppg)<3)return null;',
+ ' const [recent,older]=past;',
+ ' const lookup=y=>{const row=state.stats?.[y]?.[String(id)]||{};return row.stats&&typeof row.stats==="object"?row.stats:row;};',
+ ' const c=lookup(cur.season),p=lookup(recent.season),o=lookup(older.season);',
+ ' const cs=Number(c.def_snp),ps=Number(p.def_snp),os=Number(o.def_snp),team=Number(c.tm_def_snp);',
+ ' if(!Number.isFinite(cs)||cs<300||!Number.isFinite(ps)||ps<200||!Number.isFinite(os)||os<200||!Number.isFinite(team)||team<cs)return null;',
+ ' const s0=os/Number(older.games),s1=ps/Number(recent.games),s2=cs/Number(cur.games),share=cs/team;',
+ ' const growthPast=s1/s0-1,growthCurrent=s2/s1-1;',
+ ' if(share<.70||growthPast<.12||growthCurrent<.12)return null;',
+ ' const strength=clamp25(0,Math.min(growthPast,growthCurrent)/.30,1)*clamp25(0,(share-.65)/.25,1);',
+ ' return{strength,share,growthPast,growthCurrent,snapRates:[s0,s1,s2],games:[older.games,recent.games,cur.games],ppg:[older.ppg,recent.ppg,cur.ppg]};',
+ '}'
+].join('\n');
+let contextRoleSource=newSource.replace('function context25(id,score){',v84RoleFn+'\nfunction context25(id,score){');
+assert.notEqual(contextRoleSource,newSource,'V84 role function anchor missing');
+const oldIndex='const index=.65*development.index+.25*trajectory.index+.10*continuity.index;';
+const newIndex='const opportunityEvidenceV84=verifiedRoleExpansion84(id,score.a);const index=.65*development.index+.25*trajectory.index+.10*continuity.index+.12*(opportunityEvidenceV84?.strength||0);';
+assert(contextRoleSource.includes(oldIndex),'V84 index anchor missing');
+contextRoleSource=contextRoleSource.replace(oldIndex,newIndex);
+assert(contextRoleSource.includes('value,index,development,trajectory,continuity,'),'V84 audit property anchor missing');
+contextRoleSource=contextRoleSource.replace('value,index,development,trajectory,continuity,','value,index,development,trajectory,continuity,opportunityEvidenceV84,');
+const factors=['V75-existing','V80-candidate','V81-history-guard-counterfactual','V82-evidenced-breakout-counterfactual','V83-verified-snap-opportunity','V84-context-only-snap-role'];
 const captures=[];
 try{
  for(const factor of factors){
   const context=await browser.newContext({serviceWorkers:'block'});
   const errors=[],blocked=[];
   const origin=new URL(preview).origin;
-  const substitute=factor==='V75-existing'?oldSource:factor==='V80-candidate'?newSource:factor==='V81-history-guard-counterfactual'?relaxedHistorySource:factor==='V82-evidenced-breakout-counterfactual'?breakoutSource:opportunitySource;
+  const substitute=factor==='V75-existing'?oldSource:factor==='V80-candidate'?newSource:factor==='V81-history-guard-counterfactual'?relaxedHistorySource:factor==='V82-evidenced-breakout-counterfactual'?breakoutSource:factor==='V83-verified-snap-opportunity'?opportunitySource:contextRoleSource;
   await context.route('**/*',route=>{
    const request=route.request(),u=new URL(request.url());
    if(request.method()==='POST'&&u.origin===origin&&
@@ -143,7 +172,7 @@ try{
      actualSources,sourceNames:(source.idpSources||[]).filter(s=>!String(s).endsWith(' (not listed)')),age:Number(st.players?.[id]?.age)||null,
      scoring:Number(z.production?.value)||null,context:Number(z.context)||null,weightedPpg:z.production?.m?.ppg??null,legacyPpg:z.production?.m?.legacyPpg??null,uncappedPpg:z.production?.m?.uncappedPpg??null,currentGames:z.production?.m?.currentSeasonGames??null,
      scoreConfidence:z.production?.m?.confidence??null,scoringPercentile:z.production?.ppgPct??null,
-     scoreRelative:z.production?.relative??null,opportunityV83:z.production?.opportunityV83??null,
+     scoreRelative:z.production?.relative??null,opportunityV83:z.production?.opportunityV83??null,opportunityEvidenceV84:z.production?.leagueContext?.opportunityEvidenceV84??null,
      evidenceSeasons:['Dallas Turner','Maxx Crosby','Myles Garrett','Will Anderson Jr.','George Karlaftis','Aidan Hutchinson','Jared Verse','David Bailey'].includes(name)?
       (z.production?.a?.seasons||[]).map(s=>({year:s.season,current:s.currentSeason,games:s.games,ppg:s.ppg,points:s.points,weight:s.assignedWeight})):null,
      seasons:Number(z.production?.a?.qualifyingSeasons)||0};
@@ -289,6 +318,29 @@ try{
  console.log('IDP_V83_VERIFIED_SNAPS_COUNTERFACTUAL '+JSON.stringify(snapAudit));
  console.log('IDP_V83_RELEASE_DECISION '+JSON.stringify({status:'research-only',automaticPromotion:false,
   reason:'source-matched cohort and audited snap evidence required before any actual valuation-model changes'}));
+ const ctxRows=captures[5].ranked.filter(x=>x.position==='IDP').map(x=>{
+  const old=v80.get(x.id);
+  return{id:x.id,name:x.name,age:x.age,sources:x.actualSources,market:x.marketIdpRank,
+   beforeIdp:old.idpRank,afterIdp:x.idpRank,beforeOverall:old.overall,afterOverall:x.overall,
+   beforeValue:old.modeled,afterValue:x.modeled,delta:x.modeled-old.modeled,
+   beforeScoring:old.scoring,afterScoring:x.scoring,beforePpg:old.weightedPpg,afterPpg:x.weightedPpg,
+   evidence:x.opportunityEvidenceV84};
+ });
+ const contextMatched=ctxRows.filter(x=>x.sources>=2&&x.market>0);
+ const ctxMAE=rs=>({n:rs.length,
+  before:rs.length?Number((rs.reduce((a,x)=>a+Math.abs(x.beforeIdp-x.market),0)/rs.length).toFixed(3)):null,
+  after:rs.length?Number((rs.reduce((a,x)=>a+Math.abs(x.afterIdp-x.market),0)/rs.length).toFixed(3)):null});
+ assert.equal(captures[5].ranked.length,captures[1].ranked.length,'V84 player universe changed');
+ assert(ctxRows.every(x=>x.beforeScoring===x.afterScoring&&x.beforePpg===x.afterPpg),'V84 contaminated production');
+ const roleAudit={population:ctxRows.length,roleExpansionEligible:ctxRows.filter(x=>x.evidence).length,
+  valuedChanged:ctxRows.filter(x=>x.delta!==0).length,
+  matched:ctxMAE(contextMatched),young25:ctxMAE(contextMatched.filter(x=>x.age<=25)),
+  veteran29plus:ctxMAE(contextMatched.filter(x=>x.age>=29)),
+  qualified:ctxRows.filter(x=>x.evidence).sort((a,b)=>b.delta-a.delta),
+  featured:ctxRows.filter(x=>['Dallas Turner','Maxx Crosby','Myles Garrett','Aidan Hutchinson','George Karlaftis','Boye Mafe','David Bailey'].includes(x.name))};
+ console.log('IDP_V84_ROLE_CONTEXT_COUNTERFACTUAL '+JSON.stringify(roleAudit));
+ console.log('IDP_V84_RELEASE_DECISION '+JSON.stringify({status:'research-only-not-promoted',noAutomaticPromotion:true,
+  reason:'verify snap-supported context changes against dynasty-market cohorts and all production controls'}));
  // Paired source-agreement uncertainty: do not interpret a one-rank mean
  // improvement as strong evidence without accounting for cohort volatility.
  const before=new Map(captures[0].ranked.map(x=>[x.id,x]));

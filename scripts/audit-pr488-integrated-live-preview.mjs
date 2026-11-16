@@ -326,6 +326,43 @@ try{
   assert(live.ui.finder&&live.ui.evaluator&&live.ui.history&&live.ui.rankings,
     'Finder/Evaluator/History/Rankings UI hosts missing');
   assert.deepEqual(runtimeErrors,[],'Browser JS error during integrated 32-team audit');
+
+  // Actual navigation/render pass; no update buttons or write paths are used.
+  markStage('navigating Player Values, Evaluator, History, and Market Dashboard');
+  const surfaceChecks=[];
+  for(const tab of ['rankings','evaluator','tradeHistory','valueHistory','finder']){
+    const selected=await page.evaluate(tab=>{
+      const btn=document.querySelector('.tabs button[data-tab="'+tab+'"]')||
+        document.querySelector('[data-home-tab="'+tab+'"]');
+      if(!btn)return{tab,clicked:false,reason:'navigation control not found'};
+      btn.click();
+      return{tab,clicked:true};
+    },tab);
+    await page.waitForTimeout(650);
+    const snapshot=await page.evaluate(tab=>{
+      const section=document.getElementById(tab),nav=document.querySelector('.tabs button[data-tab="'+tab+'"]');
+      return {tab,section:!!section,hidden:section?.hidden??null,
+        textLength:(section?.textContent||'').trim().length,
+        textSample:(section?.innerText||'').slice(0,175),
+        hasNavigation:!!nav,active:nav?.classList.contains('active')||false};
+    },tab);
+    surfaceChecks.push({...selected,...snapshot});
+  }
+  const marketNavigation=await page.evaluate(()=>{
+    const tab=document.querySelector('[data-home-tab="valueHistory"][data-home-vh="market"]');
+    if(!tab)return{clicked:false};
+    tab.click();
+    const section=document.getElementById('valueHistory');
+    return{clicked:true,visible:!!section&&!section.hidden,model:window.valueHistoryModelV90,
+      marketHeader:(section?.innerText||'').slice(0,350)};
+  });
+  await page.waitForTimeout(650);
+  assert(surfaceChecks.every(x=>x.clicked&&x.section&&x.hidden===false&&x.textLength>25),
+    'Page navigation / visible core tab rendering regression: '+JSON.stringify(surfaceChecks));
+  assert(marketNavigation.clicked&&marketNavigation.visible,'Market Dashboard entry cannot open Value History');
+  assert.deepEqual(runtimeErrors,[],'New JavaScript errors after cross-page navigation');
+  console.log('PR488_LIVE_PAGE_SURFACE_ACCEPTANCE '+JSON.stringify({surfaceChecks,marketNavigation}));
+
   console.log('PR488_EXACT_DEPLOY_PREVIEW_ACCEPTANCE '+JSON.stringify({
     preview,leagueId,sourceDigests,blockedWrites,blockedMutations,...live,
     note:'All browser POSTs aborted; production unmodified; audit-only branch'

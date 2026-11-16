@@ -4,6 +4,8 @@ on:
     paths:
       - 'netlify/functions/value-history.mjs'
       - 'value-history-v276.js'
+      - 'scripts/value-history-headless-refresh.mjs'
+      - 'tests/value-history-dense-charts.test.mjs'
       - 'tests/value-history-model-era-v90.test.mjs'
       - '.github/workflows/value-history-model-era-v90.yml'
 permissions:

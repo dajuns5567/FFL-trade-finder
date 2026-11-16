@@ -34,14 +34,36 @@ const relaxedHistorySource=newSource.replace(
  'const guard25=current&&historicalWeight>0?1.5+1.5*clamp25(0,(currentGames-5)/3,1):1.5; const weightedPpg=clamp25(legacyPpg-guard25,ppg,legacyPpg+guard25);'
 );
 assert.notEqual(relaxedHistorySource,newSource,'expected exact model-guard substitution');
-const factors=['V75-existing','V80-candidate','V81-history-guard-counterfactual'];
+// V82 research-only: a current eight-game breakout can outweigh earlier
+// low-opportunity seasonal averages, but historical scoring remains 30%.
+// Require a real prior eight-game comparator, a 4-PPG AND 25% increase,
+// and >=12 current PPG. No prospect projection, position/name exceptions.
+let breakoutSource=newSource.replace(
+ ' const legacyPpg=samples.reduce(',
+ ` const priorComparable=samples.filter(s=>!s.currentSeason&&Number(s.games)>=8).sort((a,b)=>Number(b.season)-Number(a.season))[0];
+ const evidencedBreakout=Boolean(current&&currentGames>=8&&priorComparable&&Number(current.ppg)>=12&&Number(current.ppg)-Number(priorComparable.ppg)>=4&&Number(current.ppg)>=1.25*Number(priorComparable.ppg));
+ const effectiveShare=evidencedBreakout?Math.max(currentShare??0,.70):currentShare;
+ const breakoutGuard=evidencedBreakout?3.1:1.5;
+ const legacyPpg=samples.reduce(`
+);
+assert.notEqual(breakoutSource,newSource,'V82 evidence rule insertion missing');
+for(const [before,after] of [
+ ['const w=currentShare===null?base/coverage:', 'const w=effectiveShare===null?base/coverage:'],
+ ['s===current?currentShare:(1-currentShare)*base/historicalWeight;', 's===current?effectiveShare:(1-effectiveShare)*base/historicalWeight;'],
+ ['const weightedPpg=clamp25(legacyPpg-1.5,ppg,legacyPpg+1.5);','const weightedPpg=clamp25(legacyPpg-breakoutGuard,ppg,legacyPpg+breakoutGuard);'],
+ ['currentSeasonWeight:currentShare??null,','currentSeasonWeight:effectiveShare??null,']
+]){
+ assert(breakoutSource.includes(before),'V82 expected exact original source: '+before);
+ breakoutSource=breakoutSource.replace(before,after);
+}
+const factors=['V75-existing','V80-candidate','V81-history-guard-counterfactual','V82-evidenced-breakout-counterfactual'];
 const captures=[];
 try{
  for(const factor of factors){
   const context=await browser.newContext({serviceWorkers:'block'});
   const errors=[],blocked=[];
   const origin=new URL(preview).origin;
-  const substitute=factor==='V75-existing'?oldSource:factor==='V80-candidate'?newSource:relaxedHistorySource;
+  const substitute=factor==='V75-existing'?oldSource:factor==='V80-candidate'?newSource:factor==='V81-history-guard-counterfactual'?relaxedHistorySource:breakoutSource;
   await context.route('**/*',route=>{
    const request=route.request(),u=new URL(request.url());
    if(request.method()==='POST'&&u.origin===origin&&
@@ -170,6 +192,35 @@ try{
  console.log('IDP_V81_DECISION '+JSON.stringify({status:'research-only',
   recommendation:'require league-wide validated dynasty benefit before changing production model',
   noAutomaticPromotion:true}));
+ const breakoutRows=captures[3].ranked.filter(x=>x.position==='IDP').map(x=>{
+  const before=v80.get(x.id);
+  return{name:x.name,id:x.id,age:x.age,market:x.marketIdpRank,sources:x.actualSources,
+   previousRank:before.idpRank,newRank:x.idpRank,previousOverall:before.overall,newOverall:x.overall,
+   beforeValue:before.modeled,afterValue:x.modeled,
+   currentGames:x.currentGames,currentSeason:x.evidenceSeasons?.find(s=>s.current)||null,
+   priorSeason:x.evidenceSeasons?.filter(s=>!s.current).sort((a,b)=>b.year-a.year)[0]||null,
+   priorWeightedPpg:before.weightedPpg,newWeightedPpg:x.weightedPpg,
+   valueDelta:x.modeled-before.modeled,rankDelta:x.idpRank-before.idpRank};
+ });
+ const breakoutMatched=breakoutRows.filter(x=>x.sources>=2&&x.market>0);
+ const cohortError=rows=>({n:rows.length,
+  priorMAE:rows.length?Number((rows.reduce((a,x)=>a+Math.abs(x.previousRank-x.market),0)/rows.length).toFixed(3)):null,
+  candidateMAE:rows.length?Number((rows.reduce((a,x)=>a+Math.abs(x.newRank-x.market),0)/rows.length).toFixed(3)):null});
+ const breakoutAudit={population:breakoutRows.length,
+  changed:breakoutRows.filter(x=>x.valueDelta!==0).length,
+  matched:cohortError(breakoutMatched),
+  young25:cohortError(breakoutMatched.filter(x=>x.age<=25)),
+  veterans29plus:cohortError(breakoutMatched.filter(x=>x.age>=29)),
+  positiveBigMoves:breakoutRows.filter(x=>x.valueDelta>15).length,
+  negativeBigMoves:breakoutRows.filter(x=>x.valueDelta< -15).length,
+  biggestUp:breakoutRows.slice().sort((a,b)=>b.valueDelta-a.valueDelta).slice(0,20),
+  biggestDown:breakoutRows.slice().sort((a,b)=>a.valueDelta-b.valueDelta).slice(0,20),
+  featured:breakoutRows.filter(x=>['Dallas Turner','Maxx Crosby','Myles Garrett','Aidan Hutchinson','George Karlaftis','David Bailey','Jared Verse'].includes(x.name))};
+ assert.equal(captures[3].ranked.length,captures[1].ranked.length,'V82 ranking universe changed');
+ assert(breakoutRows.every(x=>Number.isFinite(x.afterValue)),'invalid breakout modeled values');
+ console.log('IDP_V82_BREAKOUT_CONTEXT_SENSITIVITY '+JSON.stringify(breakoutAudit));
+ console.log('IDP_V82_DECISION '+JSON.stringify({status:'research-only-not-accepted',noAutomaticPromotion:true,
+  requires:'validate two-source consensus alignment, short-sample stability, and individual breakout evidence before release'}));
  // Paired source-agreement uncertainty: do not interpret a one-rank mean
  // improvement as strong evidence without accounting for cohort volatility.
  const before=new Map(captures[0].ranked.map(x=>[x.id,x]));

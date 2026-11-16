@@ -201,6 +201,41 @@ test('scheduled historical contract is distinct from client model and has no inv
  assert.match(server,/source===?'scheduled'\?SCHEDULED_VALUATION_CONTRACT:null/);
 });
 
+test('completed trades are never attributed to repricing across a valuation-model boundary',()=>{
+ const extract=(start,end)=>{
+  const begin=client.indexOf(start),stop=client.indexOf(end,begin+start.length);
+  assert(begin>=0&&stop>begin,'canonical team attribution helper missing: '+start);
+  return client.slice(begin,stop);
+ };
+ const sub=[
+  extract('function chartEraChange(a,b){','function chartEraPath('),
+  extract('function teamTradeNetEvents(teamId,netData,period){','function teamAttributionCard('),
+  extract('function teamNetPointTradeMap(teamId,points){','function teamNetChart(')
+ ].join('\n');
+ const tradeBetweenVersions={id:'1',created:'2026-11-02T12:00:00Z',roster_ids:['1','2']};
+ const tradeWithinVersion={id:'2',created:'2026-11-03T12:00:00Z',roster_ids:['1','3']};
+ const snapshots=[
+  {t:'2026-11-02T00:00:00Z',value:100,teamSnapshot:true},
+  {t:'2026-11-03T00:00:00Z',value:900,teamSnapshot:true,valuation_model:model},
+  {t:'2026-11-04T00:00:00Z',value:915,teamSnapshot:true,valuation_model:model}
+ ];
+ const ctx={Boolean,Number,String,Array,Map,Date,
+  tradeHistoryCache:{trades:[tradeBetweenVersions,tradeWithinVersion]},
+  dateShort:t=>String(t).slice(0,10),
+  historicalTradeTeamName:(_,roster)=>roster
+ };
+ vm.createContext(ctx);
+ vm.runInContext(sub,ctx,{filename:'canonical-history-team-trade-attribution.js'});
+ const events=ctx.teamTradeNetEvents('1',{points:snapshots},'7D');
+ assert.equal(events.length,1,'trade crossing model boundary cannot become a measured team-movement event');
+ assert.equal(events[0].trade.id,'2');
+ assert.equal(events[0].change,15);
+ const annotations=ctx.teamNetPointTradeMap('1',snapshots);
+ assert.equal(annotations.size,1,'team net graph must not attribute model repricing to the first trade');
+ assert.equal(annotations.get(snapshots[2].t).change,15);
+ assert.equal(annotations.get(snapshots[1].t),undefined);
+});
+
 test('scheduled local and GitHub archive captures cannot silently lose their explicit valuation model',()=>{
  assert.match(client,/window.valueHistoryModelV90=HISTORY_VALUATION_MODEL/);
  assert.match(scheduled,/valuationModel:window.valueHistoryModelV90\|\|null/);

@@ -8886,6 +8886,19 @@
     "penalty": 1,
     "penalty_yd": 15
   },
+  "6154": {
+    "gp": 2,
+    "_ppr_native_weeks": 0,
+    "_ppr_reconstructed_weeks": 0,
+    "off_snp": 38,
+    "pos_rank_half_ppr": 1998,
+    "pos_rank_ppr": 1998,
+    "pos_rank_std": 1998,
+    "st_snp": 9,
+    "tm_def_snp": 109,
+    "tm_off_snp": 123,
+    "tm_st_snp": 45
+  },
   "6179": {
     "gp": 2,
     "_ppr_native_weeks": 0,

@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-11-16T20:26:49.240Z",
+  "generatedAt": "2026-11-17T03:50:36.050Z",
   "source": "Sleeper importer snapshot",
   "currentSeason": 2026,
   "completedWeek": 9,
@@ -1664,8 +1664,8 @@
     },
     "diagnostics": {
       "finalGames": 149,
-      "qualifiedPlayerGames": 9817,
-      "rejectedPlayerGames": 11375,
+      "qualifiedPlayerGames": 9819,
+      "rejectedPlayerGames": 11402,
       "ignoredGames": 0
     }
   },
@@ -10556,6 +10556,19 @@
       "bonus_tkl_10p": 2,
       "penalty": 1,
       "penalty_yd": 15
+    },
+    "6154": {
+      "gp": 2,
+      "_ppr_native_weeks": 0,
+      "_ppr_reconstructed_weeks": 0,
+      "off_snp": 38,
+      "pos_rank_half_ppr": 1998,
+      "pos_rank_ppr": 1998,
+      "pos_rank_std": 1998,
+      "st_snp": 9,
+      "tm_def_snp": 109,
+      "tm_off_snp": 123,
+      "tm_st_snp": 45
     },
     "6179": {
       "gp": 2,
@@ -46426,16 +46439,16 @@
       "withGames": 961
     },
     "2025": {
-      "players": 1048,
-      "withPpr": 562,
-      "withGames": 1048
+      "players": 1049,
+      "withPpr": 563,
+      "withGames": 1049
     },
     "2026": {
-      "players": 1548,
+      "players": 1549,
       "withPpr": 531,
-      "withGames": 1548,
+      "withGames": 1549,
       "currentSeasonQualified": true,
-      "compactPlayers": 1548
+      "compactPlayers": 1549
     }
   },
   "stats": {
@@ -82814,6 +82827,24 @@
         "idp_ff": 1,
         "idp_tkl_ast": 46
       },
+      "6154": {
+        "pts_ppr": 40.3,
+        "gp": 13,
+        "off_snp": 507,
+        "rec_tgt": 31,
+        "rec_0_4": 2,
+        "rec_td": 2,
+        "rec_20_29": 2,
+        "bonus_fd_wr": 5,
+        "idp_tkl": 2,
+        "idp_tkl_solo": 2,
+        "rec": 14,
+        "rec_fd": 5,
+        "rec_5_9": 6,
+        "bonus_rec_wr": 14,
+        "rec_10_19": 4,
+        "rec_yd": 143
+      },
       "6179": {
         "gp": 9,
         "def_snp": 165,
@@ -99701,6 +99732,10 @@
         "idp_fum_rec": 1,
         "idp_qb_hit": 1,
         "idp_tkl_ast": 33
+      },
+      "6154": {
+        "gp": 2,
+        "off_snp": 38
       },
       "6179": {
         "gp": 2,

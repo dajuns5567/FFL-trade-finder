@@ -196,13 +196,55 @@ try{
       }
       return{name,count:Number(src?.playerCount)||keys.length,hash:(h>>>0).toString(36)};
     }).sort((a,b)=>a.name.localeCompare(b.name));
-    const valueParityMismatches=[];
+    // Compare the Player Values display, Finder, Evaluator, package math and
+    // archived Value History against ONE live canonical V319 model.
+    // Never invent missing prices or silently suppress a disagreement.
+    const valueParityMismatches=[],compare=(id,consumer,actual,expected)=>{
+      const n=Number(actual);
+      if(!Number.isFinite(n)||Math.round(n)!==expected)
+        valueParityMismatches.push({id:String(id),consumer,actual:Number.isFinite(n)?n:null,canonical:expected});
+    };
+    const modeled=window.modeledPlayerValuesV319,snapshot=modeled?.snapshot?.();
+    const engineNames=['tradeEngine96','tradeEngine98','tradeEngine99'];
+    const engines=engineNames.filter(name=>typeof window[name]?.assetValue==='function');
+    const canPlayerValues=typeof window.playerValuesV139?.homeTopPlayers==='function';
+    const canFinderEvaluator=typeof window.section1V130?.fair==='function';
+    const canHindsight=typeof vh?.currentEvaluatorValue==='function'&&typeof vh?.hindsightValue==='function';
+    const consumerReady=!!(modeled?.ready&&snapshot instanceof Map&&
+      typeof canonical.playerValue==='function'&&typeof canonical.canonicalValue==='function'&&
+      typeof window.baseValue==='function'&&typeof window.packageValue==='function'&&
+      engines.length>=1&&canPlayerValues&&canFinderEvaluator&&canHindsight);
+    const rankIds=new Set(rows.map(r=>String(r.id)));
     for(const r of rows){
-      const canonicalValue=Math.round(Number(canonical.playerValue?.({type:'player',id:String(r.id)})||0));
-      if(!Number.isFinite(canonicalValue)||canonicalValue!==Number(r.value))valueParityMismatches.push({id:String(r.id),history:Number(r.value),canonical:canonicalValue});
-      if(valueParityMismatches.length>=20)break;
+      const asset={type:'player',id:String(r.id)},expected=Number(r.value);
+      compare(r.id,'normalization.playerValue',canonical.playerValue?.(asset),expected);
+      compare(r.id,'normalization.canonicalValue',canonical.canonicalValue?.(asset),expected);
+      compare(r.id,'global.baseValue',window.baseValue?.(asset),expected);
+      compare(r.id,'global.packageValue',window.packageValue?.([asset]),expected);
+      compare(r.id,'modeled.snapshot',snapshot?.get(String(r.id)),expected);
+      compare(r.id,'tradeHistory.hindsight',vh?.hindsightValue?.(asset,null),expected);
+      compare(r.id,'tradeHistory.currentEvaluator',vh?.currentEvaluatorValue?.(asset),expected);
+      for(const name of engines)compare(r.id,name,window[name].assetValue(asset),expected);
+      if(valueParityMismatches.length>=30)break;
     }
-    return {rows,picks,teams,sourceManifest,valuationModel:verifiedModel,refresh:window.__fllValueRefresh||null,modeledReady:window.modeledPlayerValuesV319?.ready===true,modeledVersion:Number(window.modeledPlayerValuesV319?.meta?.version)||0,valueParityMismatches,status:String(document.getElementById('updateStatus')?.textContent||'')};
+    const topRows=canPlayerValues?window.playerValuesV139.homeTopPlayers(10):[];
+    const historyById=new Map(rows.map(r=>[String(r.id),r]));
+    for(const r of topRows){
+      const truth=historyById.get(String(r.id));
+      if(!truth){valueParityMismatches.push({id:String(r.id),consumer:'playerValues.homeTopPlayers',error:'missing history rank'});continue}
+      compare(r.id,'playerValues.homeTopPlayers',r.value,truth.value);
+      compare(r.id,'playerValues.overallRank',r.rank,truth.overall);
+      compare(r.id,'playerValues.posRank',r.posRank,truth.posRank);
+    }
+    if(!topRows.length)valueParityMismatches.push({consumer:'playerValues.homeTopPlayers',error:'no visible ranked players'});
+    const uniqueAssets=(window.state?.allAssets||[]).filter(a=>a?.type==='player'&&rankIds.has(String(a.id)));
+    const sample=uniqueAssets.slice(0,10);
+    if(sample.length>=2){
+      const expected=sample.reduce((sum,a)=>sum+Number(historyById.get(String(a.id))?.value||0),0);
+      compare('sample-package','normalization.package',canonical.canonicalPackageValue?.(sample),expected);
+      compare('sample-package','global.package',window.packageValue?.(sample),expected);
+    }else valueParityMismatches.push({consumer:'package',error:'insufficient rostered assets'});
+    return {rows,picks,teams,sourceManifest,valuationModel:verifiedModel,refresh:window.__fllValueRefresh||null,modeledReady:modeled?.ready===true,modeledVersion:Number(modeled?.meta?.version)||0,consumerReady,consumerCount:engines.length+8,valueParityMismatches,status:String(document.getElementById('updateStatus')?.textContent||'')};
   });
   const sameRows=(a,b)=>{
     if(!Array.isArray(a)||!Array.isArray(b)||a.length!==b.length)return false;
@@ -217,7 +259,7 @@ try{
     const first=await captureCurrent();
     await page.waitForTimeout(1500);
     const second=await captureCurrent();
-    const stable=sameRows(first.rows,second.rows)&&JSON.stringify(first.sourceManifest)===JSON.stringify(second.sourceManifest)&&first.modeledVersion===second.modeledVersion&&first.valuationModel===second.valuationModel&&second.refresh?.inFlight===false&&second.refresh?.phase==='complete'&&second.modeledReady===true&&!second.valueParityMismatches?.length&&!/loading|updating|refreshing/i.test(second.status||'');
+    const stable=sameRows(first.rows,second.rows)&&JSON.stringify(first.sourceManifest)===JSON.stringify(second.sourceManifest)&&first.modeledVersion===second.modeledVersion&&first.valuationModel===second.valuationModel&&second.refresh?.inFlight===false&&second.refresh?.phase==='complete'&&second.modeledReady===true&&second.consumerReady===true&&!second.valueParityMismatches?.length&&!/loading|updating|refreshing/i.test(second.status||'');
     if(stable){captured=second;break}
     if(attempt<3)await page.waitForTimeout(2000);
   }
@@ -226,7 +268,7 @@ try{
   if(!valuationModel)throw new Error('Scheduled capture lacks the approved live valuation model contract');
   if(!Array.isArray(captured.rows)||captured.rows.length<700)throw new Error(`Scheduled capture returned only ${captured.rows?.length||0} player rows`);
   if(captured.rows.some(r=>!Number.isFinite(Number(r?.value))||!Number.isFinite(Number(r?.overall))))throw new Error('Scheduled capture contains non-finite player values/ranks');
-  if(captured.valueParityMismatches?.length)throw new Error(`Scheduled capture diverged from canonical Player Values scale: ${JSON.stringify(captured.valueParityMismatches)}`);
+  if(!captured.consumerReady||captured.valueParityMismatches?.length)throw new Error(`Scheduled capture diverged across Player Values, Finder, Evaluator or History: ${JSON.stringify(captured.valueParityMismatches)}`);
 
   const t=new Date().toISOString(),fp=fingerprint(captured.rows,captured.picks,captured.teams);
   const snap={version:5,league,t,fingerprint:fp,source:'scheduled',valuation_contract:SCHEDULED_VALUATION_CONTRACT,valuation_model:valuationModel,provenance:{git_commit:process.env.GITHUB_SHA||null,modeled_version:captured.modeledVersion,consensus_sources:Number(readiness.consensusMarker?.successful)||0,source_manifest:captured.sourceManifest,canonical_parity:'exact'},rows:captured.rows,picks:captured.picks,teams:captured.teams};

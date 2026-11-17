@@ -1,0 +1,27 @@
+name: V94 live preview cross-page values (read-only)
+on:
+  pull_request:
+    paths:
+      - 'scripts/audit-preview-cross-page-values-readonly.mjs'
+      - '.github/workflows/v94-live-preview-parity.yml'
+permissions:
+  contents: read
+jobs:
+  preview-parity:
+    if: github.event.pull_request.number == 495
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned browser for safe read-only preview check
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Compare every IDP/offensive value in the deployed PR preview across live site consumers
+        env:
+          FFL_PREVIEW_URL: https://deploy-preview-495--precious-dango-fb4633.netlify.app/
+        run: node scripts/audit-preview-cross-page-values-readonly.mjs

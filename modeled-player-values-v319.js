@@ -33,7 +33,25 @@ function completeRoster(next){
   }
   return true;
 }
+// Sleeper rosters are available before the /players/nfl metadata dictionary.
+// Do not launch the global ranked valuation pipeline with unresolved player IDs:
+// groupPos() otherwise silently treats unknown offensive positions as IDP.
+function rosterMetadataReady(){
+  const st=window.state,roster=(st?.allAssets||[]).filter(a=>a?.type==='player');
+  if(!roster.length||!st?.players)return false;
+  let inspected=0,matched=0,skilled=false;
+  for(const asset of roster){
+    if(inspected>=24)break;
+    inspected++;
+    const meta=st.players[String(asset.id)];
+    if(!Array.isArray(meta?.fantasy_positions)||!meta.fantasy_positions.length)continue;
+    matched++;
+    if(meta.fantasy_positions.some(p=>['QB','RB','WR','TE'].includes(p)))skilled=true;
+  }
+  return matched>=Math.min(inspected,8)&&skilled;
+}
 function build(force=false){
+  if(!rosterMetadataReady())return false;
   let arr=[];
   try{arr=window.ensureMaster?.()||[]}catch(_){arr=[]}
   if(!Array.isArray(arr)||!arr.length)return false;
@@ -147,11 +165,22 @@ function refresh(force=true){
   if(!build(force))return false;
   return true;
 }
+// Schedule at most one full forced rebuild per event-loop turn. A microtask
+// refresh can starve the browser during Sleeper load and status mutations.
+let queuedForcedRefresh=false;
+function queueForcedRefresh(){
+  if(queuedForcedRefresh)return;
+  queuedForcedRefresh=true;
+  setTimeout(()=>{
+    queuedForcedRefresh=false;
+    if(rosterMetadataReady())refresh(true);
+  },0);
+}
 function schedule(){
   for(const ms of [0,100,300,700,1500,3000,6000])setTimeout(()=>refresh(false),ms);
   const status=document.getElementById('updateStatus');
   if(status&&typeof MutationObserver==='function'){
-    observer=new MutationObserver(()=>queueMicrotask(()=>refresh(true)));
+    observer=new MutationObserver(queueForcedRefresh);
     observer.observe(status,{subtree:true,childList:true,characterData:true,attributes:true});
   }
   document.addEventListener('click',e=>{
@@ -162,7 +191,7 @@ function schedule(){
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
 window.modeledPlayerValuesV319={
   MIN,MAX,BAND_ENDS,BLEND,MIN_RATIO,MAX_RATIO,
-  build,install,refresh,playerValue,canonicalValue,
+  build,install,refresh,rosterMetadataReady,playerValue,canonicalValue,
   snapshot(){return new Map(map)},
   get meta(){return{...meta}},
   get ready(){return installed&&meta.ready},

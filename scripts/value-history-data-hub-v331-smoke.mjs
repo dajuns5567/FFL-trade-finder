@@ -61,7 +61,24 @@ const ktcPlayers=Array.from({length:320},(_,i)=>({playerName:`Player ${i+1}`,pos
 const ktcParsed=extractKtcSuperflexRankings(`<script type="application/json" id="ktc-players">${JSON.stringify(ktcPlayers)}</script><script>var playersArray = JSON.parse(document.getElementById('ktc-players').textContent);</script>`);
 assert(ktcParsed.rows.length===320,'KTC embedded JSON parser must recover the complete player universe');
 assert(ktcParsed.rows[0].rank===1&&ktcParsed.rows.at(-1).rank===320,'KTC embedded JSON ranks are not preserved');
-assert(!m.marketRows.find(x=>x.id==='rook')?.delta365,'new player should not receive fabricated pre-entry 365-day history');
+assert(m.marketRows.find(x=>x.id==='rook')?.delta365===1600,'rookie should compare against actual first observed value');
+assert(m.marketRows.find(x=>x.id==='rook')?.delta365From===snaps[2].t,'late-entry historical coverage must disclose its date');
+assert(m.marketRows.find(x=>x.id==='rook')?.delta365Available===true,'shortened one-year coverage must be explicit');
+assert(m.periods['ALL'].valueRisers.some(x=>x.id==='rook'&&x.delta===1600),'all-time movers must include verified late entrants');
+const idpSnaps=[snap(0,[P('off',4000,50)]),snap(3,[P('off',4100,49),P('idp1',3000,120,'IDP',28)]),snap(20,[P('off',4400,46),P('idp1',3500,95,'IDP',20),P('idp2',2200,160,'IDP',60)]),snap(56,[P('off',4600,43),P('idp1',3800,85,'IDP',16),P('idp2',2300,155,'IDP',55)])];
+const im=marketFromSnapshots(idpSnaps),idp1=im.marketRows.find(x=>x.id==='idp1'),idp2=im.marketRows.find(x=>x.id==='idp2');
+assert(idp1.delta365===800&&idp1.deltaAll===800&&idp1.deltaAllFrom===idpSnaps[1].t,'IDP first verified snapshot must anchor 1Y and ALL');
+assert(idp1.delta365Available&&idp1.deltaAllAvailable,'missing initial baseline must be labeled');
+assert(idp2.delta365===100&&idp2.deltaAllFrom===idpSnaps[2].t,'later IDP must not inherit another IDP baseline');
+assert(im.periods['1Y'].valueRisers.some(x=>x.id==='idp1'),'1Y movers must include verified IDP history');
+assert(im.periods.ALL.posRankRisers.some(x=>x.id==='idp1'),'all-time positional movers must include IDP history');
+assert(im.marketRows.find(x=>x.id==='off').delta365===600&&im.marketRows.find(x=>x.id==='off').delta365Available===true,'offense must preserve original delta while accurately disclosing less than 365 days of tracking');
+const reentry=[snap(0,[P('reentry',1000,160,'IDP',60)]),snap(35,[P('off',4000,75)]),snap(100,[P('reentry',2000,120,'IDP',40)]),snap(400,[P('reentry',2700,90,'IDP',30),P('off',4200,70)])];
+const rm=marketFromSnapshots(reentry),rr=rm.marketRows.find(x=>x.id==='reentry');
+assert(rr.delta365===700&&rr.delta365From===reentry[2].t,'1Y value must never use pre-window player history when re-entering after the 365D baseline');
+assert(rr.deltaAll===1700&&rr.deltaAllFrom===reentry[0].t,'all-time value must still use the first archived observation');
+assert(rm.periods['1Y'].valueRisers.some(x=>x.id==='reentry'&&x.delta===700),'1Y movers must share corrected in-window baseline');
+assert(rm.periods.ALL.valueRisers.some(x=>x.id==='reentry'&&x.delta===1700),'all-time movers must retain full first-observation history');
 
 const ui=fs.readFileSync('value-history-v276.js','utf8');
 for(const needle of [
@@ -133,12 +150,14 @@ for(const needle of [
   'posRankFallers',
   'Value 1Y',
   'Value All',
+  'available history',
+  'historyHint(r',
   'Overall Δ 7D',
   'Pos Δ 1W',
   'Pos Δ All',
   'deltaAll',
   'posRankDeltaAll',
-  'Since last refresh',
+  'Between recorded snapshots',
   'refreshValue',
   'refreshPos',
   'Player value',
@@ -283,7 +302,7 @@ assert(ui.includes("What's Happening With My Team"),'approved Track My Team attr
 assert(!ui.includes('What Moved My Team'),'legacy team attribution heading must be removed');
 assert(!ui.includes('${teamTradeImpactCard(trackedTeamId)}'),'standalone Recent Trade Impact card must not duplicate trade events');
 assert(ui.includes('The snapshot change is observed team net-value movement, not an assumption that the trade alone caused the move.'),'trade-linked net movement must include non-causal attribution language');
-assert(ui.includes("body:JSON.stringify({league:'1316867686394769408',rows,picks,teams,source})"),'Value History snapshot POST must include separate player, pick, and team ownership totals');
+assert(ui.includes("body:JSON.stringify({league:'1316867686394769408',rows,picks,teams,source,valuation_model:HISTORY_VALUATION_MODEL})"),'Value History snapshot POST must include separate player, pick, and team ownership totals');
 assert(ui.includes('const recorded=Number(asset.historyRecordedValue)'),'Trade History must prefer recorded historical pick values before retroactive fallback');
 assert(ui.includes('vh-assets-title'),'Trade History must visually emphasize Assets received');
 assert(ui.includes('function tradeOriginalAssets(side,trade)')&&
@@ -345,6 +364,7 @@ assert(ui.includes('Current outcome detail'),'Hindsight must present current out
 assert(ui.includes('.vh-trade-list{display:grid;gap:16px}')&&ui.includes('.vh-trade-card{border:1px solid color-mix(in srgb,#e4b53f 42%,var(--line))'),'completed trades must keep clear separation while using compact spacing and the current thin gold border');
 assert(ui.includes('.vh-trade-card{border:1px solid color-mix(in srgb,#e4b53f 42%,var(--line))'),'completed trade cards need distinct thin gold outer borders');
 assert(!ui.includes('nearest-year retroactive frame'),'retroactive pick-frame mechanics must remain hidden from user-facing text');
+assert(!/\$\{r\.delta365Available\}\?' <small>available history<\/small>'/.test(ui),'Full Market History must keep yearly delta cells numeric only');
 assert(ui.includes('vh-driver-heading')&&ui.includes('Biggest positive drivers')&&ui.includes('Biggest negative drivers'),'Track My Team driver headings must use Fleeced themed headers');
 assert(ui.includes('vh-driver-chart')&&ui.includes('View history ↗')&&ui.includes('data-vh-player'),'Track My Team drivers must link to player Value History with the on-brand View history action');
 assert(ui.includes('vh-history-cue')&&ui.includes('View history ↗'),'Full Market History must show inline View history cues');
@@ -430,7 +450,10 @@ assert(backend.includes("const fp=fingerprint(rows,picks,teams);"),'Value Histor
 assert(backend.includes("url.searchParams.get('trades')==='1'"),'completed trade history endpoint missing');
 assert(backend.includes('function cleanPicks(picks)'),'Value History backend must sanitize stored pick snapshots separately from player rows');
 assert(backend.includes('function cleanTeams(teams)'),'Value History backend must sanitize team totals separately from player rows');
-assert(backend.includes("const snapshot={version:5,league:LEAGUE,t,fingerprint:fp,source,valuation_contract:source==='scheduled'?SCHEDULED_VALUATION_CONTRACT:null,rows,picks,teams}"),'Value History snapshots must persist player, pick, team totals, source, and the scheduled valuation contract as separate fields');
+assert(backend.includes("const snapshot={version:5,league:LEAGUE,t,fingerprint:fp,source,")&&
+  backend.includes("valuation_contract:source==='scheduled'?SCHEDULED_VALUATION_CONTRACT:null,")&&
+  backend.includes("valuation_model:valuationModel,rows,picks,teams}"),
+  'Value History snapshots must persist player/pick/team data, scheduled contract, and optional model attribution separately');
 assert(backend.includes('await appendIndex(s,key,t);'),'Value History write must persist the snapshot index before reporting success');
 assert(!backend.includes("try{await appendIndex(s,key,t)}catch"),'Value History must not silently report success for an unindexed snapshot');
 assert(backend.includes('histPickMap=pickMap'),'completed trade history must read pick values from the exact historical snapshot');
@@ -469,7 +492,7 @@ assert(ui.includes('function snapshotPreconditions()')&&ui.includes('Object.keys
 assert(!ui.includes("Object.keys(state.players).length<100||!hasValidatedKtcSnapshot()"),'Value History player snapshots must not be blocked by the KTC-specific validation gate');
 assert(ui.includes("const rows=currentRows();"),'Value History must copy the site already-calculated player values into each snapshot');
 assert(!ui.includes("keepalive:true"),'Value History POST must not use browser keepalive because the expanded snapshot payload can exceed keepalive body limits');
-assert(ui.includes("body:JSON.stringify({league:'1316867686394769408',rows,picks,teams,source})"),'Value History POST must send the completed player snapshot payload');
+assert(ui.includes("body:JSON.stringify({league:'1316867686394769408',rows,picks,teams,source,valuation_model:HISTORY_VALUATION_MODEL})"),'Value History POST must send the completed player snapshot payload');
 assert(ui.includes("else if(currentView==='player'&&currentPlayerId)loadPlayer(currentPlayerId);"),'successful Value History writes must refresh the currently viewed player chart immediately');
 assert(ui.includes("try{picks=currentPickRows()}catch"),'draft-pick snapshot enrichment must never block the core player snapshot');
 assert(ui.includes("try{teams=currentTeamRows(rows)}catch"),'team snapshot enrichment must never block the core player snapshot');
@@ -515,7 +538,8 @@ assert(indexHtml.includes('Review real trades, analysis at the time of trade, an
 assert(indexHtml.includes('Historical value hub, risers, fallers, team value analysis, and more'),'Home Value History description must match');
 assert(indexHtml.includes('id="homeTopPlayers"')&&indexHtml.includes('id="homeValueRisers"'),'Home must expose current top players and 7D riser summary slots');
 assert(/\/trade-select-all-v165\.js\?v=[^"'<>\s]+/.test(siteV29),'production shell must load Select All with an explicit cache-bust key');
-assert(siteV29.includes('/ui-player-values-v139.js?v=540'),'production shell must cache-bust the current V398 Player Values UI');
+assert(/\/ui-player-values-v139\.js\?v=(?:540|20261114-idp-identity)/.test(siteV29),'production shell must load the versioned Player Values UI without stale cache');
+assert(/\/ui-player-values-v139\.js\?v=(?:540|20261114-idp-identity)/.test(siteV29),'versioned Player Values UI must match either the frozen production or audited IDP identity runtime');
 assert(/\/nonblocking-consensus-v277\.js\?v=[^"'<>\s]+/.test(siteV29),'production shell must load consensus completion runtime with an explicit cache-bust key');
 const archiveWriter=fs.readFileSync('scripts/archive-value-history.mjs','utf8');
 assert(archiveWriter.includes("dataBranch='value-history-data'"),'archive writer must target the durable data branch');
@@ -563,7 +587,8 @@ assert(headlessRefresh.includes("sameRows(first.rows,second.rows)"),'scheduled h
 assert(headlessRefresh.includes("page.waitForTimeout(1500)"),'scheduled headless snapshots must observe a stability interval before persistence');
 assert(headlessRefresh.includes("window.__fllValueRefresh"),'scheduled headless readiness must honor the full valuation refresh in-flight marker');
 assert(headlessRefresh.includes("refresh?.phase==='complete'"),'scheduled headless readiness must require the canonical valuation refresh to reach the completed phase');
-assert(headlessRefresh.includes("canonical.playerValue?.({type:'player',id:String(r.id)})"),'scheduled snapshots must verify every captured player against the live canonical Player Values API');
+assert(headlessRefresh.includes("for(const r of rows)")&&headlessRefresh.includes("compare(r.id,'normalization.playerValue',canonical.playerValue?.(asset),expected)"),'scheduled snapshots must verify every captured player against the live canonical Player Values API');
+assert(headlessRefresh.includes("compare(r.id,'normalization.canonicalValue'")&&headlessRefresh.includes("compare(r.id,'global.baseValue'")&&headlessRefresh.includes("compare(r.id,'modeled.snapshot'")&&headlessRefresh.includes("compare(r.id,'playerValues.homeTopPlayers'")&&headlessRefresh.includes("second.consumerReady===true"),'scheduled snapshots must audit all consumer values before archiving');
 assert(headlessRefresh.includes("valueParityMismatches"),'scheduled snapshots must fail closed when captured values diverge from the canonical Player Values scale');
 assert(headlessRefresh.includes("first.modeledVersion===second.modeledVersion"),'scheduled snapshots must keep the modeled-value runtime version stable across the capture interval');
 const consensusRuntime=fs.readFileSync('nonblocking-consensus-v277.js','utf8');
@@ -580,7 +605,7 @@ const archiveWorkflow=fs.readFileSync('.github/workflows/value-history-archive.y
 assert(archiveWorkflow.includes("cron: '17 * * * *'"),'hourly durable archive schedule missing');
 assert(archiveWorkflow.includes('contents: write'),'archive workflow needs contents write permission');
 assert(archiveWorkflow.includes('NETLIFY_BLOBS_TOKEN:'),'archive workflow must inject an authenticated Blob token instead of relying on public site access');
-assert(archiveWorkflow.includes("VALUE_HISTORY_PRODUCTION_SITE_ID: '2e556797-6f35-4037-aa5a-1338724eb71d'"),'hourly archive must pin the current verified Netlify production site');
+assert(archiveWorkflow.includes("VALUE_HISTORY_PRODUCTION_SITE_ID: 'fa33dfe4-8293-441e-8da0-25cc66fc984c'"),'hourly archive must pin the current verified Netlify production site');
 assert(archiveWorkflow.includes('NETLIFY_SANDBOX_DEPLOY_TOKEN'),'hourly archive must use the current-team Blob credential');
 assert(archiveWorkflow.includes('Resolve latest production Netlify site for main'),'interactive archive workflow may resolve the currently accessible Netlify live buffer without being required by scheduled history');
 assert(archiveWorkflow.includes("if: steps.active_site.outputs.matched_target_sha == 'true'"),'interactive archive must not ingest live Blob history from a retired Netlify production site');

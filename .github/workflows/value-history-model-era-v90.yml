@@ -1,0 +1,31 @@
+name: Value History V90 model-era attribution acceptance (draft only)
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/value-history.mjs'
+      - 'value-history-v276.js'
+      - 'scripts/value-history-headless-refresh.mjs'
+      - 'tests/value-history-dense-charts.test.mjs'
+      - 'tests/value-history-model-era-v90.test.mjs'
+      - '.github/workflows/value-history-model-era-v90.yml'
+permissions:
+  contents: read
+jobs:
+  history-model-era:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax and historical-era market-movement regression
+        run: |
+          node --check netlify/functions/value-history.mjs
+          node --check value-history-v276.js
+          node --check scripts/value-history-headless-refresh.mjs
+          node --test tests/value-history-model-era-v90.test.mjs
+      - name: Preserve existing history archive and cross-page valuation invariants
+        run: |
+          node --test tests/combined-valuation-history-contract.test.mjs
+          node scripts/v319-values-v311-integration-smoke.cjs

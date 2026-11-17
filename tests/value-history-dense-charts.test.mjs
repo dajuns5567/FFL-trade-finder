@@ -21,7 +21,7 @@ const ctx={
   trackedTeamId:'1',teamNetPointTradeMap:()=>new Map()
 };
 vm.createContext(ctx);
-for(const name of ['chartTraceIndices','chartEraChange','chartEraPath','chartEraMarkers','chartHoverLayer','teamNetChart','rankSpark','valueChart'])
+for(const name of ['chartTraceIndices','chartEraChange','chartVisualSeries','chartEraPath','chartEraMarkers','chartHoverLayer','teamNetChart','rankSpark','valueChart'])
   vm.runInContext(functionSource(name),ctx);
 
 const pts=Array.from({length:501},(_,i)=>({
@@ -54,7 +54,8 @@ test('Value History plot is visually sparse but every snapshot has exact tooltip
   assert.equal((html.match(/class="vh-point-dot"/g)||[]).length,2);
   assert.equal((html.match(/class="vh-point-hit"/g)||[]).length,0);
   assert.match(html,/class="vh-plot-hit"/);
-  assert.match(html,/use arrow keys when focused/);
+  assert.match(html,/Use arrow keys when focused/);
+  assert.match(html,/display-smoothed only for isolated one-snapshot spikes/);
 });
 test('Rank charts preserve all precise rank observations without hundreds of dot targets',()=>{
   const html=ctx.rankSpark(pts,'overall','Overall Rank');
@@ -88,4 +89,36 @@ test('Delegated pointer and keyboard navigation retain nearest full-resolution s
   assert.match(source,/p\.posRank/);
   assert.match(source,/p\.trades/);
   assert.match(source,/\.vh-hover-guide/);
+});
+
+test('V96 isolated dense spike smoothing never mutates original snapshots, rankings or tooltips',()=>{
+ const original=pts.map(p=>p.value);
+ const displayed=Array.from(ctx.chartVisualSeries(pts,'value'));
+ assert.equal(displayed.length,pts.length);
+ assert.equal(displayed[333],(pts[332].value+pts[334].value)/2);
+ assert.equal(displayed[111],(pts[110].value+pts[112].value)/2);
+ assert.deepEqual(pts.map(p=>p.value),original);
+ const plot=ctx.valueChart('test',pts);
+ const exact=decodeSeries(plot);
+ assert.equal(exact.points[333].value,ctx.fmt(pts[333].value));
+ assert.equal(exact.points[111].value,ctx.fmt(pts[111].value));
+ assert.match(plot,/<path d="M [^"]+C [^"]+"/);
+});
+test('V96 no smoothing across model eras, sustained changes or sparse observations',()=>{
+ const rows=Array.from({length:20},(_,i)=>({
+  t:new Date(Date.UTC(2026,10,1+i)).toISOString(),
+  value:i<10?1000:1500,
+  valuation_model:i<10?'old-era':'new-era'
+ }));
+ rows[9].value=1200;rows[10].value=1800;
+ const copy=rows.map(p=>p.value);
+ const visual=Array.from(ctx.chartVisualSeries(rows,'value'));
+ assert.equal(visual[9],1200,'last prior-era point must not change');
+ assert.equal(visual[10],1800,'first new-era point must not change');
+ assert.equal(visual[11],1500,'stable new-era value must remain exact');
+ assert.deepEqual(rows.map(p=>p.value),copy);
+ const p=ctx.chartEraPath(rows,'value',100,i=>i*10,v=>v);
+ assert.equal((p.match(/M /g)||[]).length,2,'no rendered stroke crosses explicit model versions');
+ const sparse=rows.slice(0,8);
+ assert.deepEqual(Array.from(ctx.chartVisualSeries(sparse,'value')),sparse.map(x=>x.value));
 });

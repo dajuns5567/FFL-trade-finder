@@ -2032,9 +2032,27 @@ function chartTraceIndices(rows,field,maxPoints){
 function chartEraChange(a,b){
  return Boolean((a?.valuation_model||b?.valuation_model)&&a?.valuation_model!==b?.valuation_model);
 }
+// Display-only median stabilization removes isolated one-snapshot sawtooth
+// spikes from dense histories. The stored timeline, exact chart hover rows,
+// rank deltas, and cross-model boundaries remain completely unchanged.
+function chartVisualSeries(points,field){
+ const shown=points.map(p=>Number(p[field]));
+ if(points.length<12)return shown;
+ for(let i=1;i<points.length-1;i++){
+  if(chartEraChange(points[i-1],points[i])||chartEraChange(points[i],points[i+1]))continue;
+  const a=Number(points[i-1][field]),b=shown[i],c=Number(points[i+1][field]);
+  if(![a,b,c].every(Number.isFinite))continue;
+  const neighborSpread=Math.abs(a-c),scale=Math.max(1,Math.abs(a),Math.abs(b),Math.abs(c));
+  // Only smooth clearly isolated reversals, never a sustained revaluation.
+  if(neighborSpread<=Math.max(2,scale*.015)&&
+     Math.abs(b-(a+c)/2)>=Math.max(3,scale*.025))
+   shown[i]=(a+c)/2;
+ }
+ return shown;
+}
 function chartEraPath(points,field,maxPoints,x,y){
  if(!points.length)return'';
- const chunks=[],ranges=[];
+ const shown=chartVisualSeries(points,field),chunks=[],ranges=[];
  let start=0;
  for(let i=1;i<points.length;i++)if(chartEraChange(points[i-1],points[i])){
   ranges.push([start,i]);start=i;
@@ -2044,8 +2062,13 @@ function chartEraPath(points,field,maxPoints,x,y){
   const segment=points.slice(from,end);
   const sample=chartTraceIndices(segment,field,maxPoints);
   for(let j=0;j<sample.length;j++){
-   const i=from+sample[j];
-   chunks.push(`${j?'L':'M'} ${x(i).toFixed(1)} ${y(points[i][field]).toFixed(1)}`);
+   const i=from+sample[j],xx=x(i),yy=y(shown[i]);
+   if(j===0){chunks.push(`M ${xx.toFixed(1)} ${yy.toFixed(1)}`);continue}
+   const prev=from+sample[j-1],px=x(prev),py=y(shown[prev]);
+   // Horizontal control handles preserve each plotted value without
+   // overshooting extrema. Curves are purely presentational.
+   const dx=Math.max(0,xx-px),control=dx*.30;
+   chunks.push(`C ${(px+control).toFixed(1)} ${py.toFixed(1)} ${(xx-control).toFixed(1)} ${yy.toFixed(1)} ${xx.toFixed(1)} ${yy.toFixed(1)}`);
   }
  }
  return chunks.join(' ');
@@ -2098,7 +2121,7 @@ function valueChart(id,pts,allPts=pts){
     refreshValue=prev&&!refreshBoundary?Number(latest.value)-Number(prev.value):null,refreshPos=prev&&!refreshBoundary?Number(prev.posRank)-Number(latest.posRank):null,
     refresh=`<div class="vh-refresh-callout"><span class="vh-refresh-label">${refreshBoundary?'Valuation model changed — movement not comparable':'Since last refresh'}</span><div class="vh-refresh-metrics"><div class="vh-refresh-metric"><small>Value change</small><strong class="${deltaClass(refreshValue)}">${refreshValue==null?'—':signed(refreshValue)}</strong></div><div class="vh-refresh-metric"><small>${esc(latest.pos)} rank change</small><strong class="${deltaClass(refreshPos)}">${refreshPos==null?'—':signed(refreshPos)}</strong></div></div></div>`,
     xLabel=t=>{try{return new Date(t).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}catch{return''}};
-  return`<div class="vh-value-chart">${refresh}<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(playerName(id))} value history"><line x1="${L}" y1="${H-B}" x2="${W-R}" y2="${H-B}" stroke="currentColor" opacity=".25"/><line x1="${L}" y1="${T}" x2="${L}" y2="${H-B}" stroke="currentColor" opacity=".25"/><text class="vh-value-axis" x="${L-10}" y="${T+5}" text-anchor="end">${Math.round(hi).toLocaleString()}</text><text class="vh-value-axis" x="${L-10}" y="${H-B}" text-anchor="end">${Math.round(lo).toLocaleString()}</text><text class="vh-value-axis" x="18" y="${(T+H-B)/2}" text-anchor="middle" transform="rotate(-90 18 ${(T+H-B)/2})">Player value</text><text class="vh-value-axis" x="${L}" y="${H-34}">${esc(xLabel(first.t))}</text><text class="vh-value-axis" x="${W-R}" y="${H-34}" text-anchor="end">${esc(xLabel(last.t))}</text><text class="vh-value-axis" x="${(L+W-R)/2}" y="${H-10}" text-anchor="middle">Date / time</text><path d="${path}" fill="none" stroke="#e4b53f" stroke-width="3.5" vector-effect="non-scaling-stroke"/>${markers}${hover}</svg><div class="vh-chart-tooltip" role="status" aria-live="polite"></div></div><p class="tiny muted">Hover or tap anywhere along the chart to inspect every original snapshot (timestamp, value and ranks); use arrow keys when focused.</p>`;
+  return`<div class="vh-value-chart">${refresh}<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(playerName(id))} value history"><line x1="${L}" y1="${H-B}" x2="${W-R}" y2="${H-B}" stroke="currentColor" opacity=".25"/><line x1="${L}" y1="${T}" x2="${L}" y2="${H-B}" stroke="currentColor" opacity=".25"/><text class="vh-value-axis" x="${L-10}" y="${T+5}" text-anchor="end">${Math.round(hi).toLocaleString()}</text><text class="vh-value-axis" x="${L-10}" y="${H-B}" text-anchor="end">${Math.round(lo).toLocaleString()}</text><text class="vh-value-axis" x="18" y="${(T+H-B)/2}" text-anchor="middle" transform="rotate(-90 18 ${(T+H-B)/2})">Player value</text><text class="vh-value-axis" x="${L}" y="${H-34}">${esc(xLabel(first.t))}</text><text class="vh-value-axis" x="${W-R}" y="${H-34}" text-anchor="end">${esc(xLabel(last.t))}</text><text class="vh-value-axis" x="${(L+W-R)/2}" y="${H-10}" text-anchor="middle">Date / time</text><path d="${path}" fill="none" stroke="#e4b53f" stroke-width="3.5" vector-effect="non-scaling-stroke"/>${markers}${hover}</svg><div class="vh-chart-tooltip" role="status" aria-live="polite"></div></div><p class="tiny muted">Chart line is display-smoothed only for isolated one-snapshot spikes; hover or tap for every exact original value, timestamp and rank. Use arrow keys when focused.</p>`;
 }
 function recentChanges(pts){
   const rows=[];for(let i=pts.length-1;i>0&&rows.length<8;i--){const a=pts[i-1],b=pts[i],dv=Number(b.value)-Number(a.value),dr=Number(a.overall)-Number(b.overall),dp=Number(a.posRank)-Number(b.posRank);if(dv||dr||dp)rows.push({t:b.t,dv,dr,dp,value:b.value,overall:b.overall,pos:b.pos,posRank:b.posRank,modelBoundary:Boolean((a.valuation_model||b.valuation_model)&&a.valuation_model!==b.valuation_model)})}

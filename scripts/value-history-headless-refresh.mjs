@@ -209,10 +209,11 @@ try{
     const engines=engineNames.filter(name=>typeof window[name]?.assetValue==='function');
     const canPlayerValues=typeof window.playerValuesV139?.homeTopPlayers==='function';
     const canFinderEvaluator=typeof window.section1V130?.fair==='function';
+    const canHindsight=typeof vh?.currentEvaluatorValue==='function'&&typeof vh?.hindsightValue==='function';
     const consumerReady=!!(modeled?.ready&&snapshot instanceof Map&&
       typeof canonical.playerValue==='function'&&typeof canonical.canonicalValue==='function'&&
       typeof window.baseValue==='function'&&typeof window.packageValue==='function'&&
-      engines.length>=1&&canPlayerValues&&canFinderEvaluator);
+      engines.length>=1&&canPlayerValues&&canFinderEvaluator&&canHindsight);
     const rankIds=new Set(rows.map(r=>String(r.id)));
     for(const r of rows){
       const asset={type:'player',id:String(r.id)},expected=Number(r.value);
@@ -221,6 +222,8 @@ try{
       compare(r.id,'global.baseValue',window.baseValue?.(asset),expected);
       compare(r.id,'global.packageValue',window.packageValue?.([asset]),expected);
       compare(r.id,'modeled.snapshot',snapshot?.get(String(r.id)),expected);
+      compare(r.id,'tradeHistory.hindsight',vh?.hindsightValue?.(asset,null),expected);
+      compare(r.id,'tradeHistory.currentEvaluator',vh?.currentEvaluatorValue?.(asset),expected);
       for(const name of engines)compare(r.id,name,window[name].assetValue(asset),expected);
       if(valueParityMismatches.length>=30)break;
     }
@@ -241,7 +244,7 @@ try{
       compare('sample-package','normalization.package',canonical.canonicalPackageValue?.(sample),expected);
       compare('sample-package','global.package',window.packageValue?.(sample),expected);
     }else valueParityMismatches.push({consumer:'package',error:'insufficient rostered assets'});
-    return {rows,picks,teams,sourceManifest,valuationModel:verifiedModel,refresh:window.__fllValueRefresh||null,modeledReady:modeled?.ready===true,modeledVersion:Number(modeled?.meta?.version)||0,consumerReady,consumerCount:engines.length+6,valueParityMismatches,status:String(document.getElementById('updateStatus')?.textContent||'')};
+    return {rows,picks,teams,sourceManifest,valuationModel:verifiedModel,refresh:window.__fllValueRefresh||null,modeledReady:modeled?.ready===true,modeledVersion:Number(modeled?.meta?.version)||0,consumerReady,consumerCount:engines.length+8,valueParityMismatches,status:String(document.getElementById('updateStatus')?.textContent||'')};
   });
   const sameRows=(a,b)=>{
     if(!Array.isArray(a)||!Array.isArray(b)||a.length!==b.length)return false;

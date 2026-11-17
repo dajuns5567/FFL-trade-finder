@@ -1,0 +1,22 @@
+name: Week10 Sleeper scoring finality and refresh cadence (draft only)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/import-sleeper-history.yml'
+      - '.github/workflows/sleeper-week10-cadence-contract.yml'
+      - 'tests/sleeper-week10-finality-cadence.test.mjs'
+      - 'scripts/import-sleeper-history.mjs'
+      - 'sleeper-history-client-v22.js'
+permissions:
+  contents: read
+jobs:
+  offline-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Confirm fully qualified scoring gate and redundant importer wakeups
+        run: node --test tests/sleeper-week10-finality-cadence.test.mjs tests/sleeper-idp-audit-finality.test.mjs

@@ -194,6 +194,28 @@ try{
  assert.equal(zeroHistoryChanged,0,'missing-history player gained value');
  assert(loweredIdp===0,'verified role breakout V91 must not suppress baseline modeled IDP values');
  const changed=idps.filter(x=>x.delta!==0);
+ // Release guard: a V91 value increase must be traceable to independently
+ // measured 2026 opportunity growth, never a name/age-specific adjustment.
+ const unsupported=changed.filter(x=>!(x.verifiedRoleGrowthSupport>0));
+ assert.equal(unsupported.length,0,'V91 repriced defenders without verified role-growth support: '+JSON.stringify(unsupported.slice(0,8)));
+ const changedMissingConsensus=changed.filter(x=>!x.dynastySources.length);
+ // Source-free assets may move only on verified actual production; they
+ // cannot acquire a fictitious consensus rank or developer-supplied price.
+ for(const x of changedMissingConsensus){
+  assert(!(Number(x.consensus)>0),'source-free breakout gained invented consensus: '+x.name);
+  assert(x.scoringPPG>0,'source-free breakout lacks verified production: '+x.name);
+ }
+ assert.equal(loweredIdp,0,'role-growth correction reduced an IDP modeled value');
+ const top100Before=before.ranked.slice(0,100).filter(x=>x.group==='IDP').length;
+ const top100After=after.ranked.slice(0,100).filter(x=>x.group==='IDP').length;
+ assert(top100After-top100Before<=2,'unexpected IDP crowding among top 100');
+ assert(spillover.allOffense.maxAbsolute<=100,'unexpected offense shared-currency spillover');
+ console.log('IDP_V91_BREAKOUT_RELEASE_GUARDS '+JSON.stringify({
+  changed:changed.length,unsupported:unsupported.length,
+  changedMissingConsensus:changedMissingConsensus.map(x=>({id:x.id,name:x.name,verifiedRoleGrowthSupport:x.verifiedRoleGrowthSupport})),
+  top100Before,top100After,offenseCurrencyMax:spillover.allOffense.maxAbsolute,
+  offenseRawChanged:offenseChanged,loweredIdp,sourceConsistency:consensusChanged===0
+ }));
  const composition=ranked=>{
   const countAt=n=>ranked.slice(0,n).filter(x=>x.group==='IDP').length;
   const early=ranked.slice(0,100).filter(x=>x.group==='IDP');

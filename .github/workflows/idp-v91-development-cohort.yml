@@ -1,0 +1,27 @@
+name: IDP V91 dynasty development cohort causal audit (no deploy)
+on:
+  pull_request:
+    paths:
+      - 'scripts/audit-idp-v91-development-context.mjs'
+      - 'scripts/audit-idp-v91-confidence-counterfactual.mjs'
+      - '.github/workflows/idp-v91-development-cohort.yml'
+permissions:
+  contents: read
+jobs:
+  read-only-cohort:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check audit syntax
+        run: node --check scripts/audit-idp-v91-development-context.mjs
+          node --check scripts/audit-idp-v91-confidence-counterfactual.mjs
+      - name: Install isolated read-only Chromium
+        run: |
+          npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright
+          npx playwright install --with-deps chromium
+      - name: Verify live Sleeper and dynasty-only sources, audit full IDP cohort
+        run: node scripts/audit-idp-v91-confidence-counterfactual.mjs

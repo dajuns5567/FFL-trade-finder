@@ -1,10 +1,33 @@
 (()=>{
 'use strict';
 const API='/.netlify/functions/value-history',SIGNAL_API='/.netlify/functions/player-signals';
-// Version marker is valid only on the dependent V77/V85/V86 integration branch.
-// Never infer a publisher update time or rewrite existing history.
-const HISTORY_VALUATION_MODEL='idp-v77-v85-v86-dynasty';
-window.valueHistoryModelV90=HISTORY_VALUATION_MODEL;
+// V95: model-era attribution is a verified deployment contract, not an
+// assumption based on the latest record or a manually selected player.
+// Never tag a history snapshot until the exact V94 IDP scorer AND balanced
+// V92 compression stage are served by the running site.
+const HISTORY_VALUATION_MODEL='idp-v94-v92-balanced-stable-veteran';
+window.valueHistoryModelV90=null;
+async function verifyLiveValuationModelV95(){
+ try{
+  const paths=['/valuation-idp-v25-perf.js','/valuation-idp-v43.js'];
+  const responses=await Promise.all(paths.map(path=>fetch(path,{cache:'no-store'})));
+  if(responses.some(r=>!r.ok))throw Error('valuation-source-unavailable');
+  const [scorer,curve]=await Promise.all(responses.map(r=>r.text()));
+  const v94=scorer.includes('v94StableDeclineSupport')&&
+    scorer.includes('const support=mean>=10?stability*decline*incomplete:0')&&
+    scorer.includes('const sustainedRoleShare=Math.min(.70,v75CurrentShare+.15*support)');
+  const v92=curve.includes('Math.round(compressed*.01*support*evidence)')&&
+    curve.includes('servedFactor*1.025');
+  // The IDP runtime must also be installed, not merely served as a dormant asset.
+  const running=typeof window.idpV25PropagationAudit==='function';
+  window.valueHistoryModelV90=v94&&v92&&running?HISTORY_VALUATION_MODEL:null;
+ }catch(e){
+  window.valueHistoryModelV90=null;
+ }
+ return window.valueHistoryModelV90;
+}
+window.addEventListener('load',()=>{void verifyLiveValuationModelV95()});
+if(document.readyState==='complete')void verifyLiveValuationModelV95();
 // Experimental deploy previews may read archival history but must never
 // persist their branch-specific ranks into the canonical shared timeline.
 const isValueHistoryDeployPreview=()=>/^(?:deploy-preview-\d+|[a-f0-9]{24})--precious-dango-fb4633\.netlify\.app$/i.test(location.hostname);
@@ -571,6 +594,11 @@ async function recordSnapshot(source=pendingSnapshotSource){
     }
     const rows=currentRows();
     if(rows.length<100||!sameSnapshotRows(firstRows,rows)){scheduleSnapshot(2000,source);return false}
+    if(await verifyLiveValuationModelV95()!==HISTORY_VALUATION_MODEL){
+      window.__vhLastSnapshot={ok:false,reason:'valuation-model-contract-unverified'};
+      console.warn('Value History snapshot blocked: V94 model identity could not be verified');
+      return false;
+    }
     let picks=[],teams=[];
     try{picks=currentPickRows()}catch(e){console.warn('value-history-pick-enrichment',e)}
     try{teams=currentTeamRows(rows)}catch(e){console.warn('value-history-team-enrichment',e)}

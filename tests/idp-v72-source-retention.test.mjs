@@ -17,8 +17,8 @@ function calc({cv=677,base=430,sources=['The IDP Show Combined IDP','DraftSharks
 }
 test('two independently published sources plus verified scoring gently limit compression',()=>{
  const z=calc();
- assert.equal(z.value,446);
- assert.equal(z.bonus,16);
+ assert.equal(z.value,432);
+ assert.equal(z.bonus,2);
  assert.equal(z.sourceCount,2);
  assert.equal(z.support,.5);
 });
@@ -34,7 +34,7 @@ test('source missing, omitted, or single-source IDP never receives invented cons
 });
 test('verified ranking changes pass through, and only a positive compression gap is restored',()=>{
  assert.equal(calc({cv:350}).value,430,'no support when market price is already below compressed value');
- assert.ok(calc({cv:850}).value>calc({cv:677}).value,'larger verified market must not reduce retained value');
+ assert.ok(calc({cv:850}).value>=calc({cv:677}).value,'larger verified market must not reduce retained value');
  assert.ok(calc({cv:850,evidence:1}).value>calc({cv:850,evidence:.25}).value);
 });
 test('three independent sources get greater weight than two, no duplication or omission penalties',()=>{
@@ -108,18 +108,31 @@ test('evidence floor rises continuously with independent sources, qualifying sea
 });
 test('V74 applies only within IDP V72 and preserves the full-precision ranking correction',()=>{
  assert.match(source,/if\(groupPos\(z\.x\)!=='IDP'\)return z/);
- assert.match(source,/finalFactor=Math\.max\(servedFactor,Math\.min\(careerRetention\.floor,servedFactor\*1\.17\)\)/);
+ assert.match(source,/finalFactor=Math\.max\(servedFactor,Math\.min\(careerRetention\.floor,servedFactor\*1\.025\)\)/);
  assert.match(source,/idpV74OriginalCompressionFactor:Number\(servedFactor\.toFixed\(3\)\)/);
  assert.match(source,/idpV74VerifiedCareerSeasons:careerRetention\.seasons/);
  assert.match(source,/idpOverallTradeCurveExactV72:baseline\*finalFactor\+retention\.bonus/);
 });
 
-test('V74 validated IDP retention is bounded to 17 percent of the previous continuous curve',()=>{
- assert.match(source,/servedFactor\*1\.17/);
+test('V92 career retention is bounded to 2.5 percent of earlier continuous curve',()=>{
+ assert.match(source,/servedFactor\*1\.025/);
  const verified=career();
  for(const oldFactor of [.56,.60,.67,.697,.72,.76,.88,.95]){
-  const adjusted=Math.max(oldFactor,Math.min(verified.floor,oldFactor*1.17));
+  const adjusted=Math.max(oldFactor,Math.min(verified.floor,oldFactor*1.025));
   assert(adjusted>=oldFactor);
-  assert(adjusted<=oldFactor*1.17+1e-9);
+  assert(adjusted<=oldFactor*1.025+1e-9);
  }
+});
+
+test('retention is independently evidenced, bounded and cannot double count large consensus gaps',()=>{
+ for(const compressed of [150,250,430,550,750]){
+  for(const evidence of [.1,.4,.875,1]){
+   const a=calc({cv:1800,base:compressed,evidence});
+   assert(a.value>=compressed);
+   assert(a.bonus<=Math.round(compressed*.01*.5*evidence),
+     'source retention must remain proportionate to verified scoring and publisher coverage');
+  }
+ }
+ assert.match(source,/servedFactor\*1\.025/);
+ assert.match(source,/Math\.round\(compressed\*\.01\*support\*evidence\)/);
 });

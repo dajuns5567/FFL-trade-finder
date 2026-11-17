@@ -1,4 +1,4 @@
-name: IDP V77/V85/V86 integration acceptance (draft, no deploy)
+name: IDP V91 role breakout vs V86 acceptance (draft, no deploy)
 on:
   pull_request:
     paths:
@@ -11,6 +11,7 @@ on:
       - 'tests/idp-v75-scoring-bucket.test.mjs'
       - 'tests/idp-v65-monotonic-development-v85.test.mjs'
       - 'scripts/audit-idp-v86-v85-full-league.mjs'
+      - 'scripts/audit-idp-v91-role-breakout-full-league.mjs'
       - '.github/workflows/idp-v77-v85-v86-integration.yml'
 permissions:
   contents: read
@@ -33,6 +34,7 @@ jobs:
           node --check netlify/functions/draftsharks-idp-adapter.mjs
           node --check netlify/functions/rotowire-idp-adapter.mjs
           node --check scripts/audit-idp-v86-v85-full-league.mjs
+          node --check scripts/audit-idp-v91-role-breakout-full-league.mjs
           node --test tests/idp-dynasty-provenance-v77.test.mjs tests/consensus-composite-v3.test.mjs tests/idp-v75-scoring-bucket.test.mjs tests/idp-v65-monotonic-development-v85.test.mjs tests/idp-20-45-35-calibration.test.mjs tests/idp-v72-source-retention.test.mjs
       - name: Preserve canonical player identity, values and history contracts
         run: |
@@ -43,5 +45,11 @@ jobs:
         run: |
           npm install --no-save --ignore-scripts --no-audit --no-fund --no-package-lock playwright
           npx playwright install --with-deps chromium
-      - name: Exact full-league same-source model acceptance, all writes blocked
-        run: node scripts/audit-idp-v86-v85-full-league.mjs
+      - name: Fetch exact PR base model for same-snapshot control
+        env:
+          IDP_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: git fetch --depth=1 origin "$IDP_BASE_SHA"
+      - name: Exact full-league V86 vs V91 model acceptance, all writes blocked
+        env:
+          IDP_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: node scripts/audit-idp-v91-role-breakout-full-league.mjs

@@ -59,7 +59,7 @@ test('V86 scoring requires verified snap-growth evidence; 20/45/35 coefficients 
  assert.doesNotMatch(source,/calibratedScoring25/);
 });
 
-test('sample weighting never shifts a verified three-year scoring input by more than 1.5 PPG',()=>{
+test('without independently verified role growth, generic three-year scoring guard remains 1.5 PPG',()=>{
  for(let g=1;g<=17;g++)for(const ppg of [1,5,10,15,22,35]){
   const x=calc(g,ppg);
   assert(Math.abs(x.ppg-x.legacyPpg)<=1.5+1e-8);
@@ -70,14 +70,19 @@ test('sample weighting never shifts a verified three-year scoring input by more 
 // V86 adds opportunity evidence as a gate, not a fabricated production projection.
 test('verified sustained defensive snap growth earns the mature 55% share',()=>{
  const supported=calc(8,20,{snaps:456,priorSnaps:510,teamSnaps:530});
- assert.equal(supported.currentSeasonWeight,.55);
- assert(Math.abs(supported.uncappedPpg-(.55*20+.45*10))<1e-9);
- assert(Math.abs(supported.ppg-supported.legacyPpg)<=1.5+1e-9);
+ assert.equal(supported.currentSeasonWeight,.70);
+ assert(Math.abs(supported.uncappedPpg-(.70*20+.30*10))<1e-9);
+ assert.equal(supported.verifiedRoleGrowthSupport,1);
+ assert.equal(supported.scoringGuardPpg,4.5);
+ assert(Math.abs(supported.ppg-supported.legacyPpg)<=4.5+1e-9);
+ assert(supported.ppg>supported.legacyPpg+1.5,'verified role breakout should not be erased by the old 1.5-point guard');
  assert.equal(supported.v75CurrentSeasonWeight,.55);
 });
 test('same PPG breakout without increased defensive role does not receive extra share',()=>{
  const noRoleChange=calc(8,20,{snaps:330,priorSnaps:800,teamSnaps:530});
  assert.equal(noRoleChange.currentSeasonWeight,.33529411764705885);
+ assert.equal(noRoleChange.scoringGuardPpg,1.5);
+ assert.equal(noRoleChange.verifiedRoleGrowthSupport,0);
  const noTeamSnapEvidence=calc(8,20,{snaps:456,priorSnaps:510});
  assert.equal(noTeamSnapEvidence.currentSeasonWeight,.33529411764705885);
 });
@@ -92,5 +97,32 @@ test('future or incomplete opportunities never manufacture extra scoring share',
  assert.equal(insufficient.currentSeasonWeight,.33529411764705885);
  const early=calc(4,20,{snaps:456,priorSnaps:510,teamSnaps:530});
  assert.equal(early.currentSeasonWeight,.33529411764705885);
- assert.match(source,/weightBasis:'games-matured-and-defensive-snap-supported-55pct-with-1.5ppg-guard'/);
+ assert.match(source,/weightBasis:'games-matured-snap-confirmed-role-breakout-max70pct-with-evidence-tiered-1.5to4.5ppg-guard'/);
+});
+
+test('partial corroboration transitions smoothly from generic to breakout guard',()=>{
+ const partial=calc(8,20,{snaps:286,priorSnaps:510,teamSnaps:420});
+ assert(partial.verifiedRoleGrowthSupport>0&&partial.verifiedRoleGrowthSupport<1);
+ assert(partial.scoringGuardPpg>1.5&&partial.scoringGuardPpg<4.5);
+ assert(partial.currentSeasonWeight>.33529411764705885&&partial.currentSeasonWeight<.70);
+ const fullySupported=calc(8,20,{snaps:456,priorSnaps:510,teamSnaps:530});
+ assert(fullySupported.ppg>=partial.ppg);
+});
+test('a scoring spike without confirmed role growth cannot unlock higher cap',()=>{
+ const missing=calc(8,30,{snaps:0,priorSnaps:0,teamSnaps:0});
+ assert.equal(missing.scoringGuardPpg,1.5);
+ const flat=calc(8,30,{snaps:330,priorSnaps:800,teamSnaps:530});
+ assert.equal(flat.scoringGuardPpg,1.5);
+});
+
+test('fully verified breakout increases season share only with sustained opportunity and leaves 30% historical anchor',()=>{
+ const x=calc(8,20,{snaps:456,priorSnaps:510,teamSnaps:530});
+ assert.equal(x.currentSeasonWeight,.70);
+ assert.equal(x.v75CurrentSeasonWeight,.55);
+ assert.equal(x.verifiedRoleGrowthSupport,1);
+ assert(Math.abs(x.uncappedPpg-(.7*20+.3*10))<1e-9);
+ assert(x.ppg<=x.legacyPpg+4.5+1e-9);
+ const noEvidence=calc(8,20,{snaps:0,priorSnaps:0,teamSnaps:0});
+ assert.equal(noEvidence.currentSeasonWeight,.33529411764705885);
+ assert.equal(noEvidence.verifiedRoleGrowthSupport,0);
 });

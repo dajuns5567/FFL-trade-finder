@@ -52,7 +52,12 @@ function historyMetrics25(a,id){
   const support=Math.min(snapEvidence,scoringEvidence,gamesEvidence);
   // Evidence must reflect both increased opportunity and productive use.
   verifiedRoleGrowthSupport=support;
-  return baseShare+(v75CurrentShare-baseShare)*support;
+  // The first sustained full-time defensive role makes low-snap historical
+  // seasons a weaker predictor of the next dynasty season. Retain at least
+  // 30% verified regular-season scoring as an anchor. For all other IDPs,
+  // the existing current-season share and its conservative safeguards stay.
+  const sustainedRoleShare=Math.min(.70,v75CurrentShare+.15*support);
+  return baseShare+(sustainedRoleShare-baseShare)*support;
  })();
  const legacyPpg=samples.reduce((total,row)=>total+Number(row.ppg||0)*Number(row.assignedWeight||0),0)/coverage;
  let ppg=0,tackles=0,spikes=0;
@@ -74,7 +79,7 @@ function historyMetrics25(a,id){
  // not a projection of future production or a player-specific exception.
  const supportedBreakoutGuard=1.5+3*verifiedRoleGrowthSupport;
  const weightedPpg=clamp25(legacyPpg-supportedBreakoutGuard,ppg,legacyPpg+supportedBreakoutGuard);
- return{ppg:weightedPpg,tackleRate:tackles,spikeRate:spikes,confidence:clamp25(0,Number(a.confidence||0),1),coverage:1,seasons:Number(a.qualifyingSeasons||samples.length),currentSeasonGames:current?currentGames:null,currentSeasonWeight:currentShare??null,uncappedPpg:ppg,legacyPpg,weightBasis:'games-matured-and-defensive-snap-supported-55pct-with-evidence-tiered-1.5to4.5ppg-guard',verifiedRoleGrowthSupport,scoringGuardPpg:supportedBreakoutGuard,v75CurrentSeasonWeight:v75CurrentShare};
+ return{ppg:weightedPpg,tackleRate:tackles,spikeRate:spikes,confidence:clamp25(0,Number(a.confidence||0),1),coverage:1,seasons:Number(a.qualifyingSeasons||samples.length),currentSeasonGames:current?currentGames:null,currentSeasonWeight:currentShare??null,uncappedPpg:ppg,legacyPpg,weightBasis:'games-matured-snap-confirmed-role-breakout-max70pct-with-evidence-tiered-1.5to4.5ppg-guard',verifiedRoleGrowthSupport,scoringGuardPpg:supportedBreakoutGuard,v75CurrentSeasonWeight:v75CurrentShare};
 }
 function historicalBenchmarkMetrics25(a){
  const samples=(Array.isArray(a?.seasons)?a.seasons:[]).filter(s=>!s.currentSeason).sort((x,y)=>Number(y.season)-Number(x.season)).slice(0,3),weights=[.60,.30,.10];

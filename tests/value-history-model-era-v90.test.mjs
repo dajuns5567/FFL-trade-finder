@@ -19,7 +19,8 @@ const context={Number,String,Array,Map,Set,Object,Date,Math};
 vm.createContext(context);
 vm.runInContext(source,context,{filename:'canonical-value-history-v90-functions.js'});
 const {valuationModelId,comparableMarketEra,pointsFromSnapshots,marketFromSnapshots}=context;
-const model='idp-v77-v85-v86-dynasty';
+const model='idp-v94-v92-balanced-stable-veteran';
+const previousModel='idp-v77-v85-v86-dynasty';
 const rows=(v,w)=>[
  {id:'11667',value:v,overall:121,pos:'IDP',posRank:19},
  {id:'7532',value:w,overall:42,pos:'WR',posRank:12}
@@ -307,7 +308,7 @@ test('null player market movement does not masquerade as zero-valued team covera
 });
 
 test('scheduled local and GitHub archive captures cannot silently lose their explicit valuation model',()=>{
- assert.match(client,/window.valueHistoryModelV90=HISTORY_VALUATION_MODEL/);
+ assert.match(client,/window.valueHistoryModelV90=v94&&v92&&running\?HISTORY_VALUATION_MODEL:null/);
  assert.match(scheduled,/valuationModel:window.valueHistoryModelV90\|\|null/);
  assert.match(scheduled,/first.valuationModel===second.valuationModel/);
  assert.match(scheduled,/acceptedValuationModel\(captured.valuationModel\)/);
@@ -329,7 +330,8 @@ test('scheduled local and GitHub archive captures cannot silently lose their exp
 });
 
 test('client submits contract and labels instead of pretending model-version jumps are market gains',()=>{
- assert.match(client,/const HISTORY_VALUATION_MODEL='idp-v77-v85-v86-dynasty'/);
+ assert.match(client,/const HISTORY_VALUATION_MODEL='idp-v94-v92-balanced-stable-veteran'/);
+ assert.match(client,/await verifyLiveValuationModelV95\(\)!==HISTORY_VALUATION_MODEL/);
  assert.match(client,/valuation_model:HISTORY_VALUATION_MODEL/);
  assert.match(client,/Valuation model changed — movement not comparable/);
  assert.match(client,/modelBoundaryNote/);
@@ -338,4 +340,48 @@ test('client submits contract and labels instead of pretending model-version jum
  assert.match(client,/history includes a valuation-model change/i);
  assert.match(client,/modelBoundary\?'Model change':signed\(r.dv\)/);
  assert.match(client,/isValueHistoryDeployPreview\(\)\)return false/);
+});
+
+test('V95 preserves previous explicit model eras and flags V94 on its first verified snapshot',()=>{
+ const xs=[
+  snap('2026-11-01T00:00:00Z',400,2000),
+  snap('2026-11-05T00:00:00Z',410,2010,previousModel),
+  snap('2026-11-07T00:00:00Z',415,2020,previousModel),
+  snap('2026-11-17T00:00:00Z',520,2023,model),
+  snap('2026-11-18T00:00:00Z',530,2040,model)
+ ];
+ const era=comparableMarketEra(xs);
+ assert.equal(era.model,model);
+ assert.equal(era.priorModel,previousModel);
+ assert.equal(era.changedAt,xs[3].t);
+ assert.equal(era.snaps.length,2);
+ assert.equal(pointsFromSnapshots(xs,'11667').length,5,'never delete original player chart history');
+ const market=marketFromSnapshots(xs);
+ assert.equal(market.comparable_snapshot_count,2);
+ assert.equal(market.marketRows.find(x=>x.id==='11667').deltaAll,10,'do not count +105 IDP model step as market gain');
+});
+test('V95 model claim requires BOTH exact served V94 scorer and V92 curve plus running IDP model',async()=>{
+ const start=client.indexOf('async function verifyLiveValuationModelV95(){');
+ const end=client.indexOf("window.addEventListener('load'",start);
+ assert(start>0&&end>start);
+ const fn=client.slice(start,end);
+ const runtime={window:{idpV25PropagationAudit:()=>true},fetch:async path=>({
+  ok:true,text:async()=>path.includes('v25')
+   ?'v94StableDeclineSupport; const support=mean>=10?stability*decline*incomplete:0; const sustainedRoleShare=Math.min(.70,v75CurrentShare+.15*support)'
+   :'Math.round(compressed*.01*support*evidence); servedFactor*1.025'
+ })};
+ vm.createContext(runtime);
+ vm.runInContext(fn+';globalVerify=verifyLiveValuationModelV95;',runtime);
+ assert.equal(await runtime.globalVerify(),model);
+ assert.equal(runtime.window.valueHistoryModelV90,model);
+ runtime.window.idpV25PropagationAudit=null;
+ assert.equal(await runtime.globalVerify(),null,'inactive IDP model must not be labeled V94');
+ runtime.window.idpV25PropagationAudit=()=>true;
+ runtime.fetch=async path=>({ok:true,text:async()=>path.includes('v25')?
+  'v94StableDeclineSupport; const support=mean>=10?stability*decline*incomplete:0; const sustainedRoleShare=Math.min(.70,v75CurrentShare+.15*support)'
+  :'servedFactor*1.17'});
+ assert.equal(await runtime.globalVerify(),null,'overboosted V74 curve is not V94/V92');
+ runtime.fetch=async()=>{throw Error('offline')};
+ assert.equal(await runtime.globalVerify(),null,'source failure must fail closed');
+ assert.match(server,/verified V94 valuation-model contract required; snapshot not stored/);
 });

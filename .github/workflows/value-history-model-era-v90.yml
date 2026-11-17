@@ -7,6 +7,7 @@ on:
       - 'scripts/value-history-headless-refresh.mjs'
       - 'tests/value-history-dense-charts.test.mjs'
       - 'tests/value-history-model-era-v90.test.mjs'
+      - 'tests/value-history-cross-consumer-parity.test.mjs'
       - 'scripts/value-history-data-hub-v331-smoke.mjs'
       - '.github/workflows/value-history-headless-refresh.yml'
       - '.github/workflows/value-history-archive.yml'
@@ -27,7 +28,7 @@ jobs:
           node --check netlify/functions/value-history.mjs
           node --check value-history-v276.js
           node --check scripts/value-history-headless-refresh.mjs
-          node --test tests/value-history-model-era-v90.test.mjs tests/value-history-dense-charts.test.mjs
+          node --test tests/value-history-model-era-v90.test.mjs tests/value-history-dense-charts.test.mjs tests/value-history-cross-consumer-parity.test.mjs
       - name: Preserve existing history archive and cross-page valuation invariants
         run: |
           node --test tests/combined-valuation-history-contract.test.mjs

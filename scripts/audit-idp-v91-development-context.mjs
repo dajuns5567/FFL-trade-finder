@@ -21,9 +21,19 @@ const players=Object.entries(dictionary).filter(([,p])=>p?.fantasy_positions?.le
  position:p.position||(p.fantasy_positions||[])[0],positions:p.fantasy_positions||[],team:p.team||null}));
 const refresh=await refreshAllSources({timeoutMs:15000});
 assert.equal(refresh.successful,7);
+const providerTurner=(refresh.results||[]).filter(r=>String(r.id||'').includes('idp')||r.id==='combined-dynasty').map(r=>{
+ const defenders=(r.rankings||[]).filter(x=>r.id!=='combined-dynasty'||String(x.position||'').toUpperCase()==='IDP');
+ const sorted=defenders.slice().sort((a,b)=>Number(a.rank)-Number(b.rank));
+ const hits=sorted.map((x,i)=>({rank:x.rank,modelRank:i+1,player:x.player,position:x.position,team:x.team}))
+  .filter(x=>/dallas\s+turner/i.test(x.player||''));
+ return {id:r.id,source:r.source,valid:r.valid,dyanstyVerified:r.dynastyVerified,
+  ranked:sorted.length,turnerRows:hits,first6:sorted.slice(0,6).map((x,i)=>({player:x.player,rank:x.rank,modelRank:i+1}))};
+});
+console.log('IDP_V91_RAW_PROVIDER_TURNER '+JSON.stringify(providerTurner));
 const payload=buildConsensusPayload(refresh,players);
 assert(payload.integrity.all_sources_valid,'require source integrity');
 assert.equal(payload.composite.sourceCounts.idp,2,'require exactly two verified dynasty-only IDP publishers');
+console.log('IDP_V91_COMPOSITE_TURNER '+JSON.stringify(payload.composite.detailsById?.['11667']||null));
 assert(refresh.results.some(x=>x.id==='draftsharks-idp'&&x.dynastyVerified===true),'DraftSharks must be dynasty-verified');
 assert(refresh.results.some(x=>x.id==='rotowire-idp'&&x.dynastyVerified===false),'RotoWire seasonal ranks must not enter dynasty consensus');
 const body=JSON.stringify(payload),browser=await chromium.launch({headless:true,args:['--no-sandbox']});

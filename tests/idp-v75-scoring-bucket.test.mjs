@@ -101,7 +101,7 @@ test('future or incomplete opportunities never manufacture extra scoring share',
 });
 
 test('partial corroboration transitions smoothly from generic to breakout guard',()=>{
- const partial=calc(8,20,{snaps:406,priorSnaps:510,teamSnaps:530});
+ const partial=calc(8,20,{snaps:286,priorSnaps:510,teamSnaps:420});
  assert(partial.verifiedRoleGrowthSupport>0&&partial.verifiedRoleGrowthSupport<1);
  assert(partial.scoringGuardPpg>1.5&&partial.scoringGuardPpg<4.5);
  assert(partial.currentSeasonWeight>.33529411764705885&&partial.currentSeasonWeight<.55);

@@ -175,7 +175,9 @@ try{
   });
   if(!readiness.sleeperComplete||readiness.consensusMarker?.ok!==true||Number(readiness.consensusMarker?.successful)<7)throw new Error(`Scheduled refresh inputs incomplete: ${JSON.stringify(readiness)}`);
 
-  const captureCurrent=()=>page.evaluate(()=>{
+  const captureCurrent=()=>page.evaluate(async()=>{
+    const verifiedModel=typeof window.verifyValueHistoryModelV95==='function'
+      ?await window.verifyValueHistoryModelV95():null;
     const vh=window.valueHistoryV331;
     const rows=vh.currentRows();
     let picks=[];let teams=[];
@@ -200,7 +202,7 @@ try{
       if(!Number.isFinite(canonicalValue)||canonicalValue!==Number(r.value))valueParityMismatches.push({id:String(r.id),history:Number(r.value),canonical:canonicalValue});
       if(valueParityMismatches.length>=20)break;
     }
-    return {rows,picks,teams,sourceManifest,valuationModel:window.valueHistoryModelV90||null,refresh:window.__fllValueRefresh||null,modeledReady:window.modeledPlayerValuesV319?.ready===true,modeledVersion:Number(window.modeledPlayerValuesV319?.meta?.version)||0,valueParityMismatches,status:String(document.getElementById('updateStatus')?.textContent||'')};
+    return {rows,picks,teams,sourceManifest,valuationModel:verifiedModel,refresh:window.__fllValueRefresh||null,modeledReady:window.modeledPlayerValuesV319?.ready===true,modeledVersion:Number(window.modeledPlayerValuesV319?.meta?.version)||0,valueParityMismatches,status:String(document.getElementById('updateStatus')?.textContent||'')};
   });
   const sameRows=(a,b)=>{
     if(!Array.isArray(a)||!Array.isArray(b)||a.length!==b.length)return false;

@@ -21,7 +21,7 @@ const ctx={
   trackedTeamId:'1',teamNetPointTradeMap:()=>new Map()
 };
 vm.createContext(ctx);
-for(const name of ['chartTraceIndices','chartHoverLayer','teamNetChart','rankSpark','valueChart'])
+for(const name of ['chartTraceIndices','chartEraChange','chartEraPath','chartEraMarkers','chartHoverLayer','teamNetChart','rankSpark','valueChart'])
   vm.runInContext(functionSource(name),ctx);
 
 const pts=Array.from({length:501},(_,i)=>({

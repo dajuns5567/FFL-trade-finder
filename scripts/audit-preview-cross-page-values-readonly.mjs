@@ -69,7 +69,12 @@ try{
  assert.equal(v.issues.length,0,'live cross-page valuation mismatch');
  assert(v.displayedCount>=5,'no displayed Player Values samples');
  assert(v.maxx&&v.turner,'missing audited IDP exemplars');
- await page.waitForFunction(()=>typeof window.valueHistoryV331?.liveMarketRowsV97==='function',null,{timeout:90000});
+ for(let attempt=0;attempt<15;attempt++){
+  if(await page.evaluate(()=>typeof window.valueHistoryV331?.liveFullMarketRowsV97==='function'))break;
+  await page.waitForTimeout(6000);
+  await page.reload({waitUntil:'domcontentloaded',timeout:90000});
+ }
+ await page.waitForFunction(()=>typeof window.valueHistoryV331?.liveFullMarketRowsV97==='function',null,{timeout:90000});
  const market=await page.evaluate(async()=>{
   const vh=window.valueHistoryV331,raw=await vh.marketData(true),archive=raw.marketRows||[],
    displayed=vh.liveMarketRowsV97(archive),active=new Map(vh.currentRows().map(r=>[String(r.id),r]));
@@ -81,14 +86,26 @@ try{
    if(failures.length>25)break;
   }
   const archivalMismatches=archive.filter(x=>active.has(String(x.id))&&Number(x.value)!==Number(active.get(String(x.id)).value)).length;
-  return {archivedCount:archive.length,currentCount:displayed.length,
-    archivalMismatches,issues:failures};
+  const full=vh.liveFullMarketRowsV97(archive);
+  for(const row of full){
+   const truth=active.get(String(row.id));
+   if(!truth||row.value!==truth.value||row.overall!==truth.overall||row.posRank!==truth.posRank)
+    failures.push({id:row.id,from:'fullMarket',actual:row.value,truth:truth?.value});
+  }
+  const noArchive=full.filter(row=>row.recordedValue==null);
+  if(noArchive.some(r=>r.delta1!=null||r.delta7!=null||r.deltaAll!=null))
+   failures.push({from:'fullMarket',reason:'historical movement invented for unsnapshotted current player'});
+  return {archivedCount:archive.length,currentCount:displayed.length,fullCount:full.length,
+    noArchiveCount:noArchive.length,archivalMismatches,issues:failures.slice(0,20)};
  });
  console.log('FFL_LIVE_MARKET_DASHBOARD_CANONICAL '+JSON.stringify(market));
- assert(market.currentCount>300,'missing full market dashboard population');
+ assert(market.currentCount>300,'missing history-covered market dashboard population');
+ assert.equal(market.fullCount,v.count,'Full Market must include every currently ranked Player Values asset');
  assert.equal(market.issues.length,0,'Market Dashboard is showing archived values as current');
  await page.evaluate(()=>window.valueHistoryV331.openFullMarket());
  await page.waitForSelector('#vhMarketTable table',{timeout:30000});
+ const tableRows=await page.locator('#vhMarketTable tbody tr').count();
+ assert.equal(tableRows,v.count,'Rendered Full Market omits players without archived history');
  for(const player of [v.maxx,v.turner]){
   const selector='#vhMarketTable tr:has(button[data-vh-player="'+player.id+'"]) td:nth-child(2)';
   const val=await page.locator(selector).first().textContent({timeout:20000});

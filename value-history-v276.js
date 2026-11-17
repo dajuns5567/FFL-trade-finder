@@ -19,7 +19,9 @@ async function verifyLiveValuationModelV95(){
   const v92=curve.includes('Math.round(compressed*.01*support*evidence)')&&
     curve.includes('servedFactor*1.025');
   // The IDP runtime must also be installed, not merely served as a dormant asset.
-  const running=typeof window.idpV25PropagationAudit==='function';
+  const running=typeof window.idpV25PropagationAudit==='function'&&
+    window.fflIdpScoringModelV94==='v94-verified-stable-veteran'&&
+    window.fflIdpCompressionModelV92==='v92-balanced-retention';
   window.valueHistoryModelV90=v94&&v92&&running?HISTORY_VALUATION_MODEL:null;
  }catch(e){
   window.valueHistoryModelV90=null;

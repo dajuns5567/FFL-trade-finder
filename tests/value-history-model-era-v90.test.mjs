@@ -365,7 +365,7 @@ test('V95 model claim requires BOTH exact served V94 scorer and V92 curve plus r
  const end=client.indexOf("window.addEventListener('load'",start);
  assert(start>0&&end>start);
  const fn=client.slice(start,end);
- const runtime={window:{idpV25PropagationAudit:()=>true},fetch:async path=>({
+ const runtime={HISTORY_VALUATION_MODEL:model,window:{idpV25PropagationAudit:()=>true},fetch:async path=>({
   ok:true,text:async()=>path.includes('v25')
    ?'v94StableDeclineSupport; const support=mean>=10?stability*decline*incomplete:0; const sustainedRoleShare=Math.min(.70,v75CurrentShare+.15*support)'
    :'Math.round(compressed*.01*support*evidence); servedFactor*1.025'

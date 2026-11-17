@@ -8,6 +8,8 @@ on:
       - 'tests/value-history-dense-charts.test.mjs'
       - 'tests/value-history-model-era-v90.test.mjs'
       - 'scripts/value-history-data-hub-v331-smoke.mjs'
+      - '.github/workflows/value-history-headless-refresh.yml'
+      - '.github/workflows/value-history-archive.yml'
       - '.github/workflows/value-history-model-era-v90.yml'
 permissions:
   contents: read
@@ -31,3 +33,40 @@ jobs:
           node --test tests/combined-valuation-history-contract.test.mjs
           node scripts/v319-values-v311-integration-smoke.cjs
           node scripts/value-history-data-hub-v331-smoke.mjs
+
+  headless-compat:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify actual scheduled runner and safe current archive target
+        run: |
+          node --check scripts/value-history-headless-refresh.mjs
+          node --check scripts/resolve-active-netlify-site.mjs
+          node - <<'NODE'
+          const fs=require('fs');
+          const scheduled=fs.readFileSync('.github/workflows/value-history-headless-refresh.yml','utf8');
+          const archive=fs.readFileSync('.github/workflows/value-history-archive.yml','utf8');
+          const resolver=fs.readFileSync('scripts/select-archive-production-site.mjs','utf8');
+          if(!scheduled.includes('runs-on: ubuntu-24.04'))throw Error('scheduled runner OS drift');
+          if(!scheduled.includes("playwright@1.55.0"))throw Error('Playwright runtime version drift');
+          if(!archive.includes("VALUE_HISTORY_PRODUCTION_SITE_ID: 'fa33dfe4-8293-441e-8da0-25cc66fc984c'"))throw Error('wrong current site');
+          if(!resolver.includes('production repository linkage mismatch')||!resolver.includes('no ready main production deploy'))throw Error('unsafe archive resolver');
+          NODE
+      - name: Reproduce scheduled Playwright installation on Ubuntu 24.04 without production writes
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps chromium
+          node - <<'NODE'
+          const { chromium }=require('playwright');
+          chromium.launch({headless:true,args:['--no-sandbox']}).then(async browser=>{
+            const page=await browser.newPage();
+            await page.goto('about:blank');
+            await browser.close();
+            console.log('Scheduled Chromium runtime available on pinned Ubuntu 24.04');
+          }).catch(e=>{console.error(e);process.exitCode=1});
+          NODE

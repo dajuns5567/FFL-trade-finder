@@ -18,7 +18,7 @@ const ctx={
   dateShort:t=>String(t).slice(0,10),
   playerName:()=> 'Player Test',
   deltaClass:()=> 'vh-neutral',signed:n=>String(n),
-  trackedTeamId:'1',teamNetPointTradeMap:()=>new Map()
+  trackedTeamId:'1',teamNetPointTradeMap:()=>new Map(),livePlayerMeta:()=>({value:4700})
 };
 vm.createContext(ctx);
 for(const name of ['chartTraceIndices','chartEraChange','chartVisualSeries','chartEraPath','chartEraMarkers','chartHoverLayer','teamNetChart','rankSpark','valueChart'])
@@ -121,4 +121,16 @@ test('V96 no smoothing across model eras, sustained changes or sparse observatio
  assert.equal((p.match(/M /g)||[]).length,2,'no rendered stroke crosses explicit model versions');
  const sparse=rows.slice(0,8);
  assert.deepEqual(Array.from(ctx.chartVisualSeries(sparse,'value')),sparse.map(x=>x.value));
+});
+
+test('V97 chart distinguishes live Player Values marker from immutable recorded history',()=>{
+ const plot=ctx.valueChart('test',pts);
+ assert.match(plot,/Live Player Values 4,700/);
+ assert.match(plot,/latest recorded snapshot/);
+ assert.match(plot,/vh-current-live-point/);
+ assert.match(plot,/not saved as history/);
+ const snapshot=decodeSeries(plot);
+ assert.equal(snapshot.points.length,pts.length);
+ assert.equal(snapshot.points.at(-1).value,ctx.fmt(pts.at(-1).value));
+ assert.notEqual(snapshot.points.at(-1).value,'4,700','live marker must not become fabricated historical point');
 });

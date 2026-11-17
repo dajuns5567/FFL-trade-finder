@@ -505,6 +505,33 @@ function addShell(){
 }
 function ranked(){try{return typeof ensureMaster==='function'?(ensureMaster()||[]):[]}catch{return[]}}
 function posRanks(list){const counts={},map=new Map();for(const z of list){const p=groupPos(z.x);counts[p]=(counts[p]||0)+1;map.set(String(z.x.id),counts[p])}return map}
+
+// Market history endpoints intentionally return ARCHIVED observations. Never
+// present their last recorded value as the CURRENT Player Values price.
+// This overlay is display-only: archived delta/percentage/time-series data
+// remains exactly as stored and does not become a fabricated market movement.
+let liveMarketIndexV97=null;
+function liveMarketValuesV97(){
+ if(!(liveMarketIndexV97 instanceof Map)||!liveMarketIndexV97.size)
+  liveMarketIndexV97=new Map(currentRows().map(r=>[String(r.id),r]));
+ return liveMarketIndexV97;
+}
+function liveMarketRowV97(row){
+ if(!row||row.id==null)return null;
+ const live=liveMarketValuesV97().get(String(row.id));
+ if(!live)return null; // No active Player Values row: never label an old price "current".
+ if(row.liveCurrentV97===true)return row;
+ return {...row,recordedValue:row.value,recordedOverall:row.overall,
+  recordedPosRank:row.posRank,value:live.value,overall:live.overall,
+  pos:live.pos,posRank:live.posRank,liveCurrentV97:true};
+}
+function liveMarketRowsV97(rows){
+ return(rows||[]).map(liveMarketRowV97).filter(Boolean);
+}
+function invalidateLiveMarketV97(){
+ liveMarketIndexV97=null;
+}
+
 function currentRows(){const list=ranked();if(!list.length||!tv().playerValue)return[];const pr=posRanks(list),rows=[];for(let i=0;i<list.length;i++){const x=list[i]?.x;if(!x||x.type!=='player')continue;const pos=groupPos(x);if(!['QB','RB','WR','TE','IDP'].includes(pos))continue;const value=Math.round(Number(tv().playerValue(x)||0));if(!Number.isFinite(value)||value<=0)continue;rows.push({id:String(x.id),value,overall:i+1,pos,posRank:pr.get(String(x.id))||1})}return rows}
 function currentPickProjectionSlot(asset){
   try{
@@ -1339,7 +1366,8 @@ async function loadFullMarketHistory(force=false){
 function deltaClass(n){return Number(n)>0?'vh-up':Number(n)<0?'vh-down':'vh-neutral'}
 function moverRows(rows,mode='value',limit=10){
   if(!rows?.length)return'<div class="vh-empty">Not enough historical movement yet.</div>';
-  const shown=Number.isFinite(limit)?rows.slice(0,limit):rows;
+  const current=liveMarketRowsV97(rows);
+  const shown=Number.isFinite(limit)?current.slice(0,limit):current;
   return`<div class="vh-list">${shown.map((r,i)=>{const delta=mode==='posRank'?r.posRankDelta:mode==='rank'?r.overallDelta:r.delta;const suffix=mode==='posRank'?`${delta>0?'+':''}${delta} pos ranks`:mode==='rank'?`${delta>0?'+':''}${delta} ranks`:signed(delta);return`<div class="vh-mover"><div class="vh-ranknum">${i+1}</div><button class="vh-player-link" data-vh-player="${esc(r.id)}"><span class="vh-player-name-line"><b>${esc(playerName(r.id))}</b></span><small>${esc(r.pos)} #${r.posRank} • ${esc(String(state.players?.[String(r.id)]?.team||'FA').toUpperCase())} • Overall #${r.overall} • Value ${fmt(r.value)}</small></button><div class="vh-delta ${deltaClass(delta)}">${suffix}</div><button type="button" class="small vh-view-history" data-vh-player="${esc(r.id)}">View history ↗</button></div>`}).join('')}</div>`;
 }
 function marketPeriodButtons(category){
@@ -1356,7 +1384,7 @@ function periodLabel(period,m){
   return period.replace('1Y','1 Year');
 }
 function moverPool(scope,category){return scope==='team'?(teamPools[category]||'ALL'):(marketPools[category]||'ALL')}
-function applyMoverPool(rows,scope,category){const pool=moverPool(scope,category),max=pool==='ALL'?Infinity:Number(pool);return(rows||[]).filter(r=>!Number.isFinite(max)||Number(r.overall)<=max)}
+function applyMoverPool(rows,scope,category){const pool=moverPool(scope,category),max=pool==='ALL'?Infinity:Number(pool);return liveMarketRowsV97(rows).filter(r=>!Number.isFinite(max)||Number(r.overall)<=max)}
 function moverTitle(base,period,m){const label=periodLabel(period,m);return label==='Available History'?base:`${base} — ${label}`}
 function moverCardActions(scope,category,period){
   const periodAttr=scope==='team'?'data-vh-team-period':'data-vh-market-period',poolAttr=scope==='team'?'data-vh-team-pool':'data-vh-market-pool';
@@ -1659,6 +1687,7 @@ function renderMarketDashboard(){
   const vpR=m.periods?.[vr]||{},vpF=m.periods?.[vf]||{},rpR=m.periods?.[rr]||{},rpF=m.periods?.[rf]||{};
   box.innerHTML=`
   ${modelEraNote(m)}
+  <div class="notice" role="status">Current values and ranks shown here come directly from Player Values. Market movement, historical records, and time-window changes are archived observations and may end before the latest live refresh.</div>
   <div class="vh-market-jump">
     <button type="button" data-vh-market-jump="vhMarketMovers">Movers</button>
     <button type="button" data-vh-market-jump="vhPositionIndexes">Position Indexes</button>
@@ -1686,17 +1715,18 @@ function renderFullMarketHistory(){
   const box=document.getElementById('vhContent');if(!box||!marketCache)return;
   const m=marketCache,status=document.getElementById('vhStatus');
   if(status)status.textContent=m.latest?`Tracking since ${dateShort(m.tracking_since)} • Latest snapshot ${dateTime(m.latest)} • ${fmt(m.snapshot_count)} snapshots`:'Initializing first historical snapshot…';
-  box.innerHTML=`${modelEraNote(m)}<details class="vh-card vh-market-table" open><summary><span>Full Market Value History</span><span class="vh-details-state"><span class="vh-state-open">Open</span><span class="vh-state-close">Close</span></span></summary><div class="vh-sub" style="margin-top:10px">Full Market History Table — sort the complete current market by value or historical movement. Select any player to open their Player Value History.</div><input id="vhMarketSearch" type="search" placeholder="Filter market table…" style="margin:0 0 10px"><div id="vhMarketTable"></div></details>`;
+  box.innerHTML=`${modelEraNote(m)}<div class="notice">Current value and rank columns match Player Values. Historical change columns reflect comparable archived snapshots only.</div><details class="vh-card vh-market-table" open><summary><span>Full Market Value History</span><span class="vh-details-state"><span class="vh-state-open">Open</span><span class="vh-state-close">Close</span></span></summary><div class="vh-sub" style="margin-top:10px">Full Market History Table — sort the complete current market by value or historical movement. Select any player to open their Player Value History.</div><input id="vhMarketSearch" type="search" placeholder="Filter market table…" style="margin:0 0 10px"><div id="vhMarketTable"></div></details>`;
   document.getElementById('vhMarketSearch')?.addEventListener('input',renderMarketTable);
   renderMarketTable();
 }
 function marketTableRowsMarkup(rows){
+  rows=liveMarketRowsV97(rows);
   const historyHint=(r,key)=>r[key+'From']?('Compared since '+dateShort(r[key+'From'])+(key==='delta365'&&r[key+'Available']?' (available verified history; not a full year)':key==='deltaAll'&&r[key+'Available']?' (first verified player observation)':'')):'No verified historical baseline for this player';
   const arrow=r=>Number(r.overallDelta7)>0?'<span class="vh-rank-arrow vh-up" title="Overall rank improved in the last 7 days">▲</span>':Number(r.overallDelta7)<0?'<span class="vh-rank-arrow vh-down" title="Overall rank fell in the last 7 days">▼</span>':'';
   return`<div class="vh-table-wrap"><table class="vh-table"><thead><tr><th data-vh-sort="name">Player</th><th data-vh-sort="value">Value</th><th data-vh-sort="delta1">Value Δ 1D</th><th data-vh-sort="delta7">Value 7D</th><th data-vh-sort="delta30">Value 30D</th><th data-vh-sort="delta365" title="Shows available verified history where fewer than 365 days have been tracked">Value 1Y</th><th data-vh-sort="deltaAll" title="Historical change since the first verified available observation">Value All</th><th data-vh-sort="overall">Overall</th><th data-vh-sort="overallDelta7">Overall Δ 7D</th><th data-vh-sort="posRank">Pos Rank</th><th data-vh-sort="posRankDelta1">Pos Δ 1D</th><th data-vh-sort="posRankDelta7">Pos Δ 1W</th><th data-vh-sort="posRankDelta30">Pos Δ 30D</th><th data-vh-sort="posRankDeltaAll">Pos Δ All</th></tr></thead><tbody>${rows.map(r=>`<tr><td><button class="vh-player-link" data-vh-player="${esc(r.id)}" aria-label="Open ${esc(playerName(r.id))} value history"><span class="vh-player-name-line"><b>${esc(playerName(r.id))}</b><span class="vh-history-cue">View history ↗</span></span><small>${esc(r.pos)} • ${esc(String(state.players?.[String(r.id)]?.team||'FA').toUpperCase())}</small></button></td><td>${fmt(r.value)}</td><td class="${deltaClass(r.delta1)}">${r.delta1==null?'—':signed(r.delta1)}</td><td class="${deltaClass(r.delta7)}">${r.delta7==null?'—':signed(r.delta7)}</td><td class="${deltaClass(r.delta30)}">${r.delta30==null?'—':signed(r.delta30)}</td><td class="${deltaClass(r.delta365)}" title="${esc(historyHint(r,'delta365'))}">${r.delta365==null?'—':signed(r.delta365)}</td><td class="${deltaClass(r.deltaAll)}" title="${esc(historyHint(r,'deltaAll'))}">${r.deltaAll==null?'—':signed(r.deltaAll)}</td><td><span class="vh-overall-cell">#${r.overall}${arrow(r)}</span></td><td class="${deltaClass(r.overallDelta7)}">${r.overallDelta7==null?'—':signed(r.overallDelta7)}</td><td>${esc(r.pos)} #${r.posRank}</td><td class="${deltaClass(r.posRankDelta1)}">${r.posRankDelta1==null?'—':signed(r.posRankDelta1)}</td><td class="${deltaClass(r.posRankDelta7)}">${r.posRankDelta7==null?'—':signed(r.posRankDelta7)}</td><td class="${deltaClass(r.posRankDelta30)}">${r.posRankDelta30==null?'—':signed(r.posRankDelta30)}</td><td class="${deltaClass(r.posRankDeltaAll)}">${r.posRankDeltaAll==null?'—':signed(r.posRankDeltaAll)}</td></tr>`).join('')}</tbody></table></div>`;
 }
 function sortedMarketRows(rows,query=''){
-  const q=norm(query),out=(rows||[]).filter(r=>!q||norm(playerName(r.id)).includes(q)).slice(),key=marketSort.key,dir=marketSort.dir;
+  const q=norm(query),out=liveMarketRowsV97(rows).filter(r=>!q||norm(playerName(r.id)).includes(q)),key=marketSort.key,dir=marketSort.dir;
   out.sort((a,b)=>{if(key==='name')return dir*String(playerName(a.id)).localeCompare(String(playerName(b.id)));const av=Number(a[key]),bv=Number(b[key]);if(!Number.isFinite(av)&&!Number.isFinite(bv))return 0;if(!Number.isFinite(av))return 1;if(!Number.isFinite(bv))return-1;return dir*(av-bv)});
   return out;
 }
@@ -1918,11 +1948,11 @@ function openTeamNetModal(){
 }
 window.openValueHistoryLeagueNetModalV476=function(){const go=()=>{if(marketCache){openTeamNetModal();requestAnimationFrame(()=>document.querySelector('#vhMoverModal .vh-modal-body')?.scrollTo({top:0,behavior:'auto'}));return}loadMarket().then(()=>{openTeamNetModal();requestAnimationFrame(()=>document.querySelector('#vhMoverModal .vh-modal-body')?.scrollTo({top:0,behavior:'auto'}))}).catch(()=>{})};go()};
 function overallNetValueCard(data,teamLabel){
-  const pts=Array.isArray(data?.points)?data.points:[],last=pts[pts.length-1],total=last?Number(last.value):0,count=Number(data?.player_count)||0,
+  const pts=Array.isArray(data?.points)?data.points:[],last=pts[pts.length-1],liveTeam=currentTeamNetStandings().find(t=>String(t.id)===String(trackedTeamId)),total=Number(liveTeam?.value)||0,count=Number(liveTeam?.count)||0,
     high=pts.reduce((best,p)=>!best||Number(p.value)>Number(best.value)?p:best,null),low=pts.reduce((best,p)=>!best||Number(p.value)<Number(best.value)?p:best,null),
     {neighbors}=teamNetNeighbors();
   const neighborMarkup=neighbors.map(t=>`<div class="vh-team-neighbor ${String(t.id)===String(trackedTeamId)?'current':''}"><small>${String(t.id)===String(trackedTeamId)?'Selected team':'Nearby team'}</small><b>${esc(t.name)}</b><strong>${fmt(t.value)}</strong></div>`).join('');
-  return`<div class="vh-card vh-net-card"><div class="vh-net-head"><div><h3 class="vh-section-heading">Overall Net Value</h3><div class="vh-sub">${esc(teamLabel)} player value across recorded team snapshots</div></div><div class="vh-net-total"><small>Current total</small><b>${fmt(total)}</b></div></div><div class="vh-net-metrics"><div class="vh-net-metric"><small>Current net value</small><b>${fmt(total)}</b><span>${count} current players</span></div><div class="vh-net-metric"><small>All-time high</small><b>${high?fmt(high.value):'—'}</b><span>${high?esc(dateTime(high.t)):'No history yet'}</span></div><div class="vh-net-metric"><small>All-time low</small><b>${low?fmt(low.value):'—'}</b><span>${low?esc(dateTime(low.t)):'No history yet'}</span></div></div>${teamNetChart(pts)}<div class="vh-team-neighbors"><div class="vh-team-neighbors-head"><h4>League Net Value Comparison</h4><button type="button" class="secondary small" data-vh-team-net-all>View all</button></div><div class="vh-team-neighbor-list">${neighborMarkup}</div></div><div class="vh-net-note">Simple addition of the selected team's ${count} current player values. No scarcity, fit, package, Trade Finder, Trade Evaluator, or other adjustments are applied.</div></div>`;
+  return`<div class="vh-card vh-net-card"><div class="vh-net-head"><div><h3 class="vh-section-heading">Overall Net Value</h3><div class="vh-sub">${esc(teamLabel)} current value uses Player Values; chart preserves recorded team snapshots</div></div><div class="vh-net-total"><small>Current total</small><b>${fmt(total)}</b></div></div><div class="vh-net-metrics"><div class="vh-net-metric"><small>Current net value</small><b>${fmt(total)}</b><span>${count} current players • latest recorded ${last?fmt(last.value):'—'}</span></div><div class="vh-net-metric"><small>All-time high</small><b>${high?fmt(high.value):'—'}</b><span>${high?esc(dateTime(high.t)):'No history yet'}</span></div><div class="vh-net-metric"><small>All-time low</small><b>${low?fmt(low.value):'—'}</b><span>${low?esc(dateTime(low.t)):'No history yet'}</span></div></div>${teamNetChart(pts)}<div class="vh-team-neighbors"><div class="vh-team-neighbors-head"><h4>League Net Value Comparison</h4><button type="button" class="secondary small" data-vh-team-net-all>View all</button></div><div class="vh-team-neighbor-list">${neighborMarkup}</div></div><div class="vh-net-note">Simple addition of the selected team's ${count} current player values. No scarcity, fit, package, Trade Finder, Trade Evaluator, or other adjustments are applied.</div></div>`;
 }
 function teamTradeNetEvents(teamId,netData,period){
   const id=String(teamId),days=period==='30D'?30:7,pts=(netData?.points||[]).filter(p=>p?.teamSnapshot===true&&p?.t&&Number.isFinite(Number(p.value))).slice().sort((a,b)=>String(a.t).localeCompare(String(b.t)));
@@ -2113,15 +2143,16 @@ function rankSpark(points,field,axisLabel='Rank'){
 }
 function valueChart(id,pts,allPts=pts){
   if(!pts.length)return`<div class="vh-empty">No historical observations recorded yet for ${esc(playerName(id))}. A point will appear after a completed value refresh is recorded.</div>`;
-  const values=pts.map(p=>Number(p.value)).filter(Number.isFinite),min=Math.min(...values),max=Math.max(...values),pad=Math.max(100,(max-min)*.15),lo=Math.max(0,min-pad),hi=max+pad,W=900,H=380,L=74,R=24,T=34,B=72,n=Math.max(1,pts.length-1),x=i=>L+(W-L-R)*(i/n),y=v=>T+(H-T-B)*(1-(Number(v)-lo)/Math.max(1,hi-lo));
+  const live=livePlayerMeta(id),values=pts.map(p=>Number(p.value)).filter(Number.isFinite),chartValues=live.value>0?[...values,live.value]:values,min=Math.min(...chartValues),max=Math.max(...chartValues),pad=Math.max(100,(max-min)*.15),lo=Math.max(0,min-pad),hi=max+pad,W=900,H=380,L=74,R=24,T=34,B=72,n=Math.max(1,pts.length-1),x=i=>L+(W-L-R)*(i/n),y=v=>T+(H-T-B)*(1-(Number(v)-lo)/Math.max(1,hi-lo));
   const path=chartEraPath(pts,'value',220,x,y),
     markers=chartEraMarkers(pts,'value',x,y,'vh-point-dot',3.5),
     hover=chartHoverLayer(pts,'value',{W,H,L,R,T,B,y,field:'value',label:'Player Value'}),first=pts[0],last=pts[pts.length-1],
     prev=allPts.length>1?allPts[allPts.length-2]:null,latest=allPts[allPts.length-1],refreshBoundary=Boolean(prev&&(latest.valuation_model||prev.valuation_model)&&prev.valuation_model!==latest.valuation_model),
     refreshValue=prev&&!refreshBoundary?Number(latest.value)-Number(prev.value):null,refreshPos=prev&&!refreshBoundary?Number(prev.posRank)-Number(latest.posRank):null,
-    refresh=`<div class="vh-refresh-callout"><span class="vh-refresh-label">${refreshBoundary?'Valuation model changed — movement not comparable':'Since last refresh'}</span><div class="vh-refresh-metrics"><div class="vh-refresh-metric"><small>Value change</small><strong class="${deltaClass(refreshValue)}">${refreshValue==null?'—':signed(refreshValue)}</strong></div><div class="vh-refresh-metric"><small>${esc(latest.pos)} rank change</small><strong class="${deltaClass(refreshPos)}">${refreshPos==null?'—':signed(refreshPos)}</strong></div></div></div>`,
+    refresh=`<div class="vh-refresh-callout"><span class="vh-refresh-label">${refreshBoundary?'Valuation model changed — movement not comparable':'Between recorded snapshots'}</span><div class="vh-refresh-metrics"><div class="vh-refresh-metric"><small>Value change</small><strong class="${deltaClass(refreshValue)}">${refreshValue==null?'—':signed(refreshValue)}</strong></div><div class="vh-refresh-metric"><small>${esc(latest.pos)} rank change</small><strong class="${deltaClass(refreshPos)}">${refreshPos==null?'—':signed(refreshPos)}</strong></div></div></div>`,
     xLabel=t=>{try{return new Date(t).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}catch{return''}};
-  return`<div class="vh-value-chart">${refresh}<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(playerName(id))} value history"><line x1="${L}" y1="${H-B}" x2="${W-R}" y2="${H-B}" stroke="currentColor" opacity=".25"/><line x1="${L}" y1="${T}" x2="${L}" y2="${H-B}" stroke="currentColor" opacity=".25"/><text class="vh-value-axis" x="${L-10}" y="${T+5}" text-anchor="end">${Math.round(hi).toLocaleString()}</text><text class="vh-value-axis" x="${L-10}" y="${H-B}" text-anchor="end">${Math.round(lo).toLocaleString()}</text><text class="vh-value-axis" x="18" y="${(T+H-B)/2}" text-anchor="middle" transform="rotate(-90 18 ${(T+H-B)/2})">Player value</text><text class="vh-value-axis" x="${L}" y="${H-34}">${esc(xLabel(first.t))}</text><text class="vh-value-axis" x="${W-R}" y="${H-34}" text-anchor="end">${esc(xLabel(last.t))}</text><text class="vh-value-axis" x="${(L+W-R)/2}" y="${H-10}" text-anchor="middle">Date / time</text><path d="${path}" fill="none" stroke="#e4b53f" stroke-width="3.5" vector-effect="non-scaling-stroke"/>${markers}${hover}</svg><div class="vh-chart-tooltip" role="status" aria-live="polite"></div></div><p class="tiny muted">Chart line is display-smoothed only for isolated one-snapshot spikes; hover or tap for every exact original value, timestamp and rank. Use arrow keys when focused.</p>`;
+  const liveMarker=live.value>0?`<g class="vh-current-live-point" aria-label="Live current Player Values price, not a historical snapshot"><circle cx="${(W-R-9).toFixed(1)}" cy="${y(live.value).toFixed(1)}" r="5.5" fill="#36d4ba" stroke="#07130f" stroke-width="1.6"><title>Live Player Values: ${fmt(live.value)} • not recorded in history</title></circle><text x="${(W-R-19).toFixed(1)}" y="${Math.max(T+10,y(live.value)-12).toFixed(1)}" text-anchor="end" fill="#36d4ba" font-size="12">LIVE ${fmt(live.value)}</text></g>`:'';
+  return`<div class="vh-value-chart"><div class="vh-sub">Live Player Values ${fmt(live.value)} • latest recorded snapshot ${fmt(latest.value)}. The teal marker is live and is not saved as history.</div>${refresh}<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(playerName(id))} value history"><line x1="${L}" y1="${H-B}" x2="${W-R}" y2="${H-B}" stroke="currentColor" opacity=".25"/><line x1="${L}" y1="${T}" x2="${L}" y2="${H-B}" stroke="currentColor" opacity=".25"/><text class="vh-value-axis" x="${L-10}" y="${T+5}" text-anchor="end">${Math.round(hi).toLocaleString()}</text><text class="vh-value-axis" x="${L-10}" y="${H-B}" text-anchor="end">${Math.round(lo).toLocaleString()}</text><text class="vh-value-axis" x="18" y="${(T+H-B)/2}" text-anchor="middle" transform="rotate(-90 18 ${(T+H-B)/2})">Player value</text><text class="vh-value-axis" x="${L}" y="${H-34}">${esc(xLabel(first.t))}</text><text class="vh-value-axis" x="${W-R}" y="${H-34}" text-anchor="end">${esc(xLabel(last.t))}</text><text class="vh-value-axis" x="${(L+W-R)/2}" y="${H-10}" text-anchor="middle">Date / time</text><path d="${path}" fill="none" stroke="#e4b53f" stroke-width="3.5" vector-effect="non-scaling-stroke"/>${markers}${liveMarker}${hover}</svg><div class="vh-chart-tooltip" role="status" aria-live="polite"></div></div><p class="tiny muted">Chart line is display-smoothed only for isolated one-snapshot spikes; hover or tap for every exact original value, timestamp and rank. Use arrow keys when focused.</p>`;
 }
 function recentChanges(pts){
   const rows=[];for(let i=pts.length-1;i>0&&rows.length<8;i--){const a=pts[i-1],b=pts[i],dv=Number(b.value)-Number(a.value),dr=Number(a.overall)-Number(b.overall),dp=Number(a.posRank)-Number(b.posRank);if(dv||dr||dp)rows.push({t:b.t,dv,dr,dp,value:b.value,overall:b.overall,pos:b.pos,posRank:b.posRank,modelBoundary:Boolean((a.valuation_model||b.valuation_model)&&a.valuation_model!==b.valuation_model)})}
@@ -2191,7 +2222,14 @@ function renderPlayerProfile(id,allPts,period='ALL'){
   ${similarPlayersSection(id)}`;
   setTimeout(()=>fitValueHistoryCellText(box),0);
 }
-function boot(){addShell();searchTradesOnSiteOpen();setInterval(refreshVisibleTradeHistory,TRADE_HISTORY_REFRESH_MS);window.addEventListener('focus',refreshVisibleTradeHistory);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshVisibleTradeHistory()});scheduleSnapshot(0,snapshotSourceFromUrl());document.getElementById('updateBtn')?.addEventListener('click',()=>{marketCache=null;teamNetCache.clear();scheduleSnapshot(1000,'manual-update');if(currentPlayerId)setTimeout(()=>loadPlayer(currentPlayerId),1800)},{passive:true})}
+function boot(){addShell();window.addEventListener('fll:valuation-refreshed',()=>{
+ invalidateLiveMarketV97();
+ if(currentView==='market'&&marketCache)renderMarketDashboard();
+ else if(currentView==='fullMarket'&&marketCache)renderMarketTable();
+ else if(currentView==='team'&&trackedTeamId)loadTrackedTeam().catch(()=>{});
+ else if(currentView==='playerHub'&&playerHistoryTeamId&&marketCache)renderPlayerHistoryTeamRoster();
+ else if(currentView==='player'&&currentPlayerId)loadPlayer(currentPlayerId).catch(()=>{});
+ });searchTradesOnSiteOpen();setInterval(refreshVisibleTradeHistory,TRADE_HISTORY_REFRESH_MS);window.addEventListener('focus',refreshVisibleTradeHistory);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshVisibleTradeHistory()});scheduleSnapshot(0,snapshotSourceFromUrl());document.getElementById('updateBtn')?.addEventListener('click',()=>{invalidateLiveMarketV97();marketCache=null;teamNetCache.clear();scheduleSnapshot(1000,'manual-update');if(currentPlayerId)setTimeout(()=>loadPlayer(currentPlayerId),1800)},{passive:true})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-window.valueHistoryV331={currentRows,currentPickRows,currentTeamRows,currentEvaluatorValue,hindsightValue,recordSnapshot,historyFetch,marketFetch,marketData:(force=false)=>ensureMarketCache(!!force),livePlayerMeta,periodPoints,openPlayer:(id)=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>selectPlayer(String(id)),0)},openPlayerHistory:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(renderPlayerHistoryHub,0)},openFullMarket:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>loadFullMarketHistory(),0)}};
+window.valueHistoryV331={liveMarketRowV97,liveMarketRowsV97,invalidateLiveMarketV97,currentRows,currentPickRows,currentTeamRows,currentEvaluatorValue,hindsightValue,recordSnapshot,historyFetch,marketFetch,marketData:(force=false)=>ensureMarketCache(!!force),livePlayerMeta,periodPoints,openPlayer:(id)=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>selectPlayer(String(id)),0)},openPlayerHistory:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(renderPlayerHistoryHub,0)},openFullMarket:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>loadFullMarketHistory(),0)}};
 })();

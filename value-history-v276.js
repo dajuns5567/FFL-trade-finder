@@ -794,9 +794,15 @@ function showChartHover(hit,index,tip,wrap,wrapRect,e){
     `<b>${esc(p.date)}</b><div>${esc(data.label)} <strong>#${esc(p.rank)}</strong></div>`:
     `<b>${esc(p.date)}</b><div>Value <strong>${esc(p.value)}</strong></div><div>Overall #${esc(p.overall)} • ${esc(p.pos)} #${esc(p.posRank)}</div>`;
   if(p.valuation_model)tip.innerHTML+=`<div class="muted">Valuation model: ${esc(p.valuation_model)}</div>`;
-  const svg=hit.ownerSVGElement,svgRect=svg.getBoundingClientRect(),
-    px=(svgRect.left-wrapRect.left)+(p.x/data.W)*svgRect.width,
-    py=(svgRect.top-wrapRect.top)+(p.y/Number(svg.viewBox.baseVal.height||1))*svgRect.height;
+  const svg=hit.ownerSVGElement,matrix=svg?.getScreenCTM?.();
+  // The SVG viewBox can be letterboxed inside its CSS rectangle. Use its
+  // actual viewport transform so the guide and tooltip agree on every width.
+  const screenPoint=svg?.createSVGPoint?.();
+  if(screenPoint&&matrix){screenPoint.x=p.x;screenPoint.y=p.y}
+  const rendered=screenPoint&&matrix?screenPoint.matrixTransform(matrix):null,
+    svgRect=svg.getBoundingClientRect(),
+    px=rendered?rendered.x-wrapRect.left:(svgRect.left-wrapRect.left)+(p.x/data.W)*svgRect.width,
+    py=rendered?rendered.y-wrapRect.top:(svgRect.top-wrapRect.top)+(p.y/Number(svg.viewBox.baseVal.height||1))*svgRect.height;
   tip.style.left=`${Math.max(8,Math.min(Math.max(8,wrapRect.width-210),px))}px`;
   tip.style.top=`${Math.max(20,Math.min(wrapRect.height-20,py))}px`;
   tip.style.display='block';
@@ -823,8 +829,15 @@ function handleChartPointer(e){
   if(hit.classList.contains('vh-plot-hit')){
     const data=chartHoverData(hit),points=data?.points||[];
     if(!points.length)return;
-    const svg=hit.ownerSVGElement,svgRect=svg.getBoundingClientRect();
-    const hoverX=(e.clientX-svgRect.left)*data.W/Math.max(1,svgRect.width);
+    const svg=hit.ownerSVGElement,matrix=svg?.getScreenCTM?.(),
+      svgPoint=svg?.createSVGPoint?.();
+    // getBoundingClientRect includes SVG preserveAspectRatio letterboxing;
+    // the inverse screen transform maps the pointer to real viewBox units.
+    if(svgPoint){svgPoint.x=e.clientX;svgPoint.y=e.clientY}
+    const mapped=svgPoint&&matrix?svgPoint.matrixTransform(matrix.inverse()):null,
+      svgRect=svg.getBoundingClientRect(),
+      hoverX=mapped?mapped.x:(e.clientX-svgRect.left)*data.W/Math.max(1,svgRect.width);
+    // Match the original complete observations, never the simplified line.
     const index=e.vhKeyboardIndex==null?
       Math.max(0,Math.min(points.length-1,Math.round((hoverX-data.L)/Math.max(1,data.W-data.L-data.R)*(points.length-1)))):
       Math.max(0,Math.min(points.length-1,e.vhKeyboardIndex));

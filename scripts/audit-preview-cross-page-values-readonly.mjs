@@ -69,5 +69,38 @@ try{
  assert.equal(v.issues.length,0,'live cross-page valuation mismatch');
  assert(v.displayedCount>=5,'no displayed Player Values samples');
  assert(v.maxx&&v.turner,'missing audited IDP exemplars');
+ await page.waitForFunction(()=>typeof window.valueHistoryV331?.liveMarketRowsV97==='function',null,{timeout:90000});
+ const market=await page.evaluate(async()=>{
+  const vh=window.valueHistoryV331,raw=await vh.marketData(true),archive=raw.marketRows||[],
+   displayed=vh.liveMarketRowsV97(archive),active=new Map(vh.currentRows().map(r=>[String(r.id),r]));
+  const failures=[];
+  for(const row of displayed){
+   const canonical=active.get(String(row.id));
+   if(!canonical||row.value!==canonical.value||row.overall!==canonical.overall||row.posRank!==canonical.posRank)
+    failures.push({id:row.id,archived:row.recordedValue,displayed:row.value,canonical:canonical?.value});
+   if(failures.length>25)break;
+  }
+  const archivalMismatches=archive.filter(x=>active.has(String(x.id))&&Number(x.value)!==Number(active.get(String(x.id)).value)).length;
+  return {archivedCount:archive.length,currentCount:displayed.length,
+    archivalMismatches,issues:failures};
+ });
+ console.log('FFL_LIVE_MARKET_DASHBOARD_CANONICAL '+JSON.stringify(market));
+ assert(market.currentCount>300,'missing full market dashboard population');
+ assert.equal(market.issues.length,0,'Market Dashboard is showing archived values as current');
+ await page.evaluate(()=>window.valueHistoryV331.openFullMarket());
+ await page.waitForSelector('#vhMarketTable table',{timeout:30000});
+ for(const player of [v.maxx,v.turner]){
+  const selector='#vhMarketTable tr:has(button[data-vh-player="'+player.id+'"]) td:nth-child(2)';
+  const val=await page.locator(selector).first().textContent({timeout:20000});
+  assert.equal(val.trim(),Number(player.value).toLocaleString('en-US'),
+   'Rendered Full Market table has stale current value for player '+player.id);
+ }
+ await page.evaluate(id=>window.valueHistoryV331.openPlayer(String(id)),v.turner.id);
+ await page.waitForSelector('.vh-current-live-point',{timeout:30000});
+ const info=await page.locator('.vh-profile-info .vh-current .vh-big').textContent();
+ assert.equal(info.trim(),Number(v.turner.value).toLocaleString('en-US'),'Player History current display stale');
+ const marker=await page.locator('.vh-current-live-point title').textContent();
+ assert(marker.includes(Number(v.turner.value).toLocaleString('en-US')),'Value History live marker uses archived value');
+ console.log('FFL_LIVE_MARKET_DASHBOARD_AND_HISTORY_PASS');
  console.log('FFL_LIVE_PREVIEW_CROSS_PAGE_PARITY_PASS');
 }finally{await browser.close()}

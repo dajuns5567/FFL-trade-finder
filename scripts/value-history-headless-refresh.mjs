@@ -8,7 +8,7 @@ import picksHandler from '../netlify/functions/picks.mjs';
 
 const snapshotFile=process.env.VALUE_HISTORY_SNAPSHOT_FILE||'.tmp/value-history-scheduled.json';
 const SCHEDULED_VALUATION_CONTRACT='precision-idp-runtime-20260919';
-const acceptedValuationModel=value=>String(value||'').trim()==='idp-v77-v85-v86-dynasty'?'idp-v77-v85-v86-dynasty':null;
+const acceptedValuationModel=value=>String(value||'').trim()==='idp-v94-v92-balanced-stable-veteran'?'idp-v94-v92-balanced-stable-veteran':null;
 const league='1316867686394769408';
 
 function fingerprint(rows,picks=[],teams=[]){

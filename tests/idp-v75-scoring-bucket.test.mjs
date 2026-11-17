@@ -97,7 +97,7 @@ test('future or incomplete opportunities never manufacture extra scoring share',
  assert.equal(insufficient.currentSeasonWeight,.33529411764705885);
  const early=calc(4,20,{snaps:456,priorSnaps:510,teamSnaps:530});
  assert.equal(early.currentSeasonWeight,.33529411764705885);
- assert.match(source,/weightBasis:'games-matured-snap-confirmed-role-breakout-max70pct-with-evidence-tiered-1.5to4.5ppg-guard'/);
+ assert.match(source,/weightBasis:'games-matured-snap-confirmed-role-breakout-max70pct-and-v94-verified-stable-downyear-with-evidence-tiered-1.5to4.5ppg-guard'/);
 });
 
 test('partial corroboration transitions smoothly from generic to breakout guard',()=>{
@@ -141,6 +141,7 @@ const stableVeteran=(games,nowPpg=13,history=[19,17,18])=>{
 test('V94 stable veteran with three verified seasons receives continuous modest partial-year downturn shrinkage',()=>{
  const early=stableVeteran(9),late=stableVeteran(15),finished=stableVeteran(16);
  assert.equal(early.currentSeasonWeight,.40);
+ assert.equal(early.v94StableDeclineSupport,1);
  assert(late.currentSeasonWeight>early.currentSeasonWeight);
  assert(late.currentSeasonWeight<finished.currentSeasonWeight);
  assert.equal(finished.currentSeasonWeight,.55);
@@ -155,6 +156,7 @@ test('V94 stable veteran with three verified seasons receives continuous modest 
 test('V94 does not shelter unproven or volatile historical scoring',()=>{
  const unstable=stableVeteran(9,8,[24,6,19]);
  assert.equal(unstable.currentSeasonWeight,.55);
+ assert.equal(unstable.v94StableDeclineSupport,0);
  const smallDrop=stableVeteran(9,18.5);
  assert.equal(smallDrop.currentSeasonWeight,.55);
  const early=stableVeteran(5);

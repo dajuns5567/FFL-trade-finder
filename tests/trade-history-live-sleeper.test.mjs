@@ -72,7 +72,8 @@ test('visible Trade History refreshes stale browser cache and warns on degraded 
 test('every site opening forces live completed-trade search, independent of hidden tab and shared cache',()=>{
   const ui=readFileSync(new URL('../value-history-v276.js',import.meta.url),'utf8');
   const backend=readFileSync(new URL('../netlify/functions/value-history.mjs',import.meta.url),'utf8');
-  assert.match(ui,/function boot\(\)\{addShell\(\);searchTradesOnSiteOpen\(\)/);
+  assert.match(ui,/function boot\(\)\{addShell\(\);/);
+  assert.match(ui,/\}\);searchTradesOnSiteOpen\(\)/,'current dashboard refresh handler must not stop live trade history startup');
   assert.match(ui,/tradeHistoryFetch\(\{force:true\}\)/);
   assert.match(ui,/if\(!force&&!tradeHistoryCache&&primeTradeHistoryCache/);
   assert.match(ui,/if\(!force&&tradeHistoryCache&&Date\.now\(\)-tradeHistoryCacheAt/);

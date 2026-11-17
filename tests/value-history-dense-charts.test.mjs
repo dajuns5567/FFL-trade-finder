@@ -91,6 +91,26 @@ test('Delegated pointer and keyboard navigation retain nearest full-resolution s
   assert.match(source,/\.vh-hover-guide/);
 });
 
+test('Value History hover positions use the actual SVG viewport transform',()=>{
+ // SVG preserveAspectRatio may create horizontal gutters. Bounding-box
+ // scaling alone incorrectly selects older points on the right half.
+ const hover=functionSource('handleChartPointer');
+ const display=functionSource('showChartHover');
+ assert.match(hover,/getScreenCTM/);
+ assert.match(hover,/matrix\.inverse\(\)/);
+ assert.match(hover,/svgPoint\.matrixTransform\(matrix\.inverse\(\)\)/);
+ assert.match(display,/screenPoint\.matrixTransform\(matrix\)/);
+ // A centered 900-unit chart rendered 600px wide inside an 800px box:
+ // left/right gutter are 100px, so the right endpoint is x=700, not 800.
+ const left=100,scale=600\/900,plotL=74,plotR=24,W=900;
+ const lastScreenX=left+(W-plotR)*scale;
+ const recovered=(lastScreenX-left)/scale;
+ const lastIndex=Math.round((recovered-plotL)/(W-plotL-plotR)*500);
+ assert.equal(lastIndex,500);
+ const oldIndex=Math.round(((lastScreenX/800*W)-plotL)/(W-plotL-plotR)*500);
+ assert.ok(oldIndex<500,'old bounding-rectangle scaling misses newest history');
+});
+
 test('V96 isolated dense spike smoothing never mutates original snapshots, rankings or tooltips',()=>{
  const original=pts.map(p=>p.value);
  const displayed=Array.from(ctx.chartVisualSeries(pts,'value'));

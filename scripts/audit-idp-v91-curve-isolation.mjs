@@ -13,7 +13,7 @@ const v85Source=readFileSync(new URL('../valuation-idp-v36.js',import.meta.url),
 const v91Source=readFileSync(new URL('../valuation-idp-v25-perf.js',import.meta.url),'utf8');
 const baseSha=process.env.IDP_BASE_SHA;
 assert(/^[a-f0-9]{40}$/.test(baseSha||''),'require exact immutable V86 baseline SHA');
-const v86Source=v91Source;
+const v86Source=execFileSync('git',['show',`${baseSha}:valuation-idp-v25-perf.js`],{encoding:'utf8'});
 const earlierSha=process.env.IDP_EARLIER_CURVE_SHA;
 assert(/^[a-f0-9]{40}$/.test(earlierSha||''),'require exact prior curve SHA');
 const oldCurve=execFileSync('git',['show',`${earlierSha}:valuation-idp-v43.js`],{encoding:'utf8'});
@@ -36,7 +36,7 @@ assert(refresh.results.some(x=>x.id==='rotowire-idp'&&x.dynastyVerified===false)
 const body=JSON.stringify(payload),browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 const captures=[];
 try{
- for(const variant of ['v91-with-earlier-idp-curve','v91-with-current-idp-curve']){
+ for(const variant of ['v92-prior-model','v94-current-model']){
   const context=await browser.newContext({serviceWorkers:'block'});
   const errors=[],blockedWrites=[];
   const origin=new URL(preview).origin;
@@ -48,12 +48,12 @@ try{
    if(!['GET','HEAD'].includes(req.method())){blockedWrites.push(req.url());return route.abort('blockedbyclient');}
    if(u.protocol!=='https:'||(u.hostname.endsWith('.netlify.app')&&u.origin!==origin))
     return route.abort('blockedbyclient');
-   if((variant==='v91-with-earlier-idp-curve'||variant==='v91-with-current-idp-curve')&&u.origin===origin&&u.pathname==='/valuation-idp-v36.js')
+   if((variant==='v92-prior-model'||variant==='v94-current-model')&&u.origin===origin&&u.pathname==='/valuation-idp-v36.js')
     return route.fulfill({status:200,contentType:'text/javascript',body:v85Source});
-   if((variant==='v91-with-earlier-idp-curve'||variant==='v91-with-current-idp-curve')&&u.origin===origin&&u.pathname==='/valuation-idp-v25-perf.js')
-    return route.fulfill({status:200,contentType:'text/javascript',body:v91Source});
+   if((variant==='v92-prior-model'||variant==='v94-current-model')&&u.origin===origin&&u.pathname==='/valuation-idp-v25-perf.js')
+    return route.fulfill({status:200,contentType:'text/javascript',body:variant==='v92-prior-model'?v86Source:v91Source});
    if(u.origin===origin&&u.pathname==='/valuation-idp-v43.js')
-    return route.fulfill({status:200,contentType:'text/javascript',body:variant==='v91-with-earlier-idp-curve'?oldCurve:currentCurve});
+    return route.fulfill({status:200,contentType:'text/javascript',body:currentCurve});
    return route.continue();
   });
   const page=await context.newPage();
@@ -204,10 +204,10 @@ try{
  }
  assert.equal(offenseChanged,0,'offense moved');
  assert.equal(consensusChanged,0,'dynasty consensus changed');
- assert.equal(contextChanged,0,'career context changed across only curve variants');
- assert(scoringChanged>=0,'candidate V91 scoring changed count invalid');
- // Zero-history repricing across two curves is captured, not presumed impossible.
- // Earlier and current positional curves can both raise or lower players.
+ assert.equal(contextChanged,0,'career context must not change under V94 scoring-only adjustment');
+ assert(scoringChanged>=0,'V94 scoring changes must be finite');
+ assert.equal(zeroHistoryChanged,0,'zero qualified-season players must not gain V94 values');
+ assert.equal(loweredIdp,0,'down-year evidence guard must not lower an IDP value');
  const changed=idps.filter(x=>x.delta!==0);
  const composition=ranked=>{
   const countAt=n=>ranked.slice(0,n).filter(x=>x.group==='IDP').length;
@@ -244,7 +244,7 @@ try{
  const featured=['Dallas Turner','Maxx Crosby','Will Anderson Jr.','Myles Garrett',
   'George Karlaftis','Carson Schwesinger','Aidan Hutchinson','David Bailey']
   .map(name=>idps.find(x=>x.name===name)).filter(Boolean);
- console.log('IDP_V92_CROSBY_PEER_AUDIT '+JSON.stringify({
+ console.log('IDP_V94_CROSBY_PEER_AUDIT '+JSON.stringify({
    top25:idps.filter(z=>z.idpRank<=25).map(z=>({
     name:z.name,id:z.id,idpRank:z.idpRank,overall:z.overall,consensus:z.consensus,
     dynastySources:z.dynastySources,marketRank:z.marketRank,
@@ -255,8 +255,8 @@ try{
     preCurve:z.v72Base,curveFactor:z.v72Factor
    }))
  }));
- console.log('IDP_V91_CURVE_ISOLATION '+JSON.stringify({
-  status:'earlier-vs-current-idp-curve-only',ranked:after.ranked.length,idps:idps.length,
+ console.log('IDP_V94_BALANCED_ISOLATION '+JSON.stringify({
+  status:'same-curve-v92-vs-v94-verified-veteran-stability',ranked:after.ranked.length,idps:idps.length,
   rostered:after.rosterIds.length,offenseChanged,consensusChanged,contextChanged,
   scoringChanged,zeroHistoryChanged,loweredIdp,changedCount:changed.length,
   marketAgreement,priorTop100:priorComposition.top100,candidateTop100:candidateComposition.top100,
@@ -265,5 +265,5 @@ try{
   greatestDecreases:changed.slice().sort((a,b)=>a.delta-b.delta).slice(0,25),
   featured,approvedPreviewUnmodified:true,productionPublished:false
  }));
- console.log('IDP_V91_CURVE_ISOLATION_PASS');
+ console.log('IDP_V94_BALANCED_ISOLATION_PASS');
 }finally{await browser.close()}

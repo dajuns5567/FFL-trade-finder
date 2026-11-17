@@ -80,6 +80,7 @@ try{
       currentSeasonWeight:z.production?.m?.currentSeasonWeight??null,
       v75Weight:z.production?.m?.v75CurrentSeasonWeight??null,
       verifiedRoleGrowthSupport:z.production?.m?.verifiedRoleGrowthSupport??0,
+      v94StableDeclineSupport:z.production?.m?.v94StableDeclineSupport??0,
       scoringGuardPpg:z.production?.m?.scoringGuardPpg??1.5,
       legacyPpg:z.production?.m?.legacyPpg??null,
       uncappedPpg:z.production?.m?.uncappedPpg??null,
@@ -194,10 +195,11 @@ try{
  assert.equal(zeroHistoryChanged,0,'missing-history player gained value');
  assert(loweredIdp===0,'verified role breakout V91 must not suppress baseline modeled IDP values');
  const changed=idps.filter(x=>x.delta!==0);
- // Release guard: a V91 value increase must be traceable to independently
- // measured 2026 opportunity growth, never a name/age-specific adjustment.
- const unsupported=changed.filter(x=>!(x.verifiedRoleGrowthSupport>0));
- assert.equal(unsupported.length,0,'V91 repriced defenders without verified role-growth support: '+JSON.stringify(unsupported.slice(0,8)));
+ // V94 release guard: any IDP change must trace to independently verified
+ // defensive role growth OR evidence of three stable historical scoring years.
+ // No identity-specific uplift, position quota, or ungrounded dynasty forecast.
+ const unsupported=changed.filter(x=>!(x.verifiedRoleGrowthSupport>0||x.v94StableDeclineSupport>0));
+ assert.equal(unsupported.length,0,'V94 repriced defenders without independently verified role-growth or stable-veteran evidence: '+JSON.stringify(unsupported.slice(0,8)));
  const changedMissingConsensus=changed.filter(x=>!x.dynastySources.length);
  // Source-free assets may move only on verified actual production; they
  // cannot acquire a fictitious consensus rank or developer-supplied price.
@@ -211,7 +213,7 @@ try{
  assert(top100After-top100Before<=2,'unexpected IDP crowding among top 100');
  assert(spillover.allOffense.maxAbsolute<=100,'unexpected offense shared-currency spillover');
  console.log('IDP_V91_BREAKOUT_RELEASE_GUARDS '+JSON.stringify({
-  changed:changed.length,unsupported:unsupported.length,
+  changed:changed.length,unsupported:unsupported.length,roleGrowthChanges:changed.filter(x=>x.verifiedRoleGrowthSupport>0).length,stableVeteranChanges:changed.filter(x=>x.v94StableDeclineSupport>0).length,
   changedMissingConsensus:changedMissingConsensus.map(x=>({id:x.id,name:x.name,verifiedRoleGrowthSupport:x.verifiedRoleGrowthSupport})),
   top100Before,top100After,offenseCurrencyMax:spillover.allOffense.maxAbsolute,
   offenseRawChanged:offenseChanged,loweredIdp,sourceConsistency:consensusChanged===0

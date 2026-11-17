@@ -97,7 +97,7 @@ test('future or incomplete opportunities never manufacture extra scoring share',
  assert.equal(insufficient.currentSeasonWeight,.33529411764705885);
  const early=calc(4,20,{snaps:456,priorSnaps:510,teamSnaps:530});
  assert.equal(early.currentSeasonWeight,.33529411764705885);
- assert.match(source,/weightBasis:'games-matured-snap-confirmed-role-breakout-max70pct-with-evidence-tiered-1.5to4.5ppg-guard'/);
+ assert.match(source,/weightBasis:'games-matured-snap-confirmed-role-breakout-max70pct-and-v94-verified-stable-downyear-with-evidence-tiered-1.5to4.5ppg-guard'/);
 });
 
 test('partial corroboration transitions smoothly from generic to breakout guard',()=>{
@@ -125,4 +125,57 @@ test('fully verified breakout increases season share only with sustained opportu
  const noEvidence=calc(8,20,{snaps:0,priorSnaps:0,teamSnaps:0});
  assert.equal(noEvidence.currentSeasonWeight,.33529411764705885);
  assert.equal(noEvidence.verifiedRoleGrowthSupport,0);
+});
+
+const stableVeteran=(games,nowPpg=13,history=[19,17,18])=>{
+ const [a,b,c]=history;
+ const weight=[.33529411764705885,.4062091503267974,.184640522875817,.0738562091503268];
+ const seasons=[
+  {season:2026,currentSeason:true,games,ppg:nowPpg,assignedWeight:weight[0]},
+  {season:2025,currentSeason:false,games:16,ppg:a,assignedWeight:weight[1]},
+  {season:2024,currentSeason:false,games:15,ppg:b,assignedWeight:weight[2]},
+  {season:2023,currentSeason:false,games:17,ppg:c,assignedWeight:weight[3]}
+ ];
+ return ctx.historyMetrics25({seasons,confidence:1,qualifyingSeasons:4},'test');
+};
+test('V94 stable veteran with three verified seasons receives continuous modest partial-year downturn shrinkage',()=>{
+ const early=stableVeteran(9),late=stableVeteran(15),finished=stableVeteran(16);
+ assert.equal(early.currentSeasonWeight,.40);
+ assert.equal(early.v94StableDeclineSupport,1);
+ assert(late.currentSeasonWeight>early.currentSeasonWeight);
+ assert(late.currentSeasonWeight<finished.currentSeasonWeight);
+ assert.equal(finished.currentSeasonWeight,.55);
+ assert(early.ppg>=early.legacyPpg-1.5-1e-9,'real decline still counts, without erasing historical anchor');
+ for(let games=6;games<=16;games++){
+  const x=stableVeteran(games);
+  assert(x.currentSeasonWeight>=.33529411764705885);
+  assert(x.currentSeasonWeight<=.55);
+  if(games>6)assert(x.currentSeasonWeight>=stableVeteran(games-1).currentSeasonWeight-1e-9);
+ }
+});
+test('V94 does not shelter unproven or volatile historical scoring',()=>{
+ const unstable=stableVeteran(9,8,[24,6,19]);
+ assert.equal(unstable.currentSeasonWeight,.55);
+ assert.equal(unstable.v94StableDeclineSupport,0);
+ const smallDrop=stableVeteran(9,18.5);
+ assert.equal(smallDrop.currentSeasonWeight,.55);
+ const early=stableVeteran(5);
+ assert.equal(early.currentSeasonWeight, .33529411764705885+(.55-.33529411764705885)*.25);
+ const twoYears=calc(9,5);
+ assert.equal(twoYears.currentSeasonWeight,.55);
+});
+test('V94 decline support is continuous as decline and historical volatility vary',()=>{
+ const baseline=stableVeteran(9,19);
+ const slightly=stableVeteran(9,16.4);
+ const strongly=stableVeteran(9,13);
+ assert.equal(baseline.currentSeasonWeight,.55);
+ assert(slightly.currentSeasonWeight<=.55&&slightly.currentSeasonWeight>.4);
+ assert.equal(strongly.currentSeasonWeight,.4);
+ const moderatelyStable=stableVeteran(9,13,[19,14.5,18]);
+ assert(moderatelyStable.currentSeasonWeight>=.4&&moderatelyStable.currentSeasonWeight<.55);
+ assert.match(source,/const support=mean>=10\?stability\*decline\*incomplete:0/);
+});
+
+test('V94 runtime announces the executed scorer version only after model installation',()=>{
+ assert.match(source,/window\.fflIdpScoringModelV94='v94-verified-stable-veteran'/);
 });

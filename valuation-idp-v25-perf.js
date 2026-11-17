@@ -26,14 +26,33 @@ function historyMetrics25(a,id){
   :null;
  // Current-season weighting above 33.53% needs independent opportunity evidence.
  // Source: verified Sleeper defensive snaps. No guesses or player exceptions.
- let verifiedRoleGrowthSupport=0;
+ let verifiedRoleGrowthSupport=0,v94StableDeclineSupport=0;
  const currentShare=(()=>{
 
   if(v75CurrentShare===null||currentGames<=4)return v75CurrentShare;
   const baseShare=Math.min(v75CurrentShare,.33529411764705885);
   const prior=samples.filter(x=>!x.currentSeason&&Number(x.games)>=8)
    .sort((x,y)=>Number(y.season)-Number(x.season))[0];
-  if(prior&&Number(current.ppg)<=Number(prior.ppg))return v75CurrentShare;
+  if(prior&&Number(current.ppg)<=Number(prior.ppg)){
+   // V94: incomplete down years for established, consistently productive IDPs
+   // should not erase three verified prior regular seasons. Shrink the
+   // current-year share continuously by observed historical stability,
+   // magnitude of the downturn and games remaining. Never invent production
+   // and restore the original share as the season matures.
+   const established=samples.filter(s=>!s.currentSeason&&Number(s.games)>=8);
+   if(established.length>=3&&currentGames>=6&&currentGames<16){
+    const ppgs=established.map(s=>Number(s.ppg)).filter(x=>Number.isFinite(x)&&x>0);
+    const mean=ppgs.reduce((a,b)=>a+b,0)/ppgs.length;
+    const dispersion=(Math.max(...ppgs)-Math.min(...ppgs))/Math.max(1,mean);
+    const stability=clamp25(0,(.40-dispersion)/.20,1);
+    const decline=clamp25(0,((mean-Number(current.ppg))/Math.max(1,mean)-.08)/.12,1);
+    const incomplete=clamp25(0,(16-currentGames)/6,1);
+    const support=mean>=10?stability*decline*incomplete:0;
+    v94StableDeclineSupport=support;
+    return v75CurrentShare-Math.max(0,v75CurrentShare-.40)*support;
+   }
+   return v75CurrentShare;
+  }
   if(!prior||currentGames<6||Number(current.ppg)<12)return baseShare;
   const statsFor=year=>{const row=state.stats?.[year]?.[String(id)]||{};
    return row.stats&&typeof row.stats==='object'?row.stats:row;};
@@ -79,7 +98,7 @@ function historyMetrics25(a,id){
  // not a projection of future production or a player-specific exception.
  const supportedBreakoutGuard=1.5+3*verifiedRoleGrowthSupport;
  const weightedPpg=clamp25(legacyPpg-supportedBreakoutGuard,ppg,legacyPpg+supportedBreakoutGuard);
- return{ppg:weightedPpg,tackleRate:tackles,spikeRate:spikes,confidence:clamp25(0,Number(a.confidence||0),1),coverage:1,seasons:Number(a.qualifyingSeasons||samples.length),currentSeasonGames:current?currentGames:null,currentSeasonWeight:currentShare??null,uncappedPpg:ppg,legacyPpg,weightBasis:'games-matured-snap-confirmed-role-breakout-max70pct-with-evidence-tiered-1.5to4.5ppg-guard',verifiedRoleGrowthSupport,scoringGuardPpg:supportedBreakoutGuard,v75CurrentSeasonWeight:v75CurrentShare};
+ return{ppg:weightedPpg,tackleRate:tackles,spikeRate:spikes,confidence:clamp25(0,Number(a.confidence||0),1),coverage:1,seasons:Number(a.qualifyingSeasons||samples.length),currentSeasonGames:current?currentGames:null,currentSeasonWeight:currentShare??null,uncappedPpg:ppg,legacyPpg,weightBasis:'games-matured-snap-confirmed-role-breakout-max70pct-and-v94-verified-stable-downyear-with-evidence-tiered-1.5to4.5ppg-guard',v94StableDeclineSupport,verifiedRoleGrowthSupport,scoringGuardPpg:supportedBreakoutGuard,v75CurrentSeasonWeight:v75CurrentShare};
 }
 function historicalBenchmarkMetrics25(a){
  const samples=(Array.isArray(a?.seasons)?a.seasons:[]).filter(s=>!s.currentSeason).sort((x,y)=>Number(y.season)-Number(x.season)).slice(0,3),weights=[.60,.30,.10];
@@ -220,6 +239,7 @@ window.idpV25EligibilityAudit=function(){const allowed=new Set(['DL','DE','DT','
 window.idpV25PositionSetAudit=function(){const a=window.idpV25PropagationAudit();const meaningful=a.rows.filter(r=>Number.isFinite(r.v25)&&(Number(r.consensus)>180||Number(r.weightedPpg)>=8||Number(r.confidence)>=.42));const norm=id=>{const p=state.players?.[String(id)]||{},vals=[p.position,...(Array.isArray(p.fantasy_positions)?p.fantasy_positions:[])].filter(Boolean).map(v=>String(v).toUpperCase());return [...new Set(vals)].sort().join('+')||'NONE'};const map={};for(const r of meaningful){const set=norm(r.id);(map[set]??=[]).push(r)}const summarize=rows=>{const vals=rows.map(r=>r.v25).filter(Number.isFinite).sort((x,y)=>x-y),q=p=>q25(vals,p);return{n:rows.length,p25:q(.25),median:q(.5),p75:q(.75),p90:q(.9),max:vals.at(-1)||null}};return{criteria:'same meaningful-evidence filter; no forced role mapping',positionSets:Object.fromEntries(Object.entries(map).sort((a,b)=>b[1].length-a[1].length).map(([k,v])=>[k,{...summarize(v),top:[...v].sort((x,y)=>y.v25-x.v25).slice(0,8).map(x=>({name:x.name,pos:x.position,consensus:x.consensus,scoring:x.scoring,v25:x.v25,ppg:x.weightedPpg,conf:x.confidence}))}]))}};
 window.idpScoringAudit=function(nameOrId){generation25();const q=String(nameOrId||'').toLowerCase(),id=state.players?.[nameOrId]?String(nameOrId):(()=>{const matches=Object.keys(state.players||{}).filter(pid=>playerName(pid).toLowerCase()===q);return matches.length===1?matches[0]:null})();if(!id)return null;const base=baseAudit25(id),score=scoring25(id),ctx=context25(id,score),c=Number(base?.consensus);return{...base,consensus:Number.isFinite(c)?c:null,finalValue:blend25(c,score.value,ctx.value).value,productionValue:Math.round(score.value),otherContextValue:Math.round(ctx.value),tackleRate:Number.isFinite(Number(score.m?.tackleRate))?Number(Number(score.m.tackleRate).toFixed(2)):null,spikeRate:Number.isFinite(Number(score.m?.spikeRate))?Number(Number(score.m.spikeRate).toFixed(2)):null,tacklePercentile:null,spikePercentile:null,ageContext:Number.isFinite(Number(ctx.age))?Number((Number(ctx.age)*100).toFixed(0)):null,v25RuntimeTrace:{weightedPpg:score.m?.ppg??null,confidence:score.m?.confidence??null,coverage:score.m?.coverage??null,seasons:score.m?.seasons??null,ppgPercentile:score.ppgPct??null,relativeAboveP50:score.relative??null,rawStrength:score.raw??null,postConfidenceStrength:score.strength??null,benchmarkP50:score.benchmarkP50??null,benchmarkP99:score.benchmarkP99??null,benchmarkN:score.benchmarkN??null,benchmarkTopPpg:distributions25().topPpg,playerOnlyBenchmark:distributions25().playerOnlyBenchmark,productionValue:score.value??null,sourceSeasons:(score.a?.seasons||[]).map(s=>({season:s.season,games:s.games,assignedWeight:s.assignedWeight,currentSeason:s.currentSeason,ppg:s.ppg}))},modelWeights:{consensus:.20,scoringLookback:.45,otherLeagueDynastyContext:.35,marketCenterOffset:IDP_V25_MARKET_CENTER_OFFSET,zeroConsensusFallback:'legacy-40-scoring-20-context'}}};
 masterRankCache=null;valueCache.clear();fitCache.clear();stageCache.clear();
+window.fflIdpScoringModelV94='v94-verified-stable-veteran';
 
  // Read-only IDP source/identity/scoring audit. Does not edit the market.
  window.idpSourceIntegrityAuditV73=function(){

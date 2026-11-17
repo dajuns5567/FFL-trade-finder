@@ -528,7 +528,9 @@ function liveMarketRowV97(row){
 function liveMarketRowsV97(rows){
  return(rows||[]).map(liveMarketRowV97).filter(Boolean);
 }
-function invalidateLiveMarketV97(){liveMarketIndexV97=null}
+function invalidateLiveMarketV97(){
+ liveMarketIndexV97=null;
+}
 
 function currentRows(){const list=ranked();if(!list.length||!tv().playerValue)return[];const pr=posRanks(list),rows=[];for(let i=0;i<list.length;i++){const x=list[i]?.x;if(!x||x.type!=='player')continue;const pos=groupPos(x);if(!['QB','RB','WR','TE','IDP'].includes(pos))continue;const value=Math.round(Number(tv().playerValue(x)||0));if(!Number.isFinite(value)||value<=0)continue;rows.push({id:String(x.id),value,overall:i+1,pos,posRank:pr.get(String(x.id))||1})}return rows}
 function currentPickProjectionSlot(asset){

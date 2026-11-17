@@ -309,7 +309,9 @@ test('null player market movement does not masquerade as zero-valued team covera
 
 test('scheduled local and GitHub archive captures cannot silently lose their explicit valuation model',()=>{
  assert.match(client,/window.valueHistoryModelV90=v94&&v92&&running\?HISTORY_VALUATION_MODEL:null/);
- assert.match(scheduled,/valuationModel:window.valueHistoryModelV90\|\|null/);
+ assert.match(scheduled,/const verifiedModel=typeof window.verifyValueHistoryModelV95==='function'/);
+ assert.match(scheduled,/valuationModel:verifiedModel/);
+ assert.match(client,/window.verifyValueHistoryModelV95=verifyLiveValuationModelV95/);
  assert.match(scheduled,/first.valuationModel===second.valuationModel/);
  assert.match(scheduled,/acceptedValuationModel\(captured.valuationModel\)/);
  assert.match(scheduled,/if\(!valuationModel\)throw new Error\('Scheduled capture lacks the approved live valuation model contract'\)/);

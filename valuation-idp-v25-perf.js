@@ -26,7 +26,9 @@ function historyMetrics25(a,id){
   :null;
  // Current-season weighting above 33.53% needs independent opportunity evidence.
  // Source: verified Sleeper defensive snaps. No guesses or player exceptions.
+ let verifiedRoleGrowthSupport=0;
  const currentShare=(()=>{
+
   if(v75CurrentShare===null||currentGames<=4)return v75CurrentShare;
   const baseShare=Math.min(v75CurrentShare,.33529411764705885);
   const prior=samples.filter(x=>!x.currentSeason&&Number(x.games)>=8)
@@ -48,6 +50,8 @@ function historyMetrics25(a,id){
   const scoringEvidence=clamp25(0,(ppgGain-3)/2,1);
   const gamesEvidence=clamp25(0,(currentGames-5)/3,1);
   const support=Math.min(snapEvidence,scoringEvidence,gamesEvidence);
+  // Evidence must reflect both increased opportunity and productive use.
+  verifiedRoleGrowthSupport=support;
   return baseShare+(v75CurrentShare-baseShare)*support;
  })();
  const legacyPpg=samples.reduce((total,row)=>total+Number(row.ppg||0)*Number(row.assignedWeight||0),0)/coverage;
@@ -64,8 +68,13 @@ function historyMetrics25(a,id){
  // Changes to a completed year cannot move the scoring anchor by more
  // than 1.5 league PPG in one full refresh. This is a uniform sample-size
  // volatility guard rather than a player-specific dynasty price control.
- const weightedPpg=clamp25(legacyPpg-1.5,ppg,legacyPpg+1.5);
- return{ppg:weightedPpg,tackleRate:tackles,spikeRate:spikes,confidence:clamp25(0,Number(a.confidence||0),1),coverage:1,seasons:Number(a.qualifyingSeasons||samples.length),currentSeasonGames:current?currentGames:null,currentSeasonWeight:currentShare??null,uncappedPpg:ppg,legacyPpg,weightBasis:'games-matured-and-defensive-snap-supported-55pct-with-1.5ppg-guard',v75CurrentSeasonWeight:v75CurrentShare};
+ // Verified, sustained role expansion can support more than the generic
+ // +/-1.5 PPG refresh guard. Without corroborating snaps, retain that guard.
+ // At full support the maximum is 4.5 PPG; still a conservative anchor,
+ // not a projection of future production or a player-specific exception.
+ const supportedBreakoutGuard=1.5+3*verifiedRoleGrowthSupport;
+ const weightedPpg=clamp25(legacyPpg-supportedBreakoutGuard,ppg,legacyPpg+supportedBreakoutGuard);
+ return{ppg:weightedPpg,tackleRate:tackles,spikeRate:spikes,confidence:clamp25(0,Number(a.confidence||0),1),coverage:1,seasons:Number(a.qualifyingSeasons||samples.length),currentSeasonGames:current?currentGames:null,currentSeasonWeight:currentShare??null,uncappedPpg:ppg,legacyPpg,weightBasis:'games-matured-and-defensive-snap-supported-55pct-with-evidence-tiered-1.5to4.5ppg-guard',verifiedRoleGrowthSupport,scoringGuardPpg:supportedBreakoutGuard,v75CurrentSeasonWeight:v75CurrentShare};
 }
 function historicalBenchmarkMetrics25(a){
  const samples=(Array.isArray(a?.seasons)?a.seasons:[]).filter(s=>!s.currentSeason).sort((x,y)=>Number(y.season)-Number(x.season)).slice(0,3),weights=[.60,.30,.10];

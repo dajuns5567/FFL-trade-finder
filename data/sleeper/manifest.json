@@ -1,11 +1,11 @@
 {
   "ok": true,
-  "generatedAt": "2026-11-17T03:50:36.050Z",
+  "generatedAt": "2026-11-17T13:20:39.530Z",
   "source": "Sleeper public API",
   "currentLeagueId": "1316867686394769408",
   "currentSeason": 2026,
   "currentLeagueStatus": "in_season",
-  "currentSeasonCompletedWeek": 9,
+  "currentSeasonCompletedWeek": 10,
   "currentLeagueScoringSettings": {
     "sack": 1,
     "qb_hit": 0,
@@ -153,18 +153,18 @@
   },
   "productionWeightPlan": {
     "mode": "in-season",
-    "completedWeek": 9,
+    "completedWeek": 10,
     "weights": {
-      "currentYear": 0.33529411764705885,
-      "previousYear": 0.4062091503267974,
-      "twoYearsAgo": 0.184640522875817,
-      "threeYearsAgo": 0.0738562091503268
+      "currentYear": 0.3647058823529412,
+      "previousYear": 0.38823529411764707,
+      "twoYearsAgo": 0.17647058823529413,
+      "threeYearsAgo": 0.07058823529411765
     },
     "yearWeights": {
-      "2023": 0.0738562091503268,
-      "2024": 0.184640522875817,
-      "2025": 0.4062091503267974,
-      "2026": 0.33529411764705885
+      "2023": 0.07058823529411765,
+      "2024": 0.17647058823529413,
+      "2025": 0.38823529411764707,
+      "2026": 0.3647058823529412
     }
   },
   "productionSeasons": [
@@ -190,9 +190,9 @@
       "withGames": 1049
     },
     "2026": {
-      "players": 1549,
-      "withPpr": 531,
-      "withGames": 1549,
+      "players": 1580,
+      "withPpr": 554,
+      "withGames": 1580,
       "currentSeasonQualified": true
     }
   },
@@ -213,11 +213,11 @@
       "withGames": 1049
     },
     "2026": {
-      "players": 1549,
-      "withPpr": 531,
-      "withGames": 1549,
+      "players": 1580,
+      "withPpr": 554,
+      "withGames": 1580,
       "currentSeasonQualified": true,
-      "compactPlayers": 1549
+      "compactPlayers": 1580
     }
   },
   "qualifyingHistoricalSeasonMinimumGames": 8,
@@ -548,7 +548,9 @@
         "DAL",
         "SF",
         "CIN",
-        "PIT"
+        "PIT",
+        "BAL",
+        "LAC"
       ]
     },
     "weekFinalityByWeek": {
@@ -1732,20 +1734,12 @@
       },
       "10": {
         "scheduledGames": 14,
-        "finalGames": 13,
+        "finalGames": 14,
         "ignoredGames": 0,
-        "blockingGames": 1,
-        "complete": false,
+        "blockingGames": 0,
+        "complete": true,
         "nullSlots": [],
         "slots": [
-          {
-            "id": "401873065",
-            "state": "blocking",
-            "teams": [
-              "BAL",
-              "LAC"
-            ]
-          },
           {
             "id": "401873052",
             "state": "final",
@@ -1849,14 +1843,22 @@
               "CIN",
               "PIT"
             ]
+          },
+          {
+            "id": "401873065",
+            "state": "final",
+            "teams": [
+              "BAL",
+              "LAC"
+            ]
           }
         ]
       }
     },
     "diagnostics": {
-      "finalGames": 149,
-      "qualifiedPlayerGames": 9819,
-      "rejectedPlayerGames": 11402,
+      "finalGames": 150,
+      "qualifiedPlayerGames": 9849,
+      "rejectedPlayerGames": 11534,
       "ignoredGames": 0
     }
   },

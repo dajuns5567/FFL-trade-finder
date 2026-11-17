@@ -157,7 +157,7 @@ for(const needle of [
   'Pos Δ All',
   'deltaAll',
   'posRankDeltaAll',
-  'Since last refresh',
+  'Between recorded snapshots',
   'refreshValue',
   'refreshPos',
   'Player value',

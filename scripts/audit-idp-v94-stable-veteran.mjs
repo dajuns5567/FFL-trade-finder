@@ -29,7 +29,7 @@ const verifiedDecline=[
  "   }",
  "   return v75CurrentShare;",
  "  }"
-].join("\\n");
+].join("\n");
 const v93Source=v91Source.replace(matureDeclineAnchor,verifiedDecline);
 assert(v93Source!==v91Source,'counterfactual differs from baseline');
 const baseSha=process.env.IDP_BASE_SHA;

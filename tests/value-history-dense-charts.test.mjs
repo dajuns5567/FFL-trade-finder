@@ -18,7 +18,7 @@ const ctx={
   dateShort:t=>String(t).slice(0,10),
   playerName:()=> 'Player Test',
   deltaClass:()=> 'vh-neutral',signed:n=>String(n),
-  trackedTeamId:'1',teamNetPointTradeMap:()=>new Map()
+  trackedTeamId:'1',teamNetPointTradeMap:()=>new Map(),livePlayerMeta:()=>({value:4700})
 };
 vm.createContext(ctx);
 for(const name of ['chartTraceIndices','chartEraChange','chartVisualSeries','chartEraPath','chartEraMarkers','chartHoverLayer','teamNetChart','rankSpark','valueChart'])
@@ -91,6 +91,26 @@ test('Delegated pointer and keyboard navigation retain nearest full-resolution s
   assert.match(source,/\.vh-hover-guide/);
 });
 
+test('Value History hover positions use the actual SVG viewport transform',()=>{
+ // SVG preserveAspectRatio may create horizontal gutters. Bounding-box
+ // scaling alone incorrectly selects older points on the right half.
+ const hover=functionSource('handleChartPointer');
+ const display=functionSource('showChartHover');
+ assert.match(hover,/getScreenCTM/);
+ assert.match(hover,/matrix\.inverse\(\)/);
+ assert.match(hover,/svgPoint\.matrixTransform\(matrix\.inverse\(\)\)/);
+ assert.match(display,/screenPoint\.matrixTransform\(matrix\)/);
+ // A centered 900-unit chart rendered 600px wide inside an 800px box:
+ // left/right gutter are 100px, so the right endpoint is x=700, not 800.
+ const left=100,scale=600\/900,plotL=74,plotR=24,W=900;
+ const lastScreenX=left+(W-plotR)*scale;
+ const recovered=(lastScreenX-left)/scale;
+ const lastIndex=Math.round((recovered-plotL)/(W-plotL-plotR)*500);
+ assert.equal(lastIndex,500);
+ const oldIndex=Math.round(((lastScreenX/800*W)-plotL)/(W-plotL-plotR)*500);
+ assert.ok(oldIndex<500,'old bounding-rectangle scaling misses newest history');
+});
+
 test('V96 isolated dense spike smoothing never mutates original snapshots, rankings or tooltips',()=>{
  const original=pts.map(p=>p.value);
  const displayed=Array.from(ctx.chartVisualSeries(pts,'value'));
@@ -121,4 +141,16 @@ test('V96 no smoothing across model eras, sustained changes or sparse observatio
  assert.equal((p.match(/M /g)||[]).length,2,'no rendered stroke crosses explicit model versions');
  const sparse=rows.slice(0,8);
  assert.deepEqual(Array.from(ctx.chartVisualSeries(sparse,'value')),sparse.map(x=>x.value));
+});
+
+test('V97 chart distinguishes live Player Values marker from immutable recorded history',()=>{
+ const plot=ctx.valueChart('test',pts);
+ assert.match(plot,/Live Player Values 4,700/);
+ assert.match(plot,/latest recorded snapshot/);
+ assert.match(plot,/vh-current-live-point/);
+ assert.match(plot,/not saved as history/);
+ const snapshot=decodeSeries(plot);
+ assert.equal(snapshot.points.length,pts.length);
+ assert.equal(snapshot.points.at(-1).value,ctx.fmt(pts.at(-1).value));
+ assert.notEqual(snapshot.points.at(-1).value,'4,700','live marker must not become fabricated historical point');
 });

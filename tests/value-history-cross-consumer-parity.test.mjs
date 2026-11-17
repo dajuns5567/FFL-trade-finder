@@ -21,7 +21,7 @@ function fixture(){
  const playerValues={homeTopPlayers:()=>rows.map(r=>({...r,rank:r.overall}))};
  const normal={playerValue:price,canonicalValue:price,canonicalPackageValue:sum};
  const browser={
-  valueHistoryV331:{currentRows:()=>rows,currentPickRows:()=>[],currentTeamRows:()=>[]},
+  valueHistoryV331:{currentRows:()=>rows,currentPickRows:()=>[],currentTeamRows:()=>[],currentEvaluatorValue:price,hindsightValue:price},
   verifyValueHistoryModelV95:async()=> 'idp-v94-v92-balanced-stable-veteran',
   tradeValueNormalizationV139:normal,tradeValueNormalizationV130:normal,
   baseValue:price,packageValue:sum,
@@ -68,4 +68,12 @@ test('unavailable consumers fail closed; collection waits for the installed site
  assert.equal(r.consumerReady,false);
  assert.match(source,/second\.consumerReady===true/);
  assert.match(source,/Scheduled capture diverged across Player Values, Finder, Evaluator or History/);
+});
+
+test('Trade History Hindsight must reflect current Player Values without altering original trade snapshots',async()=>{
+ const f=fixture();
+ f.window.valueHistoryV331.hindsightValue=a=>a.id==='103'?11:f.window.tradeValueNormalizationV139.playerValue(a);
+ const r=await f.capture();
+ assert(r.valueParityMismatches.some(x=>x.consumer==='tradeHistory.hindsight'&&x.id==='103'));
+ assert.match(readFileSync('value-history-v276.js','utf8'),/const historical=side\?historicalPlayerValue\(side,asset.id\):null/);
 });

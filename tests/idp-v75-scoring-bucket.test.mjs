@@ -175,3 +175,7 @@ test('V94 decline support is continuous as decline and historical volatility var
  assert(moderatelyStable.currentSeasonWeight>=.4&&moderatelyStable.currentSeasonWeight<.55);
  assert.match(source,/const support=mean>=10\?stability\*decline\*incomplete:0/);
 });
+
+test('V94 runtime announces the executed scorer version only after model installation',()=>{
+ assert.match(source,/window\.fflIdpScoringModelV94='v94-verified-stable-veteran'/);
+});

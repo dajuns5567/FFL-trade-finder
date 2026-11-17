@@ -206,8 +206,8 @@ test('SVG player, rank, and team-net charts break lines across model changes wit
   const path=plotCtx.chartEraPath(mixed,field,220,x,y);
   assert.equal((path.match(/M /g)||[]).length,3,
    'known/unknown boundaries must make new SVG move commands, not fake price lines');
-  assert.equal((path.match(/L /g)||[]).length,2,
-   'retain original same-model line segments');
+  assert.equal((path.match(/C /g)||[]).length,2,
+   'retain original same-model line segments using non-overshooting cubic curves');
  }
  const markers=plotCtx.chartEraMarkers(mixed,'value',x,y,'vh-point-dot',3.5);
  assert.equal((markers.match(/<circle/g)||[]).length,6-0-1,
@@ -367,7 +367,7 @@ test('V95 model claim requires BOTH exact served V94 scorer and V92 curve plus r
  const end=client.indexOf("window.addEventListener('load'",start);
  assert(start>0&&end>start);
  const fn=client.slice(start,end);
- const runtime={HISTORY_VALUATION_MODEL:model,window:{idpV25PropagationAudit:()=>true},fetch:async path=>({
+ const runtime={HISTORY_VALUATION_MODEL:model,window:{idpV25PropagationAudit:()=>true,fflIdpScoringModelV94:'v94-verified-stable-veteran',fflIdpCompressionModelV92:'v92-balanced-retention'},fetch:async path=>({
   ok:true,text:async()=>path.includes('v25')
    ?'v94StableDeclineSupport; const support=mean>=10?stability*decline*incomplete:0; const sustainedRoleShare=Math.min(.70,v75CurrentShare+.15*support)'
    :'Math.round(compressed*.01*support*evidence); servedFactor*1.025'
@@ -379,6 +379,13 @@ test('V95 model claim requires BOTH exact served V94 scorer and V92 curve plus r
  runtime.window.idpV25PropagationAudit=null;
  assert.equal(await runtime.globalVerify(),null,'inactive IDP model must not be labeled V94');
  runtime.window.idpV25PropagationAudit=()=>true;
+ runtime.window.fflIdpScoringModelV94='stale-v86';
+ assert.equal(await runtime.globalVerify(),null,'stale cached scorer cannot claim the new V94 model era');
+ runtime.window.fflIdpScoringModelV94='v94-verified-stable-veteran';
+ runtime.window.fflIdpCompressionModelV92='old-v74';
+ assert.equal(await runtime.globalVerify(),null,'stale cached compression cannot claim V92');
+ runtime.window.fflIdpCompressionModelV92='v92-balanced-retention';
+ assert.equal(await runtime.globalVerify(),model,'restored executed runtime identities validate');
  runtime.fetch=async path=>({ok:true,text:async()=>path.includes('v25')?
   'v94StableDeclineSupport; const support=mean>=10?stability*decline*incomplete:0; const sustainedRoleShare=Math.min(.70,v75CurrentShare+.15*support)'
   :'servedFactor*1.17'});

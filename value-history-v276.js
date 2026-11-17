@@ -26,6 +26,7 @@ async function verifyLiveValuationModelV95(){
  }
  return window.valueHistoryModelV90;
 }
+window.verifyValueHistoryModelV95=verifyLiveValuationModelV95;
 window.addEventListener('load',()=>{void verifyLiveValuationModelV95()});
 if(document.readyState==='complete')void verifyLiveValuationModelV95();
 // Experimental deploy previews may read archival history but must never

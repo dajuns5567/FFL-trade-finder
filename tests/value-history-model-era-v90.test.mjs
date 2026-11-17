@@ -206,8 +206,8 @@ test('SVG player, rank, and team-net charts break lines across model changes wit
   const path=plotCtx.chartEraPath(mixed,field,220,x,y);
   assert.equal((path.match(/M /g)||[]).length,3,
    'known/unknown boundaries must make new SVG move commands, not fake price lines');
-  assert.equal((path.match(/L /g)||[]).length,2,
-   'retain original same-model line segments');
+  assert.equal((path.match(/C /g)||[]).length,2,
+   'retain original same-model line segments using non-overshooting cubic curves');
  }
  const markers=plotCtx.chartEraMarkers(mixed,'value',x,y,'vh-point-dot',3.5);
  assert.equal((markers.match(/<circle/g)||[]).length,6-0-1,

@@ -1,4 +1,4 @@
-name: Value History V90 model-era attribution acceptance (draft only)
+name: V95 V94-era value-history acceptance (draft, no deploy)
 on:
   pull_request:
     paths:
@@ -7,6 +7,7 @@ on:
       - 'scripts/value-history-headless-refresh.mjs'
       - 'tests/value-history-dense-charts.test.mjs'
       - 'tests/value-history-model-era-v90.test.mjs'
+      - 'scripts/value-history-data-hub-v331-smoke.mjs'
       - '.github/workflows/value-history-model-era-v90.yml'
 permissions:
   contents: read
@@ -24,8 +25,9 @@ jobs:
           node --check netlify/functions/value-history.mjs
           node --check value-history-v276.js
           node --check scripts/value-history-headless-refresh.mjs
-          node --test tests/value-history-model-era-v90.test.mjs
+          node --test tests/value-history-model-era-v90.test.mjs tests/value-history-dense-charts.test.mjs
       - name: Preserve existing history archive and cross-page valuation invariants
         run: |
           node --test tests/combined-valuation-history-contract.test.mjs
           node scripts/v319-values-v311-integration-smoke.cjs
+          node scripts/value-history-data-hub-v331-smoke.mjs

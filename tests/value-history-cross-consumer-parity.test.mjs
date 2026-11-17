@@ -77,3 +77,24 @@ test('Trade History Hindsight must reflect current Player Values without alterin
  assert(r.valueParityMismatches.some(x=>x.consumer==='tradeHistory.hindsight'&&x.id==='103'));
  assert.match(readFileSync('value-history-v276.js','utf8'),/const historical=side\?historicalPlayerValue\(side,asset.id\):null/);
 });
+
+test('site load and Update both rebuild the same V319 player currency after Sleeper and dynasty consensus',()=>{
+ const refresh=readFileSync('nonblocking-consensus-v277.js','utf8');
+ const importer=readFileSync('sleeper-history-client-v22.js','utf8');
+ const valueModel=readFileSync('modeled-player-values-v319.js','utf8');
+ const runner=readFileSync('netlify/functions/site-v17.mjs','utf8');
+ assert.match(refresh,/refreshDerivedValuation277\('scoring\/core refresh'\)/);
+ assert.match(refresh,/refreshDerivedValuation277\('consensus refresh'\)/);
+ assert.match(refresh,/window\.modeledPlayerValuesV319\?\.refresh\?\.\(true\)/);
+ assert.match(refresh,/window\.dispatchEvent\(new CustomEvent\('fll:valuation-refreshed'/);
+ assert.match(importer,/cache:'no-store'/);
+ assert.match(importer,/clearValueCaches22\(\)/);
+ assert.match(importer,/loadCore=async function\(\)/);
+ assert.match(valueModel,/s\.playerValue=playerValue/);
+ assert.match(valueModel,/s\.canonicalValue=canonicalValue/);
+ assert.match(valueModel,/s\.canonicalPackageValue=canonicalPackageValue/);
+ assert.match(valueModel,/window\.tradeValueNormalizationV139=s/);
+ assert.match(valueModel,/for\(const e of \[window\.tradeEngine96,window\.tradeEngine98,window\.tradeEngine99\]/);
+ assert.match(runner,/valuation-idp-v25-perf\.js\?v=20261117-v94-stable-veteran/);
+ assert.match(runner,/valuation-idp-v43\.js\?v=20261117-v92-balanced-retention/);
+});

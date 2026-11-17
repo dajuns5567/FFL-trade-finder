@@ -531,6 +531,19 @@ function liveMarketRowsV97(rows){
 function invalidateLiveMarketV97(){
  liveMarketIndexV97=null;
 }
+function liveFullMarketRowsV97(archived){
+ const byId=new Map((archived||[]).map(r=>[String(r.id),r]));
+ // Include every currently ranked Player Values asset even if it has never
+ // appeared in an archived snapshot. Its history fields remain null, never 0.
+ return currentRows().map(live=>{
+  const recorded=byId.get(String(live.id))||{id:String(live.id),
+   delta1:null,delta7:null,delta30:null,delta90:null,delta365:null,
+   deltaAll:null,overallDelta7:null,posRankDelta1:null,posRankDelta7:null,
+   posRankDelta30:null,posRankDeltaAll:null};
+  return liveMarketRowV97(recorded);
+ }).filter(Boolean);
+}
+
 
 function currentRows(){const list=ranked();if(!list.length||!tv().playerValue)return[];const pr=posRanks(list),rows=[];for(let i=0;i<list.length;i++){const x=list[i]?.x;if(!x||x.type!=='player')continue;const pos=groupPos(x);if(!['QB','RB','WR','TE','IDP'].includes(pos))continue;const value=Math.round(Number(tv().playerValue(x)||0));if(!Number.isFinite(value)||value<=0)continue;rows.push({id:String(x.id),value,overall:i+1,pos,posRank:pr.get(String(x.id))||1})}return rows}
 function currentPickProjectionSlot(asset){
@@ -1732,7 +1745,7 @@ function sortedMarketRows(rows,query=''){
 }
 function renderMarketTable(){
   const host=document.getElementById('vhMarketTable');if(!host||!marketCache)return;
-  const rows=sortedMarketRows(marketCache.marketRows||[],document.getElementById('vhMarketSearch')?.value||'');
+  const rows=sortedMarketRows(liveFullMarketRowsV97(marketCache.marketRows||[]),document.getElementById('vhMarketSearch')?.value||'');
   host.innerHTML=marketTableRowsMarkup(rows);
 }
 function scoringMilestonesRows(scoring,loading=false){
@@ -1816,7 +1829,7 @@ function renderPlayerHistoryHub(){
 function renderPlayerHistoryTeamRoster(){
   const host=document.getElementById('vhPlayerHistoryTeam');if(!host||!marketCache||!playerHistoryTeamId)return;
   const owned=new Set((state.allAssets||[]).filter(a=>a?.type==='player'&&String(a.owner)===String(playerHistoryTeamId)).map(a=>String(a.id)));
-  const rows=sortedMarketRows((marketCache.marketRows||[]).filter(r=>owned.has(String(r.id))));
+  const rows=sortedMarketRows(liveFullMarketRowsV97(marketCache.marketRows||[]).filter(r=>owned.has(String(r.id))));
   host.innerHTML=`<div class="vh-card"><div class="vh-card-head"><div><h3>${esc(teamName(playerHistoryTeamId))} — Player Value History</h3><div class="vh-sub">${rows.length} current players • exact same columns and Market Value History data used in Track My Team</div></div></div>${marketTableRowsMarkup(rows)}</div>`;
 }
 async function loadPlayerHistoryTeamRoster(){
@@ -1982,7 +1995,7 @@ function teamAttributionCard(owned,netData,teamId){
 function renderTrackedTeamTable(netData={points:[]}){
   const host=document.getElementById('vhTrackedTeam');if(!host||!marketCache||!trackedTeamId)return;
   const owned=new Set((state.allAssets||[]).filter(a=>a?.type==='player'&&String(a.owner)===String(trackedTeamId)).map(a=>String(a.id)));
-  const rows=sortedMarketRows((marketCache.marketRows||[]).filter(r=>owned.has(String(r.id))));
+  const rows=sortedMarketRows(liveFullMarketRowsV97(marketCache.marketRows||[]).filter(r=>owned.has(String(r.id))));
   const periodRows=(category,period)=>(marketCache.periods?.[period]?.[category]||[]).filter(r=>owned.has(String(r.id)));
   const vr=teamPeriods.valueRisers,vf=teamPeriods.valueFallers,rr=teamPeriods.rankRisers,rf=teamPeriods.rankFallers,prr=teamPeriods.posRankRisers,prf=teamPeriods.posRankFallers;
   host.innerHTML=`
@@ -2161,7 +2174,7 @@ function recentChanges(pts){
 }
 function renderPlayerProfile(id,allPts,period='ALL'){
   const box=document.getElementById('vhContent');if(!box)return;
-  if(!allPts.length){box.innerHTML=`<div class="vh-profile-back"><button class="secondary small" data-vh-dashboard>← Market dashboard</button></div><div class="vh-card"><div class="vh-empty">No historical observations recorded yet for ${esc(playerName(id))}. Their history begins with the first completed snapshot in which Sleeper makes them available to the current valuation database.</div></div>`;return}
+  if(!allPts.length){const live=livePlayerMeta(id);box.innerHTML=`<div class="vh-profile-back"><button class="secondary small" data-vh-dashboard>← Market dashboard</button></div><div class="vh-card"><h2>${esc(playerName(id))}</h2><div class="vh-current"><small>Current Player Values price</small><div class="vh-big">${live.value>0?fmt(live.value):'—'}</div><span>${live.overall?'Overall #'+live.overall:'Unranked'} • ${esc(live.pos)} #${live.posRank||'—'}</span></div><div class="vh-empty">No historical observations recorded yet. The current value is live and has not been added to the archive; historical movement remains unavailable until a verified snapshot exists.</div></div>`;return}
   const meta=livePlayerMeta(id),pts=periodPoints(allPts,period),first=pts[0],last=pts[pts.length-1],delta=Number(last.value)-Number(first.value),pct=Number(first.value)?delta/Number(first.value)*100:0,vals=pts.map(p=>Number(p.value)),pmin=Math.min(...vals),pmax=Math.max(...vals),allVals=allPts.map(p=>Number(p.value)),allMin=Math.min(...allVals),allMax=Math.max(...allVals),bestOverall=Math.min(...allPts.map(p=>Number(p.overall))),bestPos=Math.min(...allPts.map(p=>Number(p.posRank))),lowestPos=Math.max(...allPts.map(p=>Number(p.posRank))),highPoint=allPts.find(p=>Number(p.value)===allMax),lowPoint=allPts.find(p=>Number(p.value)===allMin),bestOverallPoint=allPts.find(p=>Number(p.overall)===bestOverall),scoring=playerScoringCache.get(String(id))||null,scoringLoading=!playerScoringCache.has(String(id));
   const periodModelBoundary=pts.some((p,i)=>i>0&&(p.valuation_model||pts[i-1].valuation_model)&&pts[i-1].valuation_model!==p.valuation_model);
   const rank30ModelBoundary=allPts.some((p,i)=>i>0&&(p.valuation_model||allPts[i-1].valuation_model)&&allPts[i-1].valuation_model!==p.valuation_model&&new Date(p.t).getTime()>=new Date(allPts.at(-1).t).getTime()-30*86400000);
@@ -2231,5 +2244,5 @@ function boot(){addShell();window.addEventListener('fll:valuation-refreshed',()=
  else if(currentView==='player'&&currentPlayerId)loadPlayer(currentPlayerId).catch(()=>{});
  });searchTradesOnSiteOpen();setInterval(refreshVisibleTradeHistory,TRADE_HISTORY_REFRESH_MS);window.addEventListener('focus',refreshVisibleTradeHistory);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshVisibleTradeHistory()});scheduleSnapshot(0,snapshotSourceFromUrl());document.getElementById('updateBtn')?.addEventListener('click',()=>{invalidateLiveMarketV97();marketCache=null;teamNetCache.clear();scheduleSnapshot(1000,'manual-update');if(currentPlayerId)setTimeout(()=>loadPlayer(currentPlayerId),1800)},{passive:true})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-window.valueHistoryV331={liveMarketRowV97,liveMarketRowsV97,invalidateLiveMarketV97,currentRows,currentPickRows,currentTeamRows,currentEvaluatorValue,hindsightValue,recordSnapshot,historyFetch,marketFetch,marketData:(force=false)=>ensureMarketCache(!!force),livePlayerMeta,periodPoints,openPlayer:(id)=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>selectPlayer(String(id)),0)},openPlayerHistory:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(renderPlayerHistoryHub,0)},openFullMarket:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>loadFullMarketHistory(),0)}};
+window.valueHistoryV331={liveMarketRowV97,liveMarketRowsV97,liveFullMarketRowsV97,invalidateLiveMarketV97,currentRows,currentPickRows,currentTeamRows,currentEvaluatorValue,hindsightValue,recordSnapshot,historyFetch,marketFetch,marketData:(force=false)=>ensureMarketCache(!!force),livePlayerMeta,periodPoints,openPlayer:(id)=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>selectPlayer(String(id)),0)},openPlayerHistory:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(renderPlayerHistoryHub,0)},openFullMarket:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>loadFullMarketHistory(),0)}};
 })();

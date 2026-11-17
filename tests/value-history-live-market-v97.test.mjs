@@ -27,7 +27,7 @@ const ctx={Map,Number,String,Math,Array,Object,Infinity,JSON,currentRows:()=>cur
  trackedTeamId:'1',teamNetNeighbors:()=>({neighbors:[]}),
  dateTime:String,teamNetChart:()=>'<div>recorded chart only</div>'};
 vm.createContext(ctx);
-vm.runInContext('let liveMarketIndexV97=null;\n'+['liveMarketValuesV97','liveMarketRowV97','liveMarketRowsV97','invalidateLiveMarketV97','sortedMarketRows','moverRows','overallNetValueCard'].map(fn).join('\n'),ctx);
+vm.runInContext('let liveMarketIndexV97=null;\n'+['liveMarketValuesV97','liveMarketRowV97','liveMarketRowsV97','liveFullMarketRowsV97','invalidateLiveMarketV97','sortedMarketRows','moverRows','overallNetValueCard'].map(fn).join('\n'),ctx);
 test('Market dashboard reuses current canonical prices and ranks, never archive prices',()=>{
  const before=structuredClone(original);
  const result=ctx.liveMarketRowsV97(original);
@@ -70,4 +70,23 @@ test('Historical movement remains distinct from live display; model-era boundari
  assert.match(src,/function chartEraChange\(a,b\)/);
  assert.match(src,/const liveMarker=live\.value>0/);
  assert.match(src,/not saved as history/);
+});
+
+test('Full Market Value History includes every active Player Values player with no fabricated snapshot',()=>{
+ current=[{id:'5991',value:5364,overall:79,pos:'IDP',posRank:7},
+  {id:'11667',value:4481,overall:113,pos:'IDP',posRank:13},
+  {id:'new2026',value:3020,overall:208,pos:'WR',posRank:63}];
+ ctx.invalidateLiveMarketV97();
+ const rows=Array.from(ctx.liveFullMarketRowsV97(original));
+ assert.equal(rows.length,3);
+ const newcomer=rows.find(x=>x.id==='new2026');
+ assert.equal(newcomer.value,3020);
+ assert.equal(newcomer.overall,208);
+ assert.equal(newcomer.delta7,null);
+ assert.equal(newcomer.deltaAll,null);
+ assert.equal(newcomer.recordedValue,undefined);
+ assert.equal(rows.find(x=>x.id==='5991').recordedValue,4000);
+ assert.equal(rows.find(x=>x.id==='5991').value,5364);
+ assert.match(src,/liveFullMarketRowsV97\(marketCache\.marketRows\|\|\[\]\)/);
+ assert.match(src,/No historical observations recorded yet\. The current value is live/);
 });

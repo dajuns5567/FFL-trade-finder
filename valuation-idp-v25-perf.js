@@ -33,7 +33,25 @@ function historyMetrics25(a,id){
   const baseShare=Math.min(v75CurrentShare,.33529411764705885);
   const prior=samples.filter(x=>!x.currentSeason&&Number(x.games)>=8)
    .sort((x,y)=>Number(y.season)-Number(x.season))[0];
-  if(prior&&Number(current.ppg)<=Number(prior.ppg))return v75CurrentShare;
+  if(prior&&Number(current.ppg)<=Number(prior.ppg)){
+   // V94: incomplete down years for established, consistently productive IDPs
+   // should not erase three verified prior regular seasons. Shrink the
+   // current-year share continuously by observed historical stability,
+   // magnitude of the downturn and games remaining. Never invent production
+   // and restore the original share as the season matures.
+   const established=samples.filter(s=>!s.currentSeason&&Number(s.games)>=8);
+   if(established.length>=3&&currentGames>=6&&currentGames<16){
+    const ppgs=established.map(s=>Number(s.ppg)).filter(x=>Number.isFinite(x)&&x>0);
+    const mean=ppgs.reduce((a,b)=>a+b,0)/ppgs.length;
+    const dispersion=(Math.max(...ppgs)-Math.min(...ppgs))/Math.max(1,mean);
+    const stability=clamp25(0,(.40-dispersion)/.20,1);
+    const decline=clamp25(0,((mean-Number(current.ppg))/Math.max(1,mean)-.08)/.12,1);
+    const incomplete=clamp25(0,(16-currentGames)/6,1);
+    const support=mean>=10?stability*decline*incomplete:0;
+    return v75CurrentShare-Math.max(0,v75CurrentShare-.40)*support;
+   }
+   return v75CurrentShare;
+  }
   if(!prior||currentGames<6||Number(current.ppg)<12)return baseShare;
   const statsFor=year=>{const row=state.stats?.[year]?.[String(id)]||{};
    return row.stats&&typeof row.stats==='object'?row.stats:row;};

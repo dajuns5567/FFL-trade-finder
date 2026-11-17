@@ -91,7 +91,16 @@ try{
       uncappedPpg:z.production?.m?.uncappedPpg??null,
       dynastySources:(d.idpSources||[]).filter(x=>!String(x).endsWith(' (not listed)')),
       marketRank:d.idpRank??null,
-      qualifiers:z.production?.a?.qualifyingSeasons??0};
+      qualifiers:z.production?.a?.qualifyingSeasons??0,
+      scoringSeasonEvidence:(z.production?.a?.seasons||[]).map(y=>({
+       season:y.season,ppg:y.ppg,games:y.games,assignedWeight:y.assignedWeight,currentSeason:!!y.currentSeason
+      })),
+      modelPpg:z.production?.m?.ppg??null,
+      historicalPpg:z.production?.m?.legacyPpg??null,
+      currentShare:z.production?.m?.currentSeasonWeight??null,
+      roleSupport:z.production?.m?.verifiedRoleGrowthSupport??null,
+      sourceDetails:(d.idpSources||[]).filter(x=>!String(x).endsWith(' (not listed)'))
+      };
     }),
     rosterIds:[...new Set((st.rosters||[]).flatMap(r=>r.players||[]).map(String))],
     teams:st.teams.length,
@@ -235,6 +244,17 @@ try{
  const featured=['Dallas Turner','Maxx Crosby','Will Anderson Jr.','Myles Garrett',
   'George Karlaftis','Carson Schwesinger','Aidan Hutchinson','David Bailey']
   .map(name=>idps.find(x=>x.name===name)).filter(Boolean);
+ console.log('IDP_V92_CROSBY_PEER_AUDIT '+JSON.stringify({
+   top25:idps.filter(z=>z.idpRank<=25).map(z=>({
+    name:z.name,id:z.id,idpRank:z.idpRank,overall:z.overall,consensus:z.consensus,
+    dynastySources:z.dynastySources,marketRank:z.marketRank,
+    scoreValue:z.scoring,context:z.context,value:z.value,priorValue:z.priorValue,
+    ppg:z.scoringPPG,confidence:z.scoringConfidence,qualifiers:z.qualifiers,
+    seasons:z.scoringSeasonEvidence,historicalPpg:z.historicalPpg,
+    currentShare:z.currentShare,roleSupport:z.roleSupport,
+    preCurve:z.v72Base,curveFactor:z.v72Factor
+   }))
+ }));
  console.log('IDP_V91_CURVE_ISOLATION '+JSON.stringify({
   status:'earlier-vs-current-idp-curve-only',ranked:after.ranked.length,idps:idps.length,
   rostered:after.rosterIds.length,offenseChanged,consensusChanged,contextChanged,

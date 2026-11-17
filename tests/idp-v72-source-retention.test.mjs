@@ -133,6 +133,6 @@ test('retention is independently evidenced, bounded and cannot double count larg
      'source retention must remain proportionate to verified scoring and publisher coverage');
   }
  }
- assert.match(source,/servedFactor\\*1\\.025/);
- assert.match(source,/Math\\.round\\(compressed\\*\\.01\\*support\\*evidence\\)/);
+ assert.match(source,/servedFactor\*1\.025/);
+ assert.match(source,/Math\.round\(compressed\*\.01\*support\*evidence\)/);
 });

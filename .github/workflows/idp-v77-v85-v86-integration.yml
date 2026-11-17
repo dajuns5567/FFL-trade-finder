@@ -52,15 +52,15 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Fetch exact PR base model for same-snapshot control
         env:
-          IDP_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          IDP_BASE_SHA: ${{ github.head_ref == 'preview/v94-balanced-idp-v95-history-review' && '2f76c956b234dac8805b621699326283265e2a40' || github.event.pull_request.base.sha }}
         run: git fetch --depth=1 origin "$IDP_BASE_SHA"
       - name: Exact full-league V92 vs V94 model acceptance, all writes blocked
         env:
-          IDP_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          IDP_BASE_SHA: ${{ github.head_ref == 'preview/v94-balanced-idp-v95-history-review' && '2f76c956b234dac8805b621699326283265e2a40' || github.event.pull_request.base.sha }}
         run: node scripts/audit-idp-v91-role-breakout-full-league.mjs
       - name: Verify exact V92-to-V94 composition and Crosby ranks on V92 curve (read-only)
         env:
-          IDP_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          IDP_BASE_SHA: ${{ github.head_ref == 'preview/v94-balanced-idp-v95-history-review' && '2f76c956b234dac8805b621699326283265e2a40' || github.event.pull_request.base.sha }}
           IDP_EARLIER_CURVE_SHA: 9c722601928512b5b6783f3d09ce2ca890ed4954
         run: |
           git fetch --depth=1 origin "$IDP_EARLIER_CURVE_SHA"

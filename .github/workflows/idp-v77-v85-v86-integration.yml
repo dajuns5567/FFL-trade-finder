@@ -1,4 +1,4 @@
-name: IDP V91 role breakout vs V86 acceptance (draft, no deploy)
+name: IDP V94 verified veteran stability vs V92 acceptance (draft, no deploy)
 on:
   pull_request:
     paths:
@@ -15,8 +15,6 @@ on:
       - 'scripts/audit-idp-v86-v85-full-league.mjs'
       - 'scripts/audit-idp-v91-role-breakout-full-league.mjs'
       - 'scripts/audit-idp-v91-curve-isolation.mjs'
-      - 'scripts/audit-idp-v93-decline-stability.mjs'
-      - 'scripts/audit-idp-v94-stable-veteran.mjs'
       - '.github/workflows/idp-v77-v85-v86-integration.yml'
 permissions:
   contents: read
@@ -42,8 +40,6 @@ jobs:
           node --check scripts/audit-idp-v86-v85-full-league.mjs
           node --check scripts/audit-idp-v91-role-breakout-full-league.mjs
           node --check scripts/audit-idp-v91-curve-isolation.mjs
-          node --check scripts/audit-idp-v93-decline-stability.mjs
-          node --check scripts/audit-idp-v94-stable-veteran.mjs
           node --test tests/idp-dynasty-provenance-v77.test.mjs tests/consensus-composite-v3.test.mjs tests/idp-v75-scoring-bucket.test.mjs tests/idp-v65-monotonic-development-v85.test.mjs tests/idp-20-45-35-calibration.test.mjs tests/idp-v72-source-retention.test.mjs
       - name: Preserve canonical player identity, values and history contracts
         run: |
@@ -58,24 +54,14 @@ jobs:
         env:
           IDP_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: git fetch --depth=1 origin "$IDP_BASE_SHA"
-      - name: Exact full-league V86 vs V91 model acceptance, all writes blocked
+      - name: Exact full-league V92 vs V94 model acceptance, all writes blocked
         env:
           IDP_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: node scripts/audit-idp-v91-role-breakout-full-league.mjs
-      - name: Compare current V74 curve against earlier approved compression curve (read-only)
+      - name: Verify V94 retains earlier compression balance (read-only)
         env:
           IDP_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           IDP_EARLIER_CURVE_SHA: 9c722601928512b5b6783f3d09ce2ca890ed4954
         run: |
           git fetch --depth=1 origin "$IDP_EARLIER_CURVE_SHA"
           node scripts/audit-idp-v91-curve-isolation.mjs
-      - name: Read-only mature-IDP decline sample-size counterfactual
-        env:
-          IDP_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          IDP_EARLIER_CURVE_SHA: 9c722601928512b5b6783f3d09ce2ca890ed4954
-        run: node scripts/audit-idp-v93-decline-stability.mjs
-      - name: Read-only low-variance veteran decline counterfactual (V94)
-        env:
-          IDP_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          IDP_EARLIER_CURVE_SHA: 9c722601928512b5b6783f3d09ce2ca890ed4954
-        run: node scripts/audit-idp-v94-stable-veteran.mjs

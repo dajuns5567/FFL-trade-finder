@@ -1,6 +1,36 @@
 (()=>{
 'use strict';
 const API='/.netlify/functions/value-history',SIGNAL_API='/.netlify/functions/player-signals';
+// V95: model-era attribution is a verified deployment contract, not an
+// assumption based on the latest record or a manually selected player.
+// Never tag a history snapshot until the exact V94 IDP scorer AND balanced
+// V92 compression stage are served by the running site.
+const HISTORY_VALUATION_MODEL='idp-v94-v92-balanced-stable-veteran';
+window.valueHistoryModelV90=null;
+async function verifyLiveValuationModelV95(){
+ try{
+  const paths=['/valuation-idp-v25-perf.js','/valuation-idp-v43.js'];
+  const responses=await Promise.all(paths.map(path=>fetch(path,{cache:'no-store'})));
+  if(responses.some(r=>!r.ok))throw Error('valuation-source-unavailable');
+  const [scorer,curve]=await Promise.all(responses.map(r=>r.text()));
+  const v94=scorer.includes('v94StableDeclineSupport')&&
+    scorer.includes('const support=mean>=10?stability*decline*incomplete:0')&&
+    scorer.includes('const sustainedRoleShare=Math.min(.70,v75CurrentShare+.15*support)');
+  const v92=curve.includes('Math.round(compressed*.01*support*evidence)')&&
+    curve.includes('servedFactor*1.025');
+  // The IDP runtime must also be installed, not merely served as a dormant asset.
+  const running=typeof window.idpV25PropagationAudit==='function'&&
+    window.fflIdpScoringModelV94==='v94-verified-stable-veteran'&&
+    window.fflIdpCompressionModelV92==='v92-balanced-retention';
+  window.valueHistoryModelV90=v94&&v92&&running?HISTORY_VALUATION_MODEL:null;
+ }catch(e){
+  window.valueHistoryModelV90=null;
+ }
+ return window.valueHistoryModelV90;
+}
+window.verifyValueHistoryModelV95=verifyLiveValuationModelV95;
+window.addEventListener('load',()=>{void verifyLiveValuationModelV95()});
+if(document.readyState==='complete')void verifyLiveValuationModelV95();
 // Experimental deploy previews may read archival history but must never
 // persist their branch-specific ranks into the canonical shared timeline.
 const isValueHistoryDeployPreview=()=>/^(?:deploy-preview-\d+|[a-f0-9]{24})--precious-dango-fb4633\.netlify\.app$/i.test(location.hostname);
@@ -567,13 +597,18 @@ async function recordSnapshot(source=pendingSnapshotSource){
     }
     const rows=currentRows();
     if(rows.length<100||!sameSnapshotRows(firstRows,rows)){scheduleSnapshot(2000,source);return false}
+    if(await verifyLiveValuationModelV95()!==HISTORY_VALUATION_MODEL){
+      window.__vhLastSnapshot={ok:false,reason:'valuation-model-contract-unverified'};
+      console.warn('Value History snapshot blocked: V94 model identity could not be verified');
+      return false;
+    }
     let picks=[],teams=[];
     try{picks=currentPickRows()}catch(e){console.warn('value-history-pick-enrichment',e)}
     try{teams=currentTeamRows(rows)}catch(e){console.warn('value-history-team-enrichment',e)}
-    const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({league:'1316867686394769408',rows,picks,teams,source})});
+    const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({league:'1316867686394769408',rows,picks,teams,source,valuation_model:HISTORY_VALUATION_MODEL})});
     if(r.ok){
       const stored=await r.json().catch(()=>({ok:true}));
-      window.__vhLastSnapshot={ok:true,source,t:stored?.t||null};
+      window.__vhLastSnapshot={ok:true,source,t:stored?.t||null,valuation_model:stored?.valuation_model||null};
       marketCache=null;teamNetCache.clear();
       if(uiReady){
         if(currentView==='market')loadMarket(true);
@@ -718,6 +753,7 @@ function showChartHover(hit,index,tip,wrap,wrapRect,e){
     data.kind==='rank'?
     `<b>${esc(p.date)}</b><div>${esc(data.label)} <strong>#${esc(p.rank)}</strong></div>`:
     `<b>${esc(p.date)}</b><div>Value <strong>${esc(p.value)}</strong></div><div>Overall #${esc(p.overall)} • ${esc(p.pos)} #${esc(p.posRank)}</div>`;
+  if(p.valuation_model)tip.innerHTML+=`<div class="muted">Valuation model: ${esc(p.valuation_model)}</div>`;
   const svg=hit.ownerSVGElement,svgRect=svg.getBoundingClientRect(),
     px=(svgRect.left-wrapRect.left)+(p.x/data.W)*svgRect.width,
     py=(svgRect.top-wrapRect.top)+(p.y/Number(svg.viewBox.baseVal.height||1))*svgRect.height;
@@ -1611,6 +1647,10 @@ function renderMarketIntelligence(){
   const host=document.getElementById('vhMarketIntelligence');if(host)host.innerHTML=marketIntelligenceMarkup();
 }
 
+function modelEraNote(m){
+  if(!m?.model_change_at)return'';
+  return`<div class="notice" role="status">Valuation model changed on ${esc(dateTime(m.model_change_at))}. Historical snapshots remain available in player charts; Market Movers and historical change columns use comparable observations recorded under the current model. New 1D/7D trends become available as fresh snapshots accumulate.</div>`;
+}
 function renderMarketDashboard(){
   const box=document.getElementById('vhContent');if(!box||!marketCache)return;
   const m=marketCache,status=document.getElementById('vhStatus');
@@ -1618,6 +1658,7 @@ function renderMarketDashboard(){
   const vr=marketPeriods.valueRisers,vf=marketPeriods.valueFallers,rr=marketPeriods.rankRisers,rf=marketPeriods.rankFallers;
   const vpR=m.periods?.[vr]||{},vpF=m.periods?.[vf]||{},rpR=m.periods?.[rr]||{},rpF=m.periods?.[rf]||{};
   box.innerHTML=`
+  ${modelEraNote(m)}
   <div class="vh-market-jump">
     <button type="button" data-vh-market-jump="vhMarketMovers">Movers</button>
     <button type="button" data-vh-market-jump="vhPositionIndexes">Position Indexes</button>
@@ -1645,7 +1686,7 @@ function renderFullMarketHistory(){
   const box=document.getElementById('vhContent');if(!box||!marketCache)return;
   const m=marketCache,status=document.getElementById('vhStatus');
   if(status)status.textContent=m.latest?`Tracking since ${dateShort(m.tracking_since)} • Latest snapshot ${dateTime(m.latest)} • ${fmt(m.snapshot_count)} snapshots`:'Initializing first historical snapshot…';
-  box.innerHTML=`<details class="vh-card vh-market-table" open><summary><span>Full Market Value History</span><span class="vh-details-state"><span class="vh-state-open">Open</span><span class="vh-state-close">Close</span></span></summary><div class="vh-sub" style="margin-top:10px">Full Market History Table — sort the complete current market by value or historical movement. Select any player to open their Player Value History.</div><input id="vhMarketSearch" type="search" placeholder="Filter market table…" style="margin:0 0 10px"><div id="vhMarketTable"></div></details>`;
+  box.innerHTML=`${modelEraNote(m)}<details class="vh-card vh-market-table" open><summary><span>Full Market Value History</span><span class="vh-details-state"><span class="vh-state-open">Open</span><span class="vh-state-close">Close</span></span></summary><div class="vh-sub" style="margin-top:10px">Full Market History Table — sort the complete current market by value or historical movement. Select any player to open their Player Value History.</div><input id="vhMarketSearch" type="search" placeholder="Filter market table…" style="margin:0 0 10px"><div id="vhMarketTable"></div></details>`;
   document.getElementById('vhMarketSearch')?.addEventListener('input',renderMarketTable);
   renderMarketTable();
 }
@@ -1779,6 +1820,7 @@ function teamNetPointTradeMap(teamId,points){
   const trades=(tradeHistoryCache.trades||[]).filter(t=>(t.roster_ids||[]).map(String).includes(id));
   for(let i=1;i<auth.length;i++){
     const prev=auth[i-1],cur=auth[i],a=new Date(prev.t).getTime(),b=new Date(cur.t).getTime();
+    if(chartEraChange(prev,cur))continue; // Never attribute a model repricing to a trade.
     if(!Number.isFinite(a)||!Number.isFinite(b))continue;
     const events=trades.filter(t=>{const tm=new Date(t?.created||0).getTime();return Number.isFinite(tm)&&tm>a&&tm<=b}).map(t=>({id:String(t.id||''),date:dateShort(t.created),counterparts:(t.roster_ids||[]).map(String).filter(x=>x!==id).map(x=>historicalTradeTeamName(t,x)).join(' / ')||'another team'}));
     if(events.length)map.set(String(cur.t),{events,change:Math.round(Number(cur.value)-Number(prev.value))});
@@ -1790,8 +1832,8 @@ function teamNetChart(points){
   if(!pts.length)return'<div class="vh-empty">Net-value history will appear after a completed Value History snapshot.</div>';
   const tradeMap=teamNetPointTradeMap(trackedTeamId,pts),vals=pts.map(p=>Number(p.value)),min=Math.min(...vals),max=Math.max(...vals),pad=Math.max(200,(max-min)*.12),lo=Math.max(0,min-pad),hi=max+pad,W=900,H=142,L=70,R=18,T=12,B=30,n=Math.max(1,pts.length-1),
     x=i=>L+(W-L-R)*(i/n),y=v=>T+(H-T-B)*(1-(Number(v)-lo)/Math.max(1,hi-lo)),first=pts[0],last=pts[pts.length-1],
-    path=chartTraceIndices(pts,'value',160).map((i,j)=>`${j?'L':'M'} ${x(i).toFixed(1)} ${y(pts[i].value).toFixed(1)}`).join(' '),
-    markers=[0,pts.length-1].filter((i,k,a)=>a.indexOf(i)===k).map(i=>`<circle class="vh-net-dot" cx="${x(i).toFixed(1)}" cy="${y(pts[i].value).toFixed(1)}" r="3" pointer-events="none"/>`).join(''),
+    path=chartEraPath(pts,'value',160,x,y),
+    markers=chartEraMarkers(pts,'value',x,y,'vh-net-dot',3),
     hover=chartHoverLayer(pts,'net',{W,H,L,R,T,B,y,field:'value',tradeMap,label:'Overall Net Value'});
   return`<div class="vh-net-chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Overall Net Value history"><line class="vh-net-axis" x1="${L}" y1="${H-B}" x2="${W-R}" y2="${H-B}"/><line class="vh-net-axis" x1="${L}" y1="${T}" x2="${L}" y2="${H-B}"/><text class="vh-net-axis-text" x="${L-8}" y="${T+4}" text-anchor="end">${fmt(Math.round(hi))}</text><text class="vh-net-axis-text" x="${L-8}" y="${H-B}" text-anchor="end">${fmt(Math.round(lo))}</text><text class="vh-net-axis-text" x="${L}" y="${H-8}">${esc(dateShort(first.t))}</text><text class="vh-net-axis-text" x="${W-R}" y="${H-8}" text-anchor="end">${esc(dateShort(last.t))}</text><path class="vh-net-line" d="${path}"/>${markers}${hover}</svg><div class="vh-chart-tooltip" style="display:none"></div></div>`;
 }
@@ -1801,10 +1843,10 @@ function currentTeamNetStandings(){
   for(const a of state.allAssets||[]){
     if(a?.type!=='player')continue;const owner=String(a.owner||''),bucket=totals.get(owner);if(!bucket)continue;
     const id=String(a.id),value=valueById.get(id)||0,m=marketById.get(id);bucket.value+=value;bucket.count++;
-    if(Number.isFinite(Number(m?.delta7))){bucket.delta7+=Number(m.delta7);bucket.known7++}
-    if(Number.isFinite(Number(m?.delta30))){bucket.delta30+=Number(m.delta30);bucket.known30++}
+    if(m?.delta7!=null&&Number.isFinite(Number(m.delta7))){bucket.delta7+=Number(m.delta7);bucket.known7++}
+    if(m?.delta30!=null&&Number.isFinite(Number(m.delta30))){bucket.delta30+=Number(m.delta30);bucket.known30++}
   }
-  const all=[...totals].map(([id,x])=>({id,name:teamName(id),value:Math.round(x.value),delta7:Math.round(x.delta7),delta30:Math.round(x.delta30),coverage7:x.count?x.known7/x.count:0,coverage30:x.count?x.known30/x.count:0}));
+  const all=[...totals].map(([id,x])=>({id,name:teamName(id),value:Math.round(x.value),delta7:x.known7?Math.round(x.delta7):null,delta30:x.known30?Math.round(x.delta30):null,coverage7:x.count?x.known7/x.count:0,coverage30:x.count?x.known30/x.count:0}));
   all.sort((a,b)=>b.value-a.value||a.name.localeCompare(b.name));all.forEach((x,i)=>x.rank=i+1);
   const rankBaseline=(period)=>{
     const coverageKey=period==='7D'?'coverage7':'coverage30',deltaKey=period==='7D'?'delta7':'delta30';
@@ -1892,13 +1934,15 @@ function teamTradeNetEvents(teamId,netData,period){
     let idx=-1;
     for(let i=1;i<pts.length;i++){const prevMs=new Date(pts[i-1].t).getTime(),curMs=new Date(pts[i].t).getTime();if(tm>prevMs&&tm<=curMs){idx=i;break}}
     if(idx<1)continue;
-    const point=pts[idx],prev=pts[idx-1],others=(trade.roster_ids||[]).map(String).filter(x=>x!==id).map(x=>historicalTradeTeamName(trade,x));
+    const point=pts[idx],prev=pts[idx-1];
+    if(chartEraChange(prev,point))continue; // Exclude incomparable price transitions.
+    const others=(trade.roster_ids||[]).map(String).filter(x=>x!==id).map(x=>historicalTradeTeamName(trade,x));
     out.push({trade,point,prev,change:Math.round(Number(point.value)-Number(prev.value)),counterpart:others.join(' / ')||'another team'});
   }
   return out.sort((a,b)=>String(b.trade.created).localeCompare(String(a.trade.created)));
 }
 function teamAttributionCard(owned,netData,teamId){
-  const period=teamAttributionPeriod==='30D'?'30D':'7D',key=period==='30D'?'delta30':'delta7',rows=(marketCache?.marketRows||[]).filter(r=>owned.has(String(r.id))&&Number.isFinite(Number(r?.[key]))).map(r=>({...r,move:Number(r[key])}));
+  const period=teamAttributionPeriod==='30D'?'30D':'7D',key=period==='30D'?'delta30':'delta7',rows=(marketCache?.marketRows||[]).filter(r=>owned.has(String(r.id))&&r?.[key]!=null&&Number.isFinite(Number(r[key]))).map(r=>({...r,move:Number(r[key])}));
   const gains=rows.filter(r=>r.move>0).sort((a,b)=>b.move-a.move).slice(0,5),losses=rows.filter(r=>r.move<0).sort((a,b)=>a.move-b.move).slice(0,5),net=rows.reduce((n,r)=>n+r.move,0),up=gains.reduce((n,r)=>n+r.move,0),down=losses.reduce((n,r)=>n+r.move,0),tradeEvents=teamTradeNetEvents(teamId,netData,period);
   const driver=list=>list.length?list.map(r=>`<div class="vh-driver-row"><div class="vh-driver-main"><div><a href="#" class="vh-driver-name" data-vh-player="${esc(String(r.id))}">${esc(playerName(r.id))}</a><small>${esc(r.pos)} #${r.posRank} • Current value ${fmt(r.value)}</small></div><button type="button" class="vh-player-link vh-driver-chart" data-vh-player="${esc(String(r.id))}"><span class="vh-history-cue">View history ↗</span></button></div><div class="${deltaClass(r.move)}"><b>${signed(r.move)}</b></div></div>`).join(''):'<div class="vh-empty">No qualifying movement in this period.</div>';
   const tradeRows=tradeEvents.length?tradeEvents.map(e=>`<div class="vh-team-trade-event"><div class="vh-team-trade-event-main"><span class="vh-trade-event-badge">Trade</span><div><b>${esc(dateShort(e.trade.created))} • vs. ${esc(e.counterpart)}</b><small>Linked to recorded team net-value point: ${esc(dateTime(e.point.t))}</small></div></div><div class="vh-team-trade-event-value"><small>Team net value</small><b>${fmt(e.point.value)}</b><span class="${deltaClass(e.change)}">${signed(e.change)} from prior team snapshot</span></div><button type="button" class="secondary small" data-vh-open-trade-history data-vh-trade-team="${esc(String(teamId))}">View trade</button></div>`).join(''):`<div class="vh-empty">No completed trades in this period are bracketed by authoritative team net-value snapshots yet.</div>`;
@@ -1982,11 +2026,43 @@ function chartTraceIndices(rows,field,maxPoints){
   sampled.push(len-1);
   return sampled;
 }
+// A valuation-model change is a discontinuity, not a player-price move.
+// Preserve all original observations for hovering, but never draw a misleading
+// continuous stroke between two different (including known/unknown) models.
+function chartEraChange(a,b){
+ return Boolean((a?.valuation_model||b?.valuation_model)&&a?.valuation_model!==b?.valuation_model);
+}
+function chartEraPath(points,field,maxPoints,x,y){
+ if(!points.length)return'';
+ const chunks=[],ranges=[];
+ let start=0;
+ for(let i=1;i<points.length;i++)if(chartEraChange(points[i-1],points[i])){
+  ranges.push([start,i]);start=i;
+ }
+ ranges.push([start,points.length]);
+ for(const [from,end]of ranges){
+  const segment=points.slice(from,end);
+  const sample=chartTraceIndices(segment,field,maxPoints);
+  for(let j=0;j<sample.length;j++){
+   const i=from+sample[j];
+   chunks.push(`${j?'L':'M'} ${x(i).toFixed(1)} ${y(points[i][field]).toFixed(1)}`);
+  }
+ }
+ return chunks.join(' ');
+}
+function chartEraMarkers(points,field,x,y,cssClass,radius){
+ const indices=new Set([0,points.length-1]);
+ for(let i=1;i<points.length;i++)if(chartEraChange(points[i-1],points[i])){
+  indices.add(i-1);indices.add(i);
+ }
+ return[...indices].filter(i=>points[i]).sort((a,b)=>a-b).map(i=>
+  `<circle class="${cssClass}" cx="${x(i).toFixed(1)}" cy="${y(points[i][field]).toFixed(1)}" r="${radius}" pointer-events="none"/>`).join('');
+}
 function chartHoverLayer(rows,kind,{W,H,L,R,T,B,y,field,tradeMap=null,label=''}){
   const count=rows.length,n=Math.max(1,count-1),width=W-L-R;
   const snapshots=rows.map((p,i)=>({
     x:L+width*i/n,y:y(Number(p[field])),date:dateTime(p.t),value:fmt(p.value),
-    overall:p.overall,pos:p.pos,posRank:p.posRank,rank:p[field],
+    overall:p.overall,pos:p.pos,posRank:p.posRank,rank:p[field],valuation_model:p.valuation_model||null,
     trades:tradeMap?.get(String(p.t))||null
   }));
   const overlay=esc(JSON.stringify({kind,label,points:snapshots,L,R,W}));
@@ -2007,35 +2083,40 @@ function rankSpark(points,field,axisLabel='Rank'){
     x=i=>L+(W-L-R)*(i/n),y=v=>T+(H-T-B)*((Number(v)-min)/spread),
     first=clean[0],last=clean[clean.length-1],
     dateLabel=t=>{try{return new Date(t).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}catch{return''}};
-  const path=chartTraceIndices(clean,field,90).map((i,j)=>`${j?'L':'M'} ${x(i).toFixed(1)} ${y(clean[i][field]).toFixed(1)}`).join(' '),
-    markers=[0,clean.length-1].filter((i,k,a)=>a.indexOf(i)===k).map(i=>`<circle class="vh-rank-dot" cx="${x(i).toFixed(1)}" cy="${y(clean[i][field]).toFixed(1)}" r="3" pointer-events="none"/>`).join(''),
+  const path=chartEraPath(clean,field,90,x,y),
+    markers=chartEraMarkers(clean,field,x,y,'vh-rank-dot',3),
     hover=chartHoverLayer(clean,'rank',{W,H,L,R,T,B,y,field,label:axisLabel});
   return`<div class="vh-rank-chart" style="position:relative"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(axisLabel)} history"><line class="vh-axis" x1="${L}" y1="${T}" x2="${L}" y2="${H-B}"/><line class="vh-axis" x1="${L}" y1="${H-B}" x2="${W-R}" y2="${H-B}"/><text class="vh-axis-text" x="${L-7}" y="${T+4}" text-anchor="end">#${min}</text><text class="vh-axis-text" x="${L-7}" y="${H-B}" text-anchor="end">#${max}</text><text class="vh-axis-text" x="13" y="${(T+H-B)/2}" text-anchor="middle" transform="rotate(-90 13 ${(T+H-B)/2})">${esc(axisLabel)}</text><text class="vh-axis-text" x="${L}" y="${H-14}">${esc(dateLabel(first.t))}</text><text class="vh-axis-text" x="${W-R}" y="${H-14}" text-anchor="end">${esc(dateLabel(last.t))}</text><text class="vh-axis-text" x="${(L+W-R)/2}" y="${H-3}" text-anchor="middle">Date</text><path class="vh-rank-line" d="${path}"/>${markers}${hover}</svg><div class="vh-chart-tooltip" role="status" aria-live="polite"></div></div>`;
 }
 function valueChart(id,pts,allPts=pts){
   if(!pts.length)return`<div class="vh-empty">No historical observations recorded yet for ${esc(playerName(id))}. A point will appear after a completed value refresh is recorded.</div>`;
   const values=pts.map(p=>Number(p.value)).filter(Number.isFinite),min=Math.min(...values),max=Math.max(...values),pad=Math.max(100,(max-min)*.15),lo=Math.max(0,min-pad),hi=max+pad,W=900,H=380,L=74,R=24,T=34,B=72,n=Math.max(1,pts.length-1),x=i=>L+(W-L-R)*(i/n),y=v=>T+(H-T-B)*(1-(Number(v)-lo)/Math.max(1,hi-lo));
-  const path=chartTraceIndices(pts,'value',220).map((i,j)=>`${j?'L':'M'} ${x(i).toFixed(1)} ${y(pts[i].value).toFixed(1)}`).join(' '),
-    markers=[0,pts.length-1].filter((i,k,a)=>a.indexOf(i)===k).map(i=>`<circle class="vh-point-dot" cx="${x(i).toFixed(1)}" cy="${y(pts[i].value).toFixed(1)}" r="3.5"/>`).join(''),
+  const path=chartEraPath(pts,'value',220,x,y),
+    markers=chartEraMarkers(pts,'value',x,y,'vh-point-dot',3.5),
     hover=chartHoverLayer(pts,'value',{W,H,L,R,T,B,y,field:'value',label:'Player Value'}),first=pts[0],last=pts[pts.length-1],
-    prev=allPts.length>1?allPts[allPts.length-2]:null,latest=allPts[allPts.length-1],refreshValue=prev?Number(latest.value)-Number(prev.value):null,refreshPos=prev?Number(prev.posRank)-Number(latest.posRank):null,
-    refresh=`<div class="vh-refresh-callout"><span class="vh-refresh-label">Since last refresh</span><div class="vh-refresh-metrics"><div class="vh-refresh-metric"><small>Value change</small><strong class="${deltaClass(refreshValue)}">${refreshValue==null?'—':signed(refreshValue)}</strong></div><div class="vh-refresh-metric"><small>${esc(latest.pos)} rank change</small><strong class="${deltaClass(refreshPos)}">${refreshPos==null?'—':signed(refreshPos)}</strong></div></div></div>`,
+    prev=allPts.length>1?allPts[allPts.length-2]:null,latest=allPts[allPts.length-1],refreshBoundary=Boolean(prev&&(latest.valuation_model||prev.valuation_model)&&prev.valuation_model!==latest.valuation_model),
+    refreshValue=prev&&!refreshBoundary?Number(latest.value)-Number(prev.value):null,refreshPos=prev&&!refreshBoundary?Number(prev.posRank)-Number(latest.posRank):null,
+    refresh=`<div class="vh-refresh-callout"><span class="vh-refresh-label">${refreshBoundary?'Valuation model changed — movement not comparable':'Since last refresh'}</span><div class="vh-refresh-metrics"><div class="vh-refresh-metric"><small>Value change</small><strong class="${deltaClass(refreshValue)}">${refreshValue==null?'—':signed(refreshValue)}</strong></div><div class="vh-refresh-metric"><small>${esc(latest.pos)} rank change</small><strong class="${deltaClass(refreshPos)}">${refreshPos==null?'—':signed(refreshPos)}</strong></div></div></div>`,
     xLabel=t=>{try{return new Date(t).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}catch{return''}};
   return`<div class="vh-value-chart">${refresh}<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(playerName(id))} value history"><line x1="${L}" y1="${H-B}" x2="${W-R}" y2="${H-B}" stroke="currentColor" opacity=".25"/><line x1="${L}" y1="${T}" x2="${L}" y2="${H-B}" stroke="currentColor" opacity=".25"/><text class="vh-value-axis" x="${L-10}" y="${T+5}" text-anchor="end">${Math.round(hi).toLocaleString()}</text><text class="vh-value-axis" x="${L-10}" y="${H-B}" text-anchor="end">${Math.round(lo).toLocaleString()}</text><text class="vh-value-axis" x="18" y="${(T+H-B)/2}" text-anchor="middle" transform="rotate(-90 18 ${(T+H-B)/2})">Player value</text><text class="vh-value-axis" x="${L}" y="${H-34}">${esc(xLabel(first.t))}</text><text class="vh-value-axis" x="${W-R}" y="${H-34}" text-anchor="end">${esc(xLabel(last.t))}</text><text class="vh-value-axis" x="${(L+W-R)/2}" y="${H-10}" text-anchor="middle">Date / time</text><path d="${path}" fill="none" stroke="#e4b53f" stroke-width="3.5" vector-effect="non-scaling-stroke"/>${markers}${hover}</svg><div class="vh-chart-tooltip" role="status" aria-live="polite"></div></div><p class="tiny muted">Hover or tap anywhere along the chart to inspect every original snapshot (timestamp, value and ranks); use arrow keys when focused.</p>`;
 }
 function recentChanges(pts){
-  const rows=[];for(let i=pts.length-1;i>0&&rows.length<8;i--){const a=pts[i-1],b=pts[i],dv=Number(b.value)-Number(a.value),dr=Number(a.overall)-Number(b.overall),dp=Number(a.posRank)-Number(b.posRank);if(dv||dr||dp)rows.push({t:b.t,dv,dr,dp,value:b.value,overall:b.overall,pos:b.pos,posRank:b.posRank})}
+  const rows=[];for(let i=pts.length-1;i>0&&rows.length<8;i--){const a=pts[i-1],b=pts[i],dv=Number(b.value)-Number(a.value),dr=Number(a.overall)-Number(b.overall),dp=Number(a.posRank)-Number(b.posRank);if(dv||dr||dp)rows.push({t:b.t,dv,dr,dp,value:b.value,overall:b.overall,pos:b.pos,posRank:b.posRank,modelBoundary:Boolean((a.valuation_model||b.valuation_model)&&a.valuation_model!==b.valuation_model)})}
   if(!rows.length)return'<div class="vh-empty">No value or rank changes recorded yet.</div>';
-  return`<div class="vh-feed">${rows.map(r=>`<div class="vh-feed-row"><div><b>${esc(dateTime(r.t))}</b><div class="muted">Value ${fmt(r.value)} • Overall #${r.overall} • ${esc(r.pos)} #${r.posRank}</div></div><div style="text-align:right"><b class="${deltaClass(r.dv)}">${signed(r.dv)}</b><div class="muted">${r.dr?`${r.dr>0?'+':''}${r.dr} overall`:''}${r.dr&&r.dp?' • ':''}${r.dp?`${r.dp>0?'+':''}${r.dp} pos`:''}</div></div></div>`).join('')}</div>`;
+  return`<div class="vh-feed">${rows.map(r=>`<div class="vh-feed-row"><div><b>${esc(dateTime(r.t))}</b><div class="muted">Value ${fmt(r.value)} • Overall #${r.overall} • ${esc(r.pos)} #${r.posRank}</div></div><div style="text-align:right"><b class="${deltaClass(r.modelBoundary?0:r.dv)}">${r.modelBoundary?'Model change':signed(r.dv)}</b><div class="muted">${r.modelBoundary?'Separate valuation baseline':r.dr?`${r.dr>0?'+':''}${r.dr} overall`:''}${r.dr&&r.dp?' • ':''}${r.dp?`${r.dp>0?'+':''}${r.dp} pos`:''}</div></div></div>`).join('')}</div>`;
 }
 function renderPlayerProfile(id,allPts,period='ALL'){
   const box=document.getElementById('vhContent');if(!box)return;
   if(!allPts.length){box.innerHTML=`<div class="vh-profile-back"><button class="secondary small" data-vh-dashboard>← Market dashboard</button></div><div class="vh-card"><div class="vh-empty">No historical observations recorded yet for ${esc(playerName(id))}. Their history begins with the first completed snapshot in which Sleeper makes them available to the current valuation database.</div></div>`;return}
   const meta=livePlayerMeta(id),pts=periodPoints(allPts,period),first=pts[0],last=pts[pts.length-1],delta=Number(last.value)-Number(first.value),pct=Number(first.value)?delta/Number(first.value)*100:0,vals=pts.map(p=>Number(p.value)),pmin=Math.min(...vals),pmax=Math.max(...vals),allVals=allPts.map(p=>Number(p.value)),allMin=Math.min(...allVals),allMax=Math.max(...allVals),bestOverall=Math.min(...allPts.map(p=>Number(p.overall))),bestPos=Math.min(...allPts.map(p=>Number(p.posRank))),lowestPos=Math.max(...allPts.map(p=>Number(p.posRank))),highPoint=allPts.find(p=>Number(p.value)===allMax),lowPoint=allPts.find(p=>Number(p.value)===allMin),bestOverallPoint=allPts.find(p=>Number(p.overall)===bestOverall),scoring=playerScoringCache.get(String(id))||null,scoringLoading=!playerScoringCache.has(String(id));
+  const periodModelBoundary=pts.some((p,i)=>i>0&&(p.valuation_model||pts[i-1].valuation_model)&&pts[i-1].valuation_model!==p.valuation_model);
+  const rank30ModelBoundary=allPts.some((p,i)=>i>0&&(p.valuation_model||allPts[i-1].valuation_model)&&allPts[i-1].valuation_model!==p.valuation_model&&new Date(p.t).getTime()>=new Date(allPts.at(-1).t).getTime()-30*86400000);
   const archivedLast=allPts[allPts.length-1],previewRankMismatch=isValueHistoryDeployPreview()&&(
     (meta.overall!=null&&Number(meta.overall)!==Number(archivedLast.overall))||
     (meta.posRank!=null&&Number(meta.posRank)!==Number(archivedLast.posRank))||
     (meta.value>0&&Number(meta.value)!==Number(archivedLast.value)));
+  const modelBoundaries=allPts.reduce((n,p,i)=>n+(i>0&&(p.valuation_model||allPts[i-1].valuation_model)&&allPts[i-1].valuation_model!==p.valuation_model?1:0),0);
+  const modelBoundaryNote=modelBoundaries?'<div class="notice" role="status">History includes a valuation-model change. The original observations are preserved, but changes across models should not be interpreted as player-market movement.</div>':'';
   const previewSnapshotNote=previewRankMismatch?
     '<div class="notice" role="status">Live Deploy Preview: current value/rank above use this build; charts below show recorded historical snapshots from a different valuation version. Preview ranks are not saved to the canonical history.</div>':
     isValueHistoryDeployPreview()?'<div class="tiny muted">Historical charts show archived snapshots; this Deploy Preview does not write new observations.</div>':'';
@@ -2044,6 +2125,7 @@ function renderPlayerProfile(id,allPts,period='ALL'){
   box.innerHTML=`
   <div id="vhProfileData" data-points="${esc(JSON.stringify(allPts))}" hidden></div>
   ${previewSnapshotNote}
+  ${modelBoundaryNote}
   <div class="vh-profile-back"><button class="secondary small" data-vh-dashboard>← Market dashboard</button></div>
   <div class="vh-card">
     <div class="vh-profile-info">
@@ -2059,7 +2141,7 @@ function renderPlayerProfile(id,allPts,period='ALL'){
   </div>
   <div class="vh-card vh-filter-card"><div class="vh-filter-label">History range</div><div class="vh-periods">${['1D','7D','30D','90D','1Y','ALL'].map(p=>`<button type="button" class="${p===period?'':'secondary '}small" data-vh-period="${p}">${p}</button>`).join('')}</div></div>
   <div class="vh-metrics">
-    <div class="vh-metric"><small>${period} Change</small><b class="${deltaClass(delta)}">${signed(delta)}</b><div class="tiny muted">${signedPct(pct)}</div></div>
+    <div class="vh-metric"><small>${period} Change</small><b class="${deltaClass(periodModelBoundary?0:delta)}">${periodModelBoundary?'—':signed(delta)}</b><div class="tiny muted">${periodModelBoundary?'Valuation model changed':signedPct(pct)}</div></div>
     <div class="vh-metric"><small>Value Range</small><b>${fmt(pmin)}–${fmt(pmax)}</b></div>
     <div class="vh-metric"><small>All-Time High</small><b>${fmt(allMax)}</b><div class="vh-metric-time">${highPoint?dateTime(highPoint.t):'—'}</div></div>
     <div class="vh-metric"><small>All-Time Low</small><b>${fmt(allMin)}</b><div class="vh-metric-time">${lowPoint?dateTime(lowPoint.t):'—'}</div></div>
@@ -2068,8 +2150,8 @@ function renderPlayerProfile(id,allPts,period='ALL'){
   </div>
   <div class="vh-card vh-chart-card"><h3 class="vh-section-heading">${period==='ALL'?'All-Time':period} Value History</h3>${valueChart(id,pts,allPts)}</div>
   <div class="vh-rank-grid">
-    <div class="vh-card"><h3 class="vh-section-heading">Overall Rank — Last 30 Days</h3><div class="vh-rank-stat"><span class="muted">#${rankBase.overall} → #${rankLast.overall}</span><b class="${deltaClass(overallMove)}">${overallMove>0?'+':''}${overallMove}</b></div>${rankSpark(rank30.length?rank30:[rankBase,rankLast],'overall','Overall rank')}</div>
-    <div class="vh-card"><h3 class="vh-section-heading">${esc(meta.pos)} Rank — Last 30 Days</h3><div class="vh-rank-stat"><span class="muted">#${rankBase.posRank} → #${rankLast.posRank}</span><b class="${deltaClass(posMove)}">${posMove>0?'+':''}${posMove}</b></div>${rankSpark(rank30.length?rank30:[rankBase,rankLast],'posRank',`${meta.pos} rank`)}</div>
+    <div class="vh-card"><h3 class="vh-section-heading">Overall Rank — Last 30 Days</h3><div class="vh-rank-stat"><span class="muted">#${rankBase.overall} → #${rankLast.overall}</span><b class="${deltaClass(rank30ModelBoundary?0:overallMove)}">${rank30ModelBoundary?'—':`${overallMove>0?'+':''}${overallMove}`}</b></div>${rankSpark(rank30.length?rank30:[rankBase,rankLast],'overall','Overall rank')}</div>
+    <div class="vh-card"><h3 class="vh-section-heading">${esc(meta.pos)} Rank — Last 30 Days</h3><div class="vh-rank-stat"><span class="muted">#${rankBase.posRank} → #${rankLast.posRank}</span><b class="${deltaClass(rank30ModelBoundary?0:posMove)}">${rank30ModelBoundary?'—':`${posMove>0?'+':''}${posMove}`}</b></div>${rankSpark(rank30.length?rank30:[rankBase,rankLast],'posRank',`${meta.pos} rank`)}</div>
   </div>
   <div class="vh-grid">
     <div class="vh-card" style="grid-column:span 2"><h3 class="vh-section-heading">Recent Changes</h3><div class="vh-sub">Latest recorded value or rank changes</div>${recentChanges(allPts)}</div>
@@ -2088,5 +2170,5 @@ function renderPlayerProfile(id,allPts,period='ALL'){
 }
 function boot(){addShell();searchTradesOnSiteOpen();setInterval(refreshVisibleTradeHistory,TRADE_HISTORY_REFRESH_MS);window.addEventListener('focus',refreshVisibleTradeHistory);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshVisibleTradeHistory()});scheduleSnapshot(0,snapshotSourceFromUrl());document.getElementById('updateBtn')?.addEventListener('click',()=>{marketCache=null;teamNetCache.clear();scheduleSnapshot(1000,'manual-update');if(currentPlayerId)setTimeout(()=>loadPlayer(currentPlayerId),1800)},{passive:true})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-window.valueHistoryV331={currentRows,currentPickRows,currentTeamRows,recordSnapshot,historyFetch,marketFetch,marketData:(force=false)=>ensureMarketCache(!!force),livePlayerMeta,periodPoints,openPlayer:(id)=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>selectPlayer(String(id)),0)},openPlayerHistory:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(renderPlayerHistoryHub,0)},openFullMarket:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>loadFullMarketHistory(),0)}};
+window.valueHistoryV331={currentRows,currentPickRows,currentTeamRows,currentEvaluatorValue,hindsightValue,recordSnapshot,historyFetch,marketFetch,marketData:(force=false)=>ensureMarketCache(!!force),livePlayerMeta,periodPoints,openPlayer:(id)=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>selectPlayer(String(id)),0)},openPlayerHistory:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(renderPlayerHistoryHub,0)},openFullMarket:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>loadFullMarketHistory(),0)}};
 })();

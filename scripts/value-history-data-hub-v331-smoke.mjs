@@ -302,7 +302,7 @@ assert(ui.includes("What's Happening With My Team"),'approved Track My Team attr
 assert(!ui.includes('What Moved My Team'),'legacy team attribution heading must be removed');
 assert(!ui.includes('${teamTradeImpactCard(trackedTeamId)}'),'standalone Recent Trade Impact card must not duplicate trade events');
 assert(ui.includes('The snapshot change is observed team net-value movement, not an assumption that the trade alone caused the move.'),'trade-linked net movement must include non-causal attribution language');
-assert(ui.includes("body:JSON.stringify({league:'1316867686394769408',rows,picks,teams,source})"),'Value History snapshot POST must include separate player, pick, and team ownership totals');
+assert(ui.includes("body:JSON.stringify({league:'1316867686394769408',rows,picks,teams,source,valuation_model:HISTORY_VALUATION_MODEL})"),'Value History snapshot POST must include separate player, pick, and team ownership totals');
 assert(ui.includes('const recorded=Number(asset.historyRecordedValue)'),'Trade History must prefer recorded historical pick values before retroactive fallback');
 assert(ui.includes('vh-assets-title'),'Trade History must visually emphasize Assets received');
 assert(ui.includes('function tradeOriginalAssets(side,trade)')&&
@@ -450,7 +450,10 @@ assert(backend.includes("const fp=fingerprint(rows,picks,teams);"),'Value Histor
 assert(backend.includes("url.searchParams.get('trades')==='1'"),'completed trade history endpoint missing');
 assert(backend.includes('function cleanPicks(picks)'),'Value History backend must sanitize stored pick snapshots separately from player rows');
 assert(backend.includes('function cleanTeams(teams)'),'Value History backend must sanitize team totals separately from player rows');
-assert(backend.includes("const snapshot={version:5,league:LEAGUE,t,fingerprint:fp,source,valuation_contract:source==='scheduled'?SCHEDULED_VALUATION_CONTRACT:null,rows,picks,teams}"),'Value History snapshots must persist player, pick, team totals, source, and the scheduled valuation contract as separate fields');
+assert(backend.includes("const snapshot={version:5,league:LEAGUE,t,fingerprint:fp,source,")&&
+  backend.includes("valuation_contract:source==='scheduled'?SCHEDULED_VALUATION_CONTRACT:null,")&&
+  backend.includes("valuation_model:valuationModel,rows,picks,teams}"),
+  'Value History snapshots must persist player/pick/team data, scheduled contract, and optional model attribution separately');
 assert(backend.includes('await appendIndex(s,key,t);'),'Value History write must persist the snapshot index before reporting success');
 assert(!backend.includes("try{await appendIndex(s,key,t)}catch"),'Value History must not silently report success for an unindexed snapshot');
 assert(backend.includes('histPickMap=pickMap'),'completed trade history must read pick values from the exact historical snapshot');
@@ -489,7 +492,7 @@ assert(ui.includes('function snapshotPreconditions()')&&ui.includes('Object.keys
 assert(!ui.includes("Object.keys(state.players).length<100||!hasValidatedKtcSnapshot()"),'Value History player snapshots must not be blocked by the KTC-specific validation gate');
 assert(ui.includes("const rows=currentRows();"),'Value History must copy the site already-calculated player values into each snapshot');
 assert(!ui.includes("keepalive:true"),'Value History POST must not use browser keepalive because the expanded snapshot payload can exceed keepalive body limits');
-assert(ui.includes("body:JSON.stringify({league:'1316867686394769408',rows,picks,teams,source})"),'Value History POST must send the completed player snapshot payload');
+assert(ui.includes("body:JSON.stringify({league:'1316867686394769408',rows,picks,teams,source,valuation_model:HISTORY_VALUATION_MODEL})"),'Value History POST must send the completed player snapshot payload');
 assert(ui.includes("else if(currentView==='player'&&currentPlayerId)loadPlayer(currentPlayerId);"),'successful Value History writes must refresh the currently viewed player chart immediately');
 assert(ui.includes("try{picks=currentPickRows()}catch"),'draft-pick snapshot enrichment must never block the core player snapshot');
 assert(ui.includes("try{teams=currentTeamRows(rows)}catch"),'team snapshot enrichment must never block the core player snapshot');
@@ -584,7 +587,8 @@ assert(headlessRefresh.includes("sameRows(first.rows,second.rows)"),'scheduled h
 assert(headlessRefresh.includes("page.waitForTimeout(1500)"),'scheduled headless snapshots must observe a stability interval before persistence');
 assert(headlessRefresh.includes("window.__fllValueRefresh"),'scheduled headless readiness must honor the full valuation refresh in-flight marker');
 assert(headlessRefresh.includes("refresh?.phase==='complete'"),'scheduled headless readiness must require the canonical valuation refresh to reach the completed phase');
-assert(headlessRefresh.includes("canonical.playerValue?.({type:'player',id:String(r.id)})"),'scheduled snapshots must verify every captured player against the live canonical Player Values API');
+assert(headlessRefresh.includes("for(const r of rows)")&&headlessRefresh.includes("compare(r.id,'normalization.playerValue',canonical.playerValue?.(asset),expected)"),'scheduled snapshots must verify every captured player against the live canonical Player Values API');
+assert(headlessRefresh.includes("compare(r.id,'normalization.canonicalValue'")&&headlessRefresh.includes("compare(r.id,'global.baseValue'")&&headlessRefresh.includes("compare(r.id,'modeled.snapshot'")&&headlessRefresh.includes("compare(r.id,'playerValues.homeTopPlayers'")&&headlessRefresh.includes("second.consumerReady===true"),'scheduled snapshots must audit all consumer values before archiving');
 assert(headlessRefresh.includes("valueParityMismatches"),'scheduled snapshots must fail closed when captured values diverge from the canonical Player Values scale');
 assert(headlessRefresh.includes("first.modeledVersion===second.modeledVersion"),'scheduled snapshots must keep the modeled-value runtime version stable across the capture interval');
 const consensusRuntime=fs.readFileSync('nonblocking-consensus-v277.js','utf8');
@@ -601,7 +605,7 @@ const archiveWorkflow=fs.readFileSync('.github/workflows/value-history-archive.y
 assert(archiveWorkflow.includes("cron: '17 * * * *'"),'hourly durable archive schedule missing');
 assert(archiveWorkflow.includes('contents: write'),'archive workflow needs contents write permission');
 assert(archiveWorkflow.includes('NETLIFY_BLOBS_TOKEN:'),'archive workflow must inject an authenticated Blob token instead of relying on public site access');
-assert(archiveWorkflow.includes("VALUE_HISTORY_PRODUCTION_SITE_ID: '2e556797-6f35-4037-aa5a-1338724eb71d'"),'hourly archive must pin the current verified Netlify production site');
+assert(archiveWorkflow.includes("VALUE_HISTORY_PRODUCTION_SITE_ID: 'fa33dfe4-8293-441e-8da0-25cc66fc984c'"),'hourly archive must pin the current verified Netlify production site');
 assert(archiveWorkflow.includes('NETLIFY_SANDBOX_DEPLOY_TOKEN'),'hourly archive must use the current-team Blob credential');
 assert(archiveWorkflow.includes('Resolve latest production Netlify site for main'),'interactive archive workflow may resolve the currently accessible Netlify live buffer without being required by scheduled history');
 assert(archiveWorkflow.includes("if: steps.active_site.outputs.matched_target_sha == 'true'"),'interactive archive must not ingest live Blob history from a retired Netlify production site');

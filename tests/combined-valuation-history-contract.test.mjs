@@ -28,7 +28,7 @@ test('integrated candidate keeps position ranks and final value in common runtim
 });
 
 test('V94 and V92 assets use release-specific cache keys in the running site loader',()=>{
- const siteLoader=readFileSync(new URL('../netlify/functions/site-v17.mjs',import.meta.url),'utf8');
+ const siteLoader=fs.readFileSync('netlify/functions/site-v17.mjs','utf8');
  assert.match(siteLoader,/valuation-idp-v25-perf\.js\?v=20261117-v94-stable-veteran/);
  assert.match(siteLoader,/valuation-idp-v43\.js\?v=20261117-v92-balanced-retention/);
 });

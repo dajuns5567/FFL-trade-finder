@@ -55,11 +55,12 @@ try{
    }
   }
   const top100=rows.filter(z=>Number(z.overall)<=100);
-  const maxx=rows.find(z=>/maxx crosby/i.test(z.name||''));
-  const turner=rows.find(z=>/dallas turner/i.test(z.name||''));
+  const byName=z=>String(window.playerName?.(z.id)||window.state?.players?.[String(z.id)]?.full_name||window.state?.players?.[String(z.id)]?.first_name+' '+window.state?.players?.[String(z.id)]?.last_name||'');
+  const maxx=rows.find(z=>/maxx crosby/i.test(byName(z)));
+  const turner=rows.find(z=>/dallas turner/i.test(byName(z)));
   return {count:rows.length,engines:eng,modelVersion:m.meta.version,refresh:window.__fllValueRefresh?.phase,consensus:window.__fllConsensusRefresh?.successful,scoreVersion:window.fflIdpScoringModelV94,curveVersion:window.fflIdpCompressionModelV92,historyMarker:window.valueHistoryModelV90,top100Idps:top100.filter(z=>String(z.pos).toUpperCase()==='IDP'||['DL','LB','DB','DE','DT','CB','S','EDGE'].includes(String(z.pos).toUpperCase())).length,maxx,turner,issues:issues.slice(0,30),displayedCount:displayed.length};
  });
- console.log('FFL_LIVE_PREVIEW_CROSS_PAGE_PARITY '+JSON.stringify({...v,blockedWriteCount:blocked.length,pageErrors:errors.slice(0,8)}));
+ console.log('FFL_LIVE_PREVIEW_CROSS_PAGE_PARITY '+JSON.stringify({...v,blockedWriteCount:blocked.length,blockedWrites:blocked.slice(0,10),pageErrors:errors.slice(0,8)}));
  assert(v.count>400,'preview missing live canonical ranked player universe');
  assert(v.engines.length>=1,'no Finder/Evaluator valuation engine installed');
  assert.equal(v.scoreVersion,'v94-verified-stable-veteran','stale IDP scorer');

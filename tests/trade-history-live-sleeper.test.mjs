@@ -66,7 +66,7 @@ test('visible Trade History refreshes stale browser cache and warns on degraded 
   assert.match(ui,/window\.addEventListener\('focus',refreshVisibleTradeHistory\)/);
   assert.match(ui,/feedState==='partial'/);
   assert.match(ui,/feedState==='unavailable'/);
-  assert.match(site,/value-history-v276\.js\?v=541/);
+  assert.match(site,/value-history-v276\.js\?v=20261117-v96-clean-charts/);
 });
 
 test('every site opening forces live completed-trade search, independent of hidden tab and shared cache',()=>{

@@ -24,7 +24,13 @@ on:
       - 'sleeper-history-client-v22.js'
       - 'valuation-idp-v21.js'
   schedule:
-    - cron: '17 * * * *'
+    - cron: '17,47 * * * *'
+
+# Serialize all manual and scheduled writes to the canonical sleeper-data branch.
+# Never cancel a finality-verified scoring import midway through publication.
+concurrency:
+  group: sleeper-scoring-canonical-import
+  cancel-in-progress: false
 
 permissions:
   contents: write

@@ -136,6 +136,31 @@ test('full archive tracking never resets and earlier genuine movements remain se
  assert.equal(pointsFromSnapshots(snapshots,'11667').length,4,'all raw observations preserved');
 });
 
+test('7D board restores real historical moves on both sides of a new model without counting repricing',()=>{
+ const xs=[
+  snap('2026-11-10T20:00:00Z',400,2000),
+  snap('2026-11-14T20:00:00Z',560,1900),
+  snap('2026-11-17T21:04:31Z',1200,3900,model),
+  snap('2026-11-17T22:00:00Z',1230,3910,model)
+ ];
+ const m=marketFromSnapshots(xs);
+ assert.equal(m.tracking_since,xs[0].t);
+ assert.equal(m.comparable_snapshot_count,2);
+ assert.equal(m.periods['7D'].movement_basis,'same-model-segment-sum');
+ assert.equal(m.periods['7D'].comparable_segments,2);
+ assert.equal(m.periods['7D'].valueRisers.find(r=>r.id==='11667').delta,190,
+   '+160 before model revision plus +30 after it, excluding +640 model repricing');
+ assert.equal(m.periods['7D'].valueFallers.find(r=>r.id==='7532').delta,-90,
+   '-100 before revision plus +10 after, excluding +2000 model repricing');
+ assert.equal(m.marketRows.find(r=>r.id==='11667').delta7,190);
+ assert.equal(m.marketRows.find(r=>r.id==='7532').delta7,-90);
+ assert.equal(m.marketRows.find(r=>r.id==='11667').value,1230,
+   'current price is the actual latest model price, not a manufactured adjusted price');
+ assert.equal(pointsFromSnapshots(xs,'11667').length,4);
+ assert.match(server,/const windowStart=latestMs-7\*86400000/);
+ assert.match(server,/marketBuckets=new Map\(\)/);
+});
+
 test('only genuine changes within a model era become market movers',()=>{
  const xs=[
   snap('2026-11-01T00:00:00Z',400,2000),

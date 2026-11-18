@@ -35,8 +35,8 @@ test('current and previous Netlify accounts never build even with copied approva
  ])assert.equal(exitCode({siteId,siteName,context:'deploy-preview',reviewId:'501',approvedSiteId:siteId}),0);
 });
 test('handoff ignores production, branch deploys and unrelated preview PRs',()=>{
- assert.match(config,/e\\.CONTEXT==='deploy-preview'/);
- assert.match(config,/String\\(e\\.REVIEW_ID\\)==='501'/);
+ assert.match(config,/e\.CONTEXT==='deploy-preview'/);
+ assert.match(config,/String\(e\.REVIEW_ID\)==='501'/);
  assert.match(config,/FLEECED_NEXT_NETLIFY_PREVIEW_SITE_ID/);
- assert.doesNotMatch(config,/e\\.CONTEXT==='production'/);
+ assert.doesNotMatch(config,/e\.CONTEXT==='production'/);
 });

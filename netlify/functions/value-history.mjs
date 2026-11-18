@@ -683,6 +683,7 @@ function contiguousMarketMovement(snaps,days){
         posRankDelta:(prev?.posRankDelta||0)+part.posRankDelta,
         fromValue:null,fromOverall:null,fromPosRank:null,
         baseline_t:prev?.baseline_t||part.baseline_t||first.t,
+        available_history:!!(prev?.available_history||part.available_history),
         through_t:end.t,comparable_segments:(prev?.comparable_segments||0)+1,
         measurement:'sum-of-recorded-same-model-movements'});
     }

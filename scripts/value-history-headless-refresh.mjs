@@ -207,6 +207,12 @@ try{
            modelPrecision:z.marketPrecisionValueV386,
            consensus:cv,consensusRank:d.idpRank,sourceCount:src.length,sources:src,
            sourceDetails:{kind:d.kind,idpValue:d.idpValue},
+           rawDynastySourceRanks:Object.entries(window.state?.rankings||{})
+            .filter(([key,src])=>src?.kind==='idp'||/IDP Show Combined IDP/i.test(key))
+            .map(([key,src])=>({source:key,
+              rawRank:src?.data?.[String(name).trim().toLowerCase()]??null,
+              population:src?.playerCount??Object.keys(src?.data||{}).length}))
+            .filter(x=>x.rawRank!==null),
            qualifyingSeasons:audit.qualifyingSeasons,confidence:audit.confidence,
            scoringValue:audit.productionValue,scoringPpg:audit.ppg,
            seasons,lbRank:lbIndex,trace:{

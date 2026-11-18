@@ -29,7 +29,7 @@ async function refreshConsensusBackground277(run){
     }))}catch(e){console.warn('Live valuation view refresh event failed',e)}
     window.__fllConsensusRefresh={complete:true,ok:Number(consensusCount)>=7,successful:Number(consensusCount)||0,total:7,completedAt:new Date().toISOString()};
     state.lastUpdate=new Date().toISOString();
-    cacheSet('fll_sleeper_snapshot',{league:state.league,users:state.users,rosters:state.rosters,players:state.players,stats:state.stats,trending:state.trending,rankings:state.rankings,tradedPicks:state.tradedPicks,draftPicks:state.draftPicks,lastUpdate:state.lastUpdate});
+    cacheSet('fll_sleeper_snapshot',{league:state.league,users:state.users,rosters:state.rosters,players:state.players,stats:state.stats,trending:state.trending,rankings:state.rankings,consensusComposite:state.consensusComposite,tradedPicks:state.tradedPicks,draftPicks:state.draftPicks,lastUpdate:state.lastUpdate});
     status(`Updated <b>${new Date().toLocaleString()}</b>. Sleeper core data and team projections ready; consensus sources: <b>${consensusCount}/7</b> freshly refreshed. See Consensus Refresh Diagnostics for any last-known-good fallback.`,'success');
     setValueRefresh277({inFlight:false,phase:'complete',run,completedAt:new Date().toISOString()});
   }catch(e){
@@ -48,7 +48,7 @@ updateData=async function(){
     await coreLoad277();
     refreshDerivedValuation277('scoring/core refresh');
     state.lastUpdate=new Date().toISOString();
-    cacheSet('fll_sleeper_snapshot',{league:state.league,users:state.users,rosters:state.rosters,players:state.players,stats:state.stats,trending:state.trending,rankings:state.rankings,tradedPicks:state.tradedPicks,draftPicks:state.draftPicks,lastUpdate:state.lastUpdate});
+    cacheSet('fll_sleeper_snapshot',{league:state.league,users:state.users,rosters:state.rosters,players:state.players,stats:state.stats,trending:state.trending,rankings:state.rankings,consensusComposite:state.consensusComposite,tradedPicks:state.tradedPicks,draftPicks:state.draftPicks,lastUpdate:state.lastUpdate});
     status(`Core league data and team projections ready <b>${new Date().toLocaleString()}</b>. Refreshing consensus references in the background…`,'success');
     window.__fllConsensusRefresh={complete:false,ok:false,successful:0,total:7,startedAt:new Date().toISOString()};
     setValueRefresh277({inFlight:true,phase:'consensus',run});

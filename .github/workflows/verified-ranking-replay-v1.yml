@@ -1,0 +1,27 @@
+name: Verified seven-source ranking replay (read-only draft)
+on:
+  pull_request:
+    paths:
+      - 'scripts/audit-verified-consensus-ranks-v1.mjs'
+      - '.github/workflows/verified-ranking-replay-v1.yml'
+permissions:
+  contents: read
+jobs:
+  exact-sources:
+    if: github.event.pull_request.number == 473
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate isolated source replay syntax
+        run: node --check scripts/audit-verified-consensus-ranks-v1.mjs
+      - name: Install declared Netlify adapter deps and test-only browser
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund --no-package-lock
+          npm install --no-save --ignore-scripts --no-audit --no-fund --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Replay current dynasty consensus in browser without server POST or production write
+        run: node scripts/audit-verified-consensus-ranks-v1.mjs

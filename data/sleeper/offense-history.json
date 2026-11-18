@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-11-17T22:20:08.958Z",
+  "generatedAt": "2026-11-18T04:17:13.855Z",
   "source": "Sleeper importer snapshot",
   "currentSeason": 2026,
   "completedWeek": 10,
@@ -1667,7 +1667,7 @@
     "diagnostics": {
       "finalGames": 150,
       "qualifiedPlayerGames": 9882,
-      "rejectedPlayerGames": 11467,
+      "rejectedPlayerGames": 11502,
       "ignoredGames": 0
     }
   },
@@ -9642,7 +9642,7 @@
       "rush_att": 1,
       "h1_rec_yd": 36,
       "q1_rec_yd": 19,
-      "rec_drop": 2,
+      "rec_drop": 1,
       "rec_10_19": 1
     },
     "5908": {
@@ -23433,7 +23433,7 @@
       "rec_40p": 3,
       "rec_td_40p": 2,
       "rec_td_50p": 2,
-      "rec_drop": 5,
+      "rec_drop": 4,
       "rush_fd": 1,
       "rush_yac": 4,
       "rec_0_4": 2
@@ -30120,7 +30120,7 @@
       "tm_off_snp": 398,
       "tm_st_snp": 168,
       "rec_5_9": 4,
-      "rec_drop": 7,
+      "rec_drop": 6,
       "rec_rz_tgt": 4,
       "h1_rec_yd": 78,
       "bonus_rec_yd_100": 1,
@@ -38996,10 +38996,11 @@
       "rec_fd": 3,
       "rec_rz_tgt": 1,
       "rec_yar": 62,
-      "anytime_tds": 1,
-      "rec_20_29": 1,
+      "rec_drop": 1,
       "rec_td": 1,
-      "rec_td_lng": 20
+      "rec_20_29": 1,
+      "rec_td_lng": 20,
+      "anytime_tds": 1
     },
     "12702": {
       "gp": 5,

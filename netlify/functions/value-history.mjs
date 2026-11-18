@@ -661,7 +661,15 @@ function contiguousMarketMovement(snaps,days){
   for(const group of groups){
     if(group.snaps.length<2)continue;
     const first=group.snaps[0],end=group.snaps.at(-1);
-    const actual=marketPeriod(end,first);
+    // A player entering after the window's first sample still has a real
+    // comparable baseline: their own first recorded value inside the segment.
+    // Do not invent prior appearances or bridge a player's model change.
+    const firstSeen=new Map();
+    for(const snapshot of group.snaps)for(const row of snapshot.rows||[]){
+      const id=String(row?.id||'');
+      if(id&&!firstSeen.has(id))firstSeen.set(id,{t:snapshot.t,row});
+    }
+    const actual=marketPeriod(end,first,firstSeen);
     qualifyingSegments++;
     for(const part of actual.metrics.values()){
       const now=current.get(String(part.id));

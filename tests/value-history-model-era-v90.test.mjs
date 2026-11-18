@@ -39,7 +39,7 @@ test('historical snapshots without model marker retain exact old comparable hist
  assert.equal(data.comparable_snapshot_count,2);
  const defender=data.marketRows.find(x=>x.id==='11667');
  assert.equal(defender.deltaAll,10);
- assert.equal(defender.delta1,10);
+ assert.equal(defender.delta1,null,'a two-day-old change is not an eligible 1D movement');
  assert.equal(pointsFromSnapshots(xs,'11667').length,2);
 });
 

@@ -1409,10 +1409,11 @@ export default async (req)=>{
     const fp=fingerprint(rows,picks,teams);
     const t=new Date().toISOString(),key=`snapshots/${t.replace(/[:.]/g,'-')}.json`;
     const suppliedModel=String(body?.valuation_model||'').trim();
-    const valuationModel=/^idp-v94-v92-balanced-stable-veteran$/.test(suppliedModel)?suppliedModel:null;
-    // Fail closed: a deployed source without verified V94 model evidence must
-    // never append untagged V94-era values to the historical market timeline.
-    if(!valuationModel)return json({error:'verified V94 valuation-model contract required; snapshot not stored'},409);
+    // Keep original V94 historical records, but never relabel the new
+    // no-unverified-scoring V95 valuation as V94. Each represents a distinct
+    // model era; genuine player movement is evaluated within the era only.
+    const valuationModel=/^(?:idp-v94-v92-balanced-stable-veteran|idp-v95-verified-production-floor-v92-balanced)$/.test(suppliedModel)?suppliedModel:null;
+    if(!valuationModel)return json({error:'verified IDP valuation-model contract required; snapshot not stored'},409);
     const snapshot={version:5,league:LEAGUE,t,fingerprint:fp,source,
       valuation_contract:source==='scheduled'?SCHEDULED_VALUATION_CONTRACT:null,
       valuation_model:valuationModel,rows,picks,teams};

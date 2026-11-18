@@ -42,7 +42,7 @@ jobs:
             import assert from 'node:assert/strict';
             const s=JSON.parse(readFileSync('.tmp/value-history-candidate-only.json','utf8'));
             assert.equal(s.source,'scheduled');
-            assert.equal(s.valuation_model,'idp-v94-v92-balanced-stable-veteran');
+            assert.equal(s.valuation_model,'idp-v95-verified-production-floor-v92-balanced');
             assert.equal(s.provenance?.canonical_parity,'exact');
             assert.ok(Number(s.provenance?.consensus_sources)>=7);
             assert.ok(s.rows?.length>=700);

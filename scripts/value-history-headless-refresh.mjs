@@ -184,14 +184,17 @@ try{
       const ranked=typeof window.ensureMaster==='function'?window.ensureMaster():[];
       const norm=s=>String(s||'').toLowerCase().replace(/[^a-z]/g,'');
       const wanted=new Set(['keyroncrawford','natelandman']);
-      const rows=[],suspects=[];
-      let idp=0;
+      const rows=[],suspects=[],lbPeers=[];
+      let idp=0,lbRank=0;
       for(let i=0;i<ranked.length;i++){
         const z=ranked[i],id=String(z.x?.id||''),group=window.groupPos?.(z.x);
         if(group!=='IDP')continue;
         idp++;
         const name=window.playerName?.(id)||id,clean=norm(name),
           p=window.state?.players?.[id]||{},
+          isLB=['LB','ILB','MLB','OLB'].includes(String(p.position||'').toUpperCase())
+            ||(Array.isArray(p.fantasy_positions)&&p.fantasy_positions.some(q=>['LB','ILB','MLB','OLB'].includes(String(q).toUpperCase()))),
+          lbIndex=isLB?++lbRank:null,
           d=window.state?.consensusComposite?.detailsById?.[id]||{},
           audit=window.idpScoringAudit?.(id)||{},
           cv=Number(z.consensus),src=(Array.isArray(d.idpSources)?d.idpSources:[])
@@ -206,7 +209,18 @@ try{
            sourceDetails:{kind:d.kind,idpValue:d.idpValue},
            qualifyingSeasons:audit.qualifyingSeasons,confidence:audit.confidence,
            scoringValue:audit.productionValue,scoringPpg:audit.ppg,
-           seasons,production:{v25:z.production?.value,context:z.context,
+           seasons,lbRank:lbIndex,trace:{
+             v25:audit.v25RuntimeTrace?{
+               ppgPercentile:audit.v25RuntimeTrace.ppgPercentile,
+               relativeAboveP50:audit.v25RuntimeTrace.relativeAboveP50,
+               confidence:audit.v25RuntimeTrace.confidence,
+               benchmarkP50:audit.v25RuntimeTrace.benchmarkP50,
+               benchmarkP99:audit.v25RuntimeTrace.benchmarkP99,
+               scoringValue:audit.v25RuntimeTrace.productionValue
+             }:null,
+             otherContext:audit.otherContextValue,
+             modelWeights:audit.modelWeights
+           },production:{v25:z.production?.value,context:z.context,
              v72Baseline:z.production?.idpOverallTradeCurveBaselineV72,
              v72Factor:z.production?.idpOverallTradeCurveFactorV72,
              noConsensusFallback:z.production?.idpUnverifiedNoConsensusFallbackV73}};
@@ -214,8 +228,36 @@ try{
           rows.push(entry);
         if(idp<=100&&(!Number(audit.qualifyingSeasons)||!src.length))
           suspects.push(entry);
+        if(isLB&&Number(audit.qualifyingSeasons)>0){
+          lbPeers.push(entry);
+        }
       }
-      return{totalRanked:ranked.length,idpTotal:idp,spotlights:rows,top100IdpWeakEvidence:suspects.slice(0,35)};
+      const landman=lbPeers.find(x=>norm(x.name)==='natelandman');
+      const supported=lbPeers.filter(x=>Number(x.qualifyingSeasons)>=2
+          &&Number(x.scoringPpg)>=9&&Number(x.scoringPpg)<=17);
+      const sorted=lbPeers.sort((a,b)=>a.lbRank-b.lbRank);
+      return{totalRanked:ranked.length,idpTotal:idp,
+        spotlights:rows,top100IdpWeakEvidence:suspects.slice(0,35),
+        linebackerComparison:{
+          landmanId:landman?.id||null,
+          eligible:lbPeers.length,
+          comparableCount:supported.length,
+          directPeers:supported.map(x=>({
+            name:x.name,id:x.id,overall:x.overall,idpRank:x.idpRank,lbRank:x.lbRank,
+            value:x.canonical,sourceCount:x.sourceCount,consensus:x.consensus,
+            qual:x.qualifyingSeasons,ppg:x.scoringPpg,scoringValue:x.scoringValue,
+            context:x.trace.otherContext,percentile:x.trace.v25?.ppgPercentile,
+            age:x.age,yearsExp:x.years_exp
+          })).slice(0,140),
+          neighboringLBs:sorted.filter(x=>Math.abs(x.lbRank-(landman?.lbRank||0))<=25)
+            .map(x=>({name:x.name,lbRank:x.lbRank,idpRank:x.idpRank,
+              overall:x.overall,ppg:x.scoringPpg,seasons:x.qualifyingSeasons,
+              consensus:x.consensus,sourceCount:x.sourceCount,score:x.scoringValue,
+              context:x.trace.otherContext,value:x.canonical})),
+          roleBenchmark:window.idpV25RoleBenchmarkCounterfactual?.().controls
+            ?.filter(x=>String(x.id)==='8659')||[]
+        }
+      };
     });
     console.log('IDP_IDENTITY_EVIDENCE_AUDIT '+JSON.stringify(diagnostic));
   }

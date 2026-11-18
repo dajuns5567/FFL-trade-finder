@@ -1,0 +1,48 @@
+name: Value History pinned schedule contract (safe/read-only)
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/value-history-headless-refresh.yml'
+      - '.github/workflows/value-history-pinned-schedule-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-scheduler:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Confirm immutable V96 pin and fail-closed archive checks
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const yaml=readFileSync('.github/workflows/value-history-headless-refresh.yml','utf8');
+          const pin='4d276527c6e7a724de55e4a7fd2c167887fa3ea8';
+          const model='idp-v96-single-source-continuous-v95-evidence';
+          assert.equal(yaml.split(pin).length-1,4,'immutable V96 checkout, guard, source and verification pin');
+          assert.match(yaml,/ref: '4d276527c6e7a724de55e4a7fd2c167887fa3ea8'/);
+          assert.match(yaml,/test "\$\(git rev-parse HEAD\)" = '4d276527c6e7a724de55e4a7fd2c167887fa3ea8'/);
+          assert.match(yaml,/VALUE_HISTORY_SOURCE_COMMIT: '4d276527c6e7a724de55e4a7fd2c167887fa3ea8'/);
+          assert.match(yaml,/assert\.equal\(s\.valuation_model,'idp-v96-single-source-continuous-v95-evidence'\)/);
+          assert.match(yaml,/assert\.equal\(s\.provenance\?\.git_commit,process\.env\.EXPECTED_SOURCE_COMMIT\)/);
+          assert.match(yaml,/assert\.equal\(s\.provenance\?\.canonical_parity,'exact'\)/);
+          assert.match(yaml,/assert\.ok\(Number\(s\.provenance\?\.consensus_sources\)>=7\)/);
+          assert.match(yaml,/assert\.ok\(Array\.isArray\(s\.teams\)&&s\.teams\.length===32\)/);
+          assert.match(yaml,/VALUE_HISTORY_DUE_MINUTES: '165'/);
+          assert.match(yaml,/VALUE_HISTORY_STALE_MINUTES: '240'/);
+          assert.match(yaml,/group: value-history-durable-write/);
+          assert.match(yaml,/cancel-in-progress: false/);
+          assert.match(yaml,/node scripts\/archive-value-history\.mjs/);
+          assert.ok(yaml.indexOf('Reject mismatched valuation models') <
+                    yaml.indexOf('Persist scheduled observation directly'),
+                    'archive write must happen strictly AFTER V96/provenance validation');
+          assert.ok(!yaml.includes('FLEECED_ENABLE_NEW_SITE_PUBLISHER'));
+          console.log('V96 pinned schedule safety contract passed; no archive or deployment changes made');
+          NODE

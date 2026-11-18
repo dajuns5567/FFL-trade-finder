@@ -1,0 +1,30 @@
+name: Read-only seven-source full-league rank audit
+on:
+  pull_request:
+    paths:
+      - 'scripts/audit-v75-all-player-rank-calibration.mjs'
+      - 'tests/fixtures/idp-v74-baseline-20261115.js'
+      - '.github/workflows/full-player-rank-audit-v75.yml'
+permissions:
+  contents: read
+jobs:
+  full-player-rank-audit:
+    if: github.event.pull_request.number == 476
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate complete audit and exact historic IDP model syntax
+        run: |
+          node --check scripts/audit-v75-all-player-rank-calibration.mjs
+          node --check tests/fixtures/idp-v74-baseline-20261115.js
+      - name: Install dynasty adapter dependencies and headless browser
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund --no-package-lock
+          npm install --no-save --ignore-scripts --no-audit --no-fund --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Read-only V74-to-V75 32-team offense and IDP consensus audit
+        run: node scripts/audit-v75-all-player-rank-calibration.mjs

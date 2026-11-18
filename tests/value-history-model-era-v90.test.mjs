@@ -80,8 +80,10 @@ test('first versioned snapshot begins a new market era, without deleting histori
  assert.equal(data.model_change_at,xs[2].t);
  assert.equal(data.comparable_snapshot_count,1);
  assert.equal(data.snapshot_count,3);
- assert.equal(data.marketRows[0].deltaAll,null);
- assert.equal(data.marketRows[0].delta1,null);
+ assert.equal(data.marketRows.find(x=>x.id==='11667').deltaAll,10,
+  'earlier verified +10 is retained even if the current model has only one point');
+ assert.equal(data.marketRows.find(x=>x.id==='11667').delta1,null,
+  'no old-model sample exists inside this last-day window');
  const pts=pointsFromSnapshots(xs,'11667');
  assert.equal(pts.length,3);
  assert.deepEqual(Array.from(pts,x=>x.value),[400,410,900]);
@@ -122,7 +124,10 @@ test('full archive tracking never resets and earlier genuine movements remain se
  assert.equal(market.comparable_since,snapshots[2].t,'only the baseline for current model resets');
  assert.equal(market.snapshot_count,4);
  assert.equal(market.comparable_snapshot_count,2);
- assert.equal(market.periods.ALL.valueRisers[0].delta,10,'live movement remains within its model');
+ assert.equal(market.periods.ALL.valueRisers[0].delta,65,
+  'all-period movement sums old +55 and new +10 without the repricing gap');
+ assert.equal(market.periods['7D'].valueRisers[0].delta,10,
+  '7D excludes the September-to-November prior market change');
  assert.equal(market.archived_era.tracking_since,snapshots[0].t);
  assert.equal(market.archived_era.through,snapshots[1].t);
  assert.equal(market.archived_era.snapshot_count,2);
@@ -171,10 +176,13 @@ test('only genuine changes within a model era become market movers',()=>{
  const data=marketFromSnapshots(xs);
  assert.equal(data.comparable_snapshot_count,2);
  assert.equal(data.model_change_at,xs[2].t);
- assert.equal(data.marketRows.find(x=>x.id==='11667').deltaAll,30);
- assert.equal(data.marketRows.find(x=>x.id==='7532').deltaAll,-10);
- assert.equal(data.periods.ALL.valueRisers[0].delta,30);
- assert.equal(data.periods.ALL.valueFallers[0].delta,-10);
+ assert.equal(data.marketRows.find(x=>x.id==='11667').deltaAll,40,
+  'recorded +10 before and +30 after the repricing both count');
+ assert.equal(data.marketRows.find(x=>x.id==='7532').deltaAll,20,
+  'recorded +30 before and -10 after total +20');
+ assert.equal(data.periods.ALL.valueRisers[0].delta,40);
+ assert.equal(data.periods.ALL.valueFallers.length,0,
+  'cumulative increase must not be misleadingly labeled a fall');
 });
 
 test('another model change creates another safe baseline rather than cross-version volatility',()=>{
@@ -433,7 +441,8 @@ test('V95 preserves previous explicit model eras and flags V94 on its first veri
  assert.equal(pointsFromSnapshots(xs,'11667').length,5,'never delete original player chart history');
  const market=marketFromSnapshots(xs);
  assert.equal(market.comparable_snapshot_count,2);
- assert.equal(market.marketRows.find(x=>x.id==='11667').deltaAll,10,'do not count +105 IDP model step as market gain');
+ assert.equal(market.marketRows.find(x=>x.id==='11667').deltaAll,15,
+  'include +5 before and +10 after the model change, excluding the +105 repricing');
 });
 test('V95 model claim requires BOTH exact served V94 scorer and V92 curve plus running IDP model',async()=>{
  const start=client.indexOf('async function verifyLiveValuationModelV95(){');

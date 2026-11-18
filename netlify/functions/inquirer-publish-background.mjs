@@ -42,6 +42,12 @@ export default async function publishInquirerInBackground(req){
   host==='gleaming-dodol-8dbc4a.netlify.app';
  const replacement=isNewestSite||siteId==='8776d155-bc7b-4dcd-bafc-3d70d3d51800'||
   host==='transcendent-manatee-2f0123.netlify.app';
+ // A newly connected Netlify account has a different site ID and hostname.
+ // Never let a copied queue key authorize publishing on an unregistered site.
+ if(!replacement){
+  console.warn('inquirer-background-unrecognized-site-held');
+  return new Response('Unrecognized Netlify site: publisher held pending archive migration',{status:403});
+ }
  const enabled=globalThis.Netlify?.env?.get?.('FLEECED_ENABLE_NEW_SITE_PUBLISHER')||
   process.env.FLEECED_ENABLE_NEW_SITE_PUBLISHER||'';
  if(replacement&&enabled!=='true'){

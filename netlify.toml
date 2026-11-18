@@ -2,11 +2,11 @@
 [build]
   publish = "."
   functions = "netlify/functions"
-  # Handoff review #501 is intentionally isolated from old accounts and production.
-  # The new Netlify site must explicitly opt in using its own SITE_ID; it must
-  # NOT be the currently published site's ID. No production/branch deploy builds.
-  # Netlify: ignore command exits 1 to build, 0 to skip.
-  ignore = "node -e \"const e=process.env;const newSite=String(e.FLEECED_NEXT_NETLIFY_PREVIEW_SITE_ID||'').trim();const site=String(e.SITE_ID||'').trim();const allowed=!!newSite&&!!site&&newSite===site&&!['fa33dfe4-8293-441e-8da0-25cc66fc984c','3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f','8776d155-bc7b-4dcd-bafc-3d70d3d51800'].includes(site);const preview=e.CONTEXT==='deploy-preview'&&String(e.REVIEW_ID)==='501';process.exit(allowed&&preview?1:0)\""
+  # Explicitly allow PR #501 Deploy Preview only on the new account.
+  # A new account does not initially have the custom build environment
+  # variables available; use its verified site ID as the authorization.
+  # Production and branch deploys always skip. Netlify builds on exit 1.
+  ignore = "node -e \"const e=process.env;const allowed=e.SITE_ID==='a516be3b-6c65-4f54-a9fb-23c5361bf3d2';const preview=e.CONTEXT==='deploy-preview'&&String(e.REVIEW_ID)==='501';process.exit(allowed&&preview?1:0)\""
 
 [functions]
   node_bundler = "esbuild"

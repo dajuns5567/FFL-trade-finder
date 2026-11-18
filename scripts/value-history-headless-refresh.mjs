@@ -7,6 +7,10 @@ import updateHandler from '../netlify/functions/update.mjs';
 import picksHandler from '../netlify/functions/picks.mjs';
 
 const snapshotFile=process.env.VALUE_HISTORY_SNAPSHOT_FILE||'.tmp/value-history-scheduled.json';
+// Scheduled jobs may run from main while checking out a pinned, verified
+// valuation release. Record the actual checked-out source SHA, never mistake
+// the triggering main workflow SHA for the model's source revision.
+const sourceCommit=String(process.env.VALUE_HISTORY_SOURCE_COMMIT||process.env.GITHUB_SHA||'').trim()||null;
 const SCHEDULED_VALUATION_CONTRACT='precision-idp-runtime-20260919';
 const acceptedValuationModel=value=>String(value||'').trim()==='idp-v94-v92-balanced-stable-veteran'?'idp-v94-v92-balanced-stable-veteran':null;
 const league='1316867686394769408';
@@ -106,7 +110,7 @@ for(const required of ['offense-history.json']){
   if(!j||typeof j!=='object'||j.ok!==true)throw new Error(`Required Sleeper artifact ${required} failed JSON validation`);
 }
 const url=new URL(siteUrl);url.searchParams.set('vh_source','scheduled');url.searchParams.set('vh_ts',String(Date.now()));
-console.log(JSON.stringify({event:'scheduled-refresh-target',runtime:'github-main-local',site:url.origin,commit:process.env.GITHUB_SHA||null},null,2));
+console.log(JSON.stringify({event:'scheduled-refresh-target',runtime:'github-main-local',site:url.origin,commit:sourceCommit},null,2));
 
 const browser=await chromium.launch({headless:true});
 try{
@@ -271,7 +275,7 @@ try{
   if(!captured.consumerReady||captured.valueParityMismatches?.length)throw new Error(`Scheduled capture diverged across Player Values, Finder, Evaluator or History: ${JSON.stringify(captured.valueParityMismatches)}`);
 
   const t=new Date().toISOString(),fp=fingerprint(captured.rows,captured.picks,captured.teams);
-  const snap={version:5,league,t,fingerprint:fp,source:'scheduled',valuation_contract:SCHEDULED_VALUATION_CONTRACT,valuation_model:valuationModel,provenance:{git_commit:process.env.GITHUB_SHA||null,modeled_version:captured.modeledVersion,consensus_sources:Number(readiness.consensusMarker?.successful)||0,source_manifest:captured.sourceManifest,canonical_parity:'exact'},rows:captured.rows,picks:captured.picks,teams:captured.teams};
+  const snap={version:5,league,t,fingerprint:fp,source:'scheduled',valuation_contract:SCHEDULED_VALUATION_CONTRACT,valuation_model:valuationModel,provenance:{git_commit:sourceCommit,modeled_version:captured.modeledVersion,consensus_sources:Number(readiness.consensusMarker?.successful)||0,source_manifest:captured.sourceManifest,canonical_parity:'exact'},rows:captured.rows,picks:captured.picks,teams:captured.teams};
   mkdirSync(join(process.cwd(),'.tmp'),{recursive:true});
   writeFileSync(snapshotFile,JSON.stringify(snap,null,2)+'\n');
 

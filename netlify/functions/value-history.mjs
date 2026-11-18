@@ -641,9 +641,15 @@ function contiguousMarketMovement(snaps,days){
     .slice().sort((a,b)=>String(a.t).localeCompare(String(b.t)));
   if(!ordered.length)return marketPeriod(null,null);
   const latest=ordered.at(-1),latestMs=Date.parse(latest.t);
-  const base=days==null?ordered[0]:baselineFor(ordered,latestMs,days);
-  const from=Date.parse(base?.t||ordered[0].t);
-  const windowed=ordered.filter(s=>Date.parse(s.t)>=from);
+  const start=days==null?Date.parse(ordered[0].t):latestMs-days*86400000;
+  const inside=ordered.filter(s=>Date.parse(s.t)>=start);
+  // An old sparse archive sample is NOT a valid seven-day baseline. Permit
+  // only a close preceding observation to anchor the actual requested window.
+  const before=days==null?null:ordered.filter(s=>Date.parse(s.t)<start).at(-1);
+  const tolerance=days==null?0:Math.min(days>=30?7:1,Math.max(.25,days/5))*86400000;
+  const anchor=before&&start-Date.parse(before.t)<=tolerance?before:null;
+  const windowed=anchor?[anchor,...inside]:inside;
+  const base=windowed[0]||null;
   const groups=[];
   for(const snap of windowed){
     const model=valuationModelId(snap),last=groups.at(-1);

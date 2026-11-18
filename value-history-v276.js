@@ -1391,7 +1391,13 @@ async function loadFullMarketHistory(force=false){
 }
 function deltaClass(n){return Number(n)>0?'vh-up':Number(n)<0?'vh-down':'vh-neutral'}
 function moverRows(rows,mode='value',limit=10){
-  if(!rows?.length)return'<div class="vh-empty">Not enough historical movement yet.</div>';
+  if(!rows?.length){
+    const m=marketCache||{},count=Number(m.comparable_snapshot_count)||0;
+    const explanation=count<2&&m.model_change_at
+      ?'This valuation model has '+count+' comparable snapshot'+(count===1?'':'s')+'. Verified movers appear after two snapshots under the same model; earlier price history remains in player charts.'
+      :'No verified value or rank changes for this selection and window.';
+    return '<div class="vh-empty">'+esc(explanation)+'</div>';
+  }
   const current=liveMarketRowsV97(rows);
   const shown=Number.isFinite(limit)?current.slice(0,limit):current;
   return`<div class="vh-list">${shown.map((r,i)=>{const delta=mode==='posRank'?r.posRankDelta:mode==='rank'?r.overallDelta:r.delta;const suffix=mode==='posRank'?`${delta>0?'+':''}${delta} pos ranks`:mode==='rank'?`${delta>0?'+':''}${delta} ranks`:signed(delta);return`<div class="vh-mover"><div class="vh-ranknum">${i+1}</div><button class="vh-player-link" data-vh-player="${esc(r.id)}"><span class="vh-player-name-line"><b>${esc(playerName(r.id))}</b></span><small>${esc(r.pos)} #${r.posRank} • ${esc(String(state.players?.[String(r.id)]?.team||'FA').toUpperCase())} • Overall #${r.overall} • Value ${fmt(r.value)}</small></button><div class="vh-delta ${deltaClass(delta)}">${suffix}</div><button type="button" class="small vh-view-history" data-vh-player="${esc(r.id)}">View history ↗</button></div>`}).join('')}</div>`;
@@ -1703,7 +1709,8 @@ function renderMarketIntelligence(){
 
 function modelEraNote(m){
   if(!m?.model_change_at)return'';
-  return`<div class="notice" role="status">Valuation model changed on ${esc(dateTime(m.model_change_at))}. Historical snapshots remain available in player charts; Market Movers and historical change columns use comparable observations recorded under the current model. New 1D/7D trends become available as fresh snapshots accumulate.</div>`;
+  const comparable=Math.max(0,Number(m.comparable_snapshot_count)||0),total=Math.max(0,Number(m.snapshot_count)||0);
+  return`<div class="vh-sub" role="status">Model-era boundary: ${esc(dateTime(m.model_change_at))} • ${fmt(comparable)} comparable of ${fmt(total)} preserved snapshots. Only same-model observations count toward market changes; full historical player charts remain available.</div>`;
 }
 function renderMarketDashboard(){
   const box=document.getElementById('vhContent');if(!box||!marketCache)return;
@@ -1713,7 +1720,7 @@ function renderMarketDashboard(){
   const vpR=m.periods?.[vr]||{},vpF=m.periods?.[vf]||{},rpR=m.periods?.[rr]||{},rpF=m.periods?.[rf]||{};
   box.innerHTML=`
   ${modelEraNote(m)}
-  <div class="notice" role="status">Current values and ranks shown here come directly from Player Values. Market movement, historical records, and time-window changes are archived observations and may end before the latest live refresh.</div>
+  <div class="vh-sub">Current values and ranks come from Player Values; market movement, historical records, and time-window changes are archived observations and may end before the latest live refresh.</div>
   <div class="vh-market-jump">
     <button type="button" data-vh-market-jump="vhMarketMovers">Movers</button>
     <button type="button" data-vh-market-jump="vhPositionIndexes">Position Indexes</button>

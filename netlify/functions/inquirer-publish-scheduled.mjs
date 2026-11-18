@@ -23,6 +23,10 @@ export default async function inquirerPublishScheduled(req){
   siteId==='3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f'||host==='gleaming-dodol-8dbc4a.netlify.app';
  const isReplacement=isNewestSite||site==='transcendent-manatee-2f0123'||
   siteId==='8776d155-bc7b-4dcd-bafc-3d70d3d51800'||host==='transcendent-manatee-2f0123.netlify.app';
+ // Fail closed on every future account/site, including one with copied secrets.
+ // A new site must be explicitly registered and its full archive verified
+ // before an owner-approved cutover can activate publishing.
+ if(!isReplacement)return skip('Unrecognized Netlify site: publication held pending explicit site registration and archive migration');
  const publishingEnabled=globalThis.Netlify?.env?.get?.('FLEECED_ENABLE_NEW_SITE_PUBLISHER')||process.env.FLEECED_ENABLE_NEW_SITE_PUBLISHER||'';
  if(isReplacement&&publishingEnabled!=='true')
   return skip('Replacement site is preview-only pending verified archive migration');

@@ -1,30 +1,32 @@
 (()=>{
 'use strict';
 const API='/.netlify/functions/value-history',SIGNAL_API='/.netlify/functions/player-signals';
-// V95: model-era attribution is a verified deployment contract, not an
-// assumption based on the latest record or a manually selected player.
-// Never tag a history snapshot until the exact V94 IDP scorer AND balanced
-// V92 compression stage are served by the running site.
-const HISTORY_VALUATION_MODEL='idp-v95-verified-production-floor-v92-balanced';
+// V96: single-source IDP consensus retention changes prices. Preserve V94/V95
+// snapshots in their original model eras; new records require verified V94
+// scorer, V95 evidence floor, V96 IDP consensus contract and V92 compression.
+const HISTORY_VALUATION_MODEL='idp-v96-single-source-continuous-v95-evidence';
 window.valueHistoryModelV90=null;
 async function verifyLiveValuationModelV95(){
  try{
-  const paths=['/valuation-idp-v25-perf.js','/valuation-idp-v43.js'];
+  const paths=['/valuation-idp-v25-perf.js','/valuation-idp-v43.js','/netlify/functions/consensus-composite-v3.mjs'];
   const responses=await Promise.all(paths.map(path=>fetch(path,{cache:'no-store'})));
   if(responses.some(r=>!r.ok))throw Error('valuation-source-unavailable');
-  const [scorer,curve]=await Promise.all(responses.map(r=>r.text()));
+  const [scorer,curve,consensus]=await Promise.all(responses.map(r=>r.text()));
   const v94=scorer.includes('v94StableDeclineSupport')&&
     scorer.includes('const support=mean>=10?stability*decline*incomplete:0')&&
     scorer.includes('const sustainedRoleShare=Math.min(.70,v75CurrentShare+.15*support)');
   const v95=scorer.includes('idpNoQualifiedSleeperScoringV95')&&
     scorer.includes('noQualifiedScoring?Math.min(score.value,180):score.value');
+  const v96=consensus.includes('const IDP_SINGLE_SOURCE_RETENTION=.50')&&
+    consensus.includes('floor-IDP_SINGLE_SOURCE_RETENTION*(floor-observed)')&&
+    consensus.includes('idpSingleSourceEvidence:d.singleSourceEvidence||null');
   const v92=curve.includes('Math.round(compressed*.01*support*evidence)')&&
     curve.includes('servedFactor*1.025');
   // The IDP runtime must also be installed, not merely served as a dormant asset.
   const running=typeof window.idpV25PropagationAudit==='function'&&
     window.fflIdpScoringModelV94==='v94-verified-stable-veteran'&&
     window.fflIdpCompressionModelV92==='v92-balanced-retention';
-  window.valueHistoryModelV90=v94&&v95&&v92&&running?HISTORY_VALUATION_MODEL:null;
+  window.valueHistoryModelV90=v94&&v95&&v96&&v92&&running?HISTORY_VALUATION_MODEL:null;
  }catch(e){
   window.valueHistoryModelV90=null;
  }

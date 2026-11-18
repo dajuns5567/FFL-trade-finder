@@ -206,7 +206,8 @@ try{
            canonical:window.tradeValueNormalizationV139?.canonicalValue?.(z.x),
            modelPrecision:z.marketPrecisionValueV386,
            consensus:cv,consensusRank:d.idpRank,sourceCount:src.length,sources:src,
-           sourceDetails:{kind:d.kind,idpValue:d.idpValue},
+           sourceDetails:{kind:d.kind,idpValue:d.idpValue,
+             singleSourceEvidence:d.idpSingleSourceEvidence||null},
            rawDynastySourceRanks:Object.entries(window.state?.rankings||{})
             .filter(([key,src])=>src?.kind==='idp'||/IDP Show Combined IDP/i.test(key))
             .map(([key,src])=>({source:key,
@@ -242,7 +243,12 @@ try{
       const supported=lbPeers.filter(x=>Number(x.qualifyingSeasons)>=2
           &&Number(x.scoringPpg)>=9&&Number(x.scoringPpg)<=17);
       const sorted=lbPeers.sort((a,b)=>a.lbRank-b.lbRank);
+      const top100Idps=ranked.slice(0,100).filter(z=>window.groupPos?.(z.x)==='IDP');
+      const top200Idps=ranked.slice(0,200).filter(z=>window.groupPos?.(z.x)==='IDP');
       return{totalRanked:ranked.length,idpTotal:idp,
+        idpInOverallTop100:top100Idps.length,idpInOverallTop200:top200Idps.length,
+        top100Ids:top100Idps.map(z=>({name:window.playerName?.(z.x.id),id:z.x.id,value:z.value})),
+        singleSourcePlayers:lbPeers.filter(z=>z.sourceDetails?.singleSourceEvidence).length,
         spotlights:rows,top100IdpWeakEvidence:suspects.slice(0,35),
         linebackerComparison:{
           landmanId:landman?.id||null,
@@ -266,6 +272,9 @@ try{
       };
     });
     console.log('IDP_IDENTITY_EVIDENCE_AUDIT '+JSON.stringify(diagnostic));
+    if(diagnostic.idpInOverallTop100>14)throw new Error(
+      'IDP single-source retention unexpectedly crowded overall top 100: '+
+        diagnostic.idpInOverallTop100);
   }
   const captureCurrent=()=>page.evaluate(async()=>{
     const verifiedModel=typeof window.verifyValueHistoryModelV95==='function'

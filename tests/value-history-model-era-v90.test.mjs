@@ -88,6 +88,28 @@ test('first versioned snapshot begins a new market era, without deleting histori
  assert.deepEqual(Array.from(pts,x=>x.valuation_model),[null,null,model]);
 });
 
+test('market archive sampling retains latest consecutive snapshots and UI explains model-era scarcity',()=>{
+ // The market index samples deep history sparsely for cost, but must include
+ // the consecutive recent observations that establish real new-model moves.
+ assert.match(server,/wanted\.push\(\.\.\.timed\.slice\(-12\)\)/);
+ assert.match(client,/comparable_snapshot_count/);
+ assert.match(client,/No verified value or rank changes for this selection and window/);
+ assert.match(client,/earlier price history remains in player charts/);
+ const history=[
+  snap('2026-11-16T20:00:00Z',410,2020),
+  snap('2026-11-17T21:04:31Z',820,3500,model),
+  snap('2026-11-17T21:30:00Z',830,3490,model)
+ ];
+ const market=marketFromSnapshots(history);
+ assert.equal(market.snapshot_count,3);
+ assert.equal(market.comparable_snapshot_count,2);
+ assert.equal(market.periods['7D'].valueRisers[0].delta,10,
+   'new-model moves are real even before seven calendar days have elapsed');
+ assert.equal(market.periods['7D'].valueFallers[0].delta,-10);
+ assert.equal(market.marketRows.find(x=>x.id==='11667').delta7,10);
+ assert.equal(pointsFromSnapshots(history,'11667').length,3,'pre-model history still exists');
+});
+
 test('only genuine changes within a model era become market movers',()=>{
  const xs=[
   snap('2026-11-01T00:00:00Z',400,2000),

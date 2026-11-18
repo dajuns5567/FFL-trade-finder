@@ -24,7 +24,8 @@ test('production cutover requires exact owner-approved site, context and queue s
  assert.match(scheduler,/inquirer-cutover-background/);
  assert.match(scheduler,/publishingEnabled!=='true'/);
  assert.match(config,/e\.CONTEXT==='deploy-preview'/);
- assert.match(config,/\['448','450'\]/);
+ assert.match(config,/String\(e\.REVIEW_ID\)==='499'/);
+ assert.match(config,/a516be3b-6c65-4f54-a9fb-23c5361bf3d2/);
  assert.doesNotMatch(config,/e\.CONTEXT==='production'/);
 });
 test('background cutover accepts authenticated internal production origins, but never preview or foreign sites',()=>{

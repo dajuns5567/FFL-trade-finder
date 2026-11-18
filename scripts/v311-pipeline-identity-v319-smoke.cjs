@@ -2,7 +2,7 @@ const cp=require('child_process');
 const expected={
   'trade-value-normalization-v139.js':'a3176707c4812e4747864914bfc68b05294990a0',
   'trade-te-scoring-adjustment-v259.js':'7f087f0339b5d8a3af1c97e8787f4c55d28f59a6',
-  'trade-finder-v256-compiled.js':'ee45b20b587d9072f735d2c934edec12eaef2cc6',
+  'trade-finder-v256-compiled.js':'f46f80bb17b88d6e93f147dfc2f2a276e140d734',
   // Test-only integration of V330 Finder with reviewed smooth-threshold V322 runtime; neither is approved for production.
   'trade-runtime-v256-compiled.js':'007227de50a6cb867697ef09f1433730f5996851',
   'trade-evaluator-any-team-v184.js':'c088af9ce9bd24f6142873fae201f1a262c63123',
@@ -15,11 +15,14 @@ const expected={
   'trade-style-preferences-v221.js':'567db5906217a46262b92adf2619bb2106a1d532',
   'trade-win-now-preferences-v226.js':'1c74d7ea956c42568f93b08f46fea9ae9fff0b32',
   'trade-selected-positions-only-v262.js':'56e561565f6adf6402cc7e6c28cd090fa3dd8cd6',
-  'trade-specific-max-tier-add-v300.js':'66fa68072f507ebc759abea7be5ec394016994d4',
-  'trade-specific-tier-up-v282.js':'7459ff61db4b4479635dedc05a66ada53ce0a904',
-  'trade-specific-add-assets-v282.js':'f356f8913914ef136a2a0909f17d01e97a4a14a0',
-  'trade-specific-max-value-v279.js':'bd570171cabfe83f6ae3da14d9208446e16ecf9f',
-  'trade-specific-player-v232.js':'37dd812277f18ee8bedeb404ecb7e94cf6661c1e',
+  // Frozen Finder-only complementary-piece generator, preserving canonical values.
+  'trade-add-assets-complement-v1.js':'ea5fd85b4d7a53a40d6e27166c4e40333180bd03',
+  'trade-specific-max-tier-add-v300.js':'c72cb456c1bcd58bd2d4654431bb38b2d6952d62',
+  'trade-specific-tier-up-v282.js':'f8fef77ce544a2161d5cb959f963b5995acd9adc',
+  'trade-specific-add-assets-v282.js':'7329e91955ea6907aca508163515ffc00de0aad9',
+  // Reviewed finite-work Finder search and complementary outgoing-package diversity; valuation and fairness unchanged.
+  'trade-specific-max-value-v279.js':'aeec180f1c0b34b7b9eb76f3a857a5e6c7360361',
+  'trade-specific-player-v232.js':'af2e068cd94dede57019b09b6e6b94eba2a7f515',
   'pick-display-sync-v279.js':'ac0e5102c969139fade368410209ae44a6b78eff',
   'trade-recommended-pick-ownership-v301.js':'383c4cccc512d8f57692ab81a5e45102179fad02'
 };

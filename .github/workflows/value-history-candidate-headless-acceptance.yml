@@ -1,0 +1,54 @@
+name: Value History candidate headless acceptance (read-only)
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/value-history-headless-refresh.mjs'
+      - '.github/workflows/value-history-candidate-headless-acceptance.yml'
+      - 'tests/value-history-candidate-headless-contract.test.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: value-history-candidate-acceptance-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  candidate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify current model and non-writing collector contract
+        run: node --test tests/value-history-candidate-headless-contract.test.mjs
+      - name: Install Chromium dependencies
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Produce read-only candidate snapshot (no archive write)
+        env:
+          VALUE_HISTORY_SNAPSHOT_FILE: .tmp/value-history-candidate-only.json
+        run: node scripts/value-history-headless-refresh.mjs
+      - name: Require complete canonical refresh and preserved provenance
+        run: |
+          node --input-type=module -e "
+            import {readFileSync} from 'node:fs';
+            import assert from 'node:assert/strict';
+            const s=JSON.parse(readFileSync('.tmp/value-history-candidate-only.json','utf8'));
+            assert.equal(s.source,'scheduled');
+            assert.equal(s.valuation_model,'idp-v96-single-source-continuous-v95-evidence');
+            assert.equal(s.provenance?.canonical_parity,'exact');
+            assert.ok(Number(s.provenance?.consensus_sources)>=7);
+            assert.ok(s.rows?.length>=700);
+            assert.ok(s.picks?.length>=96);
+            assert.ok(s.teams?.length===32);
+            console.log(JSON.stringify({ok:true,model:s.valuation_model,rows:s.rows.length,picks:s.picks.length,teams:s.teams.length,t:s.t},null,2));
+          "
+      # Deliberately NO archive-value-history invocation, token, Blob write,
+      # production deployment, or GitHub branch write.

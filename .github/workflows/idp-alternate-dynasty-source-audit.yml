@@ -1,0 +1,22 @@
+name: Read-only alternative dynasty IDP source viability
+on:
+  pull_request:
+    paths:
+      - 'scripts/audit-alternate-dynasty-idp-sources.mjs'
+      - '.github/workflows/idp-alternate-dynasty-source-audit.yml'
+permissions:
+  contents: read
+jobs:
+  optional-dynasty-sources:
+    if: github.event.pull_request.number == 478
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check and inspect published-source configured URLs
+        run: node --check scripts/audit-alternate-dynasty-idp-sources.mjs
+      - name: Read-only inspect PFF and DynastyDealer configured dynasty sources
+        run: node scripts/audit-alternate-dynasty-idp-sources.mjs

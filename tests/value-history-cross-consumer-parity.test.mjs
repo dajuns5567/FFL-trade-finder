@@ -95,6 +95,6 @@ test('site load and Update both rebuild the same V319 player currency after Slee
  assert.match(valueModel,/s\.canonicalPackageValue=canonicalPackageValue/);
  assert.match(valueModel,/window\.tradeValueNormalizationV139=s/);
  assert.match(valueModel,/for\(const e of \[window\.tradeEngine96,window\.tradeEngine98,window\.tradeEngine99\]/);
- assert.match(runner,/valuation-idp-v25-perf\.js\?v=20261117-v94-stable-veteran/);
+ assert.match(runner,/valuation-idp-v25-perf\.js\?v=20261118-v95-verified-production/);
  assert.match(runner,/valuation-idp-v43\.js\?v=20261117-v92-balanced-retention/);
 });

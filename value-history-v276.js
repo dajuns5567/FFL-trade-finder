@@ -5,7 +5,7 @@ const API='/.netlify/functions/value-history',SIGNAL_API='/.netlify/functions/pl
 // assumption based on the latest record or a manually selected player.
 // Never tag a history snapshot until the exact V94 IDP scorer AND balanced
 // V92 compression stage are served by the running site.
-const HISTORY_VALUATION_MODEL='idp-v94-v92-balanced-stable-veteran';
+const HISTORY_VALUATION_MODEL='idp-v95-verified-production-floor-v92-balanced';
 window.valueHistoryModelV90=null;
 async function verifyLiveValuationModelV95(){
  try{
@@ -16,13 +16,15 @@ async function verifyLiveValuationModelV95(){
   const v94=scorer.includes('v94StableDeclineSupport')&&
     scorer.includes('const support=mean>=10?stability*decline*incomplete:0')&&
     scorer.includes('const sustainedRoleShare=Math.min(.70,v75CurrentShare+.15*support)');
+  const v95=scorer.includes('idpNoQualifiedSleeperScoringV95')&&
+    scorer.includes('noQualifiedScoring?Math.min(score.value,180):score.value');
   const v92=curve.includes('Math.round(compressed*.01*support*evidence)')&&
     curve.includes('servedFactor*1.025');
   // The IDP runtime must also be installed, not merely served as a dormant asset.
   const running=typeof window.idpV25PropagationAudit==='function'&&
     window.fflIdpScoringModelV94==='v94-verified-stable-veteran'&&
     window.fflIdpCompressionModelV92==='v92-balanced-retention';
-  window.valueHistoryModelV90=v94&&v92&&running?HISTORY_VALUATION_MODEL:null;
+  window.valueHistoryModelV90=v94&&v95&&v92&&running?HISTORY_VALUATION_MODEL:null;
  }catch(e){
   window.valueHistoryModelV90=null;
  }
@@ -33,7 +35,7 @@ window.addEventListener('load',()=>{void verifyLiveValuationModelV95()});
 if(document.readyState==='complete')void verifyLiveValuationModelV95();
 // Experimental deploy previews may read archival history but must never
 // persist their branch-specific ranks into the canonical shared timeline.
-const isValueHistoryDeployPreview=()=>/^(?:deploy-preview-\d+|[a-f0-9]{24})--precious-dango-fb4633\.netlify\.app$/i.test(location.hostname);
+const isValueHistoryDeployPreview=()=>/^(?:deploy-preview-\d+|[a-f0-9]{24})--[a-z0-9-]+\.netlify\.app$/i.test(location.hostname);
 let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,marketInsightsCache=null,marketSignalCache=null,marketInsightsPending=null,marketSignalsPending=null,marketIntelPeriod='7D',marketVolatilityPool='ALL',currentPlayerId=null,trackedTeamId=null,playerHistoryTeamId=null,currentView='market',marketSort={key:'value',dir:-1},teamNetSort={key:'value',dir:-1},teamAttributionPeriod='7D',tradeHistoryCache=null,tradeHistoryCacheAt=0,tradeTeamFilter='',tradeYearFilter='',tradeMonthFilter='',marketPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D'},teamPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D',posRankRisers:'30D',posRankFallers:'30D'},marketPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL'},teamPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL',posRankRisers:'ALL',posRankFallers:'ALL'},playerScoringCache=new Map(),playerScoringPending=new Map(),teamNetCache=new Map(),tradeDetailState=new Map();
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
@@ -639,7 +641,7 @@ async function recordSnapshot(source=pendingSnapshotSource){
     if(rows.length<100||!sameSnapshotRows(firstRows,rows)){scheduleSnapshot(2000,source);return false}
     if(await verifyLiveValuationModelV95()!==HISTORY_VALUATION_MODEL){
       window.__vhLastSnapshot={ok:false,reason:'valuation-model-contract-unverified'};
-      console.warn('Value History snapshot blocked: V94 model identity could not be verified');
+      console.warn('Value History snapshot blocked: V95 production-evidence model identity could not be verified');
       return false;
     }
     let picks=[],teams=[];

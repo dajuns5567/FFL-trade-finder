@@ -20,6 +20,7 @@ vm.createContext(context);
 vm.runInContext(source,context,{filename:'canonical-value-history-v90-functions.js'});
 const {valuationModelId,comparableMarketEra,pointsFromSnapshots,marketFromSnapshots}=context;
 const model='idp-v94-v92-balanced-stable-veteran';
+const currentModel='idp-v95-verified-production-floor-v92-balanced';
 const previousModel='idp-v77-v85-v86-dynasty';
 const rows=(v,w)=>[
  {id:'11667',value:v,overall:121,pos:'IDP',posRank:19},
@@ -389,7 +390,7 @@ test('null player market movement does not masquerade as zero-valued team covera
 });
 
 test('scheduled local and GitHub archive captures cannot silently lose their explicit valuation model',()=>{
- assert.match(client,/window.valueHistoryModelV90=v94&&v92&&running\?HISTORY_VALUATION_MODEL:null/);
+ assert.match(client,/window.valueHistoryModelV90=v94&&v95&&v92&&running\?HISTORY_VALUATION_MODEL:null/);
  assert.match(scheduled,/const verifiedModel=typeof window.verifyValueHistoryModelV95==='function'/);
  assert.match(scheduled,/valuationModel:verifiedModel/);
  assert.match(client,/window.verifyValueHistoryModelV95=verifyLiveValuationModelV95/);
@@ -407,13 +408,14 @@ test('scheduled local and GitHub archive captures cannot silently lose their exp
  const vmCtx={String};
  vm.createContext(vmCtx);
  vm.runInContext(declaration[0]+';globalVal=acceptedValuationModel;',vmCtx);
- assert.equal(vmCtx.globalVal(model),model);
+ assert.equal(vmCtx.globalVal(currentModel),currentModel);
+ assert.equal(vmCtx.globalVal(model),null,'previous V94 source must not be mislabeled as current V95');
  assert.equal(vmCtx.globalVal('other-model'),null);
  assert.equal(vmCtx.globalVal(null),null);
 });
 
 test('client submits contract and labels instead of pretending model-version jumps are market gains',()=>{
- assert.match(client,/const HISTORY_VALUATION_MODEL='idp-v94-v92-balanced-stable-veteran'/);
+ assert.match(client,/const HISTORY_VALUATION_MODEL='idp-v95-verified-production-floor-v92-balanced'/);
  assert.match(client,/await verifyLiveValuationModelV95\(\)!==HISTORY_VALUATION_MODEL/);
  assert.match(client,/valuation_model:HISTORY_VALUATION_MODEL/);
  assert.match(client,/Valuation model changed — movement not comparable/);
@@ -423,6 +425,8 @@ test('client submits contract and labels instead of pretending model-version jum
  assert.match(client,/history includes a valuation-model change/i);
  assert.match(client,/modelBoundary\?'Model change':signed\(r.dv\)/);
  assert.match(client,/isValueHistoryDeployPreview\(\)\)return false/);
+ assert.match(client,/deploy-preview-\\d\+/);
+ assert.match(client,/\[a-z0-9-\]\+\\.netlify\\.app/);
 });
 
 test('V95 preserves previous explicit model eras and flags V94 on its first verified snapshot',()=>{
@@ -449,15 +453,15 @@ test('V95 model claim requires BOTH exact served V94 scorer and V92 curve plus r
  const end=client.indexOf("window.addEventListener('load'",start);
  assert(start>0&&end>start);
  const fn=client.slice(start,end);
- const runtime={HISTORY_VALUATION_MODEL:model,window:{idpV25PropagationAudit:()=>true,fflIdpScoringModelV94:'v94-verified-stable-veteran',fflIdpCompressionModelV92:'v92-balanced-retention'},fetch:async path=>({
+ const runtime={HISTORY_VALUATION_MODEL:currentModel,window:{idpV25PropagationAudit:()=>true,fflIdpScoringModelV94:'v94-verified-stable-veteran',fflIdpCompressionModelV92:'v92-balanced-retention'},fetch:async path=>({
   ok:true,text:async()=>path.includes('v25')
-   ?'v94StableDeclineSupport; const support=mean>=10?stability*decline*incomplete:0; const sustainedRoleShare=Math.min(.70,v75CurrentShare+.15*support)'
+   ?'v94StableDeclineSupport; const support=mean>=10?stability*decline*incomplete:0; const sustainedRoleShare=Math.min(.70,v75CurrentShare+.15*support); idpNoQualifiedSleeperScoringV95; noQualifiedScoring?Math.min(score.value,180):score.value'
    :'Math.round(compressed*.01*support*evidence); servedFactor*1.025'
  })};
  vm.createContext(runtime);
  vm.runInContext(fn+';globalVerify=verifyLiveValuationModelV95;',runtime);
- assert.equal(await runtime.globalVerify(),model);
- assert.equal(runtime.window.valueHistoryModelV90,model);
+ assert.equal(await runtime.globalVerify(),currentModel);
+ assert.equal(runtime.window.valueHistoryModelV90,currentModel);
  runtime.window.idpV25PropagationAudit=null;
  assert.equal(await runtime.globalVerify(),null,'inactive IDP model must not be labeled V94');
  runtime.window.idpV25PropagationAudit=()=>true;
@@ -467,12 +471,12 @@ test('V95 model claim requires BOTH exact served V94 scorer and V92 curve plus r
  runtime.window.fflIdpCompressionModelV92='old-v74';
  assert.equal(await runtime.globalVerify(),null,'stale cached compression cannot claim V92');
  runtime.window.fflIdpCompressionModelV92='v92-balanced-retention';
- assert.equal(await runtime.globalVerify(),model,'restored executed runtime identities validate');
+ assert.equal(await runtime.globalVerify(),currentModel,'restored executed runtime identities validate');
  runtime.fetch=async path=>({ok:true,text:async()=>path.includes('v25')?
-  'v94StableDeclineSupport; const support=mean>=10?stability*decline*incomplete:0; const sustainedRoleShare=Math.min(.70,v75CurrentShare+.15*support)'
+  'v94StableDeclineSupport; const support=mean>=10?stability*decline*incomplete:0; const sustainedRoleShare=Math.min(.70,v75CurrentShare+.15*support); idpNoQualifiedSleeperScoringV95; noQualifiedScoring?Math.min(score.value,180):score.value'
   :'servedFactor*1.17'});
  assert.equal(await runtime.globalVerify(),null,'overboosted V74 curve is not V94/V92');
  runtime.fetch=async()=>{throw Error('offline')};
  assert.equal(await runtime.globalVerify(),null,'source failure must fail closed');
- assert.match(server,/verified V94 valuation-model contract required; snapshot not stored/);
+ assert.match(server,/verified IDP valuation-model contract required; snapshot not stored/);
 });

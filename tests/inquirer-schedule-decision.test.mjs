@@ -140,17 +140,18 @@ test('current deployment policy builds only authorized PR previews, never produc
  const literal=config.match(/^\s*ignore = (".*")$/m)?.[1];
  assert.ok(literal,'Netlify build ignore must be present');
  const command=JSON.parse(literal);
- const code=(SITE_ID,SITE_NAME,CONTEXT,REVIEW_ID='')=>spawnSync('sh',['-c',command],{
-  env:{...process.env,SITE_ID,SITE_NAME,CONTEXT,REVIEW_ID},encoding:'utf8'}).status;
- const site='fa33dfe4-8293-441e-8da0-25cc66fc984c';
- assert.equal(code(site,'','deploy-preview','450'),1,'authorized PR #450 preview builds');
- assert.equal(code(site,'','deploy-preview','448'),1,'authorized PR #448 preview builds');
- assert.equal(code(site,'','deploy-preview','451'),0,'unapproved preview is skipped');
- assert.equal(code(site,'','production','450'),0,'production deploy remains blocked');
- assert.equal(code('','precious-dango-fb4633','production','450'),0,'site-name path also blocks production');
- assert.equal(code(site,'','branch-deploy','450'),0,'branch deploys stay blocked');
- assert.equal(code('8776d155-bc7b-4dcd-bafc-3d70d3d51800','transcendent-manatee-2f0123','deploy-preview','450'),0,'old site never builds');
- assert.equal(code('3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f','gleaming-dodol-8dbc4a','deploy-preview','450'),0,'retired site never builds');
+ const code=(SITE_ID,SITE_NAME,CONTEXT,REVIEW_ID='',approvedSiteId='')=>spawnSync('sh',['-c',command],{
+  env:{...process.env,SITE_ID,SITE_NAME,CONTEXT,REVIEW_ID,
+   FLEECED_NEXT_NETLIFY_PREVIEW_SITE_ID:approvedSiteId},encoding:'utf8'}).status;
+ const site='11111111-1111-4111-8111-111111111111';
+ assert.equal(code(site,'fleeced-next','deploy-preview','501',site),1,'explicitly opted-in new-site PR501 builds');
+ assert.equal(code(site,'fleeced-next','deploy-preview','500',site),0,'migration-safety PR500 does not build');
+ assert.equal(code(site,'fleeced-next','deploy-preview','501'),0,'unknown/unapproved site must not build');
+ assert.equal(code(site,'fleeced-next','production','501',site),0,'production deploy remains blocked');
+ assert.equal(code(site,'fleeced-next','branch-deploy','501',site),0,'branch deploys stay blocked');
+ assert.equal(code('fa33dfe4-8293-441e-8da0-25cc66fc984c','precious-dango-fb4633','deploy-preview','501','fa33dfe4-8293-441e-8da0-25cc66fc984c'),0,'previous current site never builds');
+ assert.equal(code('8776d155-bc7b-4dcd-bafc-3d70d3d51800','transcendent-manatee-2f0123','deploy-preview','501','8776d155-bc7b-4dcd-bafc-3d70d3d51800'),0,'old site never builds');
+ assert.equal(code('3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f','gleaming-dodol-8dbc4a','deploy-preview','501','3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f'),0,'retired site never builds');
  const {privatePreviewStoreName,isPreviewDiagnosticContext}=await import('../netlify/functions/lib/inquirer-preview-diagnostics.mjs');
  const preview='https://deploy-preview-427--precious-dango-fb4633.netlify.app/.netlify/functions/inquirer-preview-diagnostic';
  assert.equal(privatePreviewStoreName(preview),'fleeced-inquirer-private-pr427-persistent');

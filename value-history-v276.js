@@ -1719,7 +1719,7 @@ function archivedEraBoard(m){
 function modelEraNote(m){
   if(!m?.model_change_at)return'';
   const comparable=Math.max(0,Number(m.comparable_snapshot_count)||0),total=Math.max(0,Number(m.snapshot_count)||0);
-  return`<div class="vh-sub" role="status">Model-era boundary: ${esc(dateTime(m.model_change_at))} • ${fmt(comparable)} comparable of ${fmt(total)} preserved snapshots. Only same-model observations count toward market changes; full historical player charts remain available.</div>`;
+  return`<div class="vh-sub" role="status">Historical tracking is preserved (${fmt(total)} snapshots). Latest valuation model began ${esc(dateTime(m.model_change_at))} (${fmt(comparable)} sampled observations). Market changes add verified movements within each model era in the selected window, excluding the artificial value jump when models changed.</div>`;
 }
 function renderMarketDashboard(){
   const box=document.getElementById('vhContent');if(!box||!marketCache)return;

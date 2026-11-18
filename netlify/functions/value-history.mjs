@@ -665,8 +665,15 @@ function marketFromSnapshots(snaps){
     const id=String(r.id),d1=m1.get(id),d7=m7.get(id),d30=m30.get(id),d365=m365.get(id),dAll=mAll.get(id);
     return{id,value:r.value,overall:r.overall,pos:r.pos,posRank:r.posRank,delta1:d1?.delta??null,delta7:d7?.delta??null,delta30:d30?.delta??null,delta365:d365?.delta??null,deltaAll:dAll?.delta??null,delta365From:d365?.baseline_t??null,deltaAllFrom:dAll?.baseline_t??null,delta365Available:(d365?.available_history??false)||(!((latestMs-firstMs)>=365*86400000)&&d365!=null),deltaAllAvailable:dAll?.available_history??false,posRankDelta1:d1?.posRankDelta??null,posRankDelta7:d7?.posRankDelta??null,posRankDelta30:d30?.posRankDelta??null,posRankDelta365:d365?.posRankDelta??null,posRankDeltaAll:dAll?.posRankDelta??null,overallDelta7:d7?.overallDelta??null,overallDelta30:d30?.overallDelta??null};
   }).sort((a,b)=>b.value-a.value);
+  // The archive never restarts when a valuation model changes. Only the
+  // comparable-market baseline restarts; retain the original tracking date.
+  const prior=ordered.slice(0,ordered.length-active.length),priorEra=comparableMarketEra(prior).snaps;
+  const earlier=priorEra.length>=2?marketPeriod(priorEra.at(-1),priorEra[0]):null;
   return{
-    tracking_since:first.t,latest:latest.t,snapshot_count:ordered.length,comparable_snapshot_count:active.length,
+    tracking_since:ordered[0].t,comparable_since:first.t,latest:latest.t,snapshot_count:ordered.length,comparable_snapshot_count:active.length,
+    archived_era:earlier?{tracking_since:priorEra[0].t,through:priorEra.at(-1).t,
+      snapshot_count:priorEra.length,valuation_model:valuationModelId(priorEra.at(-1)),
+      valueRisers:earlier.valueRisers.slice(0,10),valueFallers:earlier.valueFallers.slice(0,10)}:null,
     valuation_model:modelEra.model,model_change_at:modelEra.changedAt,prior_valuation_model:modelEra.priorModel,periods,marketRows,
     has1:latestMs-firstMs>=1*86400000,
     has7:latestMs-firstMs>=7*86400000,
@@ -731,7 +738,12 @@ async function getMarketSummary(s){
     snaps.push(...group.filter(Boolean));
   }
   snaps.sort((a,b)=>String(a.t).localeCompare(String(b.t)));
-  const market=marketFromSnapshots(snaps);market.snapshot_count=timed.length;market.archive_snapshot_count=(arch.items||[]).length;market.local_snapshot_count=(local.items||[]).length;return market;
+  const market=marketFromSnapshots(snaps);
+  market.snapshot_count=timed.length;
+  market.tracking_since=timed[0].t; // Exact oldest indexed observation, not the sampled/model-era start.
+  market.archive_snapshot_count=(arch.items||[]).length;
+  market.local_snapshot_count=(local.items||[]).length;
+  return market;
 }
 // EXACT archived Market Intelligence pipeline from player-signal-layer-r1.
 // Read-only analytics of existing archived Value History snapshots.

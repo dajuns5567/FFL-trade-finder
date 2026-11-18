@@ -218,11 +218,11 @@ function blend25(c,scoreValue,contextValue){
 function model25(z){
  if(groupPos(z.x)!=='IDP'||!isIndividualIdp25(z.x.id))return z;
  const c=Number(z.consensus),score=scoring25(z.x.id),ctx=context25(z.x.id,score);
-// A missing dynasty source and ZERO qualified Sleeper seasons must not be
-// represented by the model's neutral 520-point scoring prior. Use the
-// already-existing verified-scoring minimum (180) for this cohort only.
-// A prospect with real dynasty consensus, or any actual qualifying scoring,
-// continues through the unchanged 20/45/35 model and historical confidence.
+// Missing qualified Sleeper seasons never imply neutral 520-point
+// performance, even if a single dynasty publisher lists the player.
+// Use the existing conservative 180-point scoring floor for all
+// no-production IDPs, while leaving independently sourced dynasty consensus
+// in its 20% component and verified regular-season performance unchanged.
 const noQualifiedScoring=!(Number(score.a?.qualifyingSeasons)>0);
 const unverifiedFallback=!(c>0)&&noQualifiedScoring;
 const effectiveScoringValue=noQualifiedScoring?Math.min(score.value,180):score.value;

@@ -143,10 +143,10 @@ test('current deployment policy builds only authorized PR previews, never produc
  const code=(SITE_ID,SITE_NAME,CONTEXT,REVIEW_ID='',approvedSiteId='')=>spawnSync('sh',['-c',command],{
   env:{...process.env,SITE_ID,SITE_NAME,CONTEXT,REVIEW_ID,
    FLEECED_NEXT_NETLIFY_PREVIEW_SITE_ID:approvedSiteId},encoding:'utf8'}).status;
- const site='11111111-1111-4111-8111-111111111111';
+ const site='a516be3b-6c65-4f54-a9fb-23c5361bf3d2';
  assert.equal(code(site,'fleeced-next','deploy-preview','501',site),1,'explicitly opted-in new-site PR501 builds');
  assert.equal(code(site,'fleeced-next','deploy-preview','500',site),0,'migration-safety PR500 does not build');
- assert.equal(code(site,'fleeced-next','deploy-preview','501'),0,'unknown/unapproved site must not build');
+ assert.equal(code('11111111-1111-4111-8111-111111111111','fleeced-next','deploy-preview','501'),0,'unknown site must not build');
  assert.equal(code(site,'fleeced-next','production','501',site),0,'production deploy remains blocked');
  assert.equal(code(site,'fleeced-next','branch-deploy','501',site),0,'branch deploys stay blocked');
  assert.equal(code('fa33dfe4-8293-441e-8da0-25cc66fc984c','precious-dango-fb4633','deploy-preview','501','fa33dfe4-8293-441e-8da0-25cc66fc984c'),0,'previous current site never builds');

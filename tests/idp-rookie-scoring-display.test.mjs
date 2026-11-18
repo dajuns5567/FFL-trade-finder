@@ -94,7 +94,7 @@ test('every IDP audit lookup refuses ambiguous Chris Jones names yet accepts exa
   assert.equal(resolve('David Bailey'),'13363',path+' permits an unambiguous name');
  }
  const site=fs.readFileSync('netlify/functions/site-v17.mjs','utf8');
- assert.match(site,/valuation-idp-v25-perf\.js\?v=20261117-v94-stable-veteran/,
+ assert.match(site,/valuation-idp-v25-perf\.js\?v=20261118-v95-verified-production/,
   'all pages must load the refreshed identity-safe scoring audit');
 });
 

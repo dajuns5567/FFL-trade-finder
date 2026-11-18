@@ -94,7 +94,7 @@ test('new Netlify account is recognized but gated behind owner activation and We
  assert.match(worker,/enabled!=='true'/);
  const config=readFileSync(new URL('../netlify.toml',import.meta.url),'utf8');
  assert.match(config,/e\.CONTEXT==='deploy-preview'/);
- assert.match(config,/FLEECED_NEXT_NETLIFY_PREVIEW_SITE_ID/);
+ assert.match(config,/a516be3b-6c65-4f54-a9fb-23c5361bf3d2/);
  assert.match(config,/String\(e\.REVIEW_ID\)==='501'/);
  assert.doesNotMatch(config,/e\.CONTEXT==='production'/);
 });

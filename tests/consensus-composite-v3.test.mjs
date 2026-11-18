@@ -70,8 +70,10 @@ test("offensive ranking trace exposes source ranks and omission penalties withou
     [["Ranker A",10],["Ranker B",12]]);
   assert.equal(trace.filter(x=>!x.listed).length,1);
   assert.ok(trace[2].source.includes("(not listed)"));
-  // Existing single-source IDP coverage floor is 180, not raw source rank 1.
-  assert.equal(c.detailsById.lb.idpRank,180);
+  // V96 single-source IDP coverage retains only half the verified rank
+  // improvement under 180. It is not a full-trust publisher rank of 1.
+  assert.equal(c.detailsById.lb.idpRank,90.5);
+  assert.equal(c.detailsById.lb.idpSingleSourceEvidence.retainedPublisherRankShare,.5);
   assert.equal(c.detailsById.lb.offenseSourceEvidence.length,0);
   assert.ok(Math.abs(trace.reduce((s,x)=>s+x.rank*x.weight,0)/
     trace.reduce((s,x)=>s+x.weight,0)-c.detailsById.denzel.offenseRank)<1e-10);
@@ -226,6 +228,36 @@ test("two equally sized market camps retain their original influence",()=>{
     [{id:"split",name:target,positions:["WR"]}]).detailsById.split;
   assert.equal(d.offenseRobustWeights.length,4);
   assert.ok(d.offenseSourceEvidence.every(x=>x.weight>.99),"broad dispersion means no artificially selected winning camp");
+});
+test("single-source verified IDP ordering survives the conservative 180 anchor continuously",()=>{
+ const from=rank=>buildConsensusComposite([
+   result("Verified dynasty IDP","dynasty-idp",rankedWithTarget("Established LB","LB",rank,240))
+ ],[{id:"lb",name:"Established LB",positions:["LB"]}]).detailsById.lb;
+ for(const [rank,expected] of [[1,90.5],[20,100],[60,120],[120,150],[160,170],[179,179.5],[180,180],[181,181],[230,230]]){
+   const row=from(rank);
+   assert.equal(row.idpRank,expected,`source rank ${rank}`);
+   assert.equal(row.idpSingleSourceEvidence.observedIdpRank,rank);
+   assert.equal(row.idpSingleSourceEvidence.effectiveIdpRank,expected);
+ }
+ const a=from(60),b=from(120);
+ assert.ok(a.idpValue>b.idpValue,'verified stronger source ordering must survive');
+ assert.ok(a.idpRank>60,'single source remains conservatively discounted');
+});
+test("IDP two-source consensus, single-source offense, and genuinely missing ranks are unchanged",()=>{
+ const r=rankedWithTarget("Established LB","LB",20,100);
+ const combo=buildConsensusComposite([
+   result("IDP A","idp-a",r),
+   result("IDP B","idp-b",rankedWithTarget("Established LB","LB",22,100)),
+   result("Offense","off-a",rankedWithTarget("Lonely WR","WR",1,100))
+ ],[
+   {id:"lb",name:"Established LB",positions:["LB"]},
+   {id:"wr",name:"Lonely WR",positions:["WR"]},
+   {id:"unknown",name:"Unranked LB",positions:["LB"]}
+ ]);
+ assert.equal(combo.detailsById.lb.idpRank,21);
+ assert.equal(combo.detailsById.lb.idpSingleSourceEvidence,null);
+ assert.equal(combo.detailsById.wr.offenseRank,260);
+ assert.equal(combo.byId.unknown,undefined);
 });
 test("one-source floor and missing consensus stay conservative",()=>{
   const d=buildConsensusComposite([

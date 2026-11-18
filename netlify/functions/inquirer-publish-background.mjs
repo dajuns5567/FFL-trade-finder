@@ -37,11 +37,28 @@ export default async function publishInquirerInBackground(req){
   console.warn('inquirer-background-preview-write-held');
   return new Response('Preview deployment cannot publish',{status:403});
  }
+ // On a fresh Netlify account, a matching hostname or copied environment
+ // variable must never override a different SITE_ID.
+ const registeredSiteIds=new Set([
+  'fa33dfe4-8293-441e-8da0-25cc66fc984c',
+  '3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f',
+  '8776d155-bc7b-4dcd-bafc-3d70d3d51800'
+ ]);
+ if(siteId&&!registeredSiteIds.has(siteId)){
+  console.warn('inquirer-background-unregistered-site-id-held');
+  return new Response('Unregistered Netlify SITE_ID: publisher held',{status:403});
+ }
  const isCurrentSite=siteId==='fa33dfe4-8293-441e-8da0-25cc66fc984c'||host==='precious-dango-fb4633.netlify.app';
  const isNewestSite=isCurrentSite||siteId==='3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f'||
   host==='gleaming-dodol-8dbc4a.netlify.app';
  const replacement=isNewestSite||siteId==='8776d155-bc7b-4dcd-bafc-3d70d3d51800'||
   host==='transcendent-manatee-2f0123.netlify.app';
+ // A newly connected Netlify account has a different site ID and hostname.
+ // Never let a copied queue key authorize publishing on an unregistered site.
+ if(!replacement){
+  console.warn('inquirer-background-unrecognized-site-held');
+  return new Response('Unrecognized Netlify site: publisher held pending archive migration',{status:403});
+ }
  const enabled=globalThis.Netlify?.env?.get?.('FLEECED_ENABLE_NEW_SITE_PUBLISHER')||
   process.env.FLEECED_ENABLE_NEW_SITE_PUBLISHER||'';
  if(replacement&&enabled!=='true'){

@@ -8,18 +8,22 @@ const HISTORY_VALUATION_MODEL='idp-v96-single-source-continuous-v95-evidence';
 window.valueHistoryModelV90=null;
 async function verifyLiveValuationModelV95(){
  try{
-  const paths=['/valuation-idp-v25-perf.js','/valuation-idp-v43.js','/netlify/functions/consensus-composite-v3.mjs'];
+  const paths=['/valuation-idp-v25-perf.js','/valuation-idp-v43.js'];
   const responses=await Promise.all(paths.map(path=>fetch(path,{cache:'no-store'})));
   if(responses.some(r=>!r.ok))throw Error('valuation-source-unavailable');
-  const [scorer,curve,consensus]=await Promise.all(responses.map(r=>r.text()));
+  const [scorer,curve]=await Promise.all(responses.map(r=>r.text()));
   const v94=scorer.includes('v94StableDeclineSupport')&&
     scorer.includes('const support=mean>=10?stability*decline*incomplete:0')&&
     scorer.includes('const sustainedRoleShare=Math.min(.70,v75CurrentShare+.15*support)');
   const v95=scorer.includes('idpNoQualifiedSleeperScoringV95')&&
     scorer.includes('noQualifiedScoring?Math.min(score.value,180):score.value');
-  const v96=consensus.includes('const IDP_SINGLE_SOURCE_RETENTION=.50')&&
-    consensus.includes('floor-IDP_SINGLE_SOURCE_RETENTION*(floor-observed)')&&
-    consensus.includes('idpSingleSourceEvidence:d.singleSourceEvidence||null');
+  // The consensus aggregate runs in Netlify's server function; checking a
+  // static source path would not verify the executable result. Instead require
+  // source-specific V96 evidence in the ACTUAL current server-computed model.
+  const v96=Object.values(window.state?.consensusComposite?.detailsById||{})
+    .some(d=>d?.idpSingleSourceEvidence?.retainedPublisherRankShare===.50&&
+      Number.isFinite(Number(d.idpSingleSourceEvidence.observedIdpRank))&&
+      Number.isFinite(Number(d.idpSingleSourceEvidence.effectiveIdpRank)));
   const v92=curve.includes('Math.round(compressed*.01*support*evidence)')&&
     curve.includes('servedFactor*1.025');
   // The IDP runtime must also be installed, not merely served as a dormant asset.

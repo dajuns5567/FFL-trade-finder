@@ -12,7 +12,7 @@ const snapshotFile=process.env.VALUE_HISTORY_SNAPSHOT_FILE||'.tmp/value-history-
 // the triggering main workflow SHA for the model's source revision.
 const sourceCommit=String(process.env.VALUE_HISTORY_SOURCE_COMMIT||process.env.GITHUB_SHA||'').trim()||null;
 const SCHEDULED_VALUATION_CONTRACT='precision-idp-runtime-20260919';
-const acceptedValuationModel=value=>String(value||'').trim()==='idp-v94-v92-balanced-stable-veteran'?'idp-v94-v92-balanced-stable-veteran':null;
+const acceptedValuationModel=value=>String(value||'').trim()==='idp-v95-verified-production-floor-v92-balanced'?'idp-v95-verified-production-floor-v92-balanced':null;
 const league='1316867686394769408';
 
 function fingerprint(rows,picks=[],teams=[]){

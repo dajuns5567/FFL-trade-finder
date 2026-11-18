@@ -179,6 +179,46 @@ try{
   });
   if(!readiness.sleeperComplete||readiness.consensusMarker?.ok!==true||Number(readiness.consensusMarker?.successful)<7)throw new Error(`Scheduled refresh inputs incomplete: ${JSON.stringify(readiness)}`);
 
+  if(process.env.IDP_AUDIT_SPOTLIGHT==='1'){
+    const diagnostic=await page.evaluate(()=>{
+      const ranked=typeof window.ensureMaster==='function'?window.ensureMaster():[];
+      const norm=s=>String(s||'').toLowerCase().replace(/[^a-z]/g,'');
+      const wanted=new Set(['keyroncrawford','natelandman']);
+      const rows=[],suspects=[];
+      let idp=0;
+      for(let i=0;i<ranked.length;i++){
+        const z=ranked[i],id=String(z.x?.id||''),group=window.groupPos?.(z.x);
+        if(group!=='IDP')continue;
+        idp++;
+        const name=window.playerName?.(id)||id,clean=norm(name),
+          p=window.state?.players?.[id]||{},
+          d=window.state?.consensusComposite?.detailsById?.[id]||{},
+          audit=window.idpScoringAudit?.(id)||{},
+          cv=Number(z.consensus),src=(Array.isArray(d.idpSources)?d.idpSources:[])
+           .filter(x=>!String(x).endsWith(' (not listed)')),
+          seasons=(audit.seasons||[]).map(x=>({year:x.season,games:x.games,ppg:x.ppg,
+           current:x.currentSeason,points:x.points})),
+          entry={id,name,position:p.position,team:p.team,age:p.age,years_exp:p.years_exp,
+           active:p.active,overall:i+1,idpRank:idp,served:z.value,
+           canonical:window.tradeValueNormalizationV139?.canonicalValue?.(z.x),
+           modelPrecision:z.marketPrecisionValueV386,
+           consensus:cv,consensusRank:d.idpRank,sourceCount:src.length,sources:src,
+           sourceDetails:{kind:d.kind,idpValue:d.idpValue},
+           qualifyingSeasons:audit.qualifyingSeasons,confidence:audit.confidence,
+           scoringValue:audit.productionValue,scoringPpg:audit.ppg,
+           seasons,production:{v25:z.production?.value,context:z.context,
+             v72Baseline:z.production?.idpOverallTradeCurveBaselineV72,
+             v72Factor:z.production?.idpOverallTradeCurveFactorV72,
+             noConsensusFallback:z.production?.idpUnverifiedNoConsensusFallbackV73}};
+        if(wanted.has(clean)||clean.includes('landman')||clean.includes('crawford'))
+          rows.push(entry);
+        if(idp<=100&&(!Number(audit.qualifyingSeasons)||!src.length))
+          suspects.push(entry);
+      }
+      return{totalRanked:ranked.length,idpTotal:idp,spotlights:rows,top100IdpWeakEvidence:suspects.slice(0,35)};
+    });
+    console.log('IDP_IDENTITY_EVIDENCE_AUDIT '+JSON.stringify(diagnostic));
+  }
   const captureCurrent=()=>page.evaluate(async()=>{
     const verifiedModel=typeof window.verifyValueHistoryModelV95==='function'
       ?await window.verifyValueHistoryModelV95():null;

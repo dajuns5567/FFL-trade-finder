@@ -1,0 +1,32 @@
+name: IDP identity and dynasty evidence audit (read-only)
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/value-history-headless-refresh.mjs'
+      - '.github/workflows/idp-identity-evidence-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  evidence:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install read-only Chromium runtime
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Audit canonical IDP identity, source evidence and production
+        env:
+          IDP_AUDIT_SPOTLIGHT: '1'
+          VALUE_HISTORY_SNAPSHOT_FILE: .tmp/idp-audit-not-archived.json
+        run: node scripts/value-history-headless-refresh.mjs
+      # No GitHub write token, Blob credential, archive action, or production deployment.

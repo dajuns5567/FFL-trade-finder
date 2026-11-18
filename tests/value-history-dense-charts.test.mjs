@@ -102,7 +102,7 @@ test('Value History hover positions use the actual SVG viewport transform',()=>{
  assert.match(display,/screenPoint\.matrixTransform\(matrix\)/);
  // A centered 900-unit chart rendered 600px wide inside an 800px box:
  // left/right gutter are 100px, so the right endpoint is x=700, not 800.
- const left=100,scale=600\/900,plotL=74,plotR=24,W=900;
+ const left=100,scale=600/900,plotL=74,plotR=24,W=900;
  const lastScreenX=left+(W-plotR)*scale;
  const recovered=(lastScreenX-left)/scale;
  const lastIndex=Math.round((recovered-plotL)/(W-plotL-plotR)*500);

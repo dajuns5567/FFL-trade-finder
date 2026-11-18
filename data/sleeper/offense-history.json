@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-11-18T13:08:18.792Z",
+  "generatedAt": "2026-11-18T21:25:47.509Z",
   "source": "Sleeper importer snapshot",
   "currentSeason": 2026,
   "completedWeek": 10,
@@ -1666,8 +1666,8 @@
     },
     "diagnostics": {
       "finalGames": 150,
-      "qualifiedPlayerGames": 9885,
-      "rejectedPlayerGames": 11513,
+      "qualifiedPlayerGames": 9884,
+      "rejectedPlayerGames": 11446,
       "ignoredGames": 0
     }
   },
@@ -32795,11 +32795,11 @@
       "rec": 38,
       "rec_10_19": 13,
       "rec_5_9": 13,
-      "rec_air_yd": 288,
+      "rec_air_yd": 290,
       "rec_fd": 19,
       "rec_lng": 239,
       "rec_tgt": 54,
-      "rec_yar": 178,
+      "rec_yar": 176,
       "rec_yd": 466,
       "rec_ypr": 140.06,
       "rec_ypt": 101.23,
@@ -33394,32 +33394,6 @@
       "tm_off_snp": 281,
       "tm_st_snp": 107,
       "gs": 2
-    },
-    "12015": {
-      "gp": 1,
-      "_ppr_native_weeks": 1,
-      "_ppr_reconstructed_weeks": 0,
-      "fga": 4,
-      "fgm": 4,
-      "fgm_30_39": 2,
-      "fgm_40_49": 2,
-      "fgm_lng": 48,
-      "fgm_pct": 100,
-      "fgm_yds": 159,
-      "fgm_yds_over_30": 39,
-      "kick_pts": 14,
-      "pos_rank_half_ppr": 999,
-      "pos_rank_ppr": 999,
-      "pos_rank_std": 999,
-      "pts_half_ppr": 16,
-      "pts_ppr": 16,
-      "pts_std": 16,
-      "st_snp": 12,
-      "tm_def_snp": 67,
-      "tm_off_snp": 86,
-      "tm_st_snp": 30,
-      "xpa": 2,
-      "xpm": 2
     },
     "12030": {
       "gp": 2,
@@ -47974,21 +47948,21 @@
       "withGames": 885
     },
     "2024": {
-      "players": 961,
+      "players": 963,
       "withPpr": 796,
-      "withGames": 961
+      "withGames": 963
     },
     "2025": {
-      "players": 1053,
+      "players": 1055,
       "withPpr": 566,
-      "withGames": 1053
+      "withGames": 1055
     },
     "2026": {
-      "players": 1581,
-      "withPpr": 553,
-      "withGames": 1581,
+      "players": 1580,
+      "withPpr": 552,
+      "withGames": 1580,
       "currentSeasonQualified": true,
-      "compactPlayers": 1581
+      "compactPlayers": 1580
     }
   },
   "stats": {
@@ -67594,6 +67568,12 @@
         "gp": 8,
         "off_snp": 537
       },
+      "5869": {
+        "gp": 10,
+        "off_snp": 615,
+        "idp_tkl": 1,
+        "idp_tkl_solo": 1
+      },
       "5870": {
         "pts_ppr": 142.29999999999995,
         "gp": 10,
@@ -68202,6 +68182,10 @@
         "rush_yd": 58,
         "fum": 6,
         "pass_inc": 103
+      },
+      "6024": {
+        "gp": 8,
+        "off_snp": 465
       },
       "6025": {
         "pts_ppr": 4,
@@ -83660,6 +83644,10 @@
         "idp_tkl": 1,
         "idp_tkl_solo": 1
       },
+      "5869": {
+        "gp": 11,
+        "off_snp": 717
+      },
       "5870": {
         "pts_ppr": 234.44,
         "gp": 13,
@@ -84149,6 +84137,10 @@
         "idp_qb_hit": 4,
         "idp_ff": 2,
         "idp_tkl_ast": 15
+      },
+      "6024": {
+        "gp": 11,
+        "off_snp": 550
       },
       "6025": {
         "gp": 17,
@@ -110989,16 +110981,6 @@
       "11954": {
         "gp": 4,
         "off_snp": 148
-      },
-      "12015": {
-        "pts_ppr": 16,
-        "gp": 1,
-        "fgm_40_49": 2,
-        "fgm_yds": 159,
-        "fgm_yds_over_30": 39,
-        "fgm_30_39": 2,
-        "fgm": 4,
-        "xpm": 2
       },
       "12030": {
         "gp": 2,

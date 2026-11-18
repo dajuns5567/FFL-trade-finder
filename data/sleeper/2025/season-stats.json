@@ -7561,6 +7561,22 @@
     "idp_tkl_solo": 1,
     "pts_idp": 2
   },
+  "5869": {
+    "gp": 11,
+    "_ppr_native_weeks": 0,
+    "_ppr_reconstructed_weeks": 0,
+    "gs": 9,
+    "off_snp": 717,
+    "pos_rank_half_ppr": 10989,
+    "pos_rank_ppr": 10989,
+    "pos_rank_std": 10989,
+    "tm_def_snp": 655,
+    "tm_off_snp": 757,
+    "tm_st_snp": 279,
+    "st_snp": 2,
+    "penalty": 1,
+    "penalty_yd": 5
+  },
   "5870": {
     "gp": 13,
     "_ppr_native_weeks": 13,
@@ -8651,6 +8667,22 @@
     "idp_int_ret_yd": 3,
     "idp_pass_def": 2,
     "idp_sack_yd": 11
+  },
+  "6024": {
+    "gp": 11,
+    "_ppr_native_weeks": 0,
+    "_ppr_reconstructed_weeks": 0,
+    "off_snp": 550,
+    "pos_rank_half_ppr": 10989,
+    "pos_rank_ppr": 10989,
+    "pos_rank_std": 10989,
+    "st_snp": 48,
+    "tm_def_snp": 724,
+    "tm_off_snp": 697,
+    "tm_st_snp": 289,
+    "gs": 7,
+    "penalty": 5,
+    "penalty_yd": 34
   },
   "6025": {
     "gp": 17,

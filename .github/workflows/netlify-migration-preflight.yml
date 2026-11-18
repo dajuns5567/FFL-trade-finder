@@ -1,0 +1,29 @@
+name: Netlify account migration safety
+
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/inquirer-publish-scheduled.mjs'
+      - 'netlify/functions/inquirer-publish-background.mjs'
+      - 'tests/inquirer-new-site-publisher-hold.test.mjs'
+      - '.github/workflows/netlify-migration-preflight.yml'
+      - 'docs/NETLIFY-ACCOUNT-MIGRATION-PREFLIGHT.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  migration-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify publisher entry point syntax
+        run: |
+          node --check netlify/functions/inquirer-publish-scheduled.mjs
+          node --check netlify/functions/inquirer-publish-background.mjs
+      - name: Test unknown-site publisher kill switch
+        run: node --test tests/inquirer-new-site-publisher-hold.test.mjs

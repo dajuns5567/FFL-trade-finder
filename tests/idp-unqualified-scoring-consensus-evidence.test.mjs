@@ -21,6 +21,7 @@ function model(){
  };
  const ctx={
   console,Date,Math,Number,String,Set,Map,
+  document:{querySelector:()=>null},
   state:{players,stats:{2026:{[C]:{},[L]:{}},2025:{[L]:{}}},league:{},
    consensusComposite:{detailsById:{[C]:{idpSources:['DraftSharks IDP']},[L]:{idpSources:['The IDP Show Combined IDP']}}}},
   groupPos:()=> 'IDP',playerName:id=>id===C?'Keyron Crawford':'Nate Landman',

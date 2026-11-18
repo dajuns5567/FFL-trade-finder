@@ -699,6 +699,11 @@ async function getMarketSummary(s){
     return marketFromSnapshots([]);
   }
   const latestItem=timed[timed.length-1],latestMs=new Date(latestItem.t).getTime(),wanted=[timed[0],archiveItemAtOrBefore(timed,latestMs-1*86400000),archiveItemAtOrBefore(timed,latestMs-7*86400000),archiveItemAtOrBefore(timed,latestMs-30*86400000),archiveItemAtOrBefore(timed,latestMs-90*86400000),archiveItemAtOrBefore(timed,latestMs-365*86400000),latestItem].filter(Boolean);
+  // Keep the latest contiguous observations in the market sample. The sparse
+  // day/week archive index can otherwise select only the last V94 model-era
+  // snapshot, hiding real same-model movers even though many archived
+  // snapshots exist. This retains exact historical values (no interpolation).
+  wanted.push(...timed.slice(-12));
   // Sparse authentic samples discover the first tracked defensive cohort and
   // later entrants without downloading the entire multi-month archive.
   const historyStart=Date.parse(timed[0].t),sampledBuckets=new Set();

@@ -28,7 +28,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      # Scheduled workflows are defined on main, but pricing must be collected
+      # from the exact review-tested V98 valuation source. A mutable branch is
+      # not safe: future preview changes must undergo acceptance and explicit
+      # pin update before any scheduled historical writes.
       - uses: actions/checkout@v4
+        with:
+          ref: '7664bf9eb74c6aa9eea47c86b7d73dc2f3cab554'
+
+      - name: Verify pinned valuation release for scheduled capture
+        run: test "$(git rev-parse HEAD)" = '7664bf9eb74c6aa9eea47c86b7d73dc2f3cab554'
 
       - uses: actions/setup-node@v4
         with:
@@ -67,6 +76,7 @@ jobs:
         if: steps.due.outputs.due == 'true'
         env:
           VALUE_HISTORY_SNAPSHOT_FILE: .tmp/value-history-scheduled.json
+          VALUE_HISTORY_SOURCE_COMMIT: '7664bf9eb74c6aa9eea47c86b7d73dc2f3cab554'
         run: node scripts/value-history-headless-refresh.mjs
 
       - name: Persist scheduled observation directly to durable Value History archive

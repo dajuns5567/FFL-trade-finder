@@ -1707,6 +1707,15 @@ function renderMarketIntelligence(){
   const host=document.getElementById('vhMarketIntelligence');if(host)host.innerHTML=marketIntelligenceMarkup();
 }
 
+function archivedEraBoard(m){
+  const era=m?.archived_era;
+  if(!era?.snapshot_count||!era?.tracking_since||!era?.through)return'';
+  const recordedRows=(rows)=>{
+    if(!rows?.length)return'<div class="vh-empty">No recorded changes within the sampled previous model era.</div>';
+    return`<div class="vh-list">${rows.slice(0,8).map((r,i)=>`<div class="vh-mover"><div class="vh-ranknum">${i+1}</div><button class="vh-player-link" data-vh-player="${esc(r.id)}"><span class="vh-player-name-line"><b>${esc(playerName(r.id))}</b></span><small>Archived ${esc(r.pos)} #${r.posRank} • Overall #${r.overall} • Recorded value ${fmt(r.value)}</small></button><div class="vh-delta ${deltaClass(r.delta)}">${signed(r.delta)}</div><button type="button" class="small vh-view-history" data-vh-player="${esc(r.id)}">View history ↗</button></div>`).join('')}</div>`;
+  };
+  return`<details class="vh-card vh-history-section"><summary><strong>Earlier Market History (Recorded Values)</strong></summary><div class="vh-sub">Preserved observations from ${esc(dateShort(era.tracking_since))} through ${esc(dateShort(era.through))} under the preceding valuation era. ${fmt(era.snapshot_count)} sampled observations. These are historical values, NOT current Player Values or changes across model versions.</div><div class="vh-grid-2"><div class="vh-card"><h3>Earlier Recorded Risers</h3>${recordedRows(era.valueRisers)}</div><div class="vh-card"><h3>Earlier Recorded Fallers</h3>${recordedRows(era.valueFallers)}</div></div></details>`;
+}
 function modelEraNote(m){
   if(!m?.model_change_at)return'';
   const comparable=Math.max(0,Number(m.comparable_snapshot_count)||0),total=Math.max(0,Number(m.snapshot_count)||0);
@@ -1742,7 +1751,8 @@ function renderMarketDashboard(){
       <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>${moverTitle('Biggest Rank Fallers',rf,m)}</h3><div class="vh-sub">Largest declines in overall rank</div></div>${moverCardActions('market','rankFallers',rf)}</div>${moverRows(applyMoverPool(rpF.rankFallers,'market','rankFallers'),'rank')}</div>
     </div>
   </section>
-  <div id="vhMarketIntelligence">${marketIntelligenceMarkup()}</div>`;
+  <div id="vhMarketIntelligence">${marketIntelligenceMarkup()}</div>
+  ${archivedEraBoard(m)}`;
 }
 function renderFullMarketHistory(){
   const box=document.getElementById('vhContent');if(!box||!marketCache)return;

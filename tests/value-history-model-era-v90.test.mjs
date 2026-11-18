@@ -448,6 +448,26 @@ test('V96 preserves previous explicit model eras and flags model changes without
  assert.equal(market.marketRows.find(x=>x.id==='11667').deltaAll,15,
   'include +5 before and +10 after the model change, excluding the +105 repricing');
 });
+test('V95-to-V96 single-source repricing does not masquerade as an IDP market gain',()=>{
+ const previousV95='idp-v95-verified-production-floor-v92-balanced';
+ const xs=[
+  snap('2026-11-16T18:00:00Z',400,2100,previousV95),
+  snap('2026-11-17T16:00:00Z',415,2090,previousV95),
+  snap('2026-11-17T20:00:00Z',630,2090,currentModel),
+  snap('2026-11-18T02:00:00Z',660,2100,currentModel)
+ ];
+ const era=comparableMarketEra(xs);
+ assert.equal(era.model,currentModel);
+ assert.equal(era.priorModel,previousV95);
+ assert.equal(era.changedAt,xs[2].t);
+ assert.equal(era.snaps.length,2);
+ const market=marketFromSnapshots(xs);
+ assert.equal(market.comparable_snapshot_count,2);
+ assert.equal(pointsFromSnapshots(xs,'11667').length,4,
+  'the full player chart must never lose earlier observations');
+ assert.equal(market.marketRows.find(r=>r.id==='11667').deltaAll,45,
+  '+15 verified V95 movement plus +30 V96 movement, excluding +215 repricing');
+});
 test('V96 model claim requires exact V94 scorer, V95 evidence gate, V92 curve AND live single-source IDP evidence',async()=>{
  const start=client.indexOf('async function verifyLiveValuationModelV95(){');
  const end=client.indexOf("window.addEventListener('load'",start);

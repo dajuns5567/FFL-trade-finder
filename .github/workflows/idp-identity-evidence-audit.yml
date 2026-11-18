@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - 'scripts/value-history-headless-refresh.mjs'
+      - 'valuation-idp-v25-perf.js'
+      - 'tests/idp-unqualified-scoring-consensus-evidence.test.mjs'
       - '.github/workflows/idp-identity-evidence-audit.yml'
   workflow_dispatch:
 
@@ -19,6 +21,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Verify IDP production evidence cannot be invented
+        run: node --test tests/idp-unqualified-scoring-consensus-evidence.test.mjs
       - name: Install read-only Chromium runtime
         run: |
           npm install --ignore-scripts --no-audit --no-fund

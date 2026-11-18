@@ -138,7 +138,12 @@ function distributions25(){
 }
 function scoring25(id){
  generation25();id=String(id);if(scoreCache25.has(id))return scoreCache25.get(id);const a=baseAudit25(id),m=metrics25(id,a),d=distributions25(),role=role25(id);let out;
- if(!a?.qualifyingSeasons||!d.ppg.length)out={value:520,a,m,ppgPct:null,relative:null,strength:.45,role};
+ // Missing qualified Sleeper production is missing evidence, not a
+ // league-scored 520-point performance. Apply the existing conservative
+ // 180-point scoring floor to EVERY source-covered or source-free IDP with
+ // no qualifying season. Verified dynasty consensus remains in its own 20%
+ // bucket; no invented NFL games, player exceptions, or manual rank targets.
+ if(!a?.qualifyingSeasons||!d.ppg.length)out={value:180,a,m,ppgPct:null,relative:null,strength:0,role,noQualifiedSleeperScoring:true};
  else{const ppgPct=pct25(d.ppg,m.ppg),relative=clamp25(0,(m.ppg-d.p50)/(d.p99-d.p50),1.10),historicalSeasons=Number(a?.historicalSeasons||0),confidenceApplied=role==='EDGE'&&historicalSeasons>=2&&ppgPct>=.90?Math.max(m.confidence,.60):m.confidence,raw=.55*ppgPct+.45*relative,strength=.45+confidenceApplied*(raw-.45),overallValue=clamp25(180,180+1270*Math.pow(clamp25(.08,strength,1),2.70),1500);let value=overallValue,roleValue=null,roleBlend=0;if(role==='LB'){const xs=d.rolePpg?.LB||[];if(xs.length){const rp50=q25(xs,.50),rp99=Math.max(rp50+.01,q25(xs,.99)),rpct=pct25(xs,m.ppg),rrel=clamp25(0,(m.ppg-rp50)/(rp99-rp50),1.10),rraw=.55*rpct+.45*rrel,rstrength=.45+confidenceApplied*(rraw-.45);roleValue=clamp25(180,180+1270*Math.pow(clamp25(.08,rstrength,1),2.70),1500);roleBlend=.20;value=.80*overallValue+.20*roleValue}}out={value,a,m,ppgPct,relative,raw,strength,role,confidenceApplied,overallValue,roleValue,roleBlend,benchmarkP50:d.p50,benchmarkP99:d.p99,benchmarkN:d.ppg.length}}
  scoreCache25.set(id,out);return out;
 }
@@ -218,10 +223,11 @@ function model25(z){
 // already-existing verified-scoring minimum (180) for this cohort only.
 // A prospect with real dynasty consensus, or any actual qualifying scoring,
 // continues through the unchanged 20/45/35 model and historical confidence.
-const unverifiedFallback=!(c>0)&&!(Number(score.a?.qualifyingSeasons)>0);
-const effectiveScoringValue=unverifiedFallback?Math.min(score.value,180):score.value;
+const noQualifiedScoring=!(Number(score.a?.qualifyingSeasons)>0);
+const unverifiedFallback=!(c>0)&&noQualifiedScoring;
+const effectiveScoringValue=noQualifiedScoring?Math.min(score.value,180):score.value;
 const blend=blend25(c,effectiveScoringValue,ctx.value);
- return{...z,value:blend.value,consensus:Number.isFinite(c)&&c>0?Math.round(c):z.consensus,context:Math.round(ctx.value),production:{...score,leagueContext:ctx,idpV25MarketCenterOffset:IDP_V25_MARKET_CENTER_OFFSET,idpV25RawBlend:blend.raw,idpUnverifiedNoConsensusFallbackV73:unverifiedFallback,idpEffectiveFallbackScoringV73:effectiveScoringValue},fallback:blend.fallback};
+ return{...z,value:blend.value,consensus:Number.isFinite(c)&&c>0?Math.round(c):z.consensus,context:Math.round(ctx.value),production:{...score,leagueContext:ctx,idpV25MarketCenterOffset:IDP_V25_MARKET_CENTER_OFFSET,idpV25RawBlend:blend.raw,idpUnverifiedNoConsensusFallbackV73:unverifiedFallback,idpEffectiveFallbackScoringV73:effectiveScoringValue,idpNoQualifiedSleeperScoringV95:noQualifiedScoring},fallback:blend.fallback};
 }
 masterRankings=function(){return priorMaster25().map(model25).sort((a,b)=>b.value-a.value)};
 ensureMaster=function(){return masterRankCache||(masterRankCache=masterRankings())};

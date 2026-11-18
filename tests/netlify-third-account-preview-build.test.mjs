@@ -16,26 +16,25 @@ function exitCode({siteId,siteName,context,reviewId=''}) {
  assert.equal(result.error,undefined,result.stderr);
  return result.status;
 }
-test('only authorized PR previews build on the current Netlify site, production stays blocked',()=>{
- const dest='fa33dfe4-8293-441e-8da0-25cc66fc984c';
- assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'deploy-preview',reviewId:'450'}),1);
- assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'deploy-preview',reviewId:'448'}),1);
- assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'deploy-preview',reviewId:'451'}),0);
- assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'production',reviewId:'450'}),0);
- assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'branch-deploy',reviewId:'450'}),0);
- assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:''}),0);
+test('only PR #501 on the verified successor site builds as a Deploy Preview',()=>{
+ const id='a516be3b-6c65-4f54-a9fb-23c5361bf3d2',name='animated-dasik-3de74a';
+ assert.equal(exitCode({siteId:id,siteName:name,context:'deploy-preview',reviewId:'501'}),1);
+ assert.equal(exitCode({siteId:id,siteName:name,context:'deploy-preview',reviewId:'499'}),0);
+ assert.equal(exitCode({siteId:id,siteName:name,context:'deploy-preview',reviewId:'500'}),0);
+ assert.equal(exitCode({siteId:'11111111-1111-4111-8111-111111111111',siteName:name,context:'deploy-preview',reviewId:'501'}),0);
+ assert.equal(exitCode({siteId:id,siteName:name,context:'production',reviewId:'501'}),0);
+ assert.equal(exitCode({siteId:id,siteName:name,context:'branch-deploy',reviewId:'501'}),0);
 });
-test('previous accounts skip builds even for deploy-preview context',()=>{
+test('current and previous Netlify accounts never build even with copied approval',()=>{
  for(const [siteId,siteName] of [
+  ['fa33dfe4-8293-441e-8da0-25cc66fc984c','precious-dango-fb4633'],
   ['8776d155-bc7b-4dcd-bafc-3d70d3d51800','transcendent-manatee-2f0123'],
   ['3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f','gleaming-dodol-8dbc4a']
- ]){
-  assert.equal(exitCode({siteId,siteName,context:'deploy-preview'}),0);
- }
+ ])assert.equal(exitCode({siteId,siteName,context:'deploy-preview',reviewId:'501',approvedSiteId:siteId}),0);
 });
-
-test('production cutover never spends deploy preview credits',()=>{
+test('handoff ignores production, branch deploys and unrelated preview PRs',()=>{
  assert.match(config,/e\.CONTEXT==='deploy-preview'/);
- assert.match(config,/\['448','450'\]/);
+ assert.match(config,/String\(e\.REVIEW_ID\)==='501'/);
+ assert.match(config,/a516be3b-6c65-4f54-a9fb-23c5361bf3d2/);
  assert.doesNotMatch(config,/e\.CONTEXT==='production'/);
 });

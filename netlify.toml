@@ -2,11 +2,11 @@
 [build]
   publish = "."
   functions = "netlify/functions"
-  # Production release authorized for the canonical site after PR #450.
-  # Build production on this site and retain previously allowlisted PR previews;
-  # skip other sites, branch contexts and unrelated previews to control credits.
-  # Ignore exit 1 builds, exit 0 skips.
-  ignore = "node -e \"const e=process.env;const site=e.SITE_ID==='fa33dfe4-8293-441e-8da0-25cc66fc984c'||e.SITE_NAME==='precious-dango-fb4633';const production=e.CONTEXT==='production';const preview=e.CONTEXT==='deploy-preview'&&['448','450'].includes(String(e.REVIEW_ID));process.exit(site&&(production||preview)?1:0)\""
+  # Explicitly allow PR #501 Deploy Preview only on the new account.
+  # A new account does not initially have the custom build environment
+  # variables available; use its verified site ID as the authorization.
+  # Production and branch deploys always skip. Netlify builds on exit 1.
+  ignore = "node -e \"const e=process.env;const allowed=e.SITE_ID==='a516be3b-6c65-4f54-a9fb-23c5361bf3d2';const preview=e.CONTEXT==='deploy-preview'&&String(e.REVIEW_ID)==='501';process.exit(allowed&&preview?1:0)\""
 
 [functions]
   node_bundler = "esbuild"

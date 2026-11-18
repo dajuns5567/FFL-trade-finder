@@ -632,6 +632,58 @@ function marketPeriod(latest,base,firstSeen=null){
   const posRankFallers=rows.filter(x=>x.posRankDelta<0).sort((a,b)=>a.posRankDelta-b.posRankDelta||b.value-a.value);
   return{valueRisers,valueFallers,rankRisers,rankFallers,posRankRisers,posRankFallers,metrics};
 }
+// Preserve real market moves across valuation-model boundaries without ever
+// subtracting prices from DIFFERENT models. Each segment contributes only
+// independently observed first-to-last movement under its own model.
+// Historical values/ranks are never rewritten or treated as current prices.
+function contiguousMarketMovement(snaps,days){
+  const ordered=(snaps||[]).filter(s=>s?.t&&Array.isArray(s?.rows))
+    .slice().sort((a,b)=>String(a.t).localeCompare(String(b.t)));
+  if(!ordered.length)return marketPeriod(null,null);
+  const latest=ordered.at(-1),latestMs=Date.parse(latest.t);
+  const base=days==null?ordered[0]:baselineFor(ordered,latestMs,days);
+  const from=Date.parse(base?.t||ordered[0].t);
+  const windowed=ordered.filter(s=>Date.parse(s.t)>=from);
+  const groups=[];
+  for(const snap of windowed){
+    const model=valuationModelId(snap),last=groups.at(-1);
+    if(last&&last.model===model)last.snaps.push(snap);
+    else groups.push({model,snaps:[snap]});
+  }
+  const totals=new Map(),current=rowMap(latest);
+  let qualifyingSegments=0;
+  for(const group of groups){
+    if(group.snaps.length<2)continue;
+    const first=group.snaps[0],end=group.snaps.at(-1);
+    const actual=marketPeriod(end,first);
+    qualifyingSegments++;
+    for(const part of actual.metrics.values()){
+      const now=current.get(String(part.id));
+      if(!now||String(now.pos)!==String(part.pos))continue;
+      const id=String(part.id),prev=totals.get(id);
+      // Only actual comparable changes accumulate. The switch between models
+      // is deliberately excluded from the sum of price and ranking changes.
+      totals.set(id,{id,pos:now.pos,value:Number(now.value),overall:Number(now.overall),
+        posRank:Number(now.posRank),delta:(prev?.delta||0)+part.delta,
+        overallDelta:(prev?.overallDelta||0)+part.overallDelta,
+        posRankDelta:(prev?.posRankDelta||0)+part.posRankDelta,
+        fromValue:null,fromOverall:null,fromPosRank:null,
+        baseline_t:prev?.baseline_t||first.t,
+        through_t:end.t,comparable_segments:(prev?.comparable_segments||0)+1,
+        measurement:'sum-of-recorded-same-model-movements'});
+    }
+  }
+  const list=[...totals.values()];
+  return{
+    valueRisers:list.filter(r=>r.delta>0).sort((a,b)=>b.delta-a.delta||b.value-a.value),
+    valueFallers:list.filter(r=>r.delta<0).sort((a,b)=>a.delta-b.delta||b.value-a.value),
+    rankRisers:list.filter(r=>r.overallDelta>0).sort((a,b)=>b.overallDelta-a.overallDelta||b.value-a.value),
+    rankFallers:list.filter(r=>r.overallDelta<0).sort((a,b)=>a.overallDelta-b.overallDelta||b.value-a.value),
+    posRankRisers:list.filter(r=>r.posRankDelta>0).sort((a,b)=>b.posRankDelta-a.posRankDelta||b.value-a.value),
+    posRankFallers:list.filter(r=>r.posRankDelta<0).sort((a,b)=>a.posRankDelta-b.posRankDelta||b.value-a.value),
+    metrics:totals,qualifyingSegments,baseline:base?.t||null
+  };
+}
 function marketFromSnapshots(snaps){
   const ordered=(snaps||[]).filter(s=>s?.t&&Array.isArray(s?.rows)).slice().sort((a,b)=>String(a.t).localeCompare(String(b.t)));
   if(!ordered.length)return{tracking_since:null,latest:null,snapshot_count:0,periods:{'1D':{},'7D':{},'30D':{},'90D':{},'1Y':{},'ALL':{}},marketRows:[],has1:false,has7:false,has30:false,has90:false,has365:false};
@@ -654,12 +706,18 @@ function marketFromSnapshots(snaps){
     // Do not resurrect a pre-window price when an asset disappears and returns.
     if(Date.parse(snap.t)>=yearStartMs&&!firstInYear.has(id))firstInYear.set(id,{t:snap.t,row});
   }
-  const periods={};
+  // V98 continuity: do not discard earlier REAL movements from a selected
+  // time window just because a valuation model revision landed yesterday.
+  // Never calculate a delta ACROSS the model-change boundary.
+  const periods={},motions={};
   for(const [label,base] of Object.entries(bases)){
-    const p=marketPeriod(latest,base,label==='1Y'?firstInYear:label==='ALL'?firstSeen:null);
-    periods[label]={valueRisers:p.valueRisers,valueFallers:p.valueFallers,rankRisers:p.rankRisers,rankFallers:p.rankFallers,posRankRisers:p.posRankRisers,posRankFallers:p.posRankFallers,baseline:base?.t||null};
+    const days=label==='ALL'?null:label==='1Y'?365:Number(label.slice(0,-1));
+    const p=contiguousMarketMovement(ordered,days);
+    motions[label]=p.metrics;
+    periods[label]={valueRisers:p.valueRisers,valueFallers:p.valueFallers,rankRisers:p.rankRisers,rankFallers:p.rankFallers,posRankRisers:p.posRankRisers,posRankFallers:p.posRankFallers,
+      baseline:p.baseline,comparable_segments:p.qualifyingSegments,movement_basis:'same-model-segment-sum'};
   }
-  const m1=marketPeriod(latest,bases['1D']).metrics,m7=marketPeriod(latest,bases['7D']).metrics,m30=marketPeriod(latest,bases['30D']).metrics,m365=marketPeriod(latest,bases['1Y'],firstInYear).metrics,mAll=marketPeriod(latest,bases['ALL'],firstSeen).metrics;
+  const m1=motions['1D'],m7=motions['7D'],m30=motions['30D'],m365=motions['1Y'],mAll=motions.ALL;
   const latestMap=rowMap(latest);
   const marketRows=[...latestMap.values()].map(r=>{
     const id=String(r.id),d1=m1.get(id),d7=m7.get(id),d30=m30.get(id),d365=m365.get(id),dAll=mAll.get(id);
@@ -675,11 +733,11 @@ function marketFromSnapshots(snaps){
       snapshot_count:priorEra.length,valuation_model:valuationModelId(priorEra.at(-1)),
       valueRisers:earlier.valueRisers.slice(0,10),valueFallers:earlier.valueFallers.slice(0,10)}:null,
     valuation_model:modelEra.model,model_change_at:modelEra.changedAt,prior_valuation_model:modelEra.priorModel,periods,marketRows,
-    has1:latestMs-firstMs>=1*86400000,
-    has7:latestMs-firstMs>=7*86400000,
-    has30:latestMs-firstMs>=30*86400000,
-    has90:latestMs-firstMs>=90*86400000,
-    has365:latestMs-firstMs>=365*86400000
+    has1:latestMs-Date.parse(ordered[0].t)>=1*86400000,
+    has7:latestMs-Date.parse(ordered[0].t)>=7*86400000,
+    has30:latestMs-Date.parse(ordered[0].t)>=30*86400000,
+    has90:latestMs-Date.parse(ordered[0].t)>=90*86400000,
+    has365:latestMs-Date.parse(ordered[0].t)>=365*86400000
   };
 }
 function itemAtOrBefore(items,targetMs){
@@ -711,6 +769,20 @@ async function getMarketSummary(s){
   // snapshot, hiding real same-model movers even though many archived
   // snapshots exist. This retains exact historical values (no interpolation).
   wanted.push(...timed.slice(-12));
+  // Sample a real sequence of the last seven days in four-hour buckets,
+  // including both sides of any model revision. The old sparse first-of-week
+  // samples cannot recover legitimate pre-revision 7D market moves.
+  // One snapshot near the beginning and one near the end of each bucket
+  // bounds network reads; only authentic archived rows can contribute.
+  const windowStart=latestMs-7*86400000,marketBuckets=new Map();
+  for(const item of timed){
+    const ms=Date.parse(item.t);
+    if(!Number.isFinite(ms)||ms<windowStart||ms>latestMs)continue;
+    const key=Math.floor((ms-windowStart)/(4*3600000));
+    const bucket=marketBuckets.get(key);
+    if(bucket)bucket.last=item;else marketBuckets.set(key,{first:item,last:item});
+  }
+  for(const bucket of marketBuckets.values())wanted.push(bucket.first,bucket.last);
   // Sparse authentic samples discover the first tracked defensive cohort and
   // later entrants without downloading the entire multi-month archive.
   const historyStart=Date.parse(timed[0].t),sampledBuckets=new Set();

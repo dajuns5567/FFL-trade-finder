@@ -55,7 +55,7 @@ test('no current season or no historical comparator never invents missing data',
 test('V86 scoring requires verified snap-growth evidence; 20/45/35 coefficients remain unchanged',()=>{
  assert.match(source,/const raw=\.20\*c\+\.45\*scoreValue\+\.35\*contextValue-IDP_V25_MARKET_CENTER_OFFSET/);
  assert.match(source,/IDP_V25_MARKET_CENTER_OFFSET=80\.15/);
- assert.match(source,/const effectiveScoringValue=unverifiedFallback\?Math\.min\(score\.value,180\):score\.value/);
+ assert.match(source,/const effectiveScoringValue=noQualifiedScoring\?Math\.min\(score\.value,180\):score\.value/);
  assert.doesNotMatch(source,/calibratedScoring25/);
 });
 

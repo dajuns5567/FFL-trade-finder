@@ -39,18 +39,22 @@ test('any qualifying Sleeper history disables the unverified no-production cap',
  assert.equal(z.production.idpEffectiveFallbackScoringV73,560);
 });
 
-test('credible dynasty consensus remains valued through unchanged 20/45/35 even without scored history',()=>{
+test('credible dynasty consensus retains its 20% weight without inventing NFL production',()=>{
  const c=358,scoring=520,context=652,z=simulate({consensus:c,scoring,context});
- const expected=Math.max(c*.45,Math.min(.20*c+.45*scoring+.35*context-80.15,Math.max(c*2.15,c+760)));
+ const verifiedScoringFloor=180;
+ const expected=Math.max(c*.45,Math.min(.20*c+.45*verifiedScoringFloor+.35*context-80.15,Math.max(c*2.15,c+760)));
  assert.equal(z.value,Math.round(expected));
  assert.equal(z.production.idpUnverifiedNoConsensusFallbackV73,false);
+ assert.equal(z.production.idpNoQualifiedSleeperScoringV95,true);
+ assert.equal(z.production.idpEffectiveFallbackScoringV73,180);
  assert.equal(z.consensus,c);
 });
 
 test('no per-player rules, offense not touched, and full IDP evidence keeps exact existing formula',()=>{
  assert.match(source,/const raw=\.20\*c\+\.45\*scoreValue\+\.35\*contextValue-IDP_V25_MARKET_CENTER_OFFSET/);
  assert.match(source,/const raw=\.40\*scoreValue\+\.20\*contextValue/);
- assert.match(source,/unverifiedFallback=!?\(c>0\)&&!?\(Number\(score\.a\?\.qualifyingSeasons\)>0\)/);
+ assert.match(source,/unverifiedFallback=!?\(c>0\)&&noQualifiedScoring/);
+ assert.match(source,/const effectiveScoringValue=noQualifiedScoring\?Math\.min\(score\.value,180\):score\.value/);
  assert.equal(simulate({pos:'QB'}).value,777);
  const a=simulate({consensus:null,scoring:520,qualifyingSeasons:0});
  const b=simulate({consensus:null,scoring:520,qualifyingSeasons:1});

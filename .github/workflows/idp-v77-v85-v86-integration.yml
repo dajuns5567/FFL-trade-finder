@@ -20,6 +20,11 @@ permissions:
   contents: read
 jobs:
   integration-idp-only:
+    # Historical V92-to-V94 comparison uses the frozen PR466 preview and
+    # a V86 baseline that is not present on later PR499's main base.
+    # PR499 V95 is instead covered by idp-identity-evidence-audit and
+    # integrated-idp-compatibility, preserving the original acceptance.
+    if: github.event.pull_request.number == 466
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

@@ -25,14 +25,23 @@ concurrency:
 jobs:
   refresh:
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
     steps:
+      # Scheduled workflows are defined on main, but pricing must be collected
+      # from the exact fully accepted V96/PR499 valuation source. A mutable branch is
+      # not safe: future preview changes must undergo acceptance and explicit
+      # pin update before any scheduled historical writes.
       - uses: actions/checkout@v4
+        with:
+          ref: '4d276527c6e7a724de55e4a7fd2c167887fa3ea8'
+
+      - name: Verify pinned valuation release for scheduled capture
+        run: test "$(git rev-parse HEAD)" = '4d276527c6e7a724de55e4a7fd2c167887fa3ea8'
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       # Trade ingestion runs on EVERY scheduled/workflow wake, even when
       # Value History has no new valuation snapshot due. It is read-only.
@@ -63,11 +72,36 @@ jobs:
           npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Run current main locally and record scheduled observation
+      - name: Run pinned V96 source locally and record scheduled observation
         if: steps.due.outputs.due == 'true'
         env:
           VALUE_HISTORY_SNAPSHOT_FILE: .tmp/value-history-scheduled.json
+          VALUE_HISTORY_SOURCE_COMMIT: '4d276527c6e7a724de55e4a7fd2c167887fa3ea8'
         run: node scripts/value-history-headless-refresh.mjs
+
+      - name: Reject mismatched valuation models, provenance or incomplete snapshots
+        if: steps.due.outputs.due == 'true'
+        env:
+          EXPECTED_SOURCE_COMMIT: '4d276527c6e7a724de55e4a7fd2c167887fa3ea8'
+        run: |
+          node --input-type=module -e "
+            import {readFileSync} from 'node:fs';
+            import assert from 'node:assert/strict';
+            const s=JSON.parse(readFileSync('.tmp/value-history-scheduled.json','utf8'));
+            assert.equal(s.league,'1316867686394769408');
+            assert.equal(s.source,'scheduled');
+            assert.equal(s.valuation_contract,'precision-idp-runtime-20260919');
+            assert.equal(s.valuation_model,'idp-v96-single-source-continuous-v95-evidence');
+            assert.equal(s.provenance?.git_commit,process.env.EXPECTED_SOURCE_COMMIT);
+            assert.equal(s.provenance?.canonical_parity,'exact');
+            assert.ok(Number(s.provenance?.consensus_sources)>=7);
+            assert.ok(Array.isArray(s.rows)&&s.rows.length>=700);
+            assert.ok(Array.isArray(s.picks)&&s.picks.length>=96);
+            assert.ok(Array.isArray(s.teams)&&s.teams.length===32);
+            assert.ok(s.rows.every(r=>Number.isFinite(Number(r.value))&&Number.isFinite(Number(r.overall))));
+            assert.ok(Number.isFinite(Date.parse(s.t))&&Math.abs(Date.now()-Date.parse(s.t))<30*60000);
+            console.log(JSON.stringify({verified:true,source:s.provenance.git_commit,model:s.valuation_model,rows:s.rows.length,picks:s.picks.length,teams:s.teams.length}));
+          "
 
       - name: Persist scheduled observation directly to durable Value History archive
         if: steps.due.outputs.due == 'true'

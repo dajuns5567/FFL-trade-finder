@@ -242,7 +242,7 @@ for(const needle of [
   'vh-net-hit',
   'market history unavailable (',
   'Value Range',
-  '.vh-value-chart{position:relative;padding-top:0}',
+  '.vh-value-chart{position:relative;padding-top:0;min-width:0}',
   '.vh-refresh-callout{position:relative;inset:auto',
   'padding:10px 16px;min-width:0',
   "tradeBtn.textContent='Trade History'",

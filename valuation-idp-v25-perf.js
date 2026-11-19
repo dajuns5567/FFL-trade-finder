@@ -215,6 +215,78 @@ function blend25(c,scoreValue,contextValue){
  const centered=clamp25(c*.45,raw,Math.max(c*2.15,c+760));
  return{value:Math.max(1,Math.round(centered)),raw,fallback:false};
 }
+// V100: SOURCE-FREE IDP early-career fallback. No implied dynasty consensus.
+// Credible, verified two-season opportunity + LEAGUE-SCORED production warrants
+// using the existing full 45% scoring / 35% context contributions rather than
+// discounting them again to 40% / 20%. The missing 20% consensus stays ZERO.
+// Still capped at the existing 700-point source-free IDP ceiling at this stage.
+function emergingSourceFreeIdpEvidence100(id,score){
+ const p=state.players?.[String(id)]||{},age=Number(p.age),exp=Number(p.years_exp),
+  qualified=Number(score?.a?.qualifyingSeasons)||0,
+  confidence=Number(score?.m?.confidence)||0;
+ if(p.age==null||p.years_exp==null||!Number.isFinite(age)||age<18||age>26||
+   !Number.isFinite(exp)||exp<0||exp>3||qualified<2||confidence<.40)
+   return{verified:false,reason:'age-experience-history-or-confidence'};
+ const seasons=(Array.isArray(score?.a?.seasons)?score.a.seasons:[])
+  .filter(q=>Number(q.season)>0&&Number(q.games)>0&&Number(q.ppg)>0);
+ const current=seasons.find(q=>q.currentSeason===true);
+ const previous=seasons.filter(q=>!q.currentSeason&&Number(q.season)===Number(current?.season)-1)[0];
+ if(!current||Number(current.games)<8||!previous||Number(previous.games)<4||
+   !(Number(current.ppg)>=Number(previous.ppg)*1.20))
+   return{verified:false,reason:'insufficient-contiguous-scoring-improvement'};
+ const snapShare=row=>{
+   const stats=row?.stats&&typeof row.stats==='object'?row.stats:row||{};
+   const player=Number(stats.def_snp),team=Number(stats.tm_def_snp);
+   return Number.isFinite(player)&&player>=0&&Number.isFinite(team)&&team>0
+     ?Math.max(0,Math.min(1,player/team)):null;
+ };
+ const currentRow=state.stats?.[current.season]?.[String(id)]||null,
+  previousRow=state.stats?.[previous.season]?.[String(id)]||null;
+ const now=snapShare(currentRow),before=snapShare(previousRow);
+ const raw=row=>row?.stats&&typeof row.stats==='object'?row.stats:row||{};
+ const currentSnaps=Number(raw(currentRow).def_snp),priorSnaps=Number(raw(previousRow).def_snp);
+ const currentRate=currentSnaps/Number(current.games),priorRate=priorSnaps/Number(previous.games);
+ const verifiedShare=now!=null&&before!=null&&now>=.40&&now-before>=.12;
+ // Older compact Sleeper snapshots can omit the historical team-snap
+ // denominator. Never invent one: the prior *player* defensive snaps and
+ // games still prove a per-game role change when current participation
+ // is substantial. A full snap-share delta is used only when both team
+ // denominators actually exist.
+ const verifiedRate=before==null&&now!=null&&now>=.65&&
+  Number(previous.games)>=6&&Number(current.games)>=8&&
+  Number.isFinite(priorSnaps)&&priorSnaps>=100&&
+  Number.isFinite(currentSnaps)&&currentSnaps>=250&&
+  Number.isFinite(priorRate)&&priorRate>0&&
+  Number.isFinite(currentRate)&&currentRate/priorRate>=1.50;
+ if(!verifiedShare&&!verifiedRate)
+   return{verified:false,reason:'unverified-sustained-opportunity'};
+ return{verified:true,reason:'consecutive-league-scored-seasons-and-snap-growth',
+   games:Number(current.games),previousGames:Number(previous.games),
+   scoringImprovement:Number((Number(current.ppg)/Number(previous.ppg)-1).toFixed(4)),
+   snapShare:Number(now.toFixed(4)),
+   priorSnapShare:before==null?null:Number(before.toFixed(4)),
+   playerSnapRateGrowth:Number((currentRate/priorRate-1).toFixed(4)),
+   opportunityEvidenceMethod:verifiedShare?'two-season-snap-share':'verified-snaps-per-game',
+   confidence:Number(confidence.toFixed(4))};
+}
+// Offline-only diagnostic: inspect actual current runtime evidence without
+// inventing a source ranking, player-specific premium or target value.
+window.idpV100EvidenceProbe=function(id){
+ const pid=String(id),sc=scoring25(pid),p=state.players?.[pid]||{},
+  seasons=(sc.a?.seasons||[]).map(y=>({
+   season:y.season,games:y.games,ppg:y.ppg,currentSeason:y.currentSeason
+  }));
+ const current=seasons.find(y=>y.currentSeason),previous=seasons.filter(y=>!y.currentSeason)[0];
+ const row=y=>state.stats?.[y?.season]?.[pid]||null;
+ return{
+  evidence:emergingSourceFreeIdpEvidence100(pid,sc),
+  player:{age:p.age??null,yearsExp:p.years_exp??null},
+  confidence:sc.m?.confidence??null,qualifyingSeasons:sc.a?.qualifyingSeasons??null,
+  scoringValue:sc.value,seasonRows:seasons,
+  currentStats:current?{def_snp:row(current)?.def_snp,tm_def_snp:row(current)?.tm_def_snp}:null,
+  previousStats:previous?{def_snp:row(previous)?.def_snp,tm_def_snp:row(previous)?.tm_def_snp}:null
+ };
+};
 function model25(z){
  if(groupPos(z.x)!=='IDP'||!isIndividualIdp25(z.x.id))return z;
  const c=Number(z.consensus),score=scoring25(z.x.id),ctx=context25(z.x.id,score);
@@ -226,8 +298,27 @@ function model25(z){
 const noQualifiedScoring=!(Number(score.a?.qualifyingSeasons)>0);
 const unverifiedFallback=!(c>0)&&noQualifiedScoring;
 const effectiveScoringValue=noQualifiedScoring?Math.min(score.value,180):score.value;
-const blend=blend25(c,effectiveScoringValue,ctx.value);
- return{...z,value:blend.value,consensus:Number.isFinite(c)&&c>0?Math.round(c):z.consensus,context:Math.round(ctx.value),production:{...score,leagueContext:ctx,idpV25MarketCenterOffset:IDP_V25_MARKET_CENTER_OFFSET,idpV25RawBlend:blend.raw,idpUnverifiedNoConsensusFallbackV73:unverifiedFallback,idpEffectiveFallbackScoringV73:effectiveScoringValue,idpNoQualifiedSleeperScoringV95:noQualifiedScoring},fallback:blend.fallback};
+const sourceFree=!(Number.isFinite(c)&&c>0);
+const breakoutEvidence=sourceFree&&!noQualifiedScoring
+  ?emergingSourceFreeIdpEvidence100(z.x.id,score)
+  :{verified:false,reason:sourceFree?'no-qualified-scoring':'verified-consensus'};
+const originalBlend=blend25(c,effectiveScoringValue,ctx.value);
+const fullEvidenceRaw=.45*effectiveScoringValue+.35*ctx.value;
+const blend=breakoutEvidence.verified
+  ?{...originalBlend,
+    // A missing market source is still uncertainty. Protect the established
+    // rank-based canonical curve from abrupt leaps even when the available
+    // scoring/context evidence is convincing. Apply the lower of full
+    // observed-evidence math and 10% of the prior source-free model value.
+    value:Math.min(700,Math.round(originalBlend.value*1.10),
+      Math.max(originalBlend.value,Math.round(fullEvidenceRaw))),
+    raw:fullEvidenceRaw}
+  :originalBlend;
+ return{...z,value:blend.value,consensus:Number.isFinite(c)&&c>0?Math.round(c):z.consensus,context:Math.round(ctx.value),production:{...score,leagueContext:ctx,idpV25MarketCenterOffset:IDP_V25_MARKET_CENTER_OFFSET,idpV25RawBlend:blend.raw,idpUnverifiedNoConsensusFallbackV73:unverifiedFallback,idpEffectiveFallbackScoringV73:effectiveScoringValue,idpNoQualifiedSleeperScoringV95:noQualifiedScoring,
+  idpV100SourceFreeBreakout:breakoutEvidence,
+  idpV100PreFallbackValue:originalBlend.value,
+  idpV100CandidateFallbackValue:blend.value,
+  idpV100NoInventedConsensus:sourceFree},fallback:blend.fallback};
 }
 masterRankings=function(){return priorMaster25().map(model25).sort((a,b)=>b.value-a.value)};
 ensureMaster=function(){return masterRankCache||(masterRankCache=masterRankings())};

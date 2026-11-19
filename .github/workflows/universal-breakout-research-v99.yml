@@ -1,0 +1,19 @@
+name: Universal dynasty breakout research contract (read-only)
+on:
+  pull_request:
+    paths:
+      - 'scripts/lib/dynasty-breakout-evidence-v99.cjs'
+      - 'tests/universal-breakout-evidence-v99.test.mjs'
+      - '.github/workflows/universal-breakout-research-v99.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/universal-breakout-evidence-v99.test.mjs

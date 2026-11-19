@@ -374,6 +374,9 @@ try{
   // V100 offline acceptance only: preserve full model-stage evidence for the
   // local baseline/candidate pair. No archive, GitHub or Netlify writes.
   if(process.env.V100_AUDIT_FILE){
+    const probe=await page.evaluate(()=>typeof window.idpV100EvidenceProbe==='function'
+      ?window.idpV100EvidenceProbe('12978'):null);
+    console.log('V100_PONDER_EVIDENCE_PROBE '+JSON.stringify(probe));
     const diagnostic=await page.evaluate(()=>window.ensureMaster()
       .filter(z=>z?.x?.type==='player').map(z=>{
         const id=String(z.x.id),p=z.production||{},

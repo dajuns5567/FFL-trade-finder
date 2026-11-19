@@ -250,6 +250,24 @@ function emergingSourceFreeIdpEvidence100(id,score){
    snapShare:Number(now.toFixed(4)),priorSnapShare:Number(before.toFixed(4)),
    confidence:Number(confidence.toFixed(4))};
 }
+// Offline-only diagnostic: inspect actual current runtime evidence without
+// inventing a source ranking, player-specific premium or target value.
+window.idpV100EvidenceProbe=function(id){
+ const pid=String(id),sc=scoring25(pid),p=state.players?.[pid]||{},
+  seasons=(sc.a?.seasons||[]).map(y=>({
+   season:y.season,games:y.games,ppg:y.ppg,currentSeason:y.currentSeason
+  }));
+ const current=seasons.find(y=>y.currentSeason),previous=seasons.filter(y=>!y.currentSeason)[0];
+ const row=y=>state.stats?.[y?.season]?.[pid]||null;
+ return{
+  evidence:emergingSourceFreeIdpEvidence100(pid,sc),
+  player:{age:p.age??null,yearsExp:p.years_exp??null},
+  confidence:sc.m?.confidence??null,qualifyingSeasons:sc.a?.qualifyingSeasons??null,
+  scoringValue:sc.value,seasonRows:seasons,
+  currentStats:current?{def_snp:row(current)?.def_snp,tm_def_snp:row(current)?.tm_def_snp}:null,
+  previousStats:previous?{def_snp:row(previous)?.def_snp,tm_def_snp:row(previous)?.tm_def_snp}:null
+ };
+};
 function model25(z){
  if(groupPos(z.x)!=='IDP'||!isIndividualIdp25(z.x.id))return z;
  const c=Number(z.consensus),score=scoring25(z.x.id),ctx=context25(z.x.id,score);

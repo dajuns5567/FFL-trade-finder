@@ -166,7 +166,7 @@ test('existing archive imports accept verified V101 model era but never V101 can
   isKnownBadSnapshot:()=>false,Number,String,Array};
  vm.runInNewContext(writer.slice(start,end)+';this.validate=validSnapshot;',ctx);
  const base={league:'1316867686394769408',t:'2026-11-19T12:00:00Z',
-  source:'scheduled',rows:[{id:'1',value:100}]};
+  source:'scheduled',rows:Array.from({length:100},(_,i)=>({id:String(i+1),value:100}))};
  assert.equal(ctx.validate({...base,valuation_model:V96,
   valuation_contract:'precision-idp-runtime-20260919'}),true);
  const current={...base,...snap(),league:base.league,t:base.t,source:base.source};

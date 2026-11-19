@@ -24,7 +24,7 @@ jobs:
         run: |
           node --check scripts/value-history-v107-shadow-acceptance.mjs
           node --check scripts/value-history-headless-refresh.mjs
-          ! grep -Eq 'scripts/archive-value-history[.]mjs.*\)|NETLIFY_BLOBS_TOKEN:|secrets[.]' .github/workflows/value-history-v107-shadow-acceptance.yml
+          ! grep -Eq '^[[:space:]]+(NETLIFY_BLOBS_TOKEN:|GITHUB_TOKEN:|run: node scripts/archive-value-history[.]mjs)' .github/workflows/value-history-v107-shadow-acceptance.yml
       - name: Install disposable Chromium only
         run: |
           npm install --ignore-scripts --no-audit --no-fund

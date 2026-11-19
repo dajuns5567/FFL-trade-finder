@@ -1,0 +1,42 @@
+name: V102 deployed preview full-player currency parity (read-only)
+on:
+  pull_request:
+    paths:
+      - 'scripts/audit-preview-canonical-currency-v102.mjs'
+      - '.github/workflows/v102-deploy-preview-canonical-parity.yml'
+      - 'modeled-player-values-v319.js'
+      - 'value-history-v276.js'
+      - 'nonblocking-consensus-v277.js'
+      - 'ui-player-values-v139.js'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  preview-consumer-parity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify no write methods and audited preview URL are used
+        run: |
+          node --check scripts/audit-preview-canonical-currency-v102.mjs
+          ! grep -E 'request\.post|fetch\(.*method:.*POST|page\.click\(.*publish' scripts/audit-preview-canonical-currency-v102.mjs
+      - name: Install temporary local browser
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify every current player value across the real V102 Deploy Preview
+        env:
+          V102_PREVIEW_URL: 'https://6afe735753d83b6aa6c18c5c--animated-dasik-3de74a.netlify.app/'
+        run: node scripts/audit-preview-canonical-currency-v102.mjs
+      - name: Keep read-only parity report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v102-live-currency-parity-readonly
+          path: .tmp/v102-deploy-preview-parity.json
+          if-no-files-found: warn
+          retention-days: 7

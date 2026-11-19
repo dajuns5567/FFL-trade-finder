@@ -50,7 +50,12 @@ jobs:
           npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
           npx playwright install --with-deps chromium
       - name: Restore accepted V96 strictly in ephemeral test workspace
-        run: git show 4d276527c6e7a724de55e4a7fd2c167887fa3ea8:valuation-idp-v25-perf.js > valuation-idp-v25-perf.js
+        run: |
+          git show 4d276527c6e7a724de55e4a7fd2c167887fa3ea8:valuation-idp-v25-perf.js > valuation-idp-v25-perf.js
+          # This A/B comparator writes only ephemeral .tmp JSON. Its legacy
+          # V96 collector must use the historical verifier; the actual
+          # Deploy Preview retains the V100-era guard verified separately.
+          git show 4d276527c6e7a724de55e4a7fd2c167887fa3ea8:value-history-v276.js > value-history-v276.js
       - name: Capture exact accepted V96 baseline locally
         env:
           VALUE_HISTORY_SOURCE_COMMIT: '4d276527c6e7a724de55e4a7fd2c167887fa3ea8'

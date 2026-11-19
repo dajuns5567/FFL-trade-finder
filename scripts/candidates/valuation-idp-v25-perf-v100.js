@@ -240,14 +240,33 @@ function emergingSourceFreeIdpEvidence100(id,score){
    return Number.isFinite(player)&&player>=0&&Number.isFinite(team)&&team>0
      ?Math.max(0,Math.min(1,player/team)):null;
  };
- const now=snapShare(state.stats?.[current.season]?.[String(id)]);
- const before=snapShare(state.stats?.[previous.season]?.[String(id)]);
- if(now==null||before==null||now<.40||now-before<.12)
+ const currentRow=state.stats?.[current.season]?.[String(id)]||null,
+  previousRow=state.stats?.[previous.season]?.[String(id)]||null;
+ const now=snapShare(currentRow),before=snapShare(previousRow);
+ const raw=row=>row?.stats&&typeof row.stats==='object'?row.stats:row||{};
+ const currentSnaps=Number(raw(currentRow).def_snp),priorSnaps=Number(raw(previousRow).def_snp);
+ const currentRate=currentSnaps/Number(current.games),priorRate=priorSnaps/Number(previous.games);
+ const verifiedShare=now!=null&&before!=null&&now>=.40&&now-before>=.12;
+ // Older compact Sleeper snapshots can omit the historical team-snap
+ // denominator. Never invent one: the prior *player* defensive snaps and
+ // games still prove a per-game role change when current participation
+ // is substantial. A full snap-share delta is used only when both team
+ // denominators actually exist.
+ const verifiedRate=before==null&&now!=null&&now>=.65&&
+  Number(previous.games)>=6&&Number(current.games)>=8&&
+  Number.isFinite(priorSnaps)&&priorSnaps>=100&&
+  Number.isFinite(currentSnaps)&&currentSnaps>=250&&
+  Number.isFinite(priorRate)&&priorRate>0&&
+  Number.isFinite(currentRate)&&currentRate/priorRate>=1.50;
+ if(!verifiedShare&&!verifiedRate)
    return{verified:false,reason:'unverified-sustained-opportunity'};
  return{verified:true,reason:'consecutive-league-scored-seasons-and-snap-growth',
    games:Number(current.games),previousGames:Number(previous.games),
    scoringImprovement:Number((Number(current.ppg)/Number(previous.ppg)-1).toFixed(4)),
-   snapShare:Number(now.toFixed(4)),priorSnapShare:Number(before.toFixed(4)),
+   snapShare:Number(now.toFixed(4)),
+   priorSnapShare:before==null?null:Number(before.toFixed(4)),
+   playerSnapRateGrowth:Number((currentRate/priorRate-1).toFixed(4)),
+   opportunityEvidenceMethod:verifiedShare?'two-season-snap-share':'verified-snaps-per-game',
    confidence:Number(confidence.toFixed(4))};
 }
 // Offline-only diagnostic: inspect actual current runtime evidence without

@@ -1,0 +1,33 @@
+name: Final offline Chromium trade acceptance (draft only)
+on:
+  pull_request:
+    paths:
+      - 'scripts/rehearse-full-original-app-browser.mjs'
+      - 'netlify/functions/site-v29.mjs'
+      - 'trade-finder-v256-compiled.js'
+      - 'trade-runtime-v256-compiled.js'
+      - 'trade-value-normalization-v139.js'
+      - 'value-history-v276.js'
+      - 'tests/combined-cross-page-canonical-currency.test.mjs'
+      - '.github/workflows/final-offline-trade-browser-acceptance.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-chromium:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser test runtime (no deploy)
+        run: |
+          npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright
+          npx playwright install --with-deps chromium
+      - name: Read-only original site Chromium smoke with all external and write requests blocked
+        run: node scripts/rehearse-full-original-app-browser.mjs "$GITHUB_WORKSPACE"
+      - name: Cross-page canonical currency, Hindsight and historical snapshots
+        run: |
+          node --test tests/combined-cross-page-canonical-currency.test.mjs tests/trade-history-ranked-unrostered-hindsight.test.mjs tests/trade-history-hindsight-live-sync.test.mjs

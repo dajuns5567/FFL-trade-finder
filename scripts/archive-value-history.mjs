@@ -57,9 +57,19 @@ const V499_BAD_TIMES=new Set(['2026-09-19T23:38:30.077Z','2026-09-20T06:20:50.82
 const V496_BASELINE_T='2026-09-19T22:01:38.323Z';
 const V496_BASELINE_MS=Date.parse(V496_BASELINE_T);
 const SCHEDULED_VALUATION_CONTRACT='precision-idp-runtime-20260919';
+const V101_SCHEDULED_CONTRACT='precision-idp-runtime-v101-20261119';
+const V96_MODEL='idp-v96-single-source-continuous-v95-evidence';
+const V101_MODEL='idp-v101-verified-role-growth-v100-source-free-lineage';
+const V101_AUDITED_BLOB='443c8497a95e793665fb78474feaee49bd57e88f';
 function isKnownBadSnapshot(s){const t=String(s?.t||''),ms=new Date(t).getTime();return V495_BAD_TIMES.has(t)||V498_BAD_TIMES.has(t)||V499_BAD_TIMES.has(t)||(Number.isFinite(ms)&&(ms<V496_BASELINE_MS||[V380_BAD_WINDOW,V381_BAD_WINDOW,V391_BAD_WINDOW,V494_BAD_WINDOW].some(([a,b])=>ms>=a&&ms<b)))}
 function validSnapshot(s){
-  return s&&String(s.league)==='1316867686394769408'&&s.t&&Array.isArray(s.rows)&&s.rows.length>=100&&!isKnownBadSnapshot(s)&&(String(s.source||'')!=='scheduled'||String(s.valuation_contract||'')===SCHEDULED_VALUATION_CONTRACT);
+  return s&&String(s.league)==='1316867686394769408'&&s.t&&Array.isArray(s.rows)&&s.rows.length>=100&&!isKnownBadSnapshot(s)&&(
+    String(s.source||'')!=='scheduled'||
+    String(s.valuation_contract||'')===SCHEDULED_VALUATION_CONTRACT&&
+      String(s.valuation_model||'')!==V101_MODEL||
+    String(s.valuation_model||'')===V101_MODEL&&
+      String(s.valuation_contract||'')===V101_SCHEDULED_CONTRACT
+  );
 }
 function monthOf(t){return String(t).slice(0,7)}
 function safeName(t){return String(t).replace(/[:.]/g,'-')}
@@ -97,8 +107,28 @@ if(scheduledSnapshotFile){
   const snap=JSON.parse(readFileSync(scheduledSnapshotFile,'utf8'));
   // V106: a research-only V101 capture must NEVER reach the durable history
   // archive under the older V96 era. Refuse explicitly, do not silently skip.
-  if(snap?.provenance?.candidate_read_only===true||
-     String(snap?.valuation_model||'')!=='idp-v96-single-source-continuous-v95-evidence')
+  if(snap?.provenance?.candidate_read_only===true)
+    throw new Error('VALUE_HISTORY_MODEL_GUARD: scheduled archive rejects unapproved or read-only candidate valuation model');
+  const model=String(snap?.valuation_model||''),selected=String(process.env.VALUE_HISTORY_SCHEDULED_MODEL||'').trim()||V96_MODEL;
+  if(model===V101_MODEL){
+    // Never record V101 under V96's contract or before a separately approved
+    // main-branch promotion. No fallback to V96, no silent stamp rewriting.
+    if(selected!==V101_MODEL||process.env.VALUE_HISTORY_V101_APPROVED!=='1'||
+       process.env.GITHUB_REF!=='refs/heads/main'||
+       !['schedule','workflow_run','workflow_dispatch'].includes(String(process.env.GITHUB_EVENT_NAME||''))||
+       snap?.valuation_contract!==V101_SCHEDULED_CONTRACT||
+       snap?.provenance?.model_blob_sha!==V101_AUDITED_BLOB||
+       snap?.provenance?.canonical_parity!=='exact'||
+       Number(snap?.provenance?.consensus_sources)<7||
+       !/^[a-f0-9]{40}$/.test(String(snap?.provenance?.git_commit||''))||
+       !Array.isArray(snap?.provenance?.source_manifest)||
+       snap.provenance.source_manifest.length<7||
+       !Array.isArray(snap?.rows)||snap.rows.length<1000||
+       !Array.isArray(snap?.picks)||snap.picks.length<96||
+       !Array.isArray(snap?.teams)||snap.teams.length!==32)
+      throw new Error('VALUE_HISTORY_MODEL_GUARD: V101 scheduled archive requires explicitly approved, fully verified release provenance');
+  }else if(model!==V96_MODEL||selected!==V96_MODEL||
+           snap?.valuation_contract!==SCHEDULED_VALUATION_CONTRACT)
     throw new Error('VALUE_HISTORY_MODEL_GUARD: scheduled archive rejects unapproved or read-only candidate valuation model');
   payload={schema_version:1,league_id:'1316867686394769408',source:'scheduled-local-browser',snapshot_count:1,snapshots:[snap]};
 }else payload=await snapshotsFromBlobStore()||await snapshotsFromHttpExport();
@@ -135,7 +165,7 @@ for(const snap of incoming){
   const month=monthOf(snap.t),path=`${root}/snapshots/${month.replace('-','/')}/${safeName(snap.t)}.json`;
   const prior=await readFile(path);
   if(!prior)await putFile(path,JSON.stringify(snap,null,2)+'\n',`Archive Value History snapshot ${snap.t}`);
-  index.items=index.items||[];index.items.push({t:snap.t,path,fingerprint:snap.fingerprint||null,count:snap.rows.length,source:snap.source||null});
+  index.items=index.items||[];index.items.push({t:snap.t,path,fingerprint:snap.fingerprint||null,count:snap.rows.length,source:snap.source||null,valuation_model:snap.valuation_model||null,valuation_contract:snap.valuation_contract||null});
   if(!monthGroups.has(month))monthGroups.set(month,[]);monthGroups.get(month).push(snap);
 }
 async function rebuildMonthBundleFromSnapshots(month){
@@ -195,6 +225,6 @@ for(const snap of incoming){
   const stored=await readFile(String(item.path||''));
   if(!stored?.content)throw new Error(`Durable Value History archive verification unreadable snapshot ${snap.t}`);
   const parsed=JSON.parse(stored.content);
-  if(String(parsed?.t)!==String(snap.t)||String(parsed?.source||'')!==String(snap.source||''))throw new Error(`Durable Value History archive verification content mismatch for ${snap.t}`);
+  if(String(parsed?.t)!==String(snap.t)||String(parsed?.source||'')!==String(snap.source||'')||String(parsed?.valuation_model||'')!==String(snap.valuation_model||''))throw new Error(`Durable Value History archive verification content mismatch for ${snap.t}`);
 }
 console.log(`Archived ${incoming.length} Value History snapshot(s) from ${payload.source||'unknown'}; total ${index.snapshot_count}; latest ${index.latest}.`);

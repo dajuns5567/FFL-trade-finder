@@ -2173,7 +2173,7 @@ function chartVisualSeries(points,field){
  }
  return shown;
 }
-function chartEraPath(points,field,maxPoints,x,y){
+function chartEraPath(points,field,maxPoints,x,y,omitShortTail=false){
  if(!points.length)return'';
  const shown=chartVisualSeries(points,field),chunks=[],ranges=[];
  let start=0;
@@ -2182,6 +2182,11 @@ function chartEraPath(points,field,maxPoints,x,y){
  }
  ranges.push([start,points.length]);
  for(const [from,end]of ranges){
+  // A newly started model era with only one/two observations otherwise
+  // creates a dangling right-edge dash. Its exact records remain present
+  // in the full interactive hover layer and in the dated history cards.
+  // Never bridge valuation-model eras or invent a continuous price path.
+  if(omitShortTail&&from>0&&end===points.length&&end-from<=2)continue;
   const segment=points.slice(from,end);
   const sample=chartTraceIndices(segment,field,maxPoints);
   for(let j=0;j<sample.length;j++){
@@ -2239,7 +2244,10 @@ function valueChart(id,pts,allPts=pts){
   // The chart plots archived observations only. Today's Player Values price
   // appears in the compact header below, never as a misleading extra point.
   const live=livePlayerMeta(id),values=pts.map(p=>Number(p.value)).filter(Number.isFinite),min=Math.min(...values),max=Math.max(...values),pad=Math.max(100,(max-min)*.15),lo=Math.max(0,min-pad),hi=max+pad,W=900,H=380,L=74,R=24,T=34,B=72,n=Math.max(1,pts.length-1),x=i=>L+(W-L-R)*(i/n),y=v=>T+(H-T-B)*(1-(Number(v)-lo)/Math.max(1,hi-lo));
-  const path=chartEraPath(pts,'value',220,x,y),
+  const path=chartEraPath(pts,'value',220,x,y,true),
+    latestEraStart=pts.reduce((start,p,i)=>i>0&&chartEraChange(pts[i-1],p)?i:start,0),
+    deferredEraTail=latestEraStart>0&&pts.length-latestEraStart<=2?pts.length-latestEraStart:0,
+    deferredEraNote=deferredEraTail?`<div class="vh-sub vh-era-tail-note">${deferredEraTail} newer-model ${deferredEraTail===1?'snapshot is':'snapshots are'} available by hover at the right edge; this short segment is not connected to the earlier valuation era.</div>`:'',
     // No chart-endpoint dots: they could be mistaken for a second current
     // value and were visually competing with the last historical observation.
     hover=chartHoverLayer(pts,'value',{W,H,L,R,T,B,y,field:'value',label:'Player Value'}),first=pts[0],last=pts[pts.length-1],
@@ -2248,7 +2256,7 @@ function valueChart(id,pts,allPts=pts){
     refresh=`<div class="vh-refresh-callout"><span class="vh-refresh-label">${refreshBoundary?'Valuation model changed — movement not comparable':'Between recorded snapshots'}</span><div class="vh-refresh-metrics"><div class="vh-refresh-metric"><small>Value change</small><strong class="${deltaClass(refreshValue)}">${refreshValue==null?'—':signed(refreshValue)}</strong></div><div class="vh-refresh-metric"><small>${esc(latest.pos)} rank change</small><strong class="${deltaClass(refreshPos)}">${refreshPos==null?'—':signed(refreshPos)}</strong></div></div></div>`,
     xLabel=t=>{try{return new Date(t).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}catch{return''}};
   const currentDisplay=live.value>0?fmt(live.value):'—';
-  return`<div class="vh-value-chart"><div class="vh-current-price-summary" role="group" aria-label="Current player value and last recorded historical value"><span class="vh-current-price-label">Current Player Value</span><strong class="vh-current-price-number">${currentDisplay}</strong><span class="vh-current-price-recorded">Last recorded <b>${fmt(latest.value)}</b></span></div><div class="vh-sub">The chart shows recorded historical values only. Today's Player Values price is shown above and is not saved as history.</div>${refresh}<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(playerName(id))} recorded value history"><line x1="${L}" y1="${H-B}" x2="${W-R}" y2="${H-B}" stroke="currentColor" opacity=".25"/><line x1="${L}" y1="${T}" x2="${L}" y2="${H-B}" stroke="currentColor" opacity=".25"/><text class="vh-value-axis" x="${L-10}" y="${T+5}" text-anchor="end">${Math.round(hi).toLocaleString()}</text><text class="vh-value-axis" x="${L-10}" y="${H-B}" text-anchor="end">${Math.round(lo).toLocaleString()}</text><text class="vh-value-axis" x="18" y="${(T+H-B)/2}" text-anchor="middle" transform="rotate(-90 18 ${(T+H-B)/2})">Player value</text><text class="vh-value-axis" x="${L}" y="${H-34}">${esc(xLabel(first.t))}</text><text class="vh-value-axis" x="${W-R}" y="${H-34}" text-anchor="end">${esc(xLabel(last.t))}</text><text class="vh-value-axis" x="${(L+W-R)/2}" y="${H-10}" text-anchor="middle">Date / time</text><path d="${path}" fill="none" stroke="#e4b53f" stroke-width="3.5" vector-effect="non-scaling-stroke"/>${hover}</svg><div class="vh-chart-tooltip" role="status" aria-live="polite"></div></div><p class="tiny muted">Chart line is display-smoothed only for isolated one-snapshot spikes; hover or tap for every exact original value, timestamp and rank. Use arrow keys when focused.</p>`;
+  return`<div class="vh-value-chart"><div class="vh-current-price-summary" role="group" aria-label="Current player value and last recorded historical value"><span class="vh-current-price-label">Current Player Value</span><strong class="vh-current-price-number">${currentDisplay}</strong><span class="vh-current-price-recorded">Last recorded <b>${fmt(latest.value)}</b></span></div><div class="vh-sub">The chart shows recorded historical values only. Today's Player Values price is shown above and is not saved as history.</div>${refresh}${deferredEraNote}<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(playerName(id))} recorded value history"><line x1="${L}" y1="${H-B}" x2="${W-R}" y2="${H-B}" stroke="currentColor" opacity=".25"/><line x1="${L}" y1="${T}" x2="${L}" y2="${H-B}" stroke="currentColor" opacity=".25"/><text class="vh-value-axis" x="${L-10}" y="${T+5}" text-anchor="end">${Math.round(hi).toLocaleString()}</text><text class="vh-value-axis" x="${L-10}" y="${H-B}" text-anchor="end">${Math.round(lo).toLocaleString()}</text><text class="vh-value-axis" x="18" y="${(T+H-B)/2}" text-anchor="middle" transform="rotate(-90 18 ${(T+H-B)/2})">Player value</text><text class="vh-value-axis" x="${L}" y="${H-34}">${esc(xLabel(first.t))}</text><text class="vh-value-axis" x="${W-R}" y="${H-34}" text-anchor="end">${esc(xLabel(last.t))}</text><text class="vh-value-axis" x="${(L+W-R)/2}" y="${H-10}" text-anchor="middle">Date / time</text><path d="${path}" fill="none" stroke="#e4b53f" stroke-width="3.5" vector-effect="non-scaling-stroke"/>${hover}</svg><div class="vh-chart-tooltip" role="status" aria-live="polite"></div></div><p class="tiny muted">Chart line is display-smoothed only for isolated one-snapshot spikes; hover or tap for every exact original value, timestamp and rank. Use arrow keys when focused.</p>`;
 }
 function recentChanges(pts){
   const rows=[];for(let i=pts.length-1;i>0&&rows.length<8;i--){const a=pts[i-1],b=pts[i],dv=Number(b.value)-Number(a.value),dr=Number(a.overall)-Number(b.overall),dp=Number(a.posRank)-Number(b.posRank);if(dv||dr||dp)rows.push({t:b.t,dv,dr,dp,value:b.value,overall:b.overall,pos:b.pos,posRank:b.posRank,modelBoundary:Boolean((a.valuation_model||b.valuation_model)&&a.valuation_model!==b.valuation_model)})}
@@ -2259,7 +2267,18 @@ function renderPlayerProfile(id,allPts,period='ALL'){
   const box=document.getElementById('vhContent');if(!box)return;
   if(!allPts.length){const live=livePlayerMeta(id);box.innerHTML=`<div class="vh-profile-back"><button class="secondary small" data-vh-dashboard>← Market dashboard</button></div><div class="vh-card"><h2>${esc(playerName(id))}</h2><div class="vh-current"><small>Current Player Values price</small><div class="vh-big">${live.value>0?fmt(live.value):'—'}</div><span>${live.overall?'Overall #'+live.overall:'Unranked'} • ${esc(live.pos)} #${live.posRank||'—'}</span></div><div class="vh-empty">No historical observations recorded yet. The current value is live and has not been added to the archive; historical movement remains unavailable until a verified snapshot exists.</div></div>`;return}
   const meta=livePlayerMeta(id),pts=periodPoints(allPts,period),first=pts[0],last=pts[pts.length-1],delta=Number(last.value)-Number(first.value),pct=Number(first.value)?delta/Number(first.value)*100:0,vals=pts.map(p=>Number(p.value)),pmin=Math.min(...vals),pmax=Math.max(...vals),allVals=allPts.map(p=>Number(p.value)),allMin=Math.min(...allVals),allMax=Math.max(...allVals),bestOverall=Math.min(...allPts.map(p=>Number(p.overall))),bestPos=Math.min(...allPts.map(p=>Number(p.posRank))),lowestPos=Math.max(...allPts.map(p=>Number(p.posRank))),highPoint=allPts.find(p=>Number(p.value)===allMax),lowPoint=allPts.find(p=>Number(p.value)===allMin),bestOverallPoint=allPts.find(p=>Number(p.overall)===bestOverall),scoring=playerScoringCache.get(String(id))||null,scoringLoading=!playerScoringCache.has(String(id));
-  const periodModelBoundary=pts.some((p,i)=>i>0&&(p.valuation_model||pts[i-1].valuation_model)&&pts[i-1].valuation_model!==p.valuation_model);
+  const periodModelBoundary=pts.some((p,i)=>i>0&&chartEraChange(pts[i-1],p));
+  // Keep the all-time archive intact. If ALL or a selected window crosses
+  // model versions, show a truthful comparison from the latest contiguous
+  // valuation era instead of an unexplained dash that resembles a reset.
+  const comparableEraStart=pts.reduce((start,p,i)=>i>0&&chartEraChange(pts[i-1],p)?i:start,0);
+  const comparableEra=pts.slice(comparableEraStart);
+  const comparableEnough=comparableEra.length>=2;
+  const displayFirst=periodModelBoundary?comparableEra[0]:first;
+  const displayLast=periodModelBoundary?comparableEra.at(-1):last;
+  const comparableDelta=comparableEnough?Number(displayLast.value)-Number(displayFirst.value):null;
+  const comparablePct=comparableEnough&&Number(displayFirst.value)
+   ?comparableDelta/Number(displayFirst.value)*100:null;
   const rank30ModelBoundary=allPts.some((p,i)=>i>0&&(p.valuation_model||allPts[i-1].valuation_model)&&allPts[i-1].valuation_model!==p.valuation_model&&new Date(p.t).getTime()>=new Date(allPts.at(-1).t).getTime()-30*86400000);
   const archivedLast=allPts[allPts.length-1],previewRankMismatch=isValueHistoryDeployPreview()&&(
     (meta.overall!=null&&Number(meta.overall)!==Number(archivedLast.overall))||
@@ -2291,14 +2310,14 @@ function renderPlayerProfile(id,allPts,period='ALL'){
   </div>
   <div class="vh-card vh-filter-card"><div class="vh-filter-label">History range</div><div class="vh-periods">${['1D','7D','30D','90D','1Y','ALL'].map(p=>`<button type="button" class="${p===period?'':'secondary '}small" data-vh-period="${p}">${p}</button>`).join('')}</div></div>
   <div class="vh-metrics">
-    <div class="vh-metric"><small>${period} Change</small><b class="${deltaClass(periodModelBoundary?0:delta)}">${periodModelBoundary?'—':signed(delta)}</b><div class="tiny muted">${periodModelBoundary?'Valuation model changed':signedPct(pct)}</div></div>
-    <div class="vh-metric"><small>Value Range</small><b>${fmt(pmin)}–${fmt(pmax)}</b></div>
+    <div class="vh-metric"><small>${periodModelBoundary?'Current Era':period} Change</small><b class="${deltaClass(periodModelBoundary?comparableDelta:delta)}">${periodModelBoundary?(comparableEnough?signed(comparableDelta):'—'):signed(delta)}</b><div class="tiny muted">${periodModelBoundary?(comparableEnough?'Latest model • '+signedPct(comparablePct):'New model • awaiting comparison'):signedPct(pct)}</div></div>
+    <div class="vh-metric"><small>${period==='ALL'?'Recorded':'Selected'} Range</small><b>${fmt(pmin)}–${fmt(pmax)}</b></div>
     <div class="vh-metric"><small>All-Time High</small><b>${fmt(allMax)}</b><div class="vh-metric-time">${highPoint?dateTime(highPoint.t):'—'}</div></div>
     <div class="vh-metric"><small>All-Time Low</small><b>${fmt(allMin)}</b><div class="vh-metric-time">${lowPoint?dateTime(lowPoint.t):'—'}</div></div>
     <div class="vh-metric"><small>Best Overall Rank</small><b>#${bestOverall}</b><div class="vh-metric-time">${bestOverallPoint?dateTime(bestOverallPoint.t):'—'}</div></div>
     <div class="vh-metric"><small>Best ${esc(meta.pos)} Rank</small><b>#${bestPos}</b><div class="vh-metric-time">&nbsp;</div></div>
   </div>
-  <div class="vh-card vh-chart-card"><h3 class="vh-section-heading">${period==='ALL'?'All-Time':period} Value History</h3>${valueChart(id,pts,allPts)}</div>
+  <div class="vh-card vh-chart-card"><h3 class="vh-section-heading">${period==='ALL'?'All-Time':period} Value History</h3><div class="vh-sub">Historical records remain intact across ${modelBoundaries+1} valuation ${modelBoundaries===0?'era':'eras'} • ${fmt(allPts.length)} observations from ${dateShort(allPts[0].t)} to ${dateShort(allPts.at(-1).t)}.</div>${valueChart(id,pts,allPts)}</div>
   <div class="vh-rank-grid">
     <div class="vh-card"><h3 class="vh-section-heading">Overall Rank — Last 30 Days</h3><div class="vh-rank-stat"><span class="muted">#${rankBase.overall} → #${rankLast.overall}</span><b class="${deltaClass(rank30ModelBoundary?0:overallMove)}">${rank30ModelBoundary?'—':`${overallMove>0?'+':''}${overallMove}`}</b></div>${rankSpark(rank30.length?rank30:[rankBase,rankLast],'overall','Overall rank')}</div>
     <div class="vh-card"><h3 class="vh-section-heading">${esc(meta.pos)} Rank — Last 30 Days</h3><div class="vh-rank-stat"><span class="muted">#${rankBase.posRank} → #${rankLast.posRank}</span><b class="${deltaClass(rank30ModelBoundary?0:posMove)}">${rank30ModelBoundary?'—':`${posMove>0?'+':''}${posMove}`}</b></div>${rankSpark(rank30.length?rank30:[rankBase,rankLast],'posRank',`${meta.pos} rank`)}</div>

@@ -9,6 +9,7 @@ on:
       - 'tests/universal-breakout-review-priority-v99.test.mjs'
       - 'scripts/lib/breakout-context-scenario-v99.cjs'
       - 'scripts/analyze-breakout-live-evidence-v99.cjs'
+      - 'scripts/audit-breakout-consensus-provenance-v99.cjs'
       - 'tests/breakout-context-scenario-v99.test.mjs'
       - 'scripts/value-history-headless-refresh.mjs'
       - 'tests/universal-breakout-evidence-v99.test.mjs'
@@ -75,6 +76,8 @@ jobs:
         env:
           V99_V96_SNAPSHOT: '.tmp/v99-v96-snapshot.json'
         run: node scripts/compare-universal-breakout-v96-v99.cjs
+      - name: Audit missing consensus publisher provenance before valuation sensitivity
+        run: node scripts/audit-breakout-consensus-provenance-v99.cjs
       - name: Evaluate live-scored dynasty evidence sensitivity without repricing
         env:
           V99_V96_SNAPSHOT: '.tmp/v99-v96-snapshot.json'
@@ -87,5 +90,6 @@ jobs:
           path: |
             .tmp/v99-v96-breakout-comparison.json
             .tmp/v99-breakout-context-sensitivity.json
+            .tmp/v99-consensus-provenance.json
           if-no-files-found: error
           retention-days: 7

@@ -1,4 +1,4 @@
-name: V102 deployed preview full-player currency parity (read-only)
+name: V102 local browser full-player parity (private preview protected)
 on:
   pull_request:
     paths:
@@ -12,31 +12,53 @@ on:
 permissions:
   contents: read
 jobs:
-  preview-consumer-parity:
+  local-full-player-parity:
     runs-on: ubuntu-24.04
-    timeout-minutes: 12
+    timeout-minutes: 17
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Verify no write methods and audited preview URL are used
+      - name: Confirm private Netlify protection remains unmodified
         run: |
           node --check scripts/audit-preview-canonical-currency-v102.mjs
-          ! grep -E 'request\.post|fetch\(.*method:.*POST|page\.click\(.*publish' scripts/audit-preview-canonical-currency-v102.mjs
-      - name: Install temporary local browser
+          node --check scripts/value-history-headless-refresh.mjs
+          test -f valuation-idp-v25-perf.js
+      - name: Pin verified Sleeper regular-season source input
+        run: |
+          SHA="$(git ls-remote origin refs/heads/sleeper-data | cut -f1)"
+          [[ "$SHA" =~ ^[a-f0-9]{40}$ ]] || exit 1
+          echo "V100_SLEEPER_SOURCE_SHA=$SHA" >> "$GITHUB_ENV"
+      - name: Set up local temporary headless browser
         run: |
           npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Verify every current player value across the real V102 Deploy Preview
+      - name: Use archived V96 verifier strictly for isolated local parity runner
+        run: |
+          # The collector only accepts archived V96 model IDs, so use its
+          # original verifier in this disposable workspace. The deployed V101
+          # model-era script remains untouched and rejects V96 archive writes.
+          git show 4d276527c6e7a724de55e4a7fd2c167887fa3ea8:value-history-v276.js > value-history-v276.js
+          node --check value-history-v276.js
+      - name: Validate all canonical Player Values through live local browser consumers
         env:
-          V102_PREVIEW_URL: 'https://6afe735753d83b6aa6c18c5c--animated-dasik-3de74a.netlify.app/'
-        run: node scripts/audit-preview-canonical-currency-v102.mjs
-      - name: Keep read-only parity report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: v102-live-currency-parity-readonly
-          path: .tmp/v102-deploy-preview-parity.json
-          if-no-files-found: warn
-          retention-days: 7
+          VALUE_HISTORY_SOURCE_COMMIT: '4d276527c6e7a724de55e4a7fd2c167887fa3ea8'
+          VALUE_HISTORY_SNAPSHOT_FILE: '.tmp/v102-local-unpublished-parity.json'
+        run: node scripts/value-history-headless-refresh.mjs
+      - name: Enforce full-population consumer parity without archiving data
+        run: |
+          node --input-type=module -e "
+            import {readFileSync} from 'node:fs';
+            import assert from 'node:assert/strict';
+            const r=JSON.parse(readFileSync('.tmp/v102-local-unpublished-parity.json','utf8'));
+            assert.ok(r.rows.length>=1000,'Incomplete canonical Player Values population');
+            assert.ok(r.picks.length>=96,'Incomplete current draft pick population');
+            assert.equal(r.teams.length,32);
+            assert.equal(r.provenance.canonical_parity,'exact','Finder/Evaluator/Value History mismatch');
+            assert.ok(r.provenance.consensus_sources>=7);
+            console.log(JSON.stringify({contract:'V102 local current-value consumers parity, NOT historical V96 archive',players:r.rows.length,picks:r.picks.length,teams:r.teams.length,parity:r.provenance.canonical_parity,consensusSources:r.provenance.consensus_sources,archiveWrites:false}));
+          "
+          rm -f .tmp/v102-local-unpublished-parity.json

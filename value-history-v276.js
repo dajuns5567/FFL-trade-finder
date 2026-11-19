@@ -188,9 +188,9 @@ function addStyles(){
   #valueHistory .vh-metric .vh-metric-time{font-size:10px;color:var(--muted);margin:0;line-height:16px;min-height:16px}
   #valueHistory .vh-chart-card{padding:12px}
   #valueHistory .vh-chart-card svg{display:block;width:100%;height:auto;border-radius:10px}
-  #valueHistory .vh-value-chart{position:relative;padding-top:98px}
+  #valueHistory .vh-value-chart{position:relative;padding-top:0;min-width:0}
   #valueHistory .vh-value-axis{fill:currentColor;font-size:13px;font-weight:700;opacity:.88}
-  #valueHistory .vh-refresh-callout{position:absolute;right:16px;top:4px;z-index:4;min-width:260px;max-width:calc(100% - 32px);padding:12px 14px;border:1px solid color-mix(in srgb,#e4b53f 52%,var(--line));border-radius:12px;background:linear-gradient(180deg,color-mix(in srgb,#e4b53f 8%,var(--card)),color-mix(in srgb,var(--card) 96%,black));box-shadow:0 8px 24px rgba(0,0,0,.24)}
+  #valueHistory .vh-refresh-callout{position:relative;inset:auto;z-index:1;width:min(330px,100%);min-width:0;max-width:100%;margin:8px 0 12px auto;padding:10px 12px;border:1px solid color-mix(in srgb,#e4b53f 52%,var(--line));border-radius:12px;background:linear-gradient(180deg,color-mix(in srgb,#e4b53f 8%,var(--card)),color-mix(in srgb,var(--card) 96%,black));box-shadow:0 8px 24px rgba(0,0,0,.24)}
   #valueHistory .vh-refresh-callout .vh-refresh-label{display:block;text-align:center;color:#e4b53f;font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:900;margin-bottom:8px}
   #valueHistory .vh-refresh-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   #valueHistory .vh-refresh-metric{padding:8px 10px;border:1px solid color-mix(in srgb,var(--line) 82%,transparent);border-radius:9px;background:color-mix(in srgb,var(--card) 90%,transparent)}
@@ -239,19 +239,20 @@ function addStyles(){
   #valueHistory .vh-intel-period-actions button:hover,#valueHistory .vh-intel-period-actions button:focus-visible{border-color:#e4b53f!important;color:#fff!important;background:transparent!important;box-shadow:0 0 0 1px rgba(228,181,63,.18)!important;outline:none!important}
   #valueHistory .vh-intel-period-actions button.vh-active{color:#fff!important;background:transparent!important;border-color:#e4b53f!important;box-shadow:inset 0 -3px 0 #e4b53f,0 0 0 1px rgba(228,181,63,.16)!important}
   #valueHistory .vh-intel-period-note{grid-column:1/-1;padding-top:10px;border-top:1px solid color-mix(in srgb,#e4b53f 18%,var(--line));color:var(--muted);font-size:10px;line-height:1.4}
-  #valueHistory .vh-market-section{display:grid;gap:10px;scroll-margin-top:86px;margin-top:3px}
-  #valueHistory .vh-market-section+.vh-market-section{margin-top:8px}
-  #valueHistory .vh-market-section-title{display:flex;justify-content:space-between;gap:14px;align-items:end;padding:2px 2px 0}
+  #valueHistory #vhMarketIntelligence{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;min-width:0;width:100%;align-items:start}
+  #valueHistory .vh-market-section{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;scroll-margin-top:86px;margin-top:0;min-width:0;width:100%}
+  #valueHistory .vh-market-section+.vh-market-section{margin-top:0}
+  #valueHistory .vh-market-section-title{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;align-items:start;padding:2px 2px 0;min-width:0}
   #valueHistory .vh-market-section-title h3{margin:0;color:#e4b53f;font-size:18px;font-weight:950;letter-spacing:.075em;text-transform:uppercase}
-  #valueHistory .vh-market-section-title p{margin:0;color:var(--muted);font-size:11px;text-align:right;max-width:650px}
+  #valueHistory .vh-market-section-title p{margin:0;color:var(--muted);font-size:11px;text-align:left;max-width:760px;line-height:1.5}
   #valueHistory .vh-index-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
   #valueHistory .vh-index-card{border:1px solid var(--line);border-radius:12px;padding:13px;background:color-mix(in srgb,var(--card) 84%,#090b10);min-width:0}
   #valueHistory .vh-index-card small{display:block;color:var(--muted);font-size:9px;font-weight:900;letter-spacing:.06em;text-transform:uppercase}
   #valueHistory .vh-index-card b{display:block;margin-top:6px;font-size:24px;line-height:1}
   #valueHistory .vh-index-card span{display:block;margin-top:6px;font-size:10px}
-  #valueHistory .vh-heat-wrap{overflow-x:auto}
-  #valueHistory .vh-heat-grid{display:grid;grid-template-columns:78px repeat(4,minmax(110px,1fr));gap:6px;min-width:590px;margin-top:9px}
-  #valueHistory .vh-heat-head,#valueHistory .vh-heat-label,#valueHistory .vh-heat-cell{padding:11px;border-radius:9px;border:1px solid var(--line)}
+  #valueHistory .vh-heat-wrap{overflow-x:auto;min-width:0;width:100%}
+  #valueHistory .vh-heat-grid{display:grid;grid-template-columns:minmax(76px,.36fr) repeat(4,minmax(110px,1fr));gap:6px;min-width:590px;width:100%;margin-top:9px}
+  #valueHistory .vh-heat-head,#valueHistory .vh-heat-label,#valueHistory .vh-heat-cell{padding:11px 7px;border-radius:9px;border:1px solid var(--line);min-width:0;box-sizing:border-box}
   #valueHistory .vh-heat-head,#valueHistory .vh-heat-label{display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;font-weight:950;letter-spacing:.055em;text-transform:uppercase;background:color-mix(in srgb,var(--card) 86%,#090b10)}
   #valueHistory button.vh-heat-cell{width:100%;min-height:64px;margin:0!important;display:flex!important;flex-direction:column;align-items:center;justify-content:center;text-align:center!important;font-size:14px!important;line-height:1.1;font-weight:950!important;color:inherit!important;background:color-mix(in srgb,var(--card) 88%,#090b10)!important;box-shadow:none!important;cursor:pointer}
   #valueHistory button.vh-heat-cell small{display:block;margin-top:6px;color:var(--muted);font-size:10px;font-weight:800}

@@ -26,8 +26,9 @@ const ctx={Map,Number,String,Math,Array,Object,Infinity,JSON,currentRows:()=>cur
  currentTeamNetStandings:()=>[{id:'1',value:14000,count:3}],
  trackedTeamId:'1',teamNetNeighbors:()=>({neighbors:[]}),
  dateTime:String,teamNetChart:()=>'<div>recorded chart only</div>'};
+ctx.window={modeledPlayerValuesV319:{meta:{version:1}}};
 vm.createContext(ctx);
-vm.runInContext('let liveMarketIndexV97=null;\n'+['liveMarketValuesV97','liveMarketRowV97','liveMarketRowsV97','liveFullMarketRowsV97','invalidateLiveMarketV97','sortedMarketRows','moverRows','overallNetValueCard'].map(fn).join('\n'),ctx);
+vm.runInContext('let liveMarketIndexV97=null,liveMarketVersionV102=-1;\n'+['liveMarketValuesV97','liveMarketRowV97','liveMarketRowsV97','liveFullMarketRowsV97','invalidateLiveMarketV97','sortedMarketRows','moverRows','overallNetValueCard'].map(fn).join('\n'),ctx);
 test('Market dashboard reuses current canonical prices and ranks, never archive prices',()=>{
  const before=structuredClone(original);
  const result=ctx.liveMarketRowsV97(original);
@@ -55,6 +56,22 @@ test('Live market values refresh after core consensus scoring or Update',()=>{
  assert.match(src,/addEventListener\('fll:valuation-refreshed'/);
  assert.match(src,/invalidateLiveMarketV97\(\)/);
  assert.match(src,/updateBtn'\)\?\.addEventListener\('click'/);
+});
+test('already-overlaid live market rows are rebound after Player Values changes',()=>{
+ ctx.invalidateLiveMarketV97();
+ ctx.window.modeledPlayerValuesV319.meta.version=7;
+ current=[{id:'5991',value:5300,overall:82,pos:'IDP',posRank:9}];
+ const first=ctx.liveMarketRowV97(original[0]);
+ assert.equal(first.value,5300);
+ assert.equal(first.recordedValue,4000);
+ current=[{id:'5991',value:5600,overall:77,pos:'IDP',posRank:6}];
+ ctx.window.modeledPlayerValuesV319.meta.version=8;
+ const second=ctx.liveMarketRowV97(first);
+ assert.equal(second.value,5600,'must not return stale liveCurrentV97 row');
+ assert.equal(second.overall,77);
+ assert.equal(second.recordedValue,4000,'archived original value remains untouched');
+ assert.equal(second.recordedOverall,150);
+ assert.equal(original[0].value,4000);
 });
 test('Team net current headline is computed from live team value not archived team snapshot',()=>{
  const output=ctx.overallNetValueCard({points:[{t:'2026-11-10',value:9000},{t:'2026-11-16',value:9300}],player_count:3},'Team 1');

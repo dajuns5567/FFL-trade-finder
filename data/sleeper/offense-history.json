@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-11-19T13:00:42.037Z",
+  "generatedAt": "2026-11-19T21:30:04.588Z",
   "source": "Sleeper importer snapshot",
   "currentSeason": 2026,
   "completedWeek": 10,
@@ -1666,8 +1666,8 @@
     },
     "diagnostics": {
       "finalGames": 150,
-      "qualifiedPlayerGames": 9888,
-      "rejectedPlayerGames": 11482,
+      "qualifiedPlayerGames": 9891,
+      "rejectedPlayerGames": 11480,
       "ignoredGames": 0
     }
   },
@@ -32052,6 +32052,24 @@
       "rec_yd": -6,
       "rush_rec_yd": -6
     },
+    "11721": {
+      "gp": 3,
+      "_ppr_native_weeks": 0,
+      "_ppr_reconstructed_weeks": 0,
+      "def_snp": 55,
+      "idp_tkl": 2,
+      "idp_tkl_solo": 1,
+      "pos_rank_half_ppr": 2997,
+      "pos_rank_ppr": 2997,
+      "pos_rank_std": 2997,
+      "pts_idp": 6,
+      "st_snp": 5,
+      "tm_def_snp": 209,
+      "tm_off_snp": 195,
+      "tm_st_snp": 85,
+      "idp_pass_def": 1,
+      "idp_tkl_ast": 1
+    },
     "11723": {
       "gp": 9,
       "_ppr_native_weeks": 0,
@@ -48003,9 +48021,9 @@
   "pprMethod": "Sleeper raw weekly stats aggregated with native pts_ppr when supplied; otherwise deterministic standard-PPR reconstruction from Sleeper raw stat fields.",
   "seasonDiagnostics": {
     "2023": {
-      "players": 885,
-      "withPpr": 731,
-      "withGames": 885
+      "players": 884,
+      "withPpr": 730,
+      "withGames": 884
     },
     "2024": {
       "players": 963,
@@ -48018,11 +48036,11 @@
       "withGames": 1055
     },
     "2026": {
-      "players": 1582,
+      "players": 1583,
       "withPpr": 554,
-      "withGames": 1582,
+      "withGames": 1583,
       "currentSeasonQualified": true,
-      "compactPlayers": 1582
+      "compactPlayers": 1583
     }
   },
   "stats": {
@@ -54881,24 +54899,6 @@
         "idp_ff": 1,
         "idp_tkl_ast": 11
       },
-      "6920": {
-        "pts_ppr": 60.00000000000001,
-        "gp": 17,
-        "off_snp": 511,
-        "rec_tgt": 33,
-        "rec_0_4": 1,
-        "rec_td": 3,
-        "rec_20_29": 1,
-        "bonus_fd_wr": 9,
-        "rec": 21,
-        "fum_lost": 1,
-        "rec_fd": 9,
-        "rec_5_9": 8,
-        "bonus_rec_wr": 21,
-        "rec_10_19": 11,
-        "fum": 1,
-        "rec_yd": 230
-      },
       "6921": {
         "pts_ppr": 3,
         "gp": 14,
@@ -61047,9 +61047,9 @@
       },
       "11210": {
         "pts_ppr": 30.999999999999996,
-        "gp": 8,
-        "off_snp": 218,
-        "rec_tgt": 18,
+        "gp": 9,
+        "off_snp": 229,
+        "rec_tgt": 20,
         "rec_0_4": 4,
         "rec_td": 1,
         "bonus_fd_wr": 4,
@@ -91164,8 +91164,8 @@
       },
       "11210": {
         "pts_ppr": 14.6,
-        "gp": 8,
-        "off_snp": 177,
+        "gp": 9,
+        "off_snp": 190,
         "rec_tgt": 6,
         "rec_30_39": 1,
         "bonus_fd_wr": 4,
@@ -110462,6 +110462,14 @@
         "idp_tkl": 1,
         "fum": 1,
         "rec_yd": -6,
+        "idp_tkl_ast": 1
+      },
+      "11721": {
+        "gp": 3,
+        "def_snp": 55,
+        "idp_tkl": 2,
+        "idp_tkl_solo": 1,
+        "idp_pass_def": 1,
         "idp_tkl_ast": 1
       },
       "11723": {

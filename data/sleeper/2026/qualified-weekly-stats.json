@@ -15878,6 +15878,21 @@
       "tm_off_snp": 58,
       "tm_st_snp": 19
     },
+    "11721": {
+      "def_snp": 14,
+      "gms_active": 1,
+      "gp": 1,
+      "idp_tkl": 1,
+      "idp_tkl_solo": 1,
+      "pos_rank_half_ppr": 999,
+      "pos_rank_ppr": 999,
+      "pos_rank_std": 999,
+      "pts_idp": 2,
+      "st_snp": 4,
+      "tm_def_snp": 67,
+      "tm_off_snp": 60,
+      "tm_st_snp": 30
+    },
     "11723": {
       "gms_active": 1,
       "gp": 1,
@@ -61671,6 +61686,20 @@
       "tm_off_snp": 74,
       "tm_st_snp": 30
     },
+    "11721": {
+      "def_snp": 21,
+      "gms_active": 1,
+      "gp": 1,
+      "idp_pass_def": 1,
+      "pos_rank_half_ppr": 999,
+      "pos_rank_ppr": 999,
+      "pos_rank_std": 999,
+      "pts_idp": 3,
+      "st_snp": 1,
+      "tm_def_snp": 66,
+      "tm_off_snp": 71,
+      "tm_st_snp": 25
+    },
     "11723": {
       "gms_active": 1,
       "gp": 1,
@@ -107054,6 +107083,20 @@
       "tm_def_snp": 72,
       "tm_off_snp": 60,
       "tm_st_snp": 22
+    },
+    "11721": {
+      "def_snp": 20,
+      "gms_active": 1,
+      "gp": 1,
+      "idp_tkl": 1,
+      "idp_tkl_ast": 1,
+      "pos_rank_half_ppr": 999,
+      "pos_rank_ppr": 999,
+      "pos_rank_std": 999,
+      "pts_idp": 1,
+      "tm_def_snp": 76,
+      "tm_off_snp": 64,
+      "tm_st_snp": 30
     },
     "11723": {
       "gms_active": 1,

@@ -198,7 +198,7 @@ function schedule(){
   for(const ms of [0,100,300,700,1500,3000,6000])setTimeout(()=>refresh(false),ms);
   // A completed scoring/consensus refresh can retain an identical status
   // string; never depend solely on MutationObserver for canonical rebuild.
-  window.addEventListener('fll:valuation-refreshed',queueForcedRefresh);
+  window.addEventListener?.('fll:valuation-refreshed',queueForcedRefresh);
   const status=document.getElementById('updateStatus');
   if(status&&typeof MutationObserver==='function'){
     observer=new MutationObserver(queueForcedRefresh);

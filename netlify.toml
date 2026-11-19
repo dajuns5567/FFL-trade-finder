@@ -3,11 +3,11 @@
   publish = "."
   functions = "netlify/functions"
   # Production deploys and branch deploys are disabled by owner instruction.
-  # Only explicitly authorized PR #499 and PR #505 previews may build on this canonical site;
+  # Only explicitly authorized PR #499, PR #505 and PR #507 previews may build on this canonical site;
   # skip other sites and unrelated previews to conserve Netlify credits.
-  # PR #505 targets main for preview discovery; this never authorizes main production builds.
+  # Draft PR previews target main for preview discovery; production and branch builds remain blocked.
   # Ignore exit 1 builds, exit 0 skips.
-  ignore = "node -e \"const e=process.env;const site=e.SITE_ID==='a516be3b-6c65-4f54-a9fb-23c5361bf3d2';const preview=e.CONTEXT==='deploy-preview'&&['499','505'].includes(String(e.REVIEW_ID));process.exit(site&&preview?1:0)\""
+  ignore = "node -e \"const e=process.env;const site=e.SITE_ID==='a516be3b-6c65-4f54-a9fb-23c5361bf3d2';const preview=e.CONTEXT==='deploy-preview'&&(String(e.REVIEW_ID)==='499'||String(e.REVIEW_ID)==='505'||String(e.REVIEW_ID)==='507');process.exit(site&&preview?1:0)\""
 
 [functions]
   node_bundler = "esbuild"

@@ -24,7 +24,7 @@ const writerEnd=writer.indexOf('  payload={schema_version:1',writerStart);
 assert.ok(writerStart>0&&writerEnd>writerStart);
 const guard=writer.slice(writerStart,writerEnd);
 function choose(env={},candidateModel=''){
- const ctx={process:{env},createHash,readFileSync,join};
+ const ctx={process:{env,cwd:()=>process.cwd()},createHash,readFileSync,join};
  const declarations="const V96_MODEL="+JSON.stringify(V96)+
   ";const V101_MODEL="+JSON.stringify(V101)+
   ";const V101_APPROVED_MODEL_BLOB="+JSON.stringify(blob)+

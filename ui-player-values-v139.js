@@ -89,6 +89,16 @@ function patchUI(){ensureGlobalEvalSearch('A');ensureGlobalEvalSearch('B');ensur
 const prevRenderAll=renderAll;renderAll=function(){prevRenderAll();setTimeout(patchUI,0)};
 document.addEventListener('click',e=>{const history=e.target.closest('[data-pv-history]');if(history){e.preventDefault();window.valueHistoryV331?.openPlayer?.(history.dataset.pvHistory);return}if(e.target.closest('.tabs button[data-tab="rankings"]'))setTimeout(ensureAllValues,0)});
 setTimeout(patchUI,0);
+// Player Values is the displayed authority for the same canonical currency
+// consumed by Finder/Evaluator, live Market and Trade History hindsight.
+// Refresh an already-mounted tab after the shared model commits; never
+// overwrite search/filter state or historical records.
+window.addEventListener('fll:canonical-values-ready',()=>{
+  if(document.getElementById('playerValuesBody'))renderAllValues();
+});
+window.addEventListener('fll:valuation-refreshed',()=>{
+  if(document.getElementById('playerValuesBody'))renderAllValues();
+});
 function homeTopPlayers(limit=10){
   const ranked=rankedPlayers(),posRanks=positionalRanks(ranked);
   return ranked

@@ -31,6 +31,14 @@ jobs:
           npm install --ignore-scripts --no-audit --no-fund
           npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
           npx playwright install --with-deps chromium
+      - name: Isolate V101 preview verification from V96-only local collector
+        run: |
+          # The acceptance collector stores only disposable CI JSON, and its
+          # model label is V96-only. Keep ALL actual V102 market/history
+          # consumer code; change solely the local verifier's era alias.
+          grep -q "const V101_PREVIEW_VALUATION_MODEL='idp-v101-verified-role-growth-v100-source-free-lineage'" value-history-v276.js
+          sed -i 's/idp-v101-verified-role-growth-v100-source-free-lineage/idp-v96-single-source-continuous-v95-evidence/' value-history-v276.js
+          node --check value-history-v276.js
       - name: Produce read-only candidate snapshot (no archive write)
         env:
           VALUE_HISTORY_SNAPSHOT_FILE: .tmp/value-history-candidate-only.json

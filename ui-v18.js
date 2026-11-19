@@ -1,5 +1,27 @@
 (()=>{
 function esc2(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+// Sleeper rosters arrive before /players/nfl. This legacy UI overrides the
+// index.html teamStage guard, so its own rendering and ranking entry points
+// must not trigger global valuations until player positions are identifiable.
+function playerMetadataReadyV18(){
+  const roster=(state.allAssets||[]).filter(x=>x?.type==="player");
+  if(!roster.length||!state.players)return false;
+  let checked=0,matched=0,offense=false;
+  for(const asset of roster){
+    if(checked>=24)break;
+    checked++;
+    const positions=state.players[String(asset.id)]?.fantasy_positions;
+    if(!Array.isArray(positions)||!positions.length)continue;
+    matched++;
+    if(positions.some(p=>["QB","RB","WR","TE"].includes(p)))offense=true;
+  }
+  if(!(matched>=Math.min(checked,8)&&offense))return false;
+  // Even after /players/nfl resolves, the canonical V319 model must finish
+  // constructing its roster price map before legacy UI requests 32 team sums.
+  // Otherwise the fallback V139 pricing path re-scans 544 ranks per player.
+  if(typeof window!=='undefined'&&window.modeledPlayerValuesV319&&!window.modeledPlayerValuesV319.ready)return false;
+  return true;
+}
 function teamPower(t){
   const vals=(t?.roster?.players||[]).map(id=>baseValue({type:"player",id:String(id)})).sort((a,b)=>b-a);
   const top=vals.slice(0,12).reduce((a,b)=>a+b,0),depth=vals.slice(12,24).reduce((a,b)=>a+b,0);
@@ -7,13 +29,22 @@ function teamPower(t){
   const w=Number(t?.roster?.settings?.wins)||0,l=Number(t?.roster?.settings?.losses)||0,pct=(w+l)?w/(w+l):.5;
   return top+depth*.30+picks*.06+pct*350;
 }
+// One league-wide stage ranking per render, not 32 repeated full-roster
+// valuation passes (one for each team's table row). Values/formula are unchanged.
+let stageSnapshotV18=null;
 teamStage=function(teamId){
   const teams=state.teams||[],target=teams.find(t=>Number(t.id)===Number(teamId));if(!target)return{label:"Unknown",score:0};
-  const ranked=teams.map(t=>({id:Number(t.id),score:teamPower(t)})).sort((a,b)=>b.score-a.score);
-  const idx=ranked.findIndex(x=>x.id===Number(teamId)),n=Math.max(1,ranked.length),pct=idx/(n-1||1),score=ranked[idx]?.score||0;
-  if(pct<=.24)return{label:"Contender",score};
-  if(pct>=.76)return{label:"Rebuilder",score};
-  return{label:"Competitive / transitional",score};
+  if(!playerMetadataReadyV18())return{label:"Loading player data",score:0};
+  if(!stageSnapshotV18||stageSnapshotV18.teams!==teams||stageSnapshotV18.players!==state.players||stageSnapshotV18.assets!==state.allAssets||stageSnapshotV18.stats!==state.stats||stageSnapshotV18.rankings!==state.rankings||stageSnapshotV18.master!==masterRankCache){
+    const ranked=teams.map(t=>({id:Number(t.id),score:teamPower(t)})).sort((a,b)=>b.score-a.score);
+    const byId=new Map(),n=Math.max(1,ranked.length);
+    for(let idx=0;idx<ranked.length;idx++){
+      const item=ranked[idx],pct=idx/(n-1||1),score=item.score||0;
+      byId.set(item.id,{label:pct<=.24?"Contender":pct>=.76?"Rebuilder":"Competitive / transitional",score});
+    }
+    stageSnapshotV18={teams,players:state.players,assets:state.allAssets,stats:state.stats,rankings:state.rankings,master:masterRankCache,byId};
+  }
+  return stageSnapshotV18.byId.get(Number(teamId))||{label:"Unknown",score:0};
 };
 
 function evaluatorAssets(side){
@@ -58,6 +89,7 @@ function rowFor(z,n){
 }
 function renderReferenceRankings(){
   const off=document.getElementById("topOffense"),idp=document.getElementById("topIdp");if(!off||!idp)return;
+  if(!playerMetadataReadyV18()){off.textContent="Loading player data…";idp.textContent="Loading player data…";return;}
   const ranked=ensureMaster();
   const offense=ranked.filter(z=>groupPos(z.x)!=="IDP").slice(0,100),defense=ranked.filter(z=>groupPos(z.x)==="IDP").slice(0,50);
   off.innerHTML=offense.map((z,i)=>rowFor(z,i+1)).join("")||"<div class='empty'>No values loaded.</div>";
@@ -65,6 +97,6 @@ function renderReferenceRankings(){
 }
 
 const priorRenderAll=renderAll;
-renderAll=function(){priorRenderAll();ensureEvaluatorChoosers();ensureRankingsTab();renderReferenceRankings();};
+renderAll=function(){stageSnapshotV18=null;priorRenderAll();ensureEvaluatorChoosers();ensureRankingsTab();renderReferenceRankings();};
 ensureEvaluatorChoosers();ensureRankingsTab();renderReferenceRankings();
 })();

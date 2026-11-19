@@ -3,6 +3,8 @@ name: Inquirer editorial revision 6
 on:
   pull_request:
     paths:
+      - 'netlify.toml'
+      - 'tests/netlify-third-account-preview-build.test.mjs'
       - 'netlify/functions/inquirer-*.mjs'
       - 'netlify/functions/league-hub.mjs'
       - 'netlify/functions/value-history.mjs'

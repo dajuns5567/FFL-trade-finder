@@ -1,0 +1,29 @@
+name: Live Sleeper league preview Finder acceptance (draft only)
+on:
+  pull_request:
+    paths:
+      - 'scripts/accept-real-sleeper-preview-finder.mjs'
+      - '.github/workflows/live-sleeper-preview-finder-acceptance.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-league-preview:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.number == 466
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check read-only browser acceptance before launching Chromium
+        run: node --check scripts/accept-real-sleeper-preview-finder.mjs
+      - name: Install isolated Chromium browser test tools
+        run: |
+          npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright
+          npx playwright install --with-deps chromium
+      - name: Read-only actual 32-team Sleeper + PR 466 preview acceptance
+        env:
+          FFL_PREVIEW_URL: https://deploy-preview-466--precious-dango-fb4633.netlify.app
+        run: node scripts/accept-real-sleeper-preview-finder.mjs

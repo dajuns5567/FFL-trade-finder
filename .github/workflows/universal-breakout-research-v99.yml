@@ -7,6 +7,10 @@ on:
       - 'scripts/compare-universal-breakout-v96-v99.cjs'
       - 'scripts/lib/breakout-review-priority-v99.cjs'
       - 'tests/universal-breakout-review-priority-v99.test.mjs'
+      - 'scripts/lib/breakout-context-scenario-v99.cjs'
+      - 'scripts/analyze-breakout-live-evidence-v99.cjs'
+      - 'tests/breakout-context-scenario-v99.test.mjs'
+      - 'scripts/value-history-headless-refresh.mjs'
       - 'tests/universal-breakout-evidence-v99.test.mjs'
       - '.github/workflows/universal-breakout-research-v99.yml'
   workflow_dispatch:
@@ -22,7 +26,7 @@ jobs:
         with:
           node-version: '22'
       - name: Validate cross-position evidence contracts
-        run: node --test tests/universal-breakout-evidence-v99.test.mjs tests/universal-breakout-review-priority-v99.test.mjs
+        run: node --test tests/universal-breakout-evidence-v99.test.mjs tests/universal-breakout-review-priority-v99.test.mjs tests/breakout-context-scenario-v99.test.mjs
       - name: Download canonical Sleeper read-only source files
         run: |
           mkdir -p .tmp/v99-sleeper/{2025,2026}
@@ -65,15 +69,23 @@ jobs:
         env:
           VALUE_HISTORY_SOURCE_COMMIT: '4d276527c6e7a724de55e4a7fd2c167887fa3ea8'
           VALUE_HISTORY_SNAPSHOT_FILE: '.tmp/v99-v96-snapshot.json'
+          V99_LIVE_EVIDENCE_FILE: '.tmp/v99-live-evidence.json'
         run: node scripts/value-history-headless-refresh.mjs
       - name: Compare breakout candidates with exact V96 values and IDP balance
         env:
           V99_V96_SNAPSHOT: '.tmp/v99-v96-snapshot.json'
         run: node scripts/compare-universal-breakout-v96-v99.cjs
+      - name: Evaluate live-scored dynasty evidence sensitivity without repricing
+        env:
+          V99_V96_SNAPSHOT: '.tmp/v99-v96-snapshot.json'
+          V99_LIVE_EVIDENCE_FILE: '.tmp/v99-live-evidence.json'
+        run: node scripts/analyze-breakout-live-evidence-v99.cjs
       - name: Preserve read-only V96 comparison evidence
         uses: actions/upload-artifact@v4
         with:
           name: v99-v96-canonical-comparison-readonly
-          path: .tmp/v99-v96-breakout-comparison.json
+          path: |
+            .tmp/v99-v96-breakout-comparison.json
+            .tmp/v99-breakout-context-sensitivity.json
           if-no-files-found: error
           retention-days: 7

@@ -309,8 +309,8 @@ const blend=breakoutEvidence.verified
     // A missing market source is still uncertainty. Protect the established
     // rank-based canonical curve from abrupt leaps even when the available
     // scoring/context evidence is convincing. Apply the lower of full
-    // observed-evidence math and 25% of the prior source-free model value.
-    value:Math.min(700,Math.round(originalBlend.value*1.25),
+    // observed-evidence math and 10% of the prior source-free model value.
+    value:Math.min(700,Math.round(originalBlend.value*1.10),
       Math.max(originalBlend.value,Math.round(fullEvidenceRaw))),
     raw:fullEvidenceRaw}
   :originalBlend;

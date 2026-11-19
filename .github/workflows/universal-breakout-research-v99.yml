@@ -23,7 +23,10 @@ jobs:
       - name: Download canonical Sleeper read-only source files
         run: |
           mkdir -p .tmp/v99-sleeper/{2025,2026}
-          BASE='https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/sleeper-data/data/sleeper'
+          SHA="$(git ls-remote origin refs/heads/sleeper-data | cut -f1)"
+          [[ "$SHA" =~ ^[a-f0-9]{40}$ ]] || exit 1
+          echo "V99_SLEEPER_SOURCE_SHA=$SHA" >> "$GITHUB_ENV"
+          BASE="https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/$SHA/data/sleeper"
           for f in manifest.json players.json 2025/season-stats.json 2026/season-stats.json; do
             curl --fail --location --retry 3 --silent --show-error "$BASE/$f" --output ".tmp/v99-sleeper/$f"
           done

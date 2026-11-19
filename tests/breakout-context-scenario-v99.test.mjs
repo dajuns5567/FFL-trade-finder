@@ -30,7 +30,7 @@ test('offense requires multiple actual dynasty sources and remains within source
  assert.equal(scenario(c,{...live,sourceCount:1}).eligible,false);
  const x=scenario(c,{...live,sourceCount:3});
  assert.equal(x.eligible,true);
- assert.ok(x.delta<=.015*live.consensus);
+ assert.ok(x.delta<=.015*live.consensusValue);
  assert.equal(x.family,'offense');
 });
 test('stars cannot receive unbounded price additions',()=>{

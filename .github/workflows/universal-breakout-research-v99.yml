@@ -5,6 +5,8 @@ on:
       - 'scripts/lib/dynasty-breakout-evidence-v99.cjs'
       - 'scripts/audit-universal-breakout-canonical-v99.cjs'
       - 'scripts/compare-universal-breakout-v96-v99.cjs'
+      - 'scripts/lib/breakout-review-priority-v99.cjs'
+      - 'tests/universal-breakout-review-priority-v99.test.mjs'
       - 'tests/universal-breakout-evidence-v99.test.mjs'
       - '.github/workflows/universal-breakout-research-v99.yml'
   workflow_dispatch:
@@ -20,7 +22,7 @@ jobs:
         with:
           node-version: '22'
       - name: Validate cross-position evidence contracts
-        run: node --test tests/universal-breakout-evidence-v99.test.mjs
+        run: node --test tests/universal-breakout-evidence-v99.test.mjs tests/universal-breakout-review-priority-v99.test.mjs
       - name: Download canonical Sleeper read-only source files
         run: |
           mkdir -p .tmp/v99-sleeper/{2025,2026}

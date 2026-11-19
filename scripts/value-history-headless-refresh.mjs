@@ -387,7 +387,9 @@ try{
         const sources=Array.isArray(sourceNames)?sourceNames.filter(n=>!String(n).includes('(not listed)')):[];
         const seasonRows=(idp?prod.a?.seasons:prod.correctedAudit?.samples)||audit?.seasons||[];
         return {
-          id,group,position:p.position||null,overall:i+1,baselineValue:Number(z.value),
+          id,group,position:p.position||null,overall:i+1,
+          baselineValue:Number(window.tradeValueNormalizationV139?.canonicalValue?.(z.x)),
+          underlyingModelValue:Number(z.value),
           age:p.age??null,yearsExp:p.years_exp??null,
           consensusValue:Number(z.consensus)>0?Number(z.consensus):null,
           sources:[...new Set(sources.map(String))],sourceCount:new Set(sources.map(String)).size,

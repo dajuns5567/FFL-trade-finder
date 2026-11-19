@@ -66,6 +66,26 @@ const changed=[...map0.values()].map(r=>{
 }).filter(r=>r.delta!==0||r.rankDelta!==0);
 const biggest=[...changed].sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta)).slice(0,35);
 const offense=changed.filter(r=>r.position!=='IDP');
+const directModelStageChanges=[...stage1.values()].filter(r=>{
+ const b=stage0.get(String(r.id));
+ return !b||Number(r.unscaledValue)!==Number(b.unscaledValue);
+});
+const unsolicitedModelStageChanges=directModelStageChanges.filter(r=>!r.sourceFreeBreakout?.verified);
+const unaffectedOffense=changed.filter(r=>r.position!=='IDP');
+const directIdp=changed.filter(r=>stage1.get(String(r.id))?.sourceFreeBreakout?.verified);
+const worstDirectIdp=directIdp.sort((a,b)=>(b.candidate/Math.max(1,b.baseline))-
+ (a.candidate/Math.max(1,a.baseline)));
+const worstOffense=unaffectedOffense.sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta)).slice(0,12);
+const acceptanceReasons=[];
+if(unsolicitedModelStageChanges.length)acceptanceReasons.push(
+ 'Unexpected changes to non-eligible underlying model values: '+unsolicitedModelStageChanges.length);
+if(directIdp.some(r=>r.candidate>r.baseline*2||r.delta>500))
+ acceptanceReasons.push('Source-free candidates cannot jump over 2x or 500 canonical points');
+if(unaffectedOffense.some(r=>Math.abs(r.rankDelta)>3||
+  Math.abs(r.delta)>Math.max(20,r.baseline*.02)))
+ acceptanceReasons.push('Unrelated offense exceeds maximum 3 ranks or 2%/20 canonical-price spillover');
+if(changed.some(r=>r.baselineRank<=100&&(r.rankDelta!==0||r.delta!==0)))
+ acceptanceReasons.push('Previously accepted top-100 canonical player ranks/values changed');
 const originalTop100=top100(rows0),newTop100=top100(rows1);
 assert.ok(originalTop100>=8&&originalTop100<=15);
 assert.ok(newTop100>=8&&newTop100<=15);
@@ -79,6 +99,11 @@ const report={contract:'V100 offline-only no-consensus candidate comparison',
  playerCount:rows0.length,qualifyingSourceFreeIdps:eligible.length,
  enhancedSourceFreeIdps:enhanced.length,top100Idps:{baseline:originalTop100,candidate:newTop100},
  changedPlayers:changed.length,offenseRankOrValueSpillover:offense.length,
+ directModelStageChanges:directModelStageChanges.length,
+ unsolicitedModelStageChanges:unsolicitedModelStageChanges.length,
+ directIdpCount:directIdp.length,worstDirectIdp:worstDirectIdp.slice(0,8),
+ worstOffenseSpillover:worstOffense,
+ acceptanceApproved:acceptanceReasons.length===0,acceptanceReasons,
  ponder:{...ponder,baselineServed:ponderBaseline.value,
   candidateServed:ponderCandidate.value,baselineRank:ponderBaseline.overall,
   candidateRank:ponderCandidate.overall},
@@ -95,4 +120,8 @@ console.log(JSON.stringify({contract:report.contract,playerCount:report.playerCo
  top100Idps:report.top100Idps,
  changedPlayers:report.changedPlayers,
  offenseRankOrValueSpillover:report.offenseRankOrValueSpillover,
+ acceptanceApproved:report.acceptanceApproved,acceptanceReasons:report.acceptanceReasons,
+ worstDirectIdp:report.worstDirectIdp.slice(0,5),
+ worstOffenseSpillover:report.worstOffenseSpillover.slice(0,5),
  ponder:report.ponder,biggestChanges:biggest.slice(0,12)},null,2));
+assert.equal(report.acceptanceApproved,true,'Reject excessive downstream valuation spillover');

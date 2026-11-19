@@ -1,0 +1,36 @@
+name: V107 actual V101 scheduled shadow capture (read-only)
+on:
+  pull_request:
+    paths:
+      - 'scripts/value-history-headless-refresh.mjs'
+      - 'scripts/value-history-v107-shadow-acceptance.mjs'
+      - 'scripts/archive-value-history.mjs'
+      - '.github/workflows/value-history-v107-shadow-acceptance.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-v101-shadow:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Refuse durable archival commands or credentials in dry-run
+        run: |
+          node --check scripts/value-history-v107-shadow-acceptance.mjs
+          node --check scripts/value-history-headless-refresh.mjs
+          ! grep -Eq 'scripts/archive-value-history[.]mjs.*\)|NETLIFY_BLOBS_TOKEN:|secrets[.]' .github/workflows/value-history-v107-shadow-acceptance.yml
+      - name: Install disposable Chromium only
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Simulate separately approved V101 scheduled collection without a write
+        run: node scripts/value-history-v107-shadow-acceptance.mjs
+      # Do not supply a GITHUB_TOKEN, do not run any archive writer,
+      # do not deploy Netlify, and do not save snapshots as artifacts.

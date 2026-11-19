@@ -41,7 +41,7 @@ if(![V96_MODEL,V101_MODEL].includes(requestedScheduledModel)||
   throw new Error('VALUE_HISTORY_PROMOTION_GUARD: unapproved scheduled model selection');
 if(approvedScheduledModel){
  const source=readFileSync(join(process.cwd(),'valuation-idp-v25-perf.js'));
- const blob=createHash('sha1').update('blob '+source.length+'\\0').update(source).digest('hex');
+ const blob=createHash('sha1').update('blob '+source.length+'\0').update(source).digest('hex');
  if(blob!==V101_APPROVED_MODEL_BLOB)
   throw new Error('VALUE_HISTORY_PROMOTION_GUARD: V101 runtime differs from fully audited valuation source');
  if(!/^[a-f0-9]{40}$/.test(String(sourceCommit||'')))

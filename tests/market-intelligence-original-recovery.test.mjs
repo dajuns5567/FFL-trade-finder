@@ -217,11 +217,11 @@ test('V105: 7D market movements survive a model change and ignore repricing itse
  const date=d=>'2026-11-'+String(d).padStart(2,'0')+'T12:00:00Z';
  const make=(value,model,d)=>({t:date(d),valuation_model:model,rows:[
   {id:'qb',pos:'QB',value,overall:5,posRank:2},
-  {id:'rb',pos:'RB',value:model==='v1'?90:900,overall:80,posRank:3}
+  {id:'rb',pos:'RB',value:model==='model-v1'?90:900,overall:80,posRank:3}
  ]});
  const history=[
-  make(100,'v1',10),make(115,'v1',12),make(125,'v1',14),
-  make(900,'v2',15),make(920,'v2',16),make(930,'v2',17)
+  make(100,'model-v1',10),make(115,'model-v1',12),make(125,'model-v1',14),
+  make(900,'model-v2',15),make(920,'model-v2',16),make(930,'model-v2',17)
  ];
  const source=JSON.stringify(history);
  const result=marketInsightsFromSnapshots(history);
@@ -243,8 +243,8 @@ test('V105: a single recent-model snapshot does not erase last-week historical m
  const date=d=>'2026-11-'+String(d).padStart(2,'0')+'T12:00:00Z';
  const snap=(d,value,model)=>({t:date(d),valuation_model:model,
    rows:[{id:'wr',pos:'WR',overall:31,posRank:11,value}]});
- const history=[snap(12,500,'v1'),snap(14,550,'v1'),snap(17,600,'v1'),
-   snap(18,1200,'v2')];
+ const history=[snap(12,500,'model-v1'),snap(14,550,'model-v1'),snap(17,600,'model-v1'),
+   snap(18,1200,'model-v2')];
  const result=marketInsightsFromSnapshots(history),week=result.ranges['7D'];
  assert.equal(result.comparable_snapshot_count,1);
  assert.equal(result.available,true);
@@ -256,8 +256,8 @@ test('V105: a single recent-model snapshot does not erase last-week historical m
 });
 test('V105: no genuine in-era comparison produces no fabricated market gain',()=>{
  const snaps=[
-  {t:'2026-11-15T12:00:00Z',valuation_model:'v1',rows:[{id:'qb',pos:'QB',value:100,overall:3}]},
-  {t:'2026-11-16T12:00:00Z',valuation_model:'v2',rows:[{id:'qb',pos:'QB',value:250,overall:3}]}
+  {t:'2026-11-15T12:00:00Z',valuation_model:'model-v1',rows:[{id:'qb',pos:'QB',value:100,overall:3}]},
+  {t:'2026-11-16T12:00:00Z',valuation_model:'model-v2',rows:[{id:'qb',pos:'QB',value:250,overall:3}]}
  ];
  const x=marketInsightsFromSnapshots(snaps);
  assert.equal(x.available,true);

@@ -16,14 +16,14 @@ function exitCode({siteId,siteName,context,reviewId=''}) {
  assert.equal(result.error,undefined,result.stderr);
  return result.status;
 }
-test('only authorized PR previews build on the current Netlify site, production stays blocked',()=>{
- const dest='fa33dfe4-8293-441e-8da0-25cc66fc984c';
- assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'deploy-preview',reviewId:'450'}),1);
- assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'deploy-preview',reviewId:'448'}),1);
- assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'deploy-preview',reviewId:'451'}),0);
- assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'production',reviewId:'450'}),0);
- assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:'branch-deploy',reviewId:'450'}),0);
- assert.equal(exitCode({siteId:dest,siteName:'precious-dango-fb4633',context:''}),0);
+test('only PR #499 can build on verified next Netlify account as deploy-preview',()=>{
+ const siteId='a516be3b-6c65-4f54-a9fb-23c5361bf3d2',siteName='animated-dasik-3de74a';
+ assert.equal(exitCode({siteId,siteName,context:'deploy-preview',reviewId:'499'}),1);
+ for(const reviewId of ['448','450','466','500','501'])
+  assert.equal(exitCode({siteId,siteName,context:'deploy-preview',reviewId}),0);
+ assert.equal(exitCode({siteId,siteName,context:'production',reviewId:'499'}),0);
+ assert.equal(exitCode({siteId,siteName,context:'branch-deploy',reviewId:'499'}),0);
+ assert.equal(exitCode({siteId:'11111111-1111-4111-8111-111111111111',siteName,context:'deploy-preview',reviewId:'499'}),0);
 });
 test('previous accounts skip builds even for deploy-preview context',()=>{
  for(const [siteId,siteName] of [
@@ -36,6 +36,7 @@ test('previous accounts skip builds even for deploy-preview context',()=>{
 
 test('production cutover never spends deploy preview credits',()=>{
  assert.match(config,/e\.CONTEXT==='deploy-preview'/);
- assert.match(config,/\['448','450'\]/);
+ assert.match(config,/String\(e\.REVIEW_ID\)==='499'/);
+ assert.match(config,/a516be3b-6c65-4f54-a9fb-23c5361bf3d2/);
  assert.doesNotMatch(config,/e\.CONTEXT==='production'/);
 });

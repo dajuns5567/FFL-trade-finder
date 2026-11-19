@@ -1,0 +1,40 @@
+name: V103 Value History clean current-price chart (preview only)
+on:
+  pull_request:
+    paths:
+      - 'value-history-v276.js'
+      - 'tests/value-history-dense-charts.test.mjs'
+      - 'tests/value-history-live-market-v97.test.mjs'
+      - '.github/workflows/value-history-v103-chart.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  chart-and-canonical-value-regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate Value History syntax and exact historical hover data
+        run: |
+          node --check value-history-v276.js
+          node --test tests/value-history-dense-charts.test.mjs tests/value-history-live-market-v97.test.mjs tests/value-history-preview-isolation.test.mjs tests/value-history-cross-consumer-parity.test.mjs tests/canonical-live-value-sync-v102.test.mjs
+      - name: Refuse chart regressions that mix current price into historical SVG
+        run: |
+          node --input-type=module -e "
+            import assert from 'node:assert/strict';
+            import {readFileSync} from 'node:fs';
+            const s=readFileSync('value-history-v276.js','utf8');
+            const start=s.indexOf('function valueChart('),end=s.indexOf('function recentChanges(',start);
+            assert.ok(start>0&&end>start);
+            const chart=s.slice(start,end);
+            assert.match(chart,/vh-current-price-summary/);
+            assert.match(chart,/livePlayerMeta\(id\)/);
+            assert.doesNotMatch(chart,/vh-current-live-point|\$\{markers\}|\$\{liveMarker\}/);
+            assert.match(chart,/chartHoverLayer\(pts,'value'/);
+            assert.match(chart,/not saved as history/);
+            console.log('V103 current price remains separate from immutable historical chart');
+          "

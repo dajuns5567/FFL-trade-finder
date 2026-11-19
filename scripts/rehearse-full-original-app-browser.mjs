@@ -183,7 +183,161 @@ try{
  assert(fullRecommendation.count>0,'No complete recommendations generated from controlled rosters and fairness contract');
  assert(fullRecommendation.validOwners,'Recommendation crossed asset or partner ownership boundaries');
  assert(fullRecommendation.nonempty&&fullRecommendation.finite,'Recommendation missing packages or finite fairness metrics');
- const result={browser:'chromium',functional,trade_intent_dom_event:intentCheck,valuation,packageCheck,recommendationFixture,fullRecommendation,root_rendered:true,body_length:body.length,script_tags:scripts,served_js_files:servedScripts.size,failed_js_css:failedResponses.length,local_asset_requests:served,external_or_write_requests_denied:denied,html_bytes:Buffer.byteLength(html),publishers_executed:0,production_credentials_used:false};
+
+ // Exercise the *real clicked Finder route* and DOM with a full-sized, mixed
+ // 32-team synthetic league. No outbound data calls or archive writes occur.
+ // The previous search implementation could spin indefinitely even while
+ // unit-level package checks passed; use a hard browser deadline.
+ const targetRun=await page.evaluate(()=>{
+   const f=window.tradeSpecificMaxValueV279,host=document.getElementById('finderResults');
+   const team=document.getElementById('findTeam'),style=document.getElementById('findMode'),
+     intent=document.getElementById('tradeTier94'),input=document.getElementById('desiredPlayerSearch');
+   if(!f?.run||!host||!team||!style||!intent||!input)return{supported:false};
+   const old={state:window.state,playerName:window.playerName,playerRankValue:window.playerRankValue,
+     value:window.tradeValueNormalizationV139?.canonicalValue,
+     fair:window.section1V130?.fair,team:team.value,style:style.value,intent:intent.value,input:input.value};
+   window.__offlineTargetFixture=old;
+   const send=Array.from({length:95},(_,i)=>({id:'load-send-'+i,type:'player',owner:1,name:'Send '+i,
+     value:300+i*95,rank:200+i,position:'RB'}));
+   const target={id:'load-jonathan-taylor',type:'player',owner:2,name:'Jonathan Taylor',
+     value:7900,rank:8,position:'RB'};
+   const receive=Array.from({length:24},(_,i)=>({id:'load-recv-'+i,type:'player',owner:2,
+     name:'Receive '+i,value:650+i*260,rank:90+i,position:'RB'}));
+   window.state={...(old.state||{}),teams:Array.from({length:32},(_,i)=>({id:i+1,name:'Team '+(i+1)})),
+     allAssets:[...send,target,...receive],players:{}};
+   window.playerName=id=>id==='load-jonathan-taylor'?'Jonathan Taylor':String(id);
+   window.playerRankValue=a=>({rank:Number(a?.rank)||9999});
+   window.tradeValueNormalizationV139.canonicalValue=a=>Number(a?.value)||0;
+   window.section1V130=window.section1V130||{};
+   window.section1V130.fair=(a,b)=>{
+     let sum=0;for(let i=0;i<20000;i++)sum+=i%7;
+     const av=xs=>xs.reduce((v,x)=>v+(Number(x.value)||0),0);
+     const left=av(a),right=av(b);
+     return{score:83,rejected:false,edgeEffective:Math.max(100,right-left),aRaw:left,bRaw:right,
+       aAdj:0,bAdj:0,aEffective:left,bEffective:right+100+sum%2};
+   };
+   if(![...team.options].some(o=>o.value==='1'))team.add(new Option('Test Team 1','1'));
+   team.value='1';style.value='value';intent.value='up';input.value='Jonathan Taylor';
+   document.querySelectorAll('#findShop .shopCheck').forEach(x=>{x.checked=false});
+   window.__offlineTargetStarted=Date.now();
+   // Offline startup lacks authorized league API data and leaves the native
+   // button disabled. Dispatch a real bubbling click event to exercise the
+   // registered capture router without falsely assuming an enabled UI.
+   document.getElementById('runFinder').dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));
+   return{supported:true};
+ });
+ assert(targetRun.supported,'Offline clicked specific-player Max Value path unavailable');
+ try{
+  await page.waitForFunction(()=>{
+    const stats=window.tradeSpecificMaxValueV279?.sourceIntegrityStats?.().lastSearchStats;
+    const html=document.getElementById('finderResults')?.textContent||'';
+    return !!stats&&Date.now()>=window.__offlineTargetStarted&&
+      !html.includes('Searching maximum-value trades');
+  },null,{timeout:14000});
+ }catch(e){
+  const diag=await page.evaluate(()=>({
+   active:window.tradeSpecificMaxValueV279?.isActive?.(),
+   target:document.getElementById('desiredPlayerSearch')?.value,
+   mode:document.getElementById('findMode')?.value,
+   team:document.getElementById('findTeam')?.value,
+   intent:document.getElementById('tradeTier94')?.value,
+   selected:window.tradeSpecificBlankRouterV325?.selected?.().length,
+   stats:window.tradeSpecificMaxValueV279?.sourceIntegrityStats?.(),
+   html:document.getElementById('finderResults')?.textContent?.slice(0,500),
+   elapsed:Date.now()-window.__offlineTargetStarted
+  }));
+  throw new Error('Clicked Finder target path did not complete: '+JSON.stringify(diag),{cause:e});
+ }
+ const targeted=await page.evaluate(()=>{
+   const stats=window.tradeSpecificMaxValueV279.sourceIntegrityStats().lastSearchStats;
+   const content=document.getElementById('finderResults')?.textContent||'';
+   const old=window.__offlineTargetFixture;
+   window.state=old.state;window.playerName=old.playerName;window.playerRankValue=old.playerRankValue;
+   window.tradeValueNormalizationV139.canonicalValue=old.value;
+   if(old.fair===undefined)delete window.section1V130.fair;else window.section1V130.fair=old.fair;
+   document.getElementById('findTeam').value=old.team;
+   document.getElementById('findMode').value=old.style;
+   document.getElementById('tradeTier94').value=old.intent;
+   document.getElementById('desiredPlayerSearch').value=old.input;
+   delete window.__offlineTargetFixture;
+   return{...stats,spinnerCleared:!content.includes('Searching maximum-value trades'),content:content.slice(0,140)};
+ });
+ assert(targeted.spinnerCleared,'Live click event left the targeted Finder spinning');
+ assert(targeted.elapsedMs<12500,'Targeted Finder did not respect runtime deadline');
+ assert(targeted.fairnessChecks<=2200&&targeted.examined<=9000,'Budgeted Finder exceeded work limits');
+ assert(targeted.receiveScans<=72,'Targeted Finder did not bound receiving packages');
+ // Exercise the actual user-facing Add Assets click route with selected
+ // player, normal Balanced search and complementary players/picks.
+ const addAssetsFixture=await page.evaluate(()=>{
+  const host=document.getElementById('finderResults'),shop=document.getElementById('findShop'),
+   team=document.getElementById('findTeam'),style=document.getElementById('findMode'),
+   intent=document.getElementById('tradeTier94'),search=document.getElementById('desiredPlayerSearch'),
+   add=document.getElementById('tradeAssist97');
+  if(!host||!shop||!team||!style||!intent||!search||!add||
+    typeof window.tradeSpecificAddAssetsV282?.run!=='function'||
+    typeof window.tradeAddAssetsComplementV1?.build!=='function')return{supported:false};
+  const initial={state:window.state,name:window.playerName,rank:window.playerRankValue,
+    val:window.tradeValueNormalizationV139?.canonicalValue,fair:window.section1V130?.fair,
+    team:team.value,style:style.value,intent:intent.value,search:search.value,
+    add:add.checked,alias:window.tradeSelectAllV165?.aliasActive};
+  const selected={type:'player',id:'complement-selected',owner:1,rank:67,value:4800,position:'WR',name:'Selected WR'};
+  const complements=Array.from({length:12},(_,i)=>i%4===0?
+    {type:'pick',id:'complement-pick-'+i,owner:1,round:1+i%3,season:2027,original_owner:1,value:650+i*130,name:'Pick '+i}:
+    {type:'player',id:'complement-extra-'+i,owner:1,rank:80+i,value:600+i*180,position:['RB','QB','TE','IDP','WR'][i%5],name:'Extra '+i});
+  const target={type:'player',id:'complement-jonathan',owner:2,rank:8,value:7800,position:'RB',name:'Jonathan Taylor'};
+  const receiving=Array.from({length:6},(_,i)=>({type:'player',id:'complement-recv-'+i,owner:2,rank:90+i,value:950+i*230,position:'RB',name:'Receive '+i}));
+  const pool=[selected,...complements,target,...receiving];
+  const checkbox=document.createElement('input');
+  checkbox.type='checkbox';checkbox.className='shopCheck';checkbox.checked=true;checkbox._asset=selected;
+  checkbox.id='offline-manual-complement-checked';shop.appendChild(checkbox);
+  document.querySelectorAll('#findShop .shopCheck').forEach(x=>{if(x!==checkbox)x.checked=false});
+  window.__offlineComplementFixture={...initial,checkbox};
+  window.state={...(initial.state||{}),allAssets:pool,players:{},teams:Array.from({length:32},(_,i)=>({id:i+1,name:'Team '+(i+1)}))};
+  window.playerName=id=>pool.find(x=>x.id===id)?.name||id;
+  window.playerRankValue=a=>({rank:a.rank||9999});
+  window.tradeValueNormalizationV139.canonicalValue=a=>Number(a?.value)||0;
+  if(window.tradeSelectAllV165)window.tradeSelectAllV165.aliasActive=()=>false;
+  window.section1V130.fair=(give,recv)=>{
+   const value=xs=>xs.reduce((n,x)=>n+(Number(x?.value)||0),0),left=value(give),right=value(recv);
+   return{score:83,rejected:false,edgeEffective:Math.max(50,right-left),aRaw:left,bRaw:right,
+    aAdj:0,bAdj:0,aEffective:left,bEffective:right+75};
+  };
+  team.value='1';style.value='balanced';intent.value='neutral';search.value='Jonathan Taylor';add.checked=true;
+  const active=window.tradeSpecificAddAssetsV282.active();
+  window.__offlineComplementStarted=Date.now();
+  document.getElementById('runFinder').dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));
+  return{supported:true,active};
+ });
+ assert(addAssetsFixture.supported&&addAssetsFixture.active,
+  'Selected-player Add Assets capture route was not activated');
+ await page.waitForFunction(()=>{
+  const host=document.getElementById('finderResults');
+  const cards=host?.querySelectorAll('.trade95-card')||[];
+  return cards.length>0&&!host.textContent.includes('Searching realistic trades');
+ },null,{timeout:14000});
+ const complementary=await page.evaluate(()=>{
+  const host=document.getElementById('finderResults');
+  const cards=[...host.querySelectorAll('.trade95-card')];
+  const outgoingCounts=cards.map(card=>card.querySelectorAll('.trade95-grid .trade95-side:nth-child(2) .trade95-asset').length);
+  const elapsedMs=Date.now()-window.__offlineComplementStarted;
+  const old=window.__offlineComplementFixture;
+  window.state=old.state;window.playerName=old.name;window.playerRankValue=old.rank;
+  window.tradeValueNormalizationV139.canonicalValue=old.val;
+  if(old.fair===undefined)delete window.section1V130.fair;else window.section1V130.fair=old.fair;
+  if(window.tradeSelectAllV165&&old.alias)window.tradeSelectAllV165.aliasActive=old.alias;
+  document.getElementById('findTeam').value=old.team;document.getElementById('findMode').value=old.style;
+  document.getElementById('tradeTier94').value=old.intent;document.getElementById('desiredPlayerSearch').value=old.search;
+  document.getElementById('tradeAssist97').checked=old.add;old.checkbox.remove();
+  delete window.__offlineComplementFixture;
+  return{elapsedMs,visible:cards.length,outgoingCounts,spinnerCleared:!host.textContent.includes('Searching realistic trades')};
+ });
+ assert(complementary.spinnerCleared,'Actual Add Assets click left the spinner running');
+ assert(complementary.visible>=3,'No varied Add Assets recommendations displayed');
+ assert(complementary.outgoingCounts.includes(2),'Actual Add Assets results lacked one complementary piece');
+ assert(complementary.outgoingCounts.includes(3),'Actual Add Assets results lacked two complementary pieces');
+ assert(complementary.elapsedMs<13500,'Actual Add Assets click did not finish in a bounded period');
+
+ const result={browser:'chromium',functional,trade_intent_dom_event:intentCheck,valuation,packageCheck,recommendationFixture,fullRecommendation,targeted,complementary,root_rendered:true,body_length:body.length,script_tags:scripts,served_js_files:servedScripts.size,failed_js_css:failedResponses.length,local_asset_requests:served,external_or_write_requests_denied:denied,html_bytes:Buffer.byteLength(html),publishers_executed:0,production_credentials_used:false};
  console.log('FULL FLEECED BROWSER REHEARSAL PASS '+JSON.stringify(result));
  await context.close();
 }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}

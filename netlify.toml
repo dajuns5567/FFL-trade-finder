@@ -5,6 +5,7 @@
   # Production deploys and branch deploys are disabled by owner instruction.
   # Only explicitly authorized PR #499 and PR #505 previews may build on this canonical site;
   # skip other sites and unrelated previews to conserve Netlify credits.
+  # PR #505 targets main for preview discovery; this never authorizes main production builds.
   # Ignore exit 1 builds, exit 0 skips.
   ignore = "node -e \"const e=process.env;const site=e.SITE_ID==='a516be3b-6c65-4f54-a9fb-23c5361bf3d2';const preview=e.CONTEXT==='deploy-preview'&&['499','505'].includes(String(e.REVIEW_ID));process.exit(site&&preview?1:0)\""
 

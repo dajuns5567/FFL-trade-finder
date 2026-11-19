@@ -22,7 +22,7 @@ function check(overrides={},scoring={}){
  if(overrides.player)Object.assign(state.players.emerging,overrides.player);
  if(overrides.stats)for(const [year,row] of Object.entries(overrides.stats))
    Object.assign(state.stats[year].emerging,row);
- const scope={state,Number,Math,Array,String,JSON};
+ const scope={state,Number,Math,Array,String,JSON,window:{}};
  vm.runInNewContext(helper+'; this.inspect=emergingSourceFreeIdpEvidence100',scope);
  const a={qualifyingSeasons:2,seasons};
  const m={confidence:.67};

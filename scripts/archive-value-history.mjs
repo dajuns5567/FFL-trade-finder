@@ -63,12 +63,17 @@ const V101_MODEL='idp-v101-verified-role-growth-v100-source-free-lineage';
 const V101_AUDITED_BLOB='443c8497a95e793665fb78474feaee49bd57e88f';
 function isKnownBadSnapshot(s){const t=String(s?.t||''),ms=new Date(t).getTime();return V495_BAD_TIMES.has(t)||V498_BAD_TIMES.has(t)||V499_BAD_TIMES.has(t)||(Number.isFinite(ms)&&(ms<V496_BASELINE_MS||[V380_BAD_WINDOW,V381_BAD_WINDOW,V391_BAD_WINDOW,V494_BAD_WINDOW].some(([a,b])=>ms>=a&&ms<b)))}
 function validSnapshot(s){
-  return s&&String(s.league)==='1316867686394769408'&&s.t&&Array.isArray(s.rows)&&s.rows.length>=100&&!isKnownBadSnapshot(s)&&(
+  return s&&String(s.league)==='1316867686394769408'&&s.t&&
+    s?.provenance?.candidate_read_only!==true&&
+    Array.isArray(s.rows)&&s.rows.length>=100&&!isKnownBadSnapshot(s)&&(
     String(s.source||'')!=='scheduled'||
     String(s.valuation_contract||'')===SCHEDULED_VALUATION_CONTRACT&&
       String(s.valuation_model||'')!==V101_MODEL||
     String(s.valuation_model||'')===V101_MODEL&&
-      String(s.valuation_contract||'')===V101_SCHEDULED_CONTRACT
+      String(s.valuation_contract||'')===V101_SCHEDULED_CONTRACT&&
+      s?.provenance?.canonical_parity==='exact'&&
+      Number(s?.provenance?.consensus_sources)>=7&&
+      String(s?.provenance?.model_blob_sha||'')===V101_AUDITED_BLOB
   );
 }
 function monthOf(t){return String(t).slice(0,7)}

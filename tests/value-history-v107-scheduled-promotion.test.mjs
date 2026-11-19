@@ -155,3 +155,24 @@ test('scheduled GitHub workflow remains main-only with explicit two-variable opt
  assert.match(writer,/valuation_model:snap\.valuation_model\|\|null/);
  assert.match(writer,/valuation_contract:snap\.valuation_contract\|\|null/);
 });
+
+test('existing archive imports accept verified V101 model era but never V101 candidate or forged model ID',()=>{
+ const start=writer.indexOf('function validSnapshot(s){'),end=writer.indexOf('function monthOf(t){',start);
+ assert.ok(start>0&&end>start);
+ const ctx={V96_MODEL:V96,V101_MODEL:V101,
+  V101_SCHEDULED_CONTRACT:V101_CONTRACT,
+  SCHEDULED_VALUATION_CONTRACT:'precision-idp-runtime-20260919',
+  V101_AUDITED_BLOB:blob,
+  isKnownBadSnapshot:()=>false,Number,String,Array};
+ vm.runInNewContext(writer.slice(start,end)+';this.validate=validSnapshot;',ctx);
+ const base={league:'1316867686394769408',t:'2026-11-19T12:00:00Z',
+  source:'scheduled',rows:[{id:'1',value:100}]};
+ assert.equal(ctx.validate({...base,valuation_model:V96,
+  valuation_contract:'precision-idp-runtime-20260919'}),true);
+ const current={...base,...snap(),league:base.league,t:base.t,source:base.source};
+ assert.equal(ctx.validate(current),true);
+ assert.equal(ctx.validate({...current,valuation_contract:'precision-idp-runtime-20260919'}),false);
+ assert.equal(ctx.validate({...current,provenance:{...current.provenance,candidate_read_only:true}}),false);
+ assert.equal(ctx.validate({...current,provenance:{...current.provenance,model_blob_sha:'other'}}),false);
+ assert.equal(ctx.validate({...current,provenance:{...current.provenance,consensus_sources:2}}),false);
+});

@@ -681,7 +681,10 @@ function contiguousMarketMovement(snaps,days){
         posRank:Number(now.posRank),delta:(prev?.delta||0)+part.delta,
         overallDelta:(prev?.overallDelta||0)+part.overallDelta,
         posRankDelta:(prev?.posRankDelta||0)+part.posRankDelta,
-        fromValue:null,fromOverall:null,fromPosRank:null,
+        // Sum only independently VERIFIED percentage changes. Never derive
+        // percentage from today's price minus cross-model price deltas.
+        pct:(prev?.pct||0)+part.pct,
+        fromValue:prev?null:part.fromValue,fromOverall:null,fromPosRank:null,
         baseline_t:prev?.baseline_t||part.baseline_t||first.t,
         available_history:!!(prev?.available_history||part.available_history),
         through_t:end.t,comparable_segments:(prev?.comparable_segments||0)+1,
@@ -956,18 +959,68 @@ function marketInsightRange(snaps,label,historySnaps=snaps){
   volatility.sort((a,b)=>Number(b.range_pct||0)-Number(a.range_pct||0)||b.range-a.range);
   return{label,available:true,snapshot_count:ordered.length,tracking_since:first.t,through:latest.t,position_indexes,market_volatility,position_volatility,player_changes,new_highs:new_highs.slice(0,50),new_lows:new_lows.slice(0,50),volatility};
 }
+// Heat maps and indexes must report verified price MOVEMENT across the
+// selected window, even when V96/V101 introduced a different price scale.
+// marketInsightRange is retained for high/low/volatility records within the
+// latest comparable era, while the movement overlays use exactly the same
+// segment-summed algorithm already accepted by the Market Movers dashboard.
+// No subtraction across valuation-model boundaries, no invented baseline.
+function verifiedMarketIntelligenceMovement(allSnapshots,days,recorded){
+ const result=contiguousMarketMovement(allSnapshots,days);
+ const movements=[...result.metrics.values()].map(row=>({
+   id:row.id,pos:row.pos,value:row.value,overall:row.overall,
+   posRank:row.posRank,delta:row.delta,pct:Number(row.pct.toFixed(4)),
+   from_value:row.comparable_segments===1?row.fromValue:null,
+   from_t:row.baseline_t,through_t:row.through_t,
+   overall_delta:row.overallDelta,pos_rank_delta:row.posRankDelta,
+   comparable_segments:row.comparable_segments,
+   measurement:'sum-of-recorded-same-model-movements'
+ }));
+ const byId=new Map(movements.map(row=>[String(row.id),row]));
+ const latest=allSnapshots.at(-1);
+ const positions=['QB','RB','WR','TE','IDP'];
+ const indexes=[];
+ for(const pos of positions){
+   const ranked=(latest?.rows||[]).filter(r=>String(r?.pos)===pos&&Number(r?.value)>0)
+     .sort((a,b)=>Number(b.value)-Number(a.value)).slice(0,24);
+   const confirmed=ranked.map(row=>byId.get(String(row.id))).filter(Boolean);
+   if(!ranked.length)continue;
+   const avgPct=confirmed.length?confirmed.reduce((sum,row)=>sum+row.pct,0)/confirmed.length:0;
+   indexes.push({pos,count:confirmed.length,cohort_count:ranked.length,
+     index:confirmed.length?Number((100+avgPct).toFixed(2)):null,
+     change_pct:confirmed.length?Number(avgPct.toFixed(2)):null,
+     baseline_avg:null,current_avg:null,
+     baseline_t:confirmed.map(x=>x.from_t).filter(Boolean).sort()[0]||null,
+     through_t:latest?.t||null,
+     measurement:'equal-weight-verifiable-same-model-percent-movement',
+     comparable_segments:result.qualifyingSegments});
+ }
+ return{...recorded,player_changes:movements,position_indexes:indexes,
+   movement_basis:'sum-of-recorded-same-model-movements',
+   movement_segments:result.qualifyingSegments,
+   movement_observations:allSnapshots.length};
+}
 function marketInsightsFromSnapshots(snaps){
-  const ordered=(snaps||[]).filter(s=>s?.t&&Array.isArray(s?.rows)).slice().sort((a,b)=>String(a.t).localeCompare(String(b.t)));
-  const modelEra=comparableMarketEra(ordered),active=modelEra.snaps;
-  if(active.length<2)return{available:false,snapshot_count:ordered.length,comparable_snapshot_count:active.length,valuation_model:modelEra.model,model_change_at:modelEra.changedAt,through:active.at(-1)?.t||null,ranges:{}};
-  const defs={1:1,7:7,30:30,90:90,365:365},ranges={};
-  for(const [daysKey,days] of Object.entries(defs)){
-    const label=daysKey==='365'?'1Y':daysKey+'D';
-    ranges[label]=marketInsightRange(marketInsightWindow(active,label,days),label,active);
-  }
-  ranges.ALL=marketInsightRange(active,'ALL');
-  const all=ranges.ALL;
-  return{available:true,snapshot_count:ordered.length,comparable_snapshot_count:active.length,valuation_model:modelEra.model,model_change_at:modelEra.changedAt,tracking_since:active[0].t,through:active.at(-1).t,ranges,position_indexes:all.position_indexes,new_highs:all.new_highs,new_lows:all.new_lows,volatility:all.volatility};
+ const ordered=(snaps||[]).filter(s=>s?.t&&Array.isArray(s?.rows))
+   .slice().sort((a,b)=>String(a.t).localeCompare(String(b.t)));
+ const modelEra=comparableMarketEra(ordered),active=modelEra.snaps;
+ if(ordered.length<2)return{available:false,snapshot_count:ordered.length,comparable_snapshot_count:active.length,
+   valuation_model:modelEra.model,model_change_at:modelEra.changedAt,through:active.at(-1)?.t||null,ranges:{}};
+ const definitions={'1D':1,'7D':7,'30D':30,'90D':90,'1Y':365,'ALL':null},ranges={};
+ for(const [label,days] of Object.entries(definitions)){
+   // Do not count different-era prices as a high/low or a valuation swing.
+   // The record/volatility layer stays on the contiguous tagged era.
+   const recordSeries=marketInsightWindow(active,label,days);
+   const records=marketInsightRange(recordSeries,label,active);
+   ranges[label]=verifiedMarketIntelligenceMovement(ordered,days,records);
+ }
+ const all=ranges.ALL;
+ return{available:true,snapshot_count:ordered.length,comparable_snapshot_count:active.length,
+   valuation_model:modelEra.model,model_change_at:modelEra.changedAt,
+   tracking_since:ordered[0].t,comparable_since:active[0]?.t||null,through:ordered.at(-1).t,
+   ranges,position_indexes:all.position_indexes,new_highs:all.new_highs,
+   new_lows:all.new_lows,volatility:all.volatility,
+   movement_basis:'sum-of-recorded-same-model-movements'};
 }
 async function getMarketInsights(s){
   const now=Date.now();if(marketInsightsCache&&now-marketInsightsCacheAt<300000)return marketInsightsCache;

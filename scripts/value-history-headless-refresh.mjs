@@ -411,6 +411,13 @@ try{
           compositeValue:window.state?.consensusComposite?.byId?.[id]??null,
           sourceCount:sources.length,qualifyingSeasons:p.a?.qualifyingSeasons??null,
           fallback:z.fallback===true,
+          // V101 read-only evaluation: actual finished model's *league*
+          // scoring evidence, not made-up native NFL scoring or a projection.
+          leagueWeightedPpg:p.m?.ppg??null,
+          league2026RoleSupport:p.m?.verifiedRoleGrowthSupport??null,
+          leagueScoringCurrentShare:p.m?.currentSeasonWeight??null,
+          leagueScoringComponent:p.value??null,
+          idpRole:p.role??null,
           sourceFreeBreakout:p.idpV100SourceFreeBreakout||null,
           preFallbackValue:p.idpV100PreFallbackValue??null,
           candidateFallbackValue:p.idpV100CandidateFallbackValue??null};

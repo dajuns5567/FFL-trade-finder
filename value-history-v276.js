@@ -5,6 +5,10 @@ const API='/.netlify/functions/value-history',SIGNAL_API='/.netlify/functions/pl
 // snapshots in their original model eras; new records require verified V94
 // scorer, V95 evidence floor, V96 IDP consensus contract and V92 compression.
 const HISTORY_VALUATION_MODEL='idp-v96-single-source-continuous-v95-evidence';
+// V100 Deploy Preview verification: distinct experimental era, strictly
+// read-only against the existing V96 archive until a separately checked
+// model-era migration is approved. Production V96 remains unchanged.
+const V100_PREVIEW_VALUATION_MODEL='idp-v100-source-free-evidence-10pct-v96-lineage';
 window.valueHistoryModelV90=null;
 async function verifyLiveValuationModelV95(){
  try{
@@ -31,6 +35,16 @@ async function verifyLiveValuationModelV95(){
     window.fflIdpScoringModelV94==='v94-verified-stable-veteran'&&
     window.fflIdpCompressionModelV92==='v92-balanced-retention';
   window.valueHistoryModelV90=v94&&v95&&v96&&v92&&running?HISTORY_VALUATION_MODEL:null;
+  const v100=scorer.includes('idpV100SourceFreeBreakout')&&
+    scorer.includes('verified-snaps-per-game')&&
+    scorer.includes('Math.round(originalBlend.value*1.10)');
+  // Never record candidate values with the V96 history identifier.
+  // verifyLiveValuationModelV95() returns a non-V96 tag so the current
+  // snapshot writer fails closed; archive GET remains read-only in previews.
+  if(window.valueHistoryModelV90&&v100){
+    window.valueHistoryModelV90=V100_PREVIEW_VALUATION_MODEL;
+    window.__v100PreviewValuationEraReadOnly=true;
+  }
  }catch(e){
   window.valueHistoryModelV90=null;
  }

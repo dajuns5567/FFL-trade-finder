@@ -19,6 +19,11 @@ function classifyBreakout(row) {
   const confidence=finite(row?.scoringConfidence);
   const sourceCount=finite(row?.consensusSourceCount);
   const consensus=finite(row?.consensusValue);
+  const currentSnapShare=finite(row?.current?.snapShare);
+  const previousSnapShare=finite(row?.previous?.snapShare);
+  const verifiedOpportunity=currentSnapShare!=null&&previousSnapShare!=null&&
+    currentGames>=8&&priorGames>=4&&currentSnapShare>=.35&&
+    currentSnapShare-previousSnapShare>=.12;
   const missing=[];
   if(!family)missing.push('supported-position');
   if(age==null||experience==null)missing.push('age-or-experience');
@@ -47,7 +52,10 @@ function classifyBreakout(row) {
     comparablePrior,scoringConfidence:confidence,evidenceStrength,
     consensusValue:consensus,consensusSourceCount:sourceCount,
     consensusCoverage:sourceCount==null?'unknown':sourceCount<2?'thin':'multi-source',
-    missing,roleOpportunity:'unverified',
+    missing,roleOpportunity:verifiedOpportunity?'verified-snap-share-increase':'unverified',
+    currentSnapShare,previousSnapShare,
+    snapShareDelta:currentSnapShare!=null&&previousSnapShare!=null?
+      Number((currentSnapShare-previousSnapShare).toFixed(4)):null,
     // No additive price, no automatic rank target, no valuation side effect.
     proposedValueAdjustment:0
   };

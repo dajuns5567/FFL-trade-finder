@@ -32,7 +32,11 @@ env:
 
 jobs:
   refresh:
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    # Netlify Blob archival is optional and may fail when a disconnected
+    # account/site is detected. The GitHub-native headless collector must
+    # still wake, but will fail closed on incomplete Sleeper, publishers or
+    # historical index. Failed Sleeper import and MIDA sync stay blocked.
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.name == 'Archive Value History'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:

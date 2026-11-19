@@ -117,10 +117,28 @@ function build(force=false){
     prev=v;
   }
 
+  // A successful rebuild is the sole commit point for live prices. Failed
+  // roster/source validation above must never publish a partial currency.
+  const changed=next.size!==map.size||[...next].some(([id,v])=>map.get(id)!==v);
   map=next;
   lastMaster=arr;
   meta={ready:true,count:next.size,version:meta.version+1,maxRank,blend:BLEND,minRatio:MIN_RATIO,maxRatio:MAX_RATIO};
+  if(changed)queueCanonicalReady();
   return true;
+}
+// Publish the committed, shared Player Values currency after the current
+// event turn. Market/History can then invalidate their display-only caches
+// without consuming or rewriting any historical observations.
+let canonicalReadyTimer=null;
+function queueCanonicalReady(){
+  if(canonicalReadyTimer!=null)return;
+  canonicalReadyTimer=setTimeout(()=>{
+    canonicalReadyTimer=null;
+    if(!installed||!meta.ready)return;
+    try{window.dispatchEvent(new CustomEvent('fll:canonical-values-ready',{
+      detail:{version:meta.version,players:meta.count,source:'Player Values V319'}
+    }))}catch(e){console.warn('Canonical player value notification failed',e)}
+  },0);
 }
 function playerValue(a){
   if(!a||a.type!=='player')return 0;
@@ -178,6 +196,9 @@ function queueForcedRefresh(){
 }
 function schedule(){
   for(const ms of [0,100,300,700,1500,3000,6000])setTimeout(()=>refresh(false),ms);
+  // A completed scoring/consensus refresh can retain an identical status
+  // string; never depend solely on MutationObserver for canonical rebuild.
+  window.addEventListener('fll:valuation-refreshed',queueForcedRefresh);
   const status=document.getElementById('updateStatus');
   if(status&&typeof MutationObserver==='function'){
     observer=new MutationObserver(queueForcedRefresh);

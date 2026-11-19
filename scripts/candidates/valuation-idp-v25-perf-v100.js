@@ -224,7 +224,7 @@ function emergingSourceFreeIdpEvidence100(id,score){
  const p=state.players?.[String(id)]||{},age=Number(p.age),exp=Number(p.years_exp),
   qualified=Number(score?.a?.qualifyingSeasons)||0,
   confidence=Number(score?.m?.confidence)||0;
- if(!Number.isFinite(age)||age<18||age>26||
+ if(p.age==null||p.years_exp==null||!Number.isFinite(age)||age<18||age>26||
    !Number.isFinite(exp)||exp<0||exp>3||qualified<2||confidence<.40)
    return{verified:false,reason:'age-experience-history-or-confidence'};
  const seasons=(Array.isArray(score?.a?.seasons)?score.a.seasons:[])

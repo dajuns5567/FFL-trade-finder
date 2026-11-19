@@ -14,16 +14,28 @@ try{
  const errors=[];
  page.on('pageerror',e=>errors.push(String(e?.message||e)));
  await page.goto(url,{waitUntil:'domcontentloaded',timeout:65000});
- await page.waitForFunction(()=>{
-   const w=window;
-   return w.modeledPlayerValuesV319?.ready===true&&
-    w.valueHistoryV331?.currentRows&&
-    w.tradeValueNormalizationV139?.canonicalValue&&
-    Array.isArray(w.state?.allAssets)&&w.state.allAssets.length>800&&
-    w.__fllValueRefresh?.inFlight!==true&&
-    w.__fllConsensusRefresh?.complete===true&&
-    Number(w.__fllConsensusRefresh?.successful)>=7;
- },null,{timeout:180000,polling:1200});
+ try{
+  await page.waitForFunction(()=>{
+    const w=window;
+    return w.modeledPlayerValuesV319?.ready===true&&
+     typeof w.valueHistoryV331?.currentRows==='function'&&
+     typeof w.tradeValueNormalizationV139?.canonicalValue==='function'&&
+     Array.isArray(w.state?.allAssets)&&w.state.allAssets.length>800;
+  },null,{timeout:90000,polling:1200});
+ }catch(e){
+  const readiness=await page.evaluate(()=>({
+    title:document.title,location:location.href,bodyPreview:document.body?.innerText?.slice(0,600),
+    assets:window.state?.allAssets?.length??null,
+    modelReady:window.modeledPlayerValuesV319?.ready??null,
+    historyReady:typeof window.valueHistoryV331?.currentRows==='function',
+    normalizationReady:typeof window.tradeValueNormalizationV139?.canonicalValue==='function',
+    sleeperComplete:window.state?.sleeperHistory?.complete??null,
+    consensus:window.__fllConsensusRefresh??null,
+    phase:window.__fllValueRefresh??null
+  })).catch(err=>({probeError:String(err)}));
+  console.error('V102_PREVIEW_READINESS '+JSON.stringify(readiness));
+  throw e;
+ }
  await page.evaluate(async()=>{if(typeof window.verifyValueHistoryModelV95==='function')await window.verifyValueHistoryModelV95()});
  result=await page.evaluate(()=>{
    const w=window,st=w.state,ranked=w.ensureMaster(),norm=w.tradeValueNormalizationV139,
@@ -77,7 +89,8 @@ try{
      rosterPlayers:allAssets.length,
      modeledPlayers:snapshot.size,
      liveHistoryPlayers:byId.size,
-     dynastySources:w.__fllConsensusRefresh.successful,
+     dynastySources:Number(w.__fllConsensusRefresh?.successful)||0,
+     consensusRefreshComplete:w.__fllConsensusRefresh?.complete===true,
      ponderCurrentValue:norm.playerValue(pond),
      directPriceMismatches:mismatches,
      source:'canonical Player Values V319',

@@ -70,9 +70,10 @@ jobs:
       - name: Compare all canonical values, source fingerprints, and IDP ranking balance
         run: node scripts/compare-idp-v100-fallback.mjs
       - name: Save read-only acceptance report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: v100-idp-fallback-readonly
           path: .tmp/v100-acceptance-report.json
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 7

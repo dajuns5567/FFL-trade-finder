@@ -153,5 +153,5 @@ test('V103 chart shows current Player Values above an uncluttered archival chart
  const snapshot=decodeSeries(plot);
  assert.equal(snapshot.points.length,pts.length);
  assert.equal(snapshot.points.at(-1).value,ctx.fmt(pts.at(-1).value));
- assert.notEqual(snapshot.points.at(-1).value,'4,700'undefined);
+ assert.notEqual(snapshot.points.at(-1).value,'4,700','current value must not become a fabricated archived point');
 });

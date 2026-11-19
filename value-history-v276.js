@@ -9,6 +9,7 @@ const HISTORY_VALUATION_MODEL='idp-v96-single-source-continuous-v95-evidence';
 // read-only against the existing V96 archive until a separately checked
 // model-era migration is approved. Production V96 remains unchanged.
 const V100_PREVIEW_VALUATION_MODEL='idp-v100-source-free-evidence-10pct-v96-lineage';
+const V101_PREVIEW_VALUATION_MODEL='idp-v101-verified-role-growth-v100-source-free-lineage';
 window.valueHistoryModelV90=null;
 async function verifyLiveValuationModelV95(){
  try{
@@ -41,7 +42,15 @@ async function verifyLiveValuationModelV95(){
   // Never record candidate values with the V96 history identifier.
   // verifyLiveValuationModelV95() returns a non-V96 tag so the current
   // snapshot writer fails closed; archive GET remains read-only in previews.
-  if(window.valueHistoryModelV90&&v100){
+  // The V101 preview changes the league-scored IDP current-season maturity
+  // gate, not just the source-free consensus fallback: it must never be
+  // misidentified as V100 or the archived V96 valuation era.
+  const v101=v100&&scorer.includes('V101 offline research:')&&
+    scorer.includes('past<100');
+  if(window.valueHistoryModelV90&&v101){
+    window.valueHistoryModelV90=V101_PREVIEW_VALUATION_MODEL;
+    window.__v101PreviewValuationEraReadOnly=true;
+  }else if(window.valueHistoryModelV90&&v100){
     window.valueHistoryModelV90=V100_PREVIEW_VALUATION_MODEL;
     window.__v100PreviewValuationEraReadOnly=true;
   }

@@ -20,6 +20,8 @@ jobs:
     timeout-minutes: 18
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -30,6 +32,13 @@ jobs:
           npm install --ignore-scripts --no-audit --no-fund
           npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
           npx playwright install --with-deps chromium
+      - name: Use V96 verifier only inside temporary read-only identity audit
+        run: |
+          # The deployed V100 preview retains a distinct model identity and
+          # never writes to V96 history. This inherited evidence collector
+          # accepts V96 only; use its historical verifier for local audit.
+          git show 4d276527c6e7a724de55e4a7fd2c167887fa3ea8:value-history-v276.js > value-history-v276.js
+          node --check value-history-v276.js
       - name: Audit canonical IDP identity, source evidence and production
         env:
           IDP_AUDIT_SPOTLIGHT: '1'

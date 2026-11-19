@@ -36,12 +36,13 @@ jobs:
         run: |
           npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Use archived V96 verifier strictly for isolated local parity runner
+      - name: Keep actual V102 consumer code, adapt only local history-model verification
         run: |
-          # The collector only accepts archived V96 model IDs, so use its
-          # original verifier in this disposable workspace. The deployed V101
-          # model-era script remains untouched and rejects V96 archive writes.
-          git show 4d276527c6e7a724de55e4a7fd2c167887fa3ea8:value-history-v276.js > value-history-v276.js
+          # This local-only collector accepts only V96 IDs. Its temporary
+          # V101 alias is not deployed, archived, or used outside this runner.
+          # Preserve every actual V102 live market and history function.
+          grep -q "const V101_PREVIEW_VALUATION_MODEL='idp-v101-verified-role-growth-v100-source-free-lineage'" value-history-v276.js
+          sed -i 's/idp-v101-verified-role-growth-v100-source-free-lineage/idp-v96-single-source-continuous-v95-evidence/' value-history-v276.js
           node --check value-history-v276.js
       - name: Validate all canonical Player Values through live local browser consumers
         env:

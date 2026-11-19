@@ -52,7 +52,7 @@ test('short scoring sample, missing qualified seasons or flat production do not 
  ])assert.equal(check({},a).verified,false);
 });
 test('unsupported age and career stage cannot qualify',()=>{
- for(const player of [{age:30},{years_exp:5},{age:null},{years_exp:null}]
+ for(const player of [{age:30},{years_exp:5},{age:null},{years_exp:null}])
   assert.equal(check({player}).verified,false);
 });
 test('missing consensus contribution stays zero and unchanged source-free ceiling remains 700',()=>{

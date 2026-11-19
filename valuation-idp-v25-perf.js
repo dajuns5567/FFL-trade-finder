@@ -58,8 +58,13 @@ function historyMetrics25(a,id){
    return row.stats&&typeof row.stats==='object'?row.stats:row;};
   const now=statsFor(current.season),was=statsFor(prior.season);
   const snaps=Number(now.def_snp),past=Number(was.def_snp),team=Number(now.tm_def_snp);
+  // V101 offline research: a previous 8+ game role with 100+ verified
+  // defensive snaps is meaningful evidence of low initial opportunity.
+  // The previous 200-snap threshold excluded genuine second-year
+  // progressions despite verified 250+ current snaps and team participation.
+  // Never infer historical team snaps, role, or future production.
   if(!Number.isFinite(snaps)||!Number.isFinite(past)||!Number.isFinite(team)
-   ||snaps<250||past<200||team<snaps)return baseShare;
+   ||snaps<250||past<100||team<snaps)return baseShare;
   const priorRate=past/Number(prior.games),nowRate=snaps/currentGames;
   const snapGain=priorRate>0?nowRate/priorRate-1:0;
   const ppgGain=Number(current.ppg)-Number(prior.ppg);

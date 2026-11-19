@@ -86,3 +86,11 @@ test('Player Values/Value History consume committed model events, never archive 
  assert.match(history,/The teal marker is live and is not saved as history/);
  assert.match(history,/historicalPlayerValue\(side,asset\.id\)/);
 });
+
+test('refresh cannot claim new consensus/Player Values currency without a complete shared model',()=>{
+ const refresh=readFileSync('nonblocking-consensus-v277.js','utf8');
+ assert.match(refresh,/rebuilt=window\.modeledPlayerValuesV319\?\.refresh\?\.\(true\)===true/);
+ assert.match(refresh,/return rebuilt&&window\.modeledPlayerValuesV319\?\.ready===true/);
+ assert.match(refresh,/if\(!refreshDerivedValuation277\('consensus refresh'\)\)/);
+ assert.match(refresh,/Canonical Player Values not ready after consensus refresh/);
+});

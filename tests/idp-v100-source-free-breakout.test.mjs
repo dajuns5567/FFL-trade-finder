@@ -68,7 +68,7 @@ test('unsupported age and career stage cannot qualify',()=>{
 });
 test('missing consensus contribution stays zero and unchanged source-free ceiling remains 700',()=>{
  assert.match(source,/const fullEvidenceRaw=\.45\*effectiveScoringValue\+\.35\*ctx\.value/);
- assert.match(source,/value:Math\.min\(700,Math\.round\(originalBlend\.value\*1\.25\)/);
+ assert.match(source,/value:Math\.min\(700,Math\.round\(originalBlend\.value\*1\.10\)/);
  assert.match(source,/const sourceFree=!\(Number\.isFinite\(c\)&&c>0\)/);
  assert.match(source,/sourceFree&&!noQualifiedScoring/);
 });

@@ -232,8 +232,10 @@ test('single unattributed observation after a known model has no manufactured ma
  assert.equal(data.marketRows.find(x=>x.id==='11667').deltaAll,null);
 });
  
-test('market intelligence comparisons stay inside the latest annotated valuation era',()=>{
- const fn=section('function marketInsightsFromSnapshots(snaps){','async function getMarketInsights(s){');
+test('market intelligence retains all verified movements but keeps era-sensitive records isolated',()=>{
+ // Include both actual helper and public entrypoint in this extracted VM suite.
+ const fn=section('function verifiedMarketIntelligenceMovement(allSnapshots,days,recorded){',
+  'async function getMarketInsights(s){');
  const captured=[];
  context.marketInsightWindow=(snapshots,label)=>snapshots;
  context.marketInsightRange=(snapshots,label)=>{
@@ -241,7 +243,7 @@ test('market intelligence comparisons stay inside the latest annotated valuation
   return{label,available:snapshots.length>=2,position_indexes:[],new_highs:[],new_lows:[],volatility:[],
    snapshot_count:snapshots.length};
  };
- vm.runInContext(fn,context,{filename:'canonical-market-intelligence-v90.js'});
+ vm.runInContext(fn,context,{filename:'canonical-market-intelligence-v105.js'});
  const rows=[
   snap('2026-11-01T00:00:00Z',400,2000),
   snap('2026-11-03T00:00:00Z',410,2030),
@@ -250,11 +252,16 @@ test('market intelligence comparisons stay inside the latest annotated valuation
  ];
  const result=context.marketInsightsFromSnapshots(rows);
  assert.equal(result.snapshot_count,4,'archival count is preserved');
- assert.equal(result.comparable_snapshot_count,2,'the model-era subset drives insights');
+ assert.equal(result.comparable_snapshot_count,2,'latest era separately governs record and volatility baselines');
  assert.equal(result.valuation_model,model);
  assert.equal(result.model_change_at,rows[2].t);
  assert.equal(result.ranges.ALL.snapshot_count,2);
- assert(captured.every(x=>x.n===2),'market insights must not mix valuation-model baselines');
+ assert(captured.every(x=>x.n===2),'records must never compare prices from different valuation models');
+ const idp=result.ranges.ALL.player_changes.find(x=>x.id==='11667');
+ assert.equal(idp.delta,40,'real +10 and +30 are retained, but the artificial +490 model jump is excluded');
+ assert.equal(idp.comparable_segments,2);
+ assert.equal(idp.from_value,null,'do not imply a comparable historical price spanning two models');
+ assert.equal(result.ranges.ALL.movement_basis,'sum-of-recorded-same-model-movements');
 });
 
 test('team net and weekly movement retain real history and avoid cross-model deltas',()=>{

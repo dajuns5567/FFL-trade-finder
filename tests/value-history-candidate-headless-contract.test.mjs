@@ -74,3 +74,11 @@ test('V106 headless capture proves all displayed and engine prices come from Pla
  ])assert.match(scheduled,pattern);
  assert.match(scheduled,/if\(!captured\.consumerReady\|\|captured\.valueParityMismatches\?\.length\)throw/);
 });
+
+test('V106 durable archive refuses read-only V101 candidate even if accidentally passed as scheduled file',()=>{
+ const archive=readFileSync(new URL('../scripts/archive-value-history.mjs',import.meta.url),'utf8');
+ assert.match(archive,/snap\?\.provenance\?\.candidate_read_only===true/);
+ assert.match(archive,/snap\?\.valuation_model\|\|''\)!=='idp-v96-single-source-continuous-v95-evidence'/);
+ assert.match(archive,/VALUE_HISTORY_MODEL_GUARD/);
+ assert.match(archive,/throw new Error\('VALUE_HISTORY_MODEL_GUARD/);
+});

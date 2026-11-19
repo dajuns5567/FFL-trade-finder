@@ -9,6 +9,9 @@ on:
       - 'modeled-player-values-v319.js'
       - 'netlify/functions/consensus-composite-v3.mjs'
       - 'tests/idp-valuation-refresh-contract.test.mjs'
+      - 'tests/model-v319-metadata-boot-guard.test.mjs'
+      - 'tests/league-startup-metadata-guard.test.mjs'
+      - 'index.html'
       - 'scripts/import-sleeper-history.mjs'
       - 'scripts/audit-qualified-player-games.mjs'
       - 'scripts/audit-idp-sleeper-identity.mjs'
@@ -77,6 +80,10 @@ jobs:
         run: node --test tests/idp-week1-weighting.test.mjs
       - name: IDP weekly refresh and rank-stability contract
         run: node --test tests/idp-valuation-refresh-contract.test.mjs
+      - name: Model V319 metadata readiness and cold-start stability
+        run: node --test tests/model-v319-metadata-boot-guard.test.mjs
+      - name: League stage rendering waits for player metadata
+        run: node --test tests/league-startup-metadata-guard.test.mjs
       - name: Scoring pipeline syntax
         run: |
           node --check scripts/import-sleeper-history.mjs

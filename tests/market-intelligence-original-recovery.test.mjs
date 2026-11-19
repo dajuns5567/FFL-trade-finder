@@ -89,7 +89,7 @@ test('the authentic UI and API, not fabricated watchlists, are used by the Marke
  assert.match(ui,/data-vh-volatility-pool/);
  assert.match(backend,/market_insights/);
  assert.match(backend,/marketInsightsFromSnapshots\(snaps\)/);
- assert.match(site,/value-history-v276\.js\?v=541/);
+ assert.match(site,/value-history-v276\.js\?v=20261118-v96-idp-single-source/);
  assert.doesNotMatch(site,/market-dashboard-analytics-v528/);
 });
 
@@ -211,4 +211,82 @@ test('Buy/Sell View All features every qualified offensive player ahead of IDP, 
   assert.match(modal,/if\(marketOpportunityPosition==='ALL'\)/);
   assert.match(modal,/else\{\s*rows=candidates\.map\(opportunityRow\)/);
   assert.match(source,/\.vh-opportunity-idp-details summary/);
+});
+
+test('V105: 7D market movements survive a model change and ignore repricing itself',()=>{
+ const date=d=>'2026-11-'+String(d).padStart(2,'0')+'T12:00:00Z';
+ const make=(value,model,d)=>({t:date(d),valuation_model:model,rows:[
+  {id:'qb',pos:'QB',value,overall:5,posRank:2},
+  {id:'rb',pos:'RB',value:model==='model-v1'?90:900,overall:80,posRank:3}
+ ]});
+ const history=[
+  make(100,'model-v1',10),make(115,'model-v1',12),make(125,'model-v1',14),
+  make(900,'model-v2',15),make(920,'model-v2',16),make(930,'model-v2',17)
+ ];
+ const source=JSON.stringify(history);
+ const result=marketInsightsFromSnapshots(history);
+ const week=result.ranges['7D'];
+ assert.equal(result.available,true);
+ assert.equal(week.movement_basis,'sum-of-recorded-same-model-movements');
+ const q=week.player_changes.find(x=>x.id==='qb');
+ assert.equal(q.delta,55,'count real +25 and +30, never the +775 model jump');
+ assert.equal(q.comparable_segments,2);
+ assert.ok(q.pct>28&&q.pct<29,'count verified relative percentages within each model');
+ assert.equal(q.from_value,null,'do not invent a cross-model price baseline');
+ assert.equal(week.position_indexes.find(x=>x.pos==='QB').count,1);
+ assert.ok(week.position_indexes.find(x=>x.pos==='QB').index>125,
+   'position index must reflect real movement despite current model taking over');
+ assert.equal(result.ranges.ALL.player_changes.find(x=>x.id==='qb').delta,55);
+ assert.equal(JSON.stringify(history),source,'pure read-only analysis');
+});
+test('V105: a single recent-model snapshot does not erase last-week historical movements',()=>{
+ const date=d=>'2026-11-'+String(d).padStart(2,'0')+'T12:00:00Z';
+ const snap=(d,value,model)=>({t:date(d),valuation_model:model,
+   rows:[{id:'wr',pos:'WR',overall:31,posRank:11,value}]});
+ const history=[snap(12,500,'model-v1'),snap(14,550,'model-v1'),snap(17,600,'model-v1'),
+   snap(18,1200,'model-v2')];
+ const result=marketInsightsFromSnapshots(history),week=result.ranges['7D'];
+ assert.equal(result.comparable_snapshot_count,1);
+ assert.equal(result.available,true);
+ assert.equal(week.player_changes.find(x=>x.id==='wr').delta,100);
+ assert.equal(week.player_changes.find(x=>x.id==='wr').comparable_segments,1);
+ assert.equal(week.position_indexes.find(x=>x.pos==='WR').index,120);
+ assert.equal(week.position_indexes.find(x=>x.pos==='WR').count,1);
+ assert.equal(week.new_highs.length,0,'never invent a new historical high across a model jump');
+});
+test('V105: no genuine in-era comparison produces no fabricated market gain',()=>{
+ const snaps=[
+  {t:'2026-11-15T12:00:00Z',valuation_model:'model-v1',rows:[{id:'qb',pos:'QB',value:100,overall:3}]},
+  {t:'2026-11-16T12:00:00Z',valuation_model:'model-v2',rows:[{id:'qb',pos:'QB',value:250,overall:3}]}
+ ];
+ const x=marketInsightsFromSnapshots(snaps);
+ assert.equal(x.available,true);
+ assert.equal(x.ranges['7D'].player_changes.length,0);
+ assert.equal(x.ranges['7D'].position_indexes[0].index,null);
+ assert.equal(x.ranges['7D'].position_indexes[0].change_pct,null);
+});
+
+test('V105 heat map reports verified gross movement when signed changes cancel',()=>{
+ const ui=readFileSync(new URL('../value-history-v276.js',import.meta.url),'utf8');
+ const begin=ui.indexOf('function marketHeatMapMarkup(){');
+ const end=ui.indexOf('function openHeatMapModal(',begin);
+ assert.ok(begin>0&&end>begin);
+ const ctx={
+  intelRange:()=>({player_changes:[
+   {id:'qb1',pos:'QB',overall:1,pct:10},
+   {id:'qb2',pos:'QB',overall:2,pct:-10}
+  ]}),
+  intelPeriodLabel:()=> '7D',
+  deltaClass:x=>x===0?'vh-neutral':x>0?'vh-up':'vh-down',
+  signedPct:x=>(x>=0?'+':'')+x.toFixed(1)+'%',
+  esc:x=>String(x),
+  Number,Math,Array,String
+ };
+ vm.createContext(ctx);
+ vm.runInContext(ui.slice(begin,end),ctx);
+ const html=ctx.marketHeatMapMarkup();
+ assert.match(html,/0\.0%/,'net average is zero');
+ assert.match(html,/Avg absolute 10\.0%/,'real opposing movement is not hidden');
+ assert.match(html,/2 players • 50% rising/);
+ assert.doesNotMatch(html,/NaN%/);
 });

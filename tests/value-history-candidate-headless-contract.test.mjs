@@ -1,0 +1,84 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const scheduled=readFileSync(new URL('../scripts/value-history-headless-refresh.mjs',import.meta.url),'utf8');
+const workflow=readFileSync(new URL('../.github/workflows/value-history-headless-refresh.yml',import.meta.url),'utf8');
+const candidateWorkflow=readFileSync(new URL('../.github/workflows/value-history-candidate-headless-acceptance.yml',import.meta.url),'utf8');
+const due=readFileSync(new URL('../scripts/value-history-scheduled-due.mjs',import.meta.url),'utf8');
+
+test('scheduled collector captures exactly the current verified dynasty valuation model',()=>{
+  assert.match(scheduled,/acceptedValuationModel/);
+  assert.match(scheduled,/verifyValueHistoryModelV95/);
+  assert.match(scheduled,/valuation_model:valuationModel/);
+  assert.match(scheduled,/sourceManifest/);
+  assert.match(scheduled,/valueParityMismatches/);
+  assert.match(scheduled,/consumerReady/);
+  assert.match(scheduled,/rows\.length<700/);
+});
+
+test('candidate CI exercises the real local browser and never writes durable archives',()=>{
+  assert.match(candidateWorkflow,/value-history-headless-refresh\.mjs/);
+  assert.match(candidateWorkflow,/VALUE_HISTORY_SNAPSHOT_FILE: \.tmp\/value-history-candidate-only\.json/);
+  assert.match(candidateWorkflow,/consensus_sources/);
+  assert.match(candidateWorkflow,/canonical_parity/);
+  assert.match(candidateWorkflow,/permissions:\s*\n  contents: read/);
+  assert.doesNotMatch(candidateWorkflow,/^\s*run:\s*node scripts\/archive-value-history\.mjs/m);
+  assert.doesNotMatch(candidateWorkflow,/NETLIFY_(?:AUTH|BLOBS|SANDBOX)/);
+  assert.doesNotMatch(candidateWorkflow,/secrets\./);
+});
+
+test('production schedule uses durable GitHub history and runs the archive only on verified completion',()=>{
+  assert.match(workflow,/cron: '17 \* \* \* \*'/);
+  assert.match(workflow,/cron: '47 \* \* \* \*'/);
+  assert.match(workflow,/VALUE_HISTORY_STALE_MINUTES: '240'/);
+  assert.match(workflow,/value-history-scheduled-due\.mjs/);
+  assert.match(workflow,/value-history-headless-refresh\.mjs/);
+  assert.match(workflow,/archive-value-history\.mjs/);
+  assert.match(due,/source\|\|''\)==='scheduled'/);
+});
+
+test('V106 headless candidate uses actual verified V101 prices and never forges V96 history',()=>{
+ const v101='idp-v101-verified-role-growth-v100-source-free-lineage';
+ const v96='idp-v96-single-source-continuous-v95-evidence';
+ assert.match(scheduled,/const V96_MODEL='idp-v96-single-source-continuous-v95-evidence'/);
+ assert.match(scheduled,/const V101_MODEL='idp-v101-verified-role-growth-v100-source-free-lineage'/);
+ assert.match(scheduled,/VALUE_HISTORY_READ_ONLY_CANDIDATE/);
+ assert.match(scheduled,/candidateModel!==V101_MODEL/);
+ assert.match(scheduled,/process\.env\.GITHUB_EVENT_NAME==='schedule'/);
+ assert.match(scheduled,/return model===V96_MODEL\?V96_MODEL:null/);
+ assert.match(scheduled,/return model===candidateModel\?candidateModel:null/);
+ assert.match(scheduled,/candidate_read_only:candidateModel\?true:undefined/);
+ assert.match(candidateWorkflow,/VALUE_HISTORY_CANDIDATE_MODEL: 'idp-v101-verified-role-growth-v100-source-free-lineage'/);
+ assert.match(candidateWorkflow,/VALUE_HISTORY_READ_ONLY_CANDIDATE: '1'/);
+ assert.match(candidateWorkflow,/assert\.equal\(s\.valuation_model,'idp-v101-verified-role-growth-v100-source-free-lineage'\)/);
+ assert.match(candidateWorkflow,/assert\.equal\(s\.provenance\?\.candidate_read_only,true\)/);
+ assert.doesNotMatch(candidateWorkflow,/sed -i/,'never counterfeit V101 as V96');
+ assert.doesNotMatch(candidateWorkflow,/secrets\./);
+ assert.doesNotMatch(candidateWorkflow,/archive-value-history\.mjs.*run:/);
+ assert.notEqual(v101,v96);
+});
+
+test('V106 headless capture proves all displayed and engine prices come from Player Values',()=>{
+ for(const pattern of [
+  /window\.tradeValueNormalizationV139/,
+  /window\.baseValue/,
+  /window\.packageValue/,
+  /modeled\?\.snapshot\?\.\(\)/,
+  /tradeHistory\.hindsight/,
+  /tradeHistory\.currentEvaluator/,
+  /playerValues\.homeTopPlayers/,
+  /valueParityMismatches/,
+  /consumerReady/,
+  /modeledVersion===second\.modeledVersion/,
+  /canonical_parity:'exact'/
+ ])assert.match(scheduled,pattern);
+ assert.match(scheduled,/if\(!captured\.consumerReady\|\|captured\.valueParityMismatches\?\.length\)throw/);
+});
+
+test('V106 durable archive refuses read-only V101 candidate even if accidentally passed as scheduled file',()=>{
+ const archive=readFileSync(new URL('../scripts/archive-value-history.mjs',import.meta.url),'utf8');
+ assert.match(archive,/snap\?\.provenance\?\.candidate_read_only===true/);
+ assert.match(archive,/snap\?\.valuation_model\|\|''\)!=='idp-v96-single-source-continuous-v95-evidence'/);
+ assert.match(archive,/VALUE_HISTORY_MODEL_GUARD/);
+ assert.match(archive,/throw new Error\('VALUE_HISTORY_MODEL_GUARD/);
+});

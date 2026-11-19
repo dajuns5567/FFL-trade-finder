@@ -1,6 +1,7 @@
 import { getStore } from '@netlify/blobs';
 import { readFileSync } from 'node:fs';
 import { emptyMonthBundle, parseMonthBundleText } from './value-history-archive-utils.mjs';
+import { inspectShortTermSnapback } from './value-history-snapshot-integrity.mjs';
 import { readSnapshotInventory } from './archive-blob-inventory.mjs';
 const token=process.env.GITHUB_TOKEN;
 const repository=process.env.GITHUB_REPOSITORY||'dajuns5567/FFL-trade-finder';
@@ -94,12 +95,39 @@ async function snapshotsFromHttpExport(){
 let payload;
 if(scheduledSnapshotFile){
   const snap=JSON.parse(readFileSync(scheduledSnapshotFile,'utf8'));
+  // V106: a research-only V101 capture must NEVER reach the durable history
+  // archive under the older V96 era. Refuse explicitly, do not silently skip.
+  if(snap?.provenance?.candidate_read_only===true||
+     String(snap?.valuation_model||'')!=='idp-v96-single-source-continuous-v95-evidence')
+    throw new Error('VALUE_HISTORY_MODEL_GUARD: scheduled archive rejects unapproved or read-only candidate valuation model');
   payload={schema_version:1,league_id:'1316867686394769408',source:'scheduled-local-browser',snapshot_count:1,snapshots:[snap]};
 }else payload=await snapshotsFromBlobStore()||await snapshotsFromHttpExport();
 const incoming=(payload.snapshots||[]).filter(validSnapshot).filter(s=>!existing.has(String(s.t))).sort((a,b)=>String(a.t).localeCompare(String(b.t)));
 if(!incoming.length){
   console.log(`No new Value History snapshots to archive. Source=${payload.source||'unknown'} source_count=${Number(payload.snapshot_count)||0} archive_count=${(index.items||[]).length}.`);
   process.exit(0)
+}
+
+// Check immutable, already-archived evidence before writing any new point.
+// A correlated snapback across several players within hours is more likely an
+// incomplete/transient publisher refresh than meaningful dynasty consensus.
+// Do NOT average, rewrite, delete, or invent any individual historical value.
+// Refuse this unverified batch and allow the next scheduled refresh to retry.
+const recentlyIndexed=(index.items||[]).filter(x=>x?.path).slice().sort((a,b)=>String(a.t).localeCompare(String(b.t))).slice(-2);
+const confirmed=[];
+for(const item of recentlyIndexed){
+ const record=await readFile(item.path);
+ if(record?.content)try{const parsed=JSON.parse(record.content);if(validSnapshot(parsed))confirmed.push(parsed)}catch{}
+}
+for(const snap of incoming){
+ if(confirmed.length>=2){
+  const check=inspectShortTermSnapback(confirmed.at(-2),confirmed.at(-1),snap);
+  if(!check.ok)
+   throw new Error('VALUE_HISTORY_COHORT_SNAPBACK: Refusing unverified scheduled batch '+snap.t+
+    '; '+check.affected+'/'+check.comparable+' players reversed >=75 in <=18h, threshold='+
+    check.threshold+'; preserving immutable archive and retrying on next schedule. Examples='+JSON.stringify(check.examples));
+ }
+ confirmed.push(snap);
 }
 
 const monthGroups=new Map();

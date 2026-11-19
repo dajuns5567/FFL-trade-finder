@@ -1,0 +1,29 @@
+name: IDP V75 verified sample preview integrity (draft)
+on:
+  pull_request:
+    paths:
+      - 'valuation-idp-v25-perf.js'
+      - 'tests/idp-v75-scoring-bucket.test.mjs'
+      - 'scripts/verify-idp-v75-preview-exact.mjs'
+      - '.github/workflows/idp-v75-preview-exact.yml'
+permissions:
+  contents: read
+jobs:
+  preview-source:
+    if: github.event.pull_request.number == 466
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify IDP production/consensus model constraints and full-precision value
+        run: |
+          node --check valuation-idp-v25-perf.js
+          node --test tests/idp-v75-scoring-bucket.test.mjs tests/idp-20-45-35-calibration.test.mjs tests/idp-v72-source-retention.test.mjs
+          node scripts/v311-pipeline-identity-v319-smoke.cjs
+          node scripts/v319-values-v311-integration-smoke.cjs
+          node --test tests/combined-valuation-history-contract.test.mjs
+      - name: Read-only V75 exact source verification on PR 466 preview
+        run: node scripts/verify-idp-v75-preview-exact.mjs

@@ -306,7 +306,12 @@ const originalBlend=blend25(c,effectiveScoringValue,ctx.value);
 const fullEvidenceRaw=.45*effectiveScoringValue+.35*ctx.value;
 const blend=breakoutEvidence.verified
   ?{...originalBlend,
-    value:Math.min(700,Math.max(originalBlend.value,Math.round(fullEvidenceRaw))),
+    // A missing market source is still uncertainty. Protect the established
+    // rank-based canonical curve from abrupt leaps even when the available
+    // scoring/context evidence is convincing. Apply the lower of full
+    // observed-evidence math and 25% of the prior source-free model value.
+    value:Math.min(700,Math.round(originalBlend.value*1.25),
+      Math.max(originalBlend.value,Math.round(fullEvidenceRaw))),
     raw:fullEvidenceRaw}
   :originalBlend;
  return{...z,value:blend.value,consensus:Number.isFinite(c)&&c>0?Math.round(c):z.consensus,context:Math.round(ctx.value),production:{...score,leagueContext:ctx,idpV25MarketCenterOffset:IDP_V25_MARKET_CENTER_OFFSET,idpV25RawBlend:blend.raw,idpUnverifiedNoConsensusFallbackV73:unverifiedFallback,idpEffectiveFallbackScoringV73:effectiveScoringValue,idpNoQualifiedSleeperScoringV95:noQualifiedScoring,

@@ -254,7 +254,7 @@ function addStyles(){
   #valueHistory .vh-heat-grid{display:grid;grid-template-columns:minmax(76px,.36fr) repeat(4,minmax(110px,1fr));gap:6px;min-width:590px;width:100%;margin-top:9px}
   #valueHistory .vh-heat-head,#valueHistory .vh-heat-label,#valueHistory .vh-heat-cell{padding:11px 7px;border-radius:9px;border:1px solid var(--line);min-width:0;box-sizing:border-box}
   #valueHistory .vh-heat-head,#valueHistory .vh-heat-label{display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;font-weight:950;letter-spacing:.055em;text-transform:uppercase;background:color-mix(in srgb,var(--card) 86%,#090b10)}
-  #valueHistory button.vh-heat-cell{width:100%;min-height:64px;margin:0!important;display:flex!important;flex-direction:column;align-items:center;justify-content:center;text-align:center!important;font-size:14px!important;line-height:1.1;font-weight:950!important;color:inherit!important;background:color-mix(in srgb,var(--card) 88%,#090b10)!important;box-shadow:none!important;cursor:pointer}
+  #valueHistory button.vh-heat-cell{width:100%;min-height:76px;margin:0!important;display:flex!important;flex-direction:column;align-items:center;justify-content:center;text-align:center!important;font-size:14px!important;line-height:1.1;font-weight:950!important;color:inherit!important;background:color-mix(in srgb,var(--card) 88%,#090b10)!important;box-shadow:none!important;cursor:pointer}
   #valueHistory button.vh-heat-cell small{display:block;margin-top:6px;color:var(--muted);font-size:10px;font-weight:800}
   #valueHistory button.vh-heat-cell.vh-up{background:color-mix(in srgb,var(--good,#1f9d68) 13%,var(--card))!important}
   #valueHistory button.vh-heat-cell.vh-down{background:color-mix(in srgb,var(--bad,#c45151) 13%,var(--card))!important}
@@ -1598,14 +1598,16 @@ function marketHeatMapMarkup(){
     cells.push(`<div class="vh-heat-label">${pos}</div>`);
     for(const [label,min,max] of buckets){
       const sample=changes.filter(r=>String(r.pos)===pos&&Number(r.overall)>=min&&Number(r.overall)<=max&&Number.isFinite(Number(r.pct))).map(r=>Number(r.pct)),
-        avg=sample.length?sample.reduce((a,b)=>a+b,0)/sample.length:null,rising=sample.filter(v=>v>0).length,breadth=sample.length?Math.round(rising/sample.length*100):null;
+        avg=sample.length?sample.reduce((a,b)=>a+b,0)/sample.length:null,
+        avgAbs=sample.length?sample.reduce((a,b)=>a+Math.abs(b),0)/sample.length:null,
+        rising=sample.filter(v=>v>0).length,breadth=sample.length?Math.round(rising/sample.length*100):null;
       // Avoid misleading -0.0% and +0.0% labels after rounding. Modal
       // retains each player's original, unrounded recorded price movement.
       const shownAvg=avg!=null&&Math.abs(avg)<.05?0:avg;
-      cells.push(`<button type="button" class="vh-heat-cell ${deltaClass(shownAvg)}" data-vh-heat-pos="${pos}" data-vh-heat-min="${min}" data-vh-heat-max="${Number.isFinite(max)?max:'INF'}" aria-label="View ${pos} ${label} players">${avg==null?'—':shownAvg===0?'0.0%':signedPct(shownAvg)}<small>${sample.length} players • ${breadth==null?'—':breadth+'%'} rising • view ↗</small></button>`);
+      cells.push(`<button type="button" class="vh-heat-cell ${deltaClass(shownAvg)}" data-vh-heat-pos="${pos}" data-vh-heat-min="${min}" data-vh-heat-max="${Number.isFinite(max)?max:'INF'}" aria-label="View ${pos} ${label} players">${avg==null?'—':shownAvg===0?'0.0%':signedPct(shownAvg)}<small>${sample.length} players • ${breadth==null?'—':breadth+'%'} rising</small><small>${avgAbs==null?'No measured movement':'Avg absolute '+avgAbs.toFixed(1)+'%'} • view ↗</small></button>`);
     }
   }
-  return`<div class="vh-card"><div class="vh-sub">Average verified player-value movement by position and current overall-rank band • ${esc(intelPeriodLabel())}. Changes within each valuation era are counted; model-change repricing is not. Each cell also shows the share of players rising.</div><div class="vh-heat-wrap"><div class="vh-heat-grid">${cells.join('')}</div></div></div>`;
+  return`<div class="vh-card"><div class="vh-sub">Average verified player-value movement by position and current overall-rank band • ${esc(intelPeriodLabel())}. Changes within each valuation era are counted; model-change repricing is not. Each cell also shows average absolute movement and the share of players rising, so gains and losses cannot hide activity by canceling.</div><div class="vh-heat-wrap"><div class="vh-heat-grid">${cells.join('')}</div></div></div>`;
 }
 function openHeatMapModal(pos,min,max){
   closeMoverModal();

@@ -51,7 +51,7 @@ test('Value History plot is visually sparse but every snapshot has exact tooltip
   assert.equal(data.points[111].value,ctx.fmt(pts[111].value));
   assert.equal(data.points[111].overall,pts[111].overall);
   assert.equal(data.points[111].posRank,pts[111].posRank);
-  assert.equal((html.match(/class="vh-point-dot"/g)||[]).length,2);
+  assert.equal((html.match(/class="vh-point-dot"/g)||[]).length,0,'archived value chart has no extra endpoint dot');
   assert.equal((html.match(/class="vh-point-hit"/g)||[]).length,0);
   assert.match(html,/class="vh-plot-hit"/);
   assert.match(html,/Use arrow keys when focused/);
@@ -143,14 +143,15 @@ test('V96 no smoothing across model eras, sustained changes or sparse observatio
  assert.deepEqual(Array.from(ctx.chartVisualSeries(sparse,'value')),sparse.map(x=>x.value));
 });
 
-test('V97 chart distinguishes live Player Values marker from immutable recorded history',()=>{
+test('V103 chart shows current Player Values above an uncluttered archival chart',()=>{
  const plot=ctx.valueChart('test',pts);
- assert.match(plot,/Live Player Values 4,700/);
- assert.match(plot,/latest recorded snapshot/);
- assert.match(plot,/vh-current-live-point/);
+ assert.match(plot,/Current Player Value<\/span><strong class="vh-current-price-number">4,700/);
+ assert.match(plot,/Last recorded <b>/);
+ assert.doesNotMatch(plot,/vh-current-live-point|LIVE 4,700/);
+ assert.doesNotMatch(plot,/vh-point-dot/,'no separate dot at historical endpoint');
  assert.match(plot,/not saved as history/);
  const snapshot=decodeSeries(plot);
  assert.equal(snapshot.points.length,pts.length);
  assert.equal(snapshot.points.at(-1).value,ctx.fmt(pts.at(-1).value));
- assert.notEqual(snapshot.points.at(-1).value,'4,700','live marker must not become fabricated historical point');
+ assert.notEqual(snapshot.points.at(-1).value,'4,700'undefined);
 });

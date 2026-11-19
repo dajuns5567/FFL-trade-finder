@@ -83,7 +83,8 @@ test('Player Values/Value History consume committed model events, never archive 
  assert.match(history,/liveMarketVersionV102/);
  assert.match(history,/row\.liveCurrentV97===true\?row\.recordedValue:row\.value/);
  assert.match(ui,/window\.addEventListener\('fll:canonical-values-ready'/);
- assert.match(history,/The teal marker is live and is not saved as history/);
+ assert.match(history,/Today's Player Values price is shown above and is not saved as history/);
+ assert.doesNotMatch(history,/vh-current-live-point/);
  assert.match(history,/historicalPlayerValue\(side,asset\.id\)/);
 });
 

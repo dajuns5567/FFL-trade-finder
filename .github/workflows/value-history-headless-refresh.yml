@@ -22,6 +22,14 @@ concurrency:
   group: value-history-durable-write
   cancel-in-progress: false
 
+# No V101 activation is authorized in this draft. Even if this workflow
+# eventually lands on main, V96 remains the default until BOTH explicit
+# repository variables are set following release approval. No production
+# Netlify deploy is involved in the scheduled history workflow.
+env:
+  VALUE_HISTORY_SCHEDULED_MODEL: ${{ vars.FFL_HISTORY_SCHEDULED_MODEL || 'idp-v96-single-source-continuous-v95-evidence' }}
+  VALUE_HISTORY_V101_APPROVED: ${{ vars.FFL_HISTORY_V101_APPROVED || '0' }}
+
 jobs:
   refresh:
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
@@ -44,6 +52,9 @@ jobs:
         env:
           VALUE_HISTORY_DUE_MINUTES: '165'
           VALUE_HISTORY_STALE_MINUTES: '240'
+          # First explicitly approved V101 run is due immediately even when
+          # V96 has a fresh entry; subsequent runs use usual 165/240 minutes.
+          VALUE_HISTORY_EXPECTED_MODEL: ${{ vars.FFL_HISTORY_V101_APPROVED == '1' && vars.FFL_HISTORY_SCHEDULED_MODEL == 'idp-v101-verified-role-growth-v100-source-free-lineage' && 'idp-v101-verified-role-growth-v100-source-free-lineage' || '' }}
           FORCE_SCHEDULED_REFRESH: ${{ github.event_name == 'workflow_dispatch' && '1' || '0' }}
         run: node scripts/value-history-scheduled-due.mjs
 
@@ -62,6 +73,18 @@ jobs:
           npm install --ignore-scripts --no-audit --no-fund
           npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
           npx playwright install --with-deps chromium
+
+      - name: Validate requested model activation before any browser refresh
+        if: steps.due.outputs.due == 'true'
+        run: |
+          node --check scripts/value-history-headless-refresh.mjs
+          node --check scripts/archive-value-history.mjs
+          # V101 fails closed unless verified on main with a pinned audited
+          # source blob, seven publishers, Sleeper and canonical price parity.
+          if [ "$VALUE_HISTORY_SCHEDULED_MODEL" != 'idp-v96-single-source-continuous-v95-evidence' ] &&
+             [ "$VALUE_HISTORY_V101_APPROVED" != '1' ]; then
+            echo 'V101 scheduled writing not explicitly approved' >&2; exit 1
+          fi
 
       - name: Run current main locally and record scheduled observation
         if: steps.due.outputs.due == 'true'

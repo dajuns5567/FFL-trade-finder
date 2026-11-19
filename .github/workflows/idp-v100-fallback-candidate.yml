@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'scripts/candidates/valuation-idp-v25-perf-v100.js'
+      - 'scripts/candidates/valuation-idp-v25-perf-v101.js'
       - 'tests/idp-v100-source-free-breakout.test.mjs'
       - '.github/workflows/idp-v100-fallback-candidate.yml'
       - 'scripts/compare-idp-v100-fallback.mjs'
@@ -23,7 +24,7 @@ jobs:
       - name: Verify preview loads exactly the vetted candidate and V96 remains recoverable
         run: |
           git show 4d276527c6e7a724de55e4a7fd2c167887fa3ea8:valuation-idp-v25-perf.js > /tmp/accepted-v96.js
-          cmp scripts/candidates/valuation-idp-v25-perf-v100.js valuation-idp-v25-perf.js
+          cmp scripts/candidates/valuation-idp-v25-perf-v101.js valuation-idp-v25-perf.js
           ! cmp -s /tmp/accepted-v96.js valuation-idp-v25-perf.js
       - name: Test offline experimental source and missing-data guards
         run: |

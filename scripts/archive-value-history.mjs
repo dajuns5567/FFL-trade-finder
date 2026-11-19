@@ -95,6 +95,11 @@ async function snapshotsFromHttpExport(){
 let payload;
 if(scheduledSnapshotFile){
   const snap=JSON.parse(readFileSync(scheduledSnapshotFile,'utf8'));
+  // V106: a research-only V101 capture must NEVER reach the durable history
+  // archive under the older V96 era. Refuse explicitly, do not silently skip.
+  if(snap?.provenance?.candidate_read_only===true||
+     String(snap?.valuation_model||'')!=='idp-v96-single-source-continuous-v95-evidence')
+    throw new Error('VALUE_HISTORY_MODEL_GUARD: scheduled archive rejects unapproved or read-only candidate valuation model');
   payload={schema_version:1,league_id:'1316867686394769408',source:'scheduled-local-browser',snapshot_count:1,snapshots:[snap]};
 }else payload=await snapshotsFromBlobStore()||await snapshotsFromHttpExport();
 const incoming=(payload.snapshots||[]).filter(validSnapshot).filter(s=>!existing.has(String(s.t))).sort((a,b)=>String(a.t).localeCompare(String(b.t)));

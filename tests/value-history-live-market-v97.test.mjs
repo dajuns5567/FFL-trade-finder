@@ -85,7 +85,8 @@ test('Historical movement remains distinct from live display; model-era boundari
  assert.match(src,/market movement, historical records, and time-window changes are archived observations/i);
  assert.match(src,/marketCache=data\.market\|\|\{\}/,'server archived source kept intact');
  assert.match(src,/function chartEraChange\(a,b\)/);
- assert.match(src,/const liveMarker=live\.value>0/);
+ assert.match(src,/class="vh-current-price-summary"/);
+ assert.doesNotMatch(src,/const liveMarker=live\.value>0/);
  assert.match(src,/not saved as history/);
 });
 

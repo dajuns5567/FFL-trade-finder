@@ -155,3 +155,33 @@ test('V103 chart shows current Player Values above an uncluttered archival chart
  assert.equal(snapshot.points.at(-1).value,ctx.fmt(pts.at(-1).value));
  assert.notEqual(snapshot.points.at(-1).value,'4,700','current value must not become a fabricated archived point');
 });
+
+test('V104 keeps the last two new-model observations in hover, not a dangling SVG tail',()=>{
+ const rows=Array.from({length:18},(_,i)=>({
+  t:new Date(Date.UTC(2026,10,i+1)).toISOString(),
+  value:i<16?3200+i*8:5150+i,
+  pos:'IDP',posRank:15,overall:105,
+  valuation_model:i<16?'v96-recorded':'v101-recorded'
+ }));
+ const x=i=>74+20*i,y=v=>500-v/20;
+ const line=ctx.chartEraPath(rows,'value',220,x,y,true);
+ assert.equal((line.match(/M /g)||[]).length,1,'no detached short latest-era stroke');
+ const full=ctx.valueChart('test',rows);
+ const series=decodeSeries(full);
+ assert.equal(series.points.length,18,'all recorded observations remain inspectable');
+ assert.equal(series.points.at(-1).value,ctx.fmt(rows.at(-1).value));
+ assert.equal(series.points.at(-1).valuation_model,'v101-recorded');
+ assert.match(full,/2 newer-model snapshots are available by hover/);
+ assert.match(full,/not connected to the earlier valuation era/);
+});
+test('V104 aligns summary blocks and heat map without rewriting archived milestones',()=>{
+ assert.match(source,/vh-market-section-title\{display:grid;grid-template-columns:minmax\(0,1fr\)/);
+ assert.match(source,/vh-heat-grid\{display:grid;grid-template-columns:minmax\(76px,\.36fr\)/);
+ assert.match(source,/vh-refresh-callout\{position:relative;inset:auto/);
+ assert.match(source,/vh-value-chart\{position:relative;padding-top:0/);
+ assert.match(source,/const comparableEraStart=pts\.reduce/);
+ assert.match(source,/Current Era/);
+ assert.match(source,/highPoint=allPts\.find/);
+ assert.match(source,/lowPoint=allPts\.find/);
+ assert.match(source,/allPts\.length/);
+});

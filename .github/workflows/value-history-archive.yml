@@ -31,7 +31,7 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_SHA: ${{ github.sha }}
           VALUE_HISTORY_DEPLOY_BRANCH: main
-          VALUE_HISTORY_PRODUCTION_SITE_ID: '2e556797-6f35-4037-aa5a-1338724eb71d'
+          VALUE_HISTORY_PRODUCTION_SITE_ID: 'fa33dfe4-8293-441e-8da0-25cc66fc984c'
         run: node scripts/resolve-active-netlify-site.mjs
 
       - name: Report production commit drift and protect the archive

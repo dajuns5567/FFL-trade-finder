@@ -1,0 +1,32 @@
+name: V102 canonical live Player Values across consumers (draft)
+on:
+  pull_request:
+    paths:
+      - 'modeled-player-values-v319.js'
+      - 'nonblocking-consensus-v277.js'
+      - 'ui-player-values-v139.js'
+      - 'value-history-v276.js'
+      - 'tests/canonical-live-value-sync-v102.test.mjs'
+      - 'tests/value-history-live-market-v97.test.mjs'
+      - '.github/workflows/canonical-live-value-sync-v102.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  live-currency-parity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax validation
+        run: |
+          node --check modeled-player-values-v319.js
+          node --check nonblocking-consensus-v277.js
+          node --check ui-player-values-v139.js
+          node --check value-history-v276.js
+      - name: Current Player Values shared-currency and read-only history tests
+        run: |
+          node --test tests/canonical-live-value-sync-v102.test.mjs tests/value-history-live-market-v97.test.mjs tests/value-history-cross-consumer-parity.test.mjs tests/value-history-preview-isolation.test.mjs

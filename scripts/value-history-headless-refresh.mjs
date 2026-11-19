@@ -2,6 +2,7 @@ import { chromium } from 'playwright';
 import { createServer } from 'node:http';
 import { mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { extname, join, normalize } from 'node:path';
+import { createHash } from 'node:crypto';
 import siteV29 from '../netlify/functions/site-v29.mjs';
 import updateHandler from '../netlify/functions/update.mjs';
 import picksHandler from '../netlify/functions/picks.mjs';
@@ -12,6 +13,8 @@ const snapshotFile=process.env.VALUE_HISTORY_SNAPSHOT_FILE||'.tmp/value-history-
 // the triggering main workflow SHA for the model's source revision.
 const sourceCommit=String(process.env.VALUE_HISTORY_SOURCE_COMMIT||process.env.GITHUB_SHA||'').trim()||null;
 const SCHEDULED_VALUATION_CONTRACT='precision-idp-runtime-20260919';
+const V101_SCHEDULED_CONTRACT='precision-idp-runtime-v101-20261119';
+const V101_APPROVED_MODEL_BLOB='443c8497a95e793665fb78474feaee49bd57e88f';
 const V96_MODEL='idp-v96-single-source-continuous-v95-evidence';
 const V101_MODEL='idp-v101-verified-role-growth-v100-source-free-lineage';
 // V106 candidate: accept an actual V101 runtime only in an explicitly
@@ -23,11 +26,34 @@ if(candidateModel&&(
   process.env.VALUE_HISTORY_READ_ONLY_CANDIDATE!=='1'||
   process.env.GITHUB_EVENT_NAME==='schedule'
 ))throw Error('Refuse unapproved or potentially durable Value History candidate model');
+// This is a gated, never-default promotion. A draft PR cannot activate cron:
+// GitHub schedules run only the repository's default branch. Two explicit
+// repository-variable switches, a trusted main-branch event and the exact
+// full-population-audited V101 scoring source blob are required. Otherwise
+// existing V96 collection remains the sole durable schedule model.
+const requestedScheduledModel=String(process.env.VALUE_HISTORY_SCHEDULED_MODEL||'').trim()||V96_MODEL;
+const approvedScheduledModel=requestedScheduledModel===V101_MODEL&&
+  process.env.VALUE_HISTORY_V101_APPROVED==='1'&&
+  process.env.GITHUB_REF==='refs/heads/main'&&
+  ['schedule','workflow_run','workflow_dispatch'].includes(String(process.env.GITHUB_EVENT_NAME||''));
+if(![V96_MODEL,V101_MODEL].includes(requestedScheduledModel)||
+   requestedScheduledModel===V101_MODEL&&!approvedScheduledModel)
+  throw new Error('VALUE_HISTORY_PROMOTION_GUARD: unapproved scheduled model selection');
+if(approvedScheduledModel){
+ const source=readFileSync(join(process.cwd(),'valuation-idp-v25-perf.js'));
+ const blob=createHash('sha1').update('blob '+source.length+'\\0').update(source).digest('hex');
+ if(blob!==V101_APPROVED_MODEL_BLOB)
+  throw new Error('VALUE_HISTORY_PROMOTION_GUARD: V101 runtime differs from fully audited valuation source');
+ if(!/^[a-f0-9]{40}$/.test(String(sourceCommit||'')))
+  throw new Error('VALUE_HISTORY_PROMOTION_GUARD: no verifiable source revision');
+}
 const acceptedValuationModel=value=>{
  const model=String(value||'').trim();
  if(candidateModel)return model===candidateModel?candidateModel:null;
+ if(approvedScheduledModel)return model===V101_MODEL?V101_MODEL:null;
  return model===V96_MODEL?V96_MODEL:null;
 };
+const scheduledContract=approvedScheduledModel?V101_SCHEDULED_CONTRACT:SCHEDULED_VALUATION_CONTRACT;
 const league='1316867686394769408';
 
 function fingerprint(rows,picks=[],teams=[]){
@@ -68,7 +94,7 @@ async function valueHistory(req){
   const t=new Date().toISOString(),fp=fingerprint(rows,picks,teams);
   const valuationModel=acceptedValuationModel(payload.valuation_model);
   if(!valuationModel)return json({ok:false,error:'scheduled capture missing approved valuation-model evidence'},409);
-  const snap={version:5,league,t,fingerprint:fp,source:'scheduled',valuation_contract:SCHEDULED_VALUATION_CONTRACT,valuation_model:valuationModel,rows,picks,teams};
+  const snap={version:5,league,t,fingerprint:fp,source:'scheduled',valuation_contract:scheduledContract,valuation_model:valuationModel,rows,picks,teams};
   mkdirSync(join(process.cwd(),'.tmp'),{recursive:true});
   writeFileSync(snapshotFile,JSON.stringify(snap,null,2)+'\n');
   return json({ok:true,t,fingerprint:fp,source:'scheduled',count:rows.length});
@@ -442,7 +468,7 @@ try{
   }
 
   const t=new Date().toISOString(),fp=fingerprint(captured.rows,captured.picks,captured.teams);
-  const snap={version:5,league,t,fingerprint:fp,source:'scheduled',valuation_contract:SCHEDULED_VALUATION_CONTRACT,valuation_model:valuationModel,provenance:{git_commit:sourceCommit,modeled_version:captured.modeledVersion,consensus_sources:Number(readiness.consensusMarker?.successful)||0,source_manifest:captured.sourceManifest,canonical_parity:'exact',candidate_read_only:candidateModel?true:undefined},rows:captured.rows,picks:captured.picks,teams:captured.teams};
+  const snap={version:5,league,t,fingerprint:fp,source:'scheduled',valuation_contract:scheduledContract,valuation_model:valuationModel,provenance:{git_commit:sourceCommit,modeled_version:captured.modeledVersion,consensus_sources:Number(readiness.consensusMarker?.successful)||0,source_manifest:captured.sourceManifest,canonical_parity:'exact',candidate_read_only:candidateModel?true:undefined,model_blob_sha:approvedScheduledModel?V101_APPROVED_MODEL_BLOB:undefined},rows:captured.rows,picks:captured.picks,teams:captured.teams};
   mkdirSync(join(process.cwd(),'.tmp'),{recursive:true});
   writeFileSync(snapshotFile,JSON.stringify(snap,null,2)+'\n');
 

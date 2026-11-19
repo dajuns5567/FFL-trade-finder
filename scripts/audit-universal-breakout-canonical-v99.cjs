@@ -10,6 +10,8 @@ const {classifyBreakout,auditBreakoutPopulation}=require('./lib/dynasty-breakout
 const root=process.env.V99_SLEEPER_DIR||'.tmp/v99-sleeper';
 const reportFile=process.env.V99_REPORT_FILE||'.tmp/v99-breakout-report.json';
 const parse=(relative)=>JSON.parse(fs.readFileSync(path.join(root,relative),'utf8'));
+const sourceSha=String(process.env.V99_SLEEPER_SOURCE_SHA||'').trim();
+if(!/^[a-f0-9]{40}$/.test(sourceSha))throw Error('Require immutable canonical Sleeper source commit');
 const manifest=parse('manifest.json');
 const players=parse('players.json');
 const current=parse('2026/season-stats.json');
@@ -78,7 +80,8 @@ const highlights=rows.filter(r=>['12978'].includes(r.id)).map(r=>({
 }));
 const summary={
   contract:'V99 canonical Sleeper evidence screening; NO valuation or market consensus',
-  generatedAt:manifest.generatedAt,completedWeek:manifest.currentSeasonCompletedWeek,
+  generatedAt:manifest.generatedAt,sourceCommit:sourceSha,
+  completedWeek:manifest.currentSeasonCompletedWeek,
   scoredUniverse:rows.length,roles:Object.fromEntries(Object.entries(distributions).map(([k,v])=>[k,v.length])),
   candidates:population.candidates,byFamily:population.byFamily,
   consensusCoverage:'not available from Sleeper alone; cannot infer absence of dynasty coverage',
@@ -100,7 +103,8 @@ if(!highlights.length||highlights[0].currentGames<8)throw Error('Missing 2026 Po
 fs.mkdirSync(path.dirname(reportFile),{recursive:true});
 fs.writeFileSync(reportFile,JSON.stringify(summary,null,2)+'\n');
 console.log(JSON.stringify({contract:summary.contract,
-  generatedAt:summary.generatedAt,scoredUniverse:summary.scoredUniverse,
+  generatedAt:summary.generatedAt,sourceCommit:summary.sourceCommit,
+  scoredUniverse:summary.scoredUniverse,
   candidates:summary.candidates,byFamily:summary.byFamily,
   roles:summary.roles,highlights:summary.highlights,
   candidateSample:summary.candidatesList.slice(0,18)},null,2));

@@ -23,7 +23,8 @@ try{
     w.__fllValueRefresh?.inFlight!==true&&
     w.__fllConsensusRefresh?.complete===true&&
     Number(w.__fllConsensusRefresh?.successful)>=7;
- },{timeout:180000,polling:1200});
+ },null,{timeout:180000,polling:1200});
+ await page.evaluate(async()=>{if(typeof window.verifyValueHistoryModelV95==='function')await window.verifyValueHistoryModelV95()});
  result=await page.evaluate(()=>{
    const w=window,st=w.state,ranked=w.ensureMaster(),norm=w.tradeValueNormalizationV139,
     model=w.modeledPlayerValuesV319,history=w.valueHistoryV331,

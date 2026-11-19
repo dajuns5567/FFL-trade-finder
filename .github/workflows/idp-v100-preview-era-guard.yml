@@ -1,10 +1,11 @@
-name: V100 preview model-era and archive isolation contract
+name: V101 preview model-era and archive isolation contract
 on:
   pull_request:
     paths:
       - 'valuation-idp-v25-perf.js'
       - 'value-history-v276.js'
       - 'tests/idp-v100-preview-era-guard.test.mjs'
+      - 'tests/idp-v101-role-growth-scoring.test.mjs'
       - '.github/workflows/idp-v100-preview-era-guard.yml'
   workflow_dispatch:
 permissions:
@@ -18,7 +19,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Verify distinct V100 preview model identity and V96 archive isolation
-        run: node --test tests/idp-v100-preview-era-guard.test.mjs
+      - name: Verify V101 verified-scoring context, distinct model identity and archive isolation
+        run: node --test tests/idp-v100-preview-era-guard.test.mjs tests/idp-v101-role-growth-scoring.test.mjs
       - name: Preserve existing V94-V96 era and cross-version history handling
         run: node --test tests/value-history-model-era-v90.test.mjs

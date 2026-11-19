@@ -371,6 +371,64 @@ try{
   if(captured.rows.some(r=>!Number.isFinite(Number(r?.value))||!Number.isFinite(Number(r?.overall))))throw new Error('Scheduled capture contains non-finite player values/ranks');
   if(!captured.consumerReady||captured.valueParityMismatches?.length)throw new Error(`Scheduled capture diverged across Player Values, Finder, Evaluator or History: ${JSON.stringify(captured.valueParityMismatches)}`);
 
+  // V99 research-only optional audit export. Does not alter the accepted V96
+  // canonical rows, prices, snapshot model, publication or durable archive.
+  if(process.env.V99_LIVE_EVIDENCE_FILE){
+    const evidence=await page.evaluate(()=>{
+      const ranked=window.ensureMaster();
+      const details=window.state?.consensusComposite?.detailsById||{};
+      return ranked.filter(z=>z?.x?.type==='player').map((z,i)=>{
+        const id=String(z.x.id),group=String(window.groupPos(z.x)||'');
+        const d=details[id]||{},p=window.state?.players?.[id]||{};
+        const prod=z.production||{};
+        const idp=group==='IDP';
+        const audit=idp?window.idpScoringAudit?.(id):window.offenseScoringAudit?.(id);
+        const sourceNames=(idp?d.idpSources:d.offenseSources)||[];
+        const sources=Array.isArray(sourceNames)?sourceNames.filter(n=>!String(n).includes('(not listed)')):[];
+        const seasonRows=(idp?prod.a?.seasons:prod.correctedAudit?.samples)||audit?.seasons||[];
+        return {
+          id,group,position:p.position||null,overall:i+1,
+          baselineValue:Number(window.tradeValueNormalizationV139?.canonicalValue?.(z.x)),
+          underlyingModelValue:Number(z.value),
+          age:p.age??null,yearsExp:p.years_exp??null,
+          consensusValue:Number(z.consensus)>0?Number(z.consensus):null,
+          verifiedCompositeValue:Number(window.state?.consensusComposite?.byId?.[id])>0
+            ?Number(window.state.consensusComposite.byId[id]):null,
+          attributionKind:d.kind||null,
+          fallback:z.fallback===true,coverageGate:z.coverageGate384===true,
+          idpV25RawBlend:prod.idpV25RawBlend??null,
+          idpV25NoConsensusFallback:prod.idpUnverifiedNoConsensusFallbackV73??null,
+          idpNoQualifyingScoring:prod.idpNoQualifiedSleeperScoringV95??null,
+          idpCompressionFactor:prod.idpV72Factor??prod.idpOverallTradeCurveFactorV72??null,
+          idpOverallTradeCurveBaseline:prod.idpOverallTradeCurveBaselineV72??null,
+          sources:[...new Set(sources.map(String))],sourceCount:new Set(sources.map(String)).size,
+          consensusRank:idp?(d.idpRank??null):(d.offenseRank??null),
+          leaguePpg:Number.isFinite(Number(audit?.ppg))?Number(audit.ppg):null,
+          scoreConfidence:Number.isFinite(Number(audit?.confidence))?Number(audit.confidence):null,
+          qualifyingSeasons:audit?.qualifyingSeasons??null,
+          productionComponent:idp?(audit?.productionValue??null):(prod.effectiveScoringValue??null),
+          contextComponent:idp?(audit?.otherContextValue??null):Number(z.context)||null,
+          verifiedEarlyCareer:idp?null:prod.earlyCareerVerifiedScoringV50===true,
+          liveScoringSeasons:Array.isArray(seasonRows)?seasonRows.map(a=>({
+            season:a.season??null,games:a.games??null,ppg:a.ppg??null,
+            currentSeason:!!a.currentSeason
+          })):[]
+        };
+      });
+    });
+    if(evidence.length<700)throw new Error('V99 audit evidence incomplete');
+    mkdirSync(join(process.cwd(),'.tmp'),{recursive:true});
+    writeFileSync(process.env.V99_LIVE_EVIDENCE_FILE,JSON.stringify({
+      contract:'v99-v96-runtime-evidence-readonly',
+      sourceCommit:sourceCommit,
+      valuationModel:acceptedValuationModel(captured.valuationModel),
+      consensusSources:Number(readiness.consensusMarker?.successful)||0,
+      canonicalParity:'exact',
+      rows:evidence
+    },null,2)+'\n');
+    console.log(JSON.stringify({event:'v99-runtime-evidence-readonly',rows:evidence.length}));
+  }
+
   const t=new Date().toISOString(),fp=fingerprint(captured.rows,captured.picks,captured.teams);
   const snap={version:5,league,t,fingerprint:fp,source:'scheduled',valuation_contract:SCHEDULED_VALUATION_CONTRACT,valuation_model:valuationModel,provenance:{git_commit:sourceCommit,modeled_version:captured.modeledVersion,consensus_sources:Number(readiness.consensusMarker?.successful)||0,source_manifest:captured.sourceManifest,canonical_parity:'exact'},rows:captured.rows,picks:captured.picks,teams:captured.teams};
   mkdirSync(join(process.cwd(),'.tmp'),{recursive:true});

@@ -1,0 +1,26 @@
+name: V100 IDP no-consensus fallback candidate (read-only)
+on:
+  pull_request:
+    paths:
+      - 'scripts/candidates/valuation-idp-v25-perf-v100.js'
+      - 'tests/idp-v100-source-free-breakout.test.mjs'
+      - '.github/workflows/idp-v100-fallback-candidate.yml'
+      - 'scripts/compare-idp-v100-fallback.mjs'
+      - 'scripts/value-history-headless-refresh.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  candidate-contract:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify accepted active V96 runtime remains immutable
+        run: |
+          git show 4d276527c6e7a724de55e4a7fd2c167887fa3ea8:valuation-idp-v25-perf.js > /tmp/accepted-v96.js
+          cmp /tmp/accepted-v96.js valuation-idp-v25-perf.js
+      - name: Test offline experimental source and missing-data guards
+        run: node --test tests/idp-v100-source-free-breakout.test.mjs

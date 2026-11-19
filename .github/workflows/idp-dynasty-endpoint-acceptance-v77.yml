@@ -1,0 +1,29 @@
+name: Verify DraftSharks IDP dynasty endpoint in integration (draft)
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/draftsharks-idp-adapter.mjs'
+      - '.github/workflows/idp-dynasty-endpoint-acceptance-v77.yml'
+permissions:
+  contents: read
+jobs:
+  dynasty-endpoint:
+    if: github.event.pull_request.number == 478
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate configured dynasty publisher provides 250 verified rows
+        run: |
+          node --input-type=module -e '
+          import {refreshDraftSharksIdp} from "./netlify/functions/draftsharks-idp-adapter.mjs";
+          const r=await refreshDraftSharksIdp({timeoutMs:10000});
+          console.log("DYNASTY_IDP_ENDPOINT_VALIDATION",JSON.stringify({
+            valid:r.valid,rows:r.rankings.length,format:r.format,source:r.urls?.[0],dynastyVerified:r.dynastyVerified,
+            errors:r.error,first5:r.rankings.slice(0,5).map(x=>({rank:x.rank,player:x.player,position:x.sourcePosition}))
+          }));
+          if(!r.valid||r.rankings.length!==250||r.dynastyVerified!==true)process.exitCode=2;
+          '

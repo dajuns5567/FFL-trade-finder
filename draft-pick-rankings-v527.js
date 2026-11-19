@@ -46,6 +46,7 @@ function orderedPickValue(x){
       if(!groups.has(k))groups.set(k,[]);
       groups.get(k).push(a);
     }
+    const cohorts=[];
     for(const [k,picks] of groups){
       const validOwners=new Set(picks.map(originalRoster));
       // Only remap a complete, unique 32-slot cohort. Incomplete data
@@ -64,9 +65,29 @@ function orderedPickValue(x){
         :sourceValues;
       const slots=new Set(ranked.map(x=>Number(x.t.projected_slot)));
       if(slots.size!==32||[...slots].some(v=>!Number.isInteger(v)||v<1||v>32))continue;
+      cohorts.push({k,picks,ranked,values,round,year:Number(picks[0].season)});
+    }
+    // V92's dynasty draft policy is a 12% discount per additional year.
+    // Some legacy source cohorts are flat across years, while others already
+    // contain that discount. Enforce an annual CEILING on the cohort anchor
+    // instead of multiplying every price again (which double-discounts V92).
+    // The nearest complete year stays unchanged, including the 7,000 anchor.
+    const previousByRound=new Map(),round5=v=>Math.round(v/5)*5;
+    cohorts.sort((a,b)=>a.round-b.round||a.year-b.year);
+    for(const cohort of cohorts){
+      const {k,ranked,values,round,year}=cohort;
+      const previous=previousByRound.get(round);
+      const highest=values[0];
+      const yearGap=previous?year-previous.year:0;
+      const annualCeiling=previous&&yearGap>0
+        ?previous.anchor*Math.pow(.88,yearGap):highest;
+      const factor=highest>0?Math.min(1,annualCeiling/highest):1;
+      const adjusted=factor<1
+        ?values.map(v=>Math.max(5,round5(v*factor))):values;
       const mapped=new Map();
-      for(const x of ranked)mapped.set(originalRoster(x.a),values[Number(x.t.projected_slot)-1]);
+      for(const x of ranked)mapped.set(originalRoster(x.a),adjusted[Number(x.t.projected_slot)-1]);
       valueOrderCache.set(k,mapped);
+      previousByRound.set(round,{year,anchor:adjusted[0]});
     }
   }
   return valueOrderCache.get(pickOrderKey(x))?.get(originalRoster(x))??null;

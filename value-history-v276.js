@@ -2314,7 +2314,7 @@ function renderPlayerProfile(id,allPts,period='ALL'){
   <div class="vh-card vh-filter-card"><div class="vh-filter-label">History range</div><div class="vh-periods">${['1D','7D','30D','90D','1Y','ALL'].map(p=>`<button type="button" class="${p===period?'':'secondary '}small" data-vh-period="${p}">${p}</button>`).join('')}</div></div>
   <div class="vh-metrics">
     <div class="vh-metric"><small>${periodModelBoundary?'Current Era':period} Change</small><b class="${deltaClass(periodModelBoundary?comparableDelta:delta)}">${periodModelBoundary?(comparableEnough?signed(comparableDelta):'—'):signed(delta)}</b><div class="tiny muted">${periodModelBoundary?(comparableEnough?'Latest model • '+signedPct(comparablePct):'New model • awaiting comparison'):signedPct(pct)}</div></div>
-    <div class="vh-metric"><small>${period==='ALL'?'Recorded':'Selected'} Range</small><b>${fmt(pmin)}–${fmt(pmax)}</b></div>
+    <div class="vh-metric"><small>Value Range</small><b>${fmt(pmin)}–${fmt(pmax)}</b><div class="vh-metric-time">${period==='ALL'?'Full archive':'Selected range'}</div></div>
     <div class="vh-metric"><small>All-Time High</small><b>${fmt(allMax)}</b><div class="vh-metric-time">${highPoint?dateTime(highPoint.t):'—'}</div></div>
     <div class="vh-metric"><small>All-Time Low</small><b>${fmt(allMin)}</b><div class="vh-metric-time">${lowPoint?dateTime(lowPoint.t):'—'}</div></div>
     <div class="vh-metric"><small>Best Overall Rank</small><b>#${bestOverall}</b><div class="vh-metric-time">${bestOverallPoint?dateTime(bestOverallPoint.t):'—'}</div></div>

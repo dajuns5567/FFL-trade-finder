@@ -35,6 +35,17 @@ test('second-year sustained breakout is recognized from verified league PPG and 
  assert.ok(e.scoringImprovement>.20);
  assert.ok(e.snapShare-e.priorSnapShare>.40);
 });
+test('compact prior season without team denominator uses verified player snaps per game',()=>{
+ const e=check({stats:{2025:{tm_def_snp:null}}});
+ assert.equal(e.verified,true);
+ assert.equal(e.opportunityEvidenceMethod,'verified-snaps-per-game');
+ assert.equal(e.priorSnapShare,null);
+ assert.ok(e.playerSnapRateGrowth>1.5);
+});
+test('prior player snaps below 100 cannot qualify for compact evidence fallback',()=>{
+ const e=check({stats:{2025:{tm_def_snp:null,def_snp:55}}});
+ assert.equal(e.verified,false);
+});
 test('missing opportunity evidence never earns fallback enhancement',()=>{
  for(const stats of [
   {2026:{def_snp:0}},

@@ -414,7 +414,7 @@ try{
       consensusSources:Number(readiness.consensusMarker?.successful)||0,
       canonicalParity:'exact',
       rows:evidence
-    },null,2)+'\\n');
+    },null,2)+'\n');
     console.log(JSON.stringify({event:'v99-runtime-evidence-readonly',rows:evidence.length}));
   }
 

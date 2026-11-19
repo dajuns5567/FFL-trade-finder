@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-const source=fs.readFileSync(new URL('../valuation-idp-v25-perf.js',import.meta.url),'utf8');
+const source=fs.readFileSync(new URL('../scripts/candidates/valuation-idp-v25-perf-v100.js',import.meta.url),'utf8');
 const start=source.indexOf('function emergingSourceFreeIdpEvidence100(');
 const end=source.indexOf('function model25(',start);
 assert.ok(start>=0&&end>start,'require exact candidate model helper from repository');

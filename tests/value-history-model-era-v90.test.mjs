@@ -413,15 +413,20 @@ test('scheduled local and GitHub archive captures cannot silently lose their exp
   'both local collector and direct headless archive must persist matching model identity');
  assert.match(scheduled,/valuation_contract:SCHEDULED_VALUATION_CONTRACT,valuation_model:valuationModel/);
  assert.match(scheduled,/writeFileSync\(snapshotFile,JSON.stringify\(snap,null,2\)/);
- const declaration=scheduled.match(/const acceptedValuationModel=value=>[^;]+;/);
+ const declaration=scheduled.match(/const acceptedValuationModel=value=>\\{[\\s\\S]*?\\n\\};/);
  assert(declaration,'canonical accepted model filter not found');
  const vmCtx={String};
  vm.createContext(vmCtx);
- vm.runInContext(declaration[0]+';globalVal=acceptedValuationModel;',vmCtx);
+ vm.runInContext("const V96_MODEL="+JSON.stringify(currentModel)+";const V101_MODEL='idp-v101-verified-role-growth-v100-source-free-lineage';const candidateModel='';"+declaration[0]+";globalVal=acceptedValuationModel;",vmCtx);
  assert.equal(vmCtx.globalVal(currentModel),currentModel);
- assert.equal(vmCtx.globalVal(model),null,'previous V94 source must not be mislabeled as current V95');
+ assert.equal(vmCtx.globalVal(model),null,'previous V94 source must not be mislabeled as V96');
  assert.equal(vmCtx.globalVal('other-model'),null);
  assert.equal(vmCtx.globalVal(null),null);
+ const candidateCtx={String};
+ vm.createContext(candidateCtx);
+ vm.runInContext("const V96_MODEL="+JSON.stringify(currentModel)+";const V101_MODEL='idp-v101-verified-role-growth-v100-source-free-lineage';const candidateModel=V101_MODEL;"+declaration[0]+";globalVal=acceptedValuationModel;",candidateCtx);
+ assert.equal(candidateCtx.globalVal(currentModel),null,'V96 must not be mislabeled as V101 candidate');
+ assert.equal(candidateCtx.globalVal('idp-v101-verified-role-growth-v100-source-free-lineage'),'idp-v101-verified-role-growth-v100-source-free-lineage');
 });
 
 test('client submits contract and labels instead of pretending model-version jumps are market gains',()=>{

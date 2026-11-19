@@ -26,3 +26,43 @@ jobs:
           cmp /tmp/accepted-v96.js valuation-idp-v25-perf.js
       - name: Test offline experimental source and missing-data guards
         run: node --test tests/idp-v100-source-free-breakout.test.mjs
+  full-population-counterfactual:
+    needs: candidate-contract
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install headless browser for local-only parity test
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Capture exact accepted V96 baseline locally
+        env:
+          VALUE_HISTORY_SOURCE_COMMIT: '4d276527c6e7a724de55e4a7fd2c167887fa3ea8'
+          VALUE_HISTORY_SNAPSHOT_FILE: '.tmp/v100-baseline.json'
+          V100_AUDIT_FILE: '.tmp/v100-baseline-stage.json'
+        run: node scripts/value-history-headless-refresh.mjs
+      - name: Substitute candidate only within ephemeral CI workspace
+        run: |
+          cp scripts/candidates/valuation-idp-v25-perf-v100.js valuation-idp-v25-perf.js
+          test -n "$(git diff -- valuation-idp-v25-perf.js)"
+      - name: Capture full candidate without uploading or publishing values
+        env:
+          VALUE_HISTORY_SOURCE_COMMIT: '4d276527c6e7a724de55e4a7fd2c167887fa3ea8'
+          VALUE_HISTORY_SNAPSHOT_FILE: '.tmp/v100-candidate.json'
+          V100_AUDIT_FILE: '.tmp/v100-candidate-stage.json'
+        run: node scripts/value-history-headless-refresh.mjs
+      - name: Compare all canonical values, source fingerprints, and IDP ranking balance
+        run: node scripts/compare-idp-v100-fallback.mjs
+      - name: Save read-only acceptance report
+        uses: actions/upload-artifact@v4
+        with:
+          name: v100-idp-fallback-readonly
+          path: .tmp/v100-acceptance-report.json
+          if-no-files-found: error
+          retention-days: 7

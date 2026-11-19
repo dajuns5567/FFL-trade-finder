@@ -1599,7 +1599,10 @@ function marketHeatMapMarkup(){
     for(const [label,min,max] of buckets){
       const sample=changes.filter(r=>String(r.pos)===pos&&Number(r.overall)>=min&&Number(r.overall)<=max&&Number.isFinite(Number(r.pct))).map(r=>Number(r.pct)),
         avg=sample.length?sample.reduce((a,b)=>a+b,0)/sample.length:null,rising=sample.filter(v=>v>0).length,breadth=sample.length?Math.round(rising/sample.length*100):null;
-      cells.push(`<button type="button" class="vh-heat-cell ${deltaClass(avg)}" data-vh-heat-pos="${pos}" data-vh-heat-min="${min}" data-vh-heat-max="${Number.isFinite(max)?max:'INF'}" aria-label="View ${pos} ${label} players">${avg==null?'—':signedPct(avg)}<small>${sample.length} players • ${breadth==null?'—':breadth+'%'} rising • view ↗</small></button>`);
+      // Avoid misleading -0.0% and +0.0% labels after rounding. Modal
+      // retains each player's original, unrounded recorded price movement.
+      const shownAvg=avg!=null&&Math.abs(avg)<.05?0:avg;
+      cells.push(`<button type="button" class="vh-heat-cell ${deltaClass(shownAvg)}" data-vh-heat-pos="${pos}" data-vh-heat-min="${min}" data-vh-heat-max="${Number.isFinite(max)?max:'INF'}" aria-label="View ${pos} ${label} players">${avg==null?'—':shownAvg===0?'0.0%':signedPct(shownAvg)}<small>${sample.length} players • ${breadth==null?'—':breadth+'%'} rising • view ↗</small></button>`);
     }
   }
   return`<div class="vh-card"><div class="vh-sub">Average verified player-value movement by position and current overall-rank band • ${esc(intelPeriodLabel())}. The large number is the average change; each cell also shows the share of players actually rising so market breadth is not confused with the average.</div><div class="vh-heat-wrap"><div class="vh-heat-grid">${cells.join('')}</div></div></div>`;

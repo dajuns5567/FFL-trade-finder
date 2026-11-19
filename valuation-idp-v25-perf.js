@@ -215,41 +215,6 @@ function blend25(c,scoreValue,contextValue){
  const centered=clamp25(c*.45,raw,Math.max(c*2.15,c+760));
  return{value:Math.max(1,Math.round(centered)),raw,fallback:false};
 }
-// V100: SOURCE-FREE IDP early-career fallback. No implied dynasty consensus.
-// Credible, verified two-season opportunity + LEAGUE-SCORED production warrants
-// using the existing full 45% scoring / 35% context contributions rather than
-// discounting them again to 40% / 20%. The missing 20% consensus stays ZERO.
-// Still capped at the existing 700-point source-free IDP ceiling at this stage.
-function emergingSourceFreeIdpEvidence100(id,score){
- const p=state.players?.[String(id)]||{},age=Number(p.age),exp=Number(p.years_exp),
-  qualified=Number(score?.a?.qualifyingSeasons)||0,
-  confidence=Number(score?.m?.confidence)||0;
- if(!Number.isFinite(age)||age<18||age>26||
-   !Number.isFinite(exp)||exp<0||exp>3||qualified<2||confidence<.40)
-   return{verified:false,reason:'age-experience-history-or-confidence'};
- const seasons=(Array.isArray(score?.a?.seasons)?score.a.seasons:[])
-  .filter(q=>Number(q.season)>0&&Number(q.games)>0&&Number(q.ppg)>0);
- const current=seasons.find(q=>q.currentSeason===true);
- const previous=seasons.filter(q=>!q.currentSeason&&Number(q.season)===Number(current?.season)-1)[0];
- if(!current||Number(current.games)<8||!previous||Number(previous.games)<4||
-   !(Number(current.ppg)>=Number(previous.ppg)*1.20))
-   return{verified:false,reason:'insufficient-contiguous-scoring-improvement'};
- const snapShare=row=>{
-   const stats=row?.stats&&typeof row.stats==='object'?row.stats:row||{};
-   const player=Number(stats.def_snp),team=Number(stats.tm_def_snp);
-   return Number.isFinite(player)&&player>=0&&Number.isFinite(team)&&team>0
-     ?Math.max(0,Math.min(1,player/team)):null;
- };
- const now=snapShare(state.stats?.[current.season]?.[String(id)]);
- const before=snapShare(state.stats?.[previous.season]?.[String(id)]);
- if(now==null||before==null||now<.40||now-before<.12)
-   return{verified:false,reason:'unverified-sustained-opportunity'};
- return{verified:true,reason:'consecutive-league-scored-seasons-and-snap-growth',
-   games:Number(current.games),previousGames:Number(previous.games),
-   scoringImprovement:Number((Number(current.ppg)/Number(previous.ppg)-1).toFixed(4)),
-   snapShare:Number(now.toFixed(4)),priorSnapShare:Number(before.toFixed(4)),
-   confidence:Number(confidence.toFixed(4))};
-}
 function model25(z){
  if(groupPos(z.x)!=='IDP'||!isIndividualIdp25(z.x.id))return z;
  const c=Number(z.consensus),score=scoring25(z.x.id),ctx=context25(z.x.id,score);
@@ -261,22 +226,8 @@ function model25(z){
 const noQualifiedScoring=!(Number(score.a?.qualifyingSeasons)>0);
 const unverifiedFallback=!(c>0)&&noQualifiedScoring;
 const effectiveScoringValue=noQualifiedScoring?Math.min(score.value,180):score.value;
-const sourceFree=!(Number.isFinite(c)&&c>0);
-const breakoutEvidence=sourceFree&&!noQualifiedScoring
-  ?emergingSourceFreeIdpEvidence100(z.x.id,score)
-  :{verified:false,reason:sourceFree?'no-qualified-scoring':'verified-consensus'};
-const originalBlend=blend25(c,effectiveScoringValue,ctx.value);
-const fullEvidenceRaw=.45*effectiveScoringValue+.35*ctx.value;
-const blend=breakoutEvidence.verified
-  ?{...originalBlend,
-    value:Math.min(700,Math.max(originalBlend.value,Math.round(fullEvidenceRaw))),
-    raw:fullEvidenceRaw}
-  :originalBlend;
- return{...z,value:blend.value,consensus:Number.isFinite(c)&&c>0?Math.round(c):z.consensus,context:Math.round(ctx.value),production:{...score,leagueContext:ctx,idpV25MarketCenterOffset:IDP_V25_MARKET_CENTER_OFFSET,idpV25RawBlend:blend.raw,idpUnverifiedNoConsensusFallbackV73:unverifiedFallback,idpEffectiveFallbackScoringV73:effectiveScoringValue,idpNoQualifiedSleeperScoringV95:noQualifiedScoring,
-  idpV100SourceFreeBreakout:breakoutEvidence,
-  idpV100PreFallbackValue:originalBlend.value,
-  idpV100CandidateFallbackValue:blend.value,
-  idpV100NoInventedConsensus:sourceFree},fallback:blend.fallback};
+const blend=blend25(c,effectiveScoringValue,ctx.value);
+ return{...z,value:blend.value,consensus:Number.isFinite(c)&&c>0?Math.round(c):z.consensus,context:Math.round(ctx.value),production:{...score,leagueContext:ctx,idpV25MarketCenterOffset:IDP_V25_MARKET_CENTER_OFFSET,idpV25RawBlend:blend.raw,idpUnverifiedNoConsensusFallbackV73:unverifiedFallback,idpEffectiveFallbackScoringV73:effectiveScoringValue,idpNoQualifiedSleeperScoringV95:noQualifiedScoring},fallback:blend.fallback};
 }
 masterRankings=function(){return priorMaster25().map(model25).sort((a,b)=>b.value-a.value)};
 ensureMaster=function(){return masterRankCache||(masterRankCache=masterRankings())};

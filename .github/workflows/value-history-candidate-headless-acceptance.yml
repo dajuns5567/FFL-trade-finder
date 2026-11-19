@@ -31,17 +31,19 @@ jobs:
           npm install --ignore-scripts --no-audit --no-fund
           npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Isolate V101 preview verification from V96-only local collector
+      - name: Verify actual V101 runtime model and preview-only read access
         run: |
-          # The acceptance collector stores only disposable CI JSON, and its
-          # model label is V96-only. Keep ALL actual V102 market/history
-          # consumer code; change solely the local verifier's era alias.
+          # No model identity spoofing. Evaluate actual V101 current Player
+          # Values and refuse writes to canonical Value History archives.
           grep -q "const V101_PREVIEW_VALUATION_MODEL='idp-v101-verified-role-growth-v100-source-free-lineage'" value-history-v276.js
-          sed -i 's/idp-v101-verified-role-growth-v100-source-free-lineage/idp-v96-single-source-continuous-v95-evidence/' value-history-v276.js
+          grep -q "past<100" valuation-idp-v25-perf.js
           node --check value-history-v276.js
+          node --check scripts/value-history-headless-refresh.mjs
       - name: Produce read-only candidate snapshot (no archive write)
         env:
           VALUE_HISTORY_SNAPSHOT_FILE: .tmp/value-history-candidate-only.json
+          VALUE_HISTORY_READ_ONLY_CANDIDATE: '1'
+          VALUE_HISTORY_CANDIDATE_MODEL: 'idp-v101-verified-role-growth-v100-source-free-lineage'
         run: node scripts/value-history-headless-refresh.mjs
       - name: Require complete canonical refresh and preserved provenance
         run: |
@@ -50,12 +52,15 @@ jobs:
             import assert from 'node:assert/strict';
             const s=JSON.parse(readFileSync('.tmp/value-history-candidate-only.json','utf8'));
             assert.equal(s.source,'scheduled');
-            assert.equal(s.valuation_model,'idp-v96-single-source-continuous-v95-evidence');
+            assert.equal(s.valuation_model,'idp-v101-verified-role-growth-v100-source-free-lineage');
+            assert.equal(s.provenance?.candidate_read_only,true);
             assert.equal(s.provenance?.canonical_parity,'exact');
             assert.ok(Number(s.provenance?.consensus_sources)>=7);
-            assert.ok(s.rows?.length>=700);
+            assert.ok(s.rows?.length>=1000);
             assert.ok(s.picks?.length>=96);
             assert.ok(s.teams?.length===32);
+            assert.ok(/^[a-f0-9]{40}$/.test(s.provenance?.git_commit||''));
+            assert.ok(s.rows.some(r=>String(r.id)==='12978'&&Number(r.value)>0));
             console.log(JSON.stringify({ok:true,model:s.valuation_model,rows:s.rows.length,picks:s.picks.length,teams:s.teams.length,t:s.t},null,2));
           "
       # Deliberately NO archive-value-history invocation, token, Blob write,

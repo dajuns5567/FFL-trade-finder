@@ -12,7 +12,10 @@ const baseStage=read('.tmp/v100-baseline-stage.json');
 const candStage=read('.tmp/v100-candidate-stage.json');
 const sha='4d276527c6e7a724de55e4a7fd2c167887fa3ea8';
 assert.equal(baseline.provenance?.git_commit,sha);
-assert.equal(candidate.provenance?.git_commit,sha);
+const candidateCommit=String(candidate.provenance?.git_commit||'');
+assert.match(candidateCommit,/^[a-f0-9]{40}$/);
+assert.notEqual(candidateCommit,sha,'candidate must not mislabel source as accepted V96');
+assert.equal(candStage.sourceCommit,candidateCommit);
 assert.equal(baseline.provenance?.canonical_parity,'exact');
 assert.equal(candidate.provenance?.canonical_parity,'exact');
 assert.equal(baseline.valuation_model,'idp-v96-single-source-continuous-v95-evidence');
@@ -70,7 +73,7 @@ assert.ok(Math.abs(originalTop100-newTop100)<=1,'IDP top-100 calibration moved t
 assert.ok(ponder,'Ponder diagnostics missing');
 assert.ok(ponderBaseline&&ponderCandidate);
 const report={contract:'V100 offline-only no-consensus candidate comparison',
- sourceCommit:sha,stagedModelVersion:'experimental-v100-not-approved',
+ sourceCommit:sha,candidateCommit,stagedModelVersion:'experimental-v100-not-approved',
  baselineModel:baseline.valuation_model,
  sourceManifestsExact:true,consumerParityExact:true,
  playerCount:rows0.length,qualifyingSourceFreeIdps:eligible.length,

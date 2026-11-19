@@ -58,8 +58,32 @@ async function valueHistory(req){
   writeFileSync(snapshotFile,JSON.stringify(snap,null,2)+'\n');
   return json({ok:true,t,fingerprint:fp,source:'scheduled',count:rows.length});
 }
+// Optional V100 acceptance replay: both model variants must receive the
+// IDENTICAL verified publisher payload, not two independently timed refreshes.
+// No network write, Netlify Blob mutation, or promoted consensus source.
+async function pinnedConsensusUpdate(req){
+ const file=process.env.V100_CONSENSUS_FIXTURE_FILE,
+  mode=process.env.V100_CONSENSUS_FIXTURE_MODE;
+ if(!file||!mode||req.method!=='POST')return updateHandler(req);
+ if(mode==='replay'){
+  let bytes;try{bytes=readFileSync(file)}catch{throw Error('Missing V100 pinned publisher payload')}
+  const parsed=JSON.parse(bytes.toString('utf8'));
+  if(parsed?.integrity?.all_sources_valid!==true||Number(parsed?.summary?.successful)<7)
+   throw Error('Refuse incomplete V100 publisher replay');
+  return new Response(bytes,{status:200,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
+ }
+ if(mode==='record'){
+  const response=await updateHandler(req),copy=await response.clone().json();
+  if(!response.ok||copy?.integrity?.all_sources_valid!==true||Number(copy?.summary?.successful)<7)
+   throw Error('Refuse unverified publisher source fixture');
+  mkdirSync(join(process.cwd(),'.tmp'),{recursive:true});
+  writeFileSync(file,JSON.stringify(copy));
+  return response;
+ }
+ throw Error('Unsupported V100 publisher fixture mode');
+}
 async function genericFunction(name,req){
-  if(name==='update')return updateHandler(req);
+  if(name==='update')return pinnedConsensusUpdate(req);
   if(name==='picks')return picksHandler(req);
   const safe=String(name||'').replace(/[^a-zA-Z0-9_-]/g,'');
   if(!safe)return json({ok:false,error:'Unknown function'},404);
@@ -68,7 +92,8 @@ async function genericFunction(name,req){
 }
 async function proxySleeperData(url){
   const suffix=url.pathname.replace(/^\/sleeper-data\//,'');
-  const target=`https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/sleeper-data/data/sleeper/${suffix}${url.search}`;
+  const ref=/^[a-f0-9]{40}$/.test(String(process.env.V100_SLEEPER_SOURCE_SHA||''))?process.env.V100_SLEEPER_SOURCE_SHA:'sleeper-data';
+  const target=`https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/${ref}/data/sleeper/${suffix}${url.search}`;
   const r=await fetch(target,{headers:{'user-agent':'Fleeced-Scheduled-Local-Runtime/1.0',accept:'application/json'},cache:'no-store'});
   const bytes=Buffer.from(await r.arrayBuffer());
   const headers=new Headers({'content-type':r.headers.get('content-type')||'application/json; charset=utf-8','cache-control':'no-store'});
@@ -89,7 +114,7 @@ const server=createServer(async(req,res)=>{
     const origin=`http://127.0.0.1:${server.address()?.port||0}`,url=new URL(req.url||'/',origin);
     let response;
     if(url.pathname==='/'||url.pathname==='/.netlify/functions/site-v29')response=await siteV29();
-    else if(url.pathname==='/api/update')response=await updateHandler(await requestFromNode(req,origin));
+    else if(url.pathname==='/api/update')response=await pinnedConsensusUpdate(await requestFromNode(req,origin));
     else if(url.pathname==='/api/picks')response=await picksHandler(await requestFromNode(req,origin));
     else if(url.pathname==='/.netlify/functions/value-history')response=await valueHistory(await requestFromNode(req,origin));
     else if(url.pathname.startsWith('/.netlify/functions/'))response=await genericFunction(url.pathname.split('/').pop(),await requestFromNode(req,origin));

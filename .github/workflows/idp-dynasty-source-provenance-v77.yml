@@ -1,0 +1,34 @@
+name: IDP dynasty source provenance contract (draft only)
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/draftsharks-idp-adapter.mjs'
+      - 'netlify/functions/rotowire-idp-adapter.mjs'
+      - 'netlify/functions/consensus-composite-v3.mjs'
+      - 'tests/consensus-composite-v3.test.mjs'
+      - 'tests/idp-dynasty-provenance-v77.test.mjs'
+      - '.github/workflows/idp-dynasty-source-provenance-v77.yml'
+permissions:
+  contents: read
+jobs:
+  source-provenance:
+    if: github.event.pull_request.number == 478
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install declared Netlify adapter package dependencies for payload contract
+        run: npm install --ignore-scripts --no-audit --no-fund --no-package-lock
+      - name: Verify source-specific parsers and explicit dynasty provenance
+        run: |
+          node --check netlify/functions/consensus-composite-v3.mjs
+          node --check netlify/functions/draftsharks-idp-adapter.mjs
+          node --check netlify/functions/rotowire-idp-adapter.mjs
+          node --test tests/idp-dynasty-provenance-v77.test.mjs tests/consensus-composite-v3.test.mjs
+      - name: Ensure IDP validation and canonical scoring unaffected
+        run: |
+          node --test tests/idp-20-45-35-calibration.test.mjs tests/idp-v72-source-retention.test.mjs
+          node scripts/v311-pipeline-identity-v319-smoke.cjs

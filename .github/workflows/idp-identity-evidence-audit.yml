@@ -1,0 +1,47 @@
+name: IDP identity and dynasty evidence audit (read-only)
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/value-history-headless-refresh.mjs'
+      - 'valuation-idp-v25-perf.js'
+      - 'tests/idp-unqualified-scoring-consensus-evidence.test.mjs'
+      - 'netlify/functions/consensus-composite-v3.mjs'
+      - 'tests/consensus-composite-v3.test.mjs'
+      - '.github/workflows/idp-identity-evidence-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  evidence:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify IDP production evidence cannot be invented
+        run: node --test tests/idp-unqualified-scoring-consensus-evidence.test.mjs tests/consensus-composite-v3.test.mjs
+      - name: Install read-only Chromium runtime
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Use V96 verifier only inside temporary read-only identity audit
+        run: |
+          # The deployed V100 preview retains a distinct model identity and
+          # never writes to V96 history. This inherited evidence collector
+          # accepts V96 only; use its historical verifier for local audit.
+          git show 4d276527c6e7a724de55e4a7fd2c167887fa3ea8:value-history-v276.js > value-history-v276.js
+          node --check value-history-v276.js
+      - name: Audit canonical IDP identity, source evidence and production
+        env:
+          IDP_AUDIT_SPOTLIGHT: '1'
+          VALUE_HISTORY_SNAPSHOT_FILE: .tmp/idp-audit-not-archived.json
+        run: node scripts/value-history-headless-refresh.mjs
+      # No GitHub write token, Blob credential, archive action, or production deployment.

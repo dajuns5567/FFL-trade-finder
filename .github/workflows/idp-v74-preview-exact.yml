@@ -1,0 +1,28 @@
+name: IDP V74 deployed preview source integrity (read-only)
+on:
+  pull_request:
+    paths:
+      - 'valuation-idp-v43.js'
+      - 'tests/idp-v72-source-retention.test.mjs'
+      - 'scripts/verify-idp-v74-preview-exact.mjs'
+      - '.github/workflows/idp-v74-preview-exact.yml'
+permissions:
+  contents: read
+jobs:
+  verify-deploy-preview:
+    if: github.event.pull_request.number == 466
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Confirm tested IDP model and integration test syntax
+        run: |
+          node --check valuation-idp-v43.js
+          node --check scripts/verify-idp-v74-preview-exact.mjs
+          node --test tests/idp-v72-source-retention.test.mjs
+          node --test tests/combined-valuation-history-contract.test.mjs
+      - name: Read-only verify exact served V74 JS from draft preview
+        run: node scripts/verify-idp-v74-preview-exact.mjs

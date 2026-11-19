@@ -46,6 +46,21 @@ jobs:
         with:
           node-version: '22'
 
+      # Fail loudly on invalid rollout configuration, even when the due
+      # checker would otherwise skip this wake as recent.
+      - name: Validate scheduled valuation release selection
+        run: |
+          case "$VALUE_HISTORY_SCHEDULED_MODEL" in
+            idp-v96-single-source-continuous-v95-evidence) ;;
+            idp-v101-verified-role-growth-v100-source-free-lineage)
+              if [ "$VALUE_HISTORY_V101_APPROVED" != '1' ] ||
+                 [ "$GITHUB_REF" != 'refs/heads/main' ]; then
+                echo 'V101 requires explicit main release approval' >&2; exit 1
+              fi
+              ;;
+            *) echo 'Unknown scheduled valuation release: refusing archival wake' >&2; exit 1 ;;
+          esac
+
       # Trade ingestion runs on EVERY scheduled/workflow wake, even when
       # Value History has no new valuation snapshot due. It is read-only.
       - name: Check current Sleeper completed trades

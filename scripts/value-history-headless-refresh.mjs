@@ -12,7 +12,22 @@ const snapshotFile=process.env.VALUE_HISTORY_SNAPSHOT_FILE||'.tmp/value-history-
 // the triggering main workflow SHA for the model's source revision.
 const sourceCommit=String(process.env.VALUE_HISTORY_SOURCE_COMMIT||process.env.GITHUB_SHA||'').trim()||null;
 const SCHEDULED_VALUATION_CONTRACT='precision-idp-runtime-20260919';
-const acceptedValuationModel=value=>String(value||'').trim()==='idp-v96-single-source-continuous-v95-evidence'?'idp-v96-single-source-continuous-v95-evidence':null;
+const V96_MODEL='idp-v96-single-source-continuous-v95-evidence';
+const V101_MODEL='idp-v101-verified-role-growth-v100-source-free-lineage';
+// V106 candidate: accept an actual V101 runtime only in an explicitly
+// read-only CI collector. Default scheduled production remains strictly V96;
+// never write candidate values to the existing V96 history.
+const candidateModel=String(process.env.VALUE_HISTORY_CANDIDATE_MODEL||'').trim();
+if(candidateModel&&(
+  candidateModel!==V101_MODEL||
+  process.env.VALUE_HISTORY_READ_ONLY_CANDIDATE!=='1'||
+  process.env.GITHUB_EVENT_NAME==='schedule'
+))throw Error('Refuse unapproved or potentially durable Value History candidate model');
+const acceptedValuationModel=value=>{
+ const model=String(value||'').trim();
+ if(candidateModel)return model===candidateModel?candidateModel:null;
+ return model===V96_MODEL?V96_MODEL:null;
+};
 const league='1316867686394769408';
 
 function fingerprint(rows,picks=[],teams=[]){
@@ -427,7 +442,7 @@ try{
   }
 
   const t=new Date().toISOString(),fp=fingerprint(captured.rows,captured.picks,captured.teams);
-  const snap={version:5,league,t,fingerprint:fp,source:'scheduled',valuation_contract:SCHEDULED_VALUATION_CONTRACT,valuation_model:valuationModel,provenance:{git_commit:sourceCommit,modeled_version:captured.modeledVersion,consensus_sources:Number(readiness.consensusMarker?.successful)||0,source_manifest:captured.sourceManifest,canonical_parity:'exact'},rows:captured.rows,picks:captured.picks,teams:captured.teams};
+  const snap={version:5,league,t,fingerprint:fp,source:'scheduled',valuation_contract:SCHEDULED_VALUATION_CONTRACT,valuation_model:valuationModel,provenance:{git_commit:sourceCommit,modeled_version:captured.modeledVersion,consensus_sources:Number(readiness.consensusMarker?.successful)||0,source_manifest:captured.sourceManifest,canonical_parity:'exact',candidate_read_only:candidateModel?true:undefined},rows:captured.rows,picks:captured.picks,teams:captured.teams};
   mkdirSync(join(process.cwd(),'.tmp'),{recursive:true});
   writeFileSync(snapshotFile,JSON.stringify(snap,null,2)+'\n');
 

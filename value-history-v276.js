@@ -541,19 +541,28 @@ function posRanks(list){const counts={},map=new Map();for(const z of list){const
 // present their last recorded value as the CURRENT Player Values price.
 // This overlay is display-only: archived delta/percentage/time-series data
 // remains exactly as stored and does not become a fabricated market movement.
-let liveMarketIndexV97=null;
+let liveMarketIndexV97=null,liveMarketVersionV102=-1;
 function liveMarketValuesV97(){
- if(!(liveMarketIndexV97 instanceof Map)||!liveMarketIndexV97.size)
+ // Do not use a stale market overlay after Player Values commits a new
+ // canonical model, even when the browser missed a refresh event.
+ const version=Number(window.modeledPlayerValuesV319?.meta?.version)||0;
+ if(!(liveMarketIndexV97 instanceof Map)||!liveMarketIndexV97.size||
+    version!==liveMarketVersionV102){
   liveMarketIndexV97=new Map(currentRows().map(r=>[String(r.id),r]));
+  liveMarketVersionV102=version;
+ }
  return liveMarketIndexV97;
 }
 function liveMarketRowV97(row){
  if(!row||row.id==null)return null;
  const live=liveMarketValuesV97().get(String(row.id));
  if(!live)return null; // No active Player Values row: never label an old price "current".
- if(row.liveCurrentV97===true)return row;
- return {...row,recordedValue:row.value,recordedOverall:row.overall,
-  recordedPosRank:row.posRank,value:live.value,overall:live.overall,
+ // A previously overlaid row may be rendered again after an Update.
+ // Always rebind its live price, preserving original archive provenance.
+ return {...row,recordedValue:row.liveCurrentV97===true?row.recordedValue:row.value,
+  recordedOverall:row.liveCurrentV97===true?row.recordedOverall:row.overall,
+  recordedPosRank:row.liveCurrentV97===true?row.recordedPosRank:row.posRank,
+  value:live.value,overall:live.overall,
   pos:live.pos,posRank:live.posRank,liveCurrentV97:true};
 }
 function liveMarketRowsV97(rows){
@@ -561,6 +570,7 @@ function liveMarketRowsV97(rows){
 }
 function invalidateLiveMarketV97(){
  liveMarketIndexV97=null;
+ liveMarketVersionV102=-1;
 }
 function liveFullMarketRowsV97(archived){
  const byId=new Map((archived||[]).map(r=>[String(r.id),r]));
@@ -2296,14 +2306,23 @@ function renderPlayerProfile(id,allPts,period='ALL'){
   ${similarPlayersSection(id)}`;
   setTimeout(()=>fitValueHistoryCellText(box),0);
 }
-function boot(){addShell();window.addEventListener('fll:valuation-refreshed',()=>{
+function boot(){addShell();
+ // Model currency commits AFTER a completed data update and can refresh
+ // independently of status text. Both signals render from Player Values only.
+ const updateLiveConsumers=()=>{
  invalidateLiveMarketV97();
  if(currentView==='market'&&marketCache)renderMarketDashboard();
  else if(currentView==='fullMarket'&&marketCache)renderMarketTable();
  else if(currentView==='team'&&trackedTeamId)loadTrackedTeam().catch(()=>{});
  else if(currentView==='playerHub'&&playerHistoryTeamId&&marketCache)renderPlayerHistoryTeamRoster();
  else if(currentView==='player'&&currentPlayerId)loadPlayer(currentPlayerId).catch(()=>{});
- });searchTradesOnSiteOpen();setInterval(refreshVisibleTradeHistory,TRADE_HISTORY_REFRESH_MS);window.addEventListener('focus',refreshVisibleTradeHistory);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshVisibleTradeHistory()});scheduleSnapshot(0,snapshotSourceFromUrl());document.getElementById('updateBtn')?.addEventListener('click',()=>{invalidateLiveMarketV97();marketCache=null;teamNetCache.clear();scheduleSnapshot(1000,'manual-update');if(currentPlayerId)setTimeout(()=>loadPlayer(currentPlayerId),1800)},{passive:true})}
+ };
+ window.addEventListener('fll:valuation-refreshed',updateLiveConsumers);
+ window.addEventListener('fll:canonical-values-ready',()=>{
+   updateLiveConsumers();
+   refreshTradeHistoryCurrentValuesV533();
+ });
+ searchTradesOnSiteOpen();setInterval(refreshVisibleTradeHistory,TRADE_HISTORY_REFRESH_MS);window.addEventListener('focus',refreshVisibleTradeHistory);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshVisibleTradeHistory()});scheduleSnapshot(0,snapshotSourceFromUrl());document.getElementById('updateBtn')?.addEventListener('click',()=>{invalidateLiveMarketV97();marketCache=null;teamNetCache.clear();scheduleSnapshot(1000,'manual-update');if(currentPlayerId)setTimeout(()=>loadPlayer(currentPlayerId),1800)},{passive:true})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 window.valueHistoryV331={liveMarketRowV97,liveMarketRowsV97,liveFullMarketRowsV97,invalidateLiveMarketV97,currentRows,currentPickRows,currentTeamRows,currentEvaluatorValue,hindsightValue,recordSnapshot,historyFetch,marketFetch,marketData:(force=false)=>ensureMarketCache(!!force),livePlayerMeta,periodPoints,openPlayer:(id)=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>selectPlayer(String(id)),0)},openPlayerHistory:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(renderPlayerHistoryHub,0)},openFullMarket:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>loadFullMarketHistory(),0)}};
 })();

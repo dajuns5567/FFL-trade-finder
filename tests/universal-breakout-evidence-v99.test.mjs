@@ -51,6 +51,17 @@ test('strong single qualified season may be flagged without inventing prior prod
   assert.equal(a.improvement,null);
   assert.equal(a.roleOpportunity,'unverified');
 });
+test('verified participation growth requires observed snap ratios in both years',()=>{
+  const p=player({current:{games:10,ppg:15.4,positionPpgPercentile:.84,snapShare:465/634},
+    previous:{games:8,ppg:7.5,snapShare:142/430}});
+  const a=breakout.classifyBreakout(p);
+  assert.equal(a.candidate,true);
+  assert.equal(a.roleOpportunity,'verified-snap-share-increase');
+  assert.ok(a.snapShareDelta>.40);
+  assert.equal(a.proposedValueAdjustment,0);
+  const unknown=breakout.classifyBreakout(player());
+  assert.equal(unknown.roleOpportunity,'unverified');
+});
 test('population audit is deterministic and read-only',()=>{
   const rows=[player(),player({id:'x',position:'QB'}),player({id:'low',current:{games:2,ppg:40,positionPpgPercentile:1}})];
   const before=JSON.stringify(rows);

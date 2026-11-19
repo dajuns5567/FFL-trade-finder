@@ -3,6 +3,7 @@
 // Research-only join: current V96 canonical rankings vs independently screened
 // verified Sleeper breakout candidates. NO valuation adjustments or archive writes.
 const fs=require('node:fs'),path=require('node:path');
+const {breakoutReviewPriority}=require('./lib/breakout-review-priority-v99.cjs');
 const candidateFile=process.env.V99_REPORT_FILE||'.tmp/v99-breakout-report.json';
 const snapshotFile=process.env.V99_V96_SNAPSHOT||'.tmp/v99-v96-snapshot.json';
 const resultFile=process.env.V99_COMPARISON_FILE||'.tmp/v99-v96-breakout-comparison.json';
@@ -26,14 +27,17 @@ const matches=candidates.candidatesList.map(c=>{
   const m=index.get(String(c.id));
   return {...c,
     canonicalFound:!!m,
-    overall:m?.overall??null,idpRank:c.position==='IDP'?m?.posRank??null:null,
+    overall:m?.overall??null,idpRank:['EDGE','INTERIOR','LB','DB'].includes(c.position)?m?.posRank??null:null,
     actualPositionRank:m?.posRank??null,canonicalValue:m?.value??null,
+    reviewPriority:breakoutReviewPriority(c,m),
     proposedValueAdjustment:0};
 });
 const missing=matches.filter(r=>!r.canonicalFound);
 const top100Idps=snapshot.rows.filter(r=>Number(r.overall)<=100&&String(r.pos).toUpperCase()==='IDP').length;
 const earlyRanked=matches.filter(m=>m.overall!=null&&Number(m.overall)<=100).length;
 const focused=matches.filter(c=>String(c.id)==='12978');
+const highPriority=matches.filter(c=>c.reviewPriority.review).sort((a,b)=>
+ b.evidenceStrength-a.evidenceStrength||Number(b.overall)-Number(a.overall));
 const comparison={
   contract:'v99-comparison-research-only',
   valuationModel:snapshot.valuation_model,valuationSource:snapshot.provenance.git_commit,
@@ -41,7 +45,8 @@ const comparison={
   valuationCapturedAt:snapshot.t,
   playersScreened:candidates.scoredUniverse,
   candidates:matches.length,missingInCanonical:missing.length,
-  earlyRanked,top100Idps,
+  earlyRanked,top100Idps,highPriorityCount:highPriority.length,
+  highPriority,
   baselineIdpTop100:12,top100ChangeFromBaseline:top100Idps-12,
   parity:snapshot.provenance.canonical_parity,
   consensusSources:snapshot.provenance.consensus_sources,
@@ -55,5 +60,6 @@ fs.mkdirSync(path.dirname(resultFile),{recursive:true});
 fs.writeFileSync(resultFile,JSON.stringify(comparison,null,2)+'\n');
 console.log(JSON.stringify({contract:comparison.contract,parity:comparison.parity,
   playersScreened:comparison.playersScreened,candidates:comparison.candidates,
-  earlyRanked,top100Idps,missing:missing.length,focused,
+  earlyRanked,top100Idps,missing:missing.length,highPriorityCount:highPriority.length,
+  highPriority:highPriority.slice(0,25),focused,
   sample:matches.slice(0,15)},null,2));

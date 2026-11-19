@@ -4,6 +4,7 @@ on:
     paths:
       - 'scripts/lib/dynasty-breakout-evidence-v99.cjs'
       - 'scripts/audit-universal-breakout-canonical-v99.cjs'
+      - 'scripts/compare-universal-breakout-v96-v99.cjs'
       - 'tests/universal-breakout-evidence-v99.test.mjs'
       - '.github/workflows/universal-breakout-research-v99.yml'
   workflow_dispatch:
@@ -37,5 +38,40 @@ jobs:
         with:
           name: v99-canonical-breakout-readonly
           path: .tmp/v99-breakout-report.json
+          if-no-files-found: error
+          retention-days: 7
+  live-compare:
+    needs: audit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: v99-canonical-breakout-readonly
+          path: .tmp/
+      - name: Install ephemeral headless browser (no Netlify deployment)
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Capture approved V96 canonical consumer snapshot locally
+        env:
+          VALUE_HISTORY_SOURCE_COMMIT: '4d276527c6e7a724de55e4a7fd2c167887fa3ea8'
+          VALUE_HISTORY_SNAPSHOT_FILE: '.tmp/v99-v96-snapshot.json'
+        run: node scripts/value-history-headless-refresh.mjs
+      - name: Compare breakout candidates with exact V96 values and IDP balance
+        env:
+          V99_V96_SNAPSHOT: '.tmp/v99-v96-snapshot.json'
+        run: node scripts/compare-universal-breakout-v96-v99.cjs
+      - name: Preserve read-only V96 comparison evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: v99-v96-canonical-comparison-readonly
+          path: .tmp/v99-v96-breakout-comparison.json
           if-no-files-found: error
           retention-days: 7

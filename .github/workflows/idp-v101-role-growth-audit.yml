@@ -1,0 +1,81 @@
+name: V101 confirmed IDP role-growth scoring counterfactual (research only)
+on:
+  pull_request:
+    paths:
+      - 'scripts/candidates/valuation-idp-v25-perf-v101.js'
+      - 'tests/idp-v101-role-growth-scoring.test.mjs'
+      - 'scripts/compare-idp-v101-role-growth.mjs'
+      - 'scripts/value-history-headless-refresh.mjs'
+      - '.github/workflows/idp-v101-role-growth-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-evidence:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Ensure approved V100 preview runtime is unchanged
+        run: |
+          git diff --exit-code bf3150805f24e9f97f0c8b0b4232c6102a3ae16c -- valuation-idp-v25-perf.js
+          node --check scripts/candidates/valuation-idp-v25-perf-v101.js
+          node --test tests/idp-v101-role-growth-scoring.test.mjs
+  full-canonical-counterfactual:
+    needs: verify-evidence
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin one canonical regular-season Sleeper source revision
+        run: |
+          SHA="$(git ls-remote origin refs/heads/sleeper-data | cut -f1)"
+          [[ "$SHA" =~ ^[a-f0-9]{40}$ ]] || exit 1
+          echo "V100_SLEEPER_SOURCE_SHA=$SHA" >> "$GITHUB_ENV"
+      - name: Install ephemeral read-only Chromium
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Use the V96 collector's verifier only inside CI
+        run: |
+          git show 4d276527c6e7a724de55e4a7fd2c167887fa3ea8:value-history-v276.js > value-history-v276.js
+          node --check value-history-v276.js
+      - name: Capture the approved V100 model baseline, no archived writes
+        env:
+          VALUE_HISTORY_SOURCE_COMMIT: '4d276527c6e7a724de55e4a7fd2c167887fa3ea8'
+          VALUE_HISTORY_SNAPSHOT_FILE: '.tmp/v101-baseline.json'
+          V100_AUDIT_FILE: '.tmp/v101-baseline-stage.json'
+          V100_CONSENSUS_FIXTURE_FILE: '.tmp/v101-consensus-fixture.json'
+          V100_CONSENSUS_FIXTURE_MODE: 'record'
+        run: node scripts/value-history-headless-refresh.mjs
+      - name: Replace only the valuation source in this ephemeral workspace
+        run: |
+          cp scripts/candidates/valuation-idp-v25-perf-v101.js valuation-idp-v25-perf.js
+          cmp scripts/candidates/valuation-idp-v25-perf-v101.js valuation-idp-v25-perf.js
+          node --test tests/idp-v75-scoring-bucket.test.mjs
+      - name: Capture V101 scoring and canonical values using the exact same publisher payload
+        env:
+          VALUE_HISTORY_SOURCE_COMMIT: '4d276527c6e7a724de55e4a7fd2c167887fa3ea8'
+          VALUE_HISTORY_SNAPSHOT_FILE: '.tmp/v101-candidate.json'
+          V100_AUDIT_FILE: '.tmp/v101-candidate-stage.json'
+          V100_CONSENSUS_FIXTURE_FILE: '.tmp/v101-consensus-fixture.json'
+          V100_CONSENSUS_FIXTURE_MODE: 'replay'
+        run: node scripts/value-history-headless-refresh.mjs
+      - name: Compare the full population and enforce canonical trade-value spillover guards
+        run: node scripts/compare-idp-v101-role-growth.mjs
+      - name: Save rejection or acceptance diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v101-role-growth-research-readonly
+          path: .tmp/v101-role-growth-population-report.json
+          if-no-files-found: warn
+          retention-days: 7

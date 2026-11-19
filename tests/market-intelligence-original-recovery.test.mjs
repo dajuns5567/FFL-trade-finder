@@ -265,3 +265,28 @@ test('V105: no genuine in-era comparison produces no fabricated market gain',()=
  assert.equal(x.ranges['7D'].position_indexes[0].index,null);
  assert.equal(x.ranges['7D'].position_indexes[0].change_pct,null);
 });
+
+test('V105 heat map reports verified gross movement when signed changes cancel',()=>{
+ const ui=readFileSync(new URL('../value-history-v276.js',import.meta.url),'utf8');
+ const begin=ui.indexOf('function marketHeatMapMarkup(){');
+ const end=ui.indexOf('function openHeatMapModal(',begin);
+ assert.ok(begin>0&&end>begin);
+ const ctx={
+  intelRange:()=>({player_changes:[
+   {id:'qb1',pos:'QB',overall:1,pct:10},
+   {id:'qb2',pos:'QB',overall:2,pct:-10}
+  ]}),
+  intelPeriodLabel:()=> '7D',
+  deltaClass:x=>x===0?'vh-neutral':x>0?'vh-up':'vh-down',
+  signedPct:x=>(x>=0?'+':'')+x.toFixed(1)+'%',
+  esc:x=>String(x),
+  Number,Math,Array,String
+ };
+ vm.createContext(ctx);
+ vm.runInContext(ui.slice(begin,end),ctx);
+ const html=ctx.marketHeatMapMarkup();
+ assert.match(html,/0\.0%/,'net average is zero');
+ assert.match(html,/Avg absolute 10\.0%/,'real opposing movement is not hidden');
+ assert.match(html,/2 players • 50% rising/);
+ assert.doesNotMatch(html,/NaN%/);
+});

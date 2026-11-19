@@ -371,6 +371,33 @@ try{
   if(captured.rows.some(r=>!Number.isFinite(Number(r?.value))||!Number.isFinite(Number(r?.overall))))throw new Error('Scheduled capture contains non-finite player values/ranks');
   if(!captured.consumerReady||captured.valueParityMismatches?.length)throw new Error(`Scheduled capture diverged across Player Values, Finder, Evaluator or History: ${JSON.stringify(captured.valueParityMismatches)}`);
 
+  // V100 offline acceptance only: preserve full model-stage evidence for the
+  // local baseline/candidate pair. No archive, GitHub or Netlify writes.
+  if(process.env.V100_AUDIT_FILE){
+    const diagnostic=await page.evaluate(()=>window.ensureMaster()
+      .filter(z=>z?.x?.type==='player').map(z=>{
+        const id=String(z.x.id),p=z.production||{},
+          source=window.state?.consensusComposite?.detailsById?.[id]||{},
+          sources=(source.idpSources||[]).filter(name=>!String(name).endsWith(' (not listed)'));
+        return{id,group:window.groupPos(z.x),unscaledValue:Number(z.value),
+          compositeValue:window.state?.consensusComposite?.byId?.[id]??null,
+          sourceCount:sources.length,qualifyingSeasons:p.a?.qualifyingSeasons??null,
+          fallback:z.fallback===true,
+          sourceFreeBreakout:p.idpV100SourceFreeBreakout||null,
+          preFallbackValue:p.idpV100PreFallbackValue??null,
+          candidateFallbackValue:p.idpV100CandidateFallbackValue??null};
+      }));
+    mkdirSync(join(process.cwd(),'.tmp'),{recursive:true});
+    writeFileSync(process.env.V100_AUDIT_FILE,JSON.stringify({
+      contract:'v100-offline-only-model-stage-audit',
+      sourceCommit,
+      rows:diagnostic
+    },null,2)+'\n');
+    console.log(JSON.stringify({event:'v100-offline-stage-audit',
+      players:diagnostic.length,
+      eligible:diagnostic.filter(z=>z.sourceFreeBreakout?.verified===true).length}));
+  }
+
   const t=new Date().toISOString(),fp=fingerprint(captured.rows,captured.picks,captured.teams);
   const snap={version:5,league,t,fingerprint:fp,source:'scheduled',valuation_contract:SCHEDULED_VALUATION_CONTRACT,valuation_model:valuationModel,provenance:{git_commit:sourceCommit,modeled_version:captured.modeledVersion,consensus_sources:Number(readiness.consensusMarker?.successful)||0,source_manifest:captured.sourceManifest,canonical_parity:'exact'},rows:captured.rows,picks:captured.picks,teams:captured.teams};
   mkdirSync(join(process.cwd(),'.tmp'),{recursive:true});

@@ -413,7 +413,7 @@ test('scheduled local and GitHub archive captures cannot silently lose their exp
   'both local collector and direct headless archive must persist matching model identity');
  assert.match(scheduled,/valuation_contract:SCHEDULED_VALUATION_CONTRACT,valuation_model:valuationModel/);
  assert.match(scheduled,/writeFileSync\(snapshotFile,JSON.stringify\(snap,null,2\)/);
- const declaration=scheduled.match(/const acceptedValuationModel=value=>\\{[\\s\\S]*?\\n\\};/);
+ const declaration=scheduled.match(/const acceptedValuationModel=value=>\{[\s\S]*?\n\};/);
  assert(declaration,'canonical accepted model filter not found');
  const vmCtx={String};
  vm.createContext(vmCtx);

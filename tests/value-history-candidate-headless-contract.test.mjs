@@ -136,6 +136,8 @@ test('V107 executes the actual durable archive cutover guard against supported a
 test('V107 due checks only the chosen model era and starts V101 immediately after V96',async()=>{
  const archive=readFileSync(new URL('../scripts/archive-value-history.mjs',import.meta.url),'utf8');
  assert.match(archive,/valuation_model:snap\.valuation_model\|\|null/);
+ assert.match(archive,/VALUE_HISTORY_MODEL_INTEGRITY/);
+ assert.match(archive,/String\(item\?\.valuation_model\|\|''\)!==String\(snap\?\.valuation_model\|\|''\)/);
  const source=due.replace("import { appendFileSync } from 'node:fs';",'');
  const now=Date.parse('2026-11-20T12:00:00Z');
  const model='idp-v101-verified-role-growth-v100-source-free-lineage';

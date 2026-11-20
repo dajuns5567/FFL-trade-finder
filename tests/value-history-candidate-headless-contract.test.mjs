@@ -78,7 +78,25 @@ test('V106 headless capture proves all displayed and engine prices come from Pla
 test('V106 durable archive refuses read-only V101 candidate even if accidentally passed as scheduled file',()=>{
  const archive=readFileSync(new URL('../scripts/archive-value-history.mjs',import.meta.url),'utf8');
  assert.match(archive,/snap\?\.provenance\?\.candidate_read_only===true/);
- assert.match(archive,/snap\?\.valuation_model\|\|''\)!=='idp-v96-single-source-continuous-v95-evidence'/);
+ assert.match(archive,/String\(snap\?\.valuation_model\|\|''\)!==approvedModel/);
  assert.match(archive,/VALUE_HISTORY_MODEL_GUARD/);
  assert.match(archive,/throw new Error\('VALUE_HISTORY_MODEL_GUARD/);
+});
+
+test('V107 scheduled V101 transition requires explicit matching model selection and full snapshot evidence',()=>{
+ const archive=readFileSync(new URL('../scripts/archive-value-history.mjs',import.meta.url),'utf8');
+ assert.match(scheduled,/VALUE_HISTORY_APPROVED_SCHEDULED_MODEL/);
+ assert.match(scheduled,/approvedScheduledModel!==V101_MODEL/);
+ assert.match(scheduled,/if\(approvedScheduledModel\)return model===approvedScheduledModel\?approvedScheduledModel:null/);
+ assert.match(workflow,/VALUE_HISTORY_APPROVED_SCHEDULED_MODEL: 'idp-v101-verified-role-growth-v100-source-free-lineage'/);
+ assert.equal((workflow.match(/VALUE_HISTORY_APPROVED_SCHEDULED_MODEL:/g)||[]).length,2);
+ assert.match(archive,/const approvedModel=approval===v101\?v101:approval\?'':v96/);
+ assert.match(archive,/VALUE_HISTORY_V101_PROVENANCE_GUARD/);
+ assert.match(archive,/snap\?\.provenance\?\.canonical_parity!=='exact'/);
+ assert.match(archive,/Number\(snap\?\.provenance\?\.consensus_sources\)<7/);
+ assert.match(archive,/snap\?\.rows\?\.length<1000/);
+ assert.match(archive,/snap\?\.picks\?\.length!==288/);
+ assert.match(archive,/snap\?\.teams\?\.length!==32/);
+ assert.doesNotMatch(candidateWorkflow,/VALUE_HISTORY_APPROVED_SCHEDULED_MODEL/);
+ assert.match(candidateWorkflow,/VALUE_HISTORY_READ_ONLY_CANDIDATE: '1'/);
 });

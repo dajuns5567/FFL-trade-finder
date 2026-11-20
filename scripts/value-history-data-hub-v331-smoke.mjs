@@ -18,6 +18,10 @@ const snaps=[
   snap(0,[P('a',4000,100,'RB',20),P('b',7000,40,'WR',10),P('c',5000,80,'QB',15)]),
   snap(7,[P('a',4300,92,'RB',17),P('b',6800,44,'WR',11),P('c',5200,74,'QB',13)]),
   snap(30,[P('a',4700,82,'RB',14),P('b',6500,50,'WR',13),P('c',5500,65,'QB',10),P('rook',3600,130,'WR',35)]),
+  // The 30D check needs a genuinely recorded comparison INSIDE its window.
+  // Do not manufacture 30-day rank movement by comparing to the 335-day-old
+  // snapshot; a legitimate previous observation is 21 days before day 365.
+  snap(344,[P('a',6000,58,'RB',9),P('b',6100,66,'WR',17),P('c',6300,50,'QB',8),P('rook',5050,90,'WR',23)]),
   snap(365,[P('a',6100,55,'RB',8),P('b',5900,70,'WR',18),P('c',6400,48,'QB',7),P('rook',5200,88,'WR',22)])
 ];
 
@@ -27,13 +31,13 @@ assert(parseMonthBundleText('{broken', '2026-09')===null,'invalid monthly archiv
 const validMonth=parseMonthBundleText(JSON.stringify({schema_version:1,league_id:'1316867686394769408',month:'2026-09',snapshots:[{t:'x'}]}),'2026-09');
 assert(validMonth?.snapshots?.length===1,'valid monthly archive JSON must remain readable');
 assert(emptyMonthBundle('2026-09').month==='2026-09','empty monthly archive recovery bundle must preserve month identity');
-assert(baselineFor(snaps,Date.parse(snaps[3].t),365)===snaps[0],'365-day baseline selection incorrect');
+assert(baselineFor(snaps,Date.parse(snaps.at(-1).t),365)===snaps[0],'365-day baseline selection incorrect');
 
 const m=marketFromSnapshots(snaps);
 assert(m.has7&&m.has30&&m.has365,'period availability flags incorrect');
 assert(m.periods['1D'],'1D market period missing');
 assert(m.tracking_since===snaps[0].t,'tracking start incorrect');
-assert(m.latest===snaps[3].t,'latest snapshot incorrect');
+assert(m.latest===snaps.at(-1).t,'latest snapshot incorrect');
 assert(m.periods['1Y'].valueRisers[0].id==='a'&&m.periods['1Y'].valueRisers[0].delta===2100,'1Y value riser calculation incorrect');
 assert(m.periods['1Y'].valueFallers[0].id==='b'&&m.periods['1Y'].valueFallers[0].delta===-1100,'1Y value faller calculation incorrect');
 assert(m.periods['30D'].rankRisers.some(x=>x.id==='a'&&x.overallDelta>0),'30D rank risers missing');

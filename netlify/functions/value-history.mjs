@@ -1379,9 +1379,11 @@ export { monthKey, marketFromSnapshots, baselineFor, marketInsightsFromSnapshots
 export default async (req)=>{
   try{
     const url=new URL(req.url),s=safeStore();
-    // Internal editorial previews must be read-only even when the handler's
-    // ordinary GET path performs one-time legacy cleanup writes.
-    const readonlyPreview=req.method==='GET'&&url.searchParams.get('readonly_preview')==='1';
+    // Deploy Previews are experimental branches; never let their page loads
+    // overwrite the canonical league's shared history or run cleanup writes.
+    // Check both the request hostname and Netlify's runtime deploy context.
+    const isDeployPreview=/^(?:deploy-preview-\d+|[a-f0-9]{24})--precious-dango-fb4633\.netlify\.app$/i.test(url.hostname)||process.env.CONTEXT==='deploy-preview';
+    const readonlyPreview=isDeployPreview||(req.method==='GET'&&url.searchParams.get('readonly_preview')==='1');
     if(s&&!readonlyPreview){
       try{await scrubV346KtcContamination(s)}catch(e){console.warn('v346-history-scrub',e)}
       try{await scrubV348ConsensusContamination(s)}catch(e){console.warn('v348-history-scrub',e)}
@@ -1450,6 +1452,7 @@ export default async (req)=>{
       return json({player_id:playerId,points:result.points||[],scoring_milestones:null,history_state:result.source,snapshot_count:result.snapshotCount||0,partial:!!result.partial});
     }
     if(req.method!=='POST')return json({error:'method not allowed'},405);
+    if(isDeployPreview)return json({error:'deploy previews are read-only for canonical value history'},403);
     if(!s)return json({error:'live history store unavailable'},503);
     const body=await req.json().catch(()=>null);
     if(String(body?.league||'')!==LEAGUE)return json({error:'league mismatch'},400);
@@ -1458,11 +1461,19 @@ export default async (req)=>{
     rows.sort((a,b)=>a.id.localeCompare(b.id));picks.sort((a,b)=>a.id.localeCompare(b.id));
     const fp=fingerprint(rows,picks,teams);
     const t=new Date().toISOString(),key=`snapshots/${t.replace(/[:.]/g,'-')}.json`;
-    const snapshot={version:5,league:LEAGUE,t,fingerprint:fp,source,valuation_contract:source==='scheduled'?SCHEDULED_VALUATION_CONTRACT:null,rows,picks,teams};
+    const suppliedModel=String(body?.valuation_model||'').trim();
+    // V94/V95 snapshots retain their original models. A new verified
+    // source-reliability consensus curve is V96 and must not be mixed into
+    // either existing market-movement era.
+    const valuationModel=/^(?:idp-v94-v92-balanced-stable-veteran|idp-v95-verified-production-floor-v92-balanced|idp-v96-single-source-continuous-v95-evidence)$/.test(suppliedModel)?suppliedModel:null;
+    if(!valuationModel)return json({error:'verified IDP valuation-model contract required; snapshot not stored'},409);
+    const snapshot={version:5,league:LEAGUE,t,fingerprint:fp,source,
+      valuation_contract:source==='scheduled'?SCHEDULED_VALUATION_CONTRACT:null,
+      valuation_model:valuationModel,rows,picks,teams};
     await retry(()=>s.setJSON(key,snapshot),120);
     await appendIndex(s,key,t);
     await retry(()=>s.setJSON(LATEST_KEY,{version:3,t,fingerprint:fp,key,count:rows.length,source}),120);
-    return json({ok:true,stored:true,t,source,count:rows.length,pick_count:picks.length,team_count:teams.length});
+    return json({ok:true,stored:true,t,source,valuation_model:valuationModelId(snapshot),count:rows.length,pick_count:picks.length,team_count:teams.length});
   }catch(e){
     console.error('value-history',e);
     return json({error:'history unavailable'},503);

@@ -1,0 +1,45 @@
+name: V107 single Netlify draft preview (never production)
+on:
+  push:
+    branches:
+      - fix/v107-v101-scheduled-model-era-promotion-gated
+    paths:
+      - '.github/workflows/v107-one-time-netlify-preview.yml'
+permissions:
+  contents: read
+jobs:
+  preview:
+    if: github.ref == 'refs/heads/fix/v107-v101-scheduled-model-era-promotion-gated' && github.repository == 'dajuns5567/FFL-trade-finder'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate only authorized preview branch and site
+        run: |
+          test "$GITHUB_REF" = 'refs/heads/fix/v107-v101-scheduled-model-era-promotion-gated'
+          test "$GITHUB_REPOSITORY" = 'dajuns5567/FFL-trade-finder'
+          node --check netlify/functions/site-v29.mjs
+          node --check netlify/functions/value-history.mjs
+      - name: Install Netlify CLI locally
+        run: npm install --no-save --ignore-scripts --no-audit --no-fund netlify-cli@23
+      - name: Deploy ONE isolated draft URL without production publishing
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: a516be3b-6c65-4f54-a9fb-23c5361bf3d2
+        run: |
+          set -euo pipefail
+          test -n "${NETLIFY_AUTH_TOKEN:-}" || { echo 'Missing NETLIFY_AUTH_TOKEN: no deploy attempted' >&2; exit 1; }
+          test "$NETLIFY_SITE_ID" = 'a516be3b-6c65-4f54-a9fb-23c5361bf3d2'
+          ./node_modules/.bin/netlify deploy --dir=. --functions=netlify/functions --site="$NETLIFY_SITE_ID" --alias=pr513-v107-once --message='V107 PR513 single draft preview only' --json > /tmp/v107-draft-deploy.json
+          node --input-type=module -e "
+            import {readFileSync} from 'node:fs';
+            const d=JSON.parse(readFileSync('/tmp/v107-draft-deploy.json','utf8'));
+            const url=String(d.deploy_url||d.url||'');
+            if(!url.startsWith('https://')||!url.includes('animated-dasik-3de74a.netlify.app'))throw Error('Invalid draft preview target');
+            console.log('V107_DRAFT_PREVIEW_URL',url);
+          "
+      # No --prod. No schedule or GitHub archive write. Only triggers once
+      # when this workflow file is CREATED; later commits do not match paths.

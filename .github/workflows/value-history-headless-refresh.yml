@@ -65,6 +65,10 @@ jobs:
       # Trade ingestion runs on EVERY scheduled/workflow wake, even when
       # Value History has no new valuation snapshot due. It is read-only.
       - name: Check current Sleeper completed trades
+        # Separate read-only trade monitoring must not suppress an otherwise
+        # verified scheduled player-value history refresh during a transient
+        # Sleeper transactions outage. A failed check remains visible in CI.
+        continue-on-error: true
         run: node scripts/trade-history-scheduled-check.mjs
 
       - name: Check whether scheduled history is due

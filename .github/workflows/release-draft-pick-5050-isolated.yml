@@ -1,0 +1,35 @@
+name: Release candidate — 50/50 draft-pick order only (read-only)
+on:
+  pull_request:
+    paths:
+      - 'draft-pick-rankings-v527.js'
+      - 'tests/draft-pick-order-5050.test.mjs'
+      - '.github/workflows/release-draft-pick-5050-isolated.yml'
+permissions:
+  contents: read
+jobs:
+  pick-order-only:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Confirm draft order overlay compiles
+        run: node --check draft-pick-rankings-v527.js
+      - name: Check 50/50 record-plus-PF order, current values and original trades
+        run: node --test tests/draft-pick-order-5050.test.mjs
+      - name: Verify only draft-pick ranking subsystem changed
+        run: |
+          node --input-type=module <<'JS'
+          import {execFileSync} from 'node:child_process';
+          import assert from 'node:assert/strict';
+          const files=execFileSync('git',['diff','--name-only','origin/release/v107-history-collector-post-hindsight-draft...HEAD'],{encoding:'utf8'}).trim().split(String.fromCharCode(10)).filter(Boolean);
+          const allowed=new Set(["draft-pick-rankings-v527.js","tests/draft-pick-order-5050.test.mjs",".github/workflows/release-draft-pick-5050-isolated.yml"]);
+          assert(files.length===3,'expected two source/test files plus CI');
+          for(const file of files)assert(allowed.has(file),'Out-of-scope subsystem: '+file);
+          console.log('Draft-pick order only:',files);
+          JS

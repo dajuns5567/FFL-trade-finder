@@ -1586,10 +1586,27 @@ function openMarketIntelModal(kind){
 function intelligencePeriodBar(){
   return`<div class="vh-intel-periodbar"><div class="vh-intel-period-copy"><span class="vh-intel-kicker">Fleeced analytics</span><div class="vh-intel-title">Market Intelligence</div><small>Choose the value-history window used across indexes, heat, records, opportunities, reversals, and volatility.</small></div><div class="vh-intel-period-actions" role="group" aria-label="Market Intelligence time range">${['1D','7D','30D','90D','1Y','ALL'].map(p=>`<button type="button" class="${p===marketIntelPeriod?'vh-active':''}" data-vh-intel-period="${p}">${p}</button>`).join('')}</div><div class="vh-intel-period-note">Value movement uses verified observations inside the selected window. Fleeced player signals remain based on completed NFL weeks only.</div></div>`;
 }
+function currentPositionIndexes(){
+  // The archive can rank players at its LAST snapshot, but that is not
+  // necessarily today's Player Values ranking. Select today's top 24 by
+  // CURRENT canonical finished value, then attach archived, same-era price
+  // movement by player ID. Never treat missing history as a 0% return.
+  const live=currentRows(),movement=new Map(heatMapVerifiedCurrentRows().map(r=>[String(r.id),r]));
+  return ['QB','RB','WR','TE','IDP'].map(pos=>{
+    const cohort=live.filter(r=>r.pos===pos&&finiteMarketNumber(r.value)>0)
+      .slice().sort((a,b)=>Number(b.value)-Number(a.value)||Number(a.overall)-Number(b.overall))
+      .slice(0,24);
+    const verified=cohort.map(r=>movement.get(String(r.id))).filter(r=>r&&finiteMarketNumber(r.pct)!=null);
+    const pct=verified.length?verified.reduce((sum,r)=>sum+Number(r.pct),0)/verified.length:null;
+    return {pos,cohort_count:cohort.length,count:verified.length,
+      index:pct==null?null:100+pct,change_pct:pct,
+      measurement:'current-player-values-top24-same-era-verified-pct'};
+  });
+}
 function positionIndexesMarkup(){
-  const rows=intelRange()?.position_indexes||[];
-  if(!rows.length)return'<div class="vh-card"><div class="vh-empty">Building position indexes from tracked market history…</div></div>';
-  return`<div class="vh-index-grid">${rows.map(r=>{const idx=finiteMarketNumber(r.index),chg=finiteMarketNumber(r.change_pct);return`<div class="vh-index-card"><small>${esc(r.pos)} Index</small><b>${idx==null?'—':idx.toFixed(1)}</b><span class="${deltaClass(chg)}">${chg==null?'—':signedPct(chg)} over ${esc(intelPeriodLabel())}</span><span class="muted">${r.count} verified of ${r.cohort_count||24} current ${esc(r.pos)} players • 100 = no recorded movement</span></div>`}).join('')}</div>`;
+  const rows=currentPositionIndexes();
+  if(!rows.some(r=>r.cohort_count))return'<div class="vh-card"><div class="vh-empty">Waiting for current Player Values rankings…</div></div>';
+  return`<div class="vh-index-grid">${rows.map(r=>{const idx=finiteMarketNumber(r.index),chg=finiteMarketNumber(r.change_pct);return`<div class="vh-index-card"><small>${esc(r.pos)} Index</small><b>${idx==null?'—':idx.toFixed(1)}</b><span class="${deltaClass(chg)}">${chg==null?'—':signedPct(chg)} over ${esc(intelPeriodLabel())}</span><span class="muted">${r.count} verified of ${r.cohort_count} current ${esc(r.pos)} players • 100 = no recorded movement</span></div>`}).join('')}</div>`;
 }
 function heatMapVerifiedCurrentRows(){
   // The archive supplies measured within-era percentage changes, while the

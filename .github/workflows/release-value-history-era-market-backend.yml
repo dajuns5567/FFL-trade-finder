@@ -24,6 +24,8 @@ jobs:
         run: npm install --no-save --ignore-scripts --no-audit --no-fund
       - name: Test exact immutable model-era market movements and legacy Market Intelligence
         run: node --test tests/value-history-era-market-backend-isolated.test.mjs tests/market-intelligence-original-recovery.test.mjs
+      - name: Verify authentic 30D/1Y rank and rookie available-history evidence
+        run: node scripts/value-history-data-hub-v331-smoke.mjs
       - name: Enforce backend-only scope — Trade History UI, Finder, and archival writer untouched
         run: |
           node --input-type=module <<'JS'

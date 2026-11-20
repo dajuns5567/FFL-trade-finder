@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 const scheduled=readFileSync(new URL('../scripts/value-history-headless-refresh.mjs',import.meta.url),'utf8');
 const workflow=readFileSync(new URL('../.github/workflows/value-history-headless-refresh.yml',import.meta.url),'utf8');
@@ -100,4 +101,34 @@ test('V107 scheduled V101 transition requires explicit matching model selection 
  assert.match(archive,/snap\?\.teams\?\.length!==32/);
  assert.doesNotMatch(candidateWorkflow,/VALUE_HISTORY_APPROVED_SCHEDULED_MODEL/);
  assert.match(candidateWorkflow,/VALUE_HISTORY_READ_ONLY_CANDIDATE: '1'/);
+});
+
+test('V107 executes the actual durable archive cutover guard against supported and forbidden snapshots',()=>{
+ const source=readFileSync(new URL('../scripts/archive-value-history.mjs',import.meta.url),'utf8');
+ const start=source.indexOf("  const v96='idp-v96-single-source-continuous-v95-evidence';");
+ const end=source.indexOf('  payload={schema_version:',start);
+ assert(start>0&&end>start,'must extract archive guard from repository code, not reconstruct it');
+ const policy=source.slice(start,end);
+ const base={valuation_model:'idp-v101-verified-role-growth-v100-source-free-lineage',
+  rows:Array.from({length:1081},(_,i)=>({id:String(i),value:100+i,overall:i+1})),
+  picks:Array.from({length:288},(_,i)=>({id:String(i)})),
+  teams:Array.from({length:32},(_,i)=>({id:String(i)})),
+  provenance:{canonical_parity:'exact',consensus_sources:7,git_commit:'a'.repeat(40),modeled_version:6}};
+ const approved='idp-v101-verified-role-growth-v100-source-free-lineage';
+ const check=(snap,approval)=>vm.runInNewContext('(function(){'+policy+';return true})()',
+  {snap,process:{env:{VALUE_HISTORY_APPROVED_SCHEDULED_MODEL:approval||''}},String,Number,Error});
+ assert.equal(check(base,approved),true,'verified V101 capture with refresh generation 6 is valid');
+ assert.throws(()=>check(base,''),/VALUE_HISTORY_MODEL_GUARD/,'unselected archive cannot mix V101 into V96 history');
+ assert.throws(()=>check({...base,provenance:{...base.provenance,candidate_read_only:true}},approved),/VALUE_HISTORY_MODEL_GUARD/);
+ assert.throws(()=>check({...base,valuation_model:'idp-v96-single-source-continuous-v95-evidence'},approved),/VALUE_HISTORY_MODEL_GUARD/);
+ assert.equal(check({...base,valuation_model:'idp-v96-single-source-continuous-v95-evidence'},''),true,'legacy V96 keeps its original default');
+ for(const bad of [
+  {...base,provenance:{...base.provenance,canonical_parity:'partial'}},
+  {...base,provenance:{...base.provenance,consensus_sources:6}},
+  {...base,provenance:{...base.provenance,git_commit:'invalid'}},
+  {...base,provenance:{...base.provenance,modeled_version:0}},
+  {...base,rows:base.rows.slice(0,999)},
+  {...base,picks:base.picks.slice(1)},
+  {...base,teams:base.teams.slice(1)}
+ ])assert.throws(()=>check(bad,approved),/VALUE_HISTORY_V101_PROVENANCE_GUARD/);
 });

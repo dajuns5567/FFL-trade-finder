@@ -164,3 +164,29 @@ test('V107 due checks only the chosen model era and starts V101 immediately afte
  assert.equal(expired.due,true,'stale V101 record triggers a new capture');
  await assert.rejects(evaluate(rows,'unverified-model'),/VALUE_HISTORY_DUE_MODEL_GUARD/);
 });
+
+test('V107 cross-era archival skips false snapbacks but preserves same-model integrity',()=>{
+ const archive=readFileSync(new URL('../scripts/archive-value-history.mjs',import.meta.url),'utf8');
+ const start=archive.indexOf('for(const snap of incoming){\n // A V96→V101 repricing boundary');
+ const end=archive.indexOf('\nconst monthGroups=new Map();',start);
+ assert(start>0&&end>start);
+ const check=archive.slice(start,end);
+ const v96='idp-v96-single-source-continuous-v95-evidence';
+ const v101='idp-v101-verified-role-growth-v100-source-free-lineage';
+ const run=(previous,next)=>{
+  let calls=0;
+  const ctx={confirmed:previous.slice(),incoming:[next],String,JSON,Error,
+   inspectShortTermSnapback:()=>{calls++;return {ok:true}}};
+  vm.runInNewContext(check,ctx);
+  return calls;
+ };
+ const record=valuation_model=>({valuation_model,t:'2026-11-20T00:00:00Z'});
+ assert.equal(run([record(v96),record(v96)],record(v101)),0,
+  'new V101 model must not be rejected as a V96 snapback');
+ assert.equal(run([record(v96),record(v101)],record(v101)),0,
+  'first two V101 observations must not use pre-cutover V96 as baseline');
+ assert.equal(run([record(v101),record(v101)],record(v101)),1,
+  'normal integrity checks resume once three V101 samples exist');
+ assert.equal(run([record(v96),record(v96)],record(v96)),1,
+  'existing V96 same-era integrity remains active');
+});

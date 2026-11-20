@@ -87,3 +87,24 @@ test('real backend mover calculation adds only verified same-model deltas, not m
  assert.notEqual(result.metrics.get('riser').delta,430,'model switch must never become a mover');
  assert.equal(result.metrics.get('riser').comparable_segments,2);
 });
+
+test('V108 preview build is permitted only for PR #515 and never deploys production',()=>{
+ const config=readFileSync(new URL('../netlify.toml',import.meta.url),'utf8');
+ const line=config.split('\n').find(x=>/^\s*ignore\s*=/.test(x));
+ assert.ok(line);
+ const m=line.match(/node -e \\"(.*?)\\""/);
+ assert.ok(m,'preserve executable guard in actual Netlify build ignore config');
+ const status=env=>{
+  const ctx={process:{env,exit:n=>{ctx.exitCode=n}}};
+  vm.runInNewContext(m[1],ctx);
+  return ctx.exitCode;
+ };
+ const site='a516be3b-6c65-4f54-a9fb-23c5361bf3d2';
+ assert.equal(status({SITE_ID:site,CONTEXT:'deploy-preview',REVIEW_ID:'515'}),1);
+ for(const env of [
+  {SITE_ID:site,CONTEXT:'production',REVIEW_ID:'515'},
+  {SITE_ID:site,CONTEXT:'branch-deploy',REVIEW_ID:'515'},
+  {SITE_ID:site,CONTEXT:'deploy-preview',REVIEW_ID:'514'},
+  {SITE_ID:'other-site',CONTEXT:'deploy-preview',REVIEW_ID:'515'}
+ ])assert.equal(status(env),0,'disallow unapproved production, branch or site deploy');
+});

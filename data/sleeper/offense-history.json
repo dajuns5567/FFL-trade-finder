@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-11-20T03:10:53.317Z",
+  "generatedAt": "2026-11-20T11:33:44.015Z",
   "source": "Sleeper importer snapshot",
   "currentSeason": 2026,
   "completedWeek": 10,
@@ -361,7 +361,10 @@
         "BAL",
         "LAC"
       ],
-      "11": []
+      "11": [
+        "HOU",
+        "IND"
+      ]
     },
     "weekFinalityByWeek": {
       "1": {
@@ -1666,15 +1669,15 @@
       },
       "11": {
         "scheduledGames": 13,
-        "finalGames": 0,
+        "finalGames": 1,
         "ignoredGames": 0,
-        "blockingGames": 13,
+        "blockingGames": 12,
         "complete": false,
         "nullSlots": [],
         "slots": [
           {
             "id": "401873066",
-            "state": "blocking",
+            "state": "final",
             "teams": [
               "HOU",
               "IND"
@@ -1780,9 +1783,9 @@
       }
     },
     "diagnostics": {
-      "finalGames": 150,
-      "qualifiedPlayerGames": 9891,
-      "rejectedPlayerGames": 11485,
+      "finalGames": 151,
+      "qualifiedPlayerGames": 9909,
+      "rejectedPlayerGames": 11617,
       "ignoredGames": 0
     }
   },

@@ -4,7 +4,7 @@
   functions = "netlify/functions"
   # V109 REVIEW ONLY: permit only exact Deploy Preview on verified site.
   # No production deployment or branch build is authorized.
-  ignore = "node -e \"const e=process.env;const site=e.SITE_ID==='a516be3b-6c65-4f54-a9fb-23c5361bf3d2';const preview=e.CONTEXT==='deploy-preview'&&String(e.REVIEW_ID)==='PIN_PR';process.exit(site&&preview?1:0)\""
+  ignore = "node -e \"const e=process.env;const site=e.SITE_ID==='a516be3b-6c65-4f54-a9fb-23c5361bf3d2';const preview=e.CONTEXT==='deploy-preview'&&String(e.REVIEW_ID)==='542';process.exit(site&&preview?1:0)\""
 
 [functions]
   node_bundler = "esbuild"

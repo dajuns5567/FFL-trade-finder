@@ -151,7 +151,7 @@ for(const snap of incoming){
   const month=monthOf(snap.t),path=`${root}/snapshots/${month.replace('-','/')}/${safeName(snap.t)}.json`;
   const prior=await readFile(path);
   if(!prior)await putFile(path,JSON.stringify(snap,null,2)+'\n',`Archive Value History snapshot ${snap.t}`);
-  index.items=index.items||[];index.items.push({t:snap.t,path,fingerprint:snap.fingerprint||null,count:snap.rows.length,source:snap.source||null});
+  index.items=index.items||[];index.items.push({t:snap.t,path,fingerprint:snap.fingerprint||null,count:snap.rows.length,source:snap.source||null,valuation_model:snap.valuation_model||null});
   if(!monthGroups.has(month))monthGroups.set(month,[]);monthGroups.get(month).push(snap);
 }
 async function rebuildMonthBundleFromSnapshots(month){

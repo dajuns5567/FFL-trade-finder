@@ -21,7 +21,7 @@ const ctx={
   trackedTeamId:'1',teamNetPointTradeMap:()=>new Map(),livePlayerMeta:()=>({value:4700})
 };
 vm.createContext(ctx);
-for(const name of ['chartTraceIndices','chartEraChange','chartVisualSeries','chartEraPath','chartEraMarkers','chartHoverLayer','teamNetChart','rankSpark','valueChart'])
+for(const name of ['chartTraceIndices','chartEraChange','chartVisualSeries','chartEraPath','chartEraConnectors','chartEraMarkers','chartHoverLayer','teamNetChart','rankSpark','valueChart'])
   vm.runInContext(functionSource(name),ctx);
 
 const pts=Array.from({length:501},(_,i)=>({
@@ -53,6 +53,7 @@ test('Value History plot is visually sparse but every snapshot has exact tooltip
   assert.equal(data.points[111].posRank,pts[111].posRank);
   assert.equal((html.match(/class="vh-point-dot"/g)||[]).length,0,'archived value chart has no extra endpoint dot');
   assert.equal((html.match(/class="vh-point-hit"/g)||[]).length,0);
+  assert.match(html,/class="vh-value-era-dot"/,'endpoint marks the last archived point');
   assert.match(html,/class="vh-plot-hit"/);
   assert.match(html,/Use arrow keys when focused/);
   assert.match(html,/display-smoothed only for isolated one-snapshot spikes/);
@@ -148,7 +149,8 @@ test('V103 chart shows current Player Values above an uncluttered archival chart
  assert.match(plot,/Current Player Value<\/span><strong class="vh-current-price-number">4,700/);
  assert.match(plot,/Last recorded <b>/);
  assert.doesNotMatch(plot,/vh-current-live-point|LIVE 4,700/);
- assert.doesNotMatch(plot,/vh-point-dot/,'no separate dot at historical endpoint');
+ assert.doesNotMatch(plot,/vh-point-dot/,'no invented separate live-current value dot');
+ assert.match(plot,/vh-value-era-dot/,'archive endpoint remains visibly marked');
  assert.match(plot,/not saved as history/);
  const snapshot=decodeSeries(plot);
  assert.equal(snapshot.points.length,pts.length);
@@ -156,7 +158,7 @@ test('V103 chart shows current Player Values above an uncluttered archival chart
  assert.notEqual(snapshot.points.at(-1).value,'4,700','current value must not become a fabricated archived point');
 });
 
-test('V104 keeps the last two new-model observations in hover, not a dangling SVG tail',()=>{
+test('V108 visibly connects the last two same-model points while keeping the model transition dashed',()=>{
  const rows=Array.from({length:18},(_,i)=>({
   t:new Date(Date.UTC(2026,10,i+1)).toISOString(),
   value:i<16?3200+i*8:5150+i,
@@ -171,8 +173,11 @@ test('V104 keeps the last two new-model observations in hover, not a dangling SV
  assert.equal(series.points.length,18,'all recorded observations remain inspectable');
  assert.equal(series.points.at(-1).value,ctx.fmt(rows.at(-1).value));
  assert.equal(series.points.at(-1).valuation_model,'v101-recorded');
- assert.match(full,/2 newer-model snapshots are available by hover/);
- assert.match(full,/not connected to the earlier valuation era/);
+ assert.match(full,/stroke-dasharray="4 5"/,'cross-model join is dashed, never counted as movement');
+ assert.match(full,/vh-value-era-dot/,'latest archived point is visible');
+ const actual=ctx.chartEraPath(rows,'value',220,x,y);
+ assert.equal((actual.match(/M /g)||[]).length,2,'each era has its own line');
+ assert.match(actual,/C /,'new-model two-point segment draws its own connecting line');
 });
 test('V104 aligns summary blocks and heat map without rewriting archived milestones',()=>{
  assert.match(source,/vh-market-section-title\{display:grid;grid-template-columns:minmax\(0,1fr\)/);

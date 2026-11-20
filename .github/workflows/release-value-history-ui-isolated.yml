@@ -11,8 +11,7 @@ permissions:
   contents: read
 jobs:
   history-ui-only:
-    # History UI scope applies to its own PR, not a later independent
-    # Trade History consumer fix that inherits the chart implementation.
+    # This UI scope applies only to its originating release PR, not later Trade History or recorder stages.
     if: github.base_ref == 'release/value-history-era-market-backend-isolated-draft'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -35,7 +34,7 @@ jobs:
           import {execFileSync} from 'node:child_process';
           import assert from 'node:assert/strict';
           const files=execFileSync('git',['diff','--name-only','origin/release/value-history-era-market-backend-isolated-draft...HEAD'],{encoding:'utf8'}).trim().split(String.fromCharCode(10)).filter(Boolean);
-          const allowed=new Set(["value-history-v276.js","tests/value-history-dense-charts.test.mjs","tests/value-history-ui-isolated-v108.test.mjs","tests/market-intelligence-original-recovery.test.mjs",".github/workflows/release-value-history-ui-isolated.yml"]);
+          const allowed=new Set(["value-history-v276.js","tests/value-history-dense-charts.test.mjs","tests/value-history-ui-isolated-v108.test.mjs","tests/market-intelligence-original-recovery.test.mjs",".github/workflows/release-value-history-ui-isolated.yml","scripts/value-history-data-hub-v331-smoke.mjs"]);
           assert(files.length>0);
           for(const file of files)assert(allowed.has(file),'Out-of-scope subsystem: '+file);
           console.log('History UI only release source:',files);

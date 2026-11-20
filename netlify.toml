@@ -3,9 +3,9 @@
   publish = "."
   functions = "netlify/functions"
   # ONE-TIME REVIEW PREVIEW ONLY. No production/branch builds on any site.
-  # Fail-closed until the exact draft PR number is installed below.
+  # Only PR #540 may build on this site; all other reviews and production are blocked.
   # Netlify ignore command: exit 1 permits only an explicitly pinned Deploy Preview.
-  ignore = "node -e \"const e=process.env;const site=e.SITE_ID==='a516be3b-6c65-4f54-a9fb-23c5361bf3d2';const review=e.CONTEXT==='deploy-preview'&&String(e.REVIEW_ID)==='PIN_REVIEW_PR';process.exit(site&&review?1:0)\""
+  ignore = "node -e \"const e=process.env;const site=e.SITE_ID==='a516be3b-6c65-4f54-a9fb-23c5361bf3d2';const review=e.CONTEXT==='deploy-preview'&&String(e.REVIEW_ID)==='540';process.exit(site&&review?1:0)\""
 
 [functions]
   node_bundler = "esbuild"

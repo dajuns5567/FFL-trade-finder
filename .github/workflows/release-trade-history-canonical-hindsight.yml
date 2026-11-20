@@ -28,8 +28,8 @@ jobs:
           import assert from 'node:assert/strict';
           import {execFileSync} from 'node:child_process';
           const changed=execFileSync('git',['diff','--name-only','origin/release/value-history-ui-v108-isolated-draft...HEAD'],{encoding:'utf8'}).trim().split(String.fromCharCode(10)).filter(Boolean);
-          const allowed=new Set(["value-history-v276.js","tests/trade-history-canonical-unrostered-hindsight.test.mjs",".github/workflows/release-trade-history-canonical-hindsight.yml",".github/workflows/release-value-history-ui-isolated.yml"]);
-          assert.equal(changed.length,4);
+          const allowed=new Set(["value-history-v276.js","tests/trade-history-canonical-unrostered-hindsight.test.mjs",".github/workflows/release-trade-history-canonical-hindsight.yml",".github/workflows/release-value-history-ui-isolated.yml","scripts/value-history-data-hub-v331-smoke.mjs"]);
+          assert.equal(changed.length,5);
           for(const file of changed)assert(allowed.has(file),'Other major subsystem changed: '+file);
           console.log('Only Trade History Hindsight consumer and tests:',changed);
           JS

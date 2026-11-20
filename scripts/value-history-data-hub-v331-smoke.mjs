@@ -65,7 +65,10 @@ const ktcPlayers=Array.from({length:320},(_,i)=>({playerName:`Player ${i+1}`,pos
 const ktcParsed=extractKtcSuperflexRankings(`<script type="application/json" id="ktc-players">${JSON.stringify(ktcPlayers)}</script><script>var playersArray = JSON.parse(document.getElementById('ktc-players').textContent);</script>`);
 assert(ktcParsed.rows.length===320,'KTC embedded JSON parser must recover the complete player universe');
 assert(ktcParsed.rows[0].rank===1&&ktcParsed.rows.at(-1).rank===320,'KTC embedded JSON ranks are not preserved');
-assert(!m.marketRows.find(x=>x.id==='rook')?.delta365,'new player should not receive fabricated pre-entry 365-day history');
+const rookieMarket=m.marketRows.find(x=>x.id==='rook');
+assert(rookieMarket?.delta365===1600&&rookieMarket?.delta365Available===true&&
+  rookieMarket?.delta365From===snaps[2].t,
+  'new player must show only genuine first-observation-to-present movement, labelled available history, never pre-entry 365D coverage');
 
 const ui=fs.readFileSync('value-history-v276.js','utf8');
 for(const needle of [

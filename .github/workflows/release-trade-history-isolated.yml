@@ -4,6 +4,7 @@ on:
     paths:
       - '.github/workflows/release-value-history-ui-isolated.yml'
       - 'value-history-v276.js'
+      - 'tests/draft-pick-order-5050.test.mjs'
       - 'tests/trade-history-original-pick-projection.test.mjs'
       - 'tests/trade-history-ranked-unrostered-hindsight.test.mjs'
       - '.github/workflows/release-trade-history-isolated.yml'
@@ -25,15 +26,15 @@ jobs:
       - name: Install declared test dependencies only
         run: npm install --no-save --ignore-scripts --no-audit --no-fund
       - name: Validate transaction-time pick projection, today-currency Hindsight and live trade refresh
-        run: node --test tests/trade-history-original-pick-projection.test.mjs tests/trade-history-ranked-unrostered-hindsight.test.mjs tests/trade-history-live-sleeper.test.mjs
+        run: node --test tests/draft-pick-order-5050.test.mjs tests/trade-history-original-pick-projection.test.mjs tests/trade-history-ranked-unrostered-hindsight.test.mjs tests/trade-history-live-sleeper.test.mjs
       - name: Enforce Trade History-only release scope
         run: |
           node --input-type=module <<'JS'
           import {execFileSync} from 'node:child_process';
           import assert from 'node:assert/strict';
           const files=execFileSync('git',['diff','--name-only','origin/release/value-history-ui-v108-isolated-draft...HEAD'],{encoding:'utf8'}).trim().split(String.fromCharCode(10)).filter(Boolean);
-          const allowed=new Set([".github/workflows/release-value-history-ui-isolated.yml","value-history-v276.js","tests/trade-history-original-pick-projection.test.mjs","tests/trade-history-ranked-unrostered-hindsight.test.mjs",".github/workflows/release-trade-history-isolated.yml"]);
-          assert(files.length===5);
+          const allowed=new Set([".github/workflows/release-value-history-ui-isolated.yml","value-history-v276.js","tests/draft-pick-order-5050.test.mjs","tests/trade-history-original-pick-projection.test.mjs","tests/trade-history-ranked-unrostered-hindsight.test.mjs",".github/workflows/release-trade-history-isolated.yml"]);
+          assert(files.length===6);
           for(const file of files)assert(allowed.has(file),'Non-Trade-History subsystem modified: '+file);
           console.log('Trade History release only:',files);
           JS

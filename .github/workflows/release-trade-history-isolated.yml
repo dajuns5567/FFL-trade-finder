@@ -2,6 +2,7 @@ name: Release candidate — Trade History original picks and canonical Hindsight
 on:
   pull_request:
     paths:
+      - '.github/workflows/release-value-history-ui-isolated.yml'
       - 'value-history-v276.js'
       - 'tests/trade-history-original-pick-projection.test.mjs'
       - 'tests/trade-history-ranked-unrostered-hindsight.test.mjs'
@@ -31,8 +32,8 @@ jobs:
           import {execFileSync} from 'node:child_process';
           import assert from 'node:assert/strict';
           const files=execFileSync('git',['diff','--name-only','origin/release/value-history-ui-v108-isolated-draft...HEAD'],{encoding:'utf8'}).trim().split(String.fromCharCode(10)).filter(Boolean);
-          const allowed=new Set(["value-history-v276.js","tests/trade-history-original-pick-projection.test.mjs","tests/trade-history-ranked-unrostered-hindsight.test.mjs",".github/workflows/release-trade-history-isolated.yml"]);
-          assert(files.length===4);
+          const allowed=new Set([".github/workflows/release-value-history-ui-isolated.yml","value-history-v276.js","tests/trade-history-original-pick-projection.test.mjs","tests/trade-history-ranked-unrostered-hindsight.test.mjs",".github/workflows/release-trade-history-isolated.yml"]);
+          assert(files.length===5);
           for(const file of files)assert(allowed.has(file),'Non-Trade-History subsystem modified: '+file);
           console.log('Trade History release only:',files);
           JS

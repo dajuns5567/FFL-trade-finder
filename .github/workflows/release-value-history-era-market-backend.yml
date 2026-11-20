@@ -20,6 +20,8 @@ jobs:
           node-version: '22'
       - name: Check Value History backend JS syntax
         run: node --check netlify/functions/value-history.mjs
+      - name: Install read-only test dependencies for real Netlify API imports
+        run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Test exact immutable model-era market movements and legacy Market Intelligence
         run: node --test tests/value-history-era-market-backend-isolated.test.mjs tests/market-intelligence-original-recovery.test.mjs
       - name: Enforce backend-only scope — Trade History UI, Finder, and archival writer untouched

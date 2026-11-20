@@ -570,7 +570,7 @@ assert(headlessRefresh.includes("sameRows(first.rows,second.rows)"),'scheduled h
 assert(headlessRefresh.includes("page.waitForTimeout(1500)"),'scheduled headless snapshots must observe a stability interval before persistence');
 assert(headlessRefresh.includes("window.__fllValueRefresh"),'scheduled headless readiness must honor the full valuation refresh in-flight marker');
 assert(headlessRefresh.includes("refresh?.phase==='complete'"),'scheduled headless readiness must require the canonical valuation refresh to reach the completed phase');
-assert(headlessRefresh.includes("canonical.playerValue?.({type:'player',id:String(r.id)})"),'scheduled snapshots must verify every captured player against the live canonical Player Values API');
+assert(headlessRefresh.includes("const asset={type:'player',id:String(r.id)},expected=Number(r.value);")&&headlessRefresh.includes("compare(r.id,'normalization.playerValue',canonical.playerValue?.(asset),expected);")&&headlessRefresh.includes("compare(r.id,'normalization.canonicalValue',canonical.canonicalValue?.(asset),expected);"),'scheduled snapshots must verify every captured player against both canonical Player Values APIs');
 assert(headlessRefresh.includes("valueParityMismatches"),'scheduled snapshots must fail closed when captured values diverge from the canonical Player Values scale');
 assert(headlessRefresh.includes("first.modeledVersion===second.modeledVersion"),'scheduled snapshots must keep the modeled-value runtime version stable across the capture interval');
 const consensusRuntime=fs.readFileSync('nonblocking-consensus-v277.js','utf8');

@@ -19,7 +19,7 @@ test('player history removes only both intrusive preview/model warning banners',
  assert.match(ui,/chartEraConnectors\(pts,'value',x,y\)/);
 });
 
-test('all chart types retain final observations and show cross-model boundaries distinctly',()=>{
+test('all three history charts use one visual stroke while retaining cross-model provenance',()=>{
  const source=piece(ui,'function chartTraceIndices(','function chartHoverLayer(');
  const ctx={Number,Math,Set,String};
  vm.runInNewContext(source+';this.chart={path:chartEraPath,connectors:chartEraConnectors,markers:chartEraMarkers};',ctx);
@@ -32,14 +32,18 @@ test('all chart types retain final observations and show cross-model boundaries 
  assert.match(path,/M 0\.0 100\.0/);
  assert.match(path,/C /,'first era is a drawable continuous segment');
  assert.match(path,/M 20\.0 500\.0/,'single-point latest era must be plotted even if short');
- assert.match(connector,/stroke-dasharray="4 5"/);
- assert.match(connector,/model boundary|model change|Valuation-model boundary/i);
- assert.match(connector,/x1="10\.0"[^>]*x2="20\.0"/,'connector bridges orientation only');
+ assert.doesNotMatch(connector,/stroke-dasharray|#8a93a4/,'no differently styled gray/dashed break');
+ assert.match(connector,/stroke="#e4b53f" stroke-width="3.5"/,'same gold stroke as player-history curve');
+ assert.match(connector,/M 10\.0 110\.0 C [^"]+20\.0 500\.0/,'model-change interval uses same cubic curve geometry');
+ assert.match(connector,/Valuation model changed between these archived observations/,'hover retains boundary provenance');
  assert.match(ctx.chart.markers(points,'value',x,y,'dot',3),/cx="20\.0" cy="500\.0"/);
  const extended=[...points,make(520,b)];
  assert.match(ctx.chart.path(extended,'value',90,x,y),/30\.0 520\.0/,'later same-model data must connect normally');
  const same=[make(100,a),make(110,a),make(120,a)];
  assert.equal(ctx.chart.connectors(same,'value',x,y),'','no false model boundary');
+ assert.match(ui,/chartEraConnectors\(pts,'value',x,y,'vh-net-line'\)/,'team net history gets same stroke width and color');
+ assert.match(ui,/chartEraConnectors\(clean,field,x,y,'vh-rank-line'\)/,'rank history gets matching stroke');
+ assert.doesNotMatch(ui,/\$\{connectors\}\$\{markers\}\$\{hover\}/,'no differently styled endpoint/boundary dots');
 });
 
 test('heatmap rank bands use live Player Values ranks and exclude missing movement',()=>{

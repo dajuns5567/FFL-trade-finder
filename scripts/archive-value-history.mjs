@@ -219,5 +219,8 @@ for(const snap of incoming){
   if(!stored?.content)throw new Error(`Durable Value History archive verification unreadable snapshot ${snap.t}`);
   const parsed=JSON.parse(stored.content);
   if(String(parsed?.t)!==String(snap.t)||String(parsed?.source||'')!==String(snap.source||''))throw new Error(`Durable Value History archive verification content mismatch for ${snap.t}`);
+  if(String(parsed?.valuation_model||'')!==String(snap?.valuation_model||'')||
+     String(item?.valuation_model||'')!==String(snap?.valuation_model||''))
+    throw new Error(`VALUE_HISTORY_MODEL_INTEGRITY: archive model mismatch for ${snap.t}`);
 }
 console.log(`Archived ${incoming.length} Value History snapshot(s) from ${payload.source||'unknown'}; total ${index.snapshot_count}; latest ${index.latest}.`);

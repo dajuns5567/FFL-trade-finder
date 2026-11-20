@@ -20,9 +20,11 @@ jobs:
           node-version: '22'
       - name: Verify Value History syntax
         run: node --check value-history-v276.js
-      - name: Prove live market movement and archived-data isolation
+      - name: Install declared read-only test dependencies
+        run: npm install --no-save --ignore-scripts --no-audit --no-fund
+      - name: Prove current live market movement and immutable history
         run: |
-          node --test tests/market-live-movers-v109.test.mjs tests/value-history-dense-charts.test.mjs tests/value-history-ui-isolated-v108.test.mjs tests/market-intelligence-original-recovery.test.mjs
+          node --test tests/market-live-movers-v109.test.mjs tests/value-history-dense-charts.test.mjs tests/market-intelligence-original-recovery.test.mjs tests/trade-history-original-pick-projection.test.mjs tests/trade-history-hindsight-reconciled.test.mjs
       - name: Reject changes outside Market Dashboard UI
         env:
           BASE_REF: ${{ github.base_ref }}

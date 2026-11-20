@@ -12,14 +12,23 @@ function refreshDerivedValuation277(reason){
   try{valueCache?.clear?.()}catch(_){}
   try{fitCache?.clear?.()}catch(_){}
   try{stageCache?.clear?.()}catch(_){}
-  try{window.modeledPlayerValuesV319?.refresh?.(true)}catch(e){console.warn('Derived valuation refresh failed after '+reason,e)}
+  // Do not report a successful site-wide valuation update when the common
+  // Player Values map could not be rebuilt. Preserve last-known-good prices
+  // until a complete canonical model is ready.
+  let rebuilt=false;
+  try{rebuilt=window.modeledPlayerValuesV319?.refresh?.(true)===true}
+  catch(e){console.warn('Derived valuation refresh failed after '+reason,e)}
+  if(!rebuilt||window.modeledPlayerValuesV319?.ready!==true)
+    console.warn('Canonical Player Values not ready after '+reason+'; keeping last-known-good prices');
+  return rebuilt&&window.modeledPlayerValuesV319?.ready===true;
 }
 async function refreshConsensusBackground277(run){
   let consensusCount=0;
   try{
     consensusCount=await refreshConsensus(true);
     if(run!==consensusRun277)return;
-    refreshDerivedValuation277('consensus refresh');
+    if(!refreshDerivedValuation277('consensus refresh'))
+      throw new Error('Canonical Player Values not ready after consensus refresh');
     buildTeams();renderAll();
     // Hindsight and historical comparison already use the current evaluator.
     // Notify their visible views after the consensus-derived caches rebuild;

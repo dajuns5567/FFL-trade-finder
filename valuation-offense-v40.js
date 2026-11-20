@@ -8,15 +8,54 @@ const previousMaster50=masterRankings;
 const OFF50=new Set(['QB','RB','WR','TE']);
 const finite50=v=>v==null||v===''?null:(Number.isFinite(Number(v))?Number(v):null);
 const clamp50=(lo,x,hi)=>Math.max(lo,Math.min(hi,x));
-function production50(c,a){
+function production50(c,a,player=null,completedWeek=null){
   const seasons=Math.max(0,finite50(a?.qualifyingSeasons)??0);
-  const observed=finite50(a?.value);
+  const audited=finite50(a?.value),raw=finite50(a?.rawValue),
+        sample=a?.samples?.[0]||{},games=finite50(sample.games),
+        age=finite50(player?.age),yearsExp=finite50(player?.years_exp),
+        week=finite50(completedWeek);
+  // In the canonical Sleeper scoring audit, the 1-year corrected estimate
+  // already shrinks positive production for limited history. The terminal V50
+  // applies its own 35% one-season reliability factor; for corroborated
+  // early-career samples this otherwise discounts the same evidence twice.
+  // Use the *actual-statistics-based* raw scoring estimate once, retaining
+  // V50's 35% reliability and 128%-of-consensus upper bound. Require 8+
+  // CURRENT-season games, completed-week coverage, verified early career,
+  // and legitimate consensus. Veterans and short/incomplete samples retain
+  // the existing corrected estimate.
+  const verifiedEarlyCareer=seasons===1&&c>=500&&yearsExp!=null&&yearsExp>=0&&yearsExp<=1&&
+    age!=null&&age>=18&&age<=25&&sample.currentSeason===true&&games!=null&&
+    games>=8&&week!=null&&week>=games&&raw!=null&&raw>c;
+  const observed=verifiedEarlyCareer?raw:audited;
   if(!seasons||observed==null)return{value:c,seasons,reason:'neutral-missing-history'};
   // One qualified season is weak evidence, not a complete dynasty verdict.
   // Two seasons earn more weight; long-term production remains a secondary anchor.
   const reliability=seasons===1?(observed<c?.12:.35):seasons===2?.60:1;
-  return{value:clamp50(.72*c,c+reliability*(observed-c),1.28*c),
-    seasons,reason:'qualified-sleeper-anchor',reliability};
+  // Multi-year production remains corroborating evidence, not a second
+  // market price. A +28% production premium on established veterans can
+  // overwhelm stronger current multi-source dynasty consensus; cap that
+  // positive premium at +20% only for 3+ qualifying seasons. Preserve all
+  // younger / sparse-history treatment and the existing downside floor.
+  const upper=seasons>=3?1.20*c:1.28*c;
+  return{value:clamp50(.72*c,c+reliability*(observed-c),upper),
+    seasons,reason:verifiedEarlyCareer?'verified-early-career-single-confidence':'qualified-sleeper-anchor',reliability,
+    usedRawCurrentSeasonEvidence:verifiedEarlyCareer};
+}
+// All offensive positions already have a role-aware age curve. NFL career
+// stage supplies a small, evidence-gated development adjustment to that curve.
+// Keep the agreed 5% age/development bucket separate from the 23% scoring
+// lookback and 12% league/dynasty context. Missing metadata stays neutral.
+function development50(id,baseAgeFactor,qualifyingSeasons){
+ const p=state.players?.[String(id)]||{};
+ const exp=finite50(p.years_exp),age=finite50(p.age);
+ const ageFactor=clamp50(.88,finite50(baseAgeFactor)??1,1.10);
+ if(exp==null||exp<0||exp>25)return{factor:ageFactor,stageAdjustment:0,evidence:0,age,yearsExp:null};
+ const stage=exp<=0?.45:exp<=2?1:exp<=4?.60:exp<=7?0:exp<=10?-.40:-.80;
+ const seasons=Math.max(0,Number(qualifyingSeasons)||0);
+ const evidence=seasons>0?.35+.65*Math.min(1,seasons/3):.15;
+ const stageAdjustment=stage>0?.025*stage*evidence:.025*stage;
+ return{factor:clamp50(.86,ageFactor+stageAdjustment,1.12),
+  stageAdjustment,age,yearsExp:exp,evidence:seasons>0?evidence:0};
 }
 function sourceStatus50(sourceNames){
   const records=state.rankings||{};
@@ -51,11 +90,11 @@ function rebuild50(z){
   const detail=state.consensusComposite?.detailsById?.[id]||{};
   const rank=finite50(detail.offenseRank);
   const a=z?.production?.correctedAudit||{};
-  const p=production50(c,a);
+  const p=production50(c,a,state.players?.[id],state.sleeperHistory?.completedWeek);
   const sourceStatus=sourceStatus50(Array.isArray(detail.offenseSources)?detail.offenseSources:[]);
   const ctx=clamp50(.90*c,finite50(z?.context)??c,1.15*c);
-  const ageFactor=clamp50(.88,finite50(z?.production?.ageFactor)??1,1.10);
-  const raw=.70*c+.18*p.value+.08*ctx+.04*c*ageFactor;
+  const development=development50(id,z?.production?.ageFactor,p.seasons);
+  const raw=.60*c+.23*p.value+.12*ctx+.05*c*development.factor;
   let constrained=clamp50(.90*c,raw,1.12*c);
   if(rank!=null&&rank<=24)constrained=Math.max(constrained,.95*c);
   if(rank!=null&&rank>220)constrained=Math.min(constrained,1.08*c);
@@ -78,11 +117,13 @@ function rebuild50(z){
       consensusSourceCountV50:Array.isArray(detail.offenseSources)?detail.offenseSources.filter(s=>!String(s).includes('(not listed)')).length:0,
       consensusNotListedPenaltyCountV50:Array.isArray(detail.offenseSources)?detail.offenseSources.filter(s=>String(s).includes('(not listed)')).length:0,
       ageYearsV50:finite50(state.players?.[id]?.age),
+      dynastyDevelopmentV50:development,
       productionHistoryReasonV50:p.reason,
       productionReliabilityV50:p.reliability??0,
+      earlyCareerVerifiedScoringV50:p.usedRawCurrentSeasonEvidence===true,
       productionSeasonsV50:p.seasons,
-      modelWeights:{consensus:.70,scoringLookback:.18,
-        scarcityAndOtherContext:.08,ageContext:.04}}};
+      modelWeights:{consensus:.60,scoringLookback:.23,
+        scarcityAndOtherContext:.12,ageContext:.05}}};
 }
 masterRankings=function(){return previousMaster50().map(rebuild50)
   .sort((a,b)=>Number(b.value)-Number(a.value))};

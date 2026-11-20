@@ -1,0 +1,37 @@
+name: Release candidate — reconciled Trade History Hindsight (read-only)
+on:
+  pull_request:
+    paths:
+      - 'value-history-v276.js'
+      - 'tests/trade-history-hindsight-reconciled.test.mjs'
+      - '.github/workflows/release-trade-history-hindsight-reconciled.yml'
+permissions:
+  contents: read
+jobs:
+  trade-history-canonical:
+    # Only its originating Hindsight release may enforce the Trade History diff; downstream recorder has its own guard.
+    if: github.base_ref == 'release/value-history-ui-v108-isolated-draft'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify Trade History code parses
+        run: node --check value-history-v276.js
+      - name: Run Hindsight exact unrostered value and historical trade regressions
+        run: node --test tests/trade-history-hindsight-reconciled.test.mjs tests/trade-history-live-sleeper.test.mjs
+      - name: Enforce narrow Trade History-only diff
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {execFileSync} from 'node:child_process';
+          const changed=execFileSync('git',['diff','--name-only','origin/release/value-history-ui-v108-isolated-draft...HEAD'],{encoding:'utf8'}).trim().split(String.fromCharCode(10)).filter(Boolean);
+          const allowed=new Set(["value-history-v276.js","tests/trade-history-hindsight-reconciled.test.mjs",".github/workflows/release-trade-history-hindsight-reconciled.yml",]);
+          assert(changed.length>=3,'Trade History source, test and CI must be present');
+          for(const file of changed)assert(allowed.has(file),'Other major subsystem changed: '+file);
+          console.log('Only Trade History Hindsight consumer and tests:',changed);
+          JS

@@ -1,0 +1,35 @@
+name: Release candidate — original Trade History projected pick at trade (read-only)
+on:
+  pull_request:
+    paths:
+      - 'value-history-v276.js'
+      - 'tests/trade-history-original-pick-projection.test.mjs'
+      - '.github/workflows/release-trade-history-original-pick-isolated.yml'
+permissions:
+  contents: read
+jobs:
+  trade-history-original-pick:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check Trade History chart/UI source syntax
+        run: node --check value-history-v276.js
+      - name: Verify original draft slot source and immutable at-trade values
+        run: node --test tests/trade-history-original-pick-projection.test.mjs
+      - name: Verify Trade History-only original trade release diff
+        run: |
+          node --input-type=module <<'JS'
+          import {execFileSync} from 'node:child_process';
+          import assert from 'node:assert/strict';
+          const files=execFileSync('git',['diff','--name-only','origin/release/draft-pick-5050-post-reconciled-recorder-draft...HEAD'],{encoding:'utf8'}).trim().split(String.fromCharCode(10)).filter(Boolean);
+          const allowed=new Set(["value-history-v276.js","tests/trade-history-original-pick-projection.test.mjs",".github/workflows/release-trade-history-original-pick-isolated.yml"]);
+          assert(files.length===3);
+          for(const file of files)assert(allowed.has(file),'Out-of-scope feature in Trade History PR: '+file);
+          console.log('Trade History original pick only:',files);
+          JS

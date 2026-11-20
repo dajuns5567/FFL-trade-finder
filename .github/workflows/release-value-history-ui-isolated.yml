@@ -1,0 +1,47 @@
+name: Release candidate — Value History UI + Market Dashboard appearance (read-only)
+on:
+  pull_request:
+    paths:
+      - 'value-history-v276.js'
+      - 'tests/value-history-dense-charts.test.mjs'
+      - 'tests/value-history-ui-isolated-v108.test.mjs'
+      - 'tests/market-intelligence-original-recovery.test.mjs'
+      - '.github/workflows/release-value-history-ui-isolated.yml'
+permissions:
+  contents: read
+jobs:
+  history-ui-only:
+    # This UI scope applies only to its originating release PR, not later Trade History or recorder stages.
+    if: github.base_ref == 'release/value-history-era-market-backend-isolated-draft'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify history UI syntax
+        run: node --check value-history-v276.js
+      - name: Install declared test dependencies only (no production deploy)
+        run: npm install --no-save --ignore-scripts --no-audit --no-fund
+      - name: Test exact archived chart, heat map, Position Index and model-era regression
+        run: node --test tests/value-history-dense-charts.test.mjs tests/value-history-ui-isolated-v108.test.mjs tests/market-intelligence-original-recovery.test.mjs
+      - name: Enforce Value History UI release scope and unchanged Trade History pick behavior
+        run: |
+          node --input-type=module <<'JS'
+          import {execFileSync} from 'node:child_process';
+          import assert from 'node:assert/strict';
+          const files=execFileSync('git',['diff','--name-only','origin/release/value-history-era-market-backend-isolated-draft...HEAD'],{encoding:'utf8'}).trim().split(String.fromCharCode(10)).filter(Boolean);
+          const allowed=new Set(["value-history-v276.js","tests/value-history-dense-charts.test.mjs","tests/value-history-ui-isolated-v108.test.mjs","tests/market-intelligence-original-recovery.test.mjs",".github/workflows/release-value-history-ui-isolated.yml","scripts/value-history-data-hub-v331-smoke.mjs"]);
+          assert(files.length>0);
+          for(const file of files)assert(allowed.has(file),'Out-of-scope subsystem: '+file);
+          console.log('History UI only release source:',files);
+          JS
+      - name: Install isolated read-only Chromium
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Full original site / Finder browser smoke (no live API, credentials or archive writes)
+        run: node scripts/rehearse-full-original-app-browser.mjs .

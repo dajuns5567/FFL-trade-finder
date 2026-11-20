@@ -1,0 +1,41 @@
+name: Release candidate — isolated offense consensus V50 (read-only)
+on:
+  pull_request:
+    paths:
+      - 'valuation-offense-v40.js'
+      - 'tests/offense-consensus-anchor-v50.test.mjs'
+      - '.github/workflows/release-offense-consensus-v50-isolated.yml'
+permissions:
+  contents: read
+jobs:
+  isolated-offense:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify offense scoring source parses
+        run: node --check valuation-offense-v40.js
+      - name: Test current dynasty-consensus-first offensive valuation without changing IDP
+        run: node --test tests/offense-consensus-anchor-v50.test.mjs
+      - name: Install isolated Chromium for original application smoke
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Rehearse unchanged production UI and Finder with new offense model, without network writes
+        run: node scripts/rehearse-full-original-app-browser.mjs .
+      - name: Assert this release candidate changes only one major subsystem
+        run: |
+          node --input-type=module -e "
+            import {execFileSync} from 'node:child_process';
+            import assert from 'node:assert/strict';
+            const files=execFileSync('git',['diff','--name-only','origin/main...HEAD'],{encoding:'utf8'}).trim().split(/\\n/).filter(Boolean);
+            const allowed=new Set(['valuation-offense-v40.js','tests/offense-consensus-anchor-v50.test.mjs','.github/workflows/release-offense-consensus-v50-isolated.yml']);
+            assert(files.length>0);
+            for(const file of files)assert(allowed.has(file),'non-offense subsystem changed: '+file);
+            console.log('Isolated offense-only release candidate:',files);
+          "

@@ -90,7 +90,7 @@ test('V107 scheduled V101 transition requires explicit matching model selection 
  assert.match(scheduled,/approvedScheduledModel!==V101_MODEL/);
  assert.match(scheduled,/if\(approvedScheduledModel\)return model===approvedScheduledModel\?approvedScheduledModel:null/);
  assert.match(workflow,/VALUE_HISTORY_APPROVED_SCHEDULED_MODEL: 'idp-v101-verified-role-growth-v100-source-free-lineage'/);
- assert.equal((workflow.match(/VALUE_HISTORY_APPROVED_SCHEDULED_MODEL:/g)||[]).length,2);
+ assert.equal((workflow.match(/VALUE_HISTORY_APPROVED_SCHEDULED_MODEL:/g)||[]).length,3);
  assert.match(archive,/const approvedModel=approval===v101\?v101:approval\?'':v96/);
  assert.match(archive,/VALUE_HISTORY_V101_PROVENANCE_GUARD/);
  assert.match(archive,/!\(Number\(snap\?\.provenance\?\.modeled_version\)>0\)/);
@@ -131,4 +131,36 @@ test('V107 executes the actual durable archive cutover guard against supported a
   {...base,picks:base.picks.slice(1)},
   {...base,teams:base.teams.slice(1)}
  ])assert.throws(()=>check(bad,approved),/VALUE_HISTORY_V101_PROVENANCE_GUARD/);
+});
+
+test('V107 due checks only the chosen model era and starts V101 immediately after V96',async()=>{
+ const archive=readFileSync(new URL('../scripts/archive-value-history.mjs',import.meta.url),'utf8');
+ assert.match(archive,/valuation_model:snap\.valuation_model\|\|null/);
+ const source=due.replace("import { appendFileSync } from 'node:fs';",'');
+ const now=Date.parse('2026-11-20T12:00:00Z');
+ const model='idp-v101-verified-role-growth-v100-source-free-lineage';
+ const rows=[
+  {t:'2026-11-20T11:50:00Z',source:'scheduled',valuation_model:'idp-v96-single-source-continuous-v95-evidence'},
+  {t:'2026-11-20T11:55:00Z',source:'manual'}
+ ];
+ const evaluate=(items,approval='')=>{
+  const context={
+   process:{env:{VALUE_HISTORY_APPROVED_SCHEDULED_MODEL:approval}},
+   fetch:async()=>({ok:true,json:async()=>({items,snapshot_count:items.length})}),
+   console:{log:()=>{}},Date:class extends Date{static now(){return now}},
+   Number,String,Math,Array,Error
+  };
+  return vm.runInNewContext('(async()=>{'+source+';return payload;})()',context);
+ };
+ const freshCutover=await evaluate(rows,model);
+ assert.equal(freshCutover.due,true,'old V96 refresh must not prevent first V101 capture');
+ assert.equal(freshCutover.last_scheduled,null);
+ const legacy=await evaluate(rows);
+ assert.equal(legacy.due,false,'unset model maintains existing V96 scheduling behavior');
+ const newRecord={t:'2026-11-20T11:52:00Z',source:'scheduled',valuation_model:model};
+ const current=await evaluate([...rows,newRecord],model);
+ assert.equal(current.due,false,'recent V101 record satisfies approved era');
+ const expired=await evaluate([...rows,{...newRecord,t:'2026-11-20T06:00:00Z'}],model);
+ assert.equal(expired.due,true,'stale V101 record triggers a new capture');
+ await assert.rejects(evaluate(rows,'unverified-model'),/VALUE_HISTORY_DUE_MODEL_GUARD/);
 });

@@ -155,7 +155,14 @@ for(const item of recentlyIndexed){
  if(record?.content)try{const parsed=JSON.parse(record.content);if(validSnapshot(parsed))confirmed.push(parsed)}catch{}
 }
 for(const snap of incoming){
- if(confirmed.length>=2){
+ // A deliberate V96 -> V101 model migration is not a same-model snapback.
+ // Keep the existing immutable-history integrity gate for three consecutive
+ // observations within the SAME model era, including legacy untagged rows.
+ const era=String(snap?.valuation_model||'');
+ const sameEra=confirmed.length>=2&&
+  String(confirmed.at(-1)?.valuation_model||'')===era&&
+  String(confirmed.at(-2)?.valuation_model||'')===era;
+ if(sameEra){
   const check=inspectShortTermSnapback(confirmed.at(-2),confirmed.at(-1),snap);
   if(!check.ok)
    throw new Error('VALUE_HISTORY_COHORT_SNAPBACK: Refusing unverified scheduled batch '+snap.t+
@@ -231,5 +238,9 @@ for(const snap of incoming){
   if(!stored?.content)throw new Error(`Durable Value History archive verification unreadable snapshot ${snap.t}`);
   const parsed=JSON.parse(stored.content);
   if(String(parsed?.t)!==String(snap.t)||String(parsed?.source||'')!==String(snap.source||'')||String(parsed?.valuation_model||'')!==String(snap.valuation_model||''))throw new Error(`Durable Value History archive verification content mismatch for ${snap.t}`);
+  if(String(item?.valuation_model||'')!==String(snap?.valuation_model||'')||
+     String(item?.valuation_contract||'')!==String(snap?.valuation_contract||'')||
+     String(parsed?.valuation_contract||'')!==String(snap?.valuation_contract||''))
+    throw new Error(`VALUE_HISTORY_MODEL_INTEGRITY: index and immutable snapshot must preserve model and era contract for ${snap.t}`);
 }
 console.log(`Archived ${incoming.length} Value History snapshot(s) from ${payload.source||'unknown'}; total ${index.snapshot_count}; latest ${index.latest}.`);

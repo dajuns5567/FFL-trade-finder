@@ -200,3 +200,26 @@ test('cross-era snapback detection preserves actual model transitions and retain
  assert.match(writer,/item\?\.valuation_contract/);
  assert.match(writer,/parsed\?\.valuation_contract/);
 });
+
+test('Netlify accepts only explicitly allowlisted V107 PR #513 preview, never main or branch deploy',()=>{
+ const config=readFileSync('netlify.toml','utf8');
+ const line=config.split('\n').find(x=>/^\s*ignore\s*=/.test(x));
+ assert.ok(line,'must keep owner-controlled Netlify ignore gate');
+ const match=line.match(/node -e \\"(.*?)\\""/);
+ assert.ok(match,'actual Netlify ignore command must remain parseable');
+ const code=match[1];
+ const site='a516be3b-6c65-4f54-a9fb-23c5361bf3d2';
+ const evaluate=(env)=>{
+  const ctx={process:{env,exit:status=>{ctx.exitCode=status}}};
+  vm.runInNewContext(code,ctx);
+  return ctx.exitCode;
+ };
+ assert.equal(evaluate({SITE_ID:site,CONTEXT:'deploy-preview',REVIEW_ID:'513'}),1,
+  'the exact V107 PR deploy preview must be allowed to build');
+ for(const env of [
+  {SITE_ID:site,CONTEXT:'production',REVIEW_ID:'513'},
+  {SITE_ID:site,CONTEXT:'branch-deploy',REVIEW_ID:'513'},
+  {SITE_ID:site,CONTEXT:'deploy-preview',REVIEW_ID:'514'},
+  {SITE_ID:'other-site',CONTEXT:'deploy-preview',REVIEW_ID:'513'},
+ ] )assert.equal(evaluate(env),0,'all unauthorized deploys must remain blocked');
+});

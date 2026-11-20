@@ -9,6 +9,8 @@ permissions:
   contents: read
 jobs:
   trade-history-canonical:
+    # Only its originating Hindsight release may enforce the Trade History diff; downstream recorder has its own guard.
+    if: github.base_ref == 'release/value-history-ui-v108-isolated-draft'
     runs-on: ubuntu-24.04
     timeout-minutes: 8
     steps:

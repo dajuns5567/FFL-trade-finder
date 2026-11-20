@@ -108,3 +108,58 @@ test('V108 preview build is permitted only for PR #515 and never deploys product
   {SITE_ID:'other-site',CONTEXT:'deploy-preview',REVIEW_ID:'515'}
  ])assert.equal(status(env),0,'disallow unapproved production, branch or site deploy');
 });
+
+test('Position Index uses current canonical top-24 by value, not archived top-24 or null-as-zero',()=>{
+ const source=piece(ui,'function currentPositionIndexes(){','function positionIndexesMarkup(){');
+ const live=Array.from({length:26},(_,i)=>({
+   id:String(i+1),pos:'IDP',value:2600-i*50,overall:100+i
+ }));
+ // Players 25 and 26 moved into top 24 on CURRENT Player Values.
+ live[24].value=8500;live[24].overall=20;
+ live[25].value=8400;live[25].overall=21;
+ // Archive had the opposite cohort and a model-era inflated former top player.
+ const archive=[
+   {id:'1',pos:'IDP',overall:1,value:17000,pct:200},
+   {id:'25',pos:'IDP',overall:500,value:2200,pct:8},
+   {id:'26',pos:'IDP',overall:505,value:2100,pct:-4},
+   {id:'2',pos:'IDP',overall:2,value:17000,pct:null},
+   {id:'3',pos:'IDP',overall:3,value:17000,pct:undefined}
+ ];
+ const ctx={
+   currentRows:()=>live,
+   heatMapVerifiedCurrentRows:()=>archive.filter(r=>r.pct!=null),
+   finiteMarketNumber:v=>v==null||v===''?null:Number.isFinite(Number(v))?Number(v):null,
+   Number,String,Map,Array,Math
+ };
+ vm.runInNewContext(source+';this.calc=currentPositionIndexes;',ctx);
+ const idp=ctx.calc().find(r=>r.pos==='IDP');
+ assert.equal(idp.cohort_count,24);
+ assert.equal(idp.count,3,'only verified observations of selected live players count');
+ assert.equal(Number(idp.change_pct.toFixed(4)),68,'verified average 200, 8 and -4');
+ assert.equal(Number(idp.index.toFixed(4)),168);
+ // When the old archived leader exits the current top 24, its 200% return
+ // cannot continue to skew the current position cohort index.
+ live[0].value=1;
+ const changed=ctx.calc().find(r=>r.pos==='IDP');
+ assert.equal(changed.cohort_count,24);
+ assert.equal(changed.count,2);
+ assert.equal(changed.change_pct,2);
+ assert.equal(changed.index,102);
+ assert.match(ui,/const rows=currentPositionIndexes\(\)/);
+ assert.doesNotMatch(piece(ui,'function positionIndexesMarkup(){','function heatMapVerifiedCurrentRows(){'),
+   /intelRange\(\)\?\.position_indexes/,
+   'UI must not display historic rank cohorts disguised as current Player Values');
+});
+
+test('Position Index shows no measured movement rather than invented 100 when current cohort has no verified observations',()=>{
+ const code=piece(ui,'function currentPositionIndexes(){','function positionIndexesMarkup(){');
+ const ctx={currentRows:()=>[{id:'x',pos:'QB',value:7000,overall:1}],
+   heatMapVerifiedCurrentRows:()=>[],finiteMarketNumber:v=>v==null?null:Number(v),
+   Number,String,Map,Array,Math};
+ vm.runInNewContext(code+';this.calculate=currentPositionIndexes;',ctx);
+ const qb=ctx.calculate().find(x=>x.pos==='QB');
+ assert.equal(qb.count,0);
+ assert.equal(qb.cohort_count,1);
+ assert.equal(qb.index,null);
+ assert.equal(qb.change_pct,null);
+});

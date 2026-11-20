@@ -9,6 +9,8 @@ permissions:
   contents: read
 jobs:
   trade-history-canonical:
+    # The upstream Trade History-specific file scope applies to its originating PR only.
+    if: github.base_ref == 'release/value-history-ui-v108-isolated-draft'
     runs-on: ubuntu-24.04
     timeout-minutes: 8
     steps:

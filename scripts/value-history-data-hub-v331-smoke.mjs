@@ -290,7 +290,7 @@ assert(ui.includes("What's Happening With My Team"),'approved Track My Team attr
 assert(!ui.includes('What Moved My Team'),'legacy team attribution heading must be removed');
 assert(!ui.includes('${teamTradeImpactCard(trackedTeamId)}'),'standalone Recent Trade Impact card must not duplicate trade events');
 assert(ui.includes('The snapshot change is observed team net-value movement, not an assumption that the trade alone caused the move.'),'trade-linked net movement must include non-causal attribution language');
-assert(ui.includes("body:JSON.stringify({league:'1316867686394769408',rows,picks,teams,source})"),'Value History snapshot POST must include separate player, pick, and team ownership totals');
+assert(ui.includes("body:JSON.stringify({league:'1316867686394769408',rows,picks,teams,source,valuation_model:HISTORY_VALUATION_MODEL})"),'Value History snapshot POST must include player, pick, and team ownership totals with explicit valuation-model provenance');
 assert(ui.includes('const recorded=Number(asset.historyRecordedValue)'),'Trade History must prefer recorded historical pick values before retroactive fallback');
 assert(ui.includes('vh-assets-title'),'Trade History must visually emphasize Assets received');
 assert(ui.includes('function tradeOriginalAssets(side,trade)')&&
@@ -476,7 +476,7 @@ assert(ui.includes('function snapshotPreconditions()')&&ui.includes('Object.keys
 assert(!ui.includes("Object.keys(state.players).length<100||!hasValidatedKtcSnapshot()"),'Value History player snapshots must not be blocked by the KTC-specific validation gate');
 assert(ui.includes("const rows=currentRows();"),'Value History must copy the site already-calculated player values into each snapshot');
 assert(!ui.includes("keepalive:true"),'Value History POST must not use browser keepalive because the expanded snapshot payload can exceed keepalive body limits');
-assert(ui.includes("body:JSON.stringify({league:'1316867686394769408',rows,picks,teams,source})"),'Value History POST must send the completed player snapshot payload');
+assert(ui.includes("body:JSON.stringify({league:'1316867686394769408',rows,picks,teams,source,valuation_model:HISTORY_VALUATION_MODEL})"),'Value History POST must send the completed player snapshot payload');
 assert(ui.includes("else if(currentView==='player'&&currentPlayerId)loadPlayer(currentPlayerId);"),'successful Value History writes must refresh the currently viewed player chart immediately');
 assert(ui.includes("try{picks=currentPickRows()}catch"),'draft-pick snapshot enrichment must never block the core player snapshot');
 assert(ui.includes("try{teams=currentTeamRows(rows)}catch"),'team snapshot enrichment must never block the core player snapshot');
@@ -570,7 +570,7 @@ assert(headlessRefresh.includes("sameRows(first.rows,second.rows)"),'scheduled h
 assert(headlessRefresh.includes("page.waitForTimeout(1500)"),'scheduled headless snapshots must observe a stability interval before persistence');
 assert(headlessRefresh.includes("window.__fllValueRefresh"),'scheduled headless readiness must honor the full valuation refresh in-flight marker');
 assert(headlessRefresh.includes("refresh?.phase==='complete'"),'scheduled headless readiness must require the canonical valuation refresh to reach the completed phase');
-assert(headlessRefresh.includes("canonical.playerValue?.({type:'player',id:String(r.id)})"),'scheduled snapshots must verify every captured player against the live canonical Player Values API');
+assert(headlessRefresh.includes("const asset={type:'player',id:String(r.id)},expected=Number(r.value);")&&headlessRefresh.includes("compare(r.id,'normalization.playerValue',canonical.playerValue?.(asset),expected);")&&headlessRefresh.includes("compare(r.id,'normalization.canonicalValue',canonical.canonicalValue?.(asset),expected);"),'scheduled snapshots must verify every captured player against both canonical Player Values APIs');
 assert(headlessRefresh.includes("valueParityMismatches"),'scheduled snapshots must fail closed when captured values diverge from the canonical Player Values scale');
 assert(headlessRefresh.includes("first.modeledVersion===second.modeledVersion"),'scheduled snapshots must keep the modeled-value runtime version stable across the capture interval');
 const consensusRuntime=fs.readFileSync('nonblocking-consensus-v277.js','utf8');

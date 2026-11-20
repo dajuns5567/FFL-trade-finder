@@ -9,6 +9,8 @@ permissions:
   contents: read
 jobs:
   value-history-only:
+    # Enforce this subsystem's scope only on its own parent release PR.
+    if: github.base_ref == 'release/canonical-player-values-refresh-isolated-draft'
     runs-on: ubuntu-24.04
     timeout-minutes: 8
     steps:

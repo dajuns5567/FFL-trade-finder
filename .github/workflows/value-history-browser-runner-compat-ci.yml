@@ -63,5 +63,14 @@ jobs:
           console.log('Pinned Playwright 1.55 Chromium launches successfully on Ubuntu 24.04');
           await browser.close();
           JS
+      - name: Diagnose full existing main collector without durable writes
+        timeout-minutes: 6
+        continue-on-error: true
+        env:
+          VALUE_HISTORY_SNAPSHOT_FILE: .tmp/value-history-readonly-diagnostic.json
+        run: |
+          # Existing local collector redirects snapshot POST into .tmp only.
+          # It receives no GITHUB_TOKEN, Blob credentials or archive writer.
+          node scripts/value-history-headless-refresh.mjs
       # NO GitHub write token, NO archive-value-history invocation, NO Netlify
       # deploy, NO model activation. Production workflow remains unchanged.

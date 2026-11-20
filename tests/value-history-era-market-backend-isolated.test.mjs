@@ -27,3 +27,21 @@ test('real backend mover calculation adds only verified same-model deltas, not m
  assert.equal(result.metrics.get('riser').comparable_segments,2);
 });
 
+
+test('value-history API fails closed on missing or unverified valuation model instead of storing an unattributed era',()=>{
+ const route=api.slice(api.lastIndexOf("if(req.method!=='POST')"));
+ assert.ok(route.length>350,'inspect the actual post-collection API route');
+ assert.match(route,/const suppliedModel=String\(body\?\.valuation_model\|\|''\)\.trim\(\)/);
+ assert.match(route,/idp-v96-single-source-continuous-v95-evidence/);
+ assert.match(route,/idp-v94-v92-balanced-stable-veteran/);
+ assert.match(route,/idp-v95-verified-production-floor-v92-balanced/);
+ assert.match(route,/if\(!valuationModel\)return json\(\{error:'verified IDP valuation-model contract required; snapshot not stored'\},409\)/);
+ assert.match(route,/valuation_model:valuationModel,rows,picks,teams/);
+ assert.match(route,/return json\(\{ok:true,stored:true,t,source,valuation_model:valuationModelId\(snapshot\)/);
+ assert.match(route,/await retry\(\(\)=>s\.setJSON\(key,snapshot\),120\)/);
+ const validate=m=>/^(?:idp-v94-v92-balanced-stable-veteran|idp-v95-verified-production-floor-v92-balanced|idp-v96-single-source-continuous-v95-evidence)$/.test(m);
+ for(const accepted of ['idp-v94-v92-balanced-stable-veteran','idp-v95-verified-production-floor-v92-balanced','idp-v96-single-source-continuous-v95-evidence'])
+   assert.equal(validate(accepted),true);
+ for(const rejected of ['', 'unknown', 'idp-v101-verified-role-growth-v100-source-free-lineage'])
+   assert.equal(validate(rejected),false,'the UI POST API is not a V101 scheduled writer');
+});

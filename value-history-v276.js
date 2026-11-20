@@ -974,12 +974,24 @@ function tradePlayerAsset(id,receiver){return{type:'player',id:String(id),owner:
 function currentEvaluatorValue(asset){
   if(!asset)return null;
   try{
+    // The transaction asset pool omits some current, valued league players.
+    // A historical trade may still reference one of those player IDs; using
+    // pool membership alone incorrectly reported 0 in Hindsight/Evaluator.
+    const rankedAsset=asset.type==='player'
+      ?ranked().find(z=>z?.x?.type==='player'&&String(z.x.id)===String(asset.id))?.x:null;
     if(asset.type==='player'){
       const pool=Array.isArray(state?.allAssets)?state.allAssets:[];
-      if(pool.length&&!pool.some(a=>a?.type==='player'&&String(a.id)===String(asset.id)))return 0;
+      if(pool.length&&!pool.some(a=>a?.type==='player'&&String(a.id)===String(asset.id))&&!rankedAsset)return 0;
     }
     const canonical=window.tradeValueNormalizationV130?.canonicalValue;
-    if(typeof canonical==='function'){const n=Number(canonical(asset));return Number.isFinite(n)?Math.round(n):null}
+    if(typeof canonical==='function'){
+      const n=Number(canonical(asset));
+      if(Number.isFinite(n)&&n>0)return Math.round(n);
+      if(rankedAsset&&typeof tv().playerValue==='function'){
+        const v=Number(tv().playerValue(rankedAsset));if(Number.isFinite(v)&&v>0)return Math.round(v);
+      }
+      return Number.isFinite(n)?Math.round(n):null;
+    }
     if(typeof window.tradeAssetValue93==='function'){const n=Number(window.tradeAssetValue93(asset));return Number.isFinite(n)?Math.round(n):null}
     return null;
   }catch{return null}

@@ -44,6 +44,7 @@ jobs:
         env:
           VALUE_HISTORY_DUE_MINUTES: '165'
           VALUE_HISTORY_STALE_MINUTES: '240'
+          VALUE_HISTORY_APPROVED_SCHEDULED_MODEL: 'idp-v101-verified-role-growth-v100-source-free-lineage'
           FORCE_SCHEDULED_REFRESH: ${{ github.event_name == 'workflow_dispatch' && '1' || '0' }}
         run: node scripts/value-history-scheduled-due.mjs
 

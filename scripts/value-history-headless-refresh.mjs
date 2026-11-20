@@ -421,16 +421,28 @@ try{
     }
     return true;
   };
-  let captured=null;
+  let captured=null,lastDiagnosis=null;
   for(let attempt=0;attempt<4;attempt++){
     const first=await captureCurrent();
     await page.waitForTimeout(1500);
     const second=await captureCurrent();
     const stable=sameRows(first.rows,second.rows)&&JSON.stringify(first.sourceManifest)===JSON.stringify(second.sourceManifest)&&first.modeledVersion===second.modeledVersion&&first.valuationModel===second.valuationModel&&second.refresh?.inFlight===false&&second.refresh?.phase==='complete'&&second.modeledReady===true&&second.consumerReady===true&&!second.valueParityMismatches?.length&&!/loading|updating|refreshing/i.test(second.status||'');
     if(stable){captured=second;break}
+    // Diagnostic evidence is read-only and intentionally bounded. Never
+    // hide a failed parity check by accepting a partial history snapshot.
+    lastDiagnosis={attempt:attempt+1,firstRows:first.rows?.length||0,
+      lastRows:second.rows?.length||0,stableRows:sameRows(first.rows,second.rows),
+      stableSources:JSON.stringify(first.sourceManifest)===JSON.stringify(second.sourceManifest),
+      firstVersion:first.modeledVersion,lastVersion:second.modeledVersion,
+      model:first.valuationModel,modelAfter:second.valuationModel,
+      refreshPhase:second.refresh?.phase,refreshInFlight:second.refresh?.inFlight,
+      modeledReady:second.modeledReady,consumerReady:second.consumerReady,
+      mismatchCount:second.valueParityMismatches?.length||0,
+      mismatchSample:(second.valueParityMismatches||[]).slice(0,12),
+      status:String(second.status||'').slice(0,140)};
     if(attempt<3)await page.waitForTimeout(2000);
   }
-  if(!captured)throw new Error('Scheduled capture never reached a stable canonical player-row state');
+  if(!captured)throw new Error('Scheduled capture never reached stable canonical value parity: '+JSON.stringify(lastDiagnosis));
   const valuationModel=acceptedValuationModel(captured.valuationModel);
   if(!valuationModel)throw new Error('Scheduled capture lacks the approved live valuation model contract');
   if(!Array.isArray(captured.rows)||captured.rows.length<700)throw new Error(`Scheduled capture returned only ${captured.rows?.length||0} player rows`);

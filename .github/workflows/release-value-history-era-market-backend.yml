@@ -1,0 +1,35 @@
+name: Release candidate — Value History era-aware market backend (read-only)
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/value-history.mjs'
+      - 'tests/value-history-era-market-backend-isolated.test.mjs'
+      - '.github/workflows/release-value-history-era-market-backend.yml'
+permissions:
+  contents: read
+jobs:
+  value-history-only:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check Value History backend JS syntax
+        run: node --check netlify/functions/value-history.mjs
+      - name: Test exact immutable model-era market movements and legacy Market Intelligence
+        run: node --test tests/value-history-era-market-backend-isolated.test.mjs tests/market-intelligence-original-recovery.test.mjs
+      - name: Enforce backend-only scope — Trade History UI, Finder, and archival writer untouched
+        run: |
+          node --input-type=module <<'JS'
+          import {execFileSync} from 'node:child_process';
+          import assert from 'node:assert/strict';
+          const files=execFileSync('git',['diff','--name-only','origin/release/canonical-player-values-refresh-isolated-draft...HEAD'],{encoding:'utf8'}).trim().split(String.fromCharCode(10)).filter(Boolean);
+          const allowed=new Set(["netlify/functions/value-history.mjs","tests/value-history-era-market-backend-isolated.test.mjs",".github/workflows/release-value-history-era-market-backend.yml"]);
+          assert(files.length===3);
+          for(const file of files)assert(allowed.has(file),'Out-of-scope release subsystem: '+file);
+          console.log('Read-only history market backend release:',files);
+          JS

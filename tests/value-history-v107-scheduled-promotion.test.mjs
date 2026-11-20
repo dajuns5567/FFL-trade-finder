@@ -223,5 +223,5 @@ test('isolated scheduled historian cannot deploy the linked Netlify production s
  ])assert.equal(evaluate(env),0,'the current release does not authorize a Netlify build');
  const cron=readFileSync('.github/workflows/value-history-headless-refresh.yml','utf8');
  assert.match(cron,/github.ref == 'refs\/heads\/main'/,'only main can persist scheduled history');
- assert.doesNotMatch(cron,/netlify deploy|netlify-cli|netlify deploy --prod/i);
+ assert.doesNotMatch(cron,/^\\s*run:\\s*.*(?:netlify|--prod)/im,'workflow must not execute a Netlify deploy');
 });

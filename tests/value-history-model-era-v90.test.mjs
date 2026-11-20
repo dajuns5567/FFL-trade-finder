@@ -302,9 +302,10 @@ test('SVG player, rank, and team-net charts break lines across model changes wit
  assert.equal((markers.match(/<circle/g)||[]).length,6-0-1,
   'draw endpoints around each model boundary and preserve visible isolated points');
  assert.match(client,/path=chartEraPath\(clean,field,90,x,y\)/);
- assert.match(client,/path=chartEraPath\(pts,'value',220,x,y,true\)/);
- // The Value History profile suppresses only misleading 1–2-record tail
- // strokes; full recorded points stay interactive, other charts unchanged.
+ assert.match(client,/path=chartEraPath\(pts,'value',220,x,y\)/,'latest original model-era segment must be drawn');
+ assert.match(client,/chartEraConnectors\(pts,'value',x,y\)/,'cross-model dashed connector remains visible');
+ // V108 renders the exact last archived point, while keeping transitions
+ // visibly dashed and preserving full-resolution hover observations.
  assert.match(client,/if\(omitShortTail&&from>0&&end===points.length&&end-from<=2\)continue/);
  assert.match(client,/path=chartEraPath\(pts,'value',160,x,y\)/);
  assert.match(client,/const snapshots=rows.map\(\(p,i\)=>\(\{/,

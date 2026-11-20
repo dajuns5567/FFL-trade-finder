@@ -189,4 +189,5 @@ test('V107 cross-era archival skips false snapbacks but preserves same-model int
   'normal integrity checks resume once three V101 samples exist');
  assert.equal(run([record(v96),record(v96)],record(v96)),1,
   'existing V96 same-era integrity remains active');
+ assert.equal(run([{},{}],{}),1,'legacy untagged snapshots retain the original integrity check');
 });

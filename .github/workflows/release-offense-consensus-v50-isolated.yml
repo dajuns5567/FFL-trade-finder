@@ -10,7 +10,7 @@ permissions:
 jobs:
   isolated-offense:
     runs-on: ubuntu-24.04
-    timeout-minutes: 6
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
@@ -22,6 +22,12 @@ jobs:
         run: node --check valuation-offense-v40.js
       - name: Test current dynasty-consensus-first offensive valuation without changing IDP
         run: node --test tests/offense-consensus-anchor-v50.test.mjs
+      - name: Install isolated Chromium for original application smoke
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Rehearse unchanged production UI and Finder with new offense model, without network writes
+        run: node scripts/rehearse-full-original-app-browser.mjs .
       - name: Assert this release candidate changes only one major subsystem
         run: |
           node --input-type=module -e "

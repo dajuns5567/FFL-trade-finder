@@ -945,12 +945,25 @@ function tradePickAsset(p,receiver){
   return{type:'pick',id:`pick-${season}-${round}-${original}`,season,round,owner:Number(receiver)||0,original_owner:original,name:`${season} R${round}`,source:'sleeper-history',historyPick:{drafted_player_id:p?.drafted_player_id||null,draft_slot:p?.draft_slot||null,pick_no:p?.pick_no||null,draft_id:p?.draft_id||null}};
 }
 function tradePlayerAsset(id,receiver){return{type:'player',id:String(id),owner:Number(receiver)||0,name:playerName(id)}}
+// A ranked dynasty player can be unrostered and still have a canonical
+// Player Values price. Avoid treating absence from the current roster pool
+// as a historical/current trade value of zero. Rebuild IDs on master refresh.
+let hindsightRankedMasterRef=null,hindsightRankedIds=new Set();
+function isCurrentRankedPlayerForHindsight(id){
+ const master=ranked();
+ if(master!==hindsightRankedMasterRef){
+  hindsightRankedMasterRef=master;
+  hindsightRankedIds=new Set((master||[]).filter(z=>z?.x?.type==='player').map(z=>String(z.x.id)));
+ }
+ return hindsightRankedIds.has(String(id));
+}
 function currentEvaluatorValue(asset){
   if(!asset)return null;
   try{
     if(asset.type==='player'){
       const pool=Array.isArray(state?.allAssets)?state.allAssets:[];
-      if(pool.length&&!pool.some(a=>a?.type==='player'&&String(a.id)===String(asset.id)))return 0;
+      if(pool.length&&!pool.some(a=>a?.type==='player'&&String(a.id)===String(asset.id))&&
+          !isCurrentRankedPlayerForHindsight(asset.id))return 0;
     }
     const canonical=window.tradeValueNormalizationV130?.canonicalValue;
     if(typeof canonical==='function'){const n=Number(canonical(asset));return Number.isFinite(n)?Math.round(n):null}
@@ -2339,6 +2352,7 @@ function boot(){addShell();searchTradesOnSiteOpen();window.addEventListener('fll
 });
  window.addEventListener('fll:canonical-values-ready',()=>{
    updateLiveConsumersV102();
+   refreshTradeHistoryCurrentValuesV533();
  });
  setInterval(refreshVisibleTradeHistory,TRADE_HISTORY_REFRESH_MS);window.addEventListener('focus',refreshVisibleTradeHistory);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshVisibleTradeHistory()});scheduleSnapshot(0,snapshotSourceFromUrl());document.getElementById('updateBtn')?.addEventListener('click',()=>{invalidateLiveMarketV97();marketCache=null;teamNetCache.clear();scheduleSnapshot(1000,'manual-update');if(currentPlayerId)setTimeout(()=>loadPlayer(currentPlayerId),1800)},{passive:true})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();

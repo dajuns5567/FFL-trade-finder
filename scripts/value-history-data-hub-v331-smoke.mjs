@@ -21,7 +21,7 @@ const snaps=[
   // The 30D check needs a genuinely recorded comparison INSIDE its window.
   // Do not manufacture 30-day rank movement by comparing to the 335-day-old
   // snapshot; a legitimate previous observation is 21 days before day 365.
-  snap(344,[P('a',6000,58,'RB',9),P('b',6100,66,'WR',17),P('c',6300,50,'QB',8),P('rook',5050,90,'WR',23)]),
+  snap(344,[P('a',6000,58,'RB',9),P('b',6100,66,'WR',17),P('c',6300,50,'QB',8)]),
   snap(365,[P('a',6100,55,'RB',8),P('b',5900,70,'WR',18),P('c',6400,48,'QB',7),P('rook',5200,88,'WR',22)])
 ];
 

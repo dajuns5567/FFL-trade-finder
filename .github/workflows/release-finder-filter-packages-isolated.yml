@@ -47,3 +47,12 @@ jobs:
         run: node --test tests/finder-natural-filter-matrix.test.mjs tests/finder-add-assets-complements.test.mjs
       - name: Exact Finder candidate hashes and frozen unrelated modules
         run: node scripts/v311-pipeline-identity-v319-smoke.cjs
+      - name: Cross-page canonical values and immutable trade contract
+        run: |
+          node --test tests/model-v319-metadata-boot-guard.test.mjs tests/canonical-live-values-refresh-isolated.test.mjs tests/trade-history-canonical-unrostered-hindsight.test.mjs tests/trade-history-original-pick-projection.test.mjs
+      - name: Install disposable Chromium for read-only full-site rehearsal
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Rehearse actual site HTML and Finder/Evaluator navigation without live requests
+        run: node scripts/rehearse-full-original-app-browser.mjs .

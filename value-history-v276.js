@@ -1417,6 +1417,8 @@ async function loadMarket(force=false){
     }
   }
   if(currentView!=='market')return;
+  if(!window.valueHistoryModelV90)await verifyLiveValuationModelV95();
+  if(currentView!=='market')return;
   renderMarketDashboard();
   loadMarketIntelligence(force);
 }
@@ -1780,6 +1782,63 @@ function renderMarketIntelligence(){
   const host=document.getElementById('vhMarketIntelligence');if(host)host.innerHTML=marketIntelligenceMarkup();
 }
 
+// A preview cannot write to the historical archive. When the last recorded
+// snapshot and the *verified* current Player Values share an exact valuation
+// model, expose newly observed movement in a read-only LIVE board. This never
+// mutates snapshot rows, recorded deltas, player history, or the archive.
+// An older snapshot cannot anchor a short window that no longer includes it.
+function buildVerifiedLiveMoversV109(m,period,liveRows,verifiedModel,nowMs=Date.now()){
+  const days=period==='ALL'?null:period==='1Y'?365:Number(String(period).replace('D',''));
+  const latestMs=Date.parse(m?.latest||'');
+  if(!m?.valuation_model||!verifiedModel||m.valuation_model!==verifiedModel||
+     !Number.isFinite(latestMs)||latestMs>nowMs||
+     (days!=null&&(!Number.isFinite(days)||nowMs-latestMs>days*86400000))||
+     !Array.isArray(m.marketRows)||!Array.isArray(liveRows))return null;
+  const archive=m.periods?.[period]||{};
+  const former=new Map();
+  for(const category of ['valueRisers','valueFallers','rankRisers','rankFallers','posRankRisers','posRankFallers']){
+    for(const r of archive[category]||[])if(r?.id!=null)former.set(String(r.id),r);
+  }
+  const current=new Map(liveRows.map(r=>[String(r?.id),r]));
+  const rows=[];
+  for(const previous of m.marketRows){
+    const live=current.get(String(previous?.id));
+    if(!live||String(previous.pos)!==String(live.pos))continue;
+    const from=Number(previous.value),to=Number(live.value);
+    const formerOverall=Number(previous.overall),formerPosition=Number(previous.posRank);
+    if(!Number.isFinite(from)||!Number.isFinite(to)||from<=0||to<=0||
+       !Number.isFinite(formerOverall)||!Number.isFinite(formerPosition))continue;
+    const archived=former.get(String(previous.id));
+    const liveDelta=to-from;
+    const delta=Number(archived?.delta||0)+liveDelta;
+    const overallDelta=Number(archived?.overallDelta||0)+formerOverall-Number(live.overall);
+    const posRankDelta=Number(archived?.posRankDelta||0)+formerPosition-Number(live.posRank);
+    if(!Number.isFinite(delta)||!Number.isFinite(overallDelta)||!Number.isFinite(posRankDelta))continue;
+    if(!delta&&!overallDelta&&!posRankDelta)continue;
+    rows.push({id:String(live.id),pos:live.pos,posRank:live.posRank,overall:live.overall,
+      value:to,delta,overallDelta,posRankDelta,
+      recordedValue:from,recordedOverall:formerOverall,recordedPosRank:formerPosition,
+      observedDelta:liveDelta,latest_recorded_t:m.latest,
+      liveCurrentV97:true,liveUnarchivedV109:true,
+      available_history:archived?.available_history??true});
+  }
+  return{
+    valueRisers:rows.filter(r=>r.delta>0).sort((a,b)=>b.delta-a.delta||b.value-a.value),
+    valueFallers:rows.filter(r=>r.delta<0).sort((a,b)=>a.delta-b.delta||b.value-a.value),
+    rankRisers:rows.filter(r=>r.overallDelta>0).sort((a,b)=>b.overallDelta-a.overallDelta||b.value-a.value),
+    rankFallers:rows.filter(r=>r.overallDelta<0).sort((a,b)=>a.overallDelta-b.overallDelta||b.value-a.value),
+    latest_recorded_t:m.latest,live_unarchived:true
+  };
+}
+function liveDashboardPeriodV109(m,period){
+  const refresh=window.__fllValueRefresh,consensus=window.__fllConsensusRefresh;
+  if(refresh?.phase!=='complete'||refresh?.inFlight!==false||
+     consensus?.complete!==true||consensus?.ok!==true||
+     Number(consensus.successful)<7||window.modeledPlayerValuesV319?.ready!==true)return null;
+  const live=currentRows();
+  if(live.length<100||!m?.marketRows?.length)return null;
+  return buildVerifiedLiveMoversV109(m,period,live,window.valueHistoryModelV90);
+}
 function archivedEraBoard(m){
   const era=m?.archived_era;
   if(!era?.snapshot_count||!era?.tracking_since||!era?.through)return'';
@@ -1797,12 +1856,19 @@ function modelEraNote(m){
 function renderMarketDashboard(){
   const box=document.getElementById('vhContent');if(!box||!marketCache)return;
   const m=marketCache,status=document.getElementById('vhStatus');
-  if(status)status.textContent=m.latest?`Tracking since ${dateShort(m.tracking_since)} • Latest snapshot ${dateTime(m.latest)} • ${fmt(m.snapshot_count)} snapshots`:'Initializing first historical snapshot…';
+  if(status)status.textContent=m.latest?`Tracking since ${dateShort(m.tracking_since)} • Last recorded ${dateTime(m.latest)} • ${fmt(m.snapshot_count)} snapshots`:'Initializing first historical snapshot…';
   const vr=marketPeriods.valueRisers,vf=marketPeriods.valueFallers,rr=marketPeriods.rankRisers,rf=marketPeriods.rankFallers;
-  const vpR=m.periods?.[vr]||{},vpF=m.periods?.[vf]||{},rpR=m.periods?.[rr]||{},rpF=m.periods?.[rf]||{};
+  const verifiedLivePeriods=new Map();
+  for(const p of new Set([vr,vf,rr,rf])){
+    const candidate=liveDashboardPeriodV109(m,p);
+    if(candidate)verifiedLivePeriods.set(p,candidate);
+  }
+  const vpR=verifiedLivePeriods.get(vr)||m.periods?.[vr]||{},
+        vpF=verifiedLivePeriods.get(vf)||m.periods?.[vf]||{},
+        rpR=verifiedLivePeriods.get(rr)||m.periods?.[rr]||{},
+        rpF=verifiedLivePeriods.get(rf)||m.periods?.[rf]||{};
+  const liveMovers=verifiedLivePeriods.size>0;
   box.innerHTML=`
-  ${modelEraNote(m)}
-  <div class="vh-sub">Current values and ranks come from Player Values; market movement, historical records, and time-window changes are archived observations and may end before the latest live refresh.</div>
   <div class="vh-market-jump">
     <button type="button" data-vh-market-jump="vhMarketMovers">Movers</button>
     <button type="button" data-vh-market-jump="vhPositionIndexes">Position Indexes</button>
@@ -1814,7 +1880,7 @@ function renderMarketDashboard(){
     <button type="button" data-vh-market-jump="vhMarketReversals">Reversals</button>
     <button type="button" data-vh-market-jump="vhMarketVolatility">Volatility</button>
   </div>
-  <section class="vh-market-section" id="vhMarketMovers"><div class="vh-market-section-title"><h3>Market Movers</h3><p>The original finished-value and overall-rank fluctuation boards remain unchanged.</p></div>
+  <section class="vh-market-section" id="vhMarketMovers"><div class="vh-market-section-title"><h3>Market Movers</h3><p>${liveMovers?'Verified live changes added to archived same-model movement; live changes are not yet recorded.':'Archived observations through '+dateTime(m.latest)+'. New movement requires a successful scheduled snapshot.'}</p></div>
     <div class="vh-grid-2">
       <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>${moverTitle('Biggest Value Risers',vr,m)}</h3><div class="vh-sub">Largest increases in finished player value</div></div>${moverCardActions('market','valueRisers',vr)}</div>${moverRows(applyMoverPool(vpR.valueRisers,'market','valueRisers'))}</div>
       <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>${moverTitle('Biggest Value Fallers',vf,m)}</h3><div class="vh-sub">Largest decreases in finished player value</div></div>${moverCardActions('market','valueFallers',vf)}</div>${moverRows(applyMoverPool(vpF.valueFallers,'market','valueFallers'))}</div>
@@ -1824,8 +1890,7 @@ function renderMarketDashboard(){
       <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>${moverTitle('Biggest Rank Fallers',rf,m)}</h3><div class="vh-sub">Largest declines in overall rank</div></div>${moverCardActions('market','rankFallers',rf)}</div>${moverRows(applyMoverPool(rpF.rankFallers,'market','rankFallers'),'rank')}</div>
     </div>
   </section>
-  <div id="vhMarketIntelligence">${marketIntelligenceMarkup()}</div>
-  ${archivedEraBoard(m)}`;
+  <div id="vhMarketIntelligence">${marketIntelligenceMarkup()}</div>`;
 }
 function renderFullMarketHistory(){
   const box=document.getElementById('vhContent');if(!box||!marketCache)return;

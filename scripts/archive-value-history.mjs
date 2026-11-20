@@ -140,7 +140,7 @@ for(const snap of incoming){
  // all three snapshots to share a verified era preserves the existing check
  // within each era without treating a model migration as fabricated movement.
  const era=String(snap?.valuation_model||'');
- const sameEra=confirmed.length>=2&&era&&
+ const sameEra=confirmed.length>=2&&
   String(confirmed.at(-1)?.valuation_model||'')===era&&
   String(confirmed.at(-2)?.valuation_model||'')===era;
  if(sameEra){

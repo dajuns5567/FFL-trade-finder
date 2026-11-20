@@ -1,0 +1,47 @@
+name: "Release candidate — V107 recorder after reconciled Hindsight (read-only)"
+on:
+  pull_request:
+    paths:
+      - 'value-history-v276.js'
+      - 'scripts/value-history-headless-refresh.mjs'
+      - 'scripts/archive-value-history.mjs'
+      - '.github/workflows/release-v107-recorder-reconciled.yml'
+permissions:
+  contents: read
+jobs:
+  recorder:
+    if: github.base_ref == 'release/trade-history-hindsight-reconciled-draft'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact source and scheduled writer syntax
+        run: |
+          node --check value-history-v276.js
+          node --check scripts/value-history-headless-refresh.mjs
+          node --check scripts/value-history-scheduled-due.mjs
+          node --check scripts/archive-value-history.mjs
+      - name: Confirm immutable model-era, default V96 and approval-gated V101
+        run: |
+          node --test tests/value-history-v107-scheduled-promotion.test.mjs tests/value-history-model-era-v90.test.mjs tests/value-history-candidate-headless-contract.test.mjs
+      - name: Preserve the reconciled Hindsight contract
+        run: node --test tests/trade-history-hindsight-reconciled.test.mjs
+      - name: Refuse changes outside scheduled history collection subsystem
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch origin "$BASE_REF"
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {execFileSync} from 'node:child_process';
+          const changed=execFileSync('git',['diff','--name-only','origin/'+process.env.BASE_REF+'...HEAD'],{encoding:'utf8'}).trim().split('\n').filter(Boolean);
+          const allowed=new Set([".github/workflows/value-history-candidate-headless-acceptance.yml",".github/workflows/value-history-headless-refresh.yml",".github/workflows/value-history-v107-scheduled-rollout.yml",".github/workflows/value-history-v107-shadow-acceptance.yml","scripts/archive-value-history.mjs","scripts/value-history-headless-refresh.mjs","scripts/value-history-scheduled-due.mjs","scripts/value-history-v107-shadow-acceptance.mjs","tests/value-history-candidate-headless-contract.test.mjs","tests/value-history-model-era-v90.test.mjs","tests/value-history-v107-scheduled-promotion.test.mjs","value-history-v276.js",".github/workflows/release-v107-recorder-reconciled.yml"]);
+          assert(changed.length>0);
+          for(const path of changed)assert(allowed.has(path),'Unexpected non-recorder file '+path);
+          console.log('Verified recorder-only delta:',changed);
+          JS

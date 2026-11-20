@@ -25,14 +25,15 @@ concurrency:
 jobs:
   refresh:
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
-    runs-on: ubuntu-latest
+    # Pin runner: Playwright 1.55 Chromium cannot install on ubuntu-26.04.
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       # Trade ingestion runs on EVERY scheduled/workflow wake, even when
       # Value History has no new valuation snapshot due. It is read-only.

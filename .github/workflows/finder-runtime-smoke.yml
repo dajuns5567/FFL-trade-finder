@@ -3,6 +3,7 @@ name: Finder runtime smoke
 on:
   pull_request:
     paths:
+      - '.github/workflows/finder-runtime-smoke.yml'
       - 'trade-finder-style-loader-v209.js'
       - 'trade-finder-style-loader-v197.js'
       - 'trade-finder-v150.js'

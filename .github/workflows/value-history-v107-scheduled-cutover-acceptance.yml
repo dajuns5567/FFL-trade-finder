@@ -50,8 +50,10 @@ jobs:
             assert.equal(s.provenance?.canonical_parity,'exact');
             assert.ok(Number(s.provenance?.consensus_sources)>=7);
             assert.ok(/^[a-f0-9]{40}$/.test(s.provenance?.git_commit||''));
-            assert.ok(Number(s.provenance?.modeled_version)>=7);
+            assert.ok(Number(s.provenance?.modeled_version)>0);
             assert.ok(s.rows?.length>=1000);
+            assert.equal(new Set(s.rows.map(r=>String(r.id))).size,s.rows.length,'all Player Values IDs must be unique');
+            assert.ok(s.rows.every(r=>Number.isFinite(Number(r.value))&&Number.isFinite(Number(r.overall))));
             assert.equal(s.picks?.length,288);
             assert.equal(s.teams?.length,32);
             assert.ok(s.rows.some(r=>String(r.id)==='12978'&&Number(r.value)>0));

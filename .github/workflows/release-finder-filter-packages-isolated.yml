@@ -14,6 +14,7 @@ on:
       - 'tests/finder-natural-filter-matrix.test.mjs'
       - 'tests/finder-add-assets-complements.test.mjs'
       - 'scripts/v311-pipeline-identity-v319-smoke.cjs'
+      - 'scripts/value-history-data-hub-v331-smoke.mjs'
       - '.github/workflows/release-finder-filter-packages-isolated.yml'
 permissions:
   contents: read
@@ -35,10 +36,14 @@ jobs:
           git fetch origin "$BASE_REF"
           git diff --name-only "origin/$BASE_REF"...HEAD > /tmp/finder-changed.txt
           cat /tmp/finder-changed.txt
-          if grep -Ev '^((trade-add-assets-complement-v1|trade-finder-style-loader-v209|trade-finder-v256-compiled|trade-specific-add-assets-v282|trade-specific-max-tier-add-v300|trade-specific-max-value-v279|trade-specific-player-v232|trade-specific-tier-up-v282)\.js|netlify/functions/site-v29\.mjs|tests/finder-(natural-filter-matrix|add-assets-complements)\.test\.mjs|scripts/v311-pipeline-identity-v319-smoke\.cjs|\.github/workflows/release-finder-filter-packages-isolated\.yml)$' /tmp/finder-changed.txt; then
+          if grep -Ev '^((trade-add-assets-complement-v1|trade-finder-style-loader-v209|trade-finder-v256-compiled|trade-specific-add-assets-v282|trade-specific-max-tier-add-v300|trade-specific-max-value-v279|trade-specific-player-v232|trade-specific-tier-up-v282)\.js|netlify/functions/site-v29\.mjs|tests/finder-(natural-filter-matrix|add-assets-complements)\.test\.mjs|scripts/v311-pipeline-identity-v319-smoke\.cjs|scripts/value-history-data-hub-v331-smoke\.mjs|\.github/workflows/release-finder-filter-packages-isolated\.yml)$' /tmp/finder-changed.txt; then
             echo "ERROR: A non-Finder release file changed" >&2
             exit 1
           fi
+          # The Value History test follows the CI-only parent exactly; it is
+          # not a new Finder or historical-data behavior change.
+          git show "origin/$BASE_REF:scripts/value-history-data-hub-v331-smoke.mjs" > /tmp/finder-parent-history-smoke.mjs
+          cmp -s /tmp/finder-parent-history-smoke.mjs scripts/value-history-data-hub-v331-smoke.mjs || { echo "Unexpected Value History test divergence" >&2; exit 1; }
       - name: Finder engine syntax
         run: |
           for file in trade-add-assets-complement-v1.js trade-finder-style-loader-v209.js trade-finder-v256-compiled.js trade-specific-add-assets-v282.js trade-specific-max-tier-add-v300.js trade-specific-max-value-v279.js trade-specific-player-v232.js trade-specific-tier-up-v282.js; do node --check "$file"; done
@@ -49,7 +54,7 @@ jobs:
         run: node scripts/v311-pipeline-identity-v319-smoke.cjs
       - name: Cross-page canonical values and immutable trade contract
         run: |
-          node --test tests/model-v319-metadata-boot-guard.test.mjs tests/canonical-live-values-refresh-isolated.test.mjs tests/trade-history-canonical-unrostered-hindsight.test.mjs tests/trade-history-original-pick-projection.test.mjs
+          node --test tests/model-v319-metadata-boot-guard.test.mjs tests/canonical-live-values-refresh-isolated.test.mjs tests/trade-history-hindsight-reconciled.test.mjs tests/trade-history-original-pick-projection.test.mjs
       - name: Install disposable Chromium for read-only full-site rehearsal
         run: |
           npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0

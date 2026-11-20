@@ -19,7 +19,7 @@ permissions:
   contents: read
 jobs:
   finder-readonly:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
@@ -27,7 +27,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
       - name: Enforce Finder-only release scope
         env:
           BASE_REF: ${{ github.base_ref }}

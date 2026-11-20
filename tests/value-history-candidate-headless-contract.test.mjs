@@ -92,6 +92,7 @@ test('V107 scheduled V101 transition requires explicit matching model selection 
  assert.equal((workflow.match(/VALUE_HISTORY_APPROVED_SCHEDULED_MODEL:/g)||[]).length,2);
  assert.match(archive,/const approvedModel=approval===v101\?v101:approval\?'':v96/);
  assert.match(archive,/VALUE_HISTORY_V101_PROVENANCE_GUARD/);
+ assert.match(archive,/!\(Number\(snap\?\.provenance\?\.modeled_version\)>0\)/);
  assert.match(archive,/snap\?\.provenance\?\.canonical_parity!=='exact'/);
  assert.match(archive,/Number\(snap\?\.provenance\?\.consensus_sources\)<7/);
  assert.match(archive,/snap\?\.rows\?\.length<1000/);

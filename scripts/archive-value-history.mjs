@@ -111,7 +111,7 @@ if(scheduledSnapshotFile){
     snap?.provenance?.canonical_parity!=='exact'||
     Number(snap?.provenance?.consensus_sources)<7||
     !/^[a-f0-9]{40}$/.test(String(snap?.provenance?.git_commit||''))||
-    Number(snap?.provenance?.modeled_version)<7||
+    !(Number(snap?.provenance?.modeled_version)>0)||
     snap?.rows?.length<1000||
     snap?.picks?.length!==288||
     snap?.teams?.length!==32

@@ -24,7 +24,9 @@ concurrency:
 
 jobs:
   refresh:
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    # A draft-branch workflow_dispatch must never reach durable GitHub history.
+    # Scheduled and workflow_run activations occur only on the default main ref.
+    if: github.ref == 'refs/heads/main' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:

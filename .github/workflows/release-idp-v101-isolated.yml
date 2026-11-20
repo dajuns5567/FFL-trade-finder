@@ -50,12 +50,12 @@ jobs:
         run: node --test tests/consensus-composite-v3.test.mjs tests/idp-v101-role-growth-scoring.test.mjs tests/idp-20-45-35-calibration.test.mjs tests/idp-dynasty-development.test.mjs tests/idp-source-integrity-audit-v73.test.mjs tests/idp-unverified-fallback-v73.test.mjs
       - name: Enforce IDP-only PR diff with no offense UI, history, Finder or deploy changes
         run: |
-          node --input-type=module -e "
-            import {execFileSync} from 'node:child_process';
-            import assert from 'node:assert/strict';
-            const files=execFileSync('git',['diff','--name-only','origin/release/offense-consensus-v50-isolated-draft...HEAD'],{encoding:'utf8'}).trim().split(/\\n/).filter(Boolean);
-            const allowed=new Set(["ui-player-values-v139.js","scripts/candidates/valuation-idp-v25-perf-v100.js","scripts/candidates/valuation-idp-v25-perf-v101.js","valuation-idp-v21.js","valuation-idp-v25-perf.js","valuation-idp-v25.js","valuation-idp-v36.js","valuation-idp-v43.js","netlify/functions/consensus-composite-v3.mjs","netlify/functions/draftsharks-idp-adapter.mjs","netlify/functions/rotowire-idp-adapter.mjs","tests/consensus-composite-v3.test.mjs","tests/idp-v101-role-growth-scoring.test.mjs","tests/idp-20-45-35-calibration.test.mjs","tests/idp-dynasty-development.test.mjs","tests/idp-source-integrity-audit-v73.test.mjs","tests/idp-unverified-fallback-v73.test.mjs",".github/workflows/release-idp-v101-isolated.yml"]);
-            assert(files.length>=8);
-            for(const file of files)assert(allowed.has(file),'Unexpected non-IDP source: '+file);
-            console.log('Verified IDP-only file list:',files);
-          "
+          node --input-type=module <<'JS'
+          import {execFileSync} from 'node:child_process';
+          import assert from 'node:assert/strict';
+          const files=execFileSync('git',['diff','--name-only','origin/release/offense-consensus-v50-isolated-draft...HEAD'],{encoding:'utf8'}).trim().split(/\\n/).filter(Boolean);
+          const allowed=new Set(["ui-player-values-v139.js","scripts/candidates/valuation-idp-v25-perf-v100.js","scripts/candidates/valuation-idp-v25-perf-v101.js","valuation-idp-v21.js","valuation-idp-v25-perf.js","valuation-idp-v25.js","valuation-idp-v36.js","valuation-idp-v43.js","netlify/functions/consensus-composite-v3.mjs","netlify/functions/draftsharks-idp-adapter.mjs","netlify/functions/rotowire-idp-adapter.mjs","tests/consensus-composite-v3.test.mjs","tests/idp-v101-role-growth-scoring.test.mjs","tests/idp-20-45-35-calibration.test.mjs","tests/idp-dynasty-development.test.mjs","tests/idp-source-integrity-audit-v73.test.mjs","tests/idp-unverified-fallback-v73.test.mjs",".github/workflows/release-idp-v101-isolated.yml"]);
+          assert(files.length>=8);
+          for(const file of files)assert(allowed.has(file),'Unexpected non-IDP source: '+file);
+          console.log('Verified IDP-only file list:',files);
+          JS

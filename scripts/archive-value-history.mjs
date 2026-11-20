@@ -97,9 +97,25 @@ if(scheduledSnapshotFile){
   const snap=JSON.parse(readFileSync(scheduledSnapshotFile,'utf8'));
   // V106: a research-only V101 capture must NEVER reach the durable history
   // archive under the older V96 era. Refuse explicitly, do not silently skip.
+  const v96='idp-v96-single-source-continuous-v95-evidence';
+  const v101='idp-v101-verified-role-growth-v100-source-free-lineage';
+  const approval=String(process.env.VALUE_HISTORY_APPROVED_SCHEDULED_MODEL||'').trim();
+  // Unset means original V96 history, preserving legacy production behavior.
+  // V101 must be explicitly selected by the reviewed scheduled workflow, and
+  // the model identity must match the capture (never alias a candidate to V96).
+  const approvedModel=approval===v101?v101:approval?'':v96;
   if(snap?.provenance?.candidate_read_only===true||
-     String(snap?.valuation_model||'')!=='idp-v96-single-source-continuous-v95-evidence')
+     !approvedModel||String(snap?.valuation_model||'')!==approvedModel)
     throw new Error('VALUE_HISTORY_MODEL_GUARD: scheduled archive rejects unapproved or read-only candidate valuation model');
+  if(approvedModel===v101&&(
+    snap?.provenance?.canonical_parity!=='exact'||
+    Number(snap?.provenance?.consensus_sources)<7||
+    !/^[a-f0-9]{40}$/.test(String(snap?.provenance?.git_commit||''))||
+    Number(snap?.provenance?.modeled_version)<7||
+    snap?.rows?.length<1000||
+    snap?.picks?.length!==288||
+    snap?.teams?.length!==32
+  ))throw new Error('VALUE_HISTORY_V101_PROVENANCE_GUARD: refuse incomplete scheduled V101 evidence');
   payload={schema_version:1,league_id:'1316867686394769408',source:'scheduled-local-browser',snapshot_count:1,snapshots:[snap]};
 }else payload=await snapshotsFromBlobStore()||await snapshotsFromHttpExport();
 const incoming=(payload.snapshots||[]).filter(validSnapshot).filter(s=>!existing.has(String(s.t))).sort((a,b)=>String(a.t).localeCompare(String(b.t)));

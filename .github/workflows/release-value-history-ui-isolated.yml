@@ -11,6 +11,9 @@ permissions:
   contents: read
 jobs:
   history-ui-only:
+    # Validate the UI-only five-file boundary only in the actual UI release.
+    # The Trade History release intentionally changes the same monolithic JS module.
+    if: github.base_ref == 'release/value-history-era-market-backend-isolated-draft'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:

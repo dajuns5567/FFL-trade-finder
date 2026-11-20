@@ -34,6 +34,8 @@ test('server blocks preview POST before any archival writes, and skips cleanup o
 test('history page distinguishes current preview rank from archived timeline',()=>{
  assert.match(client,/const archivedLast=allPts\[allPts.length-1\]/);
  assert.match(client,/previewRankMismatch=isValueHistoryDeployPreview\(\)/);
- assert.match(client,/Preview ranks are not saved to the canonical history/);
- assert.match(client,/\$\{previewSnapshotNote\}/);
+ assert.doesNotMatch(client,/Preview ranks are not saved to the canonical history/,
+  'user requested the yellow preview warning be removed');
+ assert.doesNotMatch(client,/\$\{previewSnapshotNote\}/);
+ assert.match(client,/Last recorded/,'archived value stays explicitly labelled');
 });

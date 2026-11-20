@@ -9,6 +9,9 @@ permissions:
   contents: read
 jobs:
   trade-history-original-pick:
+    # Only the originating one-subsystem Trade History release may enforce its diff.
+    # Later Market Dashboard/Finder releases retain separate CI scopes.
+    if: github.base_ref == 'release/draft-pick-5050-post-reconciled-recorder-draft'
     runs-on: ubuntu-24.04
     timeout-minutes: 8
     steps:

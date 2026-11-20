@@ -634,7 +634,13 @@ function hasValidatedKtcSnapshot(){for(const [name,src] of Object.entries(state?
 function snapshotPreconditions(){
   if(!window.state||!state.players||Object.keys(state.players).length<100)return false;
   if(window.__fllValueRefresh?.inFlight)return false;
-  if(window.__fllConsensusRefresh?.complete!==true)return false;
+  // A completed refresh can be a FAILED/partial refresh. The previous
+  // check accepted complete=true even when fewer than seven dynasty
+  // publishers had successfully refreshed, permanently recording transitory
+  // fallback values as if they were reliable market movements.
+  const consensus=window.__fllConsensusRefresh;
+  if(consensus?.complete!==true||consensus?.ok!==true||Number(consensus?.successful)<7)return false;
+  if(window.__fllValueRefresh?.phase!=='complete')return false;
   if(window.modeledPlayerValuesV319&&window.modeledPlayerValuesV319.ready!==true)return false;
   if(state.sleeperHistory&&state.sleeperHistory.complete!==true)return false;
   const text=String(document.getElementById('updateStatus')?.textContent||'').toLowerCase();
@@ -658,21 +664,41 @@ function snapshotSourceFromUrl(){
   try{return new URLSearchParams(location.search).get('vh_source')==='scheduled'?'scheduled':'page-load'}catch{return'page-load'}
 }
 async function recordSnapshot(source=pendingSnapshotSource){
+  if(isValueHistoryDeployPreview())return false;
   try{
-    if(!snapshotPreconditions()||!scheduledRefreshReady()){scheduleSnapshot(2000,source);return false}
+    if(!snapshotPreconditions()||!scheduledRefreshReady()){
+      if(window.__fllConsensusRefresh?.complete===true&&window.__fllConsensusRefresh?.ok!==true){
+        window.__vhLastSnapshot={ok:false,reason:'consensus-refresh-incomplete'};
+        console.warn('Value History snapshot skipped: consensus sources incomplete; no fallback values archived');
+        return false;
+      }
+      scheduleSnapshot(2000,source);return false
+    }
     const firstRows=currentRows();
     if(firstRows.length<100){scheduleSnapshot(2000,source);return false}
     await new Promise(r=>setTimeout(r,1200));
-    if(!snapshotPreconditions()||!scheduledRefreshReady()){scheduleSnapshot(2000,source);return false}
+    if(!snapshotPreconditions()||!scheduledRefreshReady()){
+      if(window.__fllConsensusRefresh?.complete===true&&window.__fllConsensusRefresh?.ok!==true){
+        window.__vhLastSnapshot={ok:false,reason:'consensus-refresh-incomplete'};
+        console.warn('Value History snapshot skipped: consensus sources incomplete; no fallback values archived');
+        return false;
+      }
+      scheduleSnapshot(2000,source);return false
+    }
     const rows=currentRows();
     if(rows.length<100||!sameSnapshotRows(firstRows,rows)){scheduleSnapshot(2000,source);return false}
+    if(await verifyLiveValuationModelV95()!==HISTORY_VALUATION_MODEL){
+      window.__vhLastSnapshot={ok:false,reason:'valuation-model-contract-unverified'};
+      console.warn('Value History snapshot blocked: V95 production-evidence model identity could not be verified');
+      return false;
+    }
     let picks=[],teams=[];
     try{picks=currentPickRows()}catch(e){console.warn('value-history-pick-enrichment',e)}
     try{teams=currentTeamRows(rows)}catch(e){console.warn('value-history-team-enrichment',e)}
-    const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({league:'1316867686394769408',rows,picks,teams,source})});
+    const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({league:'1316867686394769408',rows,picks,teams,source,valuation_model:HISTORY_VALUATION_MODEL})});
     if(r.ok){
       const stored=await r.json().catch(()=>({ok:true}));
-      window.__vhLastSnapshot={ok:true,source,t:stored?.t||null};
+      window.__vhLastSnapshot={ok:true,source,t:stored?.t||null,valuation_model:stored?.valuation_model||null};
       marketCache=null;teamNetCache.clear();
       if(uiReady){
         if(currentView==='market')loadMarket(true);
@@ -688,7 +714,7 @@ async function recordSnapshot(source=pendingSnapshotSource){
     scheduleSnapshot(3000,source);return false
   }
 }
-function scheduleSnapshot(delay=60000,source=pendingSnapshotSource){pendingSnapshotSource=source;clearTimeout(snapshotTimer);snapshotTimer=setTimeout(()=>{if('requestIdleCallback'in window)requestIdleCallback(()=>recordSnapshot(source),{timeout:5000});else recordSnapshot(source)},delay)}
+function scheduleSnapshot(delay=60000,source=pendingSnapshotSource){if(isValueHistoryDeployPreview())return;pendingSnapshotSource=source;clearTimeout(snapshotTimer);snapshotTimer=setTimeout(()=>{if('requestIdleCallback'in window)requestIdleCallback(()=>recordSnapshot(source),{timeout:5000});else recordSnapshot(source)},delay)}
 
 function initUI(){
   if(uiReady)return;uiReady=true;

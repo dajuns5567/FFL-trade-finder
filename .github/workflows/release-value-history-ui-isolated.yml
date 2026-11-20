@@ -11,6 +11,8 @@ permissions:
   contents: read
 jobs:
   history-ui-only:
+    # This UI scope applies only to its originating release PR, not later Trade History or recorder stages.
+    if: github.base_ref == 'release/value-history-era-market-backend-isolated-draft'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:

@@ -1,0 +1,41 @@
+name: V109 Market Dashboard live movers and archive safety (read-only)
+on:
+  pull_request:
+    paths:
+      - 'value-history-v276.js'
+      - 'tests/market-live-movers-v109.test.mjs'
+      - '.github/workflows/v109-market-live-movers-review.yml'
+permissions:
+  contents: read
+jobs:
+  market-dashboard:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify Value History syntax
+        run: node --check value-history-v276.js
+      - name: Install declared read-only test dependencies
+        run: npm install --no-save --ignore-scripts --no-audit --no-fund
+      - name: Prove current live market movement and immutable history
+        run: |
+          node --test tests/market-live-movers-v109.test.mjs tests/value-history-dense-charts.test.mjs tests/market-intelligence-original-recovery.test.mjs tests/trade-history-original-pick-projection.test.mjs tests/trade-history-hindsight-reconciled.test.mjs
+      - name: Reject changes outside Market Dashboard UI
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch origin "$BASE_REF"
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {execFileSync} from 'node:child_process';
+          const changed=execFileSync('git',['diff','--name-only','origin/'+process.env.BASE_REF+'...HEAD'],{encoding:'utf8'}).trim().split('\n').filter(Boolean);
+          const allowed=new Set(['value-history-v276.js','tests/market-live-movers-v109.test.mjs','.github/workflows/v109-market-live-movers-review.yml']);
+          assert(changed.length===3,'expected exact UI/test/workflow source, got '+JSON.stringify(changed));
+          for(const path of changed)assert(allowed.has(path),'Out-of-scope subsystem '+path);
+          console.log('Market Dashboard only:',changed);
+          JS

@@ -4,9 +4,9 @@
   functions = "netlify/functions"
   # PREVIEW REVIEW ONLY. Never build production, branch, or unrelated PR contexts.
   # Only the exact current owner-approved Netlify site and a pinned PR review ID can build.
-  # Only PR #532 is permitted for the one staging review; all production is blocked.
+  # Only PR #533 is permitted for the one staging review; all production is blocked.
   # Netlify ignore contract: exit 1 permits a preview; exit 0 skips all other builds.
-  ignore = "node -e \"const e=process.env;const site=e.SITE_ID==='a516be3b-6c65-4f54-a9fb-23c5361bf3d2';const preview=e.CONTEXT==='deploy-preview'&&String(e.REVIEW_ID)==='532';process.exit(site&&preview?1:0)\""
+  ignore = "node -e \"const e=process.env;const site=e.SITE_ID==='a516be3b-6c65-4f54-a9fb-23c5361bf3d2';const preview=e.CONTEXT==='deploy-preview'&&String(e.REVIEW_ID)==='533';process.exit(site&&preview?1:0)\""
 
 [functions]
   node_bundler = "esbuild"

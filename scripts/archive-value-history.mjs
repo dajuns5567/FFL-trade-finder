@@ -136,7 +136,14 @@ for(const item of recentlyIndexed){
  if(record?.content)try{const parsed=JSON.parse(record.content);if(validSnapshot(parsed))confirmed.push(parsed)}catch{}
 }
 for(const snap of incoming){
- if(confirmed.length>=2){
+ // A V96→V101 repricing boundary is not a same-model snapback. Requiring
+ // all three snapshots to share a verified era preserves the existing check
+ // within each era without treating a model migration as fabricated movement.
+ const era=String(snap?.valuation_model||'');
+ const sameEra=confirmed.length>=2&&era&&
+  String(confirmed.at(-1)?.valuation_model||'')===era&&
+  String(confirmed.at(-2)?.valuation_model||'')===era;
+ if(sameEra){
   const check=inspectShortTermSnapback(confirmed.at(-2),confirmed.at(-1),snap);
   if(!check.ok)
    throw new Error('VALUE_HISTORY_COHORT_SNAPBACK: Refusing unverified scheduled batch '+snap.t+

@@ -437,7 +437,7 @@ assert(backend.includes("const fp=fingerprint(rows,picks,teams);"),'Value Histor
 assert(backend.includes("url.searchParams.get('trades')==='1'"),'completed trade history endpoint missing');
 assert(backend.includes('function cleanPicks(picks)'),'Value History backend must sanitize stored pick snapshots separately from player rows');
 assert(backend.includes('function cleanTeams(teams)'),'Value History backend must sanitize team totals separately from player rows');
-assert(/const snapshot=\\{version:5,league:LEAGUE,t,fingerprint:fp,source,\\s*valuation_contract:source==='scheduled'\\?SCHEDULED_VALUATION_CONTRACT:null,\\s*valuation_model:valuationModel,rows,picks,teams\\}/.test(backend),'Value History must persist canonical player/pick/team rows, scheduled contract and independently verified exact valuation-model identity');
+assert(/const snapshot=\{version:5,league:LEAGUE,t,fingerprint:fp,source,\s*valuation_contract:source==='scheduled'\?SCHEDULED_VALUATION_CONTRACT:null,\s*valuation_model:valuationModel,rows,picks,teams\}/.test(backend),'Value History must persist canonical player/pick/team rows, scheduled contract and independently verified exact valuation-model identity');
 assert(backend.includes('await appendIndex(s,key,t);'),'Value History write must persist the snapshot index before reporting success');
 assert(!backend.includes("try{await appendIndex(s,key,t)}catch"),'Value History must not silently report success for an unindexed snapshot');
 assert(backend.includes('histPickMap=pickMap'),'completed trade history must read pick values from the exact historical snapshot');

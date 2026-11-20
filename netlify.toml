@@ -7,6 +7,7 @@
   # skip other sites and unrelated previews to conserve Netlify credits.
   # Draft PR previews target main for preview discovery; production and branch builds remain blocked.
   # V108 preview validation only: PR #515's final Value History / Market Dashboard UI review.
+  # V108 position index validation: recompute cohorts from live canonical Player Values, archive movement only.
   # PR #513 one-time preview validation: no production or branch deployment enabled.
   # Ignore exit 1 builds, exit 0 skips.
   ignore = "node -e \"const e=process.env;const site=e.SITE_ID==='a516be3b-6c65-4f54-a9fb-23c5361bf3d2';const preview=e.CONTEXT==='deploy-preview'&&(String(e.REVIEW_ID)==='499'||String(e.REVIEW_ID)==='505'||String(e.REVIEW_ID)==='507'||String(e.REVIEW_ID)==='508'||String(e.REVIEW_ID)==='509'||String(e.REVIEW_ID)==='510'||String(e.REVIEW_ID)==='511'||String(e.REVIEW_ID)==='513'||String(e.REVIEW_ID)==='515');process.exit(site&&preview?1:0)\""

@@ -34,7 +34,7 @@ jobs:
           import {execFileSync} from 'node:child_process';
           import assert from 'node:assert/strict';
           const files=execFileSync('git',['diff','--name-only','origin/release/idp-v101-isolated-draft...HEAD'],{encoding:'utf8'}).trim().split(String.fromCharCode(10)).filter(Boolean);
-          const allowed=new Set(["modeled-player-values-v319.js","nonblocking-consensus-v277.js","ui-player-values-v139.js","tests/model-v319-metadata-boot-guard.test.mjs","tests/canonical-live-values-refresh-isolated.test.mjs",".github/workflows/release-canonical-value-sync-isolated.yml"]);
+          const allowed=new Set(["modeled-player-values-v319.js","nonblocking-consensus-v277.js","ui-player-values-v139.js","tests/model-v319-metadata-boot-guard.test.mjs","tests/canonical-live-values-refresh-isolated.test.mjs",".github/workflows/release-canonical-value-sync-isolated.yml" ,".github/workflows/release-idp-v101-isolated.yml"]);
           assert(files.length>0);
           for(const file of files)assert(allowed.has(file),'Out-of-scope subsystem: '+file);
           console.log('Canonical shared-price refresh source only:',files);

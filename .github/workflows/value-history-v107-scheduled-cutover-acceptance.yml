@@ -1,0 +1,60 @@
+name: V107 scheduled V101 cutover acceptance (read-only)
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/value-history-headless-refresh.mjs'
+      - 'scripts/archive-value-history.mjs'
+      - '.github/workflows/value-history-headless-refresh.yml'
+      - '.github/workflows/value-history-v107-scheduled-cutover-acceptance.yml'
+      - 'tests/value-history-candidate-headless-contract.test.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v107-scheduled-cutover-readonly-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  simulated-approved-schedule:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: V107 model and archive guard contract
+        run: node --test tests/value-history-candidate-headless-contract.test.mjs
+      - name: Install headless Chromium (no Netlify deploy)
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Execute V101 scheduled cutover locally without archive credentials
+        env:
+          VALUE_HISTORY_SNAPSHOT_FILE: .tmp/value-history-v107-simulated-schedule.json
+          VALUE_HISTORY_APPROVED_SCHEDULED_MODEL: 'idp-v101-verified-role-growth-v100-source-free-lineage'
+        run: node scripts/value-history-headless-refresh.mjs
+      - name: Confirm real V101 model identity, full universe and no candidate alias
+        run: |
+          node --input-type=module -e "
+            import assert from 'node:assert/strict';
+            import {readFileSync} from 'node:fs';
+            const s=JSON.parse(readFileSync('.tmp/value-history-v107-simulated-schedule.json','utf8'));
+            assert.equal(s.source,'scheduled');
+            assert.equal(s.valuation_model,'idp-v101-verified-role-growth-v100-source-free-lineage');
+            assert.notEqual(s.provenance?.candidate_read_only,true);
+            assert.equal(s.provenance?.canonical_parity,'exact');
+            assert.ok(Number(s.provenance?.consensus_sources)>=7);
+            assert.ok(/^[a-f0-9]{40}$/.test(s.provenance?.git_commit||''));
+            assert.ok(Number(s.provenance?.modeled_version)>=7);
+            assert.ok(s.rows?.length>=1000);
+            assert.equal(s.picks?.length,288);
+            assert.equal(s.teams?.length,32);
+            assert.ok(s.rows.some(r=>String(r.id)==='12978'&&Number(r.value)>0));
+            console.log('V107_SCHEDULED_CUTOVER_READ_ONLY_PASS',s.t,s.rows.length);
+          "
+      # No secrets, archive invocation, durable writes, merge, or production deploy.

@@ -150,6 +150,8 @@ test('scheduled GitHub workflow remains main-only with explicit two-variable opt
  assert.match(workflow,/if: github\.ref == 'refs\/heads\/main' &&/,
   'draft-branch manual dispatch must not write even legacy V96 history');
  assert.match(workflow,/VALUE_HISTORY_EXPECTED_MODEL/);
+ assert.match(workflow,/Check current Sleeper completed trades\n[\s\S]*?continue-on-error: true\n[\s\S]*?run: node scripts\/trade-history-scheduled-check\.mjs/,
+  'read-only completed-trade poll failures cannot suppress due valuation snapshots');
  assert.match(workflow,/group: value-history-durable-write/);
  assert.match(workflow,/cancel-in-progress: false/);
  assert.match(workflow,/value-history-scheduled-due\.mjs/);

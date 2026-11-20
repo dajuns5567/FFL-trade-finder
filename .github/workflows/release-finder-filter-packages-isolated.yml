@@ -13,6 +13,7 @@ on:
       - 'netlify/functions/site-v29.mjs'
       - 'tests/finder-natural-filter-matrix.test.mjs'
       - 'tests/finder-add-assets-complements.test.mjs'
+      - 'scripts/v311-pipeline-identity-v319-smoke.cjs'
       - '.github/workflows/release-finder-filter-packages-isolated.yml'
 permissions:
   contents: read
@@ -34,7 +35,7 @@ jobs:
           git fetch origin "$BASE_REF"
           git diff --name-only "origin/$BASE_REF"...HEAD > /tmp/finder-changed.txt
           cat /tmp/finder-changed.txt
-          if grep -Ev '^((trade-add-assets-complement-v1|trade-finder-style-loader-v209|trade-finder-v256-compiled|trade-specific-add-assets-v282|trade-specific-max-tier-add-v300|trade-specific-max-value-v279|trade-specific-player-v232|trade-specific-tier-up-v282)\.js|netlify/functions/site-v29\.mjs|tests/finder-(natural-filter-matrix|add-assets-complements)\.test\.mjs|\.github/workflows/release-finder-filter-packages-isolated\.yml)$' /tmp/finder-changed.txt; then
+          if grep -Ev '^((trade-add-assets-complement-v1|trade-finder-style-loader-v209|trade-finder-v256-compiled|trade-specific-add-assets-v282|trade-specific-max-tier-add-v300|trade-specific-max-value-v279|trade-specific-player-v232|trade-specific-tier-up-v282)\.js|netlify/functions/site-v29\.mjs|tests/finder-(natural-filter-matrix|add-assets-complements)\.test\.mjs|scripts/v311-pipeline-identity-v319-smoke\.cjs|\.github/workflows/release-finder-filter-packages-isolated\.yml)$' /tmp/finder-changed.txt; then
             echo "ERROR: A non-Finder release file changed" >&2
             exit 1
           fi
@@ -44,3 +45,5 @@ jobs:
           node --check netlify/functions/site-v29.mjs
       - name: Filter matrix and complementary packages
         run: node --test tests/finder-natural-filter-matrix.test.mjs tests/finder-add-assets-complements.test.mjs
+      - name: Exact Finder candidate hashes and frozen unrelated modules
+        run: node scripts/v311-pipeline-identity-v319-smoke.cjs

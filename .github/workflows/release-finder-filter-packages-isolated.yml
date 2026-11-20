@@ -1,0 +1,58 @@
+name: "Release candidate — Finder filter and package generation (read-only)"
+on:
+  pull_request:
+    paths:
+      - 'trade-add-assets-complement-v1.js'
+      - 'trade-finder-style-loader-v209.js'
+      - 'trade-finder-v256-compiled.js'
+      - 'trade-specific-add-assets-v282.js'
+      - 'trade-specific-max-tier-add-v300.js'
+      - 'trade-specific-max-value-v279.js'
+      - 'trade-specific-player-v232.js'
+      - 'trade-specific-tier-up-v282.js'
+      - 'netlify/functions/site-v29.mjs'
+      - 'tests/finder-natural-filter-matrix.test.mjs'
+      - 'tests/finder-add-assets-complements.test.mjs'
+      - 'scripts/v311-pipeline-identity-v319-smoke.cjs'
+      - '.github/workflows/release-finder-filter-packages-isolated.yml'
+permissions:
+  contents: read
+jobs:
+  finder-readonly:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Enforce Finder-only release scope
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch origin "$BASE_REF"
+          git diff --name-only "origin/$BASE_REF"...HEAD > /tmp/finder-changed.txt
+          cat /tmp/finder-changed.txt
+          if grep -Ev '^((trade-add-assets-complement-v1|trade-finder-style-loader-v209|trade-finder-v256-compiled|trade-specific-add-assets-v282|trade-specific-max-tier-add-v300|trade-specific-max-value-v279|trade-specific-player-v232|trade-specific-tier-up-v282)\.js|netlify/functions/site-v29\.mjs|tests/finder-(natural-filter-matrix|add-assets-complements)\.test\.mjs|scripts/v311-pipeline-identity-v319-smoke\.cjs|\.github/workflows/release-finder-filter-packages-isolated\.yml)$' /tmp/finder-changed.txt; then
+            echo "ERROR: A non-Finder release file changed" >&2
+            exit 1
+          fi
+      - name: Finder engine syntax
+        run: |
+          for file in trade-add-assets-complement-v1.js trade-finder-style-loader-v209.js trade-finder-v256-compiled.js trade-specific-add-assets-v282.js trade-specific-max-tier-add-v300.js trade-specific-max-value-v279.js trade-specific-player-v232.js trade-specific-tier-up-v282.js; do node --check "$file"; done
+          node --check netlify/functions/site-v29.mjs
+      - name: Filter matrix and complementary packages
+        run: node --test tests/finder-natural-filter-matrix.test.mjs tests/finder-add-assets-complements.test.mjs
+      - name: Exact Finder candidate hashes and frozen unrelated modules
+        run: node scripts/v311-pipeline-identity-v319-smoke.cjs
+      - name: Cross-page canonical values and immutable trade contract
+        run: |
+          node --test tests/model-v319-metadata-boot-guard.test.mjs tests/canonical-live-values-refresh-isolated.test.mjs tests/trade-history-canonical-unrostered-hindsight.test.mjs tests/trade-history-original-pick-projection.test.mjs
+      - name: Install disposable Chromium for read-only full-site rehearsal
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Rehearse actual site HTML and Finder/Evaluator navigation without live requests
+        run: node scripts/rehearse-full-original-app-browser.mjs .

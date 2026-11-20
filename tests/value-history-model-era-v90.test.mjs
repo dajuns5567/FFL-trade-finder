@@ -435,10 +435,10 @@ test('client submits contract and labels instead of pretending model-version jum
  assert.match(client,/await verifyLiveValuationModelV95\(\)!==HISTORY_VALUATION_MODEL/);
  assert.match(client,/valuation_model:HISTORY_VALUATION_MODEL/);
  assert.match(client,/Valuation model changed — movement not comparable/);
- assert.match(client,/modelBoundaryNote/);
+ assert.match(client,/chartEraConnectors/,'model boundaries remain represented without yellow warning banners');
  assert.match(client,/latest.valuation_model\|\|prev.valuation_model/);
  assert.match(client,/a.valuation_model\|\|b.valuation_model/);
- assert.match(client,/history includes a valuation-model change/i);
+ assert.doesNotMatch(client,/History includes a valuation-model change\\. The original observations/,'requested model-era notice was removed');
  assert.match(client,/modelBoundary\?'Model change':signed\(r.dv\)/);
  assert.match(client,/isValueHistoryDeployPreview\(\)\)return false/);
  assert.match(client,/deploy-preview-\\d\+/);

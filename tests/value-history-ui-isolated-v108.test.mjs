@@ -157,3 +157,23 @@ test('history UI release does not change the Trade History pick projection or sn
  assert.doesNotMatch(file,/function isCurrentRankedPlayerForHindsight\(/);
  assert.doesNotMatch(file,/function originalPickProjectionText\(/);
 });
+
+test('historical trade valuation matches current canonical Player Values even when asset pool omits ranked player',()=>{
+ const source=piece(ui,'function currentEvaluatorValue(asset){','function tradeHistoryNearestDraftYear(');
+ const canonical=new Map([['10880',2156],['7811',2107]]);
+ const rankedPlayers=[...canonical.keys()].map(id=>({x:{type:'player',id}}));
+ const ctx={state:{allAssets:[{type:'player',id:'known'}]},
+  window:{tradeValueNormalizationV130:{canonicalValue:a=>canonical.get(String(a.id))||0}},
+  ranked:()=>rankedPlayers,
+  tv:()=>({playerValue:a=>canonical.get(String(a.id))||0}),
+  Number,String,Math};
+ vm.runInNewContext(source+';this.currentEvaluatorValue=currentEvaluatorValue;',ctx);
+ assert.equal(ctx.currentEvaluatorValue({type:'player',id:'10880'}),2156);
+ assert.equal(ctx.currentEvaluatorValue({type:'player',id:'7811'}),2107);
+ assert.equal(ctx.currentEvaluatorValue({type:'player',id:'nonexistent'}),0,'unknown players remain conservative');
+ ctx.window.tradeValueNormalizationV130.canonicalValue=()=>0;
+ assert.equal(ctx.currentEvaluatorValue({type:'player',id:'10880'}),2156,
+  'a zero from a stale trade asset map must not erase a canonical ranked player');
+ ctx.state.allAssets=[{type:'player',id:'10880'}];
+ assert.equal(ctx.currentEvaluatorValue({type:'player',id:'10880'}),2156);
+});

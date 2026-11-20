@@ -30,8 +30,8 @@ jobs:
           import {execFileSync} from 'node:child_process';
           import assert from 'node:assert/strict';
           const files=execFileSync('git',['diff','--name-only','origin/release/canonical-player-values-refresh-isolated-draft...HEAD'],{encoding:'utf8'}).trim().split(String.fromCharCode(10)).filter(Boolean);
-          const allowed=new Set(["netlify/functions/value-history.mjs","tests/value-history-era-market-backend-isolated.test.mjs",".github/workflows/release-value-history-era-market-backend.yml"]);
-          assert(files.length===3);
+          const allowed=new Set(["netlify/functions/value-history.mjs","tests/value-history-era-market-backend-isolated.test.mjs",".github/workflows/release-value-history-era-market-backend.yml,"scripts/value-history-data-hub-v331-smoke.mjs"]);
+          assert(files.length===4);
           for(const file of files)assert(allowed.has(file),'Out-of-scope release subsystem: '+file);
           console.log('Read-only history market backend release:',files);
           JS

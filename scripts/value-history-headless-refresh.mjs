@@ -18,6 +18,13 @@ const V101_MODEL='idp-v101-verified-role-growth-v100-source-free-lineage';
 // read-only CI collector. Default scheduled production remains strictly V96;
 // never write candidate values to the existing V96 history.
 const candidateModel=String(process.env.VALUE_HISTORY_CANDIDATE_MODEL||'').trim();
+// V107: separately reviewed scheduled cutover. An unset selector preserves V96.
+// The selected V101 model is never inferred from the page or substituted for V96.
+const approvedScheduledModel=String(process.env.VALUE_HISTORY_APPROVED_SCHEDULED_MODEL||'').trim();
+if(approvedScheduledModel&&(
+  approvedScheduledModel!==V101_MODEL||candidateModel||
+  process.env.VALUE_HISTORY_READ_ONLY_CANDIDATE==='1'
+))throw Error('Refuse ambiguous Value History scheduled model cutover');
 if(candidateModel&&(
   candidateModel!==V101_MODEL||
   process.env.VALUE_HISTORY_READ_ONLY_CANDIDATE!=='1'||
@@ -26,6 +33,7 @@ if(candidateModel&&(
 const acceptedValuationModel=value=>{
  const model=String(value||'').trim();
  if(candidateModel)return model===candidateModel?candidateModel:null;
+ if(approvedScheduledModel)return model===approvedScheduledModel?approvedScheduledModel:null;
  return model===V96_MODEL?V96_MODEL:null;
 };
 const league='1316867686394769408';

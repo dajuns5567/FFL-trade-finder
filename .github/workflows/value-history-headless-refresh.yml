@@ -36,7 +36,8 @@ jobs:
     # account/site is detected. The GitHub-native headless collector must
     # still wake, but will fail closed on incomplete Sleeper, publishers or
     # historical index. Failed Sleeper import and MIDA sync stay blocked.
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.name == 'Archive Value History'
+    # Block manual dispatch from any draft branch for BOTH V96 and V101.
+    if: github.ref == 'refs/heads/main' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.name == 'Archive Value History')
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:

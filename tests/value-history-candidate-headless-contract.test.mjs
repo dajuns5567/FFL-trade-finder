@@ -35,6 +35,8 @@ test('production schedule uses durable GitHub history and runs the archive only 
   assert.match(workflow,/value-history-scheduled-due\.mjs/);
   assert.match(workflow,/value-history-headless-refresh\.mjs/);
   assert.match(workflow,/archive-value-history\.mjs/);
+  assert.match(workflow,/if: github\.ref == 'refs\/heads\/main' &&/,
+    'manual workflow dispatch from draft branches must not archive anything');
   assert.match(due,/source\|\|''\)==='scheduled'/);
 });
 

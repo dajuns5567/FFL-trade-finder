@@ -147,6 +147,8 @@ test('first V101 schedule is due even after fresh V96; follow-up V101 respects t
 test('scheduled GitHub workflow remains main-only with explicit two-variable opt-in and serialized archival writes',()=>{
  assert.match(workflow,/FFL_HISTORY_SCHEDULED_MODEL/);
  assert.match(workflow,/FFL_HISTORY_V101_APPROVED/);
+ assert.match(workflow,/if: github\.ref == 'refs\/heads\/main' &&/,
+  'draft-branch manual dispatch must not write even legacy V96 history');
  assert.match(workflow,/VALUE_HISTORY_EXPECTED_MODEL/);
  assert.match(workflow,/group: value-history-durable-write/);
  assert.match(workflow,/cancel-in-progress: false/);
@@ -175,4 +177,26 @@ test('existing archive imports accept verified V101 model era but never V101 can
  assert.equal(ctx.validate({...current,provenance:{...current.provenance,candidate_read_only:true}}),false);
  assert.equal(ctx.validate({...current,provenance:{...current.provenance,model_blob_sha:'other'}}),false);
  assert.equal(ctx.validate({...current,provenance:{...current.provenance,consensus_sources:2}}),false);
+});
+
+test('cross-era snapback detection preserves actual model transitions and retains all intra-era checks',()=>{
+ const start=writer.indexOf('for(const snap of incoming){\n // A deliberate V96 -> V101 model migration');
+ const end=writer.indexOf('\nconst monthGroups=new Map();',start);
+ assert.ok(start>0&&end>start,'model-aware snapback code must be present');
+ const source=writer.slice(start,end);
+ const calls=(prev,next)=>{
+  const ctx={confirmed:prev.map(valuation_model=>({valuation_model})),
+   incoming:[{valuation_model:next}],String,JSON,Error,
+   callCount:0,inspectShortTermSnapback:()=>{ctx.callCount++;return {ok:true}}};
+  vm.runInNewContext(source,ctx);
+  return ctx.callCount;
+ };
+ assert.equal(calls([V96,V96],V101),0,'V96 -> V101 cutover is not a same-model snapback');
+ assert.equal(calls([V96,V101],V101),0,'first two V101 records have no valid three-point baseline');
+ assert.equal(calls([V101,V101],V101),1,'continue normal checks after three V101 points');
+ assert.equal(calls([V96,V96],V96),1,'V96 keeps original integrity checks');
+ assert.equal(calls([undefined,undefined],undefined),1,'legacy untagged archive retains integrity checks');
+ assert.match(writer,/VALUE_HISTORY_MODEL_INTEGRITY/);
+ assert.match(writer,/item\?\.valuation_contract/);
+ assert.match(writer,/parsed\?\.valuation_contract/);
 });

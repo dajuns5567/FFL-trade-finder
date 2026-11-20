@@ -1,0 +1,27 @@
+name: V108 Value History chart and market-integrity acceptance (read-only)
+on:
+  pull_request:
+    paths:
+      - 'value-history-v276.js'
+      - 'netlify/functions/value-history.mjs'
+      - 'tests/value-history-v108-chart-market-audit.test.mjs'
+      - '.github/workflows/value-history-v108-chart-market-acceptance.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  history-ui-market:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check value history frontend and backend syntax
+        run: |
+          node --check value-history-v276.js
+          node --check netlify/functions/value-history.mjs
+      - name: Validate exact model-era chart geometry and market calculations
+        run: node --test tests/value-history-v108-chart-market-audit.test.mjs
+      # No write tokens, deploys, environment activation or archive mutations.

@@ -57,6 +57,6 @@ test('background worker independently checks same site identity, queue key, lock
 test('latest account has separately isolated preview diagnostics without any production renderer override',()=>{
  const source=readFileSync('netlify/functions/lib/inquirer-preview-diagnostics.mjs','utf8');
  assert.match(source,/animated-dasik-3de74a/);
- assert.match(source,/^|deploy-preview-\\d/); // host matching remains deploy-preview-only
+ assert.match(source,/deploy-preview-\\d+/); // exact numbered preview host remains mandatory
  assert.match(source,/privatePreviewStoreName/);
 });

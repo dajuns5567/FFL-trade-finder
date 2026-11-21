@@ -16,7 +16,8 @@ test('production cutover requires exact owner-approved site, context and queue s
  assert.match(worker,/publisher_enabled:enabled==='true'/);
  assert.match(worker,/inquirerQueueKeyMatches/);
  assert.match(worker,/req\.method!=='POST'/);
- assert.match(worker,/FORWARD_EDITORIAL_REVISION<107/);
+ assert.match(worker,/FORWARD_EDITORIAL_REVISION<APPROVED_CUTOVER_SOURCE_REVISION/);
+ assert.match(worker,/APPROVED_CUTOVER_SOURCE_REVISION/);
  assert.match(worker,/auditIndependentInquirerCopy\(\[draft7,draft8\],\{revision:107\}\)/);
  assert.match(worker,/privatePreviewStoreName/);
  assert.match(scheduler,/isCurrentSite/);

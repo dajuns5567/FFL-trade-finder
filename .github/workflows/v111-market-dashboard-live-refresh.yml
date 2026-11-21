@@ -1,0 +1,48 @@
+name: V111 Market Dashboard current canonical refresh (read-only)
+on:
+  pull_request:
+    paths:
+      - 'value-history-v276.js'
+      - 'tests/market-dashboard-live-current-v111.test.mjs'
+      - 'tests/market-live-movers-v109.test.mjs'
+      - 'tests/market-intelligence-original-recovery.test.mjs'
+      - '.github/workflows/v111-market-dashboard-live-refresh.yml'
+permissions:
+  contents: read
+jobs:
+  market-refresh:
+    if: github.base_ref == 'fix/v110-market-movement-model-provenance'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Enforce one-subsystem Market Dashboard scope
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch origin "$BASE_REF"
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {execFileSync} from 'node:child_process';
+          const paths=execFileSync('git',['diff','--name-only','origin/'+process.env.BASE_REF+'...HEAD'],{encoding:'utf8'}).trim().split('\n').filter(Boolean);
+          const allowed=new Set([
+            'value-history-v276.js','tests/market-dashboard-live-current-v111.test.mjs',
+            'tests/market-live-movers-v109.test.mjs','tests/market-intelligence-original-recovery.test.mjs',
+            '.github/workflows/v111-market-dashboard-live-refresh.yml'
+          ]);
+          assert(paths.length>=4);
+          for(const p of paths)assert(allowed.has(p),'Out-of-scope change '+p);
+          console.log('Market Dashboard refresh-only diff:',paths);
+          JS
+      - name: Install declared read-only test dependencies
+        run: npm install --no-save --ignore-scripts --no-audit --no-fund
+      - name: Verify canonical price, fresh market observations and chart integrity
+        run: |
+          node --check value-history-v276.js
+          node --test tests/market-dashboard-live-current-v111.test.mjs tests/market-live-movers-v109.test.mjs tests/market-model-provenance-v110.test.mjs tests/market-intelligence-original-recovery.test.mjs tests/value-history-dense-charts.test.mjs tests/trade-history-hindsight-reconciled.test.mjs tests/trade-history-original-pick-projection.test.mjs
+      # No live writes, snapshots, production deploys or Inquirer publication.

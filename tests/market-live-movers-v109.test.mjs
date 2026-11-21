@@ -40,12 +40,12 @@ test('verified same-era live movement updates value and rank leaderboards withou
  assert.equal(result.rankRisers[0].overallDelta,4);
  assert.equal(JSON.stringify(old),before,'historical observations must remain immutable');
 });
-test('model change, stale baseline, future observation and malformed data fail closed',()=>{
- assert.equal(context.build(old,'7D',live,'different-v101',now),null);
+test('model repricing remains a real observed value change; stale windows still fail closed',()=>{
+ assert.equal(context.build(old,'7D',live,'different-v101',now)?.valueRisers[0]?.delta,700);
  assert.equal(context.build(old,'1D',live,'verified-v101',now),null,'3-day-old snapshot cannot claim 1D movement');
  assert.equal(context.build(old,'7D',live,'verified-v101',Date.parse('2026-11-30T20:00:00Z')),null);
  assert.equal(context.build({...old,latest:'2026-11-21T20:00:00Z'},'7D',live,'verified-v101',now),null);
- assert.equal(context.build({...old,valuation_model:null},'7D',live,'verified-v101',now),null);
+ assert.equal(context.build({...old,valuation_model:null},'7D',live,'verified-v101',now)?.valueRisers[0]?.delta,700);
 });
 test('dashboard hides the two noisy model-era paragraphs and the earlier-market board, not the actual history data',()=>{
  const start=ui.indexOf('function renderMarketDashboard(){');
@@ -56,12 +56,12 @@ test('dashboard hides the two noisy model-era paragraphs and the earlier-market 
  assert.ok(!dashboard.includes('${archivedEraBoard(m)}'));
  assert.ok(!dashboard.includes('Current values and ranks come from Player Values;'));
  assert.ok(dashboard.includes('liveDashboardPeriodV109(m,p)'));
- assert.ok(dashboard.includes('Verified live changes added to archived same-model movement'));
+ assert.ok(dashboard.includes('Current Player Values changes are included; model repricing may be part of these movements'));
  assert.ok(ui.includes('function archivedEraBoard(m){'),'underlying archived-era data and code must not be deleted');
  assert.ok(ui.includes('function marketFetch(){')||ui.includes('async function marketFetch(){'));
  assert.ok(ui.includes("if(isValueHistoryDeployPreview())return false;"),'preview must retain its no-write guard');
 });
-test('live augmentation requires confirmed canonical consensus refresh, exact model identity and completed player map',()=>{
+test('live augmentation requires confirmed canonical consensus refresh and completed player map, not historical model identity',()=>{
  const start=ui.indexOf('function liveDashboardPeriodV109(');
  const end=ui.indexOf('function archivedEraBoard(m){',start);
  assert.ok(start>=0&&end>start);

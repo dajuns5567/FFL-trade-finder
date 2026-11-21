@@ -277,6 +277,10 @@ test('V105 heat map reports verified gross movement when signed changes cancel',
    {id:'qb1',pos:'QB',overall:1,pct:10},
    {id:'qb2',pos:'QB',overall:2,pct:-10}
   ]}),
+  currentMarketIntelligenceRowsV111:()=>[
+   {id:'qb1',pos:'QB',overall:1,pct:10},
+   {id:'qb2',pos:'QB',overall:2,pct:-10}
+  ],
   intelPeriodLabel:()=> '7D',
   deltaClass:x=>x===0?'vh-neutral':x>0?'vh-up':'vh-down',
   signedPct:x=>(x>=0?'+':'')+x.toFixed(1)+'%',

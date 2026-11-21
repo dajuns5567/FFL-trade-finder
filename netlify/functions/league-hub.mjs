@@ -12,6 +12,7 @@ import week2Preload2026 from './inquirer-week2-2026-preload.mjs';
 import {fetchBestSeason} from './history-fetch.mjs';
 import {applyInquirerEditorialV31,evaluateInquirerEditionQuality,FORWARD_INQUIRER_VERSION,FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
 import {inspectCanonicalArchive} from './lib/inquirer-legacy-history.mjs';
+import {githubVerifiedArchiveRows,githubPublishedEdition} from './lib/inquirer-github-archive.mjs';
 import {privatePreviewStoreName,isVerifiedPrivatePreviewPredecessor} from './lib/inquirer-preview-diagnostics.mjs';
 
 const LEAGUE='1316867686394769408';
@@ -691,6 +692,12 @@ async function broadcastArchive(){
   if(archived&&isLockedInquirerEdition(archived,2026,week))
    rows.push({type:'week',season:2026,week,key,captured_at:String(archived.generated_at||''),recovered_index:true});
  }
+ // GitHub's append-only, SHA-verified archive survives Netlify site changes.
+ // Never promote unverified manifest entries or replace canonical Blob rows.
+ for(const entry of await githubVerifiedArchiveRows()){
+  if(!rows.some(row=>Number(row.season)===entry.season&&Number(row.week)===entry.week))
+   rows.push(entry);
+ }
  rows.sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));return{reports:rows};
 }
 async function broadcastStored(season,week){
@@ -704,7 +711,8 @@ async function broadcastStored(season,week){
     reason:'Archived Inquirer edition fails the Week 4 newsroom continuity/quality contract. Publication held; original bytes were not altered.'};
   return v;
  }
- return preloadedBroadcast(season,week)||{error:'broadcast not found'};
+ const githubEdition=await githubPublishedEdition(season,week);
+ return githubEdition||preloadedBroadcast(season,week)||{error:'broadcast not found'};
 }
 
 function weeklyAwardStatRows(payload){

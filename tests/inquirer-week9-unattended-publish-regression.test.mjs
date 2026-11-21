@@ -106,13 +106,50 @@ test('a fifth affected article or two independent short repeated lines are nonfa
  assert.equal(result.tolerated,true);
  assert.equal(result.sentence_count,2);
 });
-test('three repeated lines or a sixth affected article remain fatal',()=>{
+test('three separated short repeated lines are warnings; six affected teams remain fatal',()=>{
  const six=repeatedFixture([{sentence:one,members:[1,2,3,4,5,6]}]);
  assert.equal(assessMinorNineWordReuse(six.teams,six.repeated).tolerated,false);
  const three=repeatedFixture([{sentence:one,members:[1,2,3,4]},
   {sentence:'A second isolated managerial observation explains what each team must do after the completed match.',members:[5,6,7,8]},
   {sentence:'A third isolated editorial observation explains the upcoming roster decisions with enough independent weekly detail.',members:[9,10,11,12]}]);
- assert.equal(assessMinorNineWordReuse(three.teams,three.repeated).tolerated,false);
+ const report=assessMinorNineWordReuse(three.teams,three.repeated);
+ assert.equal(report.tolerated,true);
+ assert.equal(report.sentence_count,3);
+ assert.equal(report.severity,'editorial-warning');
+ assert.equal(report.requires_improvement,true);
+});
+test('four repeated sentences, even separated, remain a blocking quality failure',()=>{
+ const lines=[
+ one,
+ 'A second isolated managerial observation explains what each team must do after the completed match.',
+ 'A third isolated editorial observation explains the upcoming roster decisions with enough independent weekly detail.',
+ 'A fourth isolated repeat describes exactly how the staff discussed the latest recorded outcome.'
+ ];
+ const fixture=repeatedFixture(lines.map(sentence=>({sentence,members:[1,2,3,4]})));
+ assert.equal(assessMinorNineWordReuse(fixture.teams,fixture.repeated).tolerated,false);
+});
+test('two consecutively repeated sentences block publication despite distinct surrounding copy',()=>{
+ const first=one;
+ const second='A separate managerial conclusion was repeated in another nearby editorial sentence for this particular roster.';
+ const fixture=repeatedFixture([{sentence:first,members:[1,2,3,4]},
+  {sentence:second,members:[1,2,3,4]}]);
+ // Make the exact two shared lines adjacent within each affected article;
+ // substantial team-specific reporting still surrounds both lines.
+ for(const team of fixture.teams.slice(0,4)){
+  team.inquirer_article.sections[0].paragraphs=[
+   'Verified independent weekly details identify this roster '+team.roster_id+' and its special circumstances. '+
+   first+' '+second+
+   ' Additional detailed analysis examines this same roster '+team.roster_id+' and its individual matchup. '+
+   'A unique conclusion belongs to roster '+team.roster_id+' after the game.'
+  ];
+ }
+ assert.equal(assessMinorNineWordReuse(fixture.teams,fixture.repeated).tolerated,false);
+ assert.equal(assessMinorNineWordReuse(fixture.teams,fixture.repeated).reason,'consecutive-repeated-sentences');
+});
+test('the best publishable candidate must prefer clean prose instead of rewarding tolerated repetitions',()=>{
+ const hub=readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
+ assert.match(hub,/if\(!q\.metrics\?\.minor_repetition_warning\)/);
+ assert.match(hub,/if\(!accepted\)\{accepted=drafted;quality=q;variationSalt=salt\}/);
 });
 test('a duplicated whole paragraph is still fatal even with exactly four teams',()=>{
  const fixture=repeatedFixture([{sentence:one,members:[1,2,3,4]}]);

@@ -52,3 +52,12 @@ test('old preview site remains a source identity, never the authorized publicati
  assert.match(worker,/const SOURCE_SITE_HOST='precious-dango-fb4633.netlify.app'/);
  assert.match(source,/Netlify site-wide Blob storage does not follow a hostname/);
 });
+
+test('immutable approved revision 107 cannot be moved when generator reaches revision 109',()=>{
+ const generator=readFileSync(new URL('../netlify/functions/inquirer-editorial-v31.mjs',import.meta.url),'utf8');
+ assert.match(generator,/export const FORWARD_EDITORIAL_REVISION=109/);
+ assert.match(source,/export const APPROVED_CUTOVER_SOURCE_REVISION=107/);
+ assert.match(source,/revision=APPROVED_CUTOVER_SOURCE_REVISION/);
+ assert.match(worker,/APPROVED_CUTOVER_SOURCE_REVISION/);
+ assert.doesNotMatch(worker,/editorial-r'\+FORWARD_EDITORIAL_REVISION/);
+});

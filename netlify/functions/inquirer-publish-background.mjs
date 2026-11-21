@@ -38,7 +38,9 @@ export default async function publishInquirerInBackground(req){
   return new Response('Preview deployment cannot publish',{status:403});
  }
  const isCurrentSite=siteId==='fa33dfe4-8293-441e-8da0-25cc66fc984c'||host==='precious-dango-fb4633.netlify.app';
- const isNewestSite=isCurrentSite||siteId==='3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f'||
+ const isNewestSite=isCurrentSite||siteId==='a516be3b-6c65-4f54-a9fb-23c5361bf3d2'||
+  host==='animated-dasik-3de74a.netlify.app'||
+  siteId==='3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f'||
   host==='gleaming-dodol-8dbc4a.netlify.app';
  const replacement=isNewestSite||siteId==='8776d155-bc7b-4dcd-bafc-3d70d3d51800'||
   host==='transcendent-manatee-2f0123.netlify.app';

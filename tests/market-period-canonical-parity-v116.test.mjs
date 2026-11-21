@@ -97,7 +97,7 @@ test('each market endpoint reads precisely one shared canonical snapshot populat
  assert.match(server,/async function getMarketSummary\(s\)\{\s*const source=await getMarketSourceSnapshots\(s\)/);
  assert.match(server,/async function getMarketInsights\(s\)\{\s*const source=await getMarketSourceSnapshots\(s\)/);
  assert.match(server,/const archived=await archiveAllSnapshots\(\)/);
- assert.match(server,/const snaps=mergeSnapshots\(archived,live\)/);
+ assert.match(server,/const snaps=mergeSnapshots\(live,archived\)/);
  assert.doesNotMatch(server,/wanted\.push\(\.\.\.timed\.slice\(-12\)\)/);
  assert.match(server,/MARKET_SOURCE_TTL_MS=30000/);
  assert.match(server,/marketInsightsCache\.through===latest/);
@@ -137,4 +137,22 @@ test('Market Dashboard timeframe controls are synchronized without changing Team
  assert.match(ui,/marketPeriods=\{valueRisers:'7D',valueFallers:'7D',rankRisers:'7D',rankFallers:'7D'\}/);
  assert.match(ui,/if\(setMarketDashboardPeriodV116\(intelPeriod\.dataset\.vhIntelPeriod\)\)renderMarketDashboard\(\)/);
  assert.match(ui,/if\(setMarketDashboardPeriodV116\(mp\.dataset\.vhMarketPeriod\)\)renderMarketDashboard\(\)/);
+});
+
+test('archived canonical row wins conflicting duplicate transient blob, while unique local timestamps survive',()=>{
+ const start=server.indexOf('function mergeSnapshots(...groups){');
+ const end=server.indexOf('const sleep=ms=>',start);
+ assert.ok(start>=0&&end>start);
+ const context={Map,Array,String};
+ vm.createContext(context);
+ vm.runInContext(server.slice(start,end),context);
+ const t='2026-11-21T20:00:00Z';
+ const archive=mk(t,NEW,3000,4000,5000);
+ const badLocal=mk(t,OLD,100,200,300);
+ const extraLocal=mk('2026-11-21T21:00:00Z',NEW,3100,4100,5100);
+ const out=context.mergeSnapshots([badLocal,extraLocal],[archive]);
+ assert.equal(out.length,2);
+ assert.equal(out[0].rows[0].value,3000,'immutable canonical archive wins matching timestamp');
+ assert.equal(out[0].valuation_model,NEW);
+ assert.equal(out[1].rows[0].value,3100,'unique newer local snapshot remains visible');
 });

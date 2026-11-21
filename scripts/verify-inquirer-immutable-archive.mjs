@@ -38,11 +38,12 @@ for(const entry of manifest.entries){
  const entries=index.filter(x=>x.season===season&&x.week===week);
  assert.equal(entries.length,1,'Missing or duplicate original index week '+week);
  assert.equal(entries[0].key,`broadcasts/${path}`);
- assert.equal(entries[0].captured_at,edition.generated_at);
+ if(week>=5)assert.equal(entries[0].captured_at,edition.generated_at);
+ else assert.equal(entries[0].captured_at,undefined,'Legacy original index must remain unmodified');
  const weekly=awards.records.filter(x=>x.season===season&&x.week===week);
  assert.equal(weekly.length,1,'Missing or duplicate awards week '+week);
- assert.equal(weekly[0].captured_at,edition.generated_at);
  if(week>=5){
+  assert.equal(weekly[0].captured_at,edition.generated_at);
   assert.equal(weekly[0].newsroom_editorial_revision,edition.editorial_revision);
   assert.equal(weekly[0].newsroom_engine,'v31-forward');
   assert(weekly[0].players_of_week?.offense?.player_id);

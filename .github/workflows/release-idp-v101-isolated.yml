@@ -1,0 +1,68 @@
+name: Release candidate — IDP dynasty valuation and verified source identity (read-only)
+on:
+  pull_request:
+    paths:
+      - 'ui-player-values-v139.js'
+      - 'scripts/candidates/valuation-idp-v25-perf-v100.js'
+      - 'scripts/candidates/valuation-idp-v25-perf-v101.js'
+      - 'valuation-idp-v21.js'
+      - 'valuation-idp-v25-perf.js'
+      - 'valuation-idp-v25.js'
+      - 'valuation-idp-v36.js'
+      - 'valuation-idp-v43.js'
+      - 'netlify/functions/consensus-composite-v3.mjs'
+      - 'netlify/functions/draftsharks-idp-adapter.mjs'
+      - 'netlify/functions/rotowire-idp-adapter.mjs'
+      - 'tests/consensus-composite-v3.test.mjs'
+      - 'tests/idp-v101-role-growth-scoring.test.mjs'
+      - 'tests/idp-20-45-35-calibration.test.mjs'
+      - 'tests/idp-dynasty-development.test.mjs'
+      - 'tests/idp-source-integrity-audit-v73.test.mjs'
+      - 'tests/idp-unverified-fallback-v73.test.mjs'
+      - 'tests/idp-valuation-refresh-contract.test.mjs'
+      - '.github/workflows/release-idp-v101-isolated.yml'
+permissions:
+  contents: read
+jobs:
+  idp-only:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax-check IDP-only source
+        run: |
+          node --check ui-player-values-v139.js
+          node --check scripts/candidates/valuation-idp-v25-perf-v100.js
+          node --check scripts/candidates/valuation-idp-v25-perf-v101.js
+          node --check valuation-idp-v21.js
+          node --check valuation-idp-v25-perf.js
+          node --check valuation-idp-v25.js
+          node --check valuation-idp-v36.js
+          node --check valuation-idp-v43.js
+          node --check netlify/functions/consensus-composite-v3.mjs
+          node --check netlify/functions/draftsharks-idp-adapter.mjs
+          node --check netlify/functions/rotowire-idp-adapter.mjs
+      - name: IDP dynasty provenance, identity, role growth, fallback and offense nonregression
+        run: node --test tests/consensus-composite-v3.test.mjs tests/idp-v101-role-growth-scoring.test.mjs tests/idp-20-45-35-calibration.test.mjs tests/idp-dynasty-development.test.mjs tests/idp-source-integrity-audit-v73.test.mjs tests/idp-unverified-fallback-v73.test.mjs tests/idp-valuation-refresh-contract.test.mjs
+      - name: Install isolated Chromium for original application acceptance
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Read-only real application rehearsal — IDP and offense must remain compatible
+        run: node scripts/rehearse-full-original-app-browser.mjs .
+      - name: Enforce IDP-only PR diff with no offense UI, history, Finder or deploy changes
+        run: |
+          node --input-type=module <<'JS'
+          import {execFileSync} from 'node:child_process';
+          import assert from 'node:assert/strict';
+          const files=execFileSync('git',['diff','--name-only','origin/release/offense-consensus-v50-isolated-draft...HEAD'],{encoding:'utf8'}).trim().split(String.fromCharCode(10)).filter(Boolean);
+          const allowed=new Set(["ui-player-values-v139.js","scripts/candidates/valuation-idp-v25-perf-v100.js","scripts/candidates/valuation-idp-v25-perf-v101.js","valuation-idp-v21.js","valuation-idp-v25-perf.js","valuation-idp-v25.js","valuation-idp-v36.js","valuation-idp-v43.js","netlify/functions/consensus-composite-v3.mjs","netlify/functions/draftsharks-idp-adapter.mjs","netlify/functions/rotowire-idp-adapter.mjs","tests/consensus-composite-v3.test.mjs","tests/idp-v101-role-growth-scoring.test.mjs","tests/idp-20-45-35-calibration.test.mjs","tests/idp-dynasty-development.test.mjs","tests/idp-source-integrity-audit-v73.test.mjs","tests/idp-unverified-fallback-v73.test.mjs","tests/idp-valuation-refresh-contract.test.mjs",".github/workflows/release-idp-v101-isolated.yml"]);
+          assert(files.length>=8);
+          for(const file of files)assert(allowed.has(file),'Unexpected non-IDP source: '+file);
+          console.log('Verified IDP-only file list:',files);
+          JS

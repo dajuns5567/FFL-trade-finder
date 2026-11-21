@@ -112,5 +112,10 @@ test('canonical Player Values overlays and market period buttons are shared, not
  assert.match(ui,/function marketPeriodButtons\(/);
  assert.match(ui,/function intelligencePeriodBar\(/);
  assert.match(ui,/marketInsightsFetch\(force\)/);
+ assert.match(ui,/function intelRange\(period=marketIntelPeriod\)\{return marketInsightsCache\?\.ranges\?\.\[period\]\|\|null\}/);
+ assert.doesNotMatch(ui,/marketInsightsCache\?\.ranges\?\.\[period\]\|\|marketInsightsCache\?\.ranges\?\.ALL/);
+ assert.doesNotMatch(ui,/source:'summary-baseline'/);
+ assert.match(ui,/const rows=currentRows\(\),signals=marketSignalCache\?\.signals\|\|\[\],range=intelRange\(\)/);
+ assert.match(ui,/observed.*dateShort\(data\.tracking_since\)/);
  assert.match(ui,/loadMarketIntelligence\(force\)/);
 });

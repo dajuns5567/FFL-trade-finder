@@ -162,7 +162,24 @@ async function verifiedPublishedInquirer(rows,{preserveSelection=false}={}){
  }catch(error){console.warn('inquirer-published-week-readback',String(error?.message||error))}}
  throw Error('No verified published newspaper is currently readable; archive retained.');
 }
-async function weekly(){if(inquirerPreviewMode)return loadInquirerPreview();const rows=await fetchPublishedInquirerArchive(),latest=latestPublishedInquirerRow(rows);if(!latest)return{available:false,reason:'No published Inquirer edition is available yet.'};if(!openBroadcastTeam&&weeklyCache?.available&&Number(weeklyCache.season)===Number(latest.season)&&Number(weeklyCache.week)===Number(latest.week))return weeklyCache;return verifiedPublishedInquirer(rows,{preserveSelection:!!openBroadcastTeam})}
+async function weekly(){
+ if(inquirerPreviewMode)return loadInquirerPreview();
+ // Explicitly opened archive articles must remain selected until Back/Home.
+ // The archive index refreshes separately and can announce a newer edition.
+ if(openBroadcastTeam&&weeklyCache?.available&&readablePublishedInquirer(weeklyCache,weeklyCache))return weeklyCache;
+ try{
+  const rows=await fetchPublishedInquirerArchive(),latest=latestPublishedInquirerRow(rows);
+  if(!latest)return weeklyCache?.available&&readablePublishedInquirer(weeklyCache,weeklyCache)?weeklyCache:{available:false,reason:'No published Inquirer edition is available yet.'};
+  if(weeklyCache?.available&&readablePublishedInquirer(weeklyCache,latest))return weeklyCache;
+  return await verifiedPublishedInquirer(rows);
+ }catch(error){
+  if(weeklyCache?.available&&readablePublishedInquirer(weeklyCache,weeklyCache)){
+   console.warn('inquirer-latest-readback-unavailable-retaining-verified-edition',String(error?.message||error));
+   return weeklyCache;
+  }
+  throw error;
+ }
+}
 let inquirerArchiveRefreshInstalled=false,inquirerArchiveRefreshInFlight=false;
 async function refreshPublishedInquirerIfAdvanced(){if(inquirerPreviewMode||inquirerArchiveRefreshInFlight||document.hidden||currentView!=='daily')return;const section=document.getElementById('leagueHub');if(!section||section.hidden)return;inquirerArchiveRefreshInFlight=true;try{const rows=await fetchPublishedInquirerArchive(),latest=latestPublishedInquirerRow(rows),old=latestPublishedInquirerRow(broadcastArchive);const readerBehind=!openBroadcastTeam&&!!latest&&(!weeklyCache?.available||inquirerRowIsNewer(latest,weeklyCache));if(!inquirerRowIsNewer(latest,old)&&!readerBehind)return;const verified=await verifiedPublishedInquirer(rows,{preserveSelection:true});broadcastArchive=rows;if(openBroadcastTeam&&weeklyCache?.available){const host=document.getElementById('leagueHubContent');if(host)host.innerHTML=dailyHTML([],[],weeklyCache,managerCache);return}if(!readablePublishedInquirer(verified,verified))return;invalidatePublishedInquirerCaches();weeklyCache=verified;await render('daily')}catch(error){console.warn('inquirer-archive-refresh-unavailable',String(error?.message||error))}finally{inquirerArchiveRefreshInFlight=false}}
 function installInquirerArchiveRefresh(){if(inquirerArchiveRefreshInstalled||inquirerPreviewMode)return;inquirerArchiveRefreshInstalled=true;setInterval(refreshPublishedInquirerIfAdvanced,60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshPublishedInquirerIfAdvanced()});window.addEventListener('focus',refreshPublishedInquirerIfAdvanced)}
@@ -634,7 +651,7 @@ async function render(view=currentView,managerId=''){const previousView=currentV
  if(view==='managers'||view==='career'){const [data,mgr,wk,weeklyAwardData]=await Promise.all([trades(),managers(),weekly().catch(()=>null),weeklyAwards().catch(()=>({records:[]}))]);weeklyAwardsCache=weeklyAwardData;all=data?.trades||[];stats=teamTradeStats(all);md=mgr;if(wk)weeklyCache=wk;await spotlightWeek(wk).catch(()=>null);if(view==='career'){host.innerHTML=careerRankingsHTML(managerId,md);return}if(managerId||selectedManagerId){draftData=await drafts();host.innerHTML=managerHTML(managerId||selectedManagerId,stats,all);return}host.innerHTML=managersHTML(stats,md);return}
  if(view==='hall'){const data=await trades();all=data?.trades||[];host.innerHTML=hallHTML(all);return}
  if(view==='awards'){const [data,draftsData,weeklyAwardData]=await Promise.all([trades(),drafts(),weeklyAwards().catch(()=>({records:[]}))]);weeklyAwardsCache=weeklyAwardData;all=data?.trades||[];stats=teamTradeStats(all);draftData=draftsData;awards=currentAwards(stats,draftData);host.innerHTML=awardsHTML(awards);syncAwards(awards);return}
- const [data,mgr,w,arc,reporters,weeklyAwardData]=await Promise.all([trades(),managers(),weekly().catch(()=>null),fetch('/.netlify/functions/league-hub?broadcast_archive=1',{cache:'no-store'}).then(r=>r.ok?r.json():{reports:[]}).catch(()=>({reports:[]})),reporterDirectory().catch(()=>({reporters:[]})),weeklyAwards().catch(()=>({records:[]}))]);weeklyAwardsCache=weeklyAwardData;all=data?.trades||[];stats=teamTradeStats(all);md=mgr;weeklyCache=w;reporterDirectoryCache=reporters;broadcastArchive=arc?.reports||[];if(inquirerPreviewMode&&w?.preview_only)broadcastArchive=[{season:w.season,week:w.week,headline:w.league_overview?.headline,preview_only:true},...broadcastArchive.filter(x=>Number(x.season)!==Number(w.season)||Number(x.week)!==Number(w.week))];const spotlightW=await spotlightWeek(w,broadcastArchive).catch(()=>null);host.innerHTML=dailyHTML(all,stats,w,md,spotlightW||w);
+ const [data,mgr,w,arc,reporters,weeklyAwardData]=await Promise.all([trades(),managers(),weekly().catch(()=>null),fetch('/.netlify/functions/league-hub?broadcast_archive=1',{cache:'no-store'}).then(r=>r.ok?r.json():{reports:broadcastArchive}).catch(()=>({reports:broadcastArchive})),reporterDirectory().catch(()=>({reporters:[]})),weeklyAwards().catch(()=>({records:[]}))]);weeklyAwardsCache=weeklyAwardData;all=data?.trades||[];stats=teamTradeStats(all);md=mgr;weeklyCache=w;reporterDirectoryCache=reporters;broadcastArchive=arc?.reports||[];if(inquirerPreviewMode&&w?.preview_only)broadcastArchive=[{season:w.season,week:w.week,headline:w.league_overview?.headline,preview_only:true},...broadcastArchive.filter(x=>Number(x.season)!==Number(w.season)||Number(x.week)!==Number(w.week))];const spotlightW=await spotlightWeek(w,broadcastArchive).catch(()=>null);host.innerHTML=dailyHTML(all,stats,w,md,spotlightW||w);
  }catch(error){if(inquirerPreviewMode&&view==='daily'){
   const detail=String(error?.message||'Draft not ready'),isRunning=/generation (started|in progress)/i.test(detail);
   host.innerHTML='<div class="lh-card"><h3>'+esc('Private '+(inquirerPreviewRequestedWeek?'Week '+inquirerPreviewRequestedWeek+' ':'Inquirer ')+(isRunning?'preview is generating':'preview is not ready'))+'</h3><p>This is an unpublished, isolated Deploy Preview. Nothing here publishes an edition to the live site.</p><small>'+esc(detail)+'</small></div>';

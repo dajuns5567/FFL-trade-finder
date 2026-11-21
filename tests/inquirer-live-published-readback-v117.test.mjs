@@ -124,3 +124,18 @@ test('archive week selector defaults to completed pending week without treating 
  assert.match(source,/Awaiting publication<\/option>/);
  assert.match(source,/selected disabled/);
 });
+
+test('rendered Fleeced Daily week picker shows pending Week 10 and still permits Week 2 history',()=>{
+ const start=source.indexOf('function archiveFiltersHTML('),end=source.indexOf('async function loadArchivedEdition(',start);
+ assert.ok(start>0&&end>start);
+ const context={broadcastArchive:[{season:2026,week:1},{season:2026,week:2}],openBroadcastTeam:'',
+  inquirerPreviewMode:false,spotlightWeeklyCache:null,esc:x=>String(x)};
+ vm.createContext(context);
+ vm.runInContext(source.slice(start,end)+';globalThis.filters=archiveFiltersHTML;',context);
+ const pending=context.filters({available:false,season:2026,week:10});
+ assert.match(pending,/<option value="10" selected disabled>Week 10 • Awaiting publication<\/option>/);
+ assert.match(pending,/<option value="2">Week 2<\/option>/);
+ const published=context.filters({available:true,season:2026,week:2});
+ assert.match(published,/<option value="2" selected>Week 2<\/option>/);
+ assert.doesNotMatch(published,/Awaiting publication/);
+});

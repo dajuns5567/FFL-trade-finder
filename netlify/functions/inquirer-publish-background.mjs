@@ -31,6 +31,7 @@ export default async function publishInquirerInBackground(req){
  const context=globalThis.Netlify?.env?.get?.('CONTEXT')||process.env.CONTEXT||'';
  if(context==='deploy-preview'||context==='branch-deploy'||
     /^deploy-preview-/.test(host)||
+    (host.endsWith('--animated-dasik-3de74a.netlify.app')&&host!=='animated-dasik-3de74a.netlify.app')||
     (host.endsWith('--transcendent-manatee-2f0123.netlify.app')&&host!=='transcendent-manatee-2f0123.netlify.app')||
     (host.endsWith('--gleaming-dodol-8dbc4a.netlify.app')&&host!=='gleaming-dodol-8dbc4a.netlify.app')||
     (host.endsWith('--precious-dango-fb4633.netlify.app')&&host!=='precious-dango-fb4633.netlify.app')){

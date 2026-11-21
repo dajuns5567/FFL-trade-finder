@@ -82,7 +82,6 @@
   "season": "2026",
   "season_type": "regular",
   "sport": "nfl",
-  "last_message_id": "1429594870330191872",
   "scoring_settings": {
     "sack": 1,
     "qb_hit": 0,
@@ -228,22 +227,18 @@
     "st_ff": 1,
     "idp_tkl_ast": 0.5
   },
-  "last_author_avatar": "b319fdf8b7b5b0359d3c78622ba4d70c",
-  "last_author_display_name": "TomKatz",
-  "last_author_id": "729929924969865216",
+  "last_message_id": "1429609056829452288",
+  "draft_id": "1316867686407356416",
+  "last_author_avatar": "08dcdee4f12437e1a3df0870ff73bacb",
+  "last_author_display_name": "Frellace14",
+  "last_author_id": "600418187745492992",
   "last_author_is_bot": false,
   "last_message_attachment": null,
   "last_message_text_map": null,
-  "last_message_time": 1795204486977,
+  "last_message_time": 1795207869306,
   "last_pinned_message_id": "1428288583596265472",
-  "draft_id": "1316867686407356416",
   "last_read_id": null,
   "previous_league_id": "1180251688940855296",
-  "bracket_id": null,
-  "bracket_overrides_id": null,
-  "group_id": null,
-  "loser_bracket_id": null,
-  "loser_bracket_overrides_id": null,
   "roster_positions": [
     "RB",
     "WR",
@@ -259,5 +254,10 @@
     "BN",
     "BN"
   ],
+  "bracket_id": null,
+  "bracket_overrides_id": null,
+  "group_id": null,
+  "loser_bracket_id": null,
+  "loser_bracket_overrides_id": null,
   "total_rosters": 32
 }

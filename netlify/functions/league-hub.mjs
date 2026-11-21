@@ -11,6 +11,7 @@ import week2Preload2026 from './inquirer-week2-2026-preload.mjs';
 import {fetchBestSeason} from './history-fetch.mjs';
 import {applyInquirerEditorialV31,evaluateInquirerEditionQuality,FORWARD_INQUIRER_VERSION,FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
 import {inspectCanonicalArchive} from './lib/inquirer-legacy-history.mjs';
+import {recoveredInquirerCatalog,recoveredInquirerEdition} from './lib/inquirer-github-archive.mjs';
 import {privatePreviewStoreName,isVerifiedPrivatePreviewPredecessor} from './lib/inquirer-preview-diagnostics.mjs';
 
 const LEAGUE='1316867686394769408';
@@ -680,8 +681,20 @@ async function broadcastArchive(){
   const season=Number(p.season),week=Number(p.week),key=String(season)+'|'+String(week);
   if(!rows.some(x=>String(Number(x.season))+'|'+String(Number(x.week))===key))rows.push({type:'week',season,week,key:'preloaded:'+season+':'+week,captured_at:String(p.generated_at||''),preloaded:true});
  }
- // A verified historical Blob can exist without a broadcasts/index.json row.
- // Discover approved Weeks 3–4 read-only; never rewrite or auto-promote a draft.
+ // Read-only immutable GitHub recovery fills missing index entries after
+ // Netlify account migrations. The pinned catalog is independently backed by
+ // the original index and awards; it never authorizes publication of Week 10.
+ try{
+  const verified=await recoveredInquirerCatalog();
+  for(const row of verified.rows){
+   if(!rows.some(x=>Number(x.season)===row.season&&Number(x.week)===row.week))
+    rows.push(row);
+  }
+ }catch(error){
+  console.warn('inquirer-github-archive-index-unavailable',String(error?.message||error));
+ }
+ // Also discover original Weeks 3–4 already in Blobs when GitHub is
+ // temporarily unreachable. Never rewrite their original publication bytes.
  for(const week of [3,4]){
   if(rows.some(x=>Number(x.season)===2026&&Number(x.week)===week))continue;
   const key='broadcasts/2026/week-'+String(week).padStart(2,'0')+'.json';
@@ -702,7 +715,15 @@ async function broadcastStored(season,week){
     reason:'Archived Inquirer edition fails the Week 4 newsroom continuity/quality contract. Publication held; original bytes were not altered.'};
   return v;
  }
- return preloadedBroadcast(season,week)||{error:'broadcast not found'};
+ const preload=preloadedBroadcast(season,week);
+ if(preload)return preload;
+ // The recovered originals are a read-only fallback, never a Blob restore.
+ // They must pass both the pinned SHA-256 and canonical editorial contract.
+ try{
+  const recovered=await recoveredInquirerEdition(season,week);
+  if(recovered&&isLockedInquirerEdition(recovered,season,week))return recovered;
+ }catch(error){console.warn('inquirer-github-archive-edition-unavailable',String(error?.message||error))}
+ return{error:'broadcast not found'};
 }
 
 function weeklyAwardStatRows(payload){

@@ -1430,7 +1430,10 @@ async function loadMarket(force=false){
   if(!marketCache||force){
     if(!marketCache)box.innerHTML='<div class="vh-empty">Loading market dashboard…</div>';
     try{await ensureMarketCache(force)}catch{
-      if(currentView==='market')box.innerHTML='<div class="notice">Historical market data is temporarily unavailable. Current values and all trade tools are unaffected.</div>';
+      if(currentView==='market'){
+        if(marketCache){renderMarketDashboard();loadMarketIntelligence(false)}
+        else box.innerHTML='<div class="notice">Historical market data is temporarily unavailable. Current values and all trade tools are unaffected.</div>';
+      }
       return
     }
   }

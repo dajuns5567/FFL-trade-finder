@@ -1,0 +1,42 @@
+name: V110 Market movement model provenance (read-only)
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/value-history.mjs'
+      - 'value-history-v276.js'
+      - 'tests/market-model-provenance-v110.test.mjs'
+      - '.github/workflows/v110-market-movement-provenance.yml'
+permissions:
+  contents: read
+jobs:
+  market-provenance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact market-only release scope
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch origin "$BASE_REF"
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {execFileSync} from 'node:child_process';
+          const changed=execFileSync('git',['diff','--name-only','origin/'+process.env.BASE_REF+'...HEAD'],{encoding:'utf8'}).trim().split('\n').filter(Boolean).sort();
+          const allowed=['netlify/functions/value-history.mjs','value-history-v276.js','tests/market-model-provenance-v110.test.mjs','.github/workflows/v110-market-movement-provenance.yml'].sort();
+          assert.deepEqual(changed,allowed);
+          JS
+      - name: Install declared test dependencies
+        run: npm install --no-save --ignore-scripts --no-audit --no-fund
+      - name: Verify backend+UI syntax and historical analytics
+        run: |
+          node --check netlify/functions/value-history.mjs
+          node --check value-history-v276.js
+          node --test tests/market-model-provenance-v110.test.mjs tests/market-live-movers-v109.test.mjs tests/market-intelligence-original-recovery.test.mjs
+      # Model continuity flag is observation metadata ONLY. No historical
+      # rows, ranking values, snapshots or scheduled writers are changed.

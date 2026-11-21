@@ -7,7 +7,14 @@ import {createHash} from 'node:crypto';
 import {inspectCanonicalArchive} from '../netlify/functions/lib/inquirer-legacy-history.mjs';
 
 const ARCHIVE_ROOT=resolve(process.argv[2]||'archive/inquirer-archive');
-const SOURCE='https://animated-dasik-3de74a.netlify.app/.netlify/functions/';
+// Hosting changes do not require changing the immutable GitHub archive.
+ // Set GitHub Actions repository variable INQUIRER_PUBLICATION_ORIGIN on migration.
+const configuredOrigin=process.env.INQUIRER_PUBLICATION_ORIGIN||'https://animated-dasik-3de74a.netlify.app';
+const sourceURL=new URL(configuredOrigin);
+if(sourceURL.protocol!=='https:'||sourceURL.username||sourceURL.password||
+   sourceURL.search||sourceURL.hash||sourceURL.pathname!=='/')
+ throw Error('INQUIRER_PUBLICATION_ORIGIN must be a credential-free HTTPS site origin');
+const SOURCE=sourceURL.origin+'/.netlify/functions/';
 const hash=raw=>createHash('sha256').update(raw,'utf8').digest('hex');
 const httpGet=async endpoint=>{
  const response=await fetch(SOURCE+endpoint,{headers:{accept:'application/json'},signal:AbortSignal.timeout(20000)});

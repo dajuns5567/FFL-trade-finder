@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'league-hub-v451.js'
+      - 'netlify/functions/league-hub.mjs'
       - 'netlify/functions/site-v29.mjs'
       - 'tests/inquirer-live-published-readback-v117.test.mjs'
       - '.github/workflows/inquirer-v117-live-readback-ci.yml'
@@ -20,7 +21,9 @@ jobs:
         with:
           node-version: '22'
       - name: Check reader syntax
-        run: node --check league-hub-v451.js
+        run: |
+          node --check league-hub-v451.js
+          node --check netlify/functions/league-hub.mjs
       - name: Assert real publication readback and fallback
         run: node --test tests/inquirer-live-published-readback-v117.test.mjs
       - name: Prove no production writer or valuation change

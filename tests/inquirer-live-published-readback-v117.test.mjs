@@ -109,3 +109,11 @@ test('Daily displays the latest completed week prominently rather than the bundl
  assert.match(source,/Week '\+w\.week\+' Fleeced! Inquirer — Publication pending/);
  assert.match(source,/role=\"status\"/);
 });
+
+test('canonical site refresh invalidates Daily support caches and rerenders every League Hub view',()=>{
+ assert.match(source,/window\.addEventListener\('fll:valuation-refreshed'/);
+ assert.match(source,/tradeCache=null;managerCache=null;weeklyAwardsCache=null;spotlightWeeklyCache=null/);
+ assert.match(source,/reporterArchiveCache=\{\};reporterDirectoryCache=null;draftCache=null/);
+ assert.match(source,/render\(currentView,selectedManagerId\)/);
+ assert.doesNotMatch(source,/!\['hall','managers','career','awards'\]\.includes\(currentView\)/);
+});

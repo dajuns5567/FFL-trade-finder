@@ -11,7 +11,7 @@ const source=readFileSync(new URL('../netlify/functions/inquirer-editorial-v31.m
 
 test('only ONE forward editorial writer remains in both production and private previews',()=>{
  assert.match(hub,/applyInquirerEditorialV31\(\{season,week/);
- assert.match(hub,/for\(const salt of \[5,0,1,2,3,4\]\)/);
+ assert.match(hub,/for\(const salt of \[5,0,1,2,3,4,6,7\]\)/);
  assert.match(hub,/const q=evaluateInquirerEditionQuality\(candidate,previousBroadcast\)/);
  assert.match(hub,/const a=inspectEditionBeforePublication\(candidate\)/);
  assert.match(hub,/if\(q\.ok&&a\.ok\)/);

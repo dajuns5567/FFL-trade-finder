@@ -1098,7 +1098,7 @@ function originalPickProjectionText(round,slot,source){
  const label=projectedPickSlotText(round,slot);
  if(!label)return'Historical projected slot unavailable';
  if(source==='verified-completed-week-5050')return label+' at trade (verified 50/50)';
- if(source==='archived-before-trade')return label+' in pre-trade archive (ranking method unverified)';
+ if(source==='archived-before-trade')return label+' • recorded before trade';
  return'Historical projected slot unavailable';
 }
 function historicalPlayerValue(side,id){

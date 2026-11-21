@@ -1,4 +1,5 @@
 import {getStore} from '@netlify/blobs';
+import {inspectPublisherArchiveReadiness} from './lib/inquirer-publisher-archive-readiness.mjs';
 
 // Internal diagnostics only. Never expose staged manuscripts or credentials.
 export default async function inquirerPublicationStatus(req){
@@ -6,6 +7,27 @@ export default async function inquirerPublicationStatus(req){
  if(req.method!=='GET'||!expected||req.headers.get('x-fleeced-queue-key')!==expected)
   return new Response('Forbidden',{status:403});
  const s=getStore('fleeced-league-hub',{consistency:'strong'});
+ // Credential-protected, read-only cutover preflight. Never publish, rewrite,
+ // index or promote any GitHub manuscript in this diagnostic endpoint.
+ if(new URL(req.url).searchParams.get('archive_readiness')==='1'){
+  const raw=new URL(req.url).searchParams.get('through_week');
+  const throughWeek=raw===null?9:Number(raw);
+  if(!Number.isInteger(throughWeek)||throughWeek<3||throughWeek>9)
+   return new Response(JSON.stringify({error:'Original audit supports 2026 Weeks 3-9 only'}),{
+    status:400,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}
+   });
+  try{
+   const report=await inspectPublisherArchiveReadiness({store:s,throughWeek});
+   return new Response(JSON.stringify(report),{
+    headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}
+   });
+  }catch(error){
+   console.error('inquirer-publisher-archive-readiness-held',String(error?.message||error));
+   return new Response(JSON.stringify({ready:false,error:'Verified archive readiness source or store unavailable'}),{
+    status:503,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}
+   });
+  }
+ }
  const [stage,idx,edition,managerCache,status]=await Promise.all([
   s.get('inquirer/editorial-staging/2026/week-05.json',{type:'json'}).catch(()=>null),
   s.get('broadcasts/index.json',{type:'json'}).catch(()=>[]),

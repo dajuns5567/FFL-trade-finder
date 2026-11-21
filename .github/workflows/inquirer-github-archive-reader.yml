@@ -1,0 +1,28 @@
+name: Inquirer pinned GitHub archive reader regression
+on:
+  push:
+    branches:
+      - fix/inquirer-read-verified-github-archive-v1
+    paths:
+      - 'netlify/functions/lib/inquirer-github-archive.mjs'
+      - 'netlify/functions/league-hub.mjs'
+      - 'tests/inquirer-github-archive-reader.test.mjs'
+      - '.github/workflows/inquirer-github-archive-reader.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-reader:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install project dependencies without lifecycle scripts
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+      - name: Offline regression against immutable publication fixtures
+        run: node --test tests/inquirer-github-archive-reader.test.mjs
+      - name: Check existing Inquirer archive refresh and reconciliation
+        run: node --test tests/inquirer-live-archive-refresh.test.mjs tests/inquirer-archive-reconciliation.test.mjs

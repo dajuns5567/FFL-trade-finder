@@ -8,6 +8,9 @@ const start=source.indexOf('function readablePublishedInquirer(');
 const end=source.indexOf('let inquirerArchiveRefreshInstalled=',start);
 assert.ok(start>=0&&end>start,'Published Daily readback must be present');
 const code=source.slice(start,end);
+const pendingSource=source.slice(source.indexOf('function pendingInquirerEdition(){'),source.indexOf('let latestVerifiedPublishedRow='));
+assert.match(pendingSource,/function pendingInquirerEdition/);
+const newerHelper=source.slice(source.indexOf('function inquirerRowIsNewer('),source.indexOf('function invalidatePublishedInquirerCaches('));
 const selectRow=source.slice(source.indexOf('function latestPublishedInquirerRow('),source.indexOf('function inquirerRowIsNewer('));
 assert.match(selectRow,/function latestPublishedInquirerRow/);
 const edition=week=>({available:true,published_locked:true,season:2026,week,teams:Array.from({length:32},(_,i)=>({roster_id:i+1})),league_overview:{headline:'Week '+week}});
@@ -16,7 +19,7 @@ function reader(responses){
   fetch:async url=>{const week=Number(new URL(url,'https://ffl.invalid').searchParams.get('broadcast_week'));requested.push(week);const response=responses[week];if(response instanceof Error)throw response;return{ok:response!==undefined,json:async()=>response}},
   fetchPublishedInquirerArchive:async()=>[{season:2026,week:11},{season:2026,week:10}]};
  vm.createContext(context);
- vm.runInContext(selectRow+'\n'+code+';globalThis.verify=verifiedPublishedInquirer;globalThis.isReadable=readablePublishedInquirer;globalThis.weeklyRead=weekly;',context);
+ vm.runInContext(selectRow+'\n'+newerHelper+'\nvar inquirerArchiveStatus=null;'+pendingSource+'\n'+code+';globalThis.verify=verifiedPublishedInquirer;globalThis.isReadable=readablePublishedInquirer;globalThis.weeklyRead=weekly;',context);
  return{verify:context.verify,isReadable:context.isReadable,weekly:context.weeklyRead,requested,warnings,context};
 }
 test('latest fully readable locked newspaper wins even when archive index order is reversed',async()=>{
@@ -79,4 +82,25 @@ test('optional trades and manager feed errors do not blank a published Daily new
  assert.match(source,/trades\(\)\.catch\(error=>\{console\.warn\('inquirer-optional-trade-panel-unavailable'/);
  assert.match(source,/managers\(\)\.catch\(error=>\{console\.warn\('inquirer-optional-manager-panel-unavailable'/);
  assert.match(source,/return\{trades:\[\]\}/);
+});
+
+test('when scoring is complete but archive has only Weeks 1 and 2, Daily defaults to the completed week as unpublished',async()=>{
+ const r=reader({2:edition(2)});
+ r.context.fetchPublishedInquirerArchive=async()=>[{season:2026,week:1},{season:2026,week:2}];
+ r.context.inquirerArchiveStatus={latest_completed:{season:2026,week:10},latest_published:{season:2026,week:2},publication_behind:true,archive_recovery_required:true};
+ const result=await r.weekly();
+ assert.equal(result.available,false);
+ assert.equal(result.week,10);
+ assert.match(result.reason,/Week 10 scoring is finalized/);
+ assert.match(result.reason,/latest published edition is 2026 Week 2/);
+ assert.match(result.reason,/Earlier approved editions must be restored/);
+});
+test('the archive endpoint exposes independently checked completion and published-week identity',()=>{
+ const api=readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
+ assert.match(api,/async function latestCompletedInquirerWeek\(\)/);
+ assert.match(api,/completedPublicationWeek\(week\)/);
+ assert.match(api,/latest_completed:completed/);
+ assert.match(api,/latest_published:latest/);
+ assert.match(api,/archive_recovery_required:/);
+ assert.match(source,/completionAdvanced=inquirerRowIsNewer\(inquirerArchiveStatus\?\.latest_completed,lastRenderedCompletedInquirerWeek\)/);
 });

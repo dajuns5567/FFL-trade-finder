@@ -33,7 +33,8 @@ export default async function inquirerPublicationReadiness(req){
   // the old hostname alone does not grant access to retired site data.
   const source=baseline.ready&&!forward.ready?
    await approvedCutoverSourceReadiness():{ready:forward.ready,reason:forward.ready?'Already locked and indexed':'Baseline restoration required first'};
-  const ready=baseline.ready&&forward.ready;
+  const archivesReady=baseline.ready&&forward.ready;
+  const publisherEnabled=(globalThis.Netlify?.env?.get?.('FLEECED_ENABLE_NEW_SITE_PUBLISHER')||process.env.FLEECED_ENABLE_NEW_SITE_PUBLISHER)==='true';
   const payload={
    schema_version:1,season:2026,read_only:true,site_writes_performed:false,
    historical_weeks:history,
@@ -42,8 +43,10 @@ export default async function inquirerPublicationReadiness(req){
    transfer_source:{ready:source.ready,reason:source.reason},
    cutover_state:['completed','running','error'].includes(cutover?.state)?cutover.state:'not-recorded',
    publication_state:['completed','queued','running','waiting','editorial-hold','error'].includes(status?.state)?status.state:'not-recorded',
-   last_published_week:Number.isInteger(Number(status?.week))?Number(status.week):null,
-   ready_for_unattended_week9_plus:ready
+   last_published_week:status?.week!=null&&Number.isInteger(Number(status.week))?Number(status.week):null,
+   archives_ready_for_week9_plus:archivesReady,
+   publisher_activation_enabled:publisherEnabled,
+   ready_for_unattended_week9_plus:archivesReady&&publisherEnabled
   };
   return new Response(JSON.stringify(payload),{status:200,headers:{
    'content-type':'application/json; charset=utf-8','cache-control':'no-store'

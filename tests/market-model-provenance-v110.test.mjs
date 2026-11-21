@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {marketFromSnapshots} from '../netlify/functions/value-history.mjs';
+import {marketFromSnapshots,marketInsightsFromSnapshots} from '../netlify/functions/value-history.mjs';
 
 const snap=(day,value,model)=>({
  t:'2026-11-'+String(day).padStart(2,'0')+'T00:00:00.000Z',
@@ -38,4 +38,33 @@ test('market dashboard gives compact attribution without restoring removed white
  assert.match(rendered,/unversioned_segments/);
  assert.doesNotMatch(rendered,/\$\{archivedEraBoard\(m\)\}/);
  assert.doesNotMatch(rendered,/\$\{modelEraNote\(m\)\}/);
+});
+
+test('heat map and position indexes do not falsely certify unversioned movements',()=>{
+ const previous=snap(16,100),current=snap(20,150);
+ const result=marketInsightsFromSnapshots([previous,current]);
+ const week=result.ranges['7D'];
+ assert.equal(result.movement_basis,'observed-values-unknown-model-era');
+ assert.equal(result.model_continuity_verified,false);
+ assert.equal(week.movement_basis,'observed-values-unknown-model-era');
+ assert.equal(week.model_continuity_verified,false);
+ assert.equal(week.unversioned_segments,1);
+ assert.equal(week.player_changes.find(x=>x.id==='def').delta,50);
+ assert.equal(week.player_changes.find(x=>x.id==='def').measurement,'observed-values-unknown-model-era');
+ assert.equal(week.position_indexes.find(x=>x.pos==='IDP').measurement,'equal-weight-observed-percent-movement-unknown-model-era');
+ const tagged=marketInsightsFromSnapshots([snap(16,100,'v10.1'),snap(20,150,'v10.1')]);
+ assert.equal(tagged.ranges['7D'].model_continuity_verified,true);
+ assert.equal(tagged.ranges['7D'].movement_basis,'sum-of-recorded-same-model-movements');
+ assert.equal(tagged.ranges['7D'].position_indexes.find(x=>x.pos==='IDP').measurement,'equal-weight-verifiable-same-model-percent-movement');
+});
+test('UI headings, heat-map cells, modal and top-24 indexes use the real provenance flag',()=>{
+ const ui=readFileSync(new URL('../value-history-v276.js',import.meta.url),'utf8');
+ const market=ui.slice(ui.indexOf('function intelligencePeriodBar(){'),ui.indexOf('function renderMarketIntelligence(){'));
+ assert.match(ui,/function marketModelVerifiedV110\(\)\{return intelRange\(\)\?\.model_continuity_verified===true\}/);
+ assert.match(market,/Model continuity is unverified/);
+ assert.match(market,/Model continuity not verified/);
+ assert.match(market,/observed, unverified-model/);
+ assert.match(market,/model-unverified/);
+ assert.match(market,/Price differences may include repricing/);
+ assert.match(market,/\$\{r.count\} \$\{marketModelVerifiedV110\(\)\?'verified':'observed'\}/);
 });

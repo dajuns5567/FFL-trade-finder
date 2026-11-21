@@ -104,13 +104,13 @@ test('direct GitHub archive import retains original bytes and refuses duplicates
   await mkdir(archive,{recursive:true});
   await writeFile(join(archive,'manifest.json'),JSON.stringify({schema_version:1,entries:[]}));
   await writeFile(original,raw);
-  execFileSync(process.execPath,[cli,original,archive]);
+  execFileSync(process.execPath,[cli,original,archive,sha256]);
   assert.equal(await readFile(join(archive,'2026/week-03.json'),'utf8'),raw);
   const manifest=JSON.parse(await readFile(join(archive,'manifest.json'),'utf8'));
   assert.equal(manifest.entries.length,1);assert.equal(manifest.entries[0].sha256,sha256);
-  assert.throws(()=>execFileSync(process.execPath,[cli,original,archive],{stdio:'pipe'}),/Command failed/);
+  assert.throws(()=>execFileSync(process.execPath,[cli,original,archive,sha256],{stdio:'pipe'}),/Command failed/);
   await writeFile(join(archive,'2026/week-03.json'),raw.replace('Weekly Recap','Changed Recap'));
-  assert.throws(()=>execFileSync(process.execPath,[cli,original,archive],{stdio:'pipe'}),/Command failed/);
+  assert.throws(()=>execFileSync(process.execPath,[cli,original,archive,sha256],{stdio:'pipe'}),/Command failed/);
  }finally{await rm(base,{recursive:true,force:true})}
 });
 test('unapproved draft cannot be imported as previously published original',async()=>{
@@ -125,8 +125,29 @@ test('unapproved draft cannot be imported as previously published original',asyn
   const archive=join(base,'archive'),original=join(base,'unapproved.json');
   await mkdir(archive,{recursive:true});
   await writeFile(join(archive,'manifest.json'),JSON.stringify({schema_version:1,entries:[]}));
-  await writeFile(original,JSON.stringify({...copy,published_locked:false}));
+  const draftRaw=JSON.stringify({...copy,published_locked:false});
+  await writeFile(original,draftRaw);
+  const draftHash=createHash('sha256').update(draftRaw).digest('hex');
+  assert.throws(()=>execFileSync(process.execPath,[cli,original,archive,draftHash],{stdio:'pipe'}),/Command failed/);
+  assert.deepEqual(await readdir(archive),['manifest.json']);
+ }finally{await rm(base,{recursive:true,force:true})}
+});
+
+test('historical import refuses absent or incorrect owner-approved SHA-256 before any archive mutation',async()=>{
+ const {mkdtemp,mkdir,writeFile,readdir,rm}=await import('node:fs/promises');
+ const {tmpdir}=await import('node:os');
+ const {join}=await import('node:path');
+ const {execFileSync}=await import('node:child_process');
+ const {fileURLToPath}=await import('node:url');
+ const cli=fileURLToPath(new URL('../scripts/import-inquirer-archive.mjs',import.meta.url));
+ const base=await mkdtemp(join(tmpdir(),'inquirer-digest-rejection-'));
+ try{
+  const archive=join(base,'archive'),original=join(base,'original.json');
+  await mkdir(archive,{recursive:true});
+  await writeFile(join(archive,'manifest.json'),JSON.stringify({schema_version:1,entries:[]}));
+  await writeFile(original,raw);
   assert.throws(()=>execFileSync(process.execPath,[cli,original,archive],{stdio:'pipe'}),/Command failed/);
+  assert.throws(()=>execFileSync(process.execPath,[cli,original,archive,'0'.repeat(64)],{stdio:'pipe'}),/Command failed/);
   assert.deepEqual(await readdir(archive),['manifest.json']);
  }finally{await rm(base,{recursive:true,force:true})}
 });

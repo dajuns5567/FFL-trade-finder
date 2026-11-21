@@ -141,7 +141,7 @@ test('full archive tracking never resets and earlier genuine movements remain se
  assert.match(client,/function archivedEraBoard\(m\)/);
  assert.match(client,/Earlier Market History \(Recorded Values\)/);
  assert.match(client,/These are historical values, NOT current Player Values/);
- assert.match(server,/market\.tracking_since=timed\[0\]\.t/);
+ assert.match(server,/market=marketFromSnapshots\(source\.snaps\)/);
  assert.equal(pointsFromSnapshots(snapshots,'11667').length,4,'all raw observations preserved');
 });
 
@@ -166,7 +166,7 @@ test('7D board restores real historical moves on both sides of a new model witho
  assert.equal(m.marketRows.find(r=>r.id==='11667').value,1230,
    'current price is the actual latest model price, not a manufactured adjusted price');
  assert.equal(pointsFromSnapshots(xs,'11667').length,4);
- assert.match(server,/const windowStart=latestMs-7\*86400000/);
+ assert.match(server,/function marketInsightWindow\(ordered,label,days=null\)/);
  assert.match(server,/marketBuckets=new Map\(\)/);
 });
 

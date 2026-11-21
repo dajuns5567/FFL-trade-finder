@@ -25,7 +25,8 @@ export function resolvedInquirerOwnerAuthorization({
  if(emergencyDisabled==='true')
   return{enabled:'false',approved:'false',source_authorized:false,emergency_disabled:true};
  const releaseSite=siteId===ORIGINAL_INQUIRER_RESTORE_SITE_ID&&context==='production'&&
-  host==='animated-dasik-3de74a.netlify.app';
+  (host==='animated-dasik-3de74a.netlify.app'||
+   host===ORIGINAL_INQUIRER_RESTORE_SITE_ID+'.netlify.app');
  return{
   enabled:releaseSite?'true':configuredEnabled,
   approved:releaseSite?'true':configuredApproved,

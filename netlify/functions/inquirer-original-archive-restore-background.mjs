@@ -3,7 +3,7 @@ import {resolveInquirerQueueCredential,inquirerQueueKeyMatches} from './lib/inqu
 import {prepareImmutableInquirerRestore,applyApprovedImmutableInquirerRestore} from './lib/inquirer-immutable-archive-restore.mjs';
 import {inspectPublisherArchiveReadiness} from './lib/inquirer-publisher-archive-readiness.mjs';
 import {FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
-import {originalInquirerRestoreGate,ORIGINAL_INQUIRER_RESTORE_SITE_ID,ORIGINAL_INQUIRER_RESTORE_MARKER} from './lib/inquirer-archive-restore-runtime.mjs';
+import {originalInquirerRestoreGate,resolvedInquirerOwnerAuthorization,ORIGINAL_INQUIRER_RESTORE_SITE_ID,ORIGINAL_INQUIRER_RESTORE_MARKER} from './lib/inquirer-archive-restore-runtime.mjs';
 
 export const config={background:true};
 // Production-only, authenticated, owner-authorized original-history recovery.
@@ -13,9 +13,14 @@ export default async function restoreOriginalInquirerArchive(req,netlifyContext)
  const env=name=>globalThis.Netlify?.env?.get?.(name)||process.env[name]||'';
  const siteId=env('SITE_ID'),context=netlifyContext?.deploy?.context||env('CONTEXT');
  const host=new URL(req.url).hostname;
+ const ownerAuthorization=resolvedInquirerOwnerAuthorization({
+  siteId,context,host,
+  configuredEnabled:env('FLEECED_ENABLE_NEW_SITE_PUBLISHER'),
+  configuredApproved:env('FLEECED_INQUIRER_ARCHIVE_RESTORE_APPROVED'),
+  emergencyDisabled:env('FLEECED_INQUIRER_EMERGENCY_DISABLE')
+ });
  const gate=originalInquirerRestoreGate({siteId,context,host,
-  enabled:env('FLEECED_ENABLE_NEW_SITE_PUBLISHER'),
-  approved:env('FLEECED_INQUIRER_ARCHIVE_RESTORE_APPROVED')});
+  enabled:ownerAuthorization.enabled,approved:ownerAuthorization.approved});
  if(!gate.allowed){
   console.warn('inquirer-original-restore-blocked',gate.reason);
   return new Response('Original archive restoration disabled',{status:403});

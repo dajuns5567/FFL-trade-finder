@@ -26,13 +26,20 @@ jobs:
       - name: Confirm no unauthorized files changed
         env:
           BASE_REF: ${{ github.base_ref }}
+          HEAD_REF: ${{ github.head_ref }}
         run: |
           git fetch origin "$BASE_REF"
           node --input-type=module <<'JS'
           import {execFileSync} from 'node:child_process';
           import assert from 'node:assert/strict';
           const paths=execFileSync('git',['diff','--name-only','origin/'+process.env.BASE_REF+'...HEAD'],{encoding:'utf8'}).trim().split('\n').filter(Boolean);
-          const allowed=new Set(['netlify.toml','tests/netlify-third-account-preview-build.test.mjs','tests/netlify-v101-one-time-release.test.mjs','tests/inquirer-replacement-bootstrap.test.mjs','tests/inquirer-approved-cutover.test.mjs','.github/workflows/netlify-v101-one-time-release-gate-ci.yml']);
-          assert.equal(paths.length,allowed.size,'Netlify deploy release must contain the exact six approved files');
+          // Preserve the original V101 exact six-file gate for every other PR.
+          // The separately owner-authorized V110 cutover must match its own
+          // exact, audited 37-file Inquirer-only release manifest.
+          const legacy=new Set(['netlify.toml','tests/netlify-third-account-preview-build.test.mjs','tests/netlify-v101-one-time-release.test.mjs','tests/inquirer-replacement-bootstrap.test.mjs','tests/inquirer-approved-cutover.test.mjs','.github/workflows/netlify-v101-one-time-release-gate-ci.yml']);
+          const release=new Set([".github/workflows/inquirer-combined-review-only.yml",".github/workflows/inquirer-current-site-publisher-identity.yml",".github/workflows/inquirer-github-archive-reader.yml",".github/workflows/inquirer-immutable-archive-restore.yml",".github/workflows/inquirer-pinned-originals-integrity.yml",".github/workflows/inquirer-publisher-archive-readiness.yml",".github/workflows/inquirer-v110-approved-cutover.yml",".github/workflows/inquirer-v110-editorial-retry.yml",".github/workflows/netlify-v101-inquirer-pr-previews-only.yml",".github/workflows/netlify-v101-one-time-release-gate-ci.yml","netlify.toml","netlify/functions/inquirer-editorial-v31.mjs","netlify/functions/inquirer-original-archive-restore-background.mjs","netlify/functions/inquirer-publication-status.mjs","netlify/functions/inquirer-publish-background.mjs","netlify/functions/inquirer-publish-scheduled.mjs","netlify/functions/league-hub.mjs","netlify/functions/lib/inquirer-archive-restore-runtime.mjs","netlify/functions/lib/inquirer-github-archive.mjs","netlify/functions/lib/inquirer-immutable-archive-restore.mjs","netlify/functions/lib/inquirer-minor-repetition.mjs","netlify/functions/lib/inquirer-publisher-archive-readiness.mjs","scripts/verify-inquirer-github-archive-pinned.mjs","tests/inquirer-current-site-publisher-identity.test.mjs","tests/inquirer-forward-copy-regression.test.mjs","tests/inquirer-github-archive-reader.test.mjs","tests/inquirer-immutable-archive-restore.test.mjs","tests/inquirer-live-cutover-gates.test.mjs","tests/inquirer-private-edition-audit.test.mjs","tests/inquirer-publisher-archive-readiness.test.mjs","tests/inquirer-replacement-bootstrap.test.mjs","tests/inquirer-schedule-decision.test.mjs","tests/inquirer-v110-editorial-candidate-retry.test.mjs","tests/inquirer-week9-unattended-publish-regression.test.mjs","tests/inquirer-weekly-publication-consistency.test.mjs","tests/netlify-v101-inquirer-pr-previews-only.test.mjs","tests/netlify-v110-inquirer-one-time-release.test.mjs"]);
+          const authorized=process.env.HEAD_REF==='release/inquirer-verified-cutover-v110';
+          const allowed=authorized?release:legacy;
+          assert.equal(paths.length,allowed.size,authorized?'V110 cutover must contain the exact audited Inquirer files':'Netlify deploy release must contain the exact six approved files');
           for(const path of paths)assert(allowed.has(path),'Out-of-scope file: '+path);
           JS

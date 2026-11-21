@@ -27,7 +27,7 @@ function fixture(complete=false){
  };
  vm.createContext(ctx);
  vm.runInContext(body+'\nglobalThis.handler=inquirerPublicationReadiness;',ctx);
- return{handler:ctx.handler,reads,writes,ctx};
+ return{handler:ctx.handler,reads,writes,ctx,data};
 }
 test('readiness endpoint never accepts mutating methods',async()=>{
  const f=fixture();
@@ -41,7 +41,8 @@ test('empty destination archive explicitly reports blocked publication, with no 
  const result=await response.json();
  assert.equal(result.archives_ready_for_week9_plus,false);
  assert.equal(result.ready_for_unattended_week9_plus,false);
- assert.equal(result.historical_weeks.length,6);
+ assert.equal(result.historical_weeks.length,16);
+ assert.equal(result.weeks_9_plus.length,10);
  assert.ok(result.historical_weeks.every(w=>w.locked_verified===false));
  assert.equal(result.site_writes_performed,false);
  assert.equal(result.last_published_week,null);
@@ -63,4 +64,17 @@ test('never exposes any key, queue credential, or article contents',()=>{
  assert.match(source,/cache-control':'no-store/);
  assert.match(source,/method!=='GET'/);
  assert.doesNotMatch(source,/\.setJSON\(|\.set\(/);
+});
+
+test('stored but unindexed Week 9 remains nonpublished and explicitly diagnosed',async()=>{
+ const f=fixture(true);
+ f.data['broadcasts/2026/week-09.json']={season:2026,week:9,available:true,
+  league_overview:{headline:'Private copied issue'}};
+ const response=await f.handler({method:'GET'}),result=await response.json();
+ const nine=result.weeks_9_plus.find(w=>w.week===9);
+ assert.equal(nine.locked_verified,true);assert.equal(nine.indexed,false);
+ assert.deepEqual(result.verified_but_not_indexed_weeks,[9]);
+ assert.equal(result.site_writes_performed,false);
+ assert.equal(f.writes.length,0);
+ assert.doesNotMatch(JSON.stringify(result),/Private copied issue/);
 });

@@ -104,3 +104,8 @@ test('the archive endpoint exposes independently checked completion and publishe
  assert.match(api,/archive_recovery_required:/);
  assert.match(source,/completionAdvanced=inquirerRowIsNewer\(inquirerArchiveStatus\?\.latest_completed,lastRenderedCompletedInquirerWeek\)/);
 });
+
+test('Daily displays the latest completed week prominently rather than the bundled Week 2',()=>{
+ assert.match(source,/Week '\+w\.week\+' Fleeced! Inquirer — Publication pending/);
+ assert.match(source,/role=\"status\"/);
+});

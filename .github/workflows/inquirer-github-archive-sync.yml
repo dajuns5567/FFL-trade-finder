@@ -29,6 +29,8 @@ jobs:
         with:
           node-version: '22'
       - name: Copy only verified, indexed and awarded newspapers
+        env:
+          INQUIRER_PUBLICATION_ORIGIN: ${{ vars.INQUIRER_PUBLICATION_ORIGIN }}
         run: node source/scripts/sync-inquirer-github-archive.mjs archive/inquirer-archive
       - name: Commit new immutable archival files only
         working-directory: archive

@@ -129,6 +129,8 @@ test('page opening always forces live Sleeper and retains a verified scheduled a
  assert.match(frontend,/tradeHistoryFetch\(\{force:true\}\)/);
  assert.match(frontend,/trades=1&trades_fresh=1/);
  assert.match(frontend,/if\(force&&!tradeHistoryPendingForced\)return tradeHistoryPending\.then/);
+ assert.match(frontend,/tradeHistoryPending\.then\(\(\)=>tradeHistoryFetch\(\{force:true\}\),\(\)=>tradeHistoryFetch\(\{force:true\}\)\)/);
+
  assert.match(frontend,/function initTradeHistoryUI\(\)[\s\S]*?tradeHistoryFetch\(\{force:true\}\)/);
  assert.match(frontend,/tradeHistoryFetch\(\{force:true\}\)\.then\(renderTradeHistory\)/);
  assert.match(backend,/scheduledCompletedTradeArchive\(liveSeason\)/);

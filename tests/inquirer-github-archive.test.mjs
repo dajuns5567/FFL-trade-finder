@@ -47,3 +47,36 @@ test('League Hub reads GitHub fallback only from the independently verified arch
  assert.match(hub,/await githubPublishedEdition\(season,week\)/);
  assert.match(hub,/return githubEdition\|\|preloadedBroadcast/);
 });
+
+test('corrupt site-local Blob falls back to fully verified GitHub edition without modifying storage',async()=>{
+ const hub=readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
+ const start=hub.indexOf('async function broadcastStored(');
+ const end=hub.indexOf('\nfunction weeklyAwardStatRows(',start);
+ assert.ok(start>=0&&end>start);
+ const {runInNewContext}=await import('node:vm');
+ const writes=[],reads=[];
+ const context={
+  store:()=>({get:async(key)=>{reads.push(key);return{season:2026,week:3,published_locked:false}}}),
+  isLockedInquirerEdition:()=>false,
+  githubPublishedEdition:async(season,week)=>season===2026&&week===3?copy:null,
+  preloadedBroadcast:()=>null
+ };
+ const handler=runInNewContext(hub.slice(start,end)+'\nbroadcastStored',{...context});
+ const edition=await handler(2026,3);
+ assert.deepEqual(JSON.parse(JSON.stringify(edition)),copy);
+ assert.equal(reads.length,1);
+ assert.equal(writes.length,0);
+});
+test('an invalid Blob with no verified GitHub counterpart remains held',async()=>{
+ const hub=readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
+ const start=hub.indexOf('async function broadcastStored('),end=hub.indexOf('\nfunction weeklyAwardStatRows(',start);
+ const {runInNewContext}=await import('node:vm');
+ const handler=runInNewContext(hub.slice(start,end)+'\nbroadcastStored',{
+  store:()=>({get:async()=>({available:true,published_locked:false})}),
+  isLockedInquirerEdition:()=>false,githubPublishedEdition:async()=>null,
+  preloadedBroadcast:()=>null
+ });
+ const result=await handler(2026,3);
+ assert.equal(result.available,false);
+ assert.match(result.reason,/Publication held/);
+});

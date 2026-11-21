@@ -910,18 +910,24 @@ function primeTradeHistoryCache(data){
   tradeHistoryCache=data;tradeHistoryCacheAt=Date.now();
   return true;
 }
-let tradeHistoryPending=null;
+let tradeHistoryPending=null,tradeHistoryPendingForced=false;
 async function tradeHistoryFetch({force=false}={}){
   // Every site opening forces an actual completed-trade search, even when
   // the tab is hidden or a prior page left a shared browser cache behind.
-  if(tradeHistoryPending)return tradeHistoryPending;
+  // If a weaker background fetch already started, a forced site-opening
+  // check runs immediately AFTER it rather than silently reusing it.
+  if(tradeHistoryPending){
+    if(force&&!tradeHistoryPendingForced)return tradeHistoryPending.then(()=>tradeHistoryFetch({force:true}));
+    return tradeHistoryPending;
+  }
   if(!force&&tradeHistoryCache&&Date.now()-tradeHistoryCacheAt<TRADE_HISTORY_REFRESH_MS)
     return tradeHistoryCache;
   if(!force&&!tradeHistoryCache&&primeTradeHistoryCache(globalThis.fleecedTradeHistorySharedCacheV515))
     return tradeHistoryCache;
+  tradeHistoryPendingForced=force;
   tradeHistoryPending=tradeHistoryFetchNetwork(force);
   try{return await tradeHistoryPending}
-  finally{tradeHistoryPending=null}
+  finally{tradeHistoryPending=null;tradeHistoryPendingForced=false}
 }
 async function tradeHistoryFetchNetwork(force){
   let last;
@@ -962,7 +968,7 @@ function refreshVisibleTradeHistory(){
   const visibleHistory=!!panel&&panel.offsetParent!==null&&!document.hidden;
   const visibleTeam=currentView==='team'&&!!trackedTeamId&&!document.hidden&&document.getElementById('vhTrackedTeam')?.offsetParent!==null;
   if((!visibleHistory&&!visibleTeam)||Date.now()-tradeHistoryCacheAt<TRADE_HISTORY_REFRESH_MS)return;
-  tradeHistoryFetch().then(()=>{
+  tradeHistoryFetch({force:true}).then(()=>{
     if(visibleHistory)renderTradeHistory();
     // The selected team must re-check both the completed-trade feed and
     // newly archived totals, not keep the initial page-load snapshot forever.
@@ -1310,7 +1316,15 @@ function refreshTradeHistoryCurrentValuesV533(){
 }
 window.refreshTradeHistoryCurrentValuesV533=refreshTradeHistoryCurrentValuesV533;
 window.addEventListener('fll:valuation-refreshed',refreshTradeHistoryCurrentValuesV533);
-function initTradeHistoryUI(){if(!tradeHistoryCache)loadTradeHistory();else renderTradeHistory()}
+function initTradeHistoryUI(){
+ if(!tradeHistoryCache){loadTradeHistory();return}
+ renderTradeHistory();
+ // A hidden tab does not tick a live refresh, so a stale cache must recheck
+ // Sleeper and the scheduled archive when Trade History is opened.
+ if(Date.now()-tradeHistoryCacheAt>=TRADE_HISTORY_REFRESH_MS)
+  tradeHistoryFetch({force:true}).then(renderTradeHistory).catch(e=>
+   console.warn('trade-history-tab-open-check-unavailable',String(e?.message||e)));
+}
 window.openValueHistoryTeamV458=function(id,showLeagueComparison=false){
  const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');btn?.click();currentView='team';trackedTeamId=String(id||'');syncSubnav();
  const go=()=>{renderTrackMyTeam();if(trackedTeamId){loadTrackedTeam();if(showLeagueComparison){let n=0,t=setInterval(()=>{n++;if(document.querySelector('[data-vh-team-net-all]')){clearInterval(t);openTeamNetModal()}else if(n>40)clearInterval(t)},100)}}};
@@ -1343,11 +1357,14 @@ function renderTradeHistory(){
     return true;
   });
   const feed=data.live_trade_feed||{},feedState=String(feed.state||'');
+  const scheduled=feed.scheduled_archive||{};
+  const scheduledText=scheduled.state==='verified'&&Number.isInteger(Number(scheduled.checked_through_week))
+    ?' • Scheduled verified trades through week '+esc(String(scheduled.checked_through_week)):'';
   const failedWeeks=Array.isArray(feed.failed_weeks)?feed.failed_weeks.filter(Number.isInteger):[];
   const feedWarning=feedState==='partial'?
     'Live Sleeper trades are temporarily incomplete for week'+(failedWeeks.length===1?' ':'s ')+failedWeeks.join(', ')+'. Some recent trades may be missing.':
     feedState==='unavailable'?'Live Sleeper trade updates are unavailable. Showing previously verified trades.':'';
-  box.innerHTML=`<div class="vh-card vh-trade-history-summary"><div class="vh-card-head"><div><h3>Completed Trade History</h3></div></div><div class="vh-team-toolbar vh-trade-filter-toolbar"><label><b>Filter by team</b><select data-vh-trade-team><option value="">All teams</option>${ids.map(id=>`<option value="${esc(id)}" ${String(tradeTeamFilter)===String(id)?'selected':''}>${esc(teamName(id))}</option>`).join('')}</select></label><label><b>Year</b><select data-vh-trade-year><option value="">All years</option>${years.map(y=>`<option value="${esc(y)}" ${String(tradeYearFilter)===String(y)?'selected':''}>${esc(y)}</option>`).join('')}</select></label><label><b>Month</b><select data-vh-trade-month><option value="">All months</option>${months.map(([v,l])=>`<option value="${v}" ${String(tradeMonthFilter)===v?'selected':''}>${l}</option>`).join('')}</select></label><div class="vh-trade-reset-wrap"><span class="vh-trade-reset-spacer" aria-hidden="true"></span><button type="button" class="secondary small vh-trade-reset" data-vh-trade-reset>Reset filters</button></div></div><div class="vh-trade-note">Source: ${esc(data.source||'Sleeper transaction history')} • ${filtered.length} completed trade${filtered.length===1?'':'s'} shown. Exact draft-result mapping is displayed only when Sleeper provides an unambiguous draft slot → roster → player chain.</div>${feedWarning?'<div class=vh-trade-note role=status>'+esc(feedWarning)+'</div>':''}</div><div class="vh-trade-list">${filtered.map(tradeCard).join('')||'<div class="vh-card"><div class="vh-empty">No completed trades match these filters.</div></div>'}</div>`;
+  box.innerHTML=`<div class="vh-card vh-trade-history-summary"><div class="vh-card-head"><div><h3>Completed Trade History</h3></div></div><div class="vh-team-toolbar vh-trade-filter-toolbar"><label><b>Filter by team</b><select data-vh-trade-team><option value="">All teams</option>${ids.map(id=>`<option value="${esc(id)}" ${String(tradeTeamFilter)===String(id)?'selected':''}>${esc(teamName(id))}</option>`).join('')}</select></label><label><b>Year</b><select data-vh-trade-year><option value="">All years</option>${years.map(y=>`<option value="${esc(y)}" ${String(tradeYearFilter)===String(y)?'selected':''}>${esc(y)}</option>`).join('')}</select></label><label><b>Month</b><select data-vh-trade-month><option value="">All months</option>${months.map(([v,l])=>`<option value="${v}" ${String(tradeMonthFilter)===v?'selected':''}>${l}</option>`).join('')}</select></label><div class="vh-trade-reset-wrap"><span class="vh-trade-reset-spacer" aria-hidden="true"></span><button type="button" class="secondary small vh-trade-reset" data-vh-trade-reset>Reset filters</button></div></div><div class="vh-trade-note">Source: ${esc(data.source||'Sleeper transaction history')}${scheduledText} • ${filtered.length} completed trade${filtered.length===1?'':'s'} shown. Exact draft-result mapping is displayed only when Sleeper provides an unambiguous draft slot → roster → player chain.</div>${feedWarning?'<div class=vh-trade-note role=status>'+esc(feedWarning)+'</div>':''}</div><div class="vh-trade-list">${filtered.map(tradeCard).join('')||'<div class="vh-card"><div class="vh-empty">No completed trades match these filters.</div></div>'}</div>`;
 }
 async function loadTradeHistory(){
   const box=document.getElementById('tradeHistoryContent');if(!box)return;

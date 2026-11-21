@@ -101,3 +101,15 @@ test('V101 archive contains actual team ownership snapshots, never synthetic cur
  assert.match(backend,/teamSnapshot:false,valuation_model:valuationModelId\(snap\)/);
  assert.match(ui,/p\?\.teamSnapshot===true/);
 });
+
+test('visible Market Dashboard and full-market history re-fetch after five minutes and on focus',()=>{
+ assert.match(ui,/let marketHistoryCacheUpdatedAtV112=0/);
+ assert.match(ui,/marketHistoryCacheUpdatedAtV112=Date\.now\(\)/);
+ assert.match(ui,/function refreshVisibleMarketHistoryV112\(\)/);
+ assert.match(ui,/currentView==='market'\)loadMarket\(true\)/);
+ assert.match(ui,/currentView==='fullMarket'\)loadFullMarketHistory\(true\)/);
+ assert.match(ui,/setInterval\(refreshVisibleMarketHistoryV112,TRADE_HISTORY_REFRESH_MS\)/);
+ assert.match(ui,/window\.addEventListener\('focus',refreshVisibleMarketHistoryV112\)/);
+ assert.match(ui,/window\.addEventListener\('fll:valuation-refreshed'/);
+ assert.match(ui,/window\.addEventListener\('fll:canonical-values-ready'/);
+});

@@ -1,0 +1,21 @@
+name: Inquirer combined review-only integration
+on:
+  push:
+    branches:
+      - review/inquirer-archive-v110-integration-preview
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-combined-inquirer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install existing dependencies without lifecycle scripts
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+      - name: Verify combined reader recovery, editorial policy, archive continuity, publisher safety and preview gate
+        run: node --test tests/inquirer-github-archive-reader.test.mjs tests/inquirer-publisher-archive-readiness.test.mjs tests/inquirer-v110-editorial-candidate-retry.test.mjs tests/inquirer-week9-unattended-publish-regression.test.mjs tests/inquirer-private-edition-audit.test.mjs tests/inquirer-schedule-decision.test.mjs tests/inquirer-weekly-publication-consistency.test.mjs tests/inquirer-current-site-publisher-identity.test.mjs tests/netlify-v101-inquirer-pr-previews-only.test.mjs

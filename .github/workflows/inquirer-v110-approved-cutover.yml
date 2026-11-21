@@ -1,0 +1,23 @@
+name: Inquirer V110 owner-authorized cutover pre-release validation
+on:
+  push:
+    branches:
+      - release/inquirer-verified-cutover-v110
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate-cutover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install existing dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+      - name: Verify publisher cutover, original immutable archive, editorial controls and old regressions
+        run: node --test tests/inquirer-live-cutover-gates.test.mjs tests/netlify-v110-inquirer-one-time-release.test.mjs tests/netlify-v101-one-time-release.test.mjs tests/inquirer-immutable-archive-restore.test.mjs tests/inquirer-github-archive-reader.test.mjs tests/inquirer-publisher-archive-readiness.test.mjs tests/inquirer-current-site-publisher-identity.test.mjs tests/inquirer-v110-editorial-candidate-retry.test.mjs tests/inquirer-week9-unattended-publish-regression.test.mjs tests/inquirer-private-edition-audit.test.mjs tests/inquirer-weekly-publication-consistency.test.mjs tests/inquirer-schedule-decision.test.mjs tests/netlify-v101-inquirer-pr-previews-only.test.mjs
+      - name: Check actual immutable GitHub Weeks 3–9 against pinned SHA256 and awards
+        run: node scripts/verify-inquirer-github-archive-pinned.mjs

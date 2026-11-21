@@ -32,7 +32,7 @@ test('scheduled publisher fails closed on replacement sites and missing history'
  const source=readFileSync(new URL('../netlify/functions/inquirer-publish-scheduled.mjs',import.meta.url),'utf8');
  assert.match(source,/FLEECED_ENABLE_NEW_SITE_PUBLISHER/);
  assert.match(source,/Replacement site is preview-only pending verified archive migration/);
- assert.match(source,/context==='deploy-preview'/);
+ assert.match(source,/runtimeContext==='deploy-preview'/);
  assert.match(source,/if\(!status\|\|typeof status!=='object'\)/);
  assert.match(source,/Publication state or NFL clock unavailable; holding publication/);
  assert.doesNotMatch(source,/catch\(error\)\{console\.warn\('inquirer-schedule-status-check'/);
@@ -43,7 +43,7 @@ test('private Inquirer history reads remain local, SSO-independent, and mutation
  const history=readFileSync(new URL('../netlify/functions/value-history.mjs',import.meta.url),'utf8');
  assert.match(hub,/if\(previewReadOnly\)url\.searchParams\.set\('readonly_preview','1'\)/);
  assert.match(hub,/const r=await valueHistoryHandler\(new Request\(url\)\)/);
- assert.match(history,/const readonlyPreview=req\.method==='GET'&&url\.searchParams\.get\('readonly_preview'\)==='1'/);
+ assert.match(history,/const readonlyPreview=isDeployPreview\|\|\(req\.method==='GET'&&url\.searchParams\.get\('readonly_preview'\)==='1'\)/);
  assert.match(history,/if\(s&&!readonlyPreview\)\{/);
 });
 

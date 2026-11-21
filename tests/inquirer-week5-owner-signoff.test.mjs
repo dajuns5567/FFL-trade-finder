@@ -73,6 +73,6 @@ test('signoff occurs only in the already-verified production scheduler and uses 
  assert.match(source,/if\(!checked\.ready\)return skip/);
  assert.match(source,/approvedWeek5Record\(\{status,stage,existingApproval,published\}\)/);
  assert.match(source,/store\.setJSON\('inquirer\/editorial-approvals\/'\+suffix,approved,\{onlyIfNew:true\}\)/);
- assert.match(source,/if\(isReplacement&&context!=='deploy-preview'&&context!=='branch-deploy'/);
+ assert.match(source,/if\(isReplacement&&runtimeContext!=='deploy-preview'&&runtimeContext!=='branch-deploy'/);
  assert.doesNotMatch(source,/store\.setJSON\('broadcasts\//);
 });

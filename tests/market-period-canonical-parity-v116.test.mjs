@@ -119,3 +119,22 @@ test('canonical Player Values overlays and market period buttons are shared, not
  assert.match(ui,/observed.*dateShort\(data\.tracking_since\)/);
  assert.match(ui,/loadMarketIntelligence\(force\)/);
 });
+
+test('Market Dashboard timeframe controls are synchronized without changing Team Value Tracker timeframe',()=>{
+ const start=ui.indexOf('function setMarketDashboardPeriodV116(period){');
+ const end=ui.indexOf('const esc=s=>',start);
+ assert.ok(start>0&&end>start,'missing unified Market Dashboard period selector');
+ const ctx={marketIntelPeriod:'7D',marketPeriods:{valueRisers:'7D',valueFallers:'7D',rankRisers:'7D',rankFallers:'7D'},
+  teamPeriods:{valueRisers:'30D',rankRisers:'30D'}};
+ vm.createContext(ctx);
+ vm.runInContext(ui.slice(start,end),ctx);
+ assert.equal(ctx.setMarketDashboardPeriodV116('30D'),true);
+ assert.equal(ctx.marketIntelPeriod,'30D');
+ assert.deepEqual(Object.values(ctx.marketPeriods),['30D','30D','30D','30D']);
+ assert.deepEqual(Object.values(ctx.teamPeriods),['30D','30D']);
+ assert.equal(ctx.setMarketDashboardPeriodV116('garbage'),false);
+ assert.equal(ctx.marketIntelPeriod,'30D');
+ assert.match(ui,/marketPeriods=\{valueRisers:'7D',valueFallers:'7D',rankRisers:'7D',rankFallers:'7D'\}/);
+ assert.match(ui,/if\(setMarketDashboardPeriodV116\(intelPeriod\.dataset\.vhIntelPeriod\)\)renderMarketDashboard\(\)/);
+ assert.match(ui,/if\(setMarketDashboardPeriodV116\(mp\.dataset\.vhMarketPeriod\)\)renderMarketDashboard\(\)/);
+});

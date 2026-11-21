@@ -38,6 +38,15 @@ export function assessMinorNineWordReuse(teams,repeated){
   const ids=sentenceOwners.get(sentence)||new Set();
   ids.add(id);sentenceOwners.set(sentence,ids);
  }
+ // Adjacent copies are disqualifying even before nine-word windows are
+ // reconciled: one window may span BOTH copied sentences and therefore is
+ // not itself an eligible sentence. Fail closed on that contiguous passage.
+ const repeatedSentences=new Set([...sentenceOwners].filter(([,ids])=>ids.size>=4).map(([line])=>line));
+ for(const team of teams){
+  const lines=sentences(team.inquirer_article).map(line=>tokens(line).join(' '));
+  if(lines.some((line,i)=>i>0&&repeatedSentences.has(line)&&repeatedSentences.has(lines[i-1])))
+   return{tolerated:false,reason:'consecutive-repeated-sentences'};
+ }
  const eligible=[...sentenceOwners].filter(([sentence,ids])=>ids.size>=4&&ids.size<=5&&
   [...ids].every(id=>embedded(teams.find(t=>String(t.roster_id)===id),sentence)));
  // Every flagged long-reuse window must be accounted for by one and only

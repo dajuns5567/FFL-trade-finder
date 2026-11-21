@@ -11,6 +11,7 @@ import week2Preload2026 from './inquirer-week2-2026-preload.mjs';
 import {fetchBestSeason} from './history-fetch.mjs';
 import {applyInquirerEditorialV31,evaluateInquirerEditionQuality,FORWARD_INQUIRER_VERSION,FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
 import {inspectCanonicalArchive} from './lib/inquirer-legacy-history.mjs';
+import {recoveredInquirerCatalog,recoveredInquirerEdition} from './lib/inquirer-github-archive.mjs';
 import {privatePreviewStoreName,isVerifiedPrivatePreviewPredecessor} from './lib/inquirer-preview-diagnostics.mjs';
 
 const LEAGUE='1316867686394769408';
@@ -600,7 +601,7 @@ export async function weeklyReport(req){
   // before selecting a candidate and search a larger deterministic salt space.
   // Preview and publication must execute the identical candidate search.
   // Otherwise a passing preview can conceal a different final manuscript.
-  for(const salt of [5,0,1,2,3,4]){
+  for(const salt of [5,0,1,2,3,4,6,7]){
    const drafted=applyInquirerEditorialV31({season,week,rawInquirer,rawOverview,previousEdition:previousBroadcast,previousEditions:historicalEditorialMemory,weekClassification,variationSalt:salt});
    const candidate={season,week,teams:drafted.inquirer.teams,league_overview:drafted.leagueOverview};
    const q=evaluateInquirerEditionQuality(candidate,previousBroadcast);
@@ -610,7 +611,14 @@ export async function weeklyReport(req){
    const a=inspectEditionBeforePublication(candidate);
    const score=q.issues.length*4+a.issues.length;
    if(!best||score<bestScore){best=drafted;bestQuality=q;bestSalt=salt;bestScore=score}
-   if(q.ok&&a.ok){accepted=drafted;quality=q;variationSalt=salt;break}
+   if(q.ok&&a.ok){
+    // Warning-only copy remains publishable, but is never preferred over
+    // independently acceptable copy without a repetition warning.
+    if(!accepted){accepted=drafted;quality=q;variationSalt=salt}
+    if(!q.metrics?.minor_repetition_warning) {
+     accepted=drafted;quality=q;variationSalt=salt;break;
+    }
+   }
   }
   // A candidate with unresolved editorial issues is still valuable to review.
   // The publication guard below stages it with findings and never publishes it.
@@ -637,7 +645,9 @@ export async function weeklyReport(req){
  // deterministic admission gate only after the prior week is locked.
  const publicationHost=new URL(req.url).hostname;
  const publicationSiteId=globalThis.Netlify?.env?.get?.('SITE_ID')||process.env.SITE_ID||'';
- const currentPublisherSite=publicationSiteId==='fa33dfe4-8293-441e-8da0-25cc66fc984c'||
+ const currentPublisherSite=publicationSiteId==='a516be3b-6c65-4f54-a9fb-23c5361bf3d2'||
+  publicationHost==='animated-dasik-3de74a.netlify.app'||
+  publicationSiteId==='fa33dfe4-8293-441e-8da0-25cc66fc984c'||
   publicationHost==='precious-dango-fb4633.netlify.app';
  const replacementPublicationSite=publicationSiteId==='8776d155-bc7b-4dcd-bafc-3d70d3d51800'||
   publicationHost==='transcendent-manatee-2f0123.netlify.app';
@@ -680,8 +690,20 @@ async function broadcastArchive(){
   const season=Number(p.season),week=Number(p.week),key=String(season)+'|'+String(week);
   if(!rows.some(x=>String(Number(x.season))+'|'+String(Number(x.week))===key))rows.push({type:'week',season,week,key:'preloaded:'+season+':'+week,captured_at:String(p.generated_at||''),preloaded:true});
  }
- // A verified historical Blob can exist without a broadcasts/index.json row.
- // Discover approved Weeks 3–4 read-only; never rewrite or auto-promote a draft.
+ // Read-only immutable GitHub recovery fills missing index entries after
+ // Netlify account migrations. The pinned catalog is independently backed by
+ // the original index and awards; it never authorizes publication of Week 10.
+ try{
+  const verified=await recoveredInquirerCatalog();
+  for(const row of verified.rows){
+   if(!rows.some(x=>Number(x.season)===row.season&&Number(x.week)===row.week))
+    rows.push(row);
+  }
+ }catch(error){
+  console.warn('inquirer-github-archive-index-unavailable',String(error?.message||error));
+ }
+ // Also discover original Weeks 3–4 already in Blobs when GitHub is
+ // temporarily unreachable. Never rewrite their original publication bytes.
  for(const week of [3,4]){
   if(rows.some(x=>Number(x.season)===2026&&Number(x.week)===week))continue;
   const key='broadcasts/2026/week-'+String(week).padStart(2,'0')+'.json';
@@ -702,7 +724,15 @@ async function broadcastStored(season,week){
     reason:'Archived Inquirer edition fails the Week 4 newsroom continuity/quality contract. Publication held; original bytes were not altered.'};
   return v;
  }
- return preloadedBroadcast(season,week)||{error:'broadcast not found'};
+ const preload=preloadedBroadcast(season,week);
+ if(preload)return preload;
+ // The recovered originals are a read-only fallback, never a Blob restore.
+ // They must pass both the pinned SHA-256 and canonical editorial contract.
+ try{
+  const recovered=await recoveredInquirerEdition(season,week);
+  if(recovered&&isLockedInquirerEdition(recovered,season,week))return recovered;
+ }catch(error){console.warn('inquirer-github-archive-edition-unavailable',String(error?.message||error))}
+ return{error:'broadcast not found'};
 }
 
 function weeklyAwardStatRows(payload){

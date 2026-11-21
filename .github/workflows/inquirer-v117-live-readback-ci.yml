@@ -30,4 +30,4 @@ jobs:
         run: |
           git diff --name-only origin/main...HEAD > /tmp/changed-files.txt
           grep -Fx 'tests/inquirer-live-published-readback-v117.test.mjs' /tmp/changed-files.txt
-          grep -F 'league-hub-v451.js?v=543' netlify/functions/site-v29.mjs
+          grep -F 'league-hub-v451.js?v=544' netlify/functions/site-v29.mjs

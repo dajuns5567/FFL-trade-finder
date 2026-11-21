@@ -5,6 +5,7 @@ on:
       - fix/inquirer-v110-editorial-candidate-retry
     paths:
       - 'netlify/functions/league-hub.mjs'
+      - 'netlify/functions/inquirer-publish-background.mjs'
       - 'netlify/functions/inquirer-editorial-v31.mjs'
       - 'netlify/functions/lib/inquirer-minor-repetition.mjs'
       - 'netlify/functions/lib/inquirer-schedule-decision.mjs'

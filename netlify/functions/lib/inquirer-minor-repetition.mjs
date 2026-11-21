@@ -54,8 +54,19 @@ export function assessMinorNineWordReuse(teams,repeated){
   if(matching.length!==1)return{tolerated:false};
   matches.set(matching[0][0],matching[0][1]);
  }
- if(!matches.size||matches.size>2)return{tolerated:false};
- return{tolerated:true,team_count:new Set([...matches.values()].flatMap(ids=>[...ids])).size,
+ if(!matches.size||matches.size>3)return{tolerated:false};
+ // Two repeated sentences back-to-back in ANY affected article represent
+ // contiguous copied prose, even when each sentence is individually short.
+ // Check the full article in reading order, including paragraph boundaries.
+ const copied=new Set(matches.keys());
+ for(const team of teams){
+  const lines=sentences(team.inquirer_article).map(line=>tokens(line).join(' '));
+  if(lines.some((line,i)=>i>0&&copied.has(line)&&copied.has(lines[i-1])))
+   return{tolerated:false,reason:'consecutive-repeated-sentences'};
+ }
+ return{tolerated:true,severity:'editorial-warning',requires_improvement:true,
+  reason:'Minor nonconsecutive repetition; not an endorsement of duplicated writing',
+  team_count:new Set([...matches.values()].flatMap(ids=>[...ids])).size,
   phrase_windows:collisions.length,sentence_count:matches.size,
   sentences:[...matches.keys()].map(s=>s.slice(0,190)),
   sentence:[...matches.keys()][0].slice(0,190)};

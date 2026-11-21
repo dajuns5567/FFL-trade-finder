@@ -1377,12 +1377,24 @@ async function health(s){
   const arch=await archiveIndex();
   let latest=null,indexed={items:[],source:s?'empty':'unavailable'};
   if(s){latest=await safeGet(s,LATEST_KEY);try{indexed=await allItems(s)}catch(e){indexed={items:[],source:'unavailable',error:String(e?.message||e)}}}
-  const archiveCount=(arch.items||[]).length,liveCount=(indexed.items||[]).length,total=Math.max(archiveCount,liveCount);
+  const archiveCount=(arch.items||[]).length,liveCount=(indexed.items||[]).length;
+  // The two stores may contain different timestamps. Their maximum individual
+  // count is NOT the size of the union, and a stale live latest pointer must
+  // never hide the newer durable GitHub observation.
+  const audit=reconcileSnapshotInventories(arch.items||[],indexed.items||[],{
+    archiveReachable:arch.reachable!==false,
+    localReachable:!!s&&indexed.source!=='unavailable',
+    limit:1
+  });
+  const total=audit.union_count;
+  const latestObserved=[String(latest?.t||''),String(arch.latest||''),String(audit.union_latest||'')]
+    .filter(t=>Number.isFinite(Date.parse(t))).sort().at(-1)||null;
   return{
     ok:archiveCount>0||liveCount>0||indexed.source!=='unavailable',
     storage:archiveCount>0||liveCount>0?'reachable':(indexed.source==='unavailable'&&!arch.reachable?'unavailable':'degraded'),
     source:archiveCount&&liveCount?'github-archive+netlify-live':archiveCount?'github-archive':liveCount?'netlify-live':indexed.source,
-    snapshotCount:total,latest:latest?.t||arch.latest||null,
+    snapshotCount:total,latest:latestObserved,
+    reconciliation:{complete:audit.complete,overlap:audit.overlap_count,github_only:audit.github_only_count,netlify_only:audit.netlify_only_count,unknown_overlap_parity:audit.overlap_unverifiable_count,conflicts:audit.conflict_count},
     components:{
       githubArchive:{reachable:arch.reachable!==false,snapshotCount:archiveCount,latest:arch.latest||null,error:arch.error||null},
       netlifyLive:{reachable:indexed.source!=='unavailable',snapshotCount:liveCount,latest:latest?.t||null,error:indexed.error||null}

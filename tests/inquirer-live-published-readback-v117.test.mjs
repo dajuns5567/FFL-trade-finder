@@ -68,3 +68,13 @@ test('a new-week notice is never offered on index entry alone without verified f
  assert.match(source,/const newestArchived=latestVerifiedPublishedRow/);
  assert.doesNotMatch(source,/New Fleeced! Inquirer edition indexed:/);
 });
+
+test('opening Daily from a historic article keeps a verified fallback until the new index responds',()=>{
+ assert.match(source,/function returnToLeagueHubHome\(\)\{openBroadcastTeam='';render\('daily'\)/);
+ assert.doesNotMatch(source,/function returnToLeagueHubHome\(\)\{openBroadcastTeam='';weeklyCache=null/);
+});
+test('optional trades and manager feed errors do not blank a published Daily newspaper',()=>{
+ assert.match(source,/trades\(\)\.catch\(error=>\{console\.warn\('inquirer-optional-trade-panel-unavailable'/);
+ assert.match(source,/managers\(\)\.catch\(error=>\{console\.warn\('inquirer-optional-manager-panel-unavailable'/);
+ assert.match(source,/return\{trades:\[\]\}/);
+});

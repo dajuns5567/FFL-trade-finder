@@ -1,5 +1,5 @@
 import {weeklyReport,weeklyAwards,isLockedInquirerEdition} from './league-hub.mjs';
-import {ORIGINAL_INQUIRER_RESTORE_SITE_ID,ORIGINAL_INQUIRER_RESTORE_MARKER} from './lib/inquirer-archive-restore-runtime.mjs';
+import {ORIGINAL_INQUIRER_RESTORE_SITE_ID,ORIGINAL_INQUIRER_RESTORE_MARKER,resolvedInquirerOwnerAuthorization} from './lib/inquirer-archive-restore-runtime.mjs';
 import {getStore} from '@netlify/blobs';
 import {FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
 import {verifiedNewSiteCutoverHistory,verifiedWeekNineAutopublishCutoverHistory} from './lib/inquirer-replacement-archive-gate.mjs';
@@ -47,8 +47,16 @@ export default async function publishInquirerInBackground(req){
  const isRestoredSite=siteId===ORIGINAL_INQUIRER_RESTORE_SITE_ID;
  const replacement=isNewestSite||siteId==='8776d155-bc7b-4dcd-bafc-3d70d3d51800'||
   host==='transcendent-manatee-2f0123.netlify.app';
- const enabled=globalThis.Netlify?.env?.get?.('FLEECED_ENABLE_NEW_SITE_PUBLISHER')||
-  process.env.FLEECED_ENABLE_NEW_SITE_PUBLISHER||'';
+ const ownerAuthorization=resolvedInquirerOwnerAuthorization({
+  siteId,context,host,
+  configuredEnabled:globalThis.Netlify?.env?.get?.('FLEECED_ENABLE_NEW_SITE_PUBLISHER')||
+   process.env.FLEECED_ENABLE_NEW_SITE_PUBLISHER||'',
+  configuredApproved:globalThis.Netlify?.env?.get?.('FLEECED_INQUIRER_ARCHIVE_RESTORE_APPROVED')||
+   process.env.FLEECED_INQUIRER_ARCHIVE_RESTORE_APPROVED||'',
+  emergencyDisabled:globalThis.Netlify?.env?.get?.('FLEECED_INQUIRER_EMERGENCY_DISABLE')||
+   process.env.FLEECED_INQUIRER_EMERGENCY_DISABLE||''
+ });
+ const enabled=ownerAuthorization.enabled;
  if(replacement&&enabled!=='true'){
   console.warn('inquirer-background-replacement-publisher-held');
   return new Response('Publication disabled on replacement site',{status:403});
@@ -57,7 +65,7 @@ export default async function publishInquirerInBackground(req){
  const configuredKey=globalThis.Netlify?.env?.get?.('FLEECED_INQUIRER_QUEUE_KEY')||process.env.FLEECED_INQUIRER_QUEUE_KEY||'';
  let expected=null;
  try{
-  expected=await resolveInquirerQueueCredential({store:isCurrentSite?statusStore:null,
+  expected=await resolveInquirerQueueCredential({store:isCurrentSite||ownerAuthorization.source_authorized?statusStore:null,
    configured:configuredKey,bootstrap:false});
  }catch(error){
   console.error('inquirer-background-queue-credential',String(error?.message||error));

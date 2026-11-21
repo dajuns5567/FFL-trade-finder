@@ -1,0 +1,126 @@
+name: Restore verified original Inquirer newspapers (archive branch only)
+on:
+  push:
+    branches: [inquirer-archive]
+    paths:
+      - inquirer-recovery-staging/READY
+permissions:
+  contents: write
+concurrency:
+  group: inquirer-immutable-retired-originals-recovery
+  cancel-in-progress: false
+jobs:
+  restore:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Reconstitute and validate original bytes before any archive write
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os,json,hashlib,base64
+          from pathlib import Path
+          from collections import Counter
+          stage=Path('inquirer-recovery-staging')
+          archive=Path('inquirer-archive')
+          expected={
+           5:(6405954,'3c402391b3df2374291b161f12952c5332aa4d082cfed90d62540c37ac2cd770',94),
+           6:(6559320,'9e9ea33becac9db113da73f7d1d28a36ecfb4bef9c44accfe94d819da563548e',98),
+           7:(7234451,'b42b573dec1665a93aae1a9a068796dd126c08c0d5adf61ed05483e580f5d43c',107),
+           8:(7444594,'11b7a8986ac317429c30d83853e0d9f30caa67c3c5c9e5ea73380b84317f4b90',107),
+           9:(7309785,'8b55ac2296147d0cb3011bc8a0c2bf57169a41a14ea83a8f889655850512a2a8',109)}
+          def digest(x):return hashlib.sha256(x).hexdigest()
+          def decode(buf):
+           if len(buf)%2:raise ValueError('Malformed compressed original')
+           dic={i:bytes([i]) for i in range(256)}
+           nxt=257;old=None;out=bytearray()
+           for i in range(0,len(buf),2):
+            code=buf[i]*256+buf[i+1]
+            if code==256:
+             dic={i:bytes([i]) for i in range(256)};nxt=257;old=None;continue
+            if code in dic:item=dic[code]
+            elif code==nxt and old is not None:item=old+old[:1]
+            else:raise ValueError('Invalid compressed original code')
+            out.extend(item)
+            if old is not None and nxt<=65535:dic[nxt]=old+item[:1];nxt+=1
+            old=item
+           return bytes(out)
+          if not (stage/'READY').exists():raise ValueError('Missing explicit recovery readiness marker')
+          index=json.loads((stage/'index.json').read_bytes())
+          awards=json.loads((stage/'weekly.json').read_bytes())
+          manifestfile=archive/'manifest.json'
+          manifest=json.loads(manifestfile.read_bytes())
+          if manifest.get('schema_version')!=1 or not isinstance(manifest.get('entries'),list):raise ValueError('Invalid published manifest')
+          original=manifest['entries']
+          if {(r.get('season'),r.get('week')) for r in original}!={(2026,3),(2026,4)}:
+           raise ValueError('Unexpected preexisting published entries; manual reconciliation needed')
+          for row in original:
+           path=f"{row['season']}/week-{row['week']:02}.json"
+           if row.get('path')!=path or digest((archive/path).read_bytes())!=row.get('sha256'):
+            raise ValueError('Historical archive checksum mismatch')
+          staged=[]
+          for week,(size,hash_,revision) in expected.items():
+           parts=sorted((stage/'2026').glob(f'week-{week:02}.lzw.b64.part*'))
+           if not parts or [p.name for p in parts]!=[f'week-{week:02}.lzw.b64.part{i:02}' for i in range(len(parts))]:
+            raise ValueError('Missing or incorrectly numbered source parts')
+           raw=decode(base64.b64decode(''.join(p.read_text('ascii') for p in parts),validate=True))
+           if len(raw)!=size or digest(raw)!=hash_:raise ValueError('Original newspaper bytes failed SHA-256')
+           item=json.loads(raw)
+           if item.get('season')!=2026 or item.get('week')!=week or item.get('published_locked') is not True or item.get('available') is not True:
+            raise ValueError('Missing original locked publication evidence')
+           if item.get('editorial_revision')!=revision or item.get('inquirer_version')!=31 or item.get('editorial_generation',{}).get('engine')!='v31-forward':
+            raise ValueError('Unexpected editorial version')
+           teams=item.get('teams',[])
+           if len(teams)!=32 or len({str(t['roster_id']) for t in teams})!=32:raise ValueError('Expected 32 teams')
+           desks={'lede','players','management','hot-seat','cool-throne','value','sentiment','outlook'}
+           reporters=Counter()
+           for t in teams:
+            a=t.get('inquirer_article',{})
+            if not a.get('headline') or len(a.get('sections',[]))!=8 or {s.get('kind') for s in a['sections']}!=desks:
+             raise ValueError('Incomplete original roster article')
+            reporters[a.get('reporter',{}).get('id')]+=1
+           if len(reporters)!=4 or sorted(reporters.values())!=[8]*4:raise ValueError('Original reporter allocation mismatch')
+           sections=item.get('league_overview',{}).get('sections',[])
+           if len(sections)<4 or [b.get('kind') for b in sections[0].get('blocks',[])]!=['lead','standings','players','decisions','league','outlook']:
+            raise ValueError('Weekly Recap not complete')
+           listed=[r for r in index if r.get('season')==2026 and r.get('week')==week]
+           recorded=[r for r in awards.get('records',[]) if r.get('season')==2026 and r.get('week')==week]
+           if len(listed)!=1 or len(recorded)!=1:raise ValueError('Missing independent publication index or award')
+           r=listed[0];a=recorded[0]
+           if r.get('key')!=f'broadcasts/2026/week-{week:02}.json' or r.get('captured_at')!=item.get('generated_at') or a.get('captured_at')!=item.get('generated_at') or a.get('newsroom_editorial_revision')!=revision or a.get('newsroom_engine')!='v31-forward':
+            raise ValueError('Independent index and awards do not agree with original')
+           players=a.get('players_of_week',{})
+           if not players.get('offense',{}).get('player_id') or not players.get('defense',{}).get('player_id'):
+            raise ValueError('Missing independently recorded player awards')
+           if ('Unpublished draft' in str(item.get('preview_warning','')))!=(week in (7,8)):
+            raise ValueError('Unexpected or altered legacy preview-warning metadata')
+           path=f'2026/week-{week:02}.json'
+           if (archive/path).exists():raise ValueError('Refusing to overwrite an existing published edition')
+           staged.append((path,raw,{'season':2026,'week':week,'path':path,'sha256':hash_}))
+          # All five have been fully checked against three independent sources.
+          for path,raw,row in staged:
+           dest=archive/path;dest.parent.mkdir(parents=True,exist_ok=True)
+           with dest.open('xb') as f:f.write(raw)
+          manifest['entries']=sorted(original+[row for _,_,row in staged],key=lambda r:(r['season'],r['week']))
+          tmp=manifestfile.with_name('manifest.json.pending')
+          with tmp.open('x',encoding='utf8') as f:json.dump(manifest,f,indent=2);f.write('\n')
+          os.replace(tmp,manifestfile)
+          print('Archived immutable original editions:',[row['week'] for _,_,row in staged])
+          PY
+      - name: Commit verified originals and delete one-time transfer payload
+        shell: bash
+        run: |
+          git config user.name "ffl-inquirer-recovery-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- inquirer-archive/manifest.json inquirer-archive/2026
+          git rm -r -- inquirer-recovery-staging
+          if git diff --cached --name-only | grep -Ev '^(inquirer-archive/(manifest.json|2026/week-0[5-9].json)|inquirer-recovery-staging/)'; then
+            echo 'Unexpected staged paths' >&2
+            exit 1
+          fi
+          git commit -m "archive(inquirer): preserve verified originals Weeks 5–9 without rewriting history"
+          git push origin HEAD:inquirer-archive

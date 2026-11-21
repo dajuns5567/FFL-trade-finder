@@ -8,6 +8,7 @@ on:
       - '.github/workflows/value-history-v107-shadow-acceptance.yml'
       - '.github/workflows/value-history-candidate-headless-acceptance.yml'
       - 'scripts/value-history-headless-refresh.mjs'
+      - 'value-history-v276.js'
       - 'scripts/archive-value-history.mjs'
       - 'scripts/value-history-scheduled-due.mjs'
       - 'scripts/value-history-v107-shadow-acceptance.mjs'
@@ -47,6 +48,7 @@ jobs:
             'scripts/archive-value-history.mjs',
             'scripts/value-history-scheduled-due.mjs',
             'scripts/value-history-v107-shadow-acceptance.mjs',
+            'value-history-v276.js',
             'tests/value-history-model-era-v90.test.mjs',
             'tests/value-history-v107-scheduled-promotion.test.mjs',
             'tests/value-history-candidate-headless-contract.test.mjs'

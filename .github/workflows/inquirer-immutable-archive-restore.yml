@@ -1,0 +1,23 @@
+name: Inquirer immutable archive restore preparation (no live writes)
+on:
+  push:
+    branches:
+      - fix/inquirer-immutable-archive-restore-plan-v1
+    paths:
+      - 'netlify/functions/lib/inquirer-immutable-archive-restore.mjs'
+      - 'tests/inquirer-immutable-archive-restore.test.mjs'
+      - '.github/workflows/inquirer-immutable-archive-restore.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-restore-plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify create-only archive restore with fake Blob storage, no Netlify writes
+        run: node --test tests/inquirer-immutable-archive-restore.test.mjs tests/inquirer-publisher-archive-readiness.test.mjs

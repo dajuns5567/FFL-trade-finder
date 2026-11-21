@@ -81,7 +81,7 @@ export async function prepareImmutableInquirerRestore({store,fetchImpl=fetch}={}
 // This intentionally DOES NOT change publication-status, draft, approval,
 // awards for Week 10, or any publication feature flag.
 export async function applyApprovedImmutableInquirerRestore({
- store,plan,approval,deploy
+ store,plan,approval,deploy,fetchImpl=fetch
 }={}){
  if(approval?.authorized!==true||approval?.operation!=='restore-original-2026-weeks-03-09'||
     deploy?.siteId!==CURRENT_SITE||deploy?.context!=='production'||
@@ -92,6 +92,11 @@ export async function applyApprovedImmutableInquirerRestore({
  if(!store||typeof store.get!=='function'||typeof store.setJSON!=='function'||
     typeof store.getMetadata!=='function')
   throw Error('Restoration requires conditional-capable Blob storage');
+ // Never trust an externally supplied or stale write plan. Rebuild it against
+ // the pinned immutable source and exact current destination before writes.
+ const freshlyPrepared=await prepareImmutableInquirerRestore({store,fetchImpl});
+ if(!same(plan,freshlyPrepared))
+  throw Error('Restore plan or destination changed since immutable preflight');
  // Fail closed if a concurrent publisher created a different edition.
  for(const item of plan.immutable_editions){
   const previous=await store.get(item.key,{type:'json'});

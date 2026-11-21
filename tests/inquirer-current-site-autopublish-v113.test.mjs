@@ -8,6 +8,8 @@ const active={siteId:ACTIVE_INQUIRER_SITE_ID,siteName:ACTIVE_INQUIRER_SITE_NAME,
  host:ACTIVE_INQUIRER_SITE_ID+'.netlify.app',context:'production'};
 test('only the actual current Netlify account is eligible for unattended publication',()=>{
  assert.equal(inquirerPublisherSite(active).active,true);
+ assert.equal(inquirerPublisherSite({host:ACTIVE_INQUIRER_SITE_ID+'.netlify.app',context:'production'}).active,true);
+ assert.equal(inquirerPublisherSite({siteId:'not-the-site',host:ACTIVE_INQUIRER_SITE_ID+'.netlify.app',context:'production'}).active,false);
  assert.equal(CUTOVER_SITE_ID,ACTIVE_INQUIRER_SITE_ID);
  assert.equal(inquirerPublisherSite({...active,context:'deploy-preview'}).active,false);
  assert.equal(inquirerPublisherSite({...active,context:'branch-deploy'}).active,false);

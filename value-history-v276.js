@@ -538,7 +538,7 @@ function addShell(){
   tradeSec.innerHTML='<div class="card"><div class="vh-shell"><div class="vh-brand-head"><h2 class="vh-brand-title">Trade History</h2></div><div id="tradeHistoryContent"><div class="empty">Open Trade History to load completed trades.</div></div></div></div>';
   main.appendChild(sec);main.appendChild(tradeSec);
   const activate=(button,id)=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));button.classList.add('active');document.querySelectorAll('.tab').forEach(x=>x.hidden=x.id!==id)};
-  valueBtn.addEventListener('click',()=>{activate(valueBtn,'valueHistory');setTimeout(()=>{if(!uiReady){initUI();return}syncSubnav();if(currentView==='fullMarket')loadFullMarketHistory();else if(currentView==='team')renderTrackMyTeam();else if(currentView==='playerHub')renderPlayerHistoryHub()},0)});
+  valueBtn.addEventListener('click',()=>{activate(valueBtn,'valueHistory');setTimeout(()=>{if(!uiReady){initUI();return}syncSubnav();if(currentView==='fullMarket')loadFullMarketHistory();else if(currentView==='team')renderTrackMyTeam();else if(currentView==='playerHub')renderPlayerHistoryHub();else if(currentView==='market')loadMarket(true)},0)});
   tradeBtn.addEventListener('click',()=>{activate(tradeBtn,'tradeHistory');setTimeout(initTradeHistoryUI,0)});
   tradeSec.addEventListener('change',handleContentChange);
   tradeSec.addEventListener('click',handleContentClick);
@@ -1405,12 +1405,20 @@ async function teamNetFetch(ids,teamId){
   if(!r.ok)throw Error('team net history unavailable');
   const data=await r.json();teamNetCache.set(key,data);return data;
 }
-async function ensureMarketCache(force=false){if(!marketCache||force){const data=await marketFetch();marketCache=data.market||{}}return marketCache}
+let marketFetchStampV111=0;
+async function ensureMarketCache(force=false){
+ if(!marketCache||force){
+   const stamp=++marketFetchStampV111;
+   const data=await marketFetch();
+   if(stamp===marketFetchStampV111)marketCache=data.market||{};
+ }
+ return marketCache;
+}
 async function loadMarket(force=false){
   const box=document.getElementById('vhContent');if(!box)return;
   currentView='market';syncSubnav();setPrimaryPlayerSearchVisible(false);currentPlayerId=null;
   if(!marketCache||force){
-    box.innerHTML='<div class="vh-empty">Loading market dashboard…</div>';
+    if(!marketCache)box.innerHTML='<div class="vh-empty">Loading market dashboard…</div>';
     try{await ensureMarketCache(force)}catch{
       if(currentView==='market')box.innerHTML='<div class="notice">Historical market data is temporarily unavailable. Current values and all trade tools are unaffected.</div>';
       return
@@ -1603,11 +1611,51 @@ function positionIndexesMarkup(){
   if(!rows.some(r=>r.cohort_count))return'<div class="vh-card"><div class="vh-empty">Waiting for current Player Values rankings…</div></div>';
   return`<div class="vh-index-grid">${rows.map(r=>{const idx=finiteMarketNumber(r.index),chg=finiteMarketNumber(r.change_pct);return`<div class="vh-index-card"><small>${esc(r.pos)} Index</small><b>${idx==null?'—':idx.toFixed(1)}</b><span class="${deltaClass(chg)}">${chg==null?'—':signedPct(chg)} over ${esc(intelPeriodLabel())}</span><span class="muted">${r.count} ${marketModelVerifiedV110()?'verified':'observed'} of ${r.cohort_count} current ${esc(r.pos)} players • 100 = no recorded movement</span></div>`}).join('')}</div>`;
 }
+// Use the SAME current canonical rows as Player Values for both heat map and
+// position indexes. Archive percentages anchor the requested window, while
+// observed value changes after the last snapshot are included on each open.
+// This is a read-only view: it never rewrites historical prices or snapshots.
+function marketLiveIntelligenceRowsV111(recorded,latestMarketRows,currentValues,opts={}){
+  const {latest,through,period='7D',ready=false,nowMs=Date.now()}=opts;
+  const latestMs=Date.parse(latest||'');
+  const days=period==='ALL'?null:period==='1Y'?365:Number(String(period).replace('D',''));
+  if(!ready||!Number.isFinite(latestMs)||latestMs>nowMs||
+    (through&&through!==latest)||
+    (days!=null&&(!Number.isFinite(days)||nowMs-latestMs>days*86400000))||
+    !Array.isArray(recorded)||!Array.isArray(latestMarketRows)||!Array.isArray(currentValues))return recorded||[];
+  const prior=new Map(latestMarketRows.map(row=>[String(row?.id),row]));
+  const live=new Map(currentValues.map(row=>[String(row?.id),row]));
+  return recorded.map(row=>{
+    const p=prior.get(String(row?.id)),now=live.get(String(row?.id));
+    if(!p||!now||String(p.pos)!==String(now.pos)||String(row?.pos)!==String(now.pos))return row;
+    const base=Number(p.value),value=Number(now.value),delta=Number(row.delta),pct=Number(row.pct);
+    if(!Number.isFinite(base)||base<=0||!Number.isFinite(value)||value<=0||
+       !Number.isFinite(delta)||!Number.isFinite(pct))return row;
+    const currentDelta=value-base,currentPct=(currentDelta/base)*100;
+    return {...row,value,overall:Number(now.overall),posRank:Number(now.posRank),
+      recordedValue:base,recordedOverall:Number(p.overall),recordedPosRank:Number(p.posRank),
+      liveCurrentV97:true,delta:delta+currentDelta,pct:pct+currentPct,
+      overall_delta:Number(row.overall_delta||0)+Number(p.overall)-Number(now.overall),
+      pos_rank_delta:Number(row.pos_rank_delta||0)+Number(p.posRank)-Number(now.posRank),
+      observed_live_delta:currentDelta,observed_live_pct:currentPct,
+      live_unarchived:true,through_recorded:latest};
+  });
+}
+function currentMarketIntelligenceRowsV111(){
+ const snapshot=marketCache,range=intelRange(),refresh=window.__fllValueRefresh,consensus=window.__fllConsensusRefresh;
+ const ready=refresh?.phase==='complete'&&refresh?.inFlight===false&&
+   consensus?.complete===true&&consensus?.ok===true&&
+   Number(consensus.successful)>=7&&window.modeledPlayerValuesV319?.ready===true;
+ return marketLiveIntelligenceRowsV111(range?.player_changes||[],snapshot?.marketRows||[],currentRows(),{
+   latest:snapshot?.latest,through:marketInsightsCache?.through,
+   period:marketIntelPeriod,ready
+ });
+}
 function heatMapVerifiedCurrentRows(){
   // The archive supplies measured within-era percentage changes, while the
   // CURRENT Player Values ranking decides each rank-band membership.
   // Never turn missing/null percentage evidence into artificial zeroes.
-  return liveMarketRowsV97(intelRange()?.player_changes||[])
+  return liveMarketRowsV97(currentMarketIntelligenceRowsV111())
    .filter(r=>finiteMarketNumber(r.pct)!=null&&Number.isFinite(Number(r.overall)));
 }
 function marketModelVerifiedV110(){return intelRange()?.model_continuity_verified===true}
@@ -1791,8 +1839,11 @@ function renderMarketIntelligence(){
 function buildVerifiedLiveMoversV109(m,period,liveRows,verifiedModel,nowMs=Date.now()){
   const days=period==='ALL'?null:period==='1Y'?365:Number(String(period).replace('D',''));
   const latestMs=Date.parse(m?.latest||'');
-  if(!m?.valuation_model||!verifiedModel||m.valuation_model!==verifiedModel||
-     !Number.isFinite(latestMs)||latestMs>nowMs||
+  // Current Player Values are authoritative even when the historical model
+  // changed. A model change is a real observed value change, NOT missing data.
+  // Keep it clearly labelled as live, unarchived movement rather than claiming
+  // algorithm-stable price appreciation.
+  if(!Number.isFinite(latestMs)||latestMs>nowMs||
      (days!=null&&(!Number.isFinite(days)||nowMs-latestMs>days*86400000))||
      !Array.isArray(m.marketRows)||!Array.isArray(liveRows))return null;
   const archive=m.periods?.[period]||{};
@@ -1882,7 +1933,7 @@ function renderMarketDashboard(){
     <button type="button" data-vh-market-jump="vhMarketReversals">Reversals</button>
     <button type="button" data-vh-market-jump="vhMarketVolatility">Volatility</button>
   </div>
-  <section class="vh-market-section" id="vhMarketMovers"><div class="vh-market-section-title"><h3>Market Movers</h3><p>${liveMovers?'Verified live changes added to archived same-model movement; not yet recorded.':unknownModelMovement?'Recorded changes through '+dateTime(m.latest)+'; model continuity unverified, so changes may include repricing.':'Archived observations through '+dateTime(m.latest)+'. New movement requires a successful scheduled snapshot.'}</p></div>
+  <section class="vh-market-section" id="vhMarketMovers"><div class="vh-market-section-title"><h3>Market Movers</h3><p>${liveMovers?'Current Player Values changes are included; model repricing may be part of these movements. Live changes are not yet recorded.':unknownModelMovement?'Recorded changes through '+dateTime(m.latest)+'; model continuity unverified, so changes may include repricing.':'Archived observations through '+dateTime(m.latest)+'. New movement requires a successful scheduled snapshot.'}</p></div>
     <div class="vh-grid-2">
       <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>${moverTitle('Biggest Value Risers',vr,m)}</h3><div class="vh-sub">Largest increases in finished player value</div></div>${moverCardActions('market','valueRisers',vr)}</div>${moverRows(applyMoverPool(vpR.valueRisers,'market','valueRisers'))}</div>
       <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>${moverTitle('Biggest Value Fallers',vf,m)}</h3><div class="vh-sub">Largest decreases in finished player value</div></div>${moverCardActions('market','valueFallers',vf)}</div>${moverRows(applyMoverPool(vpF.valueFallers,'market','valueFallers'))}</div>
@@ -2444,11 +2495,22 @@ function renderPlayerProfile(id,allPts,period='ALL'){
 // startup trade search remains outside these handlers and always runs.
 function updateLiveConsumersV102(){
  invalidateLiveMarketV97();
- if(currentView==='market'&&marketCache)renderMarketDashboard();
+ if(currentView==='market'){
+   if(marketCache)renderMarketDashboard();
+   loadMarket(true).catch(()=>{});
+ }
  else if(currentView==='fullMarket'&&marketCache)renderMarketTable();
  else if(currentView==='team'&&trackedTeamId)loadTrackedTeam().catch(()=>{});
  else if(currentView==='playerHub'&&playerHistoryTeamId&&marketCache)renderPlayerHistoryTeamRoster();
  else if(currentView==='player'&&currentPlayerId)loadPlayer(currentPlayerId).catch(()=>{});
+}
+let lastVisibleMarketRefreshV111=0;
+function refreshVisibleMarketV111(){
+ if(currentView!=='market'||document.hidden||document.getElementById('valueHistory')?.hidden)return;
+ const now=Date.now();
+ if(now-lastVisibleMarketRefreshV111<1500)return;
+ lastVisibleMarketRefreshV111=now;
+ loadMarket(true).catch(()=>{});
 }
 function boot(){addShell();searchTradesOnSiteOpen();window.addEventListener('fll:valuation-refreshed',()=>{
  updateLiveConsumersV102()
@@ -2457,7 +2519,7 @@ function boot(){addShell();searchTradesOnSiteOpen();window.addEventListener('fll
    updateLiveConsumersV102();
    refreshTradeHistoryCurrentValuesV533();
  });
- setInterval(refreshVisibleTradeHistory,TRADE_HISTORY_REFRESH_MS);window.addEventListener('focus',refreshVisibleTradeHistory);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshVisibleTradeHistory()});scheduleSnapshot(0,snapshotSourceFromUrl());document.getElementById('updateBtn')?.addEventListener('click',()=>{invalidateLiveMarketV97();marketCache=null;teamNetCache.clear();scheduleSnapshot(1000,'manual-update');if(currentPlayerId)setTimeout(()=>loadPlayer(currentPlayerId),1800)},{passive:true})}
+ setInterval(refreshVisibleTradeHistory,TRADE_HISTORY_REFRESH_MS);window.addEventListener('focus',()=>{refreshVisibleTradeHistory();refreshVisibleMarketV111()});document.addEventListener('visibilitychange',()=>{if(!document.hidden){refreshVisibleTradeHistory();refreshVisibleMarketV111()}});scheduleSnapshot(0,snapshotSourceFromUrl());document.getElementById('updateBtn')?.addEventListener('click',()=>{invalidateLiveMarketV97();marketCache=null;teamNetCache.clear();scheduleSnapshot(1000,'manual-update');if(currentPlayerId)setTimeout(()=>loadPlayer(currentPlayerId),1800)},{passive:true})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 window.valueHistoryV331={liveMarketRowV97,liveMarketRowsV97,liveFullMarketRowsV97,invalidateLiveMarketV97,currentRows,currentPickRows,currentTeamRows,currentEvaluatorValue,hindsightValue,recordSnapshot,historyFetch,marketFetch,marketData:(force=false)=>ensureMarketCache(!!force),livePlayerMeta,periodPoints,openPlayer:(id)=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>selectPlayer(String(id)),0)},openPlayerHistory:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(renderPlayerHistoryHub,0)},openFullMarket:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>loadFullMarketHistory(),0)}};
 })();

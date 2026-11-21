@@ -31,6 +31,7 @@ export default async function publishInquirerInBackground(req){
  const context=globalThis.Netlify?.env?.get?.('CONTEXT')||process.env.CONTEXT||'';
  if(context==='deploy-preview'||context==='branch-deploy'||
     /^deploy-preview-/.test(host)||
+    (host.endsWith('--animated-dasik-3de74a.netlify.app')&&host!=='animated-dasik-3de74a.netlify.app')||
     (host.endsWith('--transcendent-manatee-2f0123.netlify.app')&&host!=='transcendent-manatee-2f0123.netlify.app')||
     (host.endsWith('--gleaming-dodol-8dbc4a.netlify.app')&&host!=='gleaming-dodol-8dbc4a.netlify.app')||
     (host.endsWith('--precious-dango-fb4633.netlify.app')&&host!=='precious-dango-fb4633.netlify.app')){
@@ -38,7 +39,9 @@ export default async function publishInquirerInBackground(req){
   return new Response('Preview deployment cannot publish',{status:403});
  }
  const isCurrentSite=siteId==='fa33dfe4-8293-441e-8da0-25cc66fc984c'||host==='precious-dango-fb4633.netlify.app';
- const isNewestSite=isCurrentSite||siteId==='3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f'||
+ const isNewestSite=isCurrentSite||siteId==='a516be3b-6c65-4f54-a9fb-23c5361bf3d2'||
+  host==='animated-dasik-3de74a.netlify.app'||
+  siteId==='3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f'||
   host==='gleaming-dodol-8dbc4a.netlify.app';
  const replacement=isNewestSite||siteId==='8776d155-bc7b-4dcd-bafc-3d70d3d51800'||
   host==='transcendent-manatee-2f0123.netlify.app';
@@ -135,6 +138,17 @@ export default async function publishInquirerInBackground(req){
    console.info('inquirer-background-awards',JSON.stringify({records:awards?.records?.length||0,season:report.season,week:report.week}));
   }catch(error){awardsError=String(error?.message||error);console.error('inquirer-background-awards-failed',error)}
  }else console.info('inquirer-background-awards-held','No fully published newspaper; awards were not backfilled.');
+ // Editorial warning != editorial approval or newsroom success. Record the
+ // quality debt even for an otherwise complete, successfully published week.
+ // Do not read from an unavailable draft or manufacture a warning for history.
+ const minorRepetitionWarning=report?.editorial_generation?.quality_metrics?.minor_repetition_warning||null;
+ if(minorRepetitionWarning?.requires_improvement===true)
+  console.warn('inquirer-published-editorial-quality-warning',JSON.stringify({
+   season:report?.season,week:report?.week,
+   kind:'minor-nonconsecutive-repetition',
+   sentence_count:minorRepetitionWarning.sentence_count,
+   team_count:minorRepetitionWarning.team_count
+  }));
  const completed=!reportError&&!awardsError&&!report?.review_required&&hasCompleteWeekFeaturePackage(report,awards);
  await statusStore.setJSON('inquirer/publication-status.json',{
   state:reportError||awardsError?'error':report?.review_required?'editorial-hold':completed?'completed':'waiting',
@@ -143,6 +157,11 @@ export default async function publishInquirerInBackground(req){
   available:completed,newsroom_available:!!report?.available,review_required:!!report?.review_required,
   reason:report?.reason||null,editorial_findings:report?.editorial_findings??null,
   editorial_revision:FORWARD_EDITORIAL_REVISION,
+  editorial_warnings:minorRepetitionWarning?.requires_improvement===true?[{
+   id:'minor-nonconsecutive-repetition',severity:'warning',requires_improvement:true,
+   sentence_count:minorRepetitionWarning.sentence_count,
+   team_count:minorRepetitionWarning.team_count
+  }]:[],
   weekly_awards_records:awards?.records?.length??null,
   error:reportError,award_error:awardsError
  }).catch(error=>console.error('inquirer-status-final',error));

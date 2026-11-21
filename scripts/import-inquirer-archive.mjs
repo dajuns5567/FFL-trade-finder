@@ -1,19 +1,23 @@
 #!/usr/bin/env node
 // Explicit, local-only import of an ORIGINAL approved newspaper export.
 // Does not contact Netlify, generate stories, or write production storage.
-// Usage: node scripts/import-inquirer-archive.mjs <original-edition.json> <archive-root>
+// Usage: node scripts/import-inquirer-archive.mjs <original-edition.json> <archive-root> <owner-approved-sha256>
 import {readFile,writeFile,mkdir,stat} from 'node:fs/promises';
 import {dirname,join,resolve} from 'node:path';
 import {createHash} from 'node:crypto';
 import {inspectCanonicalArchive} from '../netlify/functions/lib/inquirer-legacy-history.mjs';
 
-const [sourceFile,archiveDir]=process.argv.slice(2);
-if(!sourceFile||!archiveDir)throw Error('Require the original newspaper JSON and the GitHub archive root');
+const [sourceFile,archiveDir,expectedDigest]=process.argv.slice(2);
+if(!sourceFile||!archiveDir||!/^[a-f0-9]{64}$/i.test(expectedDigest||''))
+ throw Error('Require original JSON, archive root, and independently approved 64-hex SHA-256 digest');
 const root=resolve(archiveDir),manifestFile=join(root,'manifest.json');
 const hash=raw=>createHash('sha256').update(raw,'utf8').digest('hex');
 const manifest=JSON.parse(await readFile(manifestFile,'utf8'));
 if(manifest?.schema_version!==1||!Array.isArray(manifest.entries))throw Error('Invalid archive manifest');
-const originalRaw=await readFile(resolve(sourceFile),'utf8'),edition=JSON.parse(originalRaw);
+const originalRaw=await readFile(resolve(sourceFile),'utf8');
+if(hash(originalRaw)!==expectedDigest.toLowerCase())
+ throw Error('Original source bytes do not match owner-approved SHA-256; refusing import');
+const edition=JSON.parse(originalRaw);
 const season=Number(edition?.season),week=Number(edition?.week);
 if(!Number.isInteger(season)||season<2026||season>2100||!Number.isInteger(week)||week<1||week>18)
  throw Error('Original newspaper season or week is invalid');

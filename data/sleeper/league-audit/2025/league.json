@@ -70,6 +70,7 @@
   },
   "avatar": "9cfafd8709c8448778dc3733f26f3040",
   "company_id": null,
+  "league_id": "1180251688940855296",
   "shard": 183,
   "season": "2025",
   "season_type": "regular",
@@ -228,9 +229,8 @@
   "last_message_text_map": null,
   "last_message_time": 1772813998989,
   "last_pinned_message_id": "1314798149453225984",
-  "draft_id": "1180251688940855297",
   "last_read_id": null,
-  "league_id": "1180251688940855296",
+  "draft_id": "1180251688940855297",
   "previous_league_id": "1113982138841436160",
   "roster_positions": [
     "RB",

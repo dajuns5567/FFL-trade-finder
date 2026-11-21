@@ -47,8 +47,8 @@ test('replacement-site publisher still checks verified original Weeks 3–6 plus
  const workerChecks=publisher.slice(workerStart,workerStart+2100);
  assert.match(workerChecks,/verifiedNewSiteCutoverHistory/);
  assert.match(workerChecks,/if\(!checked\.ready\|\|!autoCutover\.ready\)/);
- assert(worker.indexOf("replacement&&enabled!=='true'")<worker.indexOf("const statusStore=getStore("));
- assert(worker.indexOf('if(isNewestSite){')<worker.indexOf("await statusStore.setJSON('inquirer/publication-status.json'"));
+ assert(publisher.indexOf("replacement&&enabled!=='true'")<publisher.indexOf("const statusStore=getStore("));
+ assert(publisher.indexOf('if(isNewestSite){')<publisher.indexOf("await statusStore.setJSON('inquirer/publication-status.json'"));
 });
 test('current site identity does not inherit legacy site-only Week 7–8 cutover worker',()=>{
  assert.match(scheduler,/const isCurrentSite=site==='precious-dango-fb4633'/);

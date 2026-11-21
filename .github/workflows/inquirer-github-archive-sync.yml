@@ -3,6 +3,12 @@ on:
   schedule:
     - cron: '17 * * * *'
   workflow_dispatch:
+    inputs:
+      recover_retired_public_archive:
+        description: 'Recover only canonical old-site publicly locked editions from Weeks 3–10'
+        type: boolean
+        required: false
+        default: false
 permissions:
   contents: write
 concurrency:
@@ -28,7 +34,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Recover original public editions from retired site (never regenerate)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.recover_retired_public_archive }}
+        run: node source/scripts/recover-inquirer-public-archive.mjs archive/inquirer-archive
       - name: Copy only verified, indexed and awarded newspapers
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.recover_retired_public_archive }}
         env:
           INQUIRER_PUBLICATION_ORIGIN: ${{ vars.INQUIRER_PUBLICATION_ORIGIN }}
         run: node source/scripts/sync-inquirer-github-archive.mjs archive/inquirer-archive

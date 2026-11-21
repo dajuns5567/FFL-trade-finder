@@ -117,3 +117,10 @@ test('canonical site refresh invalidates Daily support caches and rerenders ever
  assert.match(source,/render\(currentView,selectedManagerId\)/);
  assert.doesNotMatch(source,/!\['hall','managers','career','awards'\]\.includes\(currentView\)/);
 });
+
+test('archive week selector defaults to completed pending week without treating it as published',()=>{
+ assert.match(source,/pendingWeek=!inquirerPreviewMode&&w\?\.available===false/);
+ assert.match(source,/selectedWeek=pendingWeek\?requestedWeek/);
+ assert.match(source,/Awaiting publication<\/option>/);
+ assert.match(source,/selected disabled/);
+});

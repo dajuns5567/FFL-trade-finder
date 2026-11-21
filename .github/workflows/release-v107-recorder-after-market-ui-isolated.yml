@@ -20,7 +20,7 @@ permissions:
   contents: read
 jobs:
   history-recorder-only:
-    if: github.base_ref == 'release/value-history-ui-v108-isolated-draft'
+    if: github.base_ref == 'main'
     runs-on: ubuntu-24.04
     timeout-minutes: 12
     steps:

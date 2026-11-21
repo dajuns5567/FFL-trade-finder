@@ -21,7 +21,7 @@ export function hasCompleteWeekFeaturePackage(report,awards){
   Number(record.newsroom_editorial_revision)>=39&&record.newsroom_engine==='v31-forward';
 }
 
-export default async function publishInquirerInBackground(req){
+export default async function publishInquirerInBackground(req,netlifyContext){
  // Apply the replacement site's explicit publication kill switch at the
  // worker itself, not only at the scheduler. A direct queued invocation must
  // never bypass the hold and regenerate an unreviewed production newspaper.
@@ -29,7 +29,7 @@ export default async function publishInquirerInBackground(req){
  const host=new URL(req.url).hostname;
  // Deploy previews and branch deploys can inspect draft copy, never publish.
  // Keep this independent of environment flags and queue credentials.
- const context=globalThis.Netlify?.env?.get?.('CONTEXT')||process.env.CONTEXT||'';
+ const context=netlifyContext?.deploy?.context||globalThis.Netlify?.env?.get?.('CONTEXT')||process.env.CONTEXT||'';
  if(context==='deploy-preview'||context==='branch-deploy'||
     /^deploy-preview-/.test(host)||
     (host.endsWith('--animated-dasik-3de74a.netlify.app')&&host!=='animated-dasik-3de74a.netlify.app')||

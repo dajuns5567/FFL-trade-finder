@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {originalInquirerRestoreGate,ORIGINAL_INQUIRER_RESTORE_SITE_ID} from '../netlify/functions/lib/inquirer-archive-restore-runtime.mjs';
+import {originalInquirerRestoreGate,resolvedInquirerOwnerAuthorization,ORIGINAL_INQUIRER_RESTORE_SITE_ID} from '../netlify/functions/lib/inquirer-archive-restore-runtime.mjs';
 import restoreHandler from '../netlify/functions/inquirer-original-archive-restore-background.mjs';
 
 const source=path=>readFileSync(new URL(path,import.meta.url),'utf8');
@@ -68,4 +68,45 @@ test('original restore only changes canonical 3-9 keys, archive index and awards
  assert.doesNotMatch(restoration,/setJSON\('inquirer\/publication-status\.json'/);
  assert.doesNotMatch(restoration,/setJSON\('broadcasts\/2026\/week-10\.json'/);
  assert.match(restoration,/original_weeks_unchanged:true,unpublished_week_10_excluded:true/);
+});
+
+test('owner-approved exact production release works without Netlify env-edit permission',()=>{
+ const source=resolvedInquirerOwnerAuthorization({
+  siteId:ORIGINAL_INQUIRER_RESTORE_SITE_ID,
+  context:'production',host:'animated-dasik-3de74a.netlify.app'
+ });
+ assert.equal(source.enabled,'true');
+ assert.equal(source.approved,'true');
+ assert.equal(source.source_authorized,true);
+ assert.equal(originalInquirerRestoreGate({
+  siteId:ORIGINAL_INQUIRER_RESTORE_SITE_ID,
+  context:'production',host:'animated-dasik-3de74a.netlify.app',
+  enabled:source.enabled,approved:source.approved
+ }).allowed,true);
+ const emergency=resolvedInquirerOwnerAuthorization({
+  siteId:ORIGINAL_INQUIRER_RESTORE_SITE_ID,context:'production',
+  host:'animated-dasik-3de74a.netlify.app',
+  emergencyDisabled:'true'
+ });
+ assert.equal(emergency.enabled,'false');
+ assert.equal(emergency.source_authorized,false);
+ for(const changed of [
+  {context:'deploy-preview'},{context:'branch-deploy'},
+  {siteId:'wrong-site'},
+  {host:'deploy-preview-570--animated-dasik-3de74a.netlify.app'},
+  {host:'branch--animated-dasik-3de74a.netlify.app'}
+ ]){
+  const flags=resolvedInquirerOwnerAuthorization({
+   siteId:ORIGINAL_INQUIRER_RESTORE_SITE_ID,context:'production',
+   host:'animated-dasik-3de74a.netlify.app',...changed
+  });
+  assert.notEqual(flags.source_authorized,true);
+ }
+});
+test('source-only authorization still relies on private queue credential and cannot bypass independent publisher checks',()=>{
+ assert.match(scheduler,/bootstrap:ownerAuthorization\.source_authorized/);
+ assert.match(scheduler,/bootstrap:isCurrentSite\|\|ownerAuthorization\.source_authorized/);
+ assert.match(background,/store:isCurrentSite\|\|ownerAuthorization\.source_authorized\?statusStore:null/);
+ assert.match(restoration,/inquirerQueueKeyMatches\(expected,req.headers.get\('x-fleeced-queue-key'\)\)/);
+ assert.match(background,/originalMarker\?\.state!=='completed'/);
 });

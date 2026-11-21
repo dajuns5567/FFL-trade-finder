@@ -65,7 +65,16 @@ if(document.readyState==='complete')void verifyLiveValuationModelV95();
 // Experimental deploy previews may read archival history but must never
 // persist their branch-specific ranks into the canonical shared timeline.
 const isValueHistoryDeployPreview=()=>/^(?:deploy-preview-\d+|[a-f0-9]{24})--[a-z0-9-]+\.netlify\.app$/i.test(location.hostname);
-let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,marketInsightsCache=null,marketSignalCache=null,marketInsightsPending=null,marketSignalsPending=null,marketIntelPeriod='7D',marketVolatilityPool='ALL',currentPlayerId=null,trackedTeamId=null,playerHistoryTeamId=null,currentView='market',marketSort={key:'value',dir:-1},teamNetSort={key:'value',dir:-1},teamAttributionPeriod='7D',tradeHistoryCache=null,tradeHistoryCacheAt=0,tradeTeamFilter='',tradeYearFilter='',tradeMonthFilter='',marketPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D'},teamPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D',posRankRisers:'30D',posRankFallers:'30D'},marketPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL'},teamPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL',posRankRisers:'ALL',posRankFallers:'ALL'},playerScoringCache=new Map(),playerScoringPending=new Map(),teamNetCache=new Map(),tradeDetailState=new Map();
+let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,marketInsightsCache=null,marketSignalCache=null,marketInsightsPending=null,marketSignalsPending=null,marketIntelPeriod='7D',marketVolatilityPool='ALL',currentPlayerId=null,trackedTeamId=null,playerHistoryTeamId=null,currentView='market',marketSort={key:'value',dir:-1},teamNetSort={key:'value',dir:-1},teamAttributionPeriod='7D',tradeHistoryCache=null,tradeHistoryCacheAt=0,tradeTeamFilter='',tradeYearFilter='',tradeMonthFilter='',marketPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'7D',rankFallers:'7D'},teamPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D',posRankRisers:'30D',posRankFallers:'30D'},marketPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL'},teamPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL',posRankRisers:'ALL',posRankFallers:'ALL'},playerScoringCache=new Map(),playerScoringPending=new Map(),teamNetCache=new Map(),tradeDetailState=new Map();
+// Market Intelligence and all Market Movers cards represent one selected
+// historical period. Track My Team deliberately keeps independent selectors.
+function setMarketDashboardPeriodV116(period){
+ const allowed=['1D','7D','30D','90D','1Y','ALL'];
+ if(!allowed.includes(String(period)))return false;
+ marketIntelPeriod=period;
+ for(const key of Object.keys(marketPeriods))marketPeriods[key]=period;
+ return true;
+}
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 const tv=()=>window.tradeValueNormalizationV139||window.tradeValueNormalizationV130||{};
@@ -793,7 +802,7 @@ function handleContentClick(e){
     return;
   }
   const jump=e.target.closest('[data-vh-market-jump]');if(jump){document.getElementById(jump.dataset.vhMarketJump||'')?.scrollIntoView({behavior:'smooth',block:'start'});return}
-  const intelPeriod=e.target.closest('[data-vh-intel-period]');if(intelPeriod){marketIntelPeriod=intelPeriod.dataset.vhIntelPeriod||'7D';renderMarketIntelligence();return}
+  const intelPeriod=e.target.closest('[data-vh-intel-period]');if(intelPeriod){if(setMarketDashboardPeriodV116(intelPeriod.dataset.vhIntelPeriod))renderMarketDashboard();return}
   const heat=e.target.closest('[data-vh-heat-pos]');if(heat){openHeatMapModal(heat.dataset.vhHeatPos,heat.dataset.vhHeatMin,heat.dataset.vhHeatMax);return}
   const intelAll=e.target.closest('[data-vh-intel-view-all]');if(intelAll){openMarketIntelModal(intelAll.dataset.vhIntelViewAll||'');return}
   const volatilityPool=e.target.closest('[data-vh-volatility-pool]');if(volatilityPool){marketVolatilityPool=volatilityPool.dataset.vhVolatilityPool||'ALL';renderMarketIntelligence();return}
@@ -807,7 +816,7 @@ function handleContentClick(e){
   const teamNetSortBtn=e.target.closest('[data-vh-team-net-sort]');if(teamNetSortBtn){const key=teamNetSortBtn.dataset.vhTeamNetSort;if(teamNetSort.key===key)teamNetSort.dir*=-1;else teamNetSort={key,dir:key==='name'?1:-1};openTeamNetModal();return}
   const attr=e.target.closest('[data-vh-team-attribution]');if(attr&&trackedTeamId){teamAttributionPeriod=attr.dataset.vhTeamAttribution;const ids=(state.allAssets||[]).filter(a=>a?.type==='player'&&String(a.owner)===String(trackedTeamId)).map(a=>String(a.id)).sort(),key=teamNetCacheKey(ids,trackedTeamId);renderTrackedTeamTable(teamNetCache.get(key)||{points:[],player_count:ids.length});return}
   const period=e.target.closest('[data-vh-period]');if(period&&currentPlayerId){const box=document.getElementById('vhProfileData');const pts=box?JSON.parse(box.dataset.points||'[]'):[];renderPlayerProfile(currentPlayerId,pts,period.dataset.vhPeriod);return}
-  const mp=e.target.closest('[data-vh-market-period]');if(mp&&marketCache){marketPeriods[mp.dataset.vhCategory]=mp.dataset.vhMarketPeriod;renderMarketDashboard();return}
+  const mp=e.target.closest('[data-vh-market-period]');if(mp&&marketCache){if(setMarketDashboardPeriodV116(mp.dataset.vhMarketPeriod))renderMarketDashboard();return}
   const tp=e.target.closest('[data-vh-team-period]');if(tp&&marketCache){teamPeriods[tp.dataset.vhCategory]=tp.dataset.vhTeamPeriod;loadTrackedTeam();return}
   const mr=e.target.closest('[data-vh-market-pool]');if(mr&&marketCache){marketPools[mr.dataset.vhCategory]=mr.dataset.vhMarketPool;renderMarketDashboard();return}
   const tr=e.target.closest('[data-vh-team-pool]');if(tr&&marketCache){teamPools[tr.dataset.vhCategory]=tr.dataset.vhTeamPool;loadTrackedTeam();return}
@@ -1523,12 +1532,13 @@ function intelOverallDeltaKey(period=marketIntelPeriod){return({'1D':'overallDel
 function intelPeriodLabel(period=marketIntelPeriod){
   const raw=periodLabel(period,marketCache||{});return raw==='Available History'?period+' / available history':raw;
 }
-function intelRange(period=marketIntelPeriod){return marketInsightsCache?.ranges?.[period]||marketInsightsCache?.ranges?.ALL||marketInsightsCache||null}
+function intelRange(period=marketIntelPeriod){return marketInsightsCache?.ranges?.[period]||null}
 function verifiedValueMove(id,period=marketIntelPeriod){
   const key=String(id),range=intelRange(period),hit=(range?.player_changes||[]).find(r=>String(r.id)===key);
   if(hit&&finiteMarketNumber(hit.delta)!=null)return{delta:Number(hit.delta),pct:finiteMarketNumber(hit.pct),from_value:finiteMarketNumber(hit.from_value),from_t:hit.from_t||null,through_t:hit.through_t||null,overall_delta:finiteMarketNumber(hit.overall_delta),pos_rank_delta:finiteMarketNumber(hit.pos_rank_delta),source:'verified-window'};
-  const row=(marketCache?.marketRows||[]).find(r=>String(r.id)===key),delta=finiteMarketNumber(row?.[intelDeltaKey(period)]);
-  return delta==null?null:{delta,pct:marketPctChange(row,intelDeltaKey(period)),overall_delta:finiteMarketNumber(row?.[intelOverallDeltaKey(period)]),source:'summary-baseline'};
+  // Do not silently substitute ALL-history or a secondary summary baseline
+  // for an unmeasured player/window. Missing evidence must render N/A.
+  return null;
 }
 function signalPerformanceDelta(signal){
   const e=signal?.evidence||{},recent=finiteMarketNumber(e.recent_form_delta);
@@ -1703,7 +1713,9 @@ function volatilityMarkup(){
     rows=volatilityPoolRows(allPlayerRows).slice().sort((a,b)=>Number(b.range_pct||0)-Number(a.range_pct||0)||Number(b.range||0)-Number(a.range||0)).slice(0,12),
     overall=data?.market_volatility||null,posRows=(data?.position_volatility||[]).filter(r=>r?.available);
   if(!marketInsightsCache)return'<div class="vh-card"><div class="vh-empty">Measuring tracked value ranges…</div></div>';
-  const overallCard=overall?.available?`<div class="vh-card"><h3>Overall Market Volatility</h3><div class="vh-sub">Top-300 market basket • ${esc(intelPeriodLabel())} • baseline index 100</div><div class="vh-volatility-stat"><span><b>Index range</b><small>${Number(overall.low_index).toFixed(1)} → ${Number(overall.high_index).toFixed(1)}</small></span><b>${Number(overall.range_pct).toFixed(2)}%</b></div><div class="vh-volatility-stat"><span><b>Average snapshot move</b><small>${overall.observations} verified snapshots</small></span><b>${Number(overall.avg_step_pct).toFixed(2)}%</b></div></div>`:'<div class="vh-card"><h3>Overall Market Volatility</h3><div class="vh-empty">Not enough snapshots in this window.</div></div>',
+  const recorded= data?.tracking_since&&data?.through?
+    ' • observed '+esc(dateShort(data.tracking_since))+'–'+esc(dateShort(data.through)):'';
+  const overallCard=overall?.available?`<div class="vh-card"><h3>Overall Market Volatility</h3><div class="vh-sub">Top-300 market basket • ${esc(intelPeriodLabel())}${recorded} • baseline index 100</div><div class="vh-volatility-stat"><span><b>Index range</b><small>${Number(overall.low_index).toFixed(1)} → ${Number(overall.high_index).toFixed(1)}</small></span><b>${Number(overall.range_pct).toFixed(2)}%</b></div><div class="vh-volatility-stat"><span><b>Average snapshot move</b><small>${overall.observations} verified snapshots</small></span><b>${Number(overall.avg_step_pct).toFixed(2)}%</b></div></div>`:'<div class="vh-card"><h3>Overall Market Volatility</h3><div class="vh-empty">Not enough snapshots in this window.</div></div>',
     positionCard=`<div class="vh-card"><h3>Positional Market Volatility</h3><div class="vh-sub">Top-24 positional baskets • high-to-low index range</div><div class="vh-intel-list">${posRows.length?posRows.map(r=>`<div class="vh-volatility-stat"><span><b>${esc(r.pos)}</b><small>Avg snapshot move ${Number(r.avg_step_pct).toFixed(2)}% • ${r.constituents||0} players</small></span><b>${Number(r.range_pct).toFixed(2)}%</b></div>`).join(''):'<div class="vh-empty">Not enough positional snapshots yet.</div>'}</div></div>`,
     segmentLabel=marketVolatilityPool==='ALL'?'All active NFL players':`Current overall Top ${marketVolatilityPool}`,
     playerCard=`<div class="vh-card"><div class="vh-intel-card-title"><h3>Player Market Volatility</h3>${intelViewAllButton('volatility')}</div><div class="vh-sub">Largest verified high-to-low value ranges for ${esc(segmentLabel)} inside ${esc(intelPeriodLabel())}. Segment is based on current overall Fleeced rank.</div>${volatilityPoolControls()}<div class="vh-intel-list">${rows.length?rows.map(r=>intelPlayerRow(r.id,`low ${fmt(r.low)} • high ${fmt(r.high)} • ${r.observations} observations`,'Tracked range',`${Number(r.range_pct).toFixed(1)}%`,'')).join(''):'<div class="vh-empty">Not enough clean player history inside this segment and window.</div>'}</div></div>`;
@@ -1773,7 +1785,7 @@ function opportunityMarkup(){
   <div class="vh-card"><div class="vh-intel-card-title"><h3>Sell High Watch</h3>${intelViewAllButton('sell')}</div><div class="vh-sub">Higher-priced positional assets where recent Fleeced momentum is weakening. Temporary cold form alone does not establish overvaluation.</div><div class="vh-intel-list">${list('sell')}</div><div class="vh-opportunity-note">Requires negative completed-week signal/cold momentum, falling recent PPG, strong/established confidence, and inside the top 40% of positional market value. No player valuation is changed.</div></div></div>`;
 }
 function categoryLeadersMarkup(){
-  const m=marketCache||{},rows=m.marketRows||[],p=m.periods?.[marketIntelPeriod]||{},signals=marketSignalCache?.signals||[],range=intelRange();
+  const rows=currentRows(),signals=marketSignalCache?.signals||[],range=intelRange();
   if(!rows.length)return'<div class="vh-card"><div class="vh-empty">Market leaders unavailable.</div></div>';
   const top=rows.slice().sort((a,b)=>Number(b.value)-Number(a.value)),verifiedChanges=(range?.player_changes||[]).slice(),cards=[];
   const add=(label,id,detail)=>{if(!id){cards.push(`<div class="vh-category-card vh-empty-card"><small>${esc(label)}</small><b>No qualified player</b><span>Waiting for enough evidence in this window.</span></div>`);return}

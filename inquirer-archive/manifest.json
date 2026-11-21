@@ -2,5 +2,22 @@
   "schema_version": 1,
   "season": 2026,
   "source": "verified-published-only",
-  "entries": []
+  "entries": [
+    {
+      "season": 2026,
+      "week": 3,
+      "path": "2026/week-03.json",
+      "sha256": "8f2631fd4f83b556daa29d78ab63e92b87a4914e7875ed6799e852397e86715c",
+      "provenance": "original-user-library-edition",
+      "original_git_blob_sha": "44de3837a1dee21b96699d80702c49217471efa6"
+    },
+    {
+      "season": 2026,
+      "week": 4,
+      "path": "2026/week-04.json",
+      "sha256": "038248bef97fd7bfd2bdece6df9c3a538cac9c29ae1bb34487458927c129022c",
+      "provenance": "original-user-library-edition",
+      "original_git_blob_sha": "d69db3f5c9ecc7c79787f66ffc8830e7bf71f44f"
+    }
+  ]
 }

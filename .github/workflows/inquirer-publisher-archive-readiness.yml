@@ -1,0 +1,25 @@
+name: Inquirer publisher archive continuity preflight
+on:
+  push:
+    branches:
+      - fix/inquirer-publisher-archive-readiness-v1
+    paths:
+      - 'netlify/functions/lib/inquirer-github-archive.mjs'
+      - 'netlify/functions/lib/inquirer-publisher-archive-readiness.mjs'
+      - 'tests/inquirer-github-archive-reader.test.mjs'
+      - 'tests/inquirer-publisher-archive-readiness.test.mjs'
+      - '.github/workflows/inquirer-publisher-archive-readiness.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit-continuity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check immutable source and read-only publisher audit
+        run: node --test tests/inquirer-github-archive-reader.test.mjs tests/inquirer-publisher-archive-readiness.test.mjs

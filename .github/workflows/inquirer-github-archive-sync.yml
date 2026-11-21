@@ -1,0 +1,46 @@
+name: Fleeced Inquirer published archive backup (GitHub only)
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: inquirer-github-published-archive
+  cancel-in-progress: false
+jobs:
+  archive:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Checkout application verification code
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: source
+          persist-credentials: false
+      - name: Checkout append-only Inquirer archive branch
+        uses: actions/checkout@v4
+        with:
+          ref: inquirer-archive
+          path: archive
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Copy only verified, indexed and awarded newspapers
+        run: node source/scripts/sync-inquirer-github-archive.mjs archive/inquirer-archive
+      - name: Commit new immutable archival files only
+        working-directory: archive
+        shell: bash
+        run: |
+          if [[ -z "$(git status --porcelain -- inquirer-archive)" ]]; then
+            echo "No newly published verified newspaper editions"
+            exit 0
+          fi
+          git config user.name "ffl-inquirer-archive-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- inquirer-archive
+          git diff --cached --name-only | grep -v '^inquirer-archive/' && exit 1 || true
+          git commit -m "archive(inquirer): preserve newly verified published newspapers"
+          git push origin HEAD:inquirer-archive

@@ -87,7 +87,7 @@ test('the actual team UI clearly explains unbracketed trade state and displays a
 });
 
 test('visible Track My Team re-fetches the live trade feed and invalidates stale market/snapshot caches',()=>{
- assert.match(ui,/const visibleTeam=currentView==='team'&&!!trackedTeamId&&!document\.hidden/);
+ assert.match(ui,/const visibleTeam=currentView==='team'&&!!trackedTeamId&&!document\.hidden&&document\.getElementById\('vhTrackedTeam'\)\?\.offsetParent!==null/);
  assert.match(ui,/if\(visibleTeam\)\{marketCache=null;teamNetCache\.clear\(\);loadTrackedTeam\(\)/);
  assert.match(ui,/window\.addEventListener\('focus',refreshVisibleTradeHistory\)/);
  assert.match(ui,/setInterval\(refreshVisibleTradeHistory,TRADE_HISTORY_REFRESH_MS\)/);
@@ -106,6 +106,7 @@ test('visible Market Dashboard and full-market history re-fetch after five minut
  assert.match(ui,/let marketHistoryCacheUpdatedAtV112=0/);
  assert.match(ui,/marketHistoryCacheUpdatedAtV112=Date\.now\(\)/);
  assert.match(ui,/function refreshVisibleMarketHistoryV112\(\)/);
+ assert.match(ui,/document\.getElementById\('vhContent'\)\?\.offsetParent===null/);
  assert.match(ui,/currentView==='market'\)loadMarket\(true\)/);
  assert.match(ui,/currentView==='fullMarket'\)loadFullMarketHistory\(true\)/);
  assert.match(ui,/setInterval\(refreshVisibleMarketHistoryV112,TRADE_HISTORY_REFRESH_MS\)/);

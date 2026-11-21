@@ -91,10 +91,13 @@ test('first versioned snapshot begins a new market era, without deleting histori
  assert.deepEqual(Array.from(pts,x=>x.valuation_model),[null,null,model]);
 });
 
-test('market archive sampling retains latest consecutive snapshots and UI explains model-era scarcity',()=>{
- // The market index samples deep history sparsely for cost, but must include
- // the consecutive recent observations that establish real new-model moves.
- assert.match(server,/wanted\.push\(\.\.\.timed\.slice\(-12\)\)/);
+test('unified full market archive includes every indexed snapshot and UI explains model-era scarcity',()=>{
+ // Both main market and intelligence must consume the exact same
+ // complete archive read, not separate sparse/complete source populations.
+ assert.match(server,/async function getMarketSourceSnapshots\(s\)/);
+ assert.match(server,/async function getMarketSummary\(s\)\{\s*const source=await getMarketSourceSnapshots\(s\)/);
+ assert.match(server,/async function getMarketInsights\(s\)\{\s*const source=await getMarketSourceSnapshots\(s\)/);
+ assert.doesNotMatch(server,/wanted\.push\(\.\.\.timed\.slice\(-12\)\)/);
  assert.match(client,/comparable_snapshot_count/);
  assert.match(client,/No verified value or rank changes for this selection and window/);
  assert.match(client,/earlier price history remains in player charts/);

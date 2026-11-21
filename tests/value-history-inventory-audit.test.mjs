@@ -40,6 +40,23 @@ test('duplicates and invalid timestamps cannot inflate union count',()=>{
  assert.equal(x.duplicate_count.github,1);
  assert.equal(x.invalid_count.github,1);
 });
+test('missing and duplicate source timestamps cannot certify complete reconciliation',()=>{
+ const absent=audit([{t:t(16)}],[{t:'invalid'}]);
+ assert.equal(absent.complete,false);
+ assert.equal(absent.invalid_count.netlify,1);
+ const duplicate=audit([{t:t(16)},{t:t(16)}],[{t:t(16)}]);
+ assert.equal(duplicate.complete,false);
+ assert.equal(duplicate.duplicate_count.github,1);
+});
+test('health count is the exact union and latest reports the most recent of either source',()=>{
+ const source=readFileSync(new URL('../netlify/functions/value-history.mjs',import.meta.url),'utf8');
+ const p=source.slice(source.indexOf('async function health(s){'),source.indexOf('export { monthKey, marketFromSnapshots'));
+ assert.match(p,/const total=audit.union_count/);
+ assert.match(p,/const latestObserved=/);
+ assert.match(p,/snapshotCount:total,latest:latestObserved/);
+ assert.match(p,/github_only:audit.github_only_count/);
+ assert.doesNotMatch(p,/Math.max\(archiveCount,liveCount\)/);
+});
 test('inventory audit GET bypasses the production cleanup writer and is metadata-only',()=>{
  const source=readFileSync(new URL('../netlify/functions/value-history.mjs',import.meta.url),'utf8');
  assert.match(source,/url.searchParams.get\('inventory_audit'\)==='1'/);

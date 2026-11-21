@@ -1,0 +1,34 @@
+name: V112 team trade linkage and live market readback (read-only)
+on:
+  pull_request:
+    paths:
+      - 'value-history-v276.js'
+      - 'tests/value-history-team-trade-linkage-v112.test.mjs'
+      - '.github/workflows/release-v112-team-trade-linkage-ci.yml'
+permissions:
+  contents: read
+jobs:
+  team-trades:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check Value History UI syntax and trade/model-era invariants
+        run: |
+          node --check value-history-v276.js
+          node --test tests/value-history-team-trade-linkage-v112.test.mjs tests/value-history-model-era-v90.test.mjs tests/trade-history-live-sleeper.test.mjs tests/value-history-ui-isolated-v108.test.mjs tests/canonical-live-values-refresh-isolated.test.mjs
+      - name: Guard isolated Value History UI release scope
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {execFileSync} from 'node:child_process';
+          const changed=execFileSync('git',['diff','--name-only','origin/main...HEAD'],{encoding:'utf8'}).trim().split('\n').filter(Boolean);
+          const allowed=new Set(['value-history-v276.js','tests/value-history-team-trade-linkage-v112.test.mjs','.github/workflows/release-v112-team-trade-linkage-ci.yml']);
+          assert(changed.length>0);
+          for(const file of changed)assert(allowed.has(file),'Out-of-scope change: '+file);
+          JS

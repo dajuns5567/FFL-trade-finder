@@ -1,0 +1,30 @@
+name: V110 Inquirer editorial retry regression (preview only)
+on:
+  push:
+    branches:
+      - fix/inquirer-v110-editorial-candidate-retry
+    paths:
+      - 'netlify/functions/league-hub.mjs'
+      - 'netlify/functions/inquirer-editorial-v31.mjs'
+      - 'netlify/functions/lib/inquirer-schedule-decision.mjs'
+      - 'tests/inquirer-v110-editorial-candidate-retry.test.mjs'
+      - 'tests/inquirer-week9-unattended-publish-regression.test.mjs'
+      - 'tests/inquirer-forward-copy-regression.test.mjs'
+      - 'tests/inquirer-weekly-publication-consistency.test.mjs'
+      - '.github/workflows/inquirer-v110-editorial-retry.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-editorial-retry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install existing lockfile-free dependencies without lifecycle scripts
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+      - name: Verify safe Week 10 retry and newsroom admission contracts
+        run: node --test tests/inquirer-v110-editorial-candidate-retry.test.mjs tests/inquirer-week9-unattended-publish-regression.test.mjs tests/inquirer-weekly-publication-consistency.test.mjs tests/inquirer-schedule-decision.test.mjs tests/inquirer-forward-copy-regression.test.mjs

@@ -62,3 +62,14 @@ test('latest account has separately isolated preview diagnostics without any pro
  assert.match(source,/deploy-preview-\\d+/); // exact numbered preview host remains mandatory
  assert.match(source,/privatePreviewStoreName/);
 });
+
+test('weekly generator uses active publisher identity for the independent Week 9+ copy gate',()=>{
+ const source=readFileSync('netlify/functions/league-hub.mjs','utf8');
+ assert.match(source,/import \{inquirerPublisherSite\} from '\.\/lib\/inquirer-publisher-site\.mjs'/);
+ assert.match(source,/const currentPublisherSite=inquirerPublisherSite\(\{siteId:publicationSiteId,siteName:publisherSiteName,host:publicationHost,context:publicationContext\}\)\.active/);
+ assert.match(source,/const independentCopy=currentPublisherSite&&week>=9\?/);
+ assert.match(source,/auditIndependentInquirerCopy\(\[result\],\{revision:FORWARD_EDITORIAL_REVISION,mode:'publication'\}\)/);
+ assert.equal(inquirerPublisherSite(active).active,true);
+ assert.equal(inquirerPublisherSite({...active,context:'deploy-preview'}).active,false);
+ assert.equal(inquirerPublisherSite({...active,siteId:'fa33dfe4-8293-441e-8da0-25cc66fc984c'}).active,false);
+});

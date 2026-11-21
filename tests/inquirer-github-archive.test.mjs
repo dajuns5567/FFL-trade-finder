@@ -80,3 +80,13 @@ test('an invalid Blob with no verified GitHub counterpart remains held',async()=
  assert.equal(result.available,false);
  assert.match(result.reason,/Publication held/);
 });
+
+test('GitHub backup source is configurable without embedding any credential or modifying old archive',()=>{
+ const script=readFileSync(new URL('../scripts/sync-inquirer-github-archive.mjs',import.meta.url),'utf8');
+ const workflow=readFileSync(new URL('../.github/workflows/inquirer-github-archive-sync.yml',import.meta.url),'utf8');
+ assert.match(script,/process\.env\.INQUIRER_PUBLICATION_ORIGIN/);
+ assert.match(script,/sourceURL\.protocol!=='https:'/);
+ assert.match(script,/sourceURL\.username\|\|sourceURL\.password/);
+ assert.match(workflow,/vars\.INQUIRER_PUBLICATION_ORIGIN/);
+ assert.match(workflow,/cron: '17 \* \* \* \*'/);
+});

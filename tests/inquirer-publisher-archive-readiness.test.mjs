@@ -86,3 +86,18 @@ test('inspector requires an explicitly provided read-only store and an original 
  await assert.rejects(inspectPublisherArchiveReadiness({fetchImpl:fixture.fetchImpl}),/Read-only Blob store required/);
  await assert.rejects(inspectPublisherArchiveReadiness({...fixture,throughWeek:10}),/only supports originally verified/);
 });
+
+test('publisher continuity diagnostic is credential-gated and cannot write to Blobs',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const file=readFileSync(new URL('../netlify/functions/inquirer-publication-status.mjs',import.meta.url),'utf8');
+ const guarded=file.indexOf("if(req.method!=='GET'||!expected||req.headers.get('x-fleeced-queue-key')!==expected)");
+ const diagnostic=file.indexOf("if(new URL(req.url).searchParams.get('archive_readiness')==='1')");
+ assert(guarded>0&&diagnostic>guarded,'Authentication must precede read-only audit');
+ const end=file.indexOf(' const [stage,idx,edition,managerCache,status]',diagnostic);
+ assert(end>diagnostic);
+ const scope=file.slice(diagnostic,end);
+ assert.match(scope,/inspectPublisherArchiveReadiness\(\{store:s,throughWeek\}\)/);
+ assert.doesNotMatch(scope,/\.setJSON\(|\.delete\(|\.set\(/);
+ assert.match(scope,/throughWeek<3\|\|throughWeek>9/);
+ assert.match(scope,/status:503/);
+});

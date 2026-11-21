@@ -1,7 +1,18 @@
-# Fleeced! Inquirer — immutable published archive
+# Fleeced! Inquirer — immutable original publication archive
 
-This Git branch is a persistent source for **previously published, verified** newspapers. A published newspaper may be added only if its original 32-team edition passes the canonical publication contract and its content digest is recorded in `manifest.json`. Entries are append-only; historical articles must not be regenerated, rewritten, or silently relabeled.
+This dedicated Git branch preserves **previously published, verified** editions without generating replacement articles or changing their original bytes. The archive is not a publishing authorization. A locked, structurally valid original plus independent historical publication evidence is required for every entry.
 
-**Recovered from original user Library exports:** 2026 Week 3 and Week 4. Both retain their exact original bytes and SHA-256 hashes in the manifest; Week 4 is the approved V31 editorial revision 14. These were verified under the original historical newspaper contract. **Weeks 5–18 remain missing or unverified**; a Week 5 revision-14 locked audit copy and an earlier revision-54 private draft are not approved public newspaper replacements. The existing Week 1–2 preloads remain in the application source.
+## Verified originals
 
-A read-only runtime fallback may load these files even if a Netlify account changes. Netlify publishing queues and temporary Blob state are not the canonical historical archive. An owner-approved initial import of authentic earlier editions is required before the existing Week 9+ publication safety gates can be lifted.
+- **2026 Weeks 3–4:** original user Library editions; preserved with their original SHA-256 hashes and Week 4 editorial revision 14.
+- **2026 Weeks 5–9:** recovered original locked editions, each verified against its SHA-256 digest, the historical `broadcasts/index.json` publication record, and the contemporaneous weekly awards metadata.
+- **2026 Weeks 1–2:** existing application preloads; not duplicated into this archive.
+- **2026 Week 10:** **NOT PUBLISHED**. The recovered original publication-status record documents a November 17 editorial hold after two repeat/copy-forward findings. Do not fabricate a newspaper, set a lock flag, or promote the held draft. A separately reviewed authentic Week 10 publication is required.
+
+Original newspaper files live at `2026/week-XX.json`; their immutable checksums live in `manifest.json`. Independent recovered evidence is stored under `evidence/2026/`. The legacy Week 3–4 index rows intentionally lack newer `captured_at` metadata: do not rewrite those records to make them resemble Weeks 5–9.
+
+## Integrity verification
+
+Run `node scripts/verify-inquirer-immutable-archive.mjs` from the repository root on this branch. GitHub Actions runs `inquirer-immutable-archive-integrity.yml` on archive or checker changes. The verification checks immutable SHA-256 digests, 32 distinct team articles, independent index and awards lineage, and the Week 10 hold. Its success proves **historical source integrity**, not deployment, site readback, quality approval of future editions, or successful automatic publishing.
+
+A reader may use this branch as a read-only fallback across Netlify account migrations. The active application's publication-selection logic, scheduled pipeline, and Netlify preview still require separate live acceptance. Do not merge into main, deploy to production, or enable a scheduled publisher as a consequence of archive recovery alone.

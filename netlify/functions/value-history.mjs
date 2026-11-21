@@ -1,5 +1,6 @@
 import {snapshotsThroughEdition} from './lib/inquirer-market-window.mjs';
 import {liveTradeWeekLimit,mergeCompletedTradeAuditWeeks} from './lib/trade-history-live-source.mjs';
+import {validateScheduledTradeArchive} from './lib/trade-history-scheduled-archive.mjs';
 import {getPickOrder5050,postCutoverTrade} from './lib/pick-order-5050.mjs';
 import { getStore } from '@netlify/blobs';
 
@@ -1223,6 +1224,19 @@ function normalizeCompletedTrade(tx,week,season,teamNames,draftResults){
   }));
   return{id:String(tx.transaction_id||''),created,season:Number(season)||null,week:Number(week)||null,roster_ids:rosterIds,team_names:teamNames||{},sides};
 }
+// Durable scheduled trade observations are a FALLBACK/BASELINE, not a
+// substitute for fresh Sleeper data. Ignore incomplete or mismatched archives.
+async function scheduledCompletedTradeArchive(season){
+ const url='https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/value-history-data/trade-history/'+
+  Number(season)+'/latest.json?ts='+Date.now();
+ try{
+  const doc=await tradeJson(url);
+  return{archive:validateScheduledTradeArchive(doc,{leagueId:LEAGUE,season}),error:null};
+ }catch(e){
+  console.warn('trade-history-scheduled-archive-unavailable',String(e?.message||e));
+  return{archive:null,error:String(e?.message||e)};
+ }
+}
 async function importedCompletedTrades({forceLive=false}={}){
   const now=Date.now();if(!forceLive&&tradeAuditCache&&now-tradeAuditCache.t<60000)return tradeAuditCache.value;
   // Historical audits are immutable snapshots, not a live transaction feed.
@@ -1240,6 +1254,7 @@ async function importedCompletedTrades({forceLive=false}={}){
   }));
   const liveBundle=seasonBundles.find(bundle=>Number(bundle.season)===Number(seasonBundles.at(-1)?.season));
   const liveSeason=Number(liveBundle?.season)||0;
+  const scheduled=liveSeason?await scheduledCompletedTradeArchive(liveSeason):{archive:null,error:'Unknown Sleeper season'};
   let liveStatus={state:'unavailable',season:liveSeason,checked_through_week:null,failed_weeks:[]};
   let liveTeamNames={};
   if(liveBundle&&liveSeason){
@@ -1261,11 +1276,17 @@ async function importedCompletedTrades({forceLive=false}={}){
     ]);
     if(Array.isArray(users)&&Array.isArray(rosters))
       liveTeamNames=historicalTeamNames(users,rosters);
+    // Verified scheduled trades persist across page loads and transient live API
+    // outages; the original frozen audit remains immutable and wins conflicts.
+    liveBundle.transactions=mergeCompletedTradeAuditWeeks(liveBundle.transactions,scheduled.archive?.transactions_by_week||{});
     liveBundle.transactions=mergeCompletedTradeAuditWeeks(liveBundle.transactions,weeks);
     liveStatus={state:failed.length?'partial':'current',season:liveSeason,
       checked_through_week:through,failed_weeks:failed};
     if(failed.length)console.warn('trade-history-live-sleeper-partial',
       {season:liveSeason,failed_weeks:failed});
+    liveStatus.scheduled_archive={state:scheduled.archive?'verified':'unavailable',
+      checked_through_week:scheduled.archive?.checked_through_week||null,
+      checked_at:scheduled.archive?.checked_at||null};
   }
   const combinedDraftResults=new Map(),ambiguous=new Set();
   for(const bundle of seasonBundles){

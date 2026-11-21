@@ -142,16 +142,24 @@ export default async function inquirerPublishScheduled(req){
      const automation=verifiedWeekNineAutopublishCutoverHistory({week7,week8,index,awards});
      if(!automation.ready)return skip(automation.reason);
     }
-    if(status&&Number(status.season)===2026&&Number(status.week)<(isCurrentSite?8:6)){
-     // Verified locked Weeks 7–8 authorize advancing a *stale completed* cursor.
-     // Never conceal an editorial hold or an active background worker.
+    const originalRestoredSite=siteId===ORIGINAL_INQUIRER_RESTORE_SITE_ID;
+    if(originalRestoredSite&&status&&Number(status.season)===2026&&
+       Number(status.week)<9&&status.state==='completed'&&status.available===true){
+     // The protected original restore marker was verified above, and the
+     // actual locked archive/index/awards were just independently checked.
+     // Upgrade ONLY a stale completed cursor. Never erase a running job,
+     // an unpublished draft or an editorial hold (especially Week 10).
+     status={...status,week:9,editorial_revision:FORWARD_EDITORIAL_REVISION};
+    }else if(status&&Number(status.season)===2026&&Number(status.week)<(isCurrentSite?8:6)){
      if(isCurrentSite&&status.state==='completed'&&status.available===true)
       status={...status,week:8,editorial_revision:FORWARD_EDITORIAL_REVISION};
      else return skip('New site publication cursor predates approved locked cutover archive');
     }
-    // Full archive verified, so an empty destination state resumes from the
-    // last published week rather than regenerating previously approved copy.
-    if(status===null)status={state:'completed',available:true,season:2026,week:isCurrentSite?8:6,editorial_revision:FORWARD_EDITORIAL_REVISION};
+    // A fully restored 2026 Week 9 archive advances from Week 9, not from
+    // Week 6 or preloaded Week 2. Never regenerate any original edition.
+    if(status===null)status={state:'completed',available:true,season:2026,
+     week:originalRestoredSite?9:isCurrentSite?8:6,
+     editorial_revision:FORWARD_EDITORIAL_REVISION};
    }else if(status===null)status={state:'waiting',season:2026,week:4,editorial_revision:0};
   }
   if(!status||typeof status!=='object')return skip('Publication history not restored or unreadable');

@@ -7,6 +7,7 @@ import {approvedWeek5Record} from './lib/inquirer-week5-owner-signoff.mjs';
 import {resolveInquirerQueueCredential} from './lib/inquirer-queue-credential.mjs';
 import {inquirerPublisherSite} from './lib/inquirer-publisher-site.mjs';
 import {approvedCutoverSourceReadiness} from './lib/inquirer-cutover-source-readiness.mjs';
+import {githubVerifiedHistoricalPublisherBaseline} from './lib/inquirer-github-publisher-continuity.mjs';
 // Queue a long-running background job. Netlify scheduled functions have a
 // hard 30-second limit, while the full Inquirer edition takes longer.
 export default async function inquirerPublishScheduled(req){
@@ -29,9 +30,15 @@ export default async function inquirerPublishScheduled(req){
   return skip('Replacement site is preview-only pending verified archive migration');
  const configuredKey=globalThis.Netlify?.env?.get?.('FLEECED_INQUIRER_QUEUE_KEY')||process.env.FLEECED_INQUIRER_QUEUE_KEY||'';
  if(!configuredKey&&!isCurrentSite)return skip('Publication queue credential not configured');
+ // Prefer immutable GitHub historical originals over a Netlify-account migration.
+ // Any GitHub outage falls back to the existing site-local verification path.
+ const githubContinuity=isCurrentSite?await githubVerifiedHistoricalPublisherBaseline():{ready:false};
+ if(githubContinuity.ready)console.info('inquirer-scheduler-github-archive-ready',{
+  published_through:githubContinuity.latestPublishedWeek
+ });
  // One-time owner-approved restore of accepted private Weeks 7–8 happens
  // BEFORE normal unattended Week 9+. No live generator can skip this gate.
- if(isCurrentSite){
+ if(isCurrentSite&&!githubContinuity.ready){
   try{
    const history=getStore('fleeced-league-hub',{consistency:'strong'});
    const marker=await history.get('inquirer/cutover/2026-weeks07-08-status.json',{type:'json'});
@@ -93,7 +100,7 @@ export default async function inquirerPublishScheduled(req){
     store.get('broadcasts/2026/week-04.json',{type:'json'})
    ]);
    const checked=verifiedReplacementHistory(week3,week4);
-   if(!checked.ready)return skip(checked.reason);
+   if(!checked.ready&&!githubContinuity.ready)return skip(checked.reason);
    if(isNewestSite){
     const [week5,week6,index,awards]=await Promise.all([
      store.get('broadcasts/2026/week-05.json',{type:'json'}),
@@ -102,25 +109,28 @@ export default async function inquirerPublishScheduled(req){
      store.get('awards/weekly.json',{type:'json'})
     ]);
     const cutover=verifiedNewSiteCutoverHistory({week3,week4,week5,week6,index,awards});
-    if(!cutover.ready)return skip(cutover.reason);
+    if(!cutover.ready&&!githubContinuity.ready)return skip(cutover.reason);
     if(isCurrentSite){
      const [week7,week8]=await Promise.all([
       store.get('broadcasts/2026/week-07.json',{type:'json'}),
       store.get('broadcasts/2026/week-08.json',{type:'json'})
      ]);
      const automation=verifiedWeekNineAutopublishCutoverHistory({week7,week8,index,awards});
-     if(!automation.ready)return skip(automation.reason);
+     if(!automation.ready&&!githubContinuity.ready)return skip(automation.reason);
     }
     if(status&&Number(status.season)===2026&&Number(status.week)<(isCurrentSite?8:6)){
      // Verified locked Weeks 7–8 authorize advancing a *stale completed* cursor.
      // Never conceal an editorial hold or an active background worker.
      if(isCurrentSite&&status.state==='completed'&&status.available===true)
-      status={...status,week:8,editorial_revision:FORWARD_EDITORIAL_REVISION};
+      status={...status,week:githubContinuity.ready?githubContinuity.latestPublishedWeek:8,
+       editorial_revision:FORWARD_EDITORIAL_REVISION};
      else return skip('New site publication cursor predates approved locked cutover archive');
     }
     // Full archive verified, so an empty destination state resumes from the
     // last published week rather than regenerating previously approved copy.
-    if(status===null)status={state:'completed',available:true,season:2026,week:isCurrentSite?8:6,editorial_revision:FORWARD_EDITORIAL_REVISION};
+    if(status===null)status={state:'completed',available:true,season:2026,
+     week:githubContinuity.ready?githubContinuity.latestPublishedWeek:isCurrentSite?8:6,
+     editorial_revision:FORWARD_EDITORIAL_REVISION};
    }else if(status===null)status={state:'waiting',season:2026,week:4,editorial_revision:0};
   }
   if(!status||typeof status!=='object')return skip('Publication history not restored or unreadable');

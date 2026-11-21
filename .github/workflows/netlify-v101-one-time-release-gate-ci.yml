@@ -1,0 +1,38 @@
+name: One-time approved Netlify release gate (read-only)
+on:
+  pull_request:
+    paths:
+      - 'netlify.toml'
+      - 'tests/netlify-third-account-preview-build.test.mjs'
+      - 'tests/netlify-v101-one-time-release.test.mjs'
+      - 'tests/inquirer-replacement-bootstrap.test.mjs'
+      - 'tests/inquirer-approved-cutover.test.mjs'
+      - '.github/workflows/netlify-v101-one-time-release-gate-ci.yml'
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test production deploy fail-closed outside exact release commit
+        run: node --test tests/netlify-third-account-preview-build.test.mjs tests/netlify-v101-one-time-release.test.mjs
+      - name: Confirm no unauthorized files changed
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch origin "$BASE_REF"
+          node --input-type=module <<'JS'
+          import {execFileSync} from 'node:child_process';
+          import assert from 'node:assert/strict';
+          const paths=execFileSync('git',['diff','--name-only','origin/'+process.env.BASE_REF+'...HEAD'],{encoding:'utf8'}).trim().split('\n').filter(Boolean);
+          const allowed=new Set(['netlify.toml','tests/netlify-third-account-preview-build.test.mjs','tests/netlify-v101-one-time-release.test.mjs','tests/inquirer-replacement-bootstrap.test.mjs','tests/inquirer-approved-cutover.test.mjs','.github/workflows/netlify-v101-one-time-release-gate-ci.yml']);
+          assert.equal(paths.length,allowed.size,'Netlify deploy release must contain the exact six approved files');
+          for(const path of paths)assert(allowed.has(path),'Out-of-scope file: '+path);
+          JS

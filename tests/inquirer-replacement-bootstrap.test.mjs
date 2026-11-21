@@ -95,7 +95,8 @@ test('new Netlify account is recognized but gated behind owner activation and We
  const config=readFileSync(new URL('../netlify.toml',import.meta.url),'utf8');
  assert.match(config,/e\.CONTEXT==='deploy-preview'/);
  assert.match(config,/\['448','450'\]/);
- assert.doesNotMatch(config,/e\.CONTEXT==='production'/);
+ assert.match(config,/Release FFL V101 site deploy once 2026-11-20/);
+ assert.match(config,/e\.SITE_ID==='a516be3b-6c65-4f54-a9fb-23c5361bf3d2'/);
 });
 test('Week 9 unattended cutover never substitutes private drafts for locked Weeks 7 and 8',()=>{
  const week7={...edition(7),editorial_revision:107,editorial_generation:{engine:'v31-forward'}};

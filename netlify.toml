@@ -2,11 +2,11 @@
 [build]
   publish = "."
   functions = "netlify/functions"
-  # Production release authorized for the canonical site after PR #450.
-  # Build production on this site and retain previously allowlisted PR previews;
-  # skip other sites, branch contexts and unrelated previews to control credits.
-  # Ignore exit 1 builds, exit 0 skips.
-  ignore = "node -e \"const e=process.env;const site=e.SITE_ID==='fa33dfe4-8293-441e-8da0-25cc66fc984c'||e.SITE_NAME==='precious-dango-fb4633';const production=e.CONTEXT==='production';const preview=e.CONTEXT==='deploy-preview'&&['448','450'].includes(String(e.REVIEW_ID));process.exit(site&&(production||preview)?1:0)\""
+  # One-time user-authorized release for the current Netlify site only.
+  # Gate the exact Git commit subject so later main pushes remain skipped.
+  # Keep old authorized PR previews; block all other production builds.
+  # Netlify: exit 1 builds, exit 0 skips.
+  ignore = "node -e \"const e=process.env;const old=e.SITE_ID==='fa33dfe4-8293-441e-8da0-25cc66fc984c'||e.SITE_NAME==='precious-dango-fb4633';const oldPreview=old&&e.CONTEXT==='deploy-preview'&&['448','450'].includes(String(e.REVIEW_ID));let oneTime=false;if(e.SITE_ID==='a516be3b-6c65-4f54-a9fb-23c5361bf3d2'&&e.CONTEXT==='production'&&e.BRANCH==='main'){try{oneTime=require('node:child_process').execFileSync('git',['log','-1','--format=%s'],{encoding:'utf8'}).trim()===\\\"Release FFL V101 site deploy once 2026-11-20\\\"}catch{}};process.exit(oldPreview||oneTime?1:0)\""
 
 [functions]
   node_bundler = "esbuild"

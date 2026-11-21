@@ -97,12 +97,22 @@ test('one short identical line in four of 32 articles is a transparent nonfatal 
  assert.equal(audit.team_count,4);
  assert.ok(audit.phrase_windows>0);
 });
-test('a fifth affected article or two repeated sentences cannot use the minor tolerance',()=>{
+test('a fifth affected article or two independent short repeated lines are nonfatal warnings',()=>{
  const five=repeatedFixture([{sentence:one,members:[1,2,3,4,5]}]);
- assert.equal(assessMinorNineWordReuse(five.teams,five.repeated).tolerated,false);
+ assert.equal(assessMinorNineWordReuse(five.teams,five.repeated).tolerated,true);
  const two=repeatedFixture([{sentence:one,members:[1,2,3,4]},
   {sentence:'A completely separate repeated decision emerged as the manager evaluated a different lineup and roster situation.',members:[5,6,7,8]}]);
- assert.equal(assessMinorNineWordReuse(two.teams,two.repeated).tolerated,false);
+ const result=assessMinorNineWordReuse(two.teams,two.repeated);
+ assert.equal(result.tolerated,true);
+ assert.equal(result.sentence_count,2);
+});
+test('three repeated lines or a sixth affected article remain fatal',()=>{
+ const six=repeatedFixture([{sentence:one,members:[1,2,3,4,5,6]}]);
+ assert.equal(assessMinorNineWordReuse(six.teams,six.repeated).tolerated,false);
+ const three=repeatedFixture([{sentence:one,members:[1,2,3,4]},
+  {sentence:'A second isolated managerial observation explains what each team must do after the completed match.',members:[5,6,7,8]},
+  {sentence:'A third isolated editorial observation explains the upcoming roster decisions with enough independent weekly detail.',members:[9,10,11,12]}]);
+ assert.equal(assessMinorNineWordReuse(three.teams,three.repeated).tolerated,false);
 });
 test('a duplicated whole paragraph is still fatal even with exactly four teams',()=>{
  const fixture=repeatedFixture([{sentence:one,members:[1,2,3,4]}]);
@@ -118,7 +128,7 @@ test('the production-quality gate records tolerance but retains all other failur
  assert.match(source,/assessMinorNineWordReuse\(teams,longRecycled\)/);
  assert.match(source,/minor_repetition_warning:minorRepetition\.tolerated/);
  assert.match(source,/const blockingIssues=minorPhraseSets\?issues\.filter/);
- assert.match(source,/if\(issue\.id==='cross-team-copy-scaffold'&&issue\.sentence===minorSentenceNorm\)/);
+ assert.match(source,/if\(issue\.id==='cross-team-copy-scaffold'&&minorSentenceNorms\.has\(issue\.sentence\)\)/);
  assert.match(source,/if\(issue\.id==='cross-reporter-phrase-scaffold'/);
  assert.match(source,/if\(issue\.id==='cross-team-clause-scaffold'/);
  assert.match(source,/if\(issue\.id==='paired-editorial-clause-scaffold'/);

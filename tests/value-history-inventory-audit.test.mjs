@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {reconcileSnapshotInventories as audit} from '../netlify/functions/value-history-inventory-audit.mjs';
+import {inspectDurableHistory} from '../scripts/audit-value-history-durable.mjs';
 
 const t=n=>'2026-11-'+String(n).padStart(2,'0')+'T00:00:00.000Z';
 test('counts exact unique timestamp union rather than max(source sizes)',()=>{
@@ -48,4 +49,18 @@ test('inventory audit GET bypasses the production cleanup writer and is metadata
  assert.doesNotMatch(helper,/\.(setJSON|delete|putFile|post|writeFile)\(/);
  assert.doesNotMatch(helper,/rows\s*:/);
  assert.match(source,/if\(s&&!readonlyPreview\)/);
+});
+
+test('durable index pointer and absent model IDs are reported without assuming same-model movement',()=>{
+ const a={t:t(16),rows:[{id:'p',pos:'IDP',value:500},{id:'w',pos:'WR',value:1000}]};
+ const b={t:t(20),rows:[{id:'p',pos:'IDP',value:2000},{id:'w',pos:'WR',value:1100}]};
+ const idx={items:[{t:t(16),path:'x'},{t:t(20),path:'y'}],snapshot_count:2,latest:t(20)};
+ const result=inspectDurableHistory(idx,{latest:{t:t(20)}},[a,b]);
+ assert.equal(result.durable_snapshot_count,2);
+ assert.equal(result.compared_players,2);
+ assert.equal(result.explicit_model_comparability_verified,false);
+ assert.equal(result.movements_by_position.IDP.change_over_25pct,1);
+ assert.match(result.warning,/model repricing/);
+ assert.throws(()=>inspectDurableHistory({...idx,snapshot_count:1},{latest:{t:t(20)}},[a,b]),/count mismatch/);
+ assert.throws(()=>inspectDurableHistory(idx,{latest:{t:t(16)}},[a,b]),/pointer mismatch/);
 });

@@ -167,7 +167,7 @@ test('7D board restores real historical moves on both sides of a new model witho
    'current price is the actual latest model price, not a manufactured adjusted price');
  assert.equal(pointsFromSnapshots(xs,'11667').length,4);
  assert.match(server,/function marketInsightWindow\(ordered,label,days=null\)/);
- assert.match(server,/marketBuckets=new Map\(\)/);
+ assert.match(server,/const archived=await archiveAllSnapshots\(\)/);
 });
 
 test('only genuine changes within a model era become market movers',()=>{

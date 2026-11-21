@@ -1,0 +1,83 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {reconcileSnapshotInventories as audit} from '../netlify/functions/value-history-inventory-audit.mjs';
+import {inspectDurableHistory} from '../scripts/audit-value-history-durable.mjs';
+
+const t=n=>'2026-11-'+String(n).padStart(2,'0')+'T00:00:00.000Z';
+test('counts exact unique timestamp union rather than max(source sizes)',()=>{
+ const github=[{t:t(15),fingerprint:'a',count:889},{t:t(16),fingerprint:'b',count:890}];
+ const netlify=[{t:t(16),fingerprint:'b',count:890},{t:t(17),fingerprint:'c',count:900}];
+ const x=audit(github,netlify);
+ assert.equal(x.github_count,2);
+ assert.equal(x.netlify_count,2);
+ assert.equal(x.union_count,3);
+ assert.equal(x.github_only_count,1);
+ assert.equal(x.netlify_only_count,1);
+ assert.equal(x.overlap_count,1);
+ assert.equal(x.conflict_count,0);
+ assert.equal(x.netlify_only[0].t,t(17));
+ assert.equal(x.union_latest,t(17));
+ assert.equal(x.read_only,true);
+});
+test('does not silently assume same timestamp has same fingerprint or row count',()=>{
+ const x=audit([{t:t(16),fingerprint:'one',count:900}], [{t:t(16),fingerprint:'different',count:899}]);
+ assert.equal(x.conflict_count,1);
+ assert.equal(x.conflicts[0].t,t(16));
+ const unknown=audit([{t:t(16),count:900}], [{t:t(16),count:900}]);
+ assert.equal(unknown.conflict_count,0);
+ assert.equal(unknown.overlap_unverifiable_count,1);
+});
+test('missing one storage source never reports a complete reconciliation',()=>{
+ const x=audit([{t:t(16)}],[],{archiveReachable:true,localReachable:false});
+ assert.equal(x.complete,false);
+ assert.equal(x.github_only_count,1);
+ assert.equal(x.netlify_reachable,false);
+});
+test('duplicates and invalid timestamps cannot inflate union count',()=>{
+ const x=audit([{t:t(16)},{t:t(16)},{t:'not-a-date'}],[{t:t(17)}]);
+ assert.equal(x.union_count,2);
+ assert.equal(x.duplicate_count.github,1);
+ assert.equal(x.invalid_count.github,1);
+});
+test('missing and duplicate source timestamps cannot certify complete reconciliation',()=>{
+ const absent=audit([{t:t(16)}],[{t:'invalid'}]);
+ assert.equal(absent.complete,false);
+ assert.equal(absent.invalid_count.netlify,1);
+ const duplicate=audit([{t:t(16)},{t:t(16)}],[{t:t(16)}]);
+ assert.equal(duplicate.complete,false);
+ assert.equal(duplicate.duplicate_count.github,1);
+});
+test('health count is the exact union and latest reports the most recent of either source',()=>{
+ const source=readFileSync(new URL('../netlify/functions/value-history.mjs',import.meta.url),'utf8');
+ const p=source.slice(source.indexOf('async function health(s){'),source.indexOf('export { monthKey, marketFromSnapshots'));
+ assert.match(p,/const total=audit.union_count/);
+ assert.match(p,/const latestObserved=/);
+ assert.match(p,/snapshotCount:total,latest:latestObserved/);
+ assert.match(p,/github_only:audit.github_only_count/);
+ assert.doesNotMatch(p,/Math.max\(archiveCount,liveCount\)/);
+});
+test('inventory audit GET bypasses the production cleanup writer and is metadata-only',()=>{
+ const source=readFileSync(new URL('../netlify/functions/value-history.mjs',import.meta.url),'utf8');
+ assert.match(source,/url.searchParams.get\('inventory_audit'\)==='1'/);
+ assert.match(source,/const readonlyPreview=isDeployPreview\|\|\(req.method==='GET'&&/);
+ assert.match(source,/return json\(\{inventory_audit:await snapshotInventoryAudit\(s\)\}\)/);
+ const helper=readFileSync(new URL('../netlify/functions/value-history-inventory-audit.mjs',import.meta.url),'utf8');
+ assert.doesNotMatch(helper,/\.(setJSON|delete|putFile|post|writeFile)\(/);
+ assert.doesNotMatch(helper,/rows\s*:/);
+ assert.match(source,/if\(s&&!readonlyPreview\)/);
+});
+
+test('durable index pointer and absent model IDs are reported without assuming same-model movement',()=>{
+ const a={t:t(16),rows:[{id:'p',pos:'IDP',value:500},{id:'w',pos:'WR',value:1000}]};
+ const b={t:t(20),rows:[{id:'p',pos:'IDP',value:2000},{id:'w',pos:'WR',value:1100}]};
+ const idx={items:[{t:t(16),path:'x'},{t:t(20),path:'y'}],snapshot_count:2,latest:t(20)};
+ const result=inspectDurableHistory(idx,{latest:{t:t(20)}},[a,b]);
+ assert.equal(result.durable_snapshot_count,2);
+ assert.equal(result.compared_players,2);
+ assert.equal(result.explicit_model_comparability_verified,false);
+ assert.equal(result.movements_by_position.IDP.change_over_25pct,1);
+ assert.match(result.warning,/model repricing/);
+ assert.throws(()=>inspectDurableHistory({...idx,snapshot_count:1},{latest:{t:t(20)}},[a,b]),/count mismatch/);
+ assert.throws(()=>inspectDurableHistory(idx,{latest:{t:t(16)}},[a,b]),/pointer mismatch/);
+});

@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-11-21T17:29:09.679Z",
+  "generatedAt": "2026-11-21T23:12:59.880Z",
   "source": "Sleeper importer snapshot",
   "currentSeason": 2026,
   "completedWeek": 10,
@@ -1784,8 +1784,8 @@
     },
     "diagnostics": {
       "finalGames": 151,
-      "qualifiedPlayerGames": 9929,
-      "rejectedPlayerGames": 11539,
+      "qualifiedPlayerGames": 9932,
+      "rejectedPlayerGames": 11545,
       "ignoredGames": 0
     }
   },
@@ -17970,6 +17970,53 @@
       "anytime_tds": 1,
       "penalty": 1,
       "penalty_yd": 15
+    },
+    "8116": {
+      "gp": 3,
+      "_ppr_native_weeks": 3,
+      "_ppr_reconstructed_weeks": 0,
+      "h1_rec_yd": 44,
+      "rush_lng": 19,
+      "pos_rank_std": 124,
+      "rec_0_4": 3,
+      "tm_def_snp": 210,
+      "rec_ypt": 14.75,
+      "pos_rank_half_ppr": 113,
+      "pass_rush_yd": 57,
+      "pts_std": 11.8,
+      "rec_lng": 29,
+      "tm_st_snp": 78,
+      "rush_fd": 3,
+      "rec": 10,
+      "q1_rec_yd": 26,
+      "rec_yar": 75,
+      "rush_att": 24,
+      "rec_5_9": 4,
+      "rush_ypa": 6.699999999999999,
+      "q1_rush_yd": 12,
+      "tm_off_snp": 202,
+      "pos_rank_ppr": 112,
+      "off_snp": 96,
+      "rush_tkl_loss_yd": -6,
+      "rush_yac": 33,
+      "h1_rush_yd": 41,
+      "pts_half_ppr": 16.8,
+      "rec_air_yd": -14,
+      "rec_ypr": 16.97,
+      "rush_rz_att": 7,
+      "rush_rec_yd": 118,
+      "rush_yd": 57,
+      "bonus_rec_rb": 10,
+      "rec_tgt": 12,
+      "pts_ppr": 21.8,
+      "rec_yd": 61,
+      "bonus_fd_rb": 5,
+      "rush_tkl_loss": 3,
+      "rec_drop": 1,
+      "st_snp": 3,
+      "rec_fd": 2,
+      "rec_10_19": 2,
+      "rec_rz_tgt": 1
     },
     "8117": {
       "gp": 2,
@@ -47988,11 +48035,11 @@
       "withGames": 1054
     },
     "2026": {
-      "players": 1579,
-      "withPpr": 551,
-      "withGames": 1579,
+      "players": 1580,
+      "withPpr": 552,
+      "withGames": 1580,
       "currentSeasonQualified": true,
-      "compactPlayers": 1579
+      "compactPlayers": 1580
     }
   },
   "stats": {
@@ -104437,6 +104484,23 @@
         "rush_yd": 4,
         "rec_yd": 801,
         "idp_tkl_ast": 1
+      },
+      "8116": {
+        "pts_ppr": 21.8,
+        "gp": 3,
+        "off_snp": 96,
+        "rush_att": 24,
+        "rec_tgt": 12,
+        "rec_0_4": 3,
+        "rush_fd": 3,
+        "rec": 10,
+        "rec_fd": 2,
+        "rec_5_9": 4,
+        "rec_10_19": 2,
+        "rush_yd": 57,
+        "bonus_rec_rb": 10,
+        "rec_yd": 61,
+        "bonus_fd_rb": 5
       },
       "8117": {
         "pts_ppr": 16.1,

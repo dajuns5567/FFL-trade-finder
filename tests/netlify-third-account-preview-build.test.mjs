@@ -37,6 +37,11 @@ test('previous accounts skip builds even for deploy-preview context',()=>{
 test('production cutover never spends deploy preview credits',()=>{
  assert.match(config,/e\.CONTEXT==='deploy-preview'/);
  assert.match(config,/\['448','450'\]/);
- assert.match(config,/Release FFL V101 site deploy once 2026-11-20/);
+ if(config.includes("process.exit(preview||legacy?1:0)")){
+  const siteId='a516be3b-6c65-4f54-a9fb-23c5361bf3d2';
+  assert.equal(exitCode({siteId,siteName:'animated-dasik-3de74a',context:'deploy-preview',reviewId:'558'}),1);
+  assert.equal(exitCode({siteId,siteName:'animated-dasik-3de74a',context:'deploy-preview',reviewId:'559'}),0);
+  assert.equal(exitCode({siteId,siteName:'animated-dasik-3de74a',context:'production',reviewId:'558'}),0);
+ }else assert.match(config,/Release FFL V101 site deploy once 2026-11-20/);
  assert.match(config,/e\.SITE_ID==='a516be3b-6c65-4f54-a9fb-23c5361bf3d2'/);
 });

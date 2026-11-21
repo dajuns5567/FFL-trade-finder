@@ -47,3 +47,15 @@ test('other similar titles or unauthorized deployment contexts cannot trigger re
   }
  }finally{rmSync(dir,{recursive:true,force:true})}
 });
+
+test('a separate exact UUID scheduled-callback production hotfix is authorized once, not for unrelated commits',()=>{
+ const dir=makeDir();try{
+  assert.equal(spawnSync('git',['init','-q'],{cwd:dir}).status,0);
+  git(dir,'Release FFL Inquirer V110 canonical scheduled host fix 2026-11-21');
+  assert.equal(run(dir),1);
+  assert.equal(run(dir,{context:'deploy-preview'}),0);
+  assert.equal(run(dir,{site:'different-site'}),0);
+  git(dir,'a future unrelated commit');
+  assert.equal(run(dir),0);
+ }finally{rmSync(dir,{recursive:true,force:true})}
+});

@@ -1379,11 +1379,18 @@ function signalEvidenceCue(sig){
 }
 
 async function marketFetch(){let last;for(let attempt=0;attempt<3;attempt++){try{const r=await fetch(`${API}?market=1`,{cache:'no-store'});if(!r.ok)throw Error(`market history unavailable (${r.status})`);return await r.json()}catch(e){last=e;if(attempt<2)await new Promise(r=>setTimeout(r,250*(attempt+1)))}}throw last||Error('market history unavailable')}
+let marketInsightsStampV111=0;
 async function marketInsightsFetch(force=false){
   if(marketInsightsCache&&!force)return marketInsightsCache;
   if(marketInsightsPending&&!force)return marketInsightsPending;
+  const stamp=++marketInsightsStampV111;
   const pending=(async()=>{const r=await fetch(`${API}?market_insights=1`,{cache:'no-store'});if(!r.ok)throw Error('market insights unavailable');return await r.json()})();
-  marketInsightsPending=pending;try{marketInsightsCache=await pending;return marketInsightsCache}finally{marketInsightsPending=null}
+  marketInsightsPending=pending;
+  try{
+    const data=await pending;
+    if(stamp===marketInsightsStampV111)marketInsightsCache=data;
+    return data;
+  }finally{if(stamp===marketInsightsStampV111)marketInsightsPending=null}
 }
 async function marketSignalsFetch(force=false){
   if(marketSignalCache&&!force)return marketSignalCache;
@@ -1416,6 +1423,9 @@ async function ensureMarketCache(force=false){
 }
 async function loadMarket(force=false){
   const box=document.getElementById('vhContent');if(!box)return;
+  // Even without an event, a tab re-entry must resolve the latest shared
+  // canonical price map rather than keep an old live overlay in memory.
+  if(force)invalidateLiveMarketV97();
   currentView='market';syncSubnav();setPrimaryPlayerSearchVisible(false);currentPlayerId=null;
   if(!marketCache||force){
     if(!marketCache)box.innerHTML='<div class="vh-empty">Loading market dashboard…</div>';

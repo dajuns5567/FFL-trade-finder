@@ -16,7 +16,7 @@ export default async function inquirerWeek9RecoveryStatus(req){
   ]);
   // Only Sleeper's matchup, roster-record and season-week completion evidence
   // may establish whether recovery generation is eligible.
-  const completed=ten?.complete===true?10:nine?.complete===true?9:null;
+  const completed=nine?.complete===true?(ten?.complete===true?10:9):null;
   const plan=planInquirerWeekRecovery(archive,{weeks:[9,10],completedWeek:completed});
   return new Response(JSON.stringify({
    ...plan,publication_performed:false,archive_modified:false,

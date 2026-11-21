@@ -8,13 +8,15 @@ const start=source.indexOf('function readablePublishedInquirer(');
 const end=source.indexOf('let inquirerArchiveRefreshInstalled=',start);
 assert.ok(start>=0&&end>start,'Published Daily readback must be present');
 const code=source.slice(start,end);
+const selectRow=source.slice(source.indexOf('function latestPublishedInquirerRow('),source.indexOf('function inquirerRowIsNewer('));
+assert.match(selectRow,/function latestPublishedInquirerRow/);
 const edition=week=>({available:true,published_locked:true,season:2026,week,teams:Array.from({length:32},(_,i)=>({roster_id:i+1})),league_overview:{headline:'Week '+week}});
 function reader(responses){
  const requested=[],context={console:{warn(){}},weeklyCache:null,openBroadcastTeam:'',inquirerPreviewMode:false,invalidatePublishedInquirerCaches(){this.weeklyCache=null},
   fetch:async url=>{const week=Number(new URL(url,'https://ffl.invalid').searchParams.get('broadcast_week'));requested.push(week);const response=responses[week];if(response instanceof Error)throw response;return{ok:response!==undefined,json:async()=>response}},
   fetchPublishedInquirerArchive:async()=>[{season:2026,week:11},{season:2026,week:10}]};
  vm.createContext(context);
- vm.runInContext(code+';globalThis.verify=verifiedPublishedInquirer;globalThis.isReadable=readablePublishedInquirer;globalThis.weeklyRead=weekly;',context);
+ vm.runInContext(selectRow+'\n'+code+';globalThis.verify=verifiedPublishedInquirer;globalThis.isReadable=readablePublishedInquirer;globalThis.weeklyRead=weekly;',context);
  return{verify:context.verify,isReadable:context.isReadable,weekly:context.weeklyRead,requested,context};
 }
 test('latest fully readable locked newspaper wins even when archive index order is reversed',async()=>{

@@ -40,6 +40,10 @@ export default async function inquirerPublicationReadiness(req){
   const source=baseline.ready&&!forward.ready?
    await approvedCutoverSourceReadiness():{ready:forward.ready,reason:forward.ready?'Already locked and indexed':'Baseline restoration required first'};
   const archivesReady=baseline.ready&&forward.ready;
+  // A failed or held generation is NOT a published edition. The status.week
+  // describes the attempted week, while the index records actual publications.
+  const indexedPublishedWeeks=history.filter(row=>row.indexed&&(row.locked_verified||row.github_verified)).map(row=>row.week);
+  const lastPublishedWeek=indexedPublishedWeeks.length?Math.max(...indexedPublishedWeeks):null;
   const publisherEnabled=(globalThis.Netlify?.env?.get?.('FLEECED_ENABLE_NEW_SITE_PUBLISHER')||process.env.FLEECED_ENABLE_NEW_SITE_PUBLISHER)==='true';
   const payload={
    schema_version:1,season:2026,read_only:true,site_writes_performed:false,
@@ -52,7 +56,10 @@ export default async function inquirerPublicationReadiness(req){
    transfer_source:{ready:source.ready,reason:source.reason},
    cutover_state:['completed','running','error'].includes(cutover?.state)?cutover.state:'not-recorded',
    publication_state:['completed','queued','running','waiting','editorial-hold','error'].includes(status?.state)?status.state:'not-recorded',
-   last_published_week:status?.week!=null&&Number.isInteger(Number(status.week))?Number(status.week):null,
+   last_published_week:lastPublishedWeek,
+   latest_publication_attempt_week:status?.week!=null&&Number.isInteger(Number(status.week))?Number(status.week):null,
+   latest_publication_attempt_state:typeof status?.state==='string'?status.state:'not-recorded',
+   latest_publication_editorial_findings:Number.isInteger(status?.editorial_findings)?status.editorial_findings:null,
    archives_ready_for_week9_plus:archivesReady,
    publisher_activation_enabled:publisherEnabled,
    ready_for_unattended_week9_plus:archivesReady&&publisherEnabled

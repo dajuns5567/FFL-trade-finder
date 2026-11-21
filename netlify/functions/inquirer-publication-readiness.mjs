@@ -3,6 +3,7 @@ import {inspectCanonicalArchive} from './lib/inquirer-legacy-history.mjs';
 import {verifiedNewSiteCutoverHistory,verifiedWeekNineAutopublishCutoverHistory} from './lib/inquirer-replacement-archive-gate.mjs';
 import {approvedCutoverSourceReadiness} from './lib/inquirer-cutover-source-readiness.mjs';
 import {githubVerifiedArchiveRows} from './lib/inquirer-github-archive.mjs';
+import {githubVerifiedHistoricalPublisherBaseline} from './lib/inquirer-github-publisher-continuity.mjs';
 
 // Read-only acceptance diagnostics. This endpoint NEVER generates articles,
 // bootstraps queue credentials, writes a Blob, or exposes manuscript contents.
@@ -24,17 +25,25 @@ export default async function inquirerPublicationReadiness(req){
   const [week3,week4,week5,week6,week7,week8]=editions;
   const [index,awards,cutover,status]=values.slice(weeks.length);
   const indexes=Array.isArray(index)?index:[];
-  const githubArchive=await githubVerifiedArchiveRows();
+  const [githubArchive,githubContinuity]=await Promise.all([
+   githubVerifiedArchiveRows(),githubVerifiedHistoricalPublisherBaseline()
+  ]);
   const githubWeeks=new Set(githubArchive.filter(row=>row.season===2026).map(row=>row.week));
   const history=weeks.map((week,i)=>({
    week,locked_verified:inspectCanonicalArchive(editions[i],2026,week).ok,
    github_verified:githubWeeks.has(week),
-   indexed:indexes.some(row=>Number(row?.season)===2026&&Number(row?.week)===week),
+   indexed:indexes.some(row=>Number(row?.season)===2026&&Number(row?.week)===week)||
+    (githubContinuity.ready&&githubWeeks.has(week)&&githubContinuity.indexedWeeks.includes(week)),
    award_present:Array.isArray(awards?.records)&&awards.records.some(row=>
-    Number(row?.season)===2026&&Number(row?.week)===week)
+    Number(row?.season)===2026&&Number(row?.week)===week)||
+    (githubContinuity.ready&&githubWeeks.has(week)&&githubContinuity.awardedWeeks.includes(week))
   }));
-  const baseline=verifiedNewSiteCutoverHistory({week3,week4,week5,week6,index,awards});
-  const forward=verifiedWeekNineAutopublishCutoverHistory({week7,week8,index,awards});
+  const localBaseline=verifiedNewSiteCutoverHistory({week3,week4,week5,week6,index,awards});
+  const localForward=verifiedWeekNineAutopublishCutoverHistory({week7,week8,index,awards});
+  const baseline=localBaseline.ready?localBaseline:githubContinuity.ready?
+   {ready:true,reason:githubContinuity.reason}:localBaseline;
+  const forward=localForward.ready?localForward:githubContinuity.ready?
+   {ready:true,reason:githubContinuity.reason}:localForward;
   // This answers whether a *copy is in this Netlify site's Blob store*;
   // the old hostname alone does not grant access to retired site data.
   const source=baseline.ready&&!forward.ready?
@@ -48,7 +57,9 @@ export default async function inquirerPublicationReadiness(req){
   const payload={
    schema_version:1,season:2026,read_only:true,site_writes_performed:false,
    historical_weeks:history,
-   github_archive:{verified_weeks:[...githubWeeks].sort((a,b)=>a-b),count:githubWeeks.size,read_only:true},
+   github_archive:{verified_weeks:[...githubWeeks].sort((a,b)=>a-b),count:githubWeeks.size,read_only:true,
+    historical_publication_continuity_verified:githubContinuity.ready,
+    continuity_reason:githubContinuity.reason},
    weeks_9_plus:history.filter(row=>row.week>=9),
    verified_but_not_indexed_weeks:history.filter(row=>row.locked_verified&&!row.indexed).map(row=>row.week),
    baseline:{ready:baseline.ready,reason:baseline.reason},

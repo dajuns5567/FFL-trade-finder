@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "source": "retired-netlify-manual-export-2026-11-21",
+  "data_in_github": false,
+  "published_archive_updated": false,
+  "status": "source-verified-indexed-in-retired-netlify-awaiting-byte-import",
+  "notes": [
+    "This source inventory is NOT the published GitHub archive manifest; original manuscripts are not committed yet.",
+    "Retired Netlify broadcasts/index.json lists Weeks 3-9, and awards/weekly.json independently lists awards Weeks 1-9.",
+    "Weeks 5-9 original edition timestamps exactly match both recovered index and weekly award records.",
+    "Weeks 7 and 8 retain historical preview_warning despite published_locked=true and matching independent published index/awards. Preserve warning and original bytes; do not silently rewrite.",
+    "Week 10 publication-status.json records editorial-hold on November 17, 2026 for 2 repeat/copy-forward findings; no edition was published.",
+    "Never copy the old account's internal-queue-credential.json. No credentials required for archive migration."
+  ],
+  "entries": [
+    {
+      "week": 5,
+      "path": "2026/week-05.json",
+      "sha256": "3c402391b3df2374291b161f12952c5332aa4d082cfed90d62540c37ac2cd770",
+      "bytes": 6405954,
+      "editorial_revision": 94,
+      "published_locked": true,
+      "publication_evidence_conflict": false,
+      "matching_old_broadcast_index": true,
+      "matching_old_weekly_awards": true
+    },
+    {
+      "week": 6,
+      "path": "2026/week-06.json",
+      "sha256": "9e9ea33becac9db113da73f7d1d28a36ecfb4bef9c44accfe94d819da563548e",
+      "bytes": 6559320,
+      "editorial_revision": 98,
+      "published_locked": true,
+      "publication_evidence_conflict": false,
+      "matching_old_broadcast_index": true,
+      "matching_old_weekly_awards": true
+    },
+    {
+      "week": 7,
+      "path": "2026/week-07.json",
+      "sha256": "b42b573dec1665a93aae1a9a068796dd126c08c0d5adf61ed05483e580f5d43c",
+      "bytes": 7234451,
+      "editorial_revision": 107,
+      "published_locked": true,
+      "publication_evidence_conflict": true,
+      "matching_old_broadcast_index": true,
+      "matching_old_weekly_awards": true
+    },
+    {
+      "week": 8,
+      "path": "2026/week-08.json",
+      "sha256": "11b7a8986ac317429c30d83853e0d9f30caa67c3c5c9e5ea73380b84317f4b90",
+      "bytes": 7444594,
+      "editorial_revision": 107,
+      "published_locked": true,
+      "publication_evidence_conflict": true,
+      "matching_old_broadcast_index": true,
+      "matching_old_weekly_awards": true
+    },
+    {
+      "week": 9,
+      "path": "2026/week-09.json",
+      "sha256": "8b55ac2296147d0cb3011bc8a0c2bf57169a41a14ea83a8f889655850512a2a8",
+      "bytes": 7309785,
+      "editorial_revision": 109,
+      "published_locked": true,
+      "publication_evidence_conflict": false,
+      "matching_old_broadcast_index": true,
+      "matching_old_weekly_awards": true
+    }
+  ],
+  "publication_evidence_recovered": true,
+  "recovered_metadata": {
+    "broadcast_index_weeks": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "weekly_award_weeks": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "publication_status": {
+      "week": 10,
+      "state": "editorial-hold",
+      "available": false,
+      "review_required": true,
+      "editorial_findings": 2,
+      "finished_at": "2026-11-17T06:02:12.380Z"
+    }
+  }
+}

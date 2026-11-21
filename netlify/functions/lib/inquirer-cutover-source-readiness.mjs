@@ -1,15 +1,16 @@
 import {getStore} from '@netlify/blobs';
 import {privatePreviewStoreName} from './inquirer-preview-diagnostics.mjs';
-import {FORWARD_EDITORIAL_REVISION} from '../inquirer-editorial-v31.mjs';
+// Immutable accepted source revision; never follow the current generator version.
+export const APPROVED_CUTOVER_SOURCE_REVISION=107;
 
 // A source hostname identifies the approved manuscript's original *name*;
 // Netlify site-wide Blob storage does not follow a hostname to a former site.
 // This check is read-only and must run before a cutover is queued.
 export const CUTOVER_SOURCE_PREVIEW='https://deploy-preview-427--precious-dango-fb4633.netlify.app';
 export const sourceDraftKey=week=>'2026/week-'+String(week).padStart(2,'0')+
- '/editorial-r'+FORWARD_EDITORIAL_REVISION+'/edition.json';
+ '/editorial-r'+APPROVED_CUTOVER_SOURCE_REVISION+'/edition.json';
 
-export async function checkApprovedCutoverSource({store,revision=FORWARD_EDITORIAL_REVISION}={}){
+export async function checkApprovedCutoverSource({store,revision=APPROVED_CUTOVER_SOURCE_REVISION}={}){
  if(!store?.get)return{ready:false,reason:'No destination-site source store'};
  const issues=[];
  for(const week of [7,8]){

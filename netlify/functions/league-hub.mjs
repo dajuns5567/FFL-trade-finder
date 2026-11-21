@@ -3,6 +3,7 @@ import valueHistoryHandler from './value-history.mjs';
 // Forward drafts must be reviewed as written; synthetic scoreboard sentence repair is retired.
 import {inspectEditionBeforePublication,editorialApprovalMatches,editorialCopyDigest,deterministicInquirerAdmission,isReadOnlyEditorialPreview,inspectPreviousWeekEditorialReuse} from './inquirer-publication-guard.mjs';
 import { getStore } from '@netlify/blobs';
+import {inquirerPublisherSite} from './lib/inquirer-publisher-site.mjs';
 import {auditIndependentInquirerCopy} from './lib/inquirer-independent-copy-audit.mjs';
 import {loadMida,attachMida} from './inquirer-context-v22.mjs';
 import {INQUIRER_VERSION,publicReporters,buildInquirerWeek,buildLeagueOverview,inquirerWeekClassification,INQUIRER_PLAYOFF_START_WEEK,INQUIRER_FINAL_WEEK} from './inquirer-reporters.mjs';
@@ -637,8 +638,9 @@ export async function weeklyReport(req){
  // deterministic admission gate only after the prior week is locked.
  const publicationHost=new URL(req.url).hostname;
  const publicationSiteId=globalThis.Netlify?.env?.get?.('SITE_ID')||process.env.SITE_ID||'';
- const currentPublisherSite=publicationSiteId==='fa33dfe4-8293-441e-8da0-25cc66fc984c'||
-  publicationHost==='precious-dango-fb4633.netlify.app';
+ const publisherSiteName=globalThis.Netlify?.env?.get?.('SITE_NAME')||process.env.SITE_NAME||'';
+ const publicationContext=globalThis.Netlify?.env?.get?.('CONTEXT')||process.env.CONTEXT||'';
+ const currentPublisherSite=inquirerPublisherSite({siteId:publicationSiteId,siteName:publisherSiteName,host:publicationHost,context:publicationContext}).active;
  const replacementPublicationSite=publicationSiteId==='8776d155-bc7b-4dcd-bafc-3d70d3d51800'||
   publicationHost==='transcendent-manatee-2f0123.netlify.app';
  const admission=manualAdmission.approved?manualAdmission:

@@ -42,7 +42,7 @@ test('scheduled publisher never starts from a missing status before verifying or
  assert.ok(replacement>0&&verify>replacement&&seed>verify&&decision>seed);
  assert.match(source,/Netlify\?\.env\?\.get\?\.\('FLEECED_ENABLE_NEW_SITE_PUBLISHER'\)/);
  assert.match(source,/context=globalThis\.Netlify\?\.env\?\.get\?\.\('CONTEXT'\)/);
- assert.match(source,/siteId==='8776d155-bc7b-4dcd-bafc-3d70d3d51800'/);
+ assert.match(source,/inquirerPublisherSite\(\{siteId,siteName:site,host,context\}\)/);
  assert.match(source,/if\(!status\|\|typeof status!=='object'\)return skip/);
 });
 
@@ -68,8 +68,8 @@ test('new account cutover is blocked until locked Weeks 3–6, archive index and
 test('new-account scheduler and worker both enforce owner enable flag and post-Week-6 continuity',()=>{
  const scheduled=readFileSync(new URL('../netlify/functions/inquirer-publish-scheduled.mjs',import.meta.url),'utf8');
  const worker=readFileSync(new URL('../netlify/functions/inquirer-publish-background.mjs',import.meta.url),'utf8');
- assert.match(scheduled,/siteId==='3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f'/);
- assert.match(worker,/siteId==='3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f'/);
+ assert.match(scheduled,/inquirerPublisherSite\(\{siteId,siteName:site,host,context\}\)/);
+ assert.match(worker,/inquirerPublisherSite\(\{siteId,siteName,host,context\}\)/);
  assert.match(scheduled,/if\(isReplacement&&publishingEnabled!=='true'\)/);
  assert.match(worker,/if\(replacement&&enabled!=='true'\)/);
  assert.match(scheduled,/verifiedNewSiteCutoverHistory\(\{week3,week4,week5,week6,index,awards\}\)/);
@@ -86,12 +86,15 @@ test('new Netlify account is recognized but gated behind owner activation and We
  const scheduler=readFileSync(new URL('../netlify/functions/inquirer-publish-scheduled.mjs',import.meta.url),'utf8');
  const worker=readFileSync(new URL('../netlify/functions/inquirer-publish-background.mjs',import.meta.url),'utf8');
  for(const source of [scheduler,worker]){
-  assert.match(source,/fa33dfe4-8293-441e-8da0-25cc66fc984c/);
+  assert.match(source,/inquirerPublisherSite/);
   assert.match(source,/verifiedWeekNineAutopublishCutoverHistory/);
  }
  assert.match(scheduler,/week:isCurrentSite\?8:6/);
  assert.match(scheduler,/publishingEnabled!=='true'/);
  assert.match(worker,/enabled!=='true'/);
+ const identity=readFileSync(new URL('../netlify/functions/lib/inquirer-publisher-site.mjs',import.meta.url),'utf8');
+ assert.match(identity,/a516be3b-6c65-4f54-a9fb-23c5361bf3d2/);
+ assert.match(identity,/fa33dfe4-8293-441e-8da0-25cc66fc984c/,'previous publisher is retired');
  const config=readFileSync(new URL('../netlify.toml',import.meta.url),'utf8');
  assert.match(config,/e\.CONTEXT==='deploy-preview'/);
  assert.match(config,/\['448','450'\]/);

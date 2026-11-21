@@ -12,12 +12,12 @@ const selectRow=source.slice(source.indexOf('function latestPublishedInquirerRow
 assert.match(selectRow,/function latestPublishedInquirerRow/);
 const edition=week=>({available:true,published_locked:true,season:2026,week,teams:Array.from({length:32},(_,i)=>({roster_id:i+1})),league_overview:{headline:'Week '+week}});
 function reader(responses){
- const requested=[],context={console:{warn(){}},weeklyCache:null,openBroadcastTeam:'',inquirerPreviewMode:false,invalidatePublishedInquirerCaches(){this.weeklyCache=null},
+ const requested=[],warnings=[],context={console:{warn(...args){warnings.push(args.map(String).join(' '))}},weeklyCache:null,openBroadcastTeam:'',inquirerPreviewMode:false,invalidatePublishedInquirerCaches(){this.weeklyCache=null},
   fetch:async url=>{const week=Number(new URL(url,'https://ffl.invalid').searchParams.get('broadcast_week'));requested.push(week);const response=responses[week];if(response instanceof Error)throw response;return{ok:response!==undefined,json:async()=>response}},
   fetchPublishedInquirerArchive:async()=>[{season:2026,week:11},{season:2026,week:10}]};
  vm.createContext(context);
  vm.runInContext(selectRow+'\n'+code+';globalThis.verify=verifiedPublishedInquirer;globalThis.isReadable=readablePublishedInquirer;globalThis.weeklyRead=weekly;',context);
- return{verify:context.verify,isReadable:context.isReadable,weekly:context.weeklyRead,requested,context};
+ return{verify:context.verify,isReadable:context.isReadable,weekly:context.weeklyRead,requested,warnings,context};
 }
 test('latest fully readable locked newspaper wins even when archive index order is reversed',async()=>{
  const r=reader({10:edition(10),11:edition(11)});
@@ -56,7 +56,7 @@ test('a selected historical article stays on its requested week through a normal
 test('default Fleeced Daily view advances to newly verified published week',async()=>{
  const r=reader({10:edition(10),11:edition(11)});
  r.context.weeklyCache=edition(10);
- assert.equal((await r.weekly()).week,11);
+ assert.equal((await r.weekly()).week,11,'Diagnostic: '+r.warnings.join(' | '));
  assert.equal(r.context.weeklyCache.week,11);
 });
 test('archive index downtime keeps the last verified issue instead of a blank page',async()=>{

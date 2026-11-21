@@ -18,6 +18,36 @@
       "sha256": "038248bef97fd7bfd2bdece6df9c3a538cac9c29ae1bb34487458927c129022c",
       "provenance": "original-user-library-edition",
       "original_git_blob_sha": "d69db3f5c9ecc7c79787f66ffc8830e7bf71f44f"
+    },
+    {
+      "season": 2026,
+      "week": 5,
+      "path": "2026/week-05.json",
+      "sha256": "3c402391b3df2374291b161f12952c5332aa4d082cfed90d62540c37ac2cd770"
+    },
+    {
+      "season": 2026,
+      "week": 6,
+      "path": "2026/week-06.json",
+      "sha256": "9e9ea33becac9db113da73f7d1d28a36ecfb4bef9c44accfe94d819da563548e"
+    },
+    {
+      "season": 2026,
+      "week": 7,
+      "path": "2026/week-07.json",
+      "sha256": "b42b573dec1665a93aae1a9a068796dd126c08c0d5adf61ed05483e580f5d43c"
+    },
+    {
+      "season": 2026,
+      "week": 8,
+      "path": "2026/week-08.json",
+      "sha256": "11b7a8986ac317429c30d83853e0d9f30caa67c3c5c9e5ea73380b84317f4b90"
+    },
+    {
+      "season": 2026,
+      "week": 9,
+      "path": "2026/week-09.json",
+      "sha256": "8b55ac2296147d0cb3011bc8a0c2bf57169a41a14ea83a8f889655850512a2a8"
     }
   ]
 }

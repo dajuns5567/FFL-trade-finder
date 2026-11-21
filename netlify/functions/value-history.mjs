@@ -657,9 +657,10 @@ function contiguousMarketMovement(snaps,days){
     else groups.push({model,snaps:[snap]});
   }
   const totals=new Map(),current=rowMap(latest);
-  let qualifyingSegments=0;
+  let qualifyingSegments=0,unversionedSegments=0;
   for(const group of groups){
     if(group.snaps.length<2)continue;
+    if(group.model===null)unversionedSegments++;
     const first=group.snaps[0],end=group.snaps.at(-1);
     // A player entering after the window's first sample still has a real
     // comparable baseline: their own first recorded value inside the segment.
@@ -699,7 +700,7 @@ function contiguousMarketMovement(snaps,days){
     rankFallers:list.filter(r=>r.overallDelta<0).sort((a,b)=>a.overallDelta-b.overallDelta||b.value-a.value),
     posRankRisers:list.filter(r=>r.posRankDelta>0).sort((a,b)=>b.posRankDelta-a.posRankDelta||b.value-a.value),
     posRankFallers:list.filter(r=>r.posRankDelta<0).sort((a,b)=>a.posRankDelta-b.posRankDelta||b.value-a.value),
-    metrics:totals,qualifyingSegments,baseline:base?.t||null
+    metrics:totals,qualifyingSegments,unversionedSegments,baseline:base?.t||null
   };
 }
 function marketFromSnapshots(snaps){
@@ -733,7 +734,10 @@ function marketFromSnapshots(snaps){
     const p=contiguousMarketMovement(ordered,days);
     motions[label]=p.metrics;
     periods[label]={valueRisers:p.valueRisers,valueFallers:p.valueFallers,rankRisers:p.rankRisers,rankFallers:p.rankFallers,posRankRisers:p.posRankRisers,posRankFallers:p.posRankFallers,
-      baseline:p.baseline,comparable_segments:p.qualifyingSegments,movement_basis:'same-model-segment-sum'};
+      baseline:p.baseline,comparable_segments:p.qualifyingSegments,
+      unversioned_segments:p.unversionedSegments||0,
+      model_continuity_verified:p.qualifyingSegments>0&&p.unversionedSegments===0,
+      movement_basis:p.unversionedSegments?'observed-values-unknown-model-era':'same-model-segment-sum'};
   }
   const m1=motions['1D'],m7=motions['7D'],m30=motions['30D'],m365=motions['1Y'],mAll=motions.ALL;
   const latestMap=rowMap(latest);
@@ -967,6 +971,8 @@ function marketInsightRange(snaps,label,historySnaps=snaps){
 // No subtraction across valuation-model boundaries, no invented baseline.
 function verifiedMarketIntelligenceMovement(allSnapshots,days,recorded){
  const result=contiguousMarketMovement(allSnapshots,days);
+ const modelContinuityVerified=result.qualifyingSegments>0&&result.unversionedSegments===0;
+ const movementBasis=modelContinuityVerified?'sum-of-recorded-same-model-movements':'observed-values-unknown-model-era';
  const movements=[...result.metrics.values()].map(row=>({
    id:row.id,pos:row.pos,value:row.value,overall:row.overall,
    posRank:row.posRank,delta:row.delta,pct:Number(row.pct.toFixed(4)),
@@ -974,7 +980,8 @@ function verifiedMarketIntelligenceMovement(allSnapshots,days,recorded){
    from_t:row.baseline_t,through_t:row.through_t,
    overall_delta:row.overallDelta,pos_rank_delta:row.posRankDelta,
    comparable_segments:row.comparable_segments,
-   measurement:'sum-of-recorded-same-model-movements'
+   measurement:movementBasis,
+   model_continuity_verified:modelContinuityVerified
  }));
  const byId=new Map(movements.map(row=>[String(row.id),row]));
  const latest=allSnapshots.at(-1);
@@ -992,11 +999,13 @@ function verifiedMarketIntelligenceMovement(allSnapshots,days,recorded){
      baseline_avg:null,current_avg:null,
      baseline_t:confirmed.map(x=>x.from_t).filter(Boolean).sort()[0]||null,
      through_t:latest?.t||null,
-     measurement:'equal-weight-verifiable-same-model-percent-movement',
+     measurement:modelContinuityVerified?'equal-weight-verifiable-same-model-percent-movement':'equal-weight-observed-percent-movement-unknown-model-era',
      comparable_segments:result.qualifyingSegments});
  }
  return{...recorded,player_changes:movements,position_indexes:indexes,
-   movement_basis:'sum-of-recorded-same-model-movements',
+   movement_basis:movementBasis,
+   model_continuity_verified:modelContinuityVerified,
+   unversioned_segments:result.unversionedSegments||0,
    movement_segments:result.qualifyingSegments,
    movement_observations:allSnapshots.length};
 }
@@ -1020,7 +1029,8 @@ function marketInsightsFromSnapshots(snaps){
    tracking_since:ordered[0].t,comparable_since:active[0]?.t||null,through:ordered.at(-1).t,
    ranges,position_indexes:all.position_indexes,new_highs:all.new_highs,
    new_lows:all.new_lows,volatility:all.volatility,
-   movement_basis:'sum-of-recorded-same-model-movements'};
+   movement_basis:all.movement_basis,
+   model_continuity_verified:all.model_continuity_verified};
 }
 async function getMarketInsights(s){
   const now=Date.now();if(marketInsightsCache&&now-marketInsightsCacheAt<300000)return marketInsightsCache;

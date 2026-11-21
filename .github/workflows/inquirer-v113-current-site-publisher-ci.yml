@@ -8,6 +8,8 @@ on:
       - 'netlify/functions/lib/inquirer-cutover-runtime.mjs'
       - 'netlify/functions/lib/inquirer-preview-diagnostics.mjs'
       - 'tests/inquirer-current-site-autopublish-v113.test.mjs'
+      - 'tests/inquirer-preview-diagnostics.test.mjs'
+      - 'tests/inquirer-schedule-decision.test.mjs'
       - '.github/workflows/inquirer-v113-current-site-publisher-ci.yml'
 permissions:
   contents: read
@@ -34,7 +36,7 @@ jobs:
           import assert from 'node:assert/strict';
           import {execFileSync} from 'node:child_process';
           const files=execFileSync('git',['diff','--name-only','origin/main...HEAD'],{encoding:'utf8'}).trim().split('\n').filter(Boolean);
-          const allowed=new Set(['netlify/functions/inquirer-publish-scheduled.mjs','netlify/functions/inquirer-publish-background.mjs','netlify/functions/lib/inquirer-publisher-site.mjs','netlify/functions/lib/inquirer-cutover-runtime.mjs','netlify/functions/lib/inquirer-preview-diagnostics.mjs','tests/inquirer-current-site-autopublish-v113.test.mjs','.github/workflows/inquirer-v113-current-site-publisher-ci.yml']);
+          const allowed=new Set(['netlify/functions/inquirer-publish-scheduled.mjs','netlify/functions/inquirer-publish-background.mjs','netlify/functions/lib/inquirer-publisher-site.mjs','netlify/functions/lib/inquirer-cutover-runtime.mjs','netlify/functions/lib/inquirer-preview-diagnostics.mjs','tests/inquirer-current-site-autopublish-v113.test.mjs','tests/inquirer-preview-diagnostics.test.mjs','tests/inquirer-schedule-decision.test.mjs','.github/workflows/inquirer-v113-current-site-publisher-ci.yml']);
           assert(files.length>0);
           for(const file of files)assert(allowed.has(file),'Out-of-scope subsystem: '+file);
           JS

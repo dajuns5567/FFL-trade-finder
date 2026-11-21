@@ -1579,7 +1579,7 @@ function openMarketIntelModal(kind){
   document.getElementById('vhLazy')?.appendChild(wrap);
 }
 function intelligencePeriodBar(){
-  return`<div class="vh-intel-periodbar"><div class="vh-intel-period-copy"><span class="vh-intel-kicker">Fleeced analytics</span><div class="vh-intel-title">Market Intelligence</div><small>Choose the value-history window used across indexes, heat, records, opportunities, reversals, and volatility.</small></div><div class="vh-intel-period-actions" role="group" aria-label="Market Intelligence time range">${['1D','7D','30D','90D','1Y','ALL'].map(p=>`<button type="button" class="${p===marketIntelPeriod?'vh-active':''}" data-vh-intel-period="${p}">${p}</button>`).join('')}</div><div class="vh-intel-period-note">Value movement uses verified observations inside the selected window. Fleeced player signals remain based on completed NFL weeks only.</div></div>`;
+  return`<div class="vh-intel-periodbar"><div class="vh-intel-period-copy"><span class="vh-intel-kicker">Fleeced analytics</span><div class="vh-intel-title">Market Intelligence</div><small>Choose the value-history window used across indexes, heat, records, opportunities, reversals, and volatility.</small></div><div class="vh-intel-period-actions" role="group" aria-label="Market Intelligence time range">${['1D','7D','30D','90D','1Y','ALL'].map(p=>`<button type="button" class="${p===marketIntelPeriod?'vh-active':''}" data-vh-intel-period="${p}">${p}</button>`).join('')}</div><div class="vh-intel-period-note">${marketModelVerifiedV110()?'Verified same-model movements':'Recorded changes; model continuity unverified'} inside the selected window. Completed NFL-week signals remain separate.</div></div>`;
 }
 function currentPositionIndexes(){
   // The archive can rank players at its LAST snapshot, but that is not
@@ -1595,13 +1595,13 @@ function currentPositionIndexes(){
     const pct=verified.length?verified.reduce((sum,r)=>sum+Number(r.pct),0)/verified.length:null;
     return {pos,cohort_count:cohort.length,count:verified.length,
       index:pct==null?null:100+pct,change_pct:pct,
-      measurement:'current-player-values-top24-same-era-verified-pct'};
+      measurement:marketModelVerifiedV110()?'current-player-values-top24-same-era-verified-pct':'current-player-values-top24-observed-pct-unverified-model'};
   });
 }
 function positionIndexesMarkup(){
   const rows=currentPositionIndexes();
   if(!rows.some(r=>r.cohort_count))return'<div class="vh-card"><div class="vh-empty">Waiting for current Player Values rankings…</div></div>';
-  return`<div class="vh-index-grid">${rows.map(r=>{const idx=finiteMarketNumber(r.index),chg=finiteMarketNumber(r.change_pct);return`<div class="vh-index-card"><small>${esc(r.pos)} Index</small><b>${idx==null?'—':idx.toFixed(1)}</b><span class="${deltaClass(chg)}">${chg==null?'—':signedPct(chg)} over ${esc(intelPeriodLabel())}</span><span class="muted">${r.count} verified of ${r.cohort_count} current ${esc(r.pos)} players • 100 = no recorded movement</span></div>`}).join('')}</div>`;
+  return`<div class="vh-index-grid">${rows.map(r=>{const idx=finiteMarketNumber(r.index),chg=finiteMarketNumber(r.change_pct);return`<div class="vh-index-card"><small>${esc(r.pos)} Index</small><b>${idx==null?'—':idx.toFixed(1)}</b><span class="${deltaClass(chg)}">${chg==null?'—':signedPct(chg)} over ${esc(intelPeriodLabel())}</span><span class="muted">${r.count} ${marketModelVerifiedV110()?'verified':'observed'} of ${r.cohort_count} current ${esc(r.pos)} players • 100 = no recorded movement</span></div>`}).join('')}</div>`;
 }
 function heatMapVerifiedCurrentRows(){
   // The archive supplies measured within-era percentage changes, while the
@@ -1610,6 +1610,7 @@ function heatMapVerifiedCurrentRows(){
   return liveMarketRowsV97(intelRange()?.player_changes||[])
    .filter(r=>finiteMarketNumber(r.pct)!=null&&Number.isFinite(Number(r.overall)));
 }
+function marketModelVerifiedV110(){return intelRange()?.model_continuity_verified===true}
 function marketHeatMapMarkup(){
   const changes=heatMapVerifiedCurrentRows(),positions=['QB','RB','WR','TE','IDP'],
     buckets=[['Top 100',1,100],['101–200',101,200],['201–300',201,300],['301+',301,Infinity]],cells=[];
@@ -1627,7 +1628,7 @@ function marketHeatMapMarkup(){
       cells.push(`<button type="button" class="vh-heat-cell ${deltaClass(shownAvg)}" data-vh-heat-pos="${pos}" data-vh-heat-min="${min}" data-vh-heat-max="${Number.isFinite(max)?max:'INF'}" aria-label="View ${pos} ${label} players">${avg==null?'—':shownAvg===0?'0.0%':signedPct(shownAvg)}<small>${sample.length} players • ${breadth==null?'—':breadth+'%'} rising</small><small>${avgAbs==null?'No measured movement':'Avg absolute '+avgAbs.toFixed(1)+'%'} • view ↗</small></button>`);
     }
   }
-  return`<div class="vh-card"><div class="vh-sub">Average verified player-value movement by position and current overall-rank band • ${esc(intelPeriodLabel())}. Changes within each valuation era are counted; model-change repricing is not. Each cell also shows average absolute movement and the share of players rising, so gains and losses cannot hide activity by canceling.</div><div class="vh-heat-wrap"><div class="vh-heat-grid">${cells.join('')}</div></div></div>`;
+  return`<div class="vh-card"><div class="vh-sub">Average ${marketModelVerifiedV110()?'verified':'observed'} player-value movement by position and current overall-rank band • ${esc(intelPeriodLabel())}. ${marketModelVerifiedV110()?'Tagged model-era repricing is excluded.':'Model continuity is unverified; observed movements may include repricing.'} Each cell also shows average absolute movement and the share of players rising, so gains and losses cannot hide activity by canceling.</div><div class="vh-heat-wrap"><div class="vh-heat-grid">${cells.join('')}</div></div></div>`;
 }
 function openHeatMapModal(pos,min,max){
   closeMoverModal();
@@ -1635,9 +1636,9 @@ function openHeatMapModal(pos,min,max){
     .filter(r=>String(r.pos)===String(pos)&&Number(r.overall)>=lo&&Number(r.overall)<=hi)
     .slice().sort((a,b)=>Number(b.pct||0)-Number(a.pct||0)||Number(b.delta||0)-Number(a.delta||0)),
     band=hi===Infinity?`${lo}+`:lo===1&&hi===100?'Top 100':`${lo}–${hi}`,
-    body=rows.length?rows.map(r=>intelPlayerRow(r.id,`${r.pos} #${r.posRank} • Overall #${r.overall} • ${r.comparable_segments>1?'movement from '+r.comparable_segments+' model-era segments':'from '+fmt(r.from_value)}`,`${intelPeriodLabel()} value Δ`,signed(r.delta),deltaClass(r.delta))).join(''):'<div class="vh-empty">No verified player movement is available in this heat-map cell for the selected window.</div>',
+    body=rows.length?rows.map(r=>intelPlayerRow(r.id,`${r.pos} #${r.posRank} • Overall #${r.overall} • ${r.comparable_segments>1?'movement from '+r.comparable_segments+' model-era segments':'from '+fmt(r.from_value)}`,`${intelPeriodLabel()} value Δ`,signed(r.delta),deltaClass(r.delta))).join(''):'<div class="vh-empty">No recorded player movement is available in this heat-map cell for the selected window.</div>',
     wrap=document.createElement('div');
-  wrap.id='vhMoverModal';wrap.className='vh-modal-backdrop';wrap.innerHTML=`<div class="vh-modal" role="dialog" aria-modal="true" aria-label="${esc(pos)} ${esc(band)} heat map"><div class="vh-modal-head"><div><h3>${esc(pos)} • ${esc(band)}</h3><div class="vh-sub">${esc(intelPeriodLabel())} verified value movement • ${rows.length} players • sorted hottest to coolest</div></div><button type="button" class="secondary small" data-vh-modal-close>Close</button></div><div class="vh-modal-body"><div class="vh-intel-list">${body}</div></div></div>`;
+  wrap.id='vhMoverModal';wrap.className='vh-modal-backdrop';wrap.innerHTML=`<div class="vh-modal" role="dialog" aria-modal="true" aria-label="${esc(pos)} ${esc(band)} heat map"><div class="vh-modal-head"><div><h3>${esc(pos)} • ${esc(band)}</h3><div class="vh-sub">${esc(intelPeriodLabel())} ${marketModelVerifiedV110()?'verified':'observed, unverified-model'} value movement • ${rows.length} players • sorted hottest to coolest</div></div><button type="button" class="secondary small" data-vh-modal-close>Close</button></div><div class="vh-modal-body"><div class="vh-intel-list">${body}</div></div></div>`;
   document.getElementById('vhLazy')?.appendChild(wrap);
 }
 function newHighLowMarkup(){
@@ -1769,14 +1770,14 @@ function categoryLeadersMarkup(){
 function marketIntelligenceMarkup(){
   return`
   ${intelligencePeriodBar()}
-  <section class="vh-market-section" id="vhPositionIndexes"><div class="vh-market-section-title"><h3>Position Indexes</h3><p>Top-24 current position cohorts: equal-weight verified percentage movements within each valuation era, combined across the selected window. Model-change repricing is excluded.</p></div>${positionIndexesMarkup()}</section>
-  <section class="vh-market-section" id="vhMarketHeat"><div class="vh-market-section-title"><h3>Market Heat Map</h3><p>Select a cell to inspect every player and value movement behind the aggregate.</p></div>${marketHeatMapMarkup()}</section>
+  <section class="vh-market-section" id="vhPositionIndexes"><div class="vh-market-section-title"><h3>Position Indexes</h3><p>Top-24 current position cohorts: equal-weight ${marketModelVerifiedV110()?'verified same-model':'recorded, model-unverified'} percentage movements. ${marketModelVerifiedV110()?'Model-change repricing is excluded.':'Price differences may include repricing.'}</p></div>${positionIndexesMarkup()}</section>
+  <section class="vh-market-section" id="vhMarketHeat"><div class="vh-market-section-title"><h3>Market Heat Map</h3><p>Select a cell to inspect each player and recorded value difference. ${marketModelVerifiedV110()?'Same-model movements verified.':'Model continuity not verified.'}</p></div>${marketHeatMapMarkup()}</section>
   <section class="vh-market-section" id="vhCategoryLeaders"><div class="vh-market-section-title"><h3>Market Leaders by Category</h3><p>12 quick-read leaders across current value, position, movement, breakouts, rebounds, and pullbacks.</p></div>${categoryLeadersMarkup()}</section>
   <section class="vh-market-section" id="vhMarketHighLow"><div class="vh-market-section-title"><h3>New Player Market Highs / Lows</h3><p>New tracked-history value records reached during the selected window, not just at the latest refresh.</p></div>${newHighLowMarkup()}</section>
   <section class="vh-market-section" id="vhMomentumLeaders"><div class="vh-market-section-title"><h3>Momentum Leaders</h3><p>Underlying completed-week signals shown separately from market value movement.</p></div>${momentumMarkup()}</section>
   <section class="vh-market-section" id="vhOpportunityWatch"><div class="vh-market-section-title"><h3>Buy Low / Sell High Watch</h3><p>Where underlying Fleeced signals and current positional market pricing disagree.</p></div>${opportunityMarkup()}</section>
   <section class="vh-market-section" id="vhMarketReversals"><div class="vh-market-section-title"><h3>Market Reversals</h3><p>Signal-state flips and short-term price movement against the selected broader trend.</p></div>${reversalsMarkup()}</section>
-  <section class="vh-market-section" id="vhMarketVolatility"><div class="vh-market-section-title"><h3>Market Volatility</h3><p>Players with the widest verified value ranges inside the selected window.</p></div>${volatilityMarkup()}</section>`;
+  <section class="vh-market-section" id="vhMarketVolatility"><div class="vh-market-section-title"><h3>Market Volatility</h3><p>Players with the widest ${marketModelVerifiedV110()?'verified':'recorded'} value ranges inside the selected window.</p></div>${volatilityMarkup()}</section>`;
 }
 function renderMarketIntelligence(){
   const host=document.getElementById('vhMarketIntelligence');if(host)host.innerHTML=marketIntelligenceMarkup();

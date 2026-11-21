@@ -1603,11 +1603,50 @@ function positionIndexesMarkup(){
   if(!rows.some(r=>r.cohort_count))return'<div class="vh-card"><div class="vh-empty">Waiting for current Player Values rankings…</div></div>';
   return`<div class="vh-index-grid">${rows.map(r=>{const idx=finiteMarketNumber(r.index),chg=finiteMarketNumber(r.change_pct);return`<div class="vh-index-card"><small>${esc(r.pos)} Index</small><b>${idx==null?'—':idx.toFixed(1)}</b><span class="${deltaClass(chg)}">${chg==null?'—':signedPct(chg)} over ${esc(intelPeriodLabel())}</span><span class="muted">${r.count} ${marketModelVerifiedV110()?'verified':'observed'} of ${r.cohort_count} current ${esc(r.pos)} players • 100 = no recorded movement</span></div>`}).join('')}</div>`;
 }
+// Use the SAME current canonical rows as Player Values for both heat map and
+// position indexes. Archive percentages anchor the requested window, while
+// observed value changes after the last snapshot are included on each open.
+// This is a read-only view: it never rewrites historical prices or snapshots.
+function marketLiveIntelligenceRowsV111(recorded,latestMarketRows,currentValues,opts={}){
+  const {latest,through,period='7D',ready=false,nowMs=Date.now()}=opts;
+  const latestMs=Date.parse(latest||'');
+  const days=period==='ALL'?null:period==='1Y'?365:Number(String(period).replace('D',''));
+  if(!ready||!Number.isFinite(latestMs)||latestMs>nowMs||
+    (through&&through!==latest)||
+    (days!=null&&(!Number.isFinite(days)||nowMs-latestMs>days*86400000))||
+    !Array.isArray(recorded)||!Array.isArray(latestMarketRows)||!Array.isArray(currentValues))return recorded||[];
+  const prior=new Map(latestMarketRows.map(row=>[String(row?.id),row]));
+  const live=new Map(currentValues.map(row=>[String(row?.id),row]));
+  return recorded.map(row=>{
+    const p=prior.get(String(row?.id)),now=live.get(String(row?.id));
+    if(!p||!now||String(p.pos)!==String(now.pos)||String(row?.pos)!==String(now.pos))return row;
+    const base=Number(p.value),value=Number(now.value),delta=Number(row.delta),pct=Number(row.pct);
+    if(!Number.isFinite(base)||base<=0||!Number.isFinite(value)||value<=0||
+       !Number.isFinite(delta)||!Number.isFinite(pct))return row;
+    const currentDelta=value-base,currentPct=(currentDelta/base)*100;
+    return {...row,value,overall:Number(now.overall),posRank:Number(now.posRank),
+      delta:delta+currentDelta,pct:pct+currentPct,
+      overall_delta:Number(row.overall_delta||0)+Number(p.overall)-Number(now.overall),
+      pos_rank_delta:Number(row.pos_rank_delta||0)+Number(p.posRank)-Number(now.posRank),
+      observed_live_delta:currentDelta,observed_live_pct:currentPct,
+      live_unarchived:true,through_recorded:latest};
+  });
+}
+function currentMarketIntelligenceRowsV111(){
+ const snapshot=marketCache,range=intelRange(),refresh=window.__fllValueRefresh,consensus=window.__fllConsensusRefresh;
+ const ready=refresh?.phase==='complete'&&refresh?.inFlight===false&&
+   consensus?.complete===true&&consensus?.ok===true&&
+   Number(consensus.successful)>=7&&window.modeledPlayerValuesV319?.ready===true;
+ return marketLiveIntelligenceRowsV111(range?.player_changes||[],snapshot?.marketRows||[],currentRows(),{
+   latest:snapshot?.latest,through:marketInsightsCache?.through,
+   period:marketIntelPeriod,ready
+ });
+}
 function heatMapVerifiedCurrentRows(){
   // The archive supplies measured within-era percentage changes, while the
   // CURRENT Player Values ranking decides each rank-band membership.
   // Never turn missing/null percentage evidence into artificial zeroes.
-  return liveMarketRowsV97(intelRange()?.player_changes||[])
+  return liveMarketRowsV97(currentMarketIntelligenceRowsV111())
    .filter(r=>finiteMarketNumber(r.pct)!=null&&Number.isFinite(Number(r.overall)));
 }
 function marketModelVerifiedV110(){return intelRange()?.model_continuity_verified===true}

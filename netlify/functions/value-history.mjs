@@ -783,7 +783,9 @@ async function getMarketSourceSnapshots(s){
   const archived=await archiveAllSnapshots();
   const indexed=s?await allItems(s):{items:[]};
   const live=s?await readSnapshotsBounded(s,indexed.items||[],25):[];
-  const snaps=mergeSnapshots(archived,live);
+  // Immutable indexed archive wins if a transient local Blob has the same
+  // timestamp; unique newer local observations still extend the timeline.
+  const snaps=mergeSnapshots(live,archived);
   if(!snaps.length&&(archived.length||indexed.items?.length))
    throw Error('market snapshots indexed but unreadable');
   return{snaps,archive_snapshot_count:archived.length,

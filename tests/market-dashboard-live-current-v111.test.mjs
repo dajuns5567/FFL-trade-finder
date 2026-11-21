@@ -48,6 +48,9 @@ test('every Market Dashboard entrypoint and canonical update refreshes the archi
  assert.match(ui,/window.addEventListener\('focus',[\s\S]*?refreshVisibleMarketV111\(\)/);
  assert.match(ui,/document.addEventListener\('visibilitychange',[\s\S]*?refreshVisibleMarketV111\(\)/);
  assert.match(ui,/marketFetchStampV111/);
+ assert.match(ui,/if\(force\)invalidateLiveMarketV97\(\)/);
+ assert.match(ui,/marketInsightsStampV111/);
+ assert.match(ui,/if\(stamp===marketInsightsStampV111\)marketInsightsCache=data/);
  assert.match(ui,/fetch\(\`\$\{API\}\?market=1\`,\{cache:'no-store'\}\)/);
  assert.match(ui,/fetch\(\`\$\{API\}\?market_insights=1\`,\{cache:'no-store'\}\)/);
 });

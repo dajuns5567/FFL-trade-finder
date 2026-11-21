@@ -4,6 +4,7 @@ import {privatePreviewStoreName} from './lib/inquirer-preview-diagnostics.mjs';
 import {verifiedNewSiteCutoverHistory,verifiedWeekNineAutopublishCutoverHistory} from './lib/inquirer-replacement-archive-gate.mjs';
 import {auditIndependentInquirerCopy} from './lib/inquirer-independent-copy-audit.mjs';
 import {resolveInquirerQueueCredential,inquirerQueueKeyMatches} from './lib/inquirer-queue-credential.mjs';
+import {APPROVED_CUTOVER_SOURCE_REVISION} from './lib/inquirer-cutover-source-readiness.mjs';
 import {FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
 import {cutoverRuntimeHoldReason} from './lib/inquirer-cutover-runtime.mjs';
 
@@ -18,7 +19,7 @@ const SOURCE_HOST='deploy-preview-427--'+SOURCE_SITE_HOST;
 const STATE='inquirer/cutover/2026-weeks07-08-status.json';
 const archiveKey=week=>'broadcasts/2026/week-'+String(week).padStart(2,'0')+'.json';
 const privateKey=week=>'2026/week-'+String(week).padStart(2,'0')+
- '/editorial-r'+FORWARD_EDITORIAL_REVISION+'/edition.json';
+ '/editorial-r'+APPROVED_CUTOVER_SOURCE_REVISION+'/edition.json';
 const jsonEqual=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const completeFeature=record=>!!record?.players_of_week?.offense?.player_id&&
  !!record?.players_of_week?.defense?.player_id&&
@@ -92,7 +93,7 @@ export default async function cutoverApprovedInquirerWeeks(req,netlifyContext){
   const [draft7,draft8]=await Promise.all([7,8].map(w=>
    privateStore.get(privateKey(w),{type:'json'})));
   if(!draft7||!draft8)throw Error('Missing completed private Week 7–8 approved manuscripts');
-  if(FORWARD_EDITORIAL_REVISION<107)throw Error('Forward newsroom must not predate owner-accepted historical revision 107');
+  if(FORWARD_EDITORIAL_REVISION<APPROVED_CUTOVER_SOURCE_REVISION)throw Error('Forward newsroom must not predate owner-accepted historical revision 107');
   const independent=auditIndependentInquirerCopy([draft7,draft8],{revision:107});
   if(!independent.ok)throw Error('Independent private audit rejected '+independent.issue_count+' defects');
   const locked=[draft7,draft8].map(draft=>{

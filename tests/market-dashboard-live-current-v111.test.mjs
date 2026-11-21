@@ -45,8 +45,8 @@ test('every Market Dashboard entrypoint and canonical update refreshes the archi
  assert.match(ui,/window.addEventListener\('fll:valuation-refreshed'/);
  assert.match(ui,/window.addEventListener\('fll:canonical-values-ready'/);
  assert.match(ui,/if\(currentView==='market'\)\{[\s\S]*?loadMarket\(true\)\.catch/);
- assert.match(ui,/window.addEventListener\('focus',[\s\S]*?refreshVisibleMarketV111\(\)/);
- assert.match(ui,/document.addEventListener\('visibilitychange',[\s\S]*?refreshVisibleMarketV111\(\)/);
+ assert.match(ui,/window.addEventListener\('focus',refreshVisibleMarketV111\)/);
+ assert.match(ui,/document.addEventListener\('visibilitychange',[\s\S]*?if\(!document.hidden\)refreshVisibleMarketV111\(\)/);
  assert.match(ui,/marketFetchStampV111/);
  assert.match(ui,/if\(force\)invalidateLiveMarketV97\(\)/);
  assert.match(ui,/marketInsightsStampV111/);

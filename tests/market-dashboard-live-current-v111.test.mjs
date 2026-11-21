@@ -28,7 +28,7 @@ test('market heat-map and position-index movement updates from exact current can
  assert.equal(rows[0].live_unarchived,true);
  assert.equal(rows[0].through_recorded,latest);
  assert.equal(JSON.stringify({history,recorded}),before,'archived data must never be rewritten');
- const next=context.augment(recorded,history,[{...current,value:2750}],opts)[0];
+ const next=context.augment(recorded,history,[{...current[0],value:2750}],opts)[0];
  assert.equal(next.delta,1100,'re-opening after a value refresh must use newest canonical values, not prior computed rows');
  assert.equal(next.pct,50);
 });

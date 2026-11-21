@@ -1,0 +1,41 @@
+name: Value History archive-source inventory reconciliation (read-only)
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/value-history.mjs'
+      - 'netlify/functions/value-history-inventory-audit.mjs'
+      - 'tests/value-history-inventory-audit.test.mjs'
+      - '.github/workflows/value-history-inventory-audit.yml'
+permissions:
+  contents: read
+jobs:
+  inventory:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Enforce inventory-only release scope
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch origin "$BASE_REF"
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {execFileSync} from 'node:child_process';
+          const changed=execFileSync('git',['diff','--name-only','origin/'+process.env.BASE_REF+'...HEAD'],{encoding:'utf8'}).trim().split('\n').filter(Boolean).sort();
+          const allowed=['netlify/functions/value-history.mjs','netlify/functions/value-history-inventory-audit.mjs','tests/value-history-inventory-audit.test.mjs','.github/workflows/value-history-inventory-audit.yml'].sort();
+          assert.deepEqual(changed,allowed);
+          console.log('Read-only inventory diff scope verified');
+          JS
+      - name: Syntax and pure timestamp/provenance checks
+        run: |
+          node --check netlify/functions/value-history.mjs
+          node --check netlify/functions/value-history-inventory-audit.mjs
+          node --test tests/value-history-inventory-audit.test.mjs tests/assess-archive-continuity.test.mjs
+      # No environment secrets, no storage authorization, no archive commands,
+      # no remote site writes and no production deployment.

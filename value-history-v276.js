@@ -1833,8 +1833,6 @@ function renderMarketDashboard(){
   const vr=marketPeriods.valueRisers,vf=marketPeriods.valueFallers,rr=marketPeriods.rankRisers,rf=marketPeriods.rankFallers;
   const vpR=m.periods?.[vr]||{},vpF=m.periods?.[vf]||{},rpR=m.periods?.[rr]||{},rpF=m.periods?.[rf]||{};
   box.innerHTML=`
-  ${modelEraNote(m)}
-  <div class="vh-sub">Current values and ranks come from Player Values; market movement, historical records, and time-window changes are archived observations and may end before the latest live refresh.</div>
   <div class="vh-market-jump">
     <button type="button" data-vh-market-jump="vhMarketMovers">Movers</button>
     <button type="button" data-vh-market-jump="vhPositionIndexes">Position Indexes</button>

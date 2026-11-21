@@ -14,8 +14,8 @@ on:
       - 'scripts/value-history-v107-shadow-acceptance.mjs'
       - 'tests/value-history-model-era-v90.test.mjs'
       - 'tests/value-history-v107-scheduled-promotion.test.mjs'
-      - 'tests/value-history-candidate-headless-contract.test.mjs',
-            'scripts/value-history-data-hub-v331-smoke.mjs'
+      - 'tests/value-history-candidate-headless-contract.test.mjs'
+      - 'scripts/value-history-data-hub-v331-smoke.mjs'
 permissions:
   contents: read
 jobs:
@@ -52,7 +52,8 @@ jobs:
             'value-history-v276.js',
             'tests/value-history-model-era-v90.test.mjs',
             'tests/value-history-v107-scheduled-promotion.test.mjs',
-            'tests/value-history-candidate-headless-contract.test.mjs'
+            'tests/value-history-candidate-headless-contract.test.mjs',
+            'scripts/value-history-data-hub-v331-smoke.mjs'
           ]);
           assert.equal(paths.length,allowed.size,'Unexpected history recorder file inventory: '+JSON.stringify(paths));
           for(const path of paths)assert(allowed.has(path),'Out-of-scope subsystem change '+path);

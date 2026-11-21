@@ -77,7 +77,8 @@ test('new-account scheduler and worker both enforce owner enable flag and post-W
  const preflight=worker.indexOf('if(isNewestSite){');
  const writes=worker.indexOf("await statusStore.setJSON('inquirer/publication-status.json'");
  assert.ok(preflight>0&&writes>preflight,'worker must inspect locked archives before ANY status write');
- assert.match(scheduled,/status=\{state:'completed',available:true,season:2026,week:isCurrentSite\?8:6/);
+ assert.match(scheduled,/week:originalRestoredSite\?9:isCurrentSite\?8:6/);
+ assert.match(scheduled,/Number\(status.week\)<9&&status.state==='completed'&&status.available===true/);
  assert.match(worker,/gleaming-dodol-8dbc4a.netlify.app/);
  assert.match(worker,/Preview deployment cannot publish/);
 });
@@ -89,7 +90,7 @@ test('new Netlify account is recognized but gated behind owner activation and We
   assert.match(source,/fa33dfe4-8293-441e-8da0-25cc66fc984c/);
   assert.match(source,/verifiedWeekNineAutopublishCutoverHistory/);
  }
- assert.match(scheduler,/week:isCurrentSite\?8:6/);
+ assert.match(scheduler,/week:originalRestoredSite\?9:isCurrentSite\?8:6/);
  assert.match(scheduler,/publishingEnabled!=='true'/);
  assert.match(worker,/enabled!=='true'/);
  const config=readFileSync(new URL('../netlify.toml',import.meta.url),'utf8');

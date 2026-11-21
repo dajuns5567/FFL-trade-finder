@@ -90,6 +90,8 @@ test('both historical comparison and Original Trade Analysis render same evidenc
  assert.match(source,/return currentEvaluatorValue\(asset\)/);
  assert.match(source,/if\(recorded!=null\)pick\.historyRecordedValue=recorded/);
  assert.match(source,/Historical projected slot unavailable/);
+ assert.match(source,/function compactTradeSide\(side,trade\)/);
+ assert.match(source,/for\(const p of side\?\.picks\|\|\[\]\)\{const projection=historicalPickProjectionEvidence\(side,p,trade\)/);
 });
 test('backend 50/50 rank comes from full preceding week, not MIDA or a current leaderboard',()=>{
  const backend=fs.readFileSync(new URL('../netlify/functions/value-history.mjs',import.meta.url),'utf8');

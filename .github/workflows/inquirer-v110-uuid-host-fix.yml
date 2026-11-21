@@ -1,0 +1,21 @@
+name: Inquirer V110 verified UUID scheduler callback hotfix
+on:
+  push:
+    branches:
+      - fix/inquirer-v110-canonical-scheduled-host
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-runtime-host:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install current locked project dependencies without scripts
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+      - name: Verify actual UUID host, preview isolation, and exact one-time production gate
+        run: node --test tests/inquirer-live-cutover-gates.test.mjs tests/netlify-v110-inquirer-one-time-release.test.mjs tests/inquirer-current-site-publisher-identity.test.mjs

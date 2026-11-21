@@ -62,14 +62,17 @@ jobs:
             *) echo 'Unknown scheduled valuation release: refusing archival wake' >&2; exit 1 ;;
           esac
 
-      # Trade ingestion runs on EVERY scheduled/workflow wake, even when
-      # Value History has no new valuation snapshot due. It is read-only.
-      - name: Check current Sleeper completed trades
-        # Separate read-only trade monitoring must not suppress an otherwise
-        # verified scheduled player-value history refresh during a transient
-        # Sleeper transactions outage. A failed check remains visible in CI.
+      # Trade History is a separate subsystem from valuation recording.
+      # On EVERY scheduled/workflow wake, verify full Sleeper transactions,
+      # then persist only new completed trades to the existing data branch.
+      # A partial Sleeper response must NEVER overwrite a prior good archive.
+      - name: Refresh durable completed Sleeper trade history
+        # Surface the failure without suppressing a healthy Player Values
+        # history refresh when Sleeper transactions are transiently unavailable.
         continue-on-error: true
-        run: node scripts/trade-history-scheduled-check.mjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/trade-history-scheduled-archive.mjs
 
       - name: Check whether scheduled history is due
         id: due

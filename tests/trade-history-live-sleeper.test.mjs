@@ -77,17 +77,19 @@ test('every site opening forces live completed-trade search, independent of hidd
   assert.match(ui,/if\(!force&&!tradeHistoryCache&&primeTradeHistoryCache/);
   assert.match(ui,/if\(!force&&tradeHistoryCache&&Date\.now\(\)-tradeHistoryCacheAt/);
   assert.match(ui,/trades=1&trades_fresh=1/);
-  assert.match(ui,/if\(tradeHistoryPending\)return tradeHistoryPending/);
+  assert.match(ui,/if\(tradeHistoryPending\)\{/);
+  assert.match(ui,/if\(force&&!tradeHistoryPendingForced\)return tradeHistoryPending\.then/);
   assert.match(backend,/async function importedCompletedTrades\(\{forceLive=false\}=\{\}\)/);
   assert.match(backend,/if\(!forceLive&&tradeAuditCache&&now-tradeAuditCache\.t<60000\)/);
   assert.match(backend,/url\.searchParams\.get\('trades_fresh'\)==='1'/);
 });
 test('scheduled check executes independently of scheduled valuation snapshot due gate',()=>{
   const workflow=readFileSync(new URL('../.github/workflows/value-history-headless-refresh.yml',import.meta.url),'utf8');
-  const poll=workflow.indexOf('name: Check current Sleeper completed trades');
+  const poll=workflow.indexOf('name: Refresh durable completed Sleeper trade history');
   const due=workflow.indexOf('name: Check whether scheduled history is due');
   assert.ok(poll>0&&due>poll);
-  assert.match(workflow,/run: node scripts\/trade-history-scheduled-check\.mjs/);
+  assert.match(workflow,/run: node scripts\/trade-history-scheduled-archive\.mjs/);
+  assert.match(workflow,/GITHUB_TOKEN: \$\{\{ secrets\.GITHUB_TOKEN \}\}/);
   assert.match(workflow,/cron: '17 \* \* \* \*'/);
   assert.match(workflow,/cron: '47 \* \* \* \*'/);
   const subsection=workflow.slice(poll,due);

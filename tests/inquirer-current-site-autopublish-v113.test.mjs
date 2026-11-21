@@ -73,3 +73,15 @@ test('weekly generator uses active publisher identity for the independent Week 9
  assert.equal(inquirerPublisherSite({...active,context:'deploy-preview'}).active,false);
  assert.equal(inquirerPublisherSite({...active,siteId:'fa33dfe4-8293-441e-8da0-25cc66fc984c'}).active,false);
 });
+
+test('protected Week 7-8 cutover executes only on current site and reads old approved preview as immutable source',()=>{
+ const source=readFileSync('netlify/functions/inquirer-cutover-background.mjs','utf8');
+ assert.match(source,/const SITE_ID='a516be3b-6c65-4f54-a9fb-23c5361bf3d2'/);
+ assert.match(source,/const SOURCE_SITE_HOST='precious-dango-fb4633.netlify.app'/);
+ assert.match(source,/const SOURCE_HOST='deploy-preview-427--'\+SOURCE_SITE_HOST/);
+ assert.match(source,/cutoverRuntimeHoldReason\(\{context,siteId,enabled,host,deployPublished\}\)/);
+ assert.match(source,/verifiedNewSiteCutoverHistory/);
+ assert.match(source,/verifiedWeekNineAutopublishCutoverHistory/);
+ assert.match(source,/onlyIfNew:true/);
+ assert.match(source,/onlyIfMatch:metadata.etag/);
+});

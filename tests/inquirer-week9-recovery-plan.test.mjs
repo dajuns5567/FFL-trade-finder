@@ -47,7 +47,7 @@ test('Week 10 becomes eligible only when Week 9 is fully verified, published, in
 });
 test('missing or incomplete scoring does not grant a generation or publication permission',()=>{
  const changes=Object.fromEntries(Array.from({length:6},(_,i)=>{
-  const week=i+3;return[week,{netlify_verified:true,indexed:true,award_present:true}];
+  const week=i+3;return[week,{locked_verified:true,indexed:true,award_present:true}];
  }));
  const report=planInquirerWeekRecovery(fixture(changes));
  assert.equal(report.weeks[0].state,'awaiting-verified-scoring');

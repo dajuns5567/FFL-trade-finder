@@ -1,0 +1,26 @@
+name: Verify pinned original GitHub Inquirer archive (read-only)
+on:
+  push:
+    branches:
+      - fix/inquirer-immutable-archive-restore-plan-v1
+    paths:
+      - 'scripts/verify-inquirer-github-archive-pinned.mjs'
+      - 'netlify/functions/lib/inquirer-immutable-archive-restore.mjs'
+      - 'tests/inquirer-immutable-archive-restore.test.mjs'
+      - '.github/workflows/inquirer-pinned-originals-integrity.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit-pinned-originals:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check original signed-by-commit newspaper content against saved SHA-256 and editorial structure
+        run: node scripts/verify-inquirer-github-archive-pinned.mjs
+      - name: Confirm local restore is mock-only and authorization gated
+        run: node --test tests/inquirer-immutable-archive-restore.test.mjs

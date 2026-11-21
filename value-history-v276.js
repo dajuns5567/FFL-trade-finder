@@ -1399,7 +1399,8 @@ async function teamNetFetch(ids,teamId){
   if(!r.ok)throw Error('team net history unavailable');
   const data=await r.json();teamNetCache.set(key,data);return data;
 }
-async function ensureMarketCache(force=false){if(!marketCache||force){const data=await marketFetch();marketCache=data.market||{}}return marketCache}
+let marketHistoryCacheUpdatedAtV112=0;
+async function ensureMarketCache(force=false){if(!marketCache||force){const data=await marketFetch();marketCache=data.market||{};marketHistoryCacheUpdatedAtV112=Date.now()}return marketCache}
 async function loadMarket(force=false){
   const box=document.getElementById('vhContent');if(!box)return;
   currentView='market';syncSubnav();setPrimaryPlayerSearchVisible(false);currentPlayerId=null;
@@ -2400,6 +2401,14 @@ function renderPlayerProfile(id,allPts,period='ALL'){
   ${similarPlayersSection(id)}`;
   setTimeout(()=>fitValueHistoryCellText(box),0);
 }
+// A long-lived Market Dashboard tab must observe new durable Value History
+// snapshots on focus and at the existing five-minute read-only refresh cadence.
+// Do not manufacture market deltas; API still enforces same-era comparisons.
+function refreshVisibleMarketHistoryV112(){
+ if(document.hidden||Date.now()-marketHistoryCacheUpdatedAtV112<TRADE_HISTORY_REFRESH_MS)return;
+ if(currentView==='market')loadMarket(true).catch(e=>console.warn('market-history-live-refresh-unavailable',String(e?.message||e)));
+ else if(currentView==='fullMarket')loadFullMarketHistory(true).catch(e=>console.warn('full-market-history-live-refresh-unavailable',String(e?.message||e)));
+}
 // Both valuation events use this same live-only refresh path. The original
 // startup trade search remains outside these handlers and always runs.
 function updateLiveConsumersV102(){
@@ -2416,7 +2425,7 @@ function boot(){addShell();searchTradesOnSiteOpen();window.addEventListener('fll
  window.addEventListener('fll:canonical-values-ready',()=>{
    updateLiveConsumersV102();
  });
- setInterval(refreshVisibleTradeHistory,TRADE_HISTORY_REFRESH_MS);window.addEventListener('focus',refreshVisibleTradeHistory);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshVisibleTradeHistory()});scheduleSnapshot(0,snapshotSourceFromUrl());document.getElementById('updateBtn')?.addEventListener('click',()=>{invalidateLiveMarketV97();marketCache=null;teamNetCache.clear();scheduleSnapshot(1000,'manual-update');if(currentPlayerId)setTimeout(()=>loadPlayer(currentPlayerId),1800)},{passive:true})}
+ setInterval(refreshVisibleTradeHistory,TRADE_HISTORY_REFRESH_MS);setInterval(refreshVisibleMarketHistoryV112,TRADE_HISTORY_REFRESH_MS);window.addEventListener('focus',refreshVisibleTradeHistory);window.addEventListener('focus',refreshVisibleMarketHistoryV112);document.addEventListener('visibilitychange',()=>{if(!document.hidden){refreshVisibleTradeHistory();refreshVisibleMarketHistoryV112()}});scheduleSnapshot(0,snapshotSourceFromUrl());document.getElementById('updateBtn')?.addEventListener('click',()=>{invalidateLiveMarketV97();marketCache=null;teamNetCache.clear();scheduleSnapshot(1000,'manual-update');if(currentPlayerId)setTimeout(()=>loadPlayer(currentPlayerId),1800)},{passive:true})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 window.valueHistoryV331={liveMarketRowV97,liveMarketRowsV97,liveFullMarketRowsV97,invalidateLiveMarketV97,currentRows,currentPickRows,currentTeamRows,currentEvaluatorValue,hindsightValue,recordSnapshot,historyFetch,marketFetch,marketData:(force=false)=>ensureMarketCache(!!force),livePlayerMeta,periodPoints,openPlayer:(id)=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>selectPlayer(String(id)),0)},openPlayerHistory:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(renderPlayerHistoryHub,0)},openFullMarket:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>loadFullMarketHistory(),0)}};
 })();

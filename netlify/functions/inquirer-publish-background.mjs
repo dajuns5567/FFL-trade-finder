@@ -3,6 +3,7 @@ import {getStore} from '@netlify/blobs';
 import {FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
 import {verifiedNewSiteCutoverHistory,verifiedWeekNineAutopublishCutoverHistory} from './lib/inquirer-replacement-archive-gate.mjs';
 import {resolveInquirerQueueCredential,inquirerQueueKeyMatches} from './lib/inquirer-queue-credential.mjs';
+import {inquirerPublisherSite} from './lib/inquirer-publisher-site.mjs';
 
 // Netlify background functions run for up to 15 minutes. The hourly scheduler
 // queues this private job instead of trying to generate 32 articles in 30 seconds.
@@ -25,6 +26,7 @@ export default async function publishInquirerInBackground(req){
  // worker itself, not only at the scheduler. A direct queued invocation must
  // never bypass the hold and regenerate an unreviewed production newspaper.
  const siteId=globalThis.Netlify?.env?.get?.('SITE_ID')||process.env.SITE_ID||'';
+ const siteName=globalThis.Netlify?.env?.get?.('SITE_NAME')||process.env.SITE_NAME||'';
  const host=new URL(req.url).hostname;
  // Deploy previews and branch deploys can inspect draft copy, never publish.
  // Keep this independent of environment flags and queue credentials.
@@ -37,11 +39,12 @@ export default async function publishInquirerInBackground(req){
   console.warn('inquirer-background-preview-write-held');
   return new Response('Preview deployment cannot publish',{status:403});
  }
- const isCurrentSite=siteId==='fa33dfe4-8293-441e-8da0-25cc66fc984c'||host==='precious-dango-fb4633.netlify.app';
- const isNewestSite=isCurrentSite||siteId==='3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f'||
-  host==='gleaming-dodol-8dbc4a.netlify.app';
- const replacement=isNewestSite||siteId==='8776d155-bc7b-4dcd-bafc-3d70d3d51800'||
-  host==='transcendent-manatee-2f0123.netlify.app';
+ const route=inquirerPublisherSite({siteId,siteName,host,context});
+ if(!route.active){
+  console.warn('inquirer-background-wrong-publication-site',route.reason);
+  return new Response('Inquirer publication is not enabled for this site',{status:403});
+ }
+ const isCurrentSite=route.active,isNewestSite=isCurrentSite,replacement=isCurrentSite;
  const enabled=globalThis.Netlify?.env?.get?.('FLEECED_ENABLE_NEW_SITE_PUBLISHER')||
   process.env.FLEECED_ENABLE_NEW_SITE_PUBLISHER||'';
  if(replacement&&enabled!=='true'){

@@ -60,3 +60,16 @@ test('private diagnostic store is distinct per PR and rejects non-preview hosts'
   'not-a-url'
  ])assert.equal(privatePreviewStoreName(url),null,url);
 });
+
+test('current active site supports isolated numbered PR preview diagnostics only',()=>{
+ const original=process.env.CONTEXT;
+ try{
+  process.env.CONTEXT='production';
+  const host='https://deploy-preview-557--animated-dasik-3de74a.netlify.app/.netlify/functions/inquirer-preview-diagnostic';
+  assert.equal(isPreviewDiagnosticContext(host),true);
+  assert.equal(privatePreviewStoreName(host),'fleeced-inquirer-private-pr557-persistent');
+  assert.equal(privatePreviewStoreName('https://animated-dasik-3de74a.netlify.app/'),null);
+  assert.equal(privatePreviewStoreName('https://main--animated-dasik-3de74a.netlify.app/'),null);
+  assert.equal(isPreviewDiagnosticContext('https://deploy-preview-403--brilliant-faun-c5b649.netlify.app/'),false);
+ }finally{if(original===undefined)delete process.env.CONTEXT;else process.env.CONTEXT=original;}
+});

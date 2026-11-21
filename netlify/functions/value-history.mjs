@@ -2,6 +2,7 @@ import {snapshotsThroughEdition} from './lib/inquirer-market-window.mjs';
 import {liveTradeWeekLimit,mergeCompletedTradeAuditWeeks} from './lib/trade-history-live-source.mjs';
 import {getPickOrder5050,postCutoverTrade} from './lib/pick-order-5050.mjs';
 import { getStore } from '@netlify/blobs';
+import { reconcileSnapshotInventories } from './value-history-inventory-audit.mjs';
 
 const LEAGUE='1316867686394769408';
 const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
@@ -1357,6 +1358,21 @@ async function completedTradeHistory(s,{forceLive=false}={}){
   const historySource=archiveSnaps.length?(localSnaps.length?'github-archive+netlify-live':'github-archive'):'netlify-live';
   return{source:'Sleeper audited transactions (2024–2026) + live current-season Sleeper trades + exact Sleeper draft results',live_trade_feed,history_source:historySource,tracking_since:snaps[0]?.t||null,latest:latestSnap?.t||null,trades:out};
 }
+// The inventory endpoint is diagnostic ONLY. It reads indexed metadata; it
+// cannot mutate Netlify storage or the durable GitHub history branch. The
+// response distinguishes source-only timestamps from verified content parity.
+async function snapshotInventoryAudit(s){
+  const [arch,local]=await Promise.all([
+    archiveIndex(),
+    s?allItems(s).catch(e=>({items:[],source:'unavailable',error:String(e?.message||e)}))
+     :Promise.resolve({items:[],source:'unavailable'})
+  ]);
+  return reconcileSnapshotInventories(arch.items||[],local.items||[],{
+    archiveReachable:arch.reachable!==false,
+    localReachable:!!s&&local.source!=='unavailable',
+    limit:100
+  });
+}
 async function health(s){
   const arch=await archiveIndex();
   let latest=null,indexed={items:[],source:s?'empty':'unavailable'};
@@ -1383,7 +1399,7 @@ export default async (req)=>{
     // overwrite the canonical league's shared history or run cleanup writes.
     // Check both the request hostname and Netlify's runtime deploy context.
     const isDeployPreview=/^(?:deploy-preview-\d+|[a-f0-9]{24})--precious-dango-fb4633\.netlify\.app$/i.test(url.hostname)||process.env.CONTEXT==='deploy-preview';
-    const readonlyPreview=isDeployPreview||(req.method==='GET'&&url.searchParams.get('readonly_preview')==='1');
+    const readonlyPreview=isDeployPreview||(req.method==='GET'&&(url.searchParams.get('readonly_preview')==='1'||url.searchParams.get('inventory_audit')==='1'));
     if(s&&!readonlyPreview){
       try{await scrubV346KtcContamination(s)}catch(e){console.warn('v346-history-scrub',e)}
       try{await scrubV348ConsensusContamination(s)}catch(e){console.warn('v348-history-scrub',e)}
@@ -1409,6 +1425,9 @@ export default async (req)=>{
         const items=(indexed.items||[]).filter(item=>{const ms=new Date(item?.t||'').getTime();return !Number.isFinite(sinceMs)||!Number.isFinite(ms)||ms>sinceMs});
         const snapshots=await readSnapshotsBounded(s,items,25);
         return json({schema_version:1,league_id:LEAGUE,source:'netlify-live-buffer',snapshot_count:snapshots.length,snapshots});
+      }
+      if(url.searchParams.get('inventory_audit')==='1'){
+        return json({inventory_audit:await snapshotInventoryAudit(s)});
       }
       if(url.searchParams.get('health')==='1'){
         const h=await health(s);

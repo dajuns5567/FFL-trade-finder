@@ -1,0 +1,41 @@
+name: Inquirer V113 current-site publisher routing (read-only)
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/inquirer-publish-scheduled.mjs'
+      - 'netlify/functions/inquirer-publish-background.mjs'
+      - 'netlify/functions/lib/inquirer-publisher-site.mjs'
+      - 'netlify/functions/lib/inquirer-cutover-runtime.mjs'
+      - 'netlify/functions/lib/inquirer-preview-diagnostics.mjs'
+      - 'tests/inquirer-current-site-autopublish-v113.test.mjs'
+      - '.github/workflows/inquirer-v113-current-site-publisher-ci.yml'
+permissions:
+  contents: read
+jobs:
+  routing:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate Inquirer publisher syntax, owner gates and migration regressions
+        run: |
+          node --check netlify/functions/inquirer-publish-scheduled.mjs
+          node --check netlify/functions/inquirer-publish-background.mjs
+          node --check netlify/functions/lib/inquirer-publisher-site.mjs
+          node --test tests/inquirer-current-site-autopublish-v113.test.mjs tests/inquirer-approved-cutover.test.mjs tests/inquirer-queue-credential.test.mjs tests/inquirer-week9-unattended-publish-regression.test.mjs tests/inquirer-schedule-decision.test.mjs tests/inquirer-preview-diagnostics.test.mjs
+      - name: Ensure the Inquirer routing change is isolated, with no Netlify deploy or archival mutation
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {execFileSync} from 'node:child_process';
+          const files=execFileSync('git',['diff','--name-only','origin/main...HEAD'],{encoding:'utf8'}).trim().split('\n').filter(Boolean);
+          const allowed=new Set(['netlify/functions/inquirer-publish-scheduled.mjs','netlify/functions/inquirer-publish-background.mjs','netlify/functions/lib/inquirer-publisher-site.mjs','netlify/functions/lib/inquirer-cutover-runtime.mjs','netlify/functions/lib/inquirer-preview-diagnostics.mjs','tests/inquirer-current-site-autopublish-v113.test.mjs','.github/workflows/inquirer-v113-current-site-publisher-ci.yml']);
+          assert(files.length>0);
+          for(const file of files)assert(allowed.has(file),'Out-of-scope subsystem: '+file);
+          JS
+      # No tokens, no Netlify deployment, no publisher background invocation.

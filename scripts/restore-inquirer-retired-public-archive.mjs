@@ -2,7 +2,7 @@
 // Recover original 2026 Inquirer editions, never regenerate or overwrite.
 // Usage: node scripts/restore-inquirer-retired-public-archive.mjs <exports-dir> <archive-root>
 // Requires exports-dir/index.json, exports-dir/weekly.json, and original week-05..09.json.
-import {readFile,stat,writeFile} from 'node:fs/promises';
+import {readFile,stat,writeFile,rename,mkdir} from 'node:fs/promises';
 import {join,resolve,dirname} from 'node:path';
 import {createHash} from 'node:crypto';
 import {inspectCanonicalArchive} from '../netlify/functions/lib/inquirer-legacy-history.mjs';
@@ -58,7 +58,6 @@ export async function restoreInquirerRetiredPublicArchive(sourceDir,archiveDir){
  }
  // Commit-safe: all existing bytes and all incoming sources validated BEFORE
  // any writes. Write editions exclusively with wx; update manifest LAST.
- const {mkdir}=await import('node:fs/promises');
  for(const {entry,raw} of checked){
   const dest=join(root,entry.path);
   await mkdir(dirname(dest),{recursive:true});
@@ -67,7 +66,8 @@ export async function restoreInquirerRetiredPublicArchive(sourceDir,archiveDir){
  const entries=[...prior,...checked.map(({entry})=>({
   season:2026,week:entry.week,path:entry.path,sha256:entry.sha256
  }))].sort((a,b)=>a.season-b.season||a.week-b.week);
- await writeFile(manifestFile,JSON.stringify({...manifest,entries},null,2)+'\n',{flag:'w'});
+ await writeFile(manifestFile+'.next',JSON.stringify({...manifest,entries},null,2)+'\n',{flag:'wx'});
+ await rename(manifestFile+'.next',manifestFile);
  return{added:checked.map(x=>x.entry.week),total:entries.length,source:'exact original retired Netlify JSON exports'};
 }
 if(process.argv[1]&&new URL('file://'+resolve(process.argv[1])).href===import.meta.url){

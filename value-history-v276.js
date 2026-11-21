@@ -1868,6 +1868,7 @@ function renderMarketDashboard(){
         rpR=verifiedLivePeriods.get(rr)||m.periods?.[rr]||{},
         rpF=verifiedLivePeriods.get(rf)||m.periods?.[rf]||{};
   const liveMovers=verifiedLivePeriods.size>0;
+  const unknownModelMovement=[vr,vf,rr,rf].some(p=>Number(m.periods?.[p]?.unversioned_segments)>0);
   box.innerHTML=`
   <div class="vh-market-jump">
     <button type="button" data-vh-market-jump="vhMarketMovers">Movers</button>
@@ -1880,7 +1881,7 @@ function renderMarketDashboard(){
     <button type="button" data-vh-market-jump="vhMarketReversals">Reversals</button>
     <button type="button" data-vh-market-jump="vhMarketVolatility">Volatility</button>
   </div>
-  <section class="vh-market-section" id="vhMarketMovers"><div class="vh-market-section-title"><h3>Market Movers</h3><p>${liveMovers?'Verified live changes added to archived same-model movement; live changes are not yet recorded.':'Archived observations through '+dateTime(m.latest)+'. New movement requires a successful scheduled snapshot.'}</p></div>
+  <section class="vh-market-section" id="vhMarketMovers"><div class="vh-market-section-title"><h3>Market Movers</h3><p>${liveMovers?'Verified live changes added to archived same-model movement; not yet recorded.':unknownModelMovement?'Recorded changes through '+dateTime(m.latest)+'; model continuity unverified, so changes may include repricing.':'Archived observations through '+dateTime(m.latest)+'. New movement requires a successful scheduled snapshot.'}</p></div>
     <div class="vh-grid-2">
       <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>${moverTitle('Biggest Value Risers',vr,m)}</h3><div class="vh-sub">Largest increases in finished player value</div></div>${moverCardActions('market','valueRisers',vr)}</div>${moverRows(applyMoverPool(vpR.valueRisers,'market','valueRisers'))}</div>
       <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>${moverTitle('Biggest Value Fallers',vf,m)}</h3><div class="vh-sub">Largest decreases in finished player value</div></div>${moverCardActions('market','valueFallers',vf)}</div>${moverRows(applyMoverPool(vpF.valueFallers,'market','valueFallers'))}</div>

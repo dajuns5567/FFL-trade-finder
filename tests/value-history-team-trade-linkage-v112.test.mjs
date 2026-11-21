@@ -114,3 +114,14 @@ test('visible Market Dashboard and full-market history re-fetch after five minut
  assert.match(ui,/window\.addEventListener\('fll:valuation-refreshed'/);
  assert.match(ui,/window\.addEventListener\('fll:canonical-values-ready'/);
 });
+
+test('Market Dashboard omits returned historical model prose and current-value meta paragraphs',()=>{
+ const begin=ui.indexOf('function renderMarketDashboard(){');
+ const end=ui.indexOf('function ',begin+10);
+ assert.ok(begin>=0&&end>begin);
+ const render=ui.slice(begin,end);
+ assert.doesNotMatch(render,/\$\{modelEraNote\(m\)\}/);
+ assert.doesNotMatch(render,/Current values and ranks come from Player Values/);
+ assert.doesNotMatch(render,/Historical tracking is preserved/);
+ assert.match(render,/vh-market-jump/);
+});

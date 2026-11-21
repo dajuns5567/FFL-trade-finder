@@ -4,6 +4,7 @@ import vm from 'node:vm';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {join} from 'node:path';
+import {spawnSync} from 'node:child_process';
 
 const collector=readFileSync('scripts/value-history-headless-refresh.mjs','utf8');
 const writer=readFileSync('scripts/archive-value-history.mjs','utf8');
@@ -207,13 +208,17 @@ test('isolated scheduled historian cannot deploy the linked Netlify production s
  const config=readFileSync('netlify.toml','utf8');
  const line=config.split('\n').find(x=>/^\s*ignore\s*=/.test(x));
  assert.ok(line,'do not change the owner-controlled Netlify build gate');
- const match=line.match(/node -e \\"(.*?)\\""/);
- assert.ok(match,'Netlify build-ignore contract stays executable');
+ const literal=line.match(/^\s*ignore\s*=\s*(".*")$/)?.[1];
+ assert.ok(literal,'Netlify build-ignore contract remains a TOML string');
+ const command=JSON.parse(literal);
+ assert.match(command,/^node -e /,'Netlify build-ignore contract stays executable');
  const site='a516be3b-6c65-4f54-a9fb-23c5361bf3d2';
  const evaluate=(env)=>{
-  const ctx={process:{env,exit:status=>{ctx.exitCode=status}}};
-  vm.runInNewContext(match[1],ctx);
-  return ctx.exitCode;
+  const result=spawnSync('sh',['-c',command],{
+   env:{...process.env,...env,BRANCH:'main'},encoding:'utf8'
+  });
+  assert.equal(result.error,undefined,result.stderr);
+  return result.status;
  };
  for(const env of [
   {SITE_ID:site,CONTEXT:'production',REVIEW_ID:'524'},

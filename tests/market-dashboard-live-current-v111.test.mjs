@@ -1,0 +1,63 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import vm from 'node:vm';
+import {readFileSync} from 'node:fs';
+
+const ui=readFileSync(new URL('../value-history-v276.js',import.meta.url),'utf8');
+const start=ui.indexOf('function marketLiveIntelligenceRowsV111(');
+const end=ui.indexOf('function currentMarketIntelligenceRowsV111(',start);
+assert.ok(start>0&&end>start);
+const context={Map,Number,String,Date,Math,Array};
+vm.runInNewContext(ui.slice(start,end)+';this.augment=marketLiveIntelligenceRowsV111;',context);
+const latest='2026-11-20T18:00:00Z',now=Date.parse('2026-11-20T20:00:00Z');
+const history=[{id:'idp',pos:'IDP',value:2000,overall:250,posRank:60}];
+const recorded=[{id:'idp',pos:'IDP',delta:350,pct:12.5,value:2000,overall:250,posRank:60,overall_delta:30,pos_rank_delta:10}];
+const current=[{id:'idp',pos:'IDP',value:2600,overall:175,posRank:34}];
+const opts={latest,through:latest,period:'7D',ready:true,nowMs:now};
+test('market heat-map and position-index movement updates from exact current canonical Player Values',()=>{
+ const before=JSON.stringify({history,recorded});
+ const rows=context.augment(recorded,history,current,opts);
+ assert.equal(rows.length,1);
+ assert.equal(rows[0].value,2600);
+ assert.equal(rows[0].recordedValue,2000);
+ assert.equal(rows[0].delta,950);
+ assert.equal(rows[0].pct,42.5);
+ assert.equal(rows[0].overall,175);
+ assert.equal(rows[0].overall_delta,105);
+ assert.equal(rows[0].pos_rank_delta,36);
+ assert.equal(rows[0].live_unarchived,true);
+ assert.equal(rows[0].through_recorded,latest);
+ assert.equal(JSON.stringify({history,recorded}),before,'archived data must never be rewritten');
+ const next=context.augment(recorded,history,[{...current,value:2750}],opts)[0];
+ assert.equal(next.delta,1100,'re-opening after a value refresh must use newest canonical values, not prior computed rows');
+ assert.equal(next.pct,50);
+});
+test('stale time window, future archive, incomplete canonical refresh and mismatched source do not fabricate movement',()=>{
+ assert.equal(context.augment(recorded,history,current,{...opts,ready:false})[0].delta,350);
+ assert.equal(context.augment(recorded,history,current,{...opts,period:'1D',nowMs:now+3*86400000})[0].delta,350);
+ assert.equal(context.augment(recorded,history,current,{...opts,through:'2026-11-19T18:00:00Z'})[0].delta,350);
+ assert.equal(context.augment(recorded,history,current,{...opts,nowMs:now-86400000})[0].delta,350);
+ assert.equal(context.augment(recorded,history,[{...current,pos:'WR'}],opts)[0].delta,350);
+});
+test('every Market Dashboard entrypoint and canonical update refreshes the archived baseline and live overlays',()=>{
+ assert.match(ui,/else if\(currentView==='market'\)loadMarket\(true\)/);
+ assert.match(ui,/function initUI\(\)\{[\s\S]*?syncSubnav\(\);loadMarket\(\)/);
+ assert.match(ui,/window.addEventListener\('fll:valuation-refreshed'/);
+ assert.match(ui,/window.addEventListener\('fll:canonical-values-ready'/);
+ assert.match(ui,/if\(currentView==='market'\)\{[\s\S]*?loadMarket\(true\)\.catch/);
+ assert.match(ui,/window.addEventListener\('focus',[\s\S]*?refreshVisibleMarketV111\(\)/);
+ assert.match(ui,/document.addEventListener\('visibilitychange',[\s\S]*?refreshVisibleMarketV111\(\)/);
+ assert.match(ui,/marketFetchStampV111/);
+ assert.match(ui,/fetch\(\`\$\{API\}\?market=1\`,\{cache:'no-store'\}\)/);
+ assert.match(ui,/fetch\(\`\$\{API\}\?market_insights=1\`,\{cache:'no-store'\}\)/);
+});
+test('heat map and top-24 position indexes share current canonical values rather than stale archival percentage alone',()=>{
+ assert.match(ui,/function currentMarketIntelligenceRowsV111\(\)/);
+ assert.match(ui,/liveMarketRowsV97\(currentMarketIntelligenceRowsV111\(\)\)/);
+ assert.match(ui,/Number\(consensus.successful\)>=7/);
+ assert.match(ui,/window.modeledPlayerValuesV319\?\.ready===true/);
+ assert.match(ui,/const value=Math.round\(Number\(tv\(\)\.playerValue\(x\)\|\|0\)\)/);
+ const market=ui.slice(ui.indexOf('function marketLiveIntelligenceRowsV111('),ui.indexOf('function archivedEraBoard(m){'));
+ assert.doesNotMatch(market,/\.setJSON\(|\.post\(|archive-value-history/);
+ assert.match(ui,/if\(isValueHistoryDeployPreview\(\)\)return false/);
+});

@@ -39,3 +39,12 @@ test('new salt candidates cannot overwrite existing locked history or turn a dra
  assert.match(hub,/await s\.setJSON\(stageKey,\{schema_version:1,season,week,digest:admission\.digest/);
  assert.match(hub,/if\(automatedAdmission\.approved&&!manualAdmission\.approved\)/);
 });
+
+test('completed publisher records minor repetition as unresolved editorial quality debt',()=>{
+ const worker=readFileSync(new URL('../netlify/functions/inquirer-publish-background.mjs',import.meta.url),'utf8');
+ assert.match(worker,/minorRepetitionWarning=report\?\.editorial_generation\?\.quality_metrics\?\.minor_repetition_warning\|\|null/);
+ assert.match(worker,/inquirer-published-editorial-quality-warning/);
+ assert.match(worker,/editorial_warnings:minorRepetitionWarning\?\.requires_improvement===true/);
+ assert.match(worker,/severity:'warning',requires_improvement:true/);
+ assert.match(worker,/const completed=!reportError&&!awardsError&&!report\?\.review_required&&hasCompleteWeekFeaturePackage\(report,awards\)/);
+});

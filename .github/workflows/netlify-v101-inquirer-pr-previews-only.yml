@@ -1,0 +1,23 @@
+name: Netlify V101 Inquirer PR previews only
+on:
+  push:
+    branches:
+      - fix/netlify-v101-inquirer-pr-previews-only
+    paths:
+      - 'netlify.toml'
+      - 'tests/netlify-v101-inquirer-pr-previews-only.test.mjs'
+      - '.github/workflows/netlify-v101-inquirer-pr-previews-only.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect-preview-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify production remains blocked and only approved PRs can preview
+        run: node --test tests/netlify-v101-inquirer-pr-previews-only.test.mjs

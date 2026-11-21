@@ -1290,7 +1290,7 @@ function compactTradePlayerMeta(id){
 function compactTradeSide(side,trade){
   const assets=[];
   for(const id of side?.player_ids||[])assets.push(`<span class="vh-compact-asset"><b>${esc(playerName(id))}</b><small>${esc(compactTradePlayerMeta(id))}</small></span>`);
-  for(const p of side?.picks||[])assets.push(`<span class="vh-compact-asset"><b>${esc(p.season)} R${esc(p.round)}${p?.drafted_player_id?` → ${esc(playerName(p.drafted_player_id))}`:''}</b></span>`);
+  for(const p of side?.picks||[]){const projection=historicalPickProjectionEvidence(side,p,trade);assets.push(`<span class="vh-compact-asset"><b>${esc(p.season)} R${esc(p.round)}${p?.drafted_player_id?` → ${esc(playerName(p.drafted_player_id))}`:''}</b><small>${esc(originalPickProjectionText(p.round,projection.slot,projection.source))}</small></span>`)}
   return`<div class="vh-compact-side"><div class="vh-compact-header"><b>${esc(historicalTradeTeamName(trade,side?.roster_id))}</b><small class="vh-receives-label">Receives</small></div><div class="vh-compact-assets">${assets.join('')||'<span class="vh-compact-asset">No assets</span>'}</div></div>`
 }
 function tradeCard(trade){

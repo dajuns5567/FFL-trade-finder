@@ -6,6 +6,7 @@ import {editorialApprovalMatches} from './inquirer-publication-guard.mjs';
 import {approvedWeek5Record} from './lib/inquirer-week5-owner-signoff.mjs';
 import {resolveInquirerQueueCredential} from './lib/inquirer-queue-credential.mjs';
 import {inquirerPublisherSite} from './lib/inquirer-publisher-site.mjs';
+import {approvedCutoverSourceReadiness} from './lib/inquirer-cutover-source-readiness.mjs';
 // Queue a long-running background job. Netlify scheduled functions have a
 // hard 30-second limit, while the full Inquirer edition takes longer.
 export default async function inquirerPublishScheduled(req){
@@ -50,6 +51,12 @@ export default async function inquirerPublishScheduled(req){
       return skip('Approved archive promotion is already running');
      if(marker?.state==='error'&&Number(marker.revision)===FORWARD_EDITORIAL_REVISION)
       return skip('Owner-approved archive promotion held: '+String(marker.reason||'unknown'));
+     // Approved source drafts live in a *site-local* Blob store. Constructing
+     // a retired preview hostname is not a cross-Netlify-account migration.
+     // Inspect the destination store before queuing a writer or bootstrapping
+     // its credential; report a missing transfer without touching approved data.
+     const source=await approvedCutoverSourceReadiness();
+     if(!source.ready)return skip('Approved Week 7–8 source unavailable on this Netlify site: '+source.reason);
      const key=await resolveInquirerQueueCredential({
       store:history,configured:configuredKey,bootstrap:true
      });

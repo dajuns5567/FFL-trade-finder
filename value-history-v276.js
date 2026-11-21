@@ -1480,12 +1480,13 @@ function intelOverallDeltaKey(period=marketIntelPeriod){return({'1D':'overallDel
 function intelPeriodLabel(period=marketIntelPeriod){
   const raw=periodLabel(period,marketCache||{});return raw==='Available History'?period+' / available history':raw;
 }
-function intelRange(period=marketIntelPeriod){return marketInsightsCache?.ranges?.[period]||marketInsightsCache?.ranges?.ALL||marketInsightsCache||null}
+function intelRange(period=marketIntelPeriod){return marketInsightsCache?.ranges?.[period]||null}
 function verifiedValueMove(id,period=marketIntelPeriod){
   const key=String(id),range=intelRange(period),hit=(range?.player_changes||[]).find(r=>String(r.id)===key);
   if(hit&&finiteMarketNumber(hit.delta)!=null)return{delta:Number(hit.delta),pct:finiteMarketNumber(hit.pct),from_value:finiteMarketNumber(hit.from_value),from_t:hit.from_t||null,through_t:hit.through_t||null,overall_delta:finiteMarketNumber(hit.overall_delta),pos_rank_delta:finiteMarketNumber(hit.pos_rank_delta),source:'verified-window'};
-  const row=(marketCache?.marketRows||[]).find(r=>String(r.id)===key),delta=finiteMarketNumber(row?.[intelDeltaKey(period)]);
-  return delta==null?null:{delta,pct:marketPctChange(row,intelDeltaKey(period)),overall_delta:finiteMarketNumber(row?.[intelOverallDeltaKey(period)]),source:'summary-baseline'};
+  // Do not silently substitute ALL-history or a secondary summary baseline
+  // for an unmeasured player/window. Missing evidence must render N/A.
+  return null;
 }
 function signalPerformanceDelta(signal){
   const e=signal?.evidence||{},recent=finiteMarketNumber(e.recent_form_delta);
@@ -1660,7 +1661,9 @@ function volatilityMarkup(){
     rows=volatilityPoolRows(allPlayerRows).slice().sort((a,b)=>Number(b.range_pct||0)-Number(a.range_pct||0)||Number(b.range||0)-Number(a.range||0)).slice(0,12),
     overall=data?.market_volatility||null,posRows=(data?.position_volatility||[]).filter(r=>r?.available);
   if(!marketInsightsCache)return'<div class="vh-card"><div class="vh-empty">Measuring tracked value ranges…</div></div>';
-  const overallCard=overall?.available?`<div class="vh-card"><h3>Overall Market Volatility</h3><div class="vh-sub">Top-300 market basket • ${esc(intelPeriodLabel())} • baseline index 100</div><div class="vh-volatility-stat"><span><b>Index range</b><small>${Number(overall.low_index).toFixed(1)} → ${Number(overall.high_index).toFixed(1)}</small></span><b>${Number(overall.range_pct).toFixed(2)}%</b></div><div class="vh-volatility-stat"><span><b>Average snapshot move</b><small>${overall.observations} verified snapshots</small></span><b>${Number(overall.avg_step_pct).toFixed(2)}%</b></div></div>`:'<div class="vh-card"><h3>Overall Market Volatility</h3><div class="vh-empty">Not enough snapshots in this window.</div></div>',
+  const recorded= data?.tracking_since&&data?.through?
+    ' • observed '+esc(dateShort(data.tracking_since))+'–'+esc(dateShort(data.through)):'';
+  const overallCard=overall?.available?`<div class="vh-card"><h3>Overall Market Volatility</h3><div class="vh-sub">Top-300 market basket • ${esc(intelPeriodLabel())}${recorded} • baseline index 100</div><div class="vh-volatility-stat"><span><b>Index range</b><small>${Number(overall.low_index).toFixed(1)} → ${Number(overall.high_index).toFixed(1)}</small></span><b>${Number(overall.range_pct).toFixed(2)}%</b></div><div class="vh-volatility-stat"><span><b>Average snapshot move</b><small>${overall.observations} verified snapshots</small></span><b>${Number(overall.avg_step_pct).toFixed(2)}%</b></div></div>`:'<div class="vh-card"><h3>Overall Market Volatility</h3><div class="vh-empty">Not enough snapshots in this window.</div></div>',
     positionCard=`<div class="vh-card"><h3>Positional Market Volatility</h3><div class="vh-sub">Top-24 positional baskets • high-to-low index range</div><div class="vh-intel-list">${posRows.length?posRows.map(r=>`<div class="vh-volatility-stat"><span><b>${esc(r.pos)}</b><small>Avg snapshot move ${Number(r.avg_step_pct).toFixed(2)}% • ${r.constituents||0} players</small></span><b>${Number(r.range_pct).toFixed(2)}%</b></div>`).join(''):'<div class="vh-empty">Not enough positional snapshots yet.</div>'}</div></div>`,
     segmentLabel=marketVolatilityPool==='ALL'?'All active NFL players':`Current overall Top ${marketVolatilityPool}`,
     playerCard=`<div class="vh-card"><div class="vh-intel-card-title"><h3>Player Market Volatility</h3>${intelViewAllButton('volatility')}</div><div class="vh-sub">Largest verified high-to-low value ranges for ${esc(segmentLabel)} inside ${esc(intelPeriodLabel())}. Segment is based on current overall Fleeced rank.</div>${volatilityPoolControls()}<div class="vh-intel-list">${rows.length?rows.map(r=>intelPlayerRow(r.id,`low ${fmt(r.low)} • high ${fmt(r.high)} • ${r.observations} observations`,'Tracked range',`${Number(r.range_pct).toFixed(1)}%`,'')).join(''):'<div class="vh-empty">Not enough clean player history inside this segment and window.</div>'}</div></div>`;
@@ -1730,7 +1733,7 @@ function opportunityMarkup(){
   <div class="vh-card"><div class="vh-intel-card-title"><h3>Sell High Watch</h3>${intelViewAllButton('sell')}</div><div class="vh-sub">Higher-priced positional assets where recent Fleeced momentum is weakening. Temporary cold form alone does not establish overvaluation.</div><div class="vh-intel-list">${list('sell')}</div><div class="vh-opportunity-note">Requires negative completed-week signal/cold momentum, falling recent PPG, strong/established confidence, and inside the top 40% of positional market value. No player valuation is changed.</div></div></div>`;
 }
 function categoryLeadersMarkup(){
-  const m=marketCache||{},rows=m.marketRows||[],p=m.periods?.[marketIntelPeriod]||{},signals=marketSignalCache?.signals||[],range=intelRange();
+  const rows=currentRows(),signals=marketSignalCache?.signals||[],range=intelRange();
   if(!rows.length)return'<div class="vh-card"><div class="vh-empty">Market leaders unavailable.</div></div>';
   const top=rows.slice().sort((a,b)=>Number(b.value)-Number(a.value)),verifiedChanges=(range?.player_changes||[]).slice(),cards=[];
   const add=(label,id,detail)=>{if(!id){cards.push(`<div class="vh-category-card vh-empty-card"><small>${esc(label)}</small><b>No qualified player</b><span>Waiting for enough evidence in this window.</span></div>`);return}

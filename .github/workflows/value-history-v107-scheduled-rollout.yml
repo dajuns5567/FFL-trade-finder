@@ -1,0 +1,44 @@
+name: V107 scheduled V101 model-era promotion gate (draft only)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/value-history-headless-refresh.yml'
+      - '.github/workflows/value-history-v107-scheduled-rollout.yml'
+      - 'scripts/value-history-headless-refresh.mjs'
+      - 'scripts/value-history-scheduled-due.mjs'
+      - 'scripts/archive-value-history.mjs'
+      - 'tests/value-history-v107-scheduled-promotion.test.mjs'
+      - 'tests/value-history-model-era-v90.test.mjs'
+      - 'tests/value-history-candidate-headless-contract.test.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  gated-model-activation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify no production deploy, scheduled write or arbitrary V101 activation
+        run: |
+          node --check scripts/value-history-headless-refresh.mjs
+          node --check scripts/value-history-scheduled-due.mjs
+          node --check scripts/archive-value-history.mjs
+          node --test tests/value-history-v107-scheduled-promotion.test.mjs tests/value-history-model-era-v90.test.mjs tests/value-history-candidate-headless-contract.test.mjs
+      - name: Verify default cron selection is V96 until an explicit promotion
+        run: |
+          node --input-type=module -e "
+            import {readFileSync} from 'node:fs';
+            import assert from 'node:assert/strict';
+            const w=readFileSync('.github/workflows/value-history-headless-refresh.yml','utf8');
+            assert.match(w,/FFL_HISTORY_SCHEDULED_MODEL/);
+            assert.match(w,/FFL_HISTORY_V101_APPROVED/);
+            assert.match(w,/idp-v96-single-source-continuous-v95-evidence/);
+            assert.match(w,/cancel-in-progress: false/);
+            const m=readFileSync('scripts/value-history-headless-refresh.mjs','utf8');
+            assert.match(m,/V101_APPROVED_MODEL_BLOB='443c8497a95e793665fb78474feaee49bd57e88f'/);
+            console.log('V107: default V96, explicit V101 approval, immutable model source, append-only era guard');
+          "

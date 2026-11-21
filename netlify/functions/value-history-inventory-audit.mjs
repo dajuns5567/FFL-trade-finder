@@ -39,7 +39,7 @@ export function reconcileSnapshotInventories(archiveItems,localItems,{archiveRea
   }
   const n=Math.max(1,Math.min(500,Math.trunc(Number(limit)||100)));
   return{
-    read_only:true,complete:!!(archiveReachable&&localReachable),
+    read_only:true,complete:!!(archiveReachable&&localReachable&&!archive.invalid.length&&!local.invalid.length&&!archive.duplicates.length&&!local.duplicates.length),
     archive_reachable:!!archiveReachable,netlify_reachable:!!localReachable,
     github_count:a.size,netlify_count:b.size,union_count:union.size,
     overlap_count:overlaps.length,github_only_count:archiveOnly.length,

@@ -1,4 +1,5 @@
-import {weeklyReport,weeklyAwards} from './league-hub.mjs';
+import {weeklyReport,weeklyAwards,isLockedInquirerEdition} from './league-hub.mjs';
+import {ORIGINAL_INQUIRER_RESTORE_SITE_ID,ORIGINAL_INQUIRER_RESTORE_MARKER} from './lib/inquirer-archive-restore-runtime.mjs';
 import {getStore} from '@netlify/blobs';
 import {FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
 import {verifiedNewSiteCutoverHistory,verifiedWeekNineAutopublishCutoverHistory} from './lib/inquirer-replacement-archive-gate.mjs';
@@ -43,6 +44,7 @@ export default async function publishInquirerInBackground(req){
   host==='animated-dasik-3de74a.netlify.app'||
   siteId==='3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f'||
   host==='gleaming-dodol-8dbc4a.netlify.app';
+ const isRestoredSite=siteId===ORIGINAL_INQUIRER_RESTORE_SITE_ID;
  const replacement=isNewestSite||siteId==='8776d155-bc7b-4dcd-bafc-3d70d3d51800'||
   host==='transcendent-manatee-2f0123.netlify.app';
  const enabled=globalThis.Netlify?.env?.get?.('FLEECED_ENABLE_NEW_SITE_PUBLISHER')||
@@ -75,13 +77,29 @@ export default async function publishInquirerInBackground(req){
     statusStore.get('broadcasts/2026/week-06.json',{type:'json'}),
     statusStore.get('broadcasts/index.json',{type:'json'}),
     statusStore.get('awards/weekly.json',{type:'json'}),
-    ...(isCurrentSite?[
+    ...((isCurrentSite||isRestoredSite)?[
      statusStore.get('broadcasts/2026/week-07.json',{type:'json'}),
-     statusStore.get('broadcasts/2026/week-08.json',{type:'json'})]:[])
+     statusStore.get('broadcasts/2026/week-08.json',{type:'json'}),
+     ...(isRestoredSite?[statusStore.get('broadcasts/2026/week-09.json',{type:'json'})]:[])
+    ]:[])
    ]);
    const checked=verifiedNewSiteCutoverHistory({week3,week4,week5,week6,index,awards});
-   const autoCutover=isCurrentSite&&checked.ready?
+   const autoCutover=(isCurrentSite||isRestoredSite)&&checked.ready?
     verifiedWeekNineAutopublishCutoverHistory({week7:recent[0],week8:recent[1],index,awards}):{ready:true};
+   if(isRestoredSite&&checked.ready&&autoCutover.ready){
+    const originalMarker=await statusStore.get(ORIGINAL_INQUIRER_RESTORE_MARKER,{type:'json'});
+    const nine=recent[2];
+    const indexed=Array.isArray(index)&&index.some(row=>Number(row?.season)===2026&&
+     Number(row?.week)===9&&row?.key==='broadcasts/2026/week-09.json');
+    if(originalMarker?.state!=='completed'||originalMarker?.through_week!==9||
+       !Array.isArray(originalMarker.verified_weeks)||
+       originalMarker.verified_weeks.join(',')!=='3,4,5,6,7,8,9'||
+       !isLockedInquirerEdition(nine,2026,9)||!indexed||
+       !hasCompleteWeekFeaturePackage(nine,awards)){
+     console.warn('inquirer-new-site-original-week9-archive-hold');
+     return new Response('Original Weeks 3–9 or matching awards not verified',{status:403});
+    }
+   }
    if(!checked.ready||!autoCutover.ready){
     console.warn('inquirer-new-site-archive-hold',checked.ready?autoCutover.reason:checked.reason);
     return new Response('New-site archive cutover not verified',{status:403});

@@ -9,6 +9,8 @@ permissions:
   contents: read
 jobs:
   trade-history-original-pick:
+    # The strict originating release diff must not reject later unrelated PRs.
+    if: github.base_ref == 'release/draft-pick-5050-post-reconciled-recorder-draft'
     runs-on: ubuntu-24.04
     timeout-minutes: 8
     steps:

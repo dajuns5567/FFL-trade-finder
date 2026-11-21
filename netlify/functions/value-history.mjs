@@ -1,5 +1,6 @@
 import {snapshotsThroughEdition} from './lib/inquirer-market-window.mjs';
 import {liveTradeWeekLimit,mergeCompletedTradeAuditWeeks} from './lib/trade-history-live-source.mjs';
+import {validateScheduledTradeArchive} from './lib/trade-history-scheduled-archive.mjs';
 import {getPickOrder5050,postCutoverTrade} from './lib/pick-order-5050.mjs';
 import { getStore } from '@netlify/blobs';
 
@@ -767,73 +768,42 @@ function itemAtOrBefore(items,targetMs){
   }
   return best;
 }
+// Market Dashboard, heat map, position indexes, volatility, highs/lows and
+// Full Market History MUST read the identical verified snapshot population.
+// The prior Movers endpoint sampled only a subset, while Intelligence
+// read every indexed observation: identical windows therefore drifted.
+// Monthly archive bundles accelerate reads; index backfill remains authoritative.
+let marketSnapshotSourceCache=null,marketSnapshotSourceAt=0,marketSnapshotSourcePending=null;
+const MARKET_SOURCE_TTL_MS=30000;
+async function getMarketSourceSnapshots(s){
+ const now=Date.now();
+ if(marketSnapshotSourceCache&&now-marketSnapshotSourceAt<MARKET_SOURCE_TTL_MS)
+  return marketSnapshotSourceCache;
+ if(marketSnapshotSourcePending)return marketSnapshotSourcePending;
+ marketSnapshotSourcePending=(async()=>{
+  const archived=await archiveAllSnapshots();
+  const indexed=s?await allItems(s):{items:[]};
+  const live=s?await readSnapshotsBounded(s,indexed.items||[],25):[];
+  // Immutable indexed archive wins duplicate Blob timestamps; newer unique locals remain.
+  const snaps=mergeSnapshots(live,archived);
+  if(!snaps.length&&(archived.length||indexed.items?.length))
+   throw Error('market snapshots indexed but unreadable');
+  return{snaps,archive_snapshot_count:archived.length,
+    local_snapshot_count:indexed.items?.length||0};
+ })();
+ try{
+  const result=await marketSnapshotSourcePending;
+  marketSnapshotSourceCache=result;marketSnapshotSourceAt=Date.now();
+  return result;
+ }finally{marketSnapshotSourcePending=null}
+}
 async function getMarketSummary(s){
-  let local={items:[],source:s?'empty':'unavailable'};
-  if(s){try{local=await allItems(s)}catch(e){local={items:[],source:'unavailable',error:String(e?.message||e)}}}
-  const arch=await archiveIndex();
-  const timed=[],seenT=new Set();
-  for(const item of arch.items||[]){const t=String(item?.t||'');if(!t||seenT.has(t))continue;seenT.add(t);timed.push({...item,source:'archive'})}
-  for(const item of local.items||[]){const t=String(item?.t||'');if(!t)continue;if(seenT.has(t)){const i=timed.findIndex(x=>x.t===t);if(i>=0)timed[i]={...item,source:'local'};continue}seenT.add(t);timed.push({...item,source:'local'})}
-  timed.sort((a,b)=>String(a.t).localeCompare(String(b.t)));
-  if(!timed.length){
-    if(local.items?.length){
-      const snaps=await readSnapshotsBounded(s,local.items,25),market=marketFromSnapshots(snaps);market.snapshot_count=snaps.length;return market;
-    }
-    return marketFromSnapshots([]);
-  }
-  const latestItem=timed[timed.length-1],latestMs=new Date(latestItem.t).getTime(),wanted=[timed[0],archiveItemAtOrBefore(timed,latestMs-1*86400000),archiveItemAtOrBefore(timed,latestMs-7*86400000),archiveItemAtOrBefore(timed,latestMs-30*86400000),archiveItemAtOrBefore(timed,latestMs-90*86400000),archiveItemAtOrBefore(timed,latestMs-365*86400000),latestItem].filter(Boolean);
-  // Keep the latest contiguous observations in the market sample. The sparse
-  // day/week archive index can otherwise select only the last V94 model-era
-  // snapshot, hiding real same-model movers even though many archived
-  // snapshots exist. This retains exact historical values (no interpolation).
-  wanted.push(...timed.slice(-12));
-  // Sample a real sequence of the last seven days in four-hour buckets,
-  // including both sides of any model revision. The old sparse first-of-week
-  // samples cannot recover legitimate pre-revision 7D market moves.
-  // One snapshot near the beginning and one near the end of each bucket
-  // bounds network reads; only authentic archived rows can contribute.
-  const windowStart=latestMs-7*86400000,marketBuckets=new Map();
-  for(const item of timed){
-    const ms=Date.parse(item.t);
-    if(!Number.isFinite(ms)||ms<windowStart||ms>latestMs)continue;
-    const key=Math.floor((ms-windowStart)/(4*3600000));
-    const bucket=marketBuckets.get(key);
-    if(bucket)bucket.last=item;else marketBuckets.set(key,{first:item,last:item});
-  }
-  for(const bucket of marketBuckets.values())wanted.push(bucket.first,bucket.last);
-  // Sparse authentic samples discover the first tracked defensive cohort and
-  // later entrants without downloading the entire multi-month archive.
-  const historyStart=Date.parse(timed[0].t),sampledBuckets=new Set();
-  for(const item of timed){
-    const ms=Date.parse(item.t),age=(ms-historyStart)/86400000;
-    if(!Number.isFinite(age)||age<0||age>90)continue;
-    const bucket=age<10?'day-'+Math.floor(age):'week-'+Math.floor((age-10)/7);
-    if(sampledBuckets.has(bucket))continue;
-    sampledBuckets.add(bucket);wanted.push(item);
-  }
-  const unique=[],seen=new Set();for(const item of wanted){const k=`${item.source}:${item.key||item.path||item.t}`;if(!seen.has(k)){seen.add(k);unique.push(item)}}
-  const snaps=[];
-  // Batch the extra archive reads; no speculative values or archive writes.
-  for(let i=0;i<unique.length;i+=5){
-    const group=await Promise.all(unique.slice(i,i+5).map(async item=>{
-      let snap=null;
-      if(item.source==='archive')snap=await archiveSnapshot(item);
-      else if(s){try{snap=await s.get(item.key,{type:'json'})}catch{}}
-      if((!snap?.t||!Array.isArray(snap.rows))&&item.source==='local'){
-        const archived=(arch.items||[]).find(x=>String(x?.t||'')===String(item.t||''));
-        if(archived)snap=await archiveSnapshot(archived);
-      }
-      return snap?.t&&Array.isArray(snap.rows)?snap:null;
-    }));
-    snaps.push(...group.filter(Boolean));
-  }
-  snaps.sort((a,b)=>String(a.t).localeCompare(String(b.t)));
-  const market=marketFromSnapshots(snaps);
-  market.snapshot_count=timed.length;
-  market.tracking_since=timed[0].t; // Exact oldest indexed observation, not the sampled/model-era start.
-  market.archive_snapshot_count=(arch.items||[]).length;
-  market.local_snapshot_count=(local.items||[]).length;
-  return market;
+ const source=await getMarketSourceSnapshots(s);
+ const market=marketFromSnapshots(source.snaps);
+ market.archive_snapshot_count=source.archive_snapshot_count;
+ market.local_snapshot_count=source.local_snapshot_count;
+ market.analytics_source='canonical-complete-archive-and-recent-local';
+ return market;
 }
 // EXACT archived Market Intelligence pipeline from player-signal-layer-r1.
 // Read-only analytics of existing archived Value History snapshots.
@@ -858,9 +828,17 @@ function marketVolatilitySummary(ordered,pos=null,limit=24){
 }
 function marketInsightWindow(ordered,label,days=null){
   if(!ordered.length)return[];
-  if(label==='ALL'||!Number.isFinite(Number(days)))return ordered.slice();
-  const latest=ordered.at(-1),latestMs=new Date(latest.t).getTime(),base=baselineFor(ordered,latestMs,Number(days))||ordered[0],baseMs=new Date(base.t).getTime();
-  return ordered.filter(s=>new Date(s.t).getTime()>=baseMs);
+  if(label==='ALL'||days===null||days===undefined)return ordered.slice();
+  const windowDays=Number(days);
+  if(!Number.isFinite(windowDays)||windowDays<=0)return[];
+  const latestMs=Date.parse(ordered.at(-1).t),start=latestMs-windowDays*86400000;
+  // Range and volatility observations must be INSIDE the selected
+  // window. A prior archive point may anchor a different comparison
+  // but must not contaminate the window's high/low range.
+  return ordered.filter(s=>{
+   const at=Date.parse(s.t);
+   return Number.isFinite(at)&&at>=start&&at<=latestMs;
+  });
 }
 function marketInsightRange(snaps,label,historySnaps=snaps){
   const ordered=(snaps||[]).filter(s=>s?.t&&Array.isArray(s?.rows)).slice().sort((a,b)=>String(a.t).localeCompare(String(b.t)));
@@ -1023,11 +1001,15 @@ function marketInsightsFromSnapshots(snaps){
    movement_basis:'sum-of-recorded-same-model-movements'};
 }
 async function getMarketInsights(s){
-  const now=Date.now();if(marketInsightsCache&&now-marketInsightsCacheAt<300000)return marketInsightsCache;
-  const archived=await archiveAllSnapshots().catch(()=>[]),indexed=s?await allItems(s).catch(()=>({items:[]})):{items:[]},
-    live=s?await readSnapshotsBounded(s,indexed.items||[],25).catch(()=>[]):[],snaps=mergeSnapshots(archived,live),
-    result=marketInsightsFromSnapshots(snaps);
-  marketInsightsCache=result;marketInsightsCacheAt=now;return result;
+  const source=await getMarketSourceSnapshots(s);
+  const latest=source.snaps.at(-1)?.t||null;
+  if(marketInsightsCache&&marketInsightsCache.through===latest&&
+      Date.now()-marketInsightsCacheAt<MARKET_SOURCE_TTL_MS)
+    return marketInsightsCache;
+  const result=marketInsightsFromSnapshots(source.snaps);
+  result.analytics_source='canonical-complete-archive-and-recent-local';
+  marketInsightsCache=result;marketInsightsCacheAt=Date.now();
+  return result;
 }
 
 async function appendIndex(s,key,t){
@@ -1223,6 +1205,19 @@ function normalizeCompletedTrade(tx,week,season,teamNames,draftResults){
   }));
   return{id:String(tx.transaction_id||''),created,season:Number(season)||null,week:Number(week)||null,roster_ids:rosterIds,team_names:teamNames||{},sides};
 }
+// Durable scheduled trade observations are a FALLBACK/BASELINE, not a
+// substitute for fresh Sleeper data. Ignore incomplete or mismatched archives.
+async function scheduledCompletedTradeArchive(season){
+ const url='https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/value-history-data/trade-history/'+
+  Number(season)+'/latest.json?ts='+Date.now();
+ try{
+  const doc=await tradeJson(url);
+  return{archive:validateScheduledTradeArchive(doc,{leagueId:LEAGUE,season}),error:null};
+ }catch(e){
+  console.warn('trade-history-scheduled-archive-unavailable',String(e?.message||e));
+  return{archive:null,error:String(e?.message||e)};
+ }
+}
 async function importedCompletedTrades({forceLive=false}={}){
   const now=Date.now();if(!forceLive&&tradeAuditCache&&now-tradeAuditCache.t<60000)return tradeAuditCache.value;
   // Historical audits are immutable snapshots, not a live transaction feed.
@@ -1240,6 +1235,7 @@ async function importedCompletedTrades({forceLive=false}={}){
   }));
   const liveBundle=seasonBundles.find(bundle=>Number(bundle.season)===Number(seasonBundles.at(-1)?.season));
   const liveSeason=Number(liveBundle?.season)||0;
+  const scheduled=liveSeason?await scheduledCompletedTradeArchive(liveSeason):{archive:null,error:'Unknown Sleeper season'};
   let liveStatus={state:'unavailable',season:liveSeason,checked_through_week:null,failed_weeks:[]};
   let liveTeamNames={};
   if(liveBundle&&liveSeason){
@@ -1261,11 +1257,17 @@ async function importedCompletedTrades({forceLive=false}={}){
     ]);
     if(Array.isArray(users)&&Array.isArray(rosters))
       liveTeamNames=historicalTeamNames(users,rosters);
+    // Verified scheduled trades persist across page loads and transient live API
+    // outages; the original frozen audit remains immutable and wins conflicts.
+    liveBundle.transactions=mergeCompletedTradeAuditWeeks(liveBundle.transactions,scheduled.archive?.transactions_by_week||{});
     liveBundle.transactions=mergeCompletedTradeAuditWeeks(liveBundle.transactions,weeks);
     liveStatus={state:failed.length?'partial':'current',season:liveSeason,
       checked_through_week:through,failed_weeks:failed};
     if(failed.length)console.warn('trade-history-live-sleeper-partial',
       {season:liveSeason,failed_weeks:failed});
+    liveStatus.scheduled_archive={state:scheduled.archive?'verified':'unavailable',
+      checked_through_week:scheduled.archive?.checked_through_week||null,
+      checked_at:scheduled.archive?.checked_at||null};
   }
   const combinedDraftResults=new Map(),ambiguous=new Set();
   for(const bundle of seasonBundles){

@@ -1,0 +1,33 @@
+name: V117 Fleeced Daily published-week readback (read-only)
+on:
+  pull_request:
+    paths:
+      - 'league-hub-v451.js'
+      - 'netlify/functions/league-hub.mjs'
+      - 'netlify/functions/site-v29.mjs'
+      - 'tests/inquirer-live-published-readback-v117.test.mjs'
+      - '.github/workflows/inquirer-v117-live-readback-ci.yml'
+permissions:
+  contents: read
+jobs:
+  live-readback:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check reader syntax
+        run: |
+          node --check league-hub-v451.js
+          node --check netlify/functions/league-hub.mjs
+      - name: Assert real publication readback and fallback
+        run: node --test tests/inquirer-live-published-readback-v117.test.mjs
+      - name: Prove no production writer or valuation change
+        run: |
+          git diff --name-only origin/main...HEAD > /tmp/changed-files.txt
+          grep -Fx 'tests/inquirer-live-published-readback-v117.test.mjs' /tmp/changed-files.txt
+          grep -F 'league-hub-v451.js?v=544' netlify/functions/site-v29.mjs

@@ -1,0 +1,47 @@
+name: V115 durable scheduled Trade History + on-open freshness (read-only CI)
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/lib/trade-history-scheduled-archive.mjs'
+      - 'netlify/functions/value-history.mjs'
+      - 'scripts/trade-history-scheduled-check.mjs'
+      - 'scripts/trade-history-scheduled-archive.mjs'
+      - '.github/workflows/value-history-headless-refresh.yml'
+      - 'value-history-v276.js'
+      - 'tests/trade-history-live-sleeper.test.mjs'
+      - 'tests/trade-history-scheduled-durable-v115.test.mjs'
+      - '.github/workflows/release-v115-trade-history-refresh-ci.yml'
+permissions:
+  contents: read
+jobs:
+  trade-history:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check scheduled trade writer, API, and frontend syntax
+        run: |
+          node --check scripts/trade-history-scheduled-check.mjs
+          node --check scripts/trade-history-scheduled-archive.mjs
+          node --check netlify/functions/lib/trade-history-scheduled-archive.mjs
+          node --check netlify/functions/value-history.mjs
+          node --check value-history-v276.js
+      - name: Prove partial failure safety, archived trade retention, and site-open canonical Hindsight parity
+        run: |
+          node --test tests/trade-history-scheduled-durable-v115.test.mjs tests/trade-history-live-sleeper.test.mjs tests/trade-history-hindsight-live-sync.test.mjs tests/draft-pick-order-5050.test.mjs tests/value-history-model-era-v90.test.mjs
+      - name: Enforce one-subsystem release scope
+        run: |
+          node --input-type=module <<'JS'
+          import {execFileSync} from 'node:child_process';
+          import assert from 'node:assert/strict';
+          const files=execFileSync('git',['diff','--name-only','origin/main...HEAD'],{encoding:'utf8'}).trim().split('\n').filter(Boolean);
+          const allowed=new Set(['netlify/functions/lib/trade-history-scheduled-archive.mjs','netlify/functions/value-history.mjs','scripts/trade-history-scheduled-check.mjs','scripts/trade-history-scheduled-archive.mjs','.github/workflows/value-history-headless-refresh.yml','value-history-v276.js','tests/trade-history-live-sleeper.test.mjs','tests/trade-history-scheduled-durable-v115.test.mjs','.github/workflows/release-v115-trade-history-refresh-ci.yml']);
+          assert.equal(files.length,allowed.size,'Expected exact 9-file isolated Trade History inventory');
+          for(const file of files)assert(allowed.has(file),'Out-of-scope subsystem modification '+file);
+          JS
+      # No Github archive writes, live Sleeper calls, valuation collection or production deployment.

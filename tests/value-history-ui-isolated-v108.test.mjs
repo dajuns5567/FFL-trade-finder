@@ -147,15 +147,15 @@ test('Position Index shows no measured movement rather than invented 100 when cu
  assert.equal(qb.change_pct,null);
 });
 
-test('history UI release does not change the Trade History pick projection or snapshot writer',()=>{
+test('integrated review retains Trade History original projection and independent snapshot writer',()=>{
  const file=readFileSync(new URL('../value-history-v276.js',import.meta.url),'utf8');
  assert.match(file,/function historicalPickProjectedSlot\(side,p,trade\)/);
  assert.match(file,/ranking_at_trade/);
  assert.match(file,/function snapshotPreconditions\(\)/);
  assert.match(file,/function scheduleSnapshot\(/);
- assert.doesNotMatch(file,/function historicalPickProjectionEvidence\(/);
+ assert.match(file,/function historicalPickProjectionEvidence\(/);
  assert.doesNotMatch(file,/function isCurrentRankedPlayerForHindsight\(/);
- assert.doesNotMatch(file,/function originalPickProjectionText\(/);
+ assert.match(file,/function originalPickProjectionText\(/);
 });
 
 test('historical trade valuation matches current canonical Player Values even when asset pool omits ranked player',()=>{

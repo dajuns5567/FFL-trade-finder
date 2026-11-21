@@ -1,0 +1,38 @@
+name: FFL integrated draft review V112–V116 (read-only, never merge)
+on:
+  pull_request:
+    paths:
+      - 'value-history-v276.js'
+      - 'netlify/functions/value-history.mjs'
+      - 'netlify/functions/inquirer-publish-scheduled.mjs'
+      - 'tests/trade-history-original-pick-projection-v114.test.mjs'
+      - 'tests/draft-pick-order-5050.test.mjs'
+      - 'tests/market-period-canonical-parity-v116.test.mjs'
+      - 'tests/market-intelligence-original-recovery.test.mjs'
+      - '.github/workflows/integrated-ffl-review-v112-v115-ci.yml'
+permissions:
+  contents: read
+jobs:
+  integrated-preview:
+    if: github.event.pull_request.number == 558
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated API-test dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Validate combined preview source syntax
+        run: |
+          node --check value-history-v276.js
+          node --check netlify/functions/value-history.mjs
+          node --check netlify/functions/inquirer-publish-scheduled.mjs
+          node --check netlify/functions/inquirer-publish-background.mjs
+          node --check scripts/trade-history-scheduled-archive.mjs
+      - name: Verify V112–V116 team, publisher, original picks, scheduled trades and every market window
+        run: |
+          node --test tests/value-history-team-trade-linkage-v112.test.mjs tests/inquirer-current-site-autopublish-v113.test.mjs tests/trade-history-original-pick-projection-v114.test.mjs tests/trade-history-scheduled-durable-v115.test.mjs tests/draft-pick-order-5050.test.mjs tests/trade-history-hindsight-live-sync.test.mjs tests/trade-history-live-sleeper.test.mjs tests/value-history-ui-isolated-v108.test.mjs tests/inquirer-schedule-decision.test.mjs tests/market-period-canonical-parity-v116.test.mjs tests/market-intelligence-original-recovery.test.mjs tests/value-history-model-era-v90.test.mjs
+      # Never merge the combined preview PR; release the isolated feature PRs.
+      # No scheduled workflow dispatch, Sleeper network poll, archive writes, Netlify production.

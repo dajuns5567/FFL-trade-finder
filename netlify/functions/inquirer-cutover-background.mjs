@@ -4,6 +4,7 @@ import {privatePreviewStoreName} from './lib/inquirer-preview-diagnostics.mjs';
 import {verifiedNewSiteCutoverHistory,verifiedWeekNineAutopublishCutoverHistory} from './lib/inquirer-replacement-archive-gate.mjs';
 import {auditIndependentInquirerCopy} from './lib/inquirer-independent-copy-audit.mjs';
 import {resolveInquirerQueueCredential,inquirerQueueKeyMatches} from './lib/inquirer-queue-credential.mjs';
+import {APPROVED_CUTOVER_SOURCE_REVISION} from './lib/inquirer-cutover-source-readiness.mjs';
 import {FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
 import {cutoverRuntimeHoldReason} from './lib/inquirer-cutover-runtime.mjs';
 
@@ -11,13 +12,14 @@ export const config={background:true};
 // One owner-approved cutover, never a live generator or an archive rewrite.
 // Verify the exact previously accepted private copies BEFORE any publication
 // write. Retain the previously approved Weeks 1–6 byte-for-byte.
-const SITE_ID='fa33dfe4-8293-441e-8da0-25cc66fc984c';
-const SITE_HOST='precious-dango-fb4633.netlify.app';
-const SOURCE_HOST='deploy-preview-427--'+SITE_HOST;
+const SITE_ID='a516be3b-6c65-4f54-a9fb-23c5361bf3d2';
+// Immutable approved draft source only; never a publisher.
+const SOURCE_SITE_HOST='precious-dango-fb4633.netlify.app';
+const SOURCE_HOST='deploy-preview-427--'+SOURCE_SITE_HOST;
 const STATE='inquirer/cutover/2026-weeks07-08-status.json';
 const archiveKey=week=>'broadcasts/2026/week-'+String(week).padStart(2,'0')+'.json';
 const privateKey=week=>'2026/week-'+String(week).padStart(2,'0')+
- '/editorial-r'+FORWARD_EDITORIAL_REVISION+'/edition.json';
+ '/editorial-r'+APPROVED_CUTOVER_SOURCE_REVISION+'/edition.json';
 const jsonEqual=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const completeFeature=record=>!!record?.players_of_week?.offense?.player_id&&
  !!record?.players_of_week?.defense?.player_id&&
@@ -91,7 +93,7 @@ export default async function cutoverApprovedInquirerWeeks(req,netlifyContext){
   const [draft7,draft8]=await Promise.all([7,8].map(w=>
    privateStore.get(privateKey(w),{type:'json'})));
   if(!draft7||!draft8)throw Error('Missing completed private Week 7–8 approved manuscripts');
-  if(FORWARD_EDITORIAL_REVISION<107)throw Error('Forward newsroom must not predate owner-accepted historical revision 107');
+  if(FORWARD_EDITORIAL_REVISION<APPROVED_CUTOVER_SOURCE_REVISION)throw Error('Forward newsroom must not predate owner-accepted historical revision 107');
   const independent=auditIndependentInquirerCopy([draft7,draft8],{revision:107});
   if(!independent.ok)throw Error('Independent private audit rejected '+independent.issue_count+' defects');
   const locked=[draft7,draft8].map(draft=>{

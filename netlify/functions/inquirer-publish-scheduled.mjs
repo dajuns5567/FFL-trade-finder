@@ -5,6 +5,8 @@ import {verifiedReplacementHistory,verifiedNewSiteCutoverHistory,verifiedWeekNin
 import {editorialApprovalMatches} from './inquirer-publication-guard.mjs';
 import {approvedWeek5Record} from './lib/inquirer-week5-owner-signoff.mjs';
 import {resolveInquirerQueueCredential} from './lib/inquirer-queue-credential.mjs';
+import {inquirerPublisherSite} from './lib/inquirer-publisher-site.mjs';
+import {approvedCutoverSourceReadiness} from './lib/inquirer-cutover-source-readiness.mjs';
 // Queue a long-running background job. Netlify scheduled functions have a
 // hard 30-second limit, while the full Inquirer edition takes longer.
 export default async function inquirerPublishScheduled(req){
@@ -17,12 +19,11 @@ export default async function inquirerPublishScheduled(req){
  const siteId=process.env.SITE_ID||globalThis.Netlify?.env?.get?.('SITE_ID')||'';
  const host=new URL(req.url).hostname,context=globalThis.Netlify?.env?.get?.('CONTEXT')||process.env.CONTEXT||'';
  if(context==='deploy-preview'||context==='branch-deploy'||host.startsWith('deploy-preview-')||host.includes('--'))return skip('Non-production deployment');
- const isCurrentSite=site==='precious-dango-fb4633'||
-  siteId==='fa33dfe4-8293-441e-8da0-25cc66fc984c'||host==='precious-dango-fb4633.netlify.app';
- const isNewestSite=isCurrentSite||site==='gleaming-dodol-8dbc4a'||
-  siteId==='3b9ae5bd-0d0f-4570-b2b7-89afae8a0e5f'||host==='gleaming-dodol-8dbc4a.netlify.app';
- const isReplacement=isNewestSite||site==='transcendent-manatee-2f0123'||
-  siteId==='8776d155-bc7b-4dcd-bafc-3d70d3d51800'||host==='transcendent-manatee-2f0123.netlify.app';
+ const route=inquirerPublisherSite({siteId,siteName:site,host,context});
+ if(!route.active)return skip(route.reason);
+ // Only this currently deployed site can resume unattended publication.
+ // Archive continuity and the explicit owner publisher flag are still required.
+ const isCurrentSite=route.active,isNewestSite=isCurrentSite,isReplacement=isCurrentSite;
  const publishingEnabled=globalThis.Netlify?.env?.get?.('FLEECED_ENABLE_NEW_SITE_PUBLISHER')||process.env.FLEECED_ENABLE_NEW_SITE_PUBLISHER||'';
  if(isReplacement&&publishingEnabled!=='true')
   return skip('Replacement site is preview-only pending verified archive migration');
@@ -50,6 +51,12 @@ export default async function inquirerPublishScheduled(req){
       return skip('Approved archive promotion is already running');
      if(marker?.state==='error'&&Number(marker.revision)===FORWARD_EDITORIAL_REVISION)
       return skip('Owner-approved archive promotion held: '+String(marker.reason||'unknown'));
+     // Approved source drafts live in a *site-local* Blob store. Constructing
+     // a retired preview hostname is not a cross-Netlify-account migration.
+     // Inspect the destination store before queuing a writer or bootstrapping
+     // its credential; report a missing transfer without touching approved data.
+     const source=await approvedCutoverSourceReadiness();
+     if(!source.ready)return skip('Approved Week 7–8 source unavailable on this Netlify site: '+source.reason);
      const key=await resolveInquirerQueueCredential({
       store:history,configured:configuredKey,bootstrap:true
      });

@@ -3,6 +3,7 @@ import valueHistoryHandler from './value-history.mjs';
 // Forward drafts must be reviewed as written; synthetic scoreboard sentence repair is retired.
 import {inspectEditionBeforePublication,editorialApprovalMatches,editorialCopyDigest,deterministicInquirerAdmission,isReadOnlyEditorialPreview,inspectPreviousWeekEditorialReuse} from './inquirer-publication-guard.mjs';
 import { getStore } from '@netlify/blobs';
+import {inquirerPublisherSite} from './lib/inquirer-publisher-site.mjs';
 import {auditIndependentInquirerCopy} from './lib/inquirer-independent-copy-audit.mjs';
 import {loadMida,attachMida} from './inquirer-context-v22.mjs';
 import {INQUIRER_VERSION,publicReporters,buildInquirerWeek,buildLeagueOverview,inquirerWeekClassification,INQUIRER_PLAYOFF_START_WEEK,INQUIRER_FINAL_WEEK} from './inquirer-reporters.mjs';
@@ -11,6 +12,7 @@ import week2Preload2026 from './inquirer-week2-2026-preload.mjs';
 import {fetchBestSeason} from './history-fetch.mjs';
 import {applyInquirerEditorialV31,evaluateInquirerEditionQuality,FORWARD_INQUIRER_VERSION,FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
 import {inspectCanonicalArchive} from './lib/inquirer-legacy-history.mjs';
+import {githubVerifiedArchiveRows,githubPublishedEdition} from './lib/inquirer-github-archive.mjs';
 import {privatePreviewStoreName,isVerifiedPrivatePreviewPredecessor} from './lib/inquirer-preview-diagnostics.mjs';
 
 const LEAGUE='1316867686394769408';
@@ -171,7 +173,7 @@ async function regularWeekAppliedToRosterRecords(week,rows){
  for(const p of prior)tally(p);tally(rows);
  return{applied:rows.every(m=>{const r=rosters.find(x=>String(x.roster_id)===String(m.roster_id)),x=record[String(m.roster_id)];return r&&x&&Number(r?.settings?.wins||0)>=x.wins&&Number(r?.settings?.losses||0)>=x.losses}),rosters,prior};
 }
-async function completedPublicationWeek(week){
+export async function completedPublicationWeek(week){
  const rows=await fetchJson(`${API}/league/${LEAGUE}/matchups/${week}`).catch(()=>[]);
  if(!matchupComplete(rows))return{complete:false,rows,reason:'player scoring is not complete'};
  if(Number(week)<INQUIRER_PLAYOFF_START_WEEK){
@@ -637,8 +639,9 @@ export async function weeklyReport(req){
  // deterministic admission gate only after the prior week is locked.
  const publicationHost=new URL(req.url).hostname;
  const publicationSiteId=globalThis.Netlify?.env?.get?.('SITE_ID')||process.env.SITE_ID||'';
- const currentPublisherSite=publicationSiteId==='fa33dfe4-8293-441e-8da0-25cc66fc984c'||
-  publicationHost==='precious-dango-fb4633.netlify.app';
+ const publisherSiteName=globalThis.Netlify?.env?.get?.('SITE_NAME')||process.env.SITE_NAME||'';
+ const publicationContext=globalThis.Netlify?.env?.get?.('CONTEXT')||process.env.CONTEXT||'';
+ const currentPublisherSite=inquirerPublisherSite({siteId:publicationSiteId,siteName:publisherSiteName,host:publicationHost,context:publicationContext}).active;
  const replacementPublicationSite=publicationSiteId==='8776d155-bc7b-4dcd-bafc-3d70d3d51800'||
   publicationHost==='transcendent-manatee-2f0123.netlify.app';
  const admission=manualAdmission.approved?manualAdmission:
@@ -673,6 +676,21 @@ export async function weeklyReport(req){
  await ensureLockedEditionIndexed(s,result,key);
  return result;
 }
+// Read-only completion clock for the Daily reader. Unlike a guessed week-1,
+// this accepts only Sleeper matchups and standings actually finalized.
+async function latestCompletedInquirerWeek(){
+ try{
+  const response=await fetch(API+'/state/nfl',{headers:{accept:'application/json'},signal:AbortSignal.timeout(4500)});
+  if(!response.ok)return null;
+  const nfl=await response.json(),season=Number(nfl?.season),current=Number(nfl?.week);
+  if(!Number.isInteger(season)||season<2026||!Number.isInteger(current)||current<1)return null;
+  for(const week of [...new Set([Math.min(INQUIRER_FINAL_WEEK,current),Math.min(INQUIRER_FINAL_WEEK,current-1)].filter(w=>w>=1))]){
+   const state=await completedPublicationWeek(week).catch(()=>null);
+   if(state?.complete)return{season,week};
+  }
+ }catch(error){console.warn('inquirer-completed-week-readback',String(error?.message||error))}
+ return null;
+}
 async function broadcastArchive(){
  const s=store(),idx=await s.get('broadcasts/index.json',{type:'json'}),rows=Array.isArray(idx)?idx.slice():[];
  for(const p of PRELOADED_BROADCASTS.values()){
@@ -689,7 +707,23 @@ async function broadcastArchive(){
   if(archived&&isLockedInquirerEdition(archived,2026,week))
    rows.push({type:'week',season:2026,week,key,captured_at:String(archived.generated_at||''),recovered_index:true});
  }
- rows.sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));return{reports:rows};
+ // GitHub's append-only, SHA-verified archive survives Netlify site changes.
+ // Never promote unverified manifest entries or replace canonical Blob rows.
+ for(const entry of await githubVerifiedArchiveRows()){
+  if(!rows.some(row=>Number(row.season)===entry.season&&Number(row.week)===entry.week))
+   rows.push(entry);
+ }
+ rows.sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));
+ const completed=await latestCompletedInquirerWeek();
+ const latest=rows[rows.length-1]||null;
+ // No missing issue is described as published merely because its NFL week ended.
+ const publicationBehind=!!completed&&(!latest||completed.season>Number(latest.season)||
+  completed.season===Number(latest.season)&&completed.week>Number(latest.week));
+ return{reports:rows,latest_completed:completed,
+  latest_published:latest?{season:Number(latest.season),week:Number(latest.week)}:null,
+  publication_behind:publicationBehind,
+  archive_recovery_required:publicationBehind&&Number(latest?.season)===2026&&Number(latest?.week)<=2};
+
 }
 async function broadcastStored(season,week){
  const s=store(),v=await s.get(`broadcasts/${Number(season)}/week-${String(Number(week)).padStart(2,'0')}.json`,{type:'json'});
@@ -697,12 +731,19 @@ async function broadcastStored(season,week){
   // The existing Blob index is NOT admission evidence. The original site
   // contains a marked-locked but rejected 2026 Week 5 revision-14 draft.
   // Never display it as canonical news if it enters the replacement store.
-  if(!isLockedInquirerEdition(v,season,week))
+  if(!isLockedInquirerEdition(v,season,week)){
+   // Invalid site-local bytes never override the verified immutable GitHub
+   // newspaper. Keep the original Blob untouched and fail closed if neither
+   // source contains a canonical locked edition.
+   const verifiedGithub=await githubPublishedEdition(season,week);
+   if(verifiedGithub)return verifiedGithub;
    return{available:false,season:Number(season),week:Number(week),
-    reason:'Archived Inquirer edition fails the Week 4 newsroom continuity/quality contract. Publication held; original bytes were not altered.'};
+    reason:'Archived Inquirer edition fails the newsroom continuity/quality contract. Publication held; original bytes were not altered.'};
+  }
   return v;
  }
- return preloadedBroadcast(season,week)||{error:'broadcast not found'};
+ const githubEdition=await githubPublishedEdition(season,week);
+ return githubEdition||preloadedBroadcast(season,week)||{error:'broadcast not found'};
 }
 
 function weeklyAwardStatRows(payload){

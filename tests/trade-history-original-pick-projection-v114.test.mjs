@@ -52,7 +52,7 @@ test('a real archived pretrade pick projection appears with explicit unverified-
  assert.equal(result.slot,11);
  assert.equal(result.snapshotT,archived);
  assert.equal(ctx.originalPickProjectionText(2,11,result.source),
-  'projected 2.11 in pre-trade archive (ranking method unverified)');
+  'projected 2.11 • recorded before trade');
 });
 test('future or undated historical snapshots cannot leak todays draft rank into Original Trade Analysis',()=>{
  const {ctx,p,side,trade}=fixture();

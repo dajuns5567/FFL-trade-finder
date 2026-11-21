@@ -143,8 +143,20 @@ test('two consecutively repeated sentences block publication despite distinct su
    'A unique conclusion belongs to roster '+team.roster_id+' after the game.'
   ];
  }
- assert.equal(assessMinorNineWordReuse(fixture.teams,fixture.repeated).tolerated,false);
- assert.equal(assessMinorNineWordReuse(fixture.teams,fixture.repeated).reason,'consecutive-repeated-sentences');
+ const owners=new Map();
+ for(const team of fixture.teams){
+  const words=team.inquirer_article.sections.flatMap(section=>section.paragraphs).join(' ')
+   .toLowerCase().match(/[a-z0-9]+/g)||[];
+  for(let i=0;i+9<=words.length;i++){
+   const phrase=words.slice(i,i+9).join(' ');
+   const ids=owners.get(phrase)||new Set();
+   ids.add(String(team.roster_id));owners.set(phrase,ids);
+  }
+ }
+ const actualRepeated=[...owners].filter(([,ids])=>ids.size>=4);
+ const audit=assessMinorNineWordReuse(fixture.teams,actualRepeated);
+ assert.equal(audit.tolerated,false);
+ assert.equal(audit.reason,'consecutive-repeated-sentences');
 });
 test('the best publishable candidate must prefer clean prose instead of rewarding tolerated repetitions',()=>{
  const hub=readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');

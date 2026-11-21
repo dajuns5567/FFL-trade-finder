@@ -5,6 +5,7 @@ import {verifiedReplacementHistory,verifiedNewSiteCutoverHistory,verifiedWeekNin
 import {editorialApprovalMatches} from './inquirer-publication-guard.mjs';
 import {approvedWeek5Record} from './lib/inquirer-week5-owner-signoff.mjs';
 import {resolveInquirerQueueCredential} from './lib/inquirer-queue-credential.mjs';
+import {originalInquirerRestoreGate,ORIGINAL_INQUIRER_RESTORE_SITE_ID,ORIGINAL_INQUIRER_RESTORE_MARKER} from './lib/inquirer-archive-restore-runtime.mjs';
 // Queue a long-running background job. Netlify scheduled functions have a
 // hard 30-second limit, while the full Inquirer edition takes longer.
 export default async function inquirerPublishScheduled(req){
@@ -30,6 +31,41 @@ export default async function inquirerPublishScheduled(req){
   return skip('Replacement site is preview-only pending verified archive migration');
  const configuredKey=globalThis.Netlify?.env?.get?.('FLEECED_INQUIRER_QUEUE_KEY')||process.env.FLEECED_INQUIRER_QUEUE_KEY||'';
  if(!configuredKey&&!isCurrentSite)return skip('Publication queue credential not configured');
+ // The newest verified site starts with the exact immutable, indexed,
+ // award-backed original Weeks 3–9. Never regenerate them as missing weeks.
+ // The owner-approved background cutover runs BEFORE normal weekly publishing.
+ if(siteId===ORIGINAL_INQUIRER_RESTORE_SITE_ID){
+  const restoreFlag=globalThis.Netlify?.env?.get?.('FLEECED_INQUIRER_ARCHIVE_RESTORE_APPROVED')||
+   process.env.FLEECED_INQUIRER_ARCHIVE_RESTORE_APPROVED||'';
+  const gate=originalInquirerRestoreGate({
+   siteId,context,host,enabled:publishingEnabled,approved:restoreFlag
+  });
+  if(!gate.allowed)return skip('Original publisher cutover held: '+gate.reason);
+  try{
+   const history=getStore('fleeced-league-hub',{consistency:'strong'});
+   const marker=await history.get(ORIGINAL_INQUIRER_RESTORE_MARKER,{type:'json'});
+   if(marker?.state!=='completed'){
+    if(marker?.state==='running'&&Date.now()-Date.parse(marker.started_at||0)<16*60*1000)
+     return skip('Verified original archive restore already running');
+    if(marker?.state==='error'&&Number(marker.editorial_revision)===FORWARD_EDITORIAL_REVISION)
+     return skip('Original archive restore held: '+String(marker.reason||'unknown'));
+    const key=await resolveInquirerQueueCredential({store:history,configured:configuredKey,bootstrap:false});
+    if(!key)return skip('Authenticated original archive restore queue unavailable');
+    const target=new URL('/.netlify/functions/inquirer-original-archive-restore-background',req.url);
+    const resp=await fetch(target,{method:'POST',
+     headers:{'x-fleeced-queue-key':key,'content-type':'application/json'},
+     body:'{}',signal:AbortSignal.timeout(20000)});
+    if(resp.status!==202)return skip('Original archive restoration queue rejected: HTTP '+resp.status);
+    console.info('inquirer-original-archive-restore-queued',{season:2026,through_week:9});
+    return new Response(JSON.stringify({queued:true,kind:'immutable-original-archive-restore'}),{
+     headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}
+    });
+   }
+  }catch(error){
+   console.error('inquirer-original-restore-preflight',String(error?.message||error));
+   return skip('Original archive restoration unavailable; publishing held');
+  }
+ }
  // One-time owner-approved restore of accepted private Weeks 7–8 happens
  // BEFORE normal unattended Week 9+. No live generator can skip this gate.
  if(isCurrentSite){

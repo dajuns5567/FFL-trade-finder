@@ -11,9 +11,11 @@ export const config={background:true};
 // One owner-approved cutover, never a live generator or an archive rewrite.
 // Verify the exact previously accepted private copies BEFORE any publication
 // write. Retain the previously approved Weeks 1–6 byte-for-byte.
-const SITE_ID='fa33dfe4-8293-441e-8da0-25cc66fc984c';
-const SITE_HOST='precious-dango-fb4633.netlify.app';
-const SOURCE_HOST='deploy-preview-427--'+SITE_HOST;
+const SITE_ID='a516be3b-6c65-4f54-a9fb-23c5361bf3d2';
+// The approved drafts originated on the retired account; only their immutable
+// source identifier remains old. Never let that source become a publisher.
+const SOURCE_SITE_HOST='precious-dango-fb4633.netlify.app';
+const SOURCE_HOST='deploy-preview-427--'+SOURCE_SITE_HOST;
 const STATE='inquirer/cutover/2026-weeks07-08-status.json';
 const archiveKey=week=>'broadcasts/2026/week-'+String(week).padStart(2,'0')+'.json';
 const privateKey=week=>'2026/week-'+String(week).padStart(2,'0')+

@@ -1578,7 +1578,6 @@ function openMarketIntelModal(kind){
   wrap.innerHTML=`<div class="vh-modal" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="vh-modal-head"><div><h3>${esc(title)}</h3><div class="vh-sub">${esc(subtitle)}</div></div><button type="button" class="secondary small" data-vh-modal-close>Close</button></div><div class="vh-modal-body"><div class="vh-intel-list">${rows.length?rows.join(''):'<div class="vh-empty">No qualifying players in this window.</div>'}</div></div></div>`;
   document.getElementById('vhLazy')?.appendChild(wrap);
 }
-function marketModelVerifiedV110(){return intelRange()?.model_continuity_verified===true}
 function intelligencePeriodBar(){
   return`<div class="vh-intel-periodbar"><div class="vh-intel-period-copy"><span class="vh-intel-kicker">Fleeced analytics</span><div class="vh-intel-title">Market Intelligence</div><small>Choose the value-history window used across indexes, heat, records, opportunities, reversals, and volatility.</small></div><div class="vh-intel-period-actions" role="group" aria-label="Market Intelligence time range">${['1D','7D','30D','90D','1Y','ALL'].map(p=>`<button type="button" class="${p===marketIntelPeriod?'vh-active':''}" data-vh-intel-period="${p}">${p}</button>`).join('')}</div><div class="vh-intel-period-note">${marketModelVerifiedV110()?'Verified same-model movements':'Recorded changes; model continuity unverified'} inside the selected window. Completed NFL-week signals remain separate.</div></div>`;
 }
@@ -1611,6 +1610,7 @@ function heatMapVerifiedCurrentRows(){
   return liveMarketRowsV97(intelRange()?.player_changes||[])
    .filter(r=>finiteMarketNumber(r.pct)!=null&&Number.isFinite(Number(r.overall)));
 }
+function marketModelVerifiedV110(){return intelRange()?.model_continuity_verified===true}
 function marketHeatMapMarkup(){
   const changes=heatMapVerifiedCurrentRows(),positions=['QB','RB','WR','TE','IDP'],
     buckets=[['Top 100',1,100],['101–200',101,200],['201–300',201,300],['301+',301,Infinity]],cells=[];

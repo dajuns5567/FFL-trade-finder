@@ -1,0 +1,25 @@
+name: Value History archive module integrity (read-only)
+on:
+  pull_request:
+    paths:
+      - 'scripts/value-history-snapshot-integrity.mjs'
+      - 'tests/value-history-snapshot-integrity.test.mjs'
+      - '.github/workflows/value-history-archive-snapshot-integrity-ci.yml'
+permissions:
+  contents: read
+jobs:
+  archive-import:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate archive import dependency and cohort integrity
+        run: |
+          node --check scripts/archive-value-history.mjs
+          node --check scripts/value-history-snapshot-integrity.mjs
+          node --test tests/value-history-snapshot-integrity.test.mjs
+          node --input-type=module -e "import {inspectShortTermSnapback} from './scripts/value-history-snapshot-integrity.mjs'; if(typeof inspectShortTermSnapback!=='function') process.exit(1)"
+      # Does not contact GitHub archival APIs, run a scheduled refresh or deploy.

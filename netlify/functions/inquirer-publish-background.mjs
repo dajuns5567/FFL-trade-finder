@@ -4,6 +4,7 @@ import {FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
 import {verifiedNewSiteCutoverHistory,verifiedWeekNineAutopublishCutoverHistory} from './lib/inquirer-replacement-archive-gate.mjs';
 import {resolveInquirerQueueCredential,inquirerQueueKeyMatches} from './lib/inquirer-queue-credential.mjs';
 import {inquirerPublisherSite} from './lib/inquirer-publisher-site.mjs';
+import {githubVerifiedHistoricalPublisherBaseline} from './lib/inquirer-github-publisher-continuity.mjs';
 
 // Netlify background functions run for up to 15 minutes. The hourly scheduler
 // queues this private job instead of trying to generate 32 articles in 30 seconds.
@@ -83,8 +84,18 @@ export default async function publishInquirerInBackground(req){
    const autoCutover=isCurrentSite&&checked.ready?
     verifiedWeekNineAutopublishCutoverHistory({week7:recent[0],week8:recent[1],index,awards}):{ready:true};
    if(!checked.ready||!autoCutover.ready){
-    console.warn('inquirer-new-site-archive-hold',checked.ready?autoCutover.reason:checked.reason);
-    return new Response('New-site archive cutover not verified',{status:403});
+    // The immutable GitHub archive is a fully verified alternative to
+    // retired-account Blob migration. Do not demand site-local duplicates
+    // after all original editions, index and awards are verified in GitHub.
+    const github=await githubVerifiedHistoricalPublisherBaseline();
+    if(!github.ready){
+     console.warn('inquirer-new-site-archive-hold',{
+      site_local:checked.ready?autoCutover.reason:checked.reason,
+      github:github.reason
+     });
+     return new Response('New-site archive cutover not verified',{status:403});
+    }
+    console.info('inquirer-background-github-history-verified',{through_week:github.latestPublishedWeek});
    }
   }catch(error){
    console.error('inquirer-new-site-archive-preflight-unavailable',String(error?.message||error));

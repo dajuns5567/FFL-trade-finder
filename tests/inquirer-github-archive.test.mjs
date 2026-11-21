@@ -90,3 +90,43 @@ test('GitHub backup source is configurable without embedding any credential or m
  assert.match(workflow,/vars\.INQUIRER_PUBLICATION_ORIGIN/);
  assert.match(workflow,/cron: '17 \* \* \* \*'/);
 });
+
+test('direct GitHub archive import retains original bytes and refuses duplicates or changes',async()=>{
+ const {mkdtemp,mkdir,writeFile,readFile,rm}=await import('node:fs/promises');
+ const {tmpdir}=await import('node:os');
+ const {join}=await import('node:path');
+ const {execFileSync}=await import('node:child_process');
+ const {fileURLToPath}=await import('node:url');
+ const cli=fileURLToPath(new URL('../scripts/import-inquirer-archive.mjs',import.meta.url));
+ const base=await mkdtemp(join(tmpdir(),'inquirer-archive-import-'));
+ try{
+  const archive=join(base,'archive'),original=join(base,'original.json');
+  await mkdir(archive,{recursive:true});
+  await writeFile(join(archive,'manifest.json'),JSON.stringify({schema_version:1,entries:[]}));
+  await writeFile(original,raw);
+  execFileSync(process.execPath,[cli,original,archive]);
+  assert.equal(await readFile(join(archive,'2026/week-03.json'),'utf8'),raw);
+  const manifest=JSON.parse(await readFile(join(archive,'manifest.json'),'utf8'));
+  assert.equal(manifest.entries.length,1);assert.equal(manifest.entries[0].sha256,sha256);
+  assert.throws(()=>execFileSync(process.execPath,[cli,original,archive],{stdio:'pipe'}),/Command failed/);
+  await writeFile(join(archive,'2026/week-03.json'),raw.replace('Weekly Recap','Changed Recap'));
+  assert.throws(()=>execFileSync(process.execPath,[cli,original,archive],{stdio:'pipe'}),/Command failed/);
+ }finally{await rm(base,{recursive:true,force:true})}
+});
+test('unapproved draft cannot be imported as previously published original',async()=>{
+ const {mkdtemp,mkdir,writeFile,readdir,rm}=await import('node:fs/promises');
+ const {tmpdir}=await import('node:os');
+ const {join}=await import('node:path');
+ const {execFileSync}=await import('node:child_process');
+ const {fileURLToPath}=await import('node:url');
+ const cli=fileURLToPath(new URL('../scripts/import-inquirer-archive.mjs',import.meta.url));
+ const base=await mkdtemp(join(tmpdir(),'inquirer-draft-rejection-'));
+ try{
+  const archive=join(base,'archive'),original=join(base,'unapproved.json');
+  await mkdir(archive,{recursive:true});
+  await writeFile(join(archive,'manifest.json'),JSON.stringify({schema_version:1,entries:[]}));
+  await writeFile(original,JSON.stringify({...copy,published_locked:false}));
+  assert.throws(()=>execFileSync(process.execPath,[cli,original,archive],{stdio:'pipe'}),/Command failed/);
+  assert.deepEqual(await readdir(archive),['manifest.json']);
+ }finally{await rm(base,{recursive:true,force:true})}
+});

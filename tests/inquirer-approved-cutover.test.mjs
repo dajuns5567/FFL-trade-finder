@@ -25,7 +25,13 @@ test('production cutover requires exact owner-approved site, context and queue s
  assert.match(scheduler,/publishingEnabled!=='true'/);
  assert.match(config,/e\.CONTEXT==='deploy-preview'/);
  assert.match(config,/\['448','450'\]/);
- assert.match(config,/Release FFL V101 site deploy once 2026-11-20/);
+ // The isolated historical release had a one-time authorized production subject.
+ // Combined PR #558 is strictly preview-only: never demand that production subject
+ // when the current config intentionally skips every production build.
+ if(config.includes("process.exit(preview||legacy?1:0)")){
+  assert.match(config,/String\(e\.REVIEW_ID\)==='558'/);
+  assert.doesNotMatch(config,/process\.exit\(.*production\?/);
+ }else assert.match(config,/Release FFL V101 site deploy once 2026-11-20/);
  assert.match(config,/e\.SITE_ID==='a516be3b-6c65-4f54-a9fb-23c5361bf3d2'/);
 });
 test('background cutover accepts authenticated internal production origins, but never preview or foreign sites',()=>{

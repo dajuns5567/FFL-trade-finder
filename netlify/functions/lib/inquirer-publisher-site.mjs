@@ -21,6 +21,6 @@ export function inquirerPublisherSite({siteId='',siteName='',host='',context=''}
  // Netlify SITE_ID takes precedence over a caller-controlled URL Host.
  const active=id?id===ACTIVE_INQUIRER_SITE_ID:
   name===ACTIVE_INQUIRER_SITE_NAME||
-  origin===ACTIVE_INQUIRER_SITE_NAME+'.netlify.app';
+  origin===ACTIVE_INQUIRER_SITE_NAME+'.netlify.app'||origin===ACTIVE_INQUIRER_SITE_ID+'.netlify.app';
  return active?{active:true,reason:null}:{active:false,reason:'Unrecognized Inquirer publisher site'};
 }

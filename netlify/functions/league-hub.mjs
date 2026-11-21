@@ -673,6 +673,21 @@ export async function weeklyReport(req){
  await ensureLockedEditionIndexed(s,result,key);
  return result;
 }
+// Read-only completion clock for the Daily reader. Unlike a guessed week-1,
+// this accepts only Sleeper matchups and standings actually finalized.
+async function latestCompletedInquirerWeek(){
+ try{
+  const response=await fetch(API+'/state/nfl',{headers:{accept:'application/json'},signal:AbortSignal.timeout(4500)});
+  if(!response.ok)return null;
+  const nfl=await response.json(),season=Number(nfl?.season),current=Number(nfl?.week);
+  if(!Number.isInteger(season)||season<2026||!Number.isInteger(current)||current<1)return null;
+  for(const week of [...new Set([Math.min(INQUIRER_FINAL_WEEK,current),Math.min(INQUIRER_FINAL_WEEK,current-1)].filter(w=>w>=1))]){
+   const state=await completedPublicationWeek(week).catch(()=>null);
+   if(state?.complete)return{season,week};
+  }
+ }catch(error){console.warn('inquirer-completed-week-readback',String(error?.message||error))}
+ return null;
+}
 async function broadcastArchive(){
  const s=store(),idx=await s.get('broadcasts/index.json',{type:'json'}),rows=Array.isArray(idx)?idx.slice():[];
  for(const p of PRELOADED_BROADCASTS.values()){
@@ -689,7 +704,17 @@ async function broadcastArchive(){
   if(archived&&isLockedInquirerEdition(archived,2026,week))
    rows.push({type:'week',season:2026,week,key,captured_at:String(archived.generated_at||''),recovered_index:true});
  }
- rows.sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));return{reports:rows};
+ rows.sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));
+ const completed=await latestCompletedInquirerWeek();
+ const latest=rows[rows.length-1]||null;
+ // No missing issue is described as published merely because its NFL week ended.
+ const publicationBehind=!!completed&&(!latest||completed.season>Number(latest.season)||
+  completed.season===Number(latest.season)&&completed.week>Number(latest.week));
+ return{reports:rows,latest_completed:completed,
+  latest_published:latest?{season:Number(latest.season),week:Number(latest.week)}:null,
+  publication_behind:publicationBehind,
+  archive_recovery_required:publicationBehind&&Number(latest?.season)===2026&&Number(latest?.week)<=2};
+
 }
 async function broadcastStored(season,week){
  const s=store(),v=await s.get(`broadcasts/${Number(season)}/week-${String(Number(week)).padStart(2,'0')}.json`,{type:'json'});

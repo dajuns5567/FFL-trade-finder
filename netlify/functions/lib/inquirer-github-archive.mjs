@@ -78,3 +78,14 @@ export async function recoveredInquirerEdition(season,week,fetchImpl=fetch){
   throw Error('Recovered newspaper failed immutable publication checks: 2026 Week '+week);
  return edition;
 }
+
+export async function recoveredInquirerAwardEvidence(fetchImpl=fetch){
+ const catalog=await recoveredInquirerCatalog(fetchImpl);
+ const evidence=await readJson('evidence/2026/weekly.json',fetchImpl);
+ if(!Array.isArray(evidence?.records))throw Error('Immutable newspaper awards evidence missing');
+ for(const row of catalog.rows){
+  if(evidence.records.filter(x=>Number(x.season)===2026&&Number(x.week)===row.week).length!==1)
+   throw Error('Immutable original awards missing for Week '+row.week);
+ }
+ return evidence;
+}

@@ -610,7 +610,14 @@ export async function weeklyReport(req){
    const a=inspectEditionBeforePublication(candidate);
    const score=q.issues.length*4+a.issues.length;
    if(!best||score<bestScore){best=drafted;bestQuality=q;bestSalt=salt;bestScore=score}
-   if(q.ok&&a.ok){accepted=drafted;quality=q;variationSalt=salt;break}
+   if(q.ok&&a.ok){
+    // Warning-only copy remains publishable, but is never preferred over
+    // independently acceptable copy without a repetition warning.
+    if(!accepted){accepted=drafted;quality=q;variationSalt=salt}
+    if(!q.metrics?.minor_repetition_warning) {
+     accepted=drafted;quality=q;variationSalt=salt;break;
+    }
+   }
   }
   // A candidate with unresolved editorial issues is still valuable to review.
   // The publication guard below stages it with findings and never publishes it.

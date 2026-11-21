@@ -1,0 +1,71 @@
+name: V107 history recorder after canonical Value History UI (read-only)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/value-history-headless-refresh.yml'
+      - '.github/workflows/release-v107-recorder-after-market-ui-isolated.yml'
+      - '.github/workflows/value-history-v107-scheduled-rollout.yml'
+      - '.github/workflows/value-history-v107-shadow-acceptance.yml'
+      - '.github/workflows/value-history-candidate-headless-acceptance.yml'
+      - 'scripts/value-history-headless-refresh.mjs'
+      - 'scripts/archive-value-history.mjs'
+      - 'scripts/value-history-scheduled-due.mjs'
+      - 'scripts/value-history-v107-shadow-acceptance.mjs'
+      - 'tests/value-history-model-era-v90.test.mjs'
+      - 'tests/value-history-v107-scheduled-promotion.test.mjs'
+      - 'tests/value-history-candidate-headless-contract.test.mjs'
+permissions:
+  contents: read
+jobs:
+  history-recorder-only:
+    if: github.base_ref == 'release/value-history-ui-v108-isolated-draft'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Enforce exact history-writer-only change scope
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch origin "$BASE_REF"
+          node --input-type=module <<'JS'
+          import {execFileSync} from 'node:child_process';
+          import assert from 'node:assert/strict';
+          const paths=execFileSync('git',['diff','--name-only','origin/'+process.env.BASE_REF+'...HEAD'],{encoding:'utf8'}).trim().split('\n').filter(Boolean);
+          const allowed=new Set([
+            '.github/workflows/value-history-headless-refresh.yml',
+            '.github/workflows/release-v107-recorder-after-market-ui-isolated.yml',
+            '.github/workflows/value-history-v107-scheduled-rollout.yml',
+            '.github/workflows/value-history-v107-shadow-acceptance.yml',
+            '.github/workflows/value-history-candidate-headless-acceptance.yml',
+            'scripts/value-history-headless-refresh.mjs',
+            'scripts/archive-value-history.mjs',
+            'scripts/value-history-scheduled-due.mjs',
+            'scripts/value-history-v107-shadow-acceptance.mjs',
+            'tests/value-history-model-era-v90.test.mjs',
+            'tests/value-history-v107-scheduled-promotion.test.mjs',
+            'tests/value-history-candidate-headless-contract.test.mjs'
+          ]);
+          assert.equal(paths.length,allowed.size,'Unexpected history recorder file inventory: '+JSON.stringify(paths));
+          for(const path of paths)assert(allowed.has(path),'Out-of-scope subsystem change '+path);
+          console.log('Exact single-subsystem V107 recorder patch verified');
+          JS
+      - name: Validate browser, scheduler, history and archive scripts
+        run: |
+          node --check scripts/value-history-headless-refresh.mjs
+          node --check scripts/value-history-scheduled-due.mjs
+          node --check scripts/archive-value-history.mjs
+          node --check scripts/value-history-v107-shadow-acceptance.mjs
+          node --check value-history-v276.js
+      - name: Model-era conservation, V96 default, explicit V101 approval, candidate no-write
+        run: |
+          node --test tests/value-history-v107-scheduled-promotion.test.mjs tests/value-history-model-era-v90.test.mjs tests/value-history-candidate-headless-contract.test.mjs
+      - name: Verify archived snapshots remain immutable and collector rejects incomplete payloads
+        run: |
+          node --test tests/assess-archive-continuity.test.mjs
+      # GitHub read-only; no scheduled writes or Netlify deploys in acceptance.

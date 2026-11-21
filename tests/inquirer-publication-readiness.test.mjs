@@ -23,7 +23,8 @@ function fixture(complete=false){
   inspectCanonicalArchive:(edition,season,week)=>({ok:!!edition&&edition.season===season&&edition.week===week}),
   verifiedNewSiteCutoverHistory:({week3,week4,week5,week6})=>({ready:!!week3&&!!week4&&!!week5&&!!week6,reason:'baseline'}),
   verifiedWeekNineAutopublishCutoverHistory:({week7,week8})=>({ready:!!week7&&!!week8,reason:'forward'}),
-  approvedCutoverSourceReadiness:async()=>({ready:false,reason:'not transferred'})
+  approvedCutoverSourceReadiness:async()=>({ready:false,reason:'not transferred'}),
+  githubVerifiedArchiveRows:async()=>[]
  };
  vm.createContext(ctx);
  vm.runInContext(body+'\nglobalThis.handler=inquirerPublicationReadiness;',ctx);
@@ -42,6 +43,8 @@ test('empty destination archive explicitly reports blocked publication, with no 
  assert.equal(result.archives_ready_for_week9_plus,false);
  assert.equal(result.ready_for_unattended_week9_plus,false);
  assert.equal(result.historical_weeks.length,16);
+ assert.deepEqual(result.github_archive.verified_weeks,[]);
+ assert.ok(result.historical_weeks.every(w=>w.github_verified===false));
  assert.equal(result.weeks_9_plus.length,10);
  assert.ok(result.historical_weeks.every(w=>w.locked_verified===false));
  assert.equal(result.site_writes_performed,false);
@@ -77,4 +80,18 @@ test('stored but unindexed Week 9 remains nonpublished and explicitly diagnosed'
  assert.equal(result.site_writes_performed,false);
  assert.equal(f.writes.length,0);
  assert.doesNotMatch(JSON.stringify(result),/Private copied issue/);
+});
+
+test('verified GitHub editions remain independently reported when Netlify Blobs are missing',async()=>{
+ const f=fixture();
+ f.ctx.githubVerifiedArchiveRows=async()=>[
+  {season:2026,week:3,source:'github-verified'},
+  {season:2026,week:8,source:'github-verified'}];
+ const response=await f.handler({method:'GET'}),result=await response.json();
+ assert.deepEqual(result.github_archive.verified_weeks,[3,8]);
+ assert.equal(result.historical_weeks.find(w=>w.week===3).github_verified,true);
+ assert.equal(result.historical_weeks.find(w=>w.week===8).locked_verified,false);
+ assert.equal(result.archives_ready_for_week9_plus,false);
+ assert.equal(result.ready_for_unattended_week9_plus,false);
+ assert.equal(f.writes.length,0);
 });

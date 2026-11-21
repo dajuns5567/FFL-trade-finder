@@ -19,7 +19,7 @@ const unknown='00000000-0000-0000-0000-000000000000';
 test('only exact selected Inquirer PRs build deploy previews on verified V101 site',()=>{
  for(const review of ['563','564','565','566','567','568'])
   assert.equal(run(current,'deploy-preview',review),1,'allowed PR '+review);
- for(const review of ['0','402','499','562','568','999'])
+ for(const review of ['0','402','499','562','569','999'])
   assert.equal(run(current,'deploy-preview',review),0,'unapproved PR '+review);
 });
 test('zero production or branch deploys are authorized by the new preview allowlist',()=>{

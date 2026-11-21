@@ -706,9 +706,15 @@ async function broadcastStored(season,week){
   // The existing Blob index is NOT admission evidence. The original site
   // contains a marked-locked but rejected 2026 Week 5 revision-14 draft.
   // Never display it as canonical news if it enters the replacement store.
-  if(!isLockedInquirerEdition(v,season,week))
+  if(!isLockedInquirerEdition(v,season,week)){
+   // Invalid site-local bytes never override the verified immutable GitHub
+   // newspaper. Keep the original Blob untouched and fail closed if neither
+   // source contains a canonical locked edition.
+   const verifiedGithub=await githubPublishedEdition(season,week);
+   if(verifiedGithub)return verifiedGithub;
    return{available:false,season:Number(season),week:Number(week),
-    reason:'Archived Inquirer edition fails the Week 4 newsroom continuity/quality contract. Publication held; original bytes were not altered.'};
+    reason:'Archived Inquirer edition fails the newsroom continuity/quality contract. Publication held; original bytes were not altered.'};
+  }
   return v;
  }
  const githubEdition=await githubPublishedEdition(season,week);

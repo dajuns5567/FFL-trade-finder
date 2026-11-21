@@ -3,12 +3,14 @@
   "source": "retired-netlify-manual-export-2026-11-21",
   "data_in_github": false,
   "published_archive_updated": false,
-  "status": "source-verified-awaiting-original-byte-import-and-publication-index-reconciliation",
+  "status": "source-verified-indexed-in-retired-netlify-awaiting-byte-import",
   "notes": [
-    "This source inventory is NOT the inquirer-archive/manifest.json published archive.",
-    "Weeks 7 and 8 have published_locked=true AND preview_warning indicating unpublished draft; preserve original bytes and quarantine pending index corroboration.",
-    "No published manuscript is synthesized or modified. Source hash checking required before import.",
-    "Current old Netlify broadcasts/index.json, awards/weekly.json, and publication-status evidence have not yet been recovered."
+    "This source inventory is NOT the published GitHub archive manifest; original manuscripts are not committed yet.",
+    "Retired Netlify broadcasts/index.json lists Weeks 3-9, and awards/weekly.json independently lists awards Weeks 1-9.",
+    "Weeks 5-9 original edition timestamps exactly match both recovered index and weekly award records.",
+    "Weeks 7 and 8 retain historical preview_warning despite published_locked=true and matching independent published index/awards. Preserve warning and original bytes; do not silently rewrite.",
+    "Week 10 publication-status.json records editorial-hold on November 17, 2026 for 2 repeat/copy-forward findings; no edition was published.",
+    "Never copy the old account's internal-queue-credential.json. No credentials required for archive migration."
   ],
   "entries": [
     {
@@ -18,7 +20,9 @@
       "bytes": 6405954,
       "editorial_revision": 94,
       "published_locked": true,
-      "publication_evidence_conflict": false
+      "publication_evidence_conflict": false,
+      "matching_old_broadcast_index": true,
+      "matching_old_weekly_awards": true
     },
     {
       "week": 6,
@@ -27,7 +31,9 @@
       "bytes": 6559320,
       "editorial_revision": 98,
       "published_locked": true,
-      "publication_evidence_conflict": false
+      "publication_evidence_conflict": false,
+      "matching_old_broadcast_index": true,
+      "matching_old_weekly_awards": true
     },
     {
       "week": 7,
@@ -36,7 +42,9 @@
       "bytes": 7234451,
       "editorial_revision": 107,
       "published_locked": true,
-      "publication_evidence_conflict": true
+      "publication_evidence_conflict": true,
+      "matching_old_broadcast_index": true,
+      "matching_old_weekly_awards": true
     },
     {
       "week": 8,
@@ -45,7 +53,9 @@
       "bytes": 7444594,
       "editorial_revision": 107,
       "published_locked": true,
-      "publication_evidence_conflict": true
+      "publication_evidence_conflict": true,
+      "matching_old_broadcast_index": true,
+      "matching_old_weekly_awards": true
     },
     {
       "week": 9,
@@ -54,7 +64,40 @@
       "bytes": 7309785,
       "editorial_revision": 109,
       "published_locked": true,
-      "publication_evidence_conflict": false
+      "publication_evidence_conflict": false,
+      "matching_old_broadcast_index": true,
+      "matching_old_weekly_awards": true
     }
-  ]
+  ],
+  "publication_evidence_recovered": true,
+  "recovered_metadata": {
+    "broadcast_index_weeks": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "weekly_award_weeks": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "publication_status": {
+      "week": 10,
+      "state": "editorial-hold",
+      "available": false,
+      "review_required": true,
+      "editorial_findings": 2,
+      "finished_at": "2026-11-17T06:02:12.380Z"
+    }
+  }
 }

@@ -1,0 +1,76 @@
+name: Scheduled Value History Chromium runner compatibility (read-only)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/value-history-headless-refresh.yml'
+      - '.github/workflows/value-history-browser-runner-compat-ci.yml'
+permissions:
+  contents: read
+jobs:
+  browser-compatibility:
+    if: github.base_ref == 'main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Enforce exact scheduled workflow-only hotfix
+        run: |
+          git fetch origin main
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {execFileSync} from 'node:child_process';
+          import {readFileSync} from 'node:fs';
+          const paths=execFileSync('git',['diff','--name-only','origin/main...HEAD'],{encoding:'utf8'}).trim().split('\n').filter(Boolean);
+          assert.deepEqual(paths.sort(),[
+            '.github/workflows/value-history-browser-runner-compat-ci.yml',
+            '.github/workflows/value-history-headless-refresh.yml'
+          ].sort());
+          const w=readFileSync('.github/workflows/value-history-headless-refresh.yml','utf8');
+          assert.match(w,/runs-on: ubuntu-24\.04/);
+          assert.match(w,/node-version: '22'/);
+          assert.match(w,/playwright@1\.55\.0/);
+          assert.match(w,/npx playwright install --with-deps chromium/);
+          assert.match(w,/if: steps\.due\.outputs\.due == 'true'/);
+          assert.match(w,/node scripts\/value-history-scheduled-due\.mjs/);
+          assert.match(w,/node scripts\/value-history-headless-refresh\.mjs/);
+          assert.match(w,/node scripts\/archive-value-history\.mjs/);
+          assert.match(w,/cron: '17 \* \* \* \*'/);
+          assert.match(w,/cron: '47 \* \* \* \*'/);
+          console.log('Schedule, due guard, recorder and archival commands preserved; only runner pin changed');
+          JS
+      - name: Check existing collector syntax without running it
+        run: |
+          node --check scripts/value-history-headless-refresh.mjs
+          node --check scripts/archive-value-history.mjs
+      - name: Install exactly the pinned browser and dependencies
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Launch and close headless Chromium without any network or archive writes
+        run: |
+          node --input-type=module <<'JS'
+          import {chromium} from 'playwright';
+          const browser=await chromium.launch({headless:true});
+          const page=await browser.newPage();
+          await page.goto('about:blank');
+          const title=await page.title();
+          if(title!=='')throw new Error('Unexpected browser state');
+          console.log('Pinned Playwright 1.55 Chromium launches successfully on Ubuntu 24.04');
+          await browser.close();
+          JS
+      - name: Diagnose full existing main collector without durable writes
+        timeout-minutes: 6
+        continue-on-error: true
+        env:
+          VALUE_HISTORY_SNAPSHOT_FILE: .tmp/value-history-readonly-diagnostic.json
+        run: |
+          # Existing local collector redirects snapshot POST into .tmp only.
+          # It receives no GITHUB_TOKEN, Blob credentials or archive writer.
+          node scripts/value-history-headless-refresh.mjs
+      # NO GitHub write token, NO archive-value-history invocation, NO Netlify
+      # deploy, NO model activation. Production workflow remains unchanged.

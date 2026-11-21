@@ -208,7 +208,7 @@ test('isolated scheduled historian cannot deploy the linked Netlify production s
  const config=readFileSync('netlify.toml','utf8');
  const line=config.split('\n').find(x=>/^\s*ignore\s*=/.test(x));
  assert.ok(line,'do not change the owner-controlled Netlify build gate');
- const literal=line.match(/^\\s*ignore\\s*=\\s*(".*")$/)?.[1];
+ const literal=line.match(/^\s*ignore\s*=\s*(".*")$/)?.[1];
  assert.ok(literal,'Netlify build-ignore contract remains a TOML string');
  const command=JSON.parse(literal);
  assert.match(command,/^node -e /,'Netlify build-ignore contract stays executable');

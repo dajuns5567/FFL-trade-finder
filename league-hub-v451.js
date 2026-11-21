@@ -151,6 +151,7 @@ function latestPublishedInquirerRow(rows){return(Array.isArray(rows)?rows:[]).fi
 function inquirerRowIsNewer(a,b){return!!a&&(!b||Number(a.season)>Number(b.season)||Number(a.season)===Number(b.season)&&Number(a.week)>Number(b.week))}
 function invalidatePublishedInquirerCaches(){weeklyCache=null;spotlightWeeklyCache=null;weeklyAwardsCache=null;reporterArchiveCache={}}
 async function fetchPublishedInquirerArchive(){const response=await fetch('/.netlify/functions/league-hub?broadcast_archive=1',{cache:'no-store'});if(!response.ok)throw Error('published archive unavailable');const data=await response.json();if(!Array.isArray(data?.reports))throw Error('published archive index unavailable');return data.reports}
+let latestVerifiedPublishedRow=null;
 function readablePublishedInquirer(e,row){return e?.available===true&&e?.published_locked!==false&&Number(e.season)===Number(row.season)&&Number(e.week)===Number(row.week)&&Array.isArray(e.teams)&&e.teams.length===32&&!!e.league_overview?.headline}
 async function verifiedPublishedInquirer(rows,{preserveSelection=false}={}){
  const entries=(Array.isArray(rows)?rows:[]).filter(x=>Number(x?.season)>0&&Number(x?.week)>0).slice().sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week));
@@ -158,7 +159,8 @@ async function verifiedPublishedInquirer(rows,{preserveSelection=false}={}){
  for(const row of entries.slice(0,12)){try{
   const r=await fetch('/.netlify/functions/league-hub?broadcast_season='+Number(row.season)+'&broadcast_week='+Number(row.week),{cache:'no-store'});
   if(!r.ok)continue;const edition=await r.json();if(!readablePublishedInquirer(edition,row))continue;
-  if(!preserveSelection){invalidatePublishedInquirerCaches();weeklyCache=edition}return edition;
+  latestVerifiedPublishedRow={season:Number(edition.season),week:Number(edition.week)};
+   if(!preserveSelection){invalidatePublishedInquirerCaches();weeklyCache=edition}return edition;
  }catch(error){console.warn('inquirer-published-week-readback',String(error?.message||error))}}
  throw Error('No verified published newspaper is currently readable; archive retained.');
 }
@@ -555,8 +557,8 @@ function dailyHTML(all,stats,w,md,spotlightW=w){
  const teams=w?.teams||[],first=teams[0],overviewOpen=openBroadcastTeam==='__league__';
  const opened=!overviewOpen&&openBroadcastTeam?teams.find(t=>String(t.roster_id)===String(openBroadcastTeam)):null;
  const articleOpen=overviewOpen||!!opened;
- const newestArchived=latestPublishedInquirerRow(broadcastArchive),newerAvailable=!inquirerPreviewMode&&w?.available&&inquirerRowIsNewer(newestArchived,w);
- const editionNotice=newerAvailable?'<div class="lh-story" role="status"><b>New Fleeced! Inquirer edition indexed: '+esc(newestArchived.season+' Week '+newestArchived.week)+'</b><button type="button" class="lh-brand-button lh-brand-button-compact" data-lh-inquirer-back>Open latest verified edition</button></div>':'';
+ const newestArchived=latestVerifiedPublishedRow,newerAvailable=!inquirerPreviewMode&&w?.available&&!!newestArchived&&inquirerRowIsNewer(newestArchived,w);
+ const editionNotice=newerAvailable?'<div class="lh-story" role="status"><b>New verified Fleeced! Inquirer edition: '+esc(newestArchived.season+' Week '+newestArchived.week)+'</b><button type="button" class="lh-brand-button lh-brand-button-compact" data-lh-inquirer-back>Open latest verified edition</button></div>':'';
  const archive='<div class="lh-archive"><b>Fleeced! Inquirer Archive</b><div class="lh-sub">Jump straight to a season, week and team. It opens on the current completed week.</div>'+
   (broadcastArchive.length?archiveFiltersHTML(w):'<span class="lh-sub">The first archived report will appear after a completed week is captured.</span>')+
   '</div>'+reporterArchiveHTML(w);

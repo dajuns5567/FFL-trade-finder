@@ -12,7 +12,7 @@ const selectRow=source.slice(source.indexOf('function latestPublishedInquirerRow
 assert.match(selectRow,/function latestPublishedInquirerRow/);
 const edition=week=>({available:true,published_locked:true,season:2026,week,teams:Array.from({length:32},(_,i)=>({roster_id:i+1})),league_overview:{headline:'Week '+week}});
 function reader(responses){
- const requested=[],warnings=[],context={console:{warn(...args){warnings.push(args.map(String).join(' '))}},weeklyCache:null,openBroadcastTeam:'',inquirerPreviewMode:false,invalidatePublishedInquirerCaches(){this.weeklyCache=null},
+ const requested=[],warnings=[],context={console:{warn(...args){warnings.push(args.map(String).join(' '))}},weeklyCache:null,openBroadcastTeam:'',inquirerPreviewMode:false,invalidatePublishedInquirerCaches(){context.weeklyCache=null},
   fetch:async url=>{const week=Number(new URL(url,'https://ffl.invalid').searchParams.get('broadcast_week'));requested.push(week);const response=responses[week];if(response instanceof Error)throw response;return{ok:response!==undefined,json:async()=>response}},
   fetchPublishedInquirerArchive:async()=>[{season:2026,week:11},{season:2026,week:10}]};
  vm.createContext(context);

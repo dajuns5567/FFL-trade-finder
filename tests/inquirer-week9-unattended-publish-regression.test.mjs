@@ -26,7 +26,7 @@ const nineGrams=text=>{
  return out;
 };
 test('Week 9 held cross-team scaffold is eliminated at its generation source',()=>{
- assert.equal(FORWARD_EDITORIAL_REVISION,109);
+ assert.equal(FORWARD_EDITORIAL_REVISION,110);
  assert.doesNotMatch(source,/The bench advantage deserves a Week 6 review/);
  assert.doesNotMatch(source,/Those unused points will be much louder at the next lineup meeting/);
  assert.doesNotMatch(source,/A losing week is a rough time to discover the bench had a better answer/);
@@ -97,12 +97,71 @@ test('one short identical line in four of 32 articles is a transparent nonfatal 
  assert.equal(audit.team_count,4);
  assert.ok(audit.phrase_windows>0);
 });
-test('a fifth affected article or two repeated sentences cannot use the minor tolerance',()=>{
+test('a fifth affected article or two independent short repeated lines are nonfatal warnings',()=>{
  const five=repeatedFixture([{sentence:one,members:[1,2,3,4,5]}]);
- assert.equal(assessMinorNineWordReuse(five.teams,five.repeated).tolerated,false);
+ assert.equal(assessMinorNineWordReuse(five.teams,five.repeated).tolerated,true);
  const two=repeatedFixture([{sentence:one,members:[1,2,3,4]},
   {sentence:'A completely separate repeated decision emerged as the manager evaluated a different lineup and roster situation.',members:[5,6,7,8]}]);
- assert.equal(assessMinorNineWordReuse(two.teams,two.repeated).tolerated,false);
+ const result=assessMinorNineWordReuse(two.teams,two.repeated);
+ assert.equal(result.tolerated,true);
+ assert.equal(result.sentence_count,2);
+});
+test('three separated short repeated lines are warnings; six affected teams remain fatal',()=>{
+ const six=repeatedFixture([{sentence:one,members:[1,2,3,4,5,6]}]);
+ assert.equal(assessMinorNineWordReuse(six.teams,six.repeated).tolerated,false);
+ const three=repeatedFixture([{sentence:one,members:[1,2,3,4]},
+  {sentence:'A second isolated managerial observation explains what each team must do after the completed match.',members:[5,6,7,8]},
+  {sentence:'A third isolated editorial observation explains the upcoming roster decisions with enough independent weekly detail.',members:[9,10,11,12]}]);
+ const report=assessMinorNineWordReuse(three.teams,three.repeated);
+ assert.equal(report.tolerated,true);
+ assert.equal(report.sentence_count,3);
+ assert.equal(report.severity,'editorial-warning');
+ assert.equal(report.requires_improvement,true);
+});
+test('four repeated sentences, even separated, remain a blocking quality failure',()=>{
+ const lines=[
+ one,
+ 'A second isolated managerial observation explains what each team must do after the completed match.',
+ 'A third isolated editorial observation explains the upcoming roster decisions with enough independent weekly detail.',
+ 'A fourth isolated repeat describes exactly how the staff discussed the latest recorded outcome.'
+ ];
+ const fixture=repeatedFixture(lines.map(sentence=>({sentence,members:[1,2,3,4]})));
+ assert.equal(assessMinorNineWordReuse(fixture.teams,fixture.repeated).tolerated,false);
+});
+test('two consecutively repeated sentences block publication despite distinct surrounding copy',()=>{
+ const first=one;
+ const second='A separate managerial conclusion was repeated in another nearby editorial sentence for this particular roster.';
+ const fixture=repeatedFixture([{sentence:first,members:[1,2,3,4]},
+  {sentence:second,members:[1,2,3,4]}]);
+ // Make the exact two shared lines adjacent within each affected article;
+ // substantial team-specific reporting still surrounds both lines.
+ for(const team of fixture.teams.slice(0,4)){
+  team.inquirer_article.sections[0].paragraphs=[
+   'Verified independent weekly details identify this roster '+team.roster_id+' and its special circumstances. '+
+   first+' '+second+
+   ' Additional detailed analysis examines this same roster '+team.roster_id+' and its individual matchup. '+
+   'A unique conclusion belongs to roster '+team.roster_id+' after the game.'
+  ];
+ }
+ const owners=new Map();
+ for(const team of fixture.teams){
+  const words=team.inquirer_article.sections.flatMap(section=>section.paragraphs).join(' ')
+   .toLowerCase().match(/[a-z0-9]+/g)||[];
+  for(let i=0;i+9<=words.length;i++){
+   const phrase=words.slice(i,i+9).join(' ');
+   const ids=owners.get(phrase)||new Set();
+   ids.add(String(team.roster_id));owners.set(phrase,ids);
+  }
+ }
+ const actualRepeated=[...owners].filter(([,ids])=>ids.size>=4);
+ const audit=assessMinorNineWordReuse(fixture.teams,actualRepeated);
+ assert.equal(audit.tolerated,false);
+ assert.equal(audit.reason,'consecutive-repeated-sentences');
+});
+test('the best publishable candidate must prefer clean prose instead of rewarding tolerated repetitions',()=>{
+ const hub=readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
+ assert.match(hub,/if\(!q\.metrics\?\.minor_repetition_warning\)/);
+ assert.match(hub,/if\(!accepted\)\{accepted=drafted;quality=q;variationSalt=salt\}/);
 });
 test('a duplicated whole paragraph is still fatal even with exactly four teams',()=>{
  const fixture=repeatedFixture([{sentence:one,members:[1,2,3,4]}]);
@@ -118,7 +177,7 @@ test('the production-quality gate records tolerance but retains all other failur
  assert.match(source,/assessMinorNineWordReuse\(teams,longRecycled\)/);
  assert.match(source,/minor_repetition_warning:minorRepetition\.tolerated/);
  assert.match(source,/const blockingIssues=minorPhraseSets\?issues\.filter/);
- assert.match(source,/if\(issue\.id==='cross-team-copy-scaffold'&&issue\.sentence===minorSentenceNorm\)/);
+ assert.match(source,/if\(issue\.id==='cross-team-copy-scaffold'&&minorSentenceNorms\.has\(issue\.sentence\)\)/);
  assert.match(source,/if\(issue\.id==='cross-reporter-phrase-scaffold'/);
  assert.match(source,/if\(issue\.id==='cross-team-clause-scaffold'/);
  assert.match(source,/if\(issue\.id==='paired-editorial-clause-scaffold'/);

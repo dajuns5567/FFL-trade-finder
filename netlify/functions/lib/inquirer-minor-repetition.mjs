@@ -1,44 +1,82 @@
-// A narrowly scoped, auditable editorial tolerance for future Inquirer editions.
-// Only one short, *exact* repeated sentence in four of 32 team articles qualifies.
-// This never overrides independent structural, factual, recap or copy-review gates.
+// Small, auditable allowance for incidental repeated sentences in otherwise
+// independently reported newspapers. NEVER waive long copy, factual, recap,
+// structural, historical or unrelated editorial findings.
 const tokens=value=>String(value||'').toLowerCase().match(/[a-z0-9]+/g)||[];
 const sentences=article=>(article?.sections||[]).flatMap(section=>section?.paragraphs||[])
-  .flatMap(paragraph=>String(paragraph||'')
-    .replace(/\b(?:Jr|Sr|Dr|Mr|Mrs|Ms)\.(?=\s+[A-Z])/g,match=>match.replace('.','§'))
-    .split(/(?<=[.!?])\s+/).map(sentence=>sentence.replaceAll('§','.')));
+ .flatMap(paragraph=>String(paragraph||'')
+   .replace(/\b(?:Jr|Sr|Dr|Mr|Mrs|Ms)\.(?=\s+[A-Z])/g,match=>match.replace('.','§'))
+   .split(/(?<=[.!?])\s+/).map(sentence=>sentence.replaceAll('§','.')));
+const sentenceCounts=team=>{
+ const counts=new Map();
+ for(const line of sentences(team?.inquirer_article)){
+  const words=tokens(line);
+  if(words.length<9||words.length>28)continue;
+  const norm=words.join(' ');
+  counts.set(norm,(counts.get(norm)||0)+1);
+ }
+ return counts;
+};
+const embedded=(team,sentence)=>{
+ const paragraphs=(team?.inquirer_article?.sections||[]).flatMap(section=>section.paragraphs||[]);
+ return paragraphs.some(paragraph=>{
+  const parts=sentences({sections:[{paragraphs:[paragraph]}]});
+  const occurrences=parts.filter(part=>tokens(part).join(' ')===sentence).length;
+  const surrounding=parts.filter(part=>tokens(part).join(' ')!==sentence);
+  return occurrences===1&&surrounding.length>=2&&
+   surrounding.reduce((total,part)=>total+tokens(part).length,0)>=18;
+ });
+};
 export function assessMinorNineWordReuse(teams,repeated){
  const collisions=[...(repeated||[])];
- if(!collisions.length||collisions.length>20)return{tolerated:false};
- const owners=new Set(collisions.flatMap(([,ids])=>[...ids].map(String)));
- if(owners.size!==4||collisions.some(([,ids])=>ids.size!==4))
+ if(!collisions.length||collisions.length>40||!Array.isArray(teams)||teams.length!==32)
   return{tolerated:false};
- const byTeam=new Map((teams||[]).map(team=>[
-  String(team.roster_id),
-  new Set(sentences(team.inquirer_article).map(sentence=>tokens(sentence))
-   .filter(words=>words.length>=9&&words.length<=28)
-   .map(words=>words.join(' ')))
- ]));
- if([...owners].some(id=>!byTeam.has(id)))return{tolerated:false};
- const [first,...others]=[...owners];
- const shared=[...byTeam.get(first)].filter(sentence=>others.every(id=>byTeam.get(id).has(sentence)));
- // Never waive a copied paragraph. Each occurrence must be one incidental
- // sentence embedded inside independently written, substantive surrounding prose.
- const embedded=(team,sentence)=>{
-  const paragraphs=(team.inquirer_article?.sections||[]).flatMap(section=>section.paragraphs||[]);
-  return paragraphs.some(paragraph=>{
-   const parts=sentences({sections:[{paragraphs:[paragraph]}]});
-   const occurrences=parts.filter(part=>tokens(part).join(' ')===sentence).length;
-   const surrounding=parts.filter(part=>tokens(part).join(' ')!==sentence);
-   return occurrences===1&&surrounding.length>=2&&
-     surrounding.reduce((total,part)=>total+tokens(part).length,0)>=18;
-  });
- };
- const matches=shared.filter(sentence=>{
-  const padded=' '+sentence+' ';
-  return collisions.every(([phrase])=>padded.includes(' '+phrase+' '))&&
-    [...owners].every(id=>embedded((teams||[]).find(t=>String(t.roster_id)===id),sentence));
- });
- if(matches.length!==1)return{tolerated:false};
- return{tolerated:true,team_count:4,phrase_windows:collisions.length,
-   sentence:matches[0].slice(0,190)};
+ const byTeam=new Map(teams.map(team=>[String(team.roster_id),sentenceCounts(team)]));
+ if(byTeam.size!==32)return{tolerated:false};
+ const sentenceOwners=new Map();
+ for(const [id,counts] of byTeam)for(const [sentence,count] of counts){
+  if(count!==1)continue; // A repeated line within even one article is not incidental.
+  const ids=sentenceOwners.get(sentence)||new Set();
+  ids.add(id);sentenceOwners.set(sentence,ids);
+ }
+ // Adjacent copies are disqualifying even before nine-word windows are
+ // reconciled: one window may span BOTH copied sentences and therefore is
+ // not itself an eligible sentence. Fail closed on that contiguous passage.
+ const repeatedSentences=new Set([...sentenceOwners].filter(([,ids])=>ids.size>=4).map(([line])=>line));
+ for(const team of teams){
+  const lines=sentences(team.inquirer_article).map(line=>tokens(line).join(' '));
+  if(lines.some((line,i)=>i>0&&repeatedSentences.has(line)&&repeatedSentences.has(lines[i-1])))
+   return{tolerated:false,reason:'consecutive-repeated-sentences'};
+ }
+ const eligible=[...sentenceOwners].filter(([sentence,ids])=>ids.size>=4&&ids.size<=5&&
+  [...ids].every(id=>embedded(teams.find(t=>String(t.roster_id)===id),sentence)));
+ // Every flagged long-reuse window must be accounted for by one and only
+ // one *complete* qualifying sentence with exactly the same affected teams.
+ // Never suppress a collision merely because its substring occurs somewhere
+ // inside an otherwise benign sentence shared by another group.
+ const matches=new Map();
+ for(const [rawPhrase,rawIds] of collisions){
+  const phrase=tokens(rawPhrase).join(' '),ids=new Set([...rawIds].map(String));
+  if(ids.size<4||ids.size>5)return{tolerated:false};
+  const matching=eligible.filter(([sentence,owners])=>
+   owners.size===ids.size&&[...owners].every(id=>ids.has(id))&&
+   (' '+sentence+' ').includes(' '+phrase+' '));
+  if(matching.length!==1)return{tolerated:false};
+  matches.set(matching[0][0],matching[0][1]);
+ }
+ if(!matches.size||matches.size>3)return{tolerated:false};
+ // Two repeated sentences back-to-back in ANY affected article represent
+ // contiguous copied prose, even when each sentence is individually short.
+ // Check the full article in reading order, including paragraph boundaries.
+ const copied=new Set(matches.keys());
+ for(const team of teams){
+  const lines=sentences(team.inquirer_article).map(line=>tokens(line).join(' '));
+  if(lines.some((line,i)=>i>0&&copied.has(line)&&copied.has(lines[i-1])))
+   return{tolerated:false,reason:'consecutive-repeated-sentences'};
+ }
+ return{tolerated:true,severity:'editorial-warning',requires_improvement:true,
+  reason:'Minor nonconsecutive repetition; not an endorsement of duplicated writing',
+  team_count:new Set([...matches.values()].flatMap(ids=>[...ids])).size,
+  phrase_windows:collisions.length,sentence_count:matches.size,
+  sentences:[...matches.keys()].map(s=>s.slice(0,190)),
+  sentence:[...matches.keys()][0].slice(0,190)};
 }

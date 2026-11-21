@@ -9,6 +9,8 @@ permissions:
   contents: read
 jobs:
   market-dashboard:
+    # The strict originating release diff must not reject later unrelated PRs.
+    if: github.base_ref == 'release/finder-post-reconciled-history-draft'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:

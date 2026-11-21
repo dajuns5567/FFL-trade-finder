@@ -1,0 +1,41 @@
+name: Descendant release scope correctness (read-only)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/v109-market-live-movers-review.yml'
+      - '.github/workflows/release-trade-history-original-pick-isolated.yml'
+      - '.github/workflows/descendant-release-scope-ci.yml'
+permissions:
+  contents: read
+jobs:
+  scope:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Enforce CI-only changes
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch origin "$BASE_REF"
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {execFileSync} from 'node:child_process';
+          import {readFileSync} from 'node:fs';
+          const changed=execFileSync('git',['diff','--name-only','origin/'+process.env.BASE_REF+'...HEAD'],{encoding:'utf8'}).trim().split('\n').filter(Boolean).sort();
+          const allow=['.github/workflows/v109-market-live-movers-review.yml','.github/workflows/release-trade-history-original-pick-isolated.yml','.github/workflows/descendant-release-scope-ci.yml'].sort();
+          assert.deepEqual(changed,allow);
+          const market=readFileSync(allow[2],'utf8'),picks=readFileSync(allow[1],'utf8');
+          assert(market.includes("if: github.base_ref == 'release/finder-post-reconciled-history-draft'"));
+          assert(picks.includes("if: github.base_ref == 'release/draft-pick-5050-post-reconciled-recorder-draft'"));
+          console.log('Original release scope gates remain enforced only at their exact origin');
+          JS
+      - name: Run descendant regression tests without stale diff assertion
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund
+          node --test tests/market-live-movers-v109.test.mjs tests/market-model-provenance-v110.test.mjs tests/trade-history-original-pick-projection.test.mjs

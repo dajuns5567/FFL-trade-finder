@@ -1405,7 +1405,15 @@ async function teamNetFetch(ids,teamId){
   if(!r.ok)throw Error('team net history unavailable');
   const data=await r.json();teamNetCache.set(key,data);return data;
 }
-async function ensureMarketCache(force=false){if(!marketCache||force){const data=await marketFetch();marketCache=data.market||{}}return marketCache}
+let marketFetchStampV111=0;
+async function ensureMarketCache(force=false){
+ if(!marketCache||force){
+   const stamp=++marketFetchStampV111;
+   const data=await marketFetch();
+   if(stamp===marketFetchStampV111)marketCache=data.market||{};
+ }
+ return marketCache;
+}
 async function loadMarket(force=false){
   const box=document.getElementById('vhContent');if(!box)return;
   currentView='market';syncSubnav();setPrimaryPlayerSearchVisible(false);currentPlayerId=null;
@@ -1625,7 +1633,8 @@ function marketLiveIntelligenceRowsV111(recorded,latestMarketRows,currentValues,
        !Number.isFinite(delta)||!Number.isFinite(pct))return row;
     const currentDelta=value-base,currentPct=(currentDelta/base)*100;
     return {...row,value,overall:Number(now.overall),posRank:Number(now.posRank),
-      delta:delta+currentDelta,pct:pct+currentPct,
+      recordedValue:base,recordedOverall:Number(p.overall),recordedPosRank:Number(p.posRank),
+      liveCurrentV97:true,delta:delta+currentDelta,pct:pct+currentPct,
       overall_delta:Number(row.overall_delta||0)+Number(p.overall)-Number(now.overall),
       pos_rank_delta:Number(row.pos_rank_delta||0)+Number(p.posRank)-Number(now.posRank),
       observed_live_delta:currentDelta,observed_live_pct:currentPct,
@@ -2495,6 +2504,14 @@ function updateLiveConsumersV102(){
  else if(currentView==='playerHub'&&playerHistoryTeamId&&marketCache)renderPlayerHistoryTeamRoster();
  else if(currentView==='player'&&currentPlayerId)loadPlayer(currentPlayerId).catch(()=>{});
 }
+let lastVisibleMarketRefreshV111=0;
+function refreshVisibleMarketV111(){
+ if(currentView!=='market'||document.hidden||document.getElementById('valueHistory')?.hidden)return;
+ const now=Date.now();
+ if(now-lastVisibleMarketRefreshV111<1500)return;
+ lastVisibleMarketRefreshV111=now;
+ loadMarket(true).catch(()=>{});
+}
 function boot(){addShell();searchTradesOnSiteOpen();window.addEventListener('fll:valuation-refreshed',()=>{
  updateLiveConsumersV102()
 });
@@ -2502,7 +2519,7 @@ function boot(){addShell();searchTradesOnSiteOpen();window.addEventListener('fll
    updateLiveConsumersV102();
    refreshTradeHistoryCurrentValuesV533();
  });
- setInterval(refreshVisibleTradeHistory,TRADE_HISTORY_REFRESH_MS);window.addEventListener('focus',()=>{refreshVisibleTradeHistory();if(currentView==='market'&&!document.getElementById('valueHistory')?.hidden)loadMarket(true).catch(()=>{})});document.addEventListener('visibilitychange',()=>{if(!document.hidden){refreshVisibleTradeHistory();if(currentView==='market'&&!document.getElementById('valueHistory')?.hidden)loadMarket(true).catch(()=>{})}});scheduleSnapshot(0,snapshotSourceFromUrl());document.getElementById('updateBtn')?.addEventListener('click',()=>{invalidateLiveMarketV97();marketCache=null;teamNetCache.clear();scheduleSnapshot(1000,'manual-update');if(currentPlayerId)setTimeout(()=>loadPlayer(currentPlayerId),1800)},{passive:true})}
+ setInterval(refreshVisibleTradeHistory,TRADE_HISTORY_REFRESH_MS);window.addEventListener('focus',()=>{refreshVisibleTradeHistory();refreshVisibleMarketV111()});document.addEventListener('visibilitychange',()=>{if(!document.hidden){refreshVisibleTradeHistory();refreshVisibleMarketV111()}});scheduleSnapshot(0,snapshotSourceFromUrl());document.getElementById('updateBtn')?.addEventListener('click',()=>{invalidateLiveMarketV97();marketCache=null;teamNetCache.clear();scheduleSnapshot(1000,'manual-update');if(currentPlayerId)setTimeout(()=>loadPlayer(currentPlayerId),1800)},{passive:true})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 window.valueHistoryV331={liveMarketRowV97,liveMarketRowsV97,liveFullMarketRowsV97,invalidateLiveMarketV97,currentRows,currentPickRows,currentTeamRows,currentEvaluatorValue,hindsightValue,recordSnapshot,historyFetch,marketFetch,marketData:(force=false)=>ensureMarketCache(!!force),livePlayerMeta,periodPoints,openPlayer:(id)=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>selectPlayer(String(id)),0)},openPlayerHistory:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(renderPlayerHistoryHub,0)},openFullMarket:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>loadFullMarketHistory(),0)}};
 })();

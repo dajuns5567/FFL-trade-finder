@@ -110,3 +110,22 @@ test('source-only authorization still relies on private queue credential and can
  assert.match(restoration,/inquirerQueueKeyMatches\(expected,req.headers.get\('x-fleeced-queue-key'\)\)/);
  assert.match(background,/originalMarker\?\.state!=='completed'/);
 });
+
+test('Netlify scheduler production callback uses UUID hostname, which is owner-authorized only for exact site',()=>{
+ const siteId=ORIGINAL_INQUIRER_RESTORE_SITE_ID,uuidHost=siteId+'.netlify.app';
+ const flags=resolvedInquirerOwnerAuthorization({siteId,context:'production',host:uuidHost});
+ assert.equal(flags.source_authorized,true);
+ assert.equal(flags.enabled,'true');
+ assert.equal(flags.approved,'true');
+ assert.equal(originalInquirerRestoreGate({siteId,context:'production',host:uuidHost,
+  enabled:flags.enabled,approved:flags.approved}).allowed,true);
+ for(const bad of [
+  {siteId:'wrong-site',context:'production',host:uuidHost},
+  {siteId,context:'deploy-preview',host:uuidHost},
+  {siteId,context:'branch-deploy',host:uuidHost},
+  {siteId,context:'production',host:'another-uuid.netlify.app'},
+  {siteId,context:'production',host:'deploy-preview-571--'+uuidHost}
+ ]){
+  assert.equal(resolvedInquirerOwnerAuthorization(bad).source_authorized,false);
+ }
+});

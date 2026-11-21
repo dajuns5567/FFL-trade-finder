@@ -1064,6 +1064,27 @@ function historicalPickValue(side,p){
   const row=historicalPickSnapshotRow(side,p),n=Number(row?.value);
   return Number.isFinite(n)?Math.round(n):null;
 }
+function historicalPickProjectionEvidence(side,p,trade){
+ const createdMs=Date.parse(String(trade?.created||''));
+ const cutoverMs=Date.parse('2026-09-25T04:00:00.000Z');
+ const postCutover=Number.isFinite(createdMs)&&createdMs>=cutoverMs;
+ const owner=Number(p?.original_roster_id);
+ const ranking=trade?.ranking_at_trade;
+ const rankCandidate=ranking?.slots?.[String(owner)],rank=Number(rankCandidate);
+ const standingsWeek=Number(ranking?.standings_week),tradeWeek=Number(trade?.week);
+ const validRanking=postCutover&&rankCandidate!=null&&Number.isInteger(rank)&&rank>=1&&rank<=32&&
+   ranking?.method==='50% record rank + 50% points-for rank'&&
+   Number(ranking?.season)===Number(trade?.season)&&
+   Number.isInteger(standingsWeek)&&standingsWeek>=1&&
+   Number.isInteger(tradeWeek)&&standingsWeek<=tradeWeek-1;
+ if(validRanking)return{slot:rank,source:'verified-completed-week-5050',standingsWeek};
+ const hist=historicalPickSnapshotRow(side,p),candidate=hist?.projected_slot,n=Number(candidate);
+ const archivedMs=Date.parse(String(trade?.trade_snapshot_t||''));
+ if(candidate!=null&&Number.isInteger(n)&&n>=1&&n<=32&&
+    Number.isFinite(createdMs)&&Number.isFinite(archivedMs)&&archivedMs<=createdMs)
+  return{slot:n,source:'archived-before-trade',snapshotT:trade.trade_snapshot_t};
+ return{slot:null,source:'unavailable'};
+}
 function historicalPickProjectedSlot(side,p,trade){
  return historicalPickProjectionEvidence(side,p,trade).slot;
 }

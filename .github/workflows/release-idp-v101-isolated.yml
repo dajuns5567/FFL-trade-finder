@@ -25,6 +25,9 @@ permissions:
   contents: read
 jobs:
   idp-only:
+    # The IDP-only diff gate applies to its own release PR, not unrelated
+    # downstream stages that inherit the same code without modifying IDP.
+    if: github.base_ref == 'release/offense-consensus-v50-isolated-draft'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:

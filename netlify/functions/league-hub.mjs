@@ -173,7 +173,7 @@ async function regularWeekAppliedToRosterRecords(week,rows){
  for(const p of prior)tally(p);tally(rows);
  return{applied:rows.every(m=>{const r=rosters.find(x=>String(x.roster_id)===String(m.roster_id)),x=record[String(m.roster_id)];return r&&x&&Number(r?.settings?.wins||0)>=x.wins&&Number(r?.settings?.losses||0)>=x.losses}),rosters,prior};
 }
-async function completedPublicationWeek(week){
+export async function completedPublicationWeek(week){
  const rows=await fetchJson(`${API}/league/${LEAGUE}/matchups/${week}`).catch(()=>[]);
  if(!matchupComplete(rows))return{complete:false,rows,reason:'player scoring is not complete'};
  if(Number(week)<INQUIRER_PLAYOFF_START_WEEK){

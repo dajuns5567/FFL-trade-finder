@@ -1,0 +1,22 @@
+name: Verify immutable recovered Inquirer archive
+on:
+  push:
+    branches: [inquirer-archive]
+    paths:
+      - 'inquirer-archive/**'
+      - 'scripts/verify-inquirer-immutable-archive.mjs'
+      - '.github/workflows/inquirer-immutable-archive-integrity.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  archive-integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify original checksums, independent records, and Week 10 editorial hold
+        run: node scripts/verify-inquirer-immutable-archive.mjs

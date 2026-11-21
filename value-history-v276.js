@@ -960,7 +960,7 @@ function searchTradesOnSiteOpen(){
 function refreshVisibleTradeHistory(){
   const panel=document.getElementById('tradeHistory');
   const visibleHistory=!!panel&&panel.offsetParent!==null&&!document.hidden;
-  const visibleTeam=currentView==='team'&&!!trackedTeamId&&!document.hidden;
+  const visibleTeam=currentView==='team'&&!!trackedTeamId&&!document.hidden&&document.getElementById('vhTrackedTeam')?.offsetParent!==null;
   if((!visibleHistory&&!visibleTeam)||Date.now()-tradeHistoryCacheAt<TRADE_HISTORY_REFRESH_MS)return;
   tradeHistoryFetch().then(()=>{
     if(visibleHistory)renderTradeHistory();
@@ -2405,7 +2405,7 @@ function renderPlayerProfile(id,allPts,period='ALL'){
 // snapshots on focus and at the existing five-minute read-only refresh cadence.
 // Do not manufacture market deltas; API still enforces same-era comparisons.
 function refreshVisibleMarketHistoryV112(){
- if(document.hidden||Date.now()-marketHistoryCacheUpdatedAtV112<TRADE_HISTORY_REFRESH_MS)return;
+ if(document.hidden||document.getElementById('vhContent')?.offsetParent===null||Date.now()-marketHistoryCacheUpdatedAtV112<TRADE_HISTORY_REFRESH_MS)return;
  if(currentView==='market')loadMarket(true).catch(e=>console.warn('market-history-live-refresh-unavailable',String(e?.message||e)));
  else if(currentView==='fullMarket')loadFullMarketHistory(true).catch(e=>console.warn('full-market-history-live-refresh-unavailable',String(e?.message||e)));
 }

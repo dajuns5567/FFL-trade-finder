@@ -8,7 +8,7 @@ import {resolveInquirerQueueCredential} from './lib/inquirer-queue-credential.mj
 import {originalInquirerRestoreGate,resolvedInquirerOwnerAuthorization,ORIGINAL_INQUIRER_RESTORE_SITE_ID,ORIGINAL_INQUIRER_RESTORE_MARKER} from './lib/inquirer-archive-restore-runtime.mjs';
 // Queue a long-running background job. Netlify scheduled functions have a
 // hard 30-second limit, while the full Inquirer edition takes longer.
-export default async function inquirerPublishScheduled(req){
+export default async function inquirerPublishScheduled(req,netlifyContext){
  const skip=reason=>{console.info('inquirer-schedule-not-queued',{reason});return new Response(JSON.stringify({queued:false,reason}),{
   headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}
  });};
@@ -17,7 +17,8 @@ export default async function inquirerPublishScheduled(req){
  const site=process.env.SITE_NAME||globalThis.Netlify?.env?.get?.('SITE_NAME')||'';
  const siteId=process.env.SITE_ID||globalThis.Netlify?.env?.get?.('SITE_ID')||'';
  const host=new URL(req.url).hostname,context=globalThis.Netlify?.env?.get?.('CONTEXT')||process.env.CONTEXT||'';
- if(context==='deploy-preview'||context==='branch-deploy'||host.startsWith('deploy-preview-')||host.includes('--'))return skip('Non-production deployment');
+ const runtimeContext=netlifyContext?.deploy?.context||context;
+ if(runtimeContext==='deploy-preview'||runtimeContext==='branch-deploy'||host.startsWith('deploy-preview-')||host.includes('--'))return skip('Non-production deployment');
  const isCurrentSite=site==='precious-dango-fb4633'||
   siteId==='fa33dfe4-8293-441e-8da0-25cc66fc984c'||host==='precious-dango-fb4633.netlify.app';
  const isNewestSite=isCurrentSite||site==='animated-dasik-3de74a'||
@@ -27,7 +28,7 @@ export default async function inquirerPublishScheduled(req){
  const isReplacement=isNewestSite||site==='transcendent-manatee-2f0123'||
   siteId==='8776d155-bc7b-4dcd-bafc-3d70d3d51800'||host==='transcendent-manatee-2f0123.netlify.app';
  const ownerAuthorization=resolvedInquirerOwnerAuthorization({
-  siteId,context,host,
+  siteId,context:runtimeContext,host,
   configuredEnabled:globalThis.Netlify?.env?.get?.('FLEECED_ENABLE_NEW_SITE_PUBLISHER')||
    process.env.FLEECED_ENABLE_NEW_SITE_PUBLISHER||'',
   configuredApproved:globalThis.Netlify?.env?.get?.('FLEECED_INQUIRER_ARCHIVE_RESTORE_APPROVED')||
@@ -47,7 +48,7 @@ export default async function inquirerPublishScheduled(req){
  if(siteId===ORIGINAL_INQUIRER_RESTORE_SITE_ID){
   const restoreFlag=ownerAuthorization.approved;
   const gate=originalInquirerRestoreGate({
-   siteId,context,host,enabled:publishingEnabled,approved:restoreFlag
+   siteId,context:runtimeContext,host,enabled:publishingEnabled,approved:restoreFlag
   });
   if(!gate.allowed)return skip('Original publisher cutover held: '+gate.reason);
   try{
@@ -177,7 +178,7 @@ export default async function inquirerPublishScheduled(req){
   // One-time, user-authorized exact-copy Week 5 sign-off.
   // Do not create new drafts or overwrite approved/published records. This only
   // applies to the already-reviewed pre-signoff staging snapshot, before expiry.
-  if(isReplacement&&context!=='deploy-preview'&&context!=='branch-deploy'&&
+  if(isReplacement&&runtimeContext!=='deploy-preview'&&runtimeContext!=='branch-deploy'&&
      status.state==='editorial-hold'&&Number(status.season)===2026&&Number(status.week)===5){
    const suffix='2026/week-05.json';
    const [stage,existingApproval,published]=await Promise.all([

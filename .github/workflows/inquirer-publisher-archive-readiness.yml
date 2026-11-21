@@ -6,6 +6,7 @@ on:
     paths:
       - 'netlify/functions/lib/inquirer-github-archive.mjs'
       - 'netlify/functions/lib/inquirer-publisher-archive-readiness.mjs'
+      - 'netlify/functions/inquirer-publication-status.mjs'
       - 'tests/inquirer-github-archive-reader.test.mjs'
       - 'tests/inquirer-publisher-archive-readiness.test.mjs'
       - '.github/workflows/inquirer-publisher-archive-readiness.yml'

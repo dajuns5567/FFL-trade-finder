@@ -10,6 +10,7 @@ permissions:
   contents: read
 jobs:
   market-provenance:
+    if: github.base_ref == 'fix/v109-market-movers-live-stale-cleanup'
     runs-on: ubuntu-24.04
     timeout-minutes: 12
     steps:

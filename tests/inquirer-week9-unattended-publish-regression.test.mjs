@@ -26,7 +26,7 @@ const nineGrams=text=>{
  return out;
 };
 test('Week 9 held cross-team scaffold is eliminated at its generation source',()=>{
- assert.equal(FORWARD_EDITORIAL_REVISION,109);
+ assert.equal(FORWARD_EDITORIAL_REVISION,110);
  assert.doesNotMatch(source,/The bench advantage deserves a Week 6 review/);
  assert.doesNotMatch(source,/Those unused points will be much louder at the next lineup meeting/);
  assert.doesNotMatch(source,/A losing week is a rough time to discover the bench had a better answer/);

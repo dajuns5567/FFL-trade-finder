@@ -917,7 +917,7 @@ async function tradeHistoryFetch({force=false}={}){
   // If a weaker background fetch already started, a forced site-opening
   // check runs immediately AFTER it rather than silently reusing it.
   if(tradeHistoryPending){
-    if(force&&!tradeHistoryPendingForced)return tradeHistoryPending.then(()=>tradeHistoryFetch({force:true}));
+    if(force&&!tradeHistoryPendingForced)return tradeHistoryPending.then(()=>tradeHistoryFetch({force:true}),()=>tradeHistoryFetch({force:true}));
     return tradeHistoryPending;
   }
   if(!force&&tradeHistoryCache&&Date.now()-tradeHistoryCacheAt<TRADE_HISTORY_REFRESH_MS)

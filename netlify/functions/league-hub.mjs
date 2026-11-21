@@ -600,7 +600,7 @@ export async function weeklyReport(req){
   // before selecting a candidate and search a larger deterministic salt space.
   // Preview and publication must execute the identical candidate search.
   // Otherwise a passing preview can conceal a different final manuscript.
-  for(const salt of [5,0,1,2,3,4]){
+  for(const salt of [5,0,1,2,3,4,6,7]){
    const drafted=applyInquirerEditorialV31({season,week,rawInquirer,rawOverview,previousEdition:previousBroadcast,previousEditions:historicalEditorialMemory,weekClassification,variationSalt:salt});
    const candidate={season,week,teams:drafted.inquirer.teams,league_overview:drafted.leagueOverview};
    const q=evaluateInquirerEditionQuality(candidate,previousBroadcast);

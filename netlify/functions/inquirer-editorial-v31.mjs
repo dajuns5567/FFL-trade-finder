@@ -6699,15 +6699,16 @@ export function evaluateInquirerEditionQuality(current,previous=null){
     // The short repeated sentence can trigger several overlapping phrase
   // detectors. Waive only signatures belonging to that same verified sentence;
   // every unrelated issue (and every publication/structural gate) stays fatal.
+  const minorSentences=minorRepetition.tolerated?
+    (minorRepetition.sentences||[minorRepetition.sentence]):[];
   const minorPhraseSets=minorRepetition.tolerated?{
-    reporter:new Set(forwardEditorialPhraseKeys(minorRepetition.sentence,entities)),
-    clause:new Set(forwardEditorialPhraseKeys(minorRepetition.sentence,entities,12,false)),
-    paired:new Set(forwardEditorialPhraseKeys(minorRepetition.sentence,entities,16,false))
+    reporter:new Set(minorSentences.flatMap(sentence=>forwardEditorialPhraseKeys(sentence,entities))),
+    clause:new Set(minorSentences.flatMap(sentence=>forwardEditorialPhraseKeys(sentence,entities,12,false))),
+    paired:new Set(minorSentences.flatMap(sentence=>forwardEditorialPhraseKeys(sentence,entities,16,false)))
   }:null;
-  const minorSentenceNorm=minorRepetition.tolerated?
-    forwardNormSentence(minorRepetition.sentence,entities):null;
+  const minorSentenceNorms=new Set(minorSentences.map(sentence=>forwardNormSentence(sentence,entities)));
   const blockingIssues=minorPhraseSets?issues.filter(issue=>{
-    if(issue.id==='cross-team-copy-scaffold'&&issue.sentence===minorSentenceNorm)return false;
+    if(issue.id==='cross-team-copy-scaffold'&&minorSentenceNorms.has(issue.sentence))return false;
     if(issue.id==='cross-reporter-phrase-scaffold'&&minorPhraseSets.reporter.has(issue.phrase))return false;
     if(issue.id==='cross-team-clause-scaffold'&&minorPhraseSets.clause.has(issue.phrase))return false;
     if(issue.id==='paired-editorial-clause-scaffold'&&minorPhraseSets.paired.has(issue.phrase))return false;

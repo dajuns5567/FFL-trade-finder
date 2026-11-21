@@ -2,7 +2,7 @@
 // and awards against the active site's existing Blob state WITHOUT ANY WRITES.
 // This is diagnostic evidence, never authorization to publish or restore copy.
 import {isDeepStrictEqual} from 'node:util';
-import {recoveredInquirerCatalog,recoveredInquirerEdition} from './inquirer-github-archive.mjs';
+import {recoveredInquirerCatalog,recoveredInquirerEdition,recoveredInquirerAwardEvidence} from './inquirer-github-archive.mjs';
 
 const archiveKey=week=>'broadcasts/2026/week-'+String(week).padStart(2,'0')+'.json';
 const weekOf=row=>Number(row?.season)===2026?Number(row?.week):null;
@@ -16,13 +16,13 @@ const completeAwards=record=>!!record?.players_of_week?.offense?.player_id&&
 // A verified source may identify missing destination records, but MUST NEVER
 // permit a conflicting local publication or bypass a different editorial hold.
 export async function inspectPublisherArchiveReadiness({
- store,sourceAwards,fetchImpl=fetch,throughWeek=9
+ store,fetchImpl=fetch,throughWeek=9
 }={}){
  if(!store||typeof store.get!=='function')throw Error('Read-only Blob store required');
- if(!Array.isArray(sourceAwards?.records))throw Error('Original award evidence required');
+
  if(!Number.isInteger(throughWeek)||throughWeek<3||throughWeek>9)
   throw Error('Publisher source audit only supports originally verified Weeks 3-9');
- const catalog=await recoveredInquirerCatalog(fetchImpl);
+ const [catalog,sourceAwards]=await Promise.all([recoveredInquirerCatalog(fetchImpl),recoveredInquirerAwardEvidence(fetchImpl)]);
  const rows=catalog.rows.filter(x=>x.week<=throughWeek);
  const [localIndex,localAwards,localStatus]=await Promise.all([
   store.get('broadcasts/index.json',{type:'json'}),

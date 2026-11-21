@@ -156,7 +156,7 @@ function readablePublishedInquirer(e,row){return e?.available===true&&e?.publish
 async function verifiedPublishedInquirer(rows,{preserveSelection=false}={}){
  const entries=(Array.isArray(rows)?rows:[]).filter(x=>Number(x?.season)>0&&Number(x?.week)>0).slice().sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week));
  if(!entries.length)return{available:false,reason:'No published Inquirer edition is available yet.'};
- for(const row of entries.slice(0,12)){try{
+ for(const row of entries){try{
   const r=await fetch('/.netlify/functions/league-hub?broadcast_season='+Number(row.season)+'&broadcast_week='+Number(row.week),{cache:'no-store'});
   if(!r.ok)continue;const edition=await r.json();if(!readablePublishedInquirer(edition,row))continue;
   latestVerifiedPublishedRow={season:Number(edition.season),week:Number(edition.week)};

@@ -88,3 +88,15 @@ test('compositional writing covers Week 1 in subsequent seasons without rewritin
  reinforceForwardReporterVoice(preserved,5,0,[],2026);
  assert.equal(JSON.stringify(preserved),before);
 });
+
+
+test('recap grammar inflects verbs for plural and singular subjects across many compositions',()=>{
+ const teams=Array.from({length:32},(_,i)=>team(i));
+ for(let week=1;week<=18;week++)for(let salt=0;salt<16;salt++){
+  const overview=recap();
+  rotateForwardRecapOpening(overview,teams,week,salt,[],2027);
+  const text=overview.sections[0].blocks[0].paragraphs[0];
+  assert.doesNotMatch(text,/\b(?:finalized fantasy scores|scorekeeper’s notes|week’s finished numbers|final fantasy totals)\s+(?:records|sets|opens|leads|puts|documents|frames|features|prints|makes|presents|files|places)\b/i);
+  assert.doesNotMatch(text,/\b(?:completed-week ledger|Sunday archive|league scoreboard|matchup record|scoring summary|full-league account|morning-after accounting|finished score sheet)\s+(?:record|set out|open with|lead with|put forward|document|frame|feature|print|make room|present|file|place on)\b/i);
+ }
+});

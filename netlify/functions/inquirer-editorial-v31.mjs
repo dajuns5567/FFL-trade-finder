@@ -701,8 +701,13 @@ export function polishForwardTeamCopy(teams,week,salt){
  * real matchup; old published issues remain byte-for-byte immutable. */
 export function reinforceForwardReporterVoice(teams,week,salt=0,history=[]){
  if(Number(week)<10)return teams;
- const prior=new Set(history.filter(Boolean).flatMap(issue=>(issue.teams||[])
-  .flatMap(t=>forwardArticleSentences(t).map(line=>forwardNormSentence(line,forwardEntities(issue)))));
+ const prior=new Set();
+ for(const issue of history.filter(Boolean)){
+  const entities=forwardEntities(issue);
+  for(const oldTeam of issue.teams||[])
+   for(const sentence of forwardArticleSentences(oldTeam))
+    prior.add(forwardNormSentence(sentence,entities));
+ }
  const used=new Set();
  const tones={
   'walter-mercer':[

@@ -34,11 +34,11 @@ const frames=[
  p=>p.club+' '+p.teamVerb+' '+p.points+' against '+p.foe+', while '+p.player+' registered '+p.low+'. In '+p.setting+', that is '+p.reference+'; '+p.irony+'.',
  p=>p.player+' '+p.playerVerb+' '+p.low+' for '+p.club+' in the '+p.foe+' matchup. The '+p.points+'-point team total makes it '+p.reference+'; '+p.irony+'.',
  p=>p.setting[0].toUpperCase()+p.setting.slice(1)+' begins with '+p.club+' at '+p.points+' against '+p.foe+'. '+p.player+' at '+p.low+' is '+p.reference+'; '+p.irony+'.',
- p=>'Against '+p.foe+', '+p.club+' '+p.verb+' '+p.points+'. '+p.player+' supplied '+p.low+', '+p.reference+' that '+p.setting+' cannot misplace; '+p.irony+'.',
+ p=>'Against '+p.foe+', '+p.club+' '+p.teamVerb+' '+p.points+'. '+p.player+' supplied '+p.low+', '+p.reference+' that '+p.setting+' cannot misplace; '+p.irony+'.',
  p=>'Put '+p.player+' at '+p.low+' beside '+p.club+' at '+p.points+' in '+p.setting+'. The '+p.foe+' matchup supplies the context; '+p.irony+'.',
- p=>'For '+p.club+', '+p.player+' '+p.verb+' '+p.low+' while the team ended at '+p.points+' versus '+p.foe+'. That is '+p.reference+' in '+p.setting+'; '+p.irony+'.',
+ p=>'For '+p.club+', '+p.player+' '+p.playerVerb+' '+p.low+' while the team ended at '+p.points+' versus '+p.foe+'. That is '+p.reference+' in '+p.setting+'; '+p.irony+'.',
  p=>p.club+' finished at '+p.points+' against '+p.foe+'. '+p.player+' at '+p.low+' is '+p.reference+' in '+p.setting+'; '+p.irony+'.',
- p=>p.club+' faced '+p.foe+' and '+p.verb+' '+p.points+', with '+p.player+' at '+p.low+'. '+p.setting[0].toUpperCase()+p.setting.slice(1)+' takes note; '+p.irony+'.'
+ p=>p.club+' faced '+p.foe+' and '+p.teamVerb+' '+p.points+', with '+p.player+' at '+p.low+'. '+p.setting[0].toUpperCase()+p.setting.slice(1)+' takes note; '+p.irony+'.'
 ];
 const previousLines=history=>history.filter(Boolean).flatMap(e=>[
  ...(e.teams||[]).flatMap(t=>t.inquirer_article?.paragraphs||[]),

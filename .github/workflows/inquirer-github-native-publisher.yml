@@ -36,6 +36,7 @@ jobs:
       - name: Run GitHub-native publisher and existing editorial integrity regression tests
         run: |
           node --test tests/inquirer-github-native-publisher.test.mjs
+          node --test tests/inquirer-github-public-readback.test.mjs
           node --test tests/inquirer-github-archive-reader.test.mjs tests/inquirer-week9-unattended-publish-regression.test.mjs
       - name: Checkout immutable approved editions for editorial regression
         if: github.event_name == 'push'

@@ -10,7 +10,7 @@ const score=(row,settings)=>Number(((Number(row.pass_yd||0)*Number(settings.pass
  (Number(row.idp_tkl||0)*Number(settings.idp_tkl||0))).toFixed(2));
 const request=(playerId,extras={})=>({
  playerId,season:2026,week:10,currentSeason:2026,currentCompletedWeek:10,
- canonical:null,payload:stats,players,scoring,score,...extras
+ canonical:null,payload:stats,players,scoring,score,verifiedCompletedWeek:10,...extras
 });
 
 test('current-season completed Week 10 automatically awards offense and IDP even without cached League Hub awards',()=>{
@@ -21,6 +21,17 @@ test('current-season completed Week 10 automatically awards offense and IDP even
  assert.deepEqual(defense.map(x=>[x.type,x.season,x.week,x.points]),
   [['defensive-player-of-week',2026,10,12]]);
  assert.deepEqual(playerWeeklyMilestoneAwards(request('QB1')),[]);
+});
+
+test('no fallback badge is awarded when the independent completed-league feed has not verified the week',()=>{
+ for(const verifiedCompletedWeek of [null,0,9]){
+  assert.deepEqual(playerWeeklyMilestoneAwards(request('QB2',{verifiedCompletedWeek})),[]);
+  assert.deepEqual(playerWeeklyMilestoneAwards(request('EDGE1',{verifiedCompletedWeek})),[]);
+ }
+ // An authoritative, separately validated League Hub award remains readable
+ // even during a transient independent feed outage.
+ const canonical={players_of_week:{offense:{player_id:'QB2',points:12}}};
+ assert.equal(playerWeeklyMilestoneAwards(request('QB2',{verifiedCompletedWeek:0,canonical})).length,1);
 });
 
 test('a verified League Hub weekly winner overrides a competing reconstructed winner',()=>{
@@ -53,6 +64,7 @@ test('the live milestones endpoint uses the same completed-week fallback for cur
  const source=readFileSync(new URL('../netlify/functions/value-history.mjs',import.meta.url),'utf8');
  assert.match(source,/playerWeeklyMilestoneAwards\(\{/);
  assert.match(source,/currentCompletedWeek,/);
+ assert.match(source,/verifiedCompletedWeek:year<currentSeason\?18:Math.min\(currentCompletedWeek,verifiedCurrentWeek\)/);
  assert.doesNotMatch(source,/else if\(Number\(year\)<currentSeason\)/);
  assert.match(source,/weeklyAwardSource:'Fleeced locked completed-week awards/);
 });
@@ -63,7 +75,9 @@ test('browser refreshes cached awards after league weekly update and loads the n
  assert.match(ui,/playerScoringCacheAt=new Map\(\)/);
  assert.match(ui,/Date\.now\(\)-\(playerScoringCacheAt\.get\(key\)\|\|0\)<60000/);
  assert.match(ui,/loadPlayerScoring\(key\);/);
- assert.match(site,/value-history-v276\.js\?v=542/);
+ assert.match(ui,/setInterval\(refreshVisiblePlayerWeeklyBadges,PLAYER_WEEKLY_BADGE_REFRESH_MS\)/);
+ assert.match(ui,/window\.addEventListener\('focus',refreshVisiblePlayerWeeklyBadges\)/);
+ assert.match(site,/value-history-v276\.js\?v=545/);
 });
 
 test('the latest League Hub weekly Player of the Week badge is visible even if stat archive sync lags',()=>{
@@ -92,5 +106,5 @@ test('current season award sync is required on both backend and browser',()=>{
  assert.match(backend,/currentCompletedWeek,/);
  assert.doesNotMatch(backend,/else if\(Number\(year\)<currentSeason\)/);
  assert.match(browser,/playerScoringCacheAt/);
- assert.match(loader,/value-history-v276\.js\?v=542/);
+ assert.match(loader,/value-history-v276\.js\?v=545/);
 });

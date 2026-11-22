@@ -1120,6 +1120,18 @@ async function canonicalWeeklyAwards(origin){
     return Array.isArray(payload?.records)?payload.records:[];
   }catch{return[]}
 }
+// Current-season award fallback is permitted only through the independently
+// finalized Sleeper league week. An NFL week number alone is not finalization.
+async function verifiedCompletedLeagueWeek(origin,season){
+ try{
+  const base=String(origin||'').replace(/\/$/,'');if(!base)return 0;
+  const response=await fetch(`${base}/.netlify/functions/league-hub?league_latest=1`,{headers:{accept:'application/json'},cache:'no-store'});
+  if(!response.ok)return 0;
+  const data=await response.json();
+  return data?.available===true&&Number(data.season)===Number(season)&&Array.isArray(data.teams)&&data.teams.length===32
+   ?Math.max(0,Number(data.week)||0):0;
+ }catch{return 0}
+}
 async function scoringMilestones(playerId){
   const origin=String(arguments[1]||''),cacheKey=String(playerId),cachedMilestone=playerMilestoneCache.get(cacheKey),now=Date.now();
   if(cachedMilestone&&now-cachedMilestone.t<300000)return cachedMilestone.value;
@@ -1130,6 +1142,7 @@ async function scoringMilestones(playerId){
       canonicalWeeklyAwards(origin),
       scoringJson(`${SCORING_API}/state/nfl`).catch(()=>({}))
     ]),currentSeason=Number(league?.season),currentCompletedWeek=Math.max(0,Math.min(18,(Number(nflState?.week)||1)-1)),scoring=league?.scoring_settings||{};
+    const verifiedCompletedWeek=Math.min(currentCompletedWeek,await verifiedCompletedLeagueWeek(origin,currentSeason));
     if(!currentSeason||!Object.keys(scoring).length)return null;
     const years=[currentSeason,currentSeason-1,currentSeason-2,currentSeason-3],weeklyByYear={},canonicalByKey=new Map((canonicalRecords||[]).filter(r=>r?.players_of_week).map(r=>[Number(r.season)+'|'+Number(r.week),r]));
     await Promise.all(years.map(async y=>weeklyByYear[y]=await scoringSeasonWeeks(y,currentSeason,currentCompletedWeek)));
@@ -1145,7 +1158,7 @@ async function scoringMilestones(playerId){
             const leader=canonical?.players_of_week?.[group];
             if(leader&&String(leader.player_id)===String(playerId))weeklyAwards.push({type:group==='offense'?'offensive-player-of-week':'defensive-player-of-week',title:group==='offense'?'Top Offensive Scorer':'Top Defensive Scorer',points:Number(Number(leader.points||0).toFixed(2)),season:year,week,week_started_at:nflWeekStartIso(year,week)});
           }
-        }else if(Number(year)<currentSeason){
+        }else if(Number(year)<currentSeason || (Number(year)===currentSeason && Number(week)<=verifiedCompletedWeek)){
           const leaders={offense:null,defense:null};
           for(const item of scoringPayloadRows(payload)){
             const group=weeklyAwardGroup(players?.[item.id]?.position),points=leagueScore(item.stats,scoring);

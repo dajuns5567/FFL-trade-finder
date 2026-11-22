@@ -35,3 +35,12 @@ test('one-subsystem-at-a-time releases are allowed, but future regressions are n
  candidate.set(f.file,candidate.get(f.file).replace('not-yet-released:'+f.id,f.markers[0]));
  assert.doesNotThrow(()=>verifyNoFeatureRollback(read(baseline),read(candidate)));
 });
+
+test('restored targeted Finder filtering and complementary assets cannot disappear after acceptance',()=>{
+ const candidate=new Map(all);
+ for(const feature of features.filter(x=>x.pr===585))
+  candidate.set(feature.file,candidate.get(feature.file).replace(feature.markers[0],'old-Finder-path'));
+ assert.throws(()=>verifyNoFeatureRollback(read(all),read(candidate)),/finder-targeted-bounded-filter-routing/);
+ const report=featureCoverage(read(candidate));
+ assert.equal(report.filter(x=>x.pr===585&&!x.present).length,2);
+});

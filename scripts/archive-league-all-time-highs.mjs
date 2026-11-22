@@ -35,7 +35,6 @@ export function nextDurableHighs(previous,observation){
  const existing=Array.isArray(previous?.records)?previous.records:[];
  const records=mergeAwardHighs(existing,input.observations,input.captured_at);
  if(records.length<existing.length)throw Error('AWARD_ARCHIVE_SHRINK_BLOCKED');
- const oldByKey=new Map(existing.map(x=>[x.award_key+'|'+x.roster_id,x]));
  for(const prior of existing){
   const key=prior.award_key+'|'+prior.roster_id,next=records.find(x=>x.award_key+'|'+x.roster_id===key);
   if(!next||Number(next.score)<Number(prior.score))
@@ -63,7 +62,7 @@ async function run(){
   if(!response.ok)throw Error('award archive GET '+response.status);
   const meta=await response.json();
   if(!meta?.content||meta.encoding!=='base64')throw Error('award archive unreadable');
-  return{sha:meta.sha,...JSON.parse(Buffer.from(meta.content.replace(/\\s/g,''),'base64').toString('utf8'))};
+  return{sha:meta.sha,...JSON.parse(Buffer.from(meta.content.replace(/\s/g,''),'base64').toString('utf8'))};
  };
  const before=await get();
  const next=nextDurableHighs(before,input);

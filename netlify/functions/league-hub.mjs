@@ -1,6 +1,6 @@
 import {inquirerMarketCutoff,editionAvailability} from './lib/inquirer-market-window.mjs';
 import {completedLeagueWeekView} from './lib/league-completed-week.mjs';
-import {selectHotSeat} from './lib/league-hot-seat.mjs';
+import {selectHotSeat,supplementCompletedHotSeat} from './lib/league-hot-seat.mjs';
 import {mergeAwardHighs} from './lib/league-all-time-highs.mjs';
 import valueHistoryHandler from './value-history.mjs';
 // Forward drafts must be reviewed as written; synthetic scoreboard sentence repair is retired.
@@ -791,26 +791,6 @@ function weeklyManagerAwards(broadcast){
 // finalized Sleeper feed never had projected scores. Augment only the newest
 // matching fully completed week in the response; don't rewrite locked
 // historical badges or pretend an unarchived fallback is already durable.
-export function supplementCompletedHotSeat(cache,completed){
- const records=Array.isArray(cache?.records)?cache.records:[];
- if(completed?.available!==true||!Array.isArray(completed.teams)||
-    completed.teams.length!==32||!records.length)return cache;
- const hot=selectHotSeat(completed.teams);
- if(!hot)return cache;
- const next=records.map(rec=>{
-  if(Number(rec.season)!==Number(completed.season)||
-     Number(rec.week)!==Number(completed.week)||
-     (rec.manager_awards||[]).some(a=>a.type==='hot-seat'))return rec;
-  const badge={type:'hot-seat',title:'🔥 Hot Seat',
-   roster_id:String(hot.roster_id),manager_user_id:String(hot.manager_user_id||''),
-   manager_name:String(hot.manager_name||''),team_name:String(hot.team_name||''),
-   points:Number(hot.points),detail:hot.hot_seat_detail,
-   provisional:true,source:'sleeper-finalized-matchups'};
-  return{...rec,manager_awards:[badge,...(rec.manager_awards||[])],
-   derived_hot_seat:true};
- });
- return{...cache,records:next};
-}
 async function displayWeeklyAwards(cache){
  const list=Array.isArray(cache?.records)?cache.records:[];
  if(!list.length)return cache;

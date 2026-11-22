@@ -17,7 +17,7 @@ test('each section separately blocks removal of a view, data reader, or refresh 
  for(const contract of SECTION_CONTRACTS){
   for(const marker of contract.markers){
    const edited=new Map(original);
-   edited.set(contract.file,edited.get(contract.file).replace(marker,'__REGRESSED_MISSING_FEATURE__'));
+   edited.set(contract.file,edited.get(contract.file).replaceAll(marker,'__REGRESSED_MISSING_FEATURE__'));
    assert.throws(()=>assertSectionReadiness(file=>edited.get(file)),
     /Site subsection source regression/,contract.area+' must reject missing '+marker);
   }

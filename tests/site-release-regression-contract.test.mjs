@@ -46,4 +46,7 @@ test('newspaper, Fleeced Daily, awards and milestone reader contracts stay disco
  assert.throws(()=>checkRuntimeContracts({...src,hub:src.hub.replace('league_latest=1','legacy_week=2')}),/independent completed-week/);
  assert.throws(()=>checkRuntimeContracts({...src,news:src.news.replaceAll('githubPublishedInquirerEdition','oldWeek2Reader')}),/Inquirer archive/);
  assert.throws(()=>checkRuntimeContracts({...src,toml:src.toml.replace('site-v29','site-v17')}),/canonical V29/);
+ assert.throws(()=>checkRuntimeContracts({...src,history:src.history.replace('tradeHistoryFetch({force:true})','tradeHistoryFetch({force:false})')}),/Trade History stopped/);
+ assert.throws(()=>checkRuntimeContracts({...src,history:src.history.replace('scheduleSnapshot(0,snapshotSourceFromUrl())','scheduleSnapshot(0,null)')}),/snapshot stopped/);
+ assert.throws(()=>checkRuntimeContracts({...src,history:src.history.replace('fll:canonical-values-ready','legacy-values-only')}),/Player Values stopped/);
 });

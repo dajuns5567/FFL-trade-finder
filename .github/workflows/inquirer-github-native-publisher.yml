@@ -56,6 +56,20 @@ jobs:
           assert.notStrictEqual(corrected,raw,'Original Week 9 must match the protected SHA-256 and receive the reader correction');
           assert.equal(corrected.reader_editorial_correction?.id,CORRECTION_ID);
           assert.equal(corrected.teams.length,32);
+          // Source-backed commentary in the approved Week 9 manuscript must
+          // survive the reader's team-attribution repair, not be replaced.
+          const preserved=[
+            ['Dallas Cowboys','cool-throne','average for Diggs was 12.5'],
+            ['Las Vegas Raiders','value','Drew Lock climbed 407'],
+            ['Baltimore Ravens','cool-throne','two-week number is 20.9']
+          ];
+          for(const [name,kind,phrase] of preserved){
+            const original=raw.teams.find(t=>t.team_name===name)?.inquirer_article?.sections?.find(s=>s.kind===kind);
+            const edited=corrected.teams.find(t=>t.team_name===name)?.inquirer_article?.sections?.find(s=>s.kind===kind);
+            assert(original?.paragraphs?.some(p=>p.toLowerCase().includes(phrase.toLowerCase())));
+            assert(edited?.paragraphs?.some(p=>p.toLowerCase().includes(phrase.toLowerCase())),
+              'Approved source reporting lost for '+name+' / '+kind);
+          }
           assert.deepEqual(corrected.league_overview.sections[0].blocks.map(b=>b.kind),INQUIRER_RECAP_BEATS);
           assert.deepEqual(inspectInquirerFormatContract(corrected),[]);
           const text=corrected.league_overview.sections.map(s=>s.paragraphs.join(' ')).join(' ');

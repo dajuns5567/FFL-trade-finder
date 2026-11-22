@@ -46,6 +46,7 @@ test('Hot Seat requires actual pregame projections and a genuine projected upset
  assert.match(section(good,'Hot Seat'),/Projected \+20\.0/);
  const unverified=render(baseManager,week({'1':{won:false,points:90,opponent_points:110,projected:null,opponent_projected:100,projection_coverage:0}}));
  assert.match(section(unverified,'Hot Seat'),/<b>n\/a<\/b>/);
+ assert.match(section(unverified,'Hot Seat'),/No verified projected upset for this completed week/);
  assert.doesNotMatch(section(unverified,'Hot Seat'),/Manager One/);
 });
 

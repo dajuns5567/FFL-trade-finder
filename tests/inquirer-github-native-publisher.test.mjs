@@ -24,6 +24,18 @@ test('GitHub publisher only accepts 16 completed paired Sleeper matchups',()=>{
  const missing=matchup();missing[0].points=null;
  assert.equal(completeMatchups(missing),false);
 });
+test('completed Sleeper standings rank winning rosters ahead of winless rosters',()=>{
+ const teams=buildSourceTeams({league:{roster_positions:['RB','BN']},week:10,
+  matchups:matchup(),history:[[10,matchup()]],nextMatchups:matchup(),rosters,users,players,
+  previousEdition:{teams:[]}});
+ const byId=new Map(teams.map(t=>[Number(t.roster_id),t]));
+ assert.equal(byId.get(32).league_context.standings_rank,1);
+ assert.equal(byId.get(1).league_context.standings_rank,32);
+ assert.deepEqual(byId.get(32).league_context.record,{wins:1,losses:0,ties:0});
+ assert.deepEqual(byId.get(32).league_context.streak,{type:'W',length:1});
+ assert.equal(byId.get(32).league_context.points_for,136);
+ assert.equal(new Set(teams.map(t=>t.league_context.standings_rank)).size,32);
+});
 test('GitHub source team data are sourced from named Sleeper fantasy managers',()=>{
  const teams=buildSourceTeams({league:{roster_positions:['RB','BN']},week:10,
   matchups:matchup(),history:[[10,matchup()]],nextMatchups:matchup(),rosters,users,players,

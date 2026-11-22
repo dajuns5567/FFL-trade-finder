@@ -41,7 +41,8 @@ test('real assembled V29 page contains restored Finder dependencies exactly once
   'Finder helper/engines must load after router and before compiled Finder');
  assert.equal(new Set(paths).size,paths.length,'duplicate JS imports may overwrite restored Finder logic');
  assert.ok(html.includes('id="findShop"'),'Trade Finder controls must be in rendered page');
- assert.ok(html.includes('id="desiredPlayerSearch"'),'specific-player acquisition input must remain');
+ assert.match(read('trade-specific-player-v232.js'),/desiredPlayerSearch/,
+  'specific-player acquisition control must be read by its installed runtime');
 });
 
 test('restored Finder preview retains canonical player-value, evaluator, market and League Hub readers',async()=>{

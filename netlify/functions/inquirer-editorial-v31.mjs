@@ -726,13 +726,13 @@ export function reinforceForwardReporterVoice(teams,week,salt=0,history=[]){
    (club,foe,weak,low,score)=>'The '+club+' look included '+weak+' with '+low+'. Somebody should tell the stylist that '+foe+' was keeping score, not taking requests.'
   ],
   'mack-hollis':[
-   (club,foe,weak,low,score)=>'+weak+' gave '+club+' '+low+' against '+foe+'. Call it a calculated risk if you want; the calculator has asked to be reassigned.',
-   (club,foe,weak,low,score)=>'+club+' finished at '+score+' while '+weak+' scraped together '+low+'. The excuse machine is going to need a larger fuel tank.',
+   (club,foe,weak,low,score)=>weak+' gave '+club+' '+low+' against '+foe+'. Call it a calculated risk if you want; the calculator has asked to be reassigned.',
+   (club,foe,weak,low,score)=>club+' finished at '+score+' while '+weak+' scraped together '+low+'. The excuse machine is going to need a larger fuel tank.',
    (club,foe,weak,low,score)=>'Somebody started '+weak+' for '+club+' and got '+low+'. '+foe+' deserves a thank-you card, not a scouting report.',
-   (club,foe,weak,low,score)=>'+weak+' managed '+low+' for '+club+'. That is not a secret tactical wrinkle. It is the wrinkle nobody bothered to iron.',
-   (club,foe,weak,low,score)=>'+club+' posted '+score+' versus '+foe+' with '+weak+' contributing '+low+'. Keep the motivational poster; fix the lineup.',
+   (club,foe,weak,low,score)=>weak+' managed '+low+' for '+club+'. That is not a secret tactical wrinkle. It is the wrinkle nobody bothered to iron.',
+   (club,foe,weak,low,score)=>club+' posted '+score+' versus '+foe+' with '+weak+' contributing '+low+'. Keep the motivational poster; fix the lineup.',
    (club,foe,weak,low,score)=>'At '+low+' from '+weak+', '+club+' made the '+foe+' matchup harder than the job description required.',
-   (club,foe,weak,low,score)=>'+weak+' put '+low+' on the '+club+' board. If that was the plan against '+foe+', the plan owes everybody an apology.',
+   (club,foe,weak,low,score)=>weak+' put '+low+' on the '+club+' board. If that was the plan against '+foe+', the plan owes everybody an apology.',
    (club,foe,weak,low,score)=>'The '+club+' manager will get questions about '+weak+' at '+low+'. The scoreboard has already conducted the interview.'
   ],
   'nora-voss':[
@@ -740,7 +740,7 @@ export function reinforceForwardReporterVoice(teams,week,salt=0,history=[]){
    (club,foe,weak,low,score)=>'The '+club+' gossip desk counted '+low+' from '+weak+'. '+foe+' has reportedly requested that this be called a strategy.',
    (club,foe,weak,low,score)=>'Everybody noticed '+weak+' at '+low+' for '+club+'. Nobody in the '+foe+' camp seems interested in keeping that secret.',
    (club,foe,weak,low,score)=>'Sources close to the '+club+' lineup confirm '+weak+' delivered '+low+'. The rest of the '+foe+' conversation is not fit for a family paper.',
-   (club,foe,weak,low,score)=>'+club+' brought '+score+' against '+foe+', and '+weak+' brought '+low+'. The group chat has already chosen its favorite screenshot.',
+   (club,foe,weak,low,score)=>club+' brought '+score+' against '+foe+', and '+weak+' brought '+low+'. The group chat has already chosen its favorite screenshot.',
    (club,foe,weak,low,score)=>'The '+club+' rumor mill has been circling '+weak+' and '+low+'. '+foe+' is trying very hard not to laugh in public.',
    (club,foe,weak,low,score)=>'A '+low+' from '+weak+' gave '+club+' a headline nobody wanted. '+foe+' sent flowers and a very sarcastic note.',
    (club,foe,weak,low,score)=>'The '+club+' starting-card scandal is '+weak+' at '+low+'. Some manager will call it nuance; '+foe+' will call it evidence.'

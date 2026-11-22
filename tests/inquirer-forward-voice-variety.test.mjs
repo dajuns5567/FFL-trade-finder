@@ -34,6 +34,27 @@ test('reporter labels cannot impose distinct tonal treatment on the same verifie
  assert.match(lines[0],/New Orleans Aints/);
 });
 
+test('Sleeper-native score/combined-won history drives two-week streaks without result strings',async()=>{
+ const {verifiedTwoWeekForm}=await import('../netlify/functions/lib/inquirer-verified-two-week-form.mjs');
+ const rows=Array.from({length:32},(_,i)=>({
+  roster_id:String(i+1),team_name:'Club '+(i+1),
+  league_context:{recent_games:[
+   {week:9,points:i<4?110:80,opponent_points:i<4?90:100,won:i<4},
+   {week:10,points:i<4?115:75,opponent_points:i<4?95:100,won:i<4}
+  ]}
+ }));
+ const form=verifiedTwoWeekForm(rows,10);
+ assert.equal(form.complete,true);
+ assert.deepEqual(form.winners.map(t=>t.roster_id),['1','2','3','4']);
+ assert.equal(form.losers.length,28);
+ const missing=structuredClone(rows);
+ missing[2].league_context.recent_games=[missing[2].league_context.recent_games[1]];
+ assert.equal(verifiedTwoWeekForm(missing,10).complete,false);
+ const contradicted=structuredClone(rows);
+ contradicted[0].league_context.recent_games[0].result='L';
+ assert.equal(verifiedTwoWeekForm(contradicted,10).complete,false);
+});
+
 test('recap rotations look past the immediate previous edition and retain feature mirrors',()=>{
  const t=team(2),issue=recap();
  rotateForwardRecapOpening(issue,[t],11,0,[]);

@@ -37,17 +37,38 @@ jobs:
         run: |
           node --test tests/inquirer-github-native-publisher.test.mjs
           node --test tests/inquirer-github-archive-reader.test.mjs tests/inquirer-week9-unattended-publish-regression.test.mjs
-      - name: Checkout historical GitHub archive for production-equivalent dry-run
-        if: github.event_name == 'push'
+      # Preview uses a separate Git branch; it never mutates the original
+      # archive or the production forward index.
+      - name: Checkout isolated PR 574 publication archive
+        if: github.event_name == 'push' && github.ref == 'refs/heads/fix/inquirer-github-native-publication-20261121'
         uses: actions/checkout@v4
         with:
-          ref: inquirer-archive
+          ref: inquirer-preview-574
           path: history
-      - name: Actually generate Week 10+ from Sleeper and verify editorial admission without publishing
-        if: github.event_name == 'push'
+          persist-credentials: true
+      - name: Generate a completed issue with real Sleeper and historical values
+        if: github.event_name == 'push' && github.ref == 'refs/heads/fix/inquirer-github-native-publication-20261121'
         env:
           INQUIRER_GITHUB_ARCHIVE_ROOT: history/inquirer-archive
         run: node scripts/publish-inquirer-github-native.mjs
+      - name: Publish accepted issue to preview-only GitHub archive
+        if: github.event_name == 'push' && github.ref == 'refs/heads/fix/inquirer-github-native-publication-20261121'
+        working-directory: history
+        run: |
+          set -euo pipefail
+          if [ ! -d inquirer-archive/forward ]; then
+            echo 'No accepted completed week; nothing can be published'
+            exit 0
+          fi
+          git add inquirer-archive/forward/
+          if git diff --cached --quiet; then
+            echo 'No new issue: preview archive is already current'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Preview-only: verified weekly Inquirer publication'
+          git push origin HEAD:inquirer-preview-574
   publish:
     needs: verify
     if: github.ref == 'refs/heads/main' && github.event_name != 'push'

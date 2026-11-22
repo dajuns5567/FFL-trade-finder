@@ -1,0 +1,204 @@
+name: GitHub-native Fleeced Inquirer publisher
+
+on:
+  push:
+    branches:
+      - fix/inquirer-github-native-publication-20261121
+  schedule:
+    - cron: '19,49 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  # A superseding code revision cancels only stale preview verification.
+  # Live scheduled/archive publication is never cancelled halfway through.
+  group: ${{ github.event_name == 'push' && 'inquirer-github-native-validation' || 'inquirer-github-native-publication' }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Use established project dependency install
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+      - name: Verify actual publisher modules compile
+        run: |
+          node --check scripts/publish-inquirer-github-native.mjs
+          node --check netlify/functions/lib/inquirer-github-published.mjs
+          node --check netlify/functions/league-hub.mjs
+      - name: Run GitHub-native publisher and existing editorial integrity regression tests
+        run: |
+          node --test tests/inquirer-github-native-publisher.test.mjs
+          node --test tests/inquirer-github-archive-reader.test.mjs tests/inquirer-week9-unattended-publish-regression.test.mjs
+      - name: Checkout immutable approved editions for editorial regression
+        if: github.event_name == 'push'
+        uses: actions/checkout@v4
+        with:
+          ref: inquirer-archive
+          path: editorial-history
+      - name: Check Week 9 correction against its SHA-256-locked original
+        if: github.event_name == 'push'
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs/promises';
+          import {correctWeekNineReaderEdition,CORRECTION_ID} from './netlify/functions/lib/inquirer-week09-editorial-correction.mjs';
+          import {inspectInquirerFormatContract,INQUIRER_RECAP_BEATS} from './netlify/functions/inquirer-format-contract.mjs';
+          const raw=JSON.parse(await fs.readFile('editorial-history/inquirer-archive/2026/week-09.json','utf8'));
+          const corrected=correctWeekNineReaderEdition(raw);
+          assert.notStrictEqual(corrected,raw,'Original Week 9 must match the protected SHA-256 and receive the reader correction');
+          assert.equal(corrected.reader_editorial_correction?.id,CORRECTION_ID);
+          assert.equal(corrected.teams.length,32);
+          // Source-backed commentary in the approved Week 9 manuscript must
+          // survive the reader's team-attribution repair, not be replaced.
+          const preserved=[
+            ['Dallas Cowboys','cool-throne','average for Diggs was 12.5'],
+            ['Las Vegas Raiders','value','Drew Lock climbed 407'],
+            ['Baltimore Ravens','cool-throne','two-week number is 20.9']
+          ];
+          for(const [name,kind,phrase] of preserved){
+            const original=raw.teams.find(t=>t.team_name===name)?.inquirer_article?.sections?.find(s=>s.kind===kind);
+            const edited=corrected.teams.find(t=>t.team_name===name)?.inquirer_article?.sections?.find(s=>s.kind===kind);
+            assert(original?.paragraphs?.some(p=>p.toLowerCase().includes(phrase.toLowerCase())));
+            assert(edited?.paragraphs?.some(p=>p.toLowerCase().includes(phrase.toLowerCase())),
+              'Approved source reporting lost for '+name+' / '+kind);
+          }
+          assert.deepEqual(corrected.league_overview.sections[0].blocks.map(b=>b.kind),INQUIRER_RECAP_BEATS);
+          assert.deepEqual(inspectInquirerFormatContract(corrected),[]);
+          const text=corrected.league_overview.sections.map(s=>s.paragraphs.join(' ')).join(' ');
+          assert.doesNotMatch(text,/not a result between NFL franchises|not the NFL standings|not interchangeable NFL-team prose/);
+          console.log('inquirer-week09-locked-style',JSON.stringify({week:9,teams:corrected.teams.length,beats:INQUIRER_RECAP_BEATS.length}));
+          NODE
+      - name: Regenerate Week 10 from clean history to catch editorial drift
+        if: github.event_name == 'push'
+        env:
+          INQUIRER_GITHUB_ARCHIVE_ROOT: editorial-history/inquirer-archive
+        run: node scripts/publish-inquirer-github-native.mjs
+      # Preview uses a separate Git branch; it never mutates the original
+      # archive or the production forward index.
+      - name: Checkout isolated PR 574 publication archive
+        if: github.event_name == 'push' && github.ref == 'refs/heads/fix/inquirer-github-native-publication-20261121'
+        uses: actions/checkout@v4
+        with:
+          ref: inquirer-preview-574-r3
+          path: history
+          persist-credentials: true
+      - name: Generate a completed issue with real Sleeper and historical values
+        if: github.event_name == 'push' && github.ref == 'refs/heads/fix/inquirer-github-native-publication-20261121'
+        env:
+          INQUIRER_GITHUB_ARCHIVE_ROOT: history/inquirer-archive
+        run: node scripts/publish-inquirer-github-native.mjs
+      - name: Verify preview issue through the exact public GitHub reader
+        if: github.event_name == 'push' && github.ref == 'refs/heads/fix/inquirer-github-native-publication-20261121'
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs/promises';
+          import path from 'node:path';
+          import {githubPublishedInquirerIndex,githubPublishedInquirerEdition} from './netlify/functions/lib/inquirer-github-published.mjs';
+          const root=path.resolve('history/inquirer-archive');
+          const fetchLocal=async url=>{
+            const relative='forward/'+url.split('/forward/').at(-1);
+            if(!/^forward\/(index\.json|2026\/week-\d{2}\.json)$/.test(relative))
+              throw Error('Reader requested unexpected archive path: '+relative);
+            try{return new Response(await fs.readFile(path.join(root,relative)),{status:200})}
+            catch(error){if(error.code==='ENOENT')return new Response('',{status:404});throw error}
+          };
+          const index=await githubPublishedInquirerIndex(fetchLocal);
+          const last=index.reports.at(-1);
+          if(last){
+            const issue=await githubPublishedInquirerEdition(last.season,last.week,fetchLocal);
+            if(!issue||issue.teams.length!==32)throw Error('Website reader rejected staged issue');
+            console.log('github-inquirer-reader-acceptance',JSON.stringify({season:issue.season,week:issue.week,teams:issue.teams.length}));
+          }else console.log('No completed issue yet; reader correctly has no forward edition');
+          NODE
+      - name: Publish accepted issue to preview-only GitHub archive
+        if: github.event_name == 'push' && github.ref == 'refs/heads/fix/inquirer-github-native-publication-20261121'
+        working-directory: history
+        run: |
+          set -euo pipefail
+          if [ ! -d inquirer-archive/forward ]; then
+            echo 'No accepted completed week; nothing can be published'
+            exit 0
+          fi
+          git add inquirer-archive/forward/
+          if git diff --cached --quiet; then
+            echo 'No new issue: preview archive is already current'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Preview-only: verified weekly Inquirer publication'
+          git push origin HEAD:inquirer-preview-574-r3
+  publish:
+    needs: verify
+    if: github.ref == 'refs/heads/main' && github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: source
+      - uses: actions/checkout@v4
+        with:
+          ref: inquirer-archive
+          path: history
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install existing newsroom engine
+        working-directory: source
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+      - name: Generate one completed NFL fantasy week and run original editorial checks
+        id: publisher
+        working-directory: source
+        env:
+          INQUIRER_GITHUB_ARCHIVE_ROOT: ../history/inquirer-archive
+        run: node scripts/publish-inquirer-github-native.mjs
+      - name: Verify staged production issue through public GitHub reader before commit
+        working-directory: source
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs/promises';
+          import path from 'node:path';
+          import {githubPublishedInquirerIndex,githubPublishedInquirerEdition} from './netlify/functions/lib/inquirer-github-published.mjs';
+          const root=path.resolve('../history/inquirer-archive');
+          const fetchLocal=async url=>{
+            const relative='forward/'+url.split('/forward/').at(-1);
+            if(!/^forward\/(index\.json|2026\/week-\d{2}\.json)$/.test(relative))
+              throw Error('Reader requested unexpected archive path: '+relative);
+            try{return new Response(await fs.readFile(path.join(root,relative)),{status:200})}
+            catch(error){if(error.code==='ENOENT')return new Response('',{status:404});throw error}
+          };
+          const index=await githubPublishedInquirerIndex(fetchLocal);
+          const last=index.reports.at(-1);
+          if(last){
+            const issue=await githubPublishedInquirerEdition(last.season,last.week,fetchLocal);
+            if(!issue||issue.teams.length!==32)throw Error('Website reader rejected staged issue');
+            console.log('github-inquirer-reader-acceptance',JSON.stringify({season:issue.season,week:issue.week,teams:issue.teams.length}));
+          }else console.log('No completed issue yet; reader correctly has no forward edition');
+          NODE
+      - name: Commit verified edition and digest-bound index to archive branch only
+        working-directory: history
+        run: |
+          set -euo pipefail
+          if [ ! -d inquirer-archive/forward ]; then
+            echo 'No completed and approved week yet; publication intentionally unchanged'
+            exit 0
+          fi
+          git add inquirer-archive/forward/
+          if git diff --cached --quiet; then
+            echo 'No newly approved completed week to publish'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Publish verified Fleeced Inquirer completed week'
+          git push origin HEAD:inquirer-archive

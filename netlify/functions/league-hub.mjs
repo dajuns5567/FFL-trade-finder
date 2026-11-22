@@ -13,6 +13,7 @@ import {fetchBestSeason} from './history-fetch.mjs';
 import {applyInquirerEditorialV31,evaluateInquirerEditionQuality,FORWARD_INQUIRER_VERSION,FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
 import {inspectCanonicalArchive} from './lib/inquirer-legacy-history.mjs';
 import {recoveredInquirerCatalog,recoveredInquirerEdition} from './lib/inquirer-github-archive.mjs';
+import {githubPublishedInquirerIndex,githubPublishedInquirerEdition} from './lib/inquirer-github-published.mjs';
 import {correctWeekNineReaderEdition} from './lib/inquirer-week09-editorial-correction.mjs';
 import {privatePreviewStoreName,isVerifiedPrivatePreviewPredecessor} from './lib/inquirer-preview-diagnostics.mjs';
 
@@ -704,6 +705,15 @@ async function broadcastArchive(){
  }catch(error){
   console.warn('inquirer-github-archive-index-unavailable',String(error?.message||error));
  }
+ // GitHub Actions publishes Week 10+ directly to its immutable-file branch.
+ // Unlike Netlify's internal publisher, this path requires no Blob migration,
+ // scheduled callback, site secrets, or editorial status from a Netlify site.
+ try{
+  const forward=await githubPublishedInquirerIndex();
+  for(const row of forward.reports)
+   if(!rows.some(x=>Number(x.season)===row.season&&Number(x.week)===row.week))
+    rows.push(row);
+ }catch(error){console.warn('inquirer-github-forward-index-unavailable',String(error?.message||error))}
  // Also discover original Weeks 3–4 already in Blobs when GitHub is
  // temporarily unreachable. Never rewrite their original publication bytes.
  for(const week of [3,4]){
@@ -716,6 +726,17 @@ async function broadcastArchive(){
  rows.sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));return{reports:rows};
 }
 async function broadcastStored(season,week){
+ // GitHub-native issues take precedence over stale/missing Netlify Blobs.
+ // Never fall back to a different Week 10+ manuscript when a GitHub-indexed
+ // issue exists but fails its checksum or published-edition verification.
+ if(Number(season)===2026&&Number(week)>=10){
+  const github=await githubPublishedInquirerEdition(season,week);
+  if(github){
+   if(!isLockedInquirerEdition(github,season,week))
+    throw Error('GitHub published edition failed the canonical 32-team newsroom contract');
+   return github;
+  }
+ }
  const s=store(),v=await s.get(`broadcasts/${Number(season)}/week-${String(Number(week)).padStart(2,'0')}.json`,{type:'json'});
  if(v!==null&&v!==undefined){
   // The existing Blob index is NOT admission evidence. The original site
@@ -850,9 +871,8 @@ export async function weeklyAwards({additionalLockedEditions=[],persist=true,onl
  return{schema_version:1,records:next};
 }
 
-// League Hub game results advance from Sleeper, irrespective of the newspaper.
-// This GET endpoint never generates articles, writes Blobs, or checks an
-// editorial approval, publication cursor, archive, or matching award.
+// League Hub week visibility is independent of the GitHub newspaper archive.
+// Only finalized Sleeper matchups and roster records can advance this feed.
 async function latestCompletedLeagueWeek(){
  const [league,nfl]=await Promise.all([
   fetchJson(`${API}/league/${LEAGUE}`),fetchJson(`${API}/state/nfl`)
@@ -864,8 +884,6 @@ async function latestCompletedLeagueWeek(){
   fetchJson(`${API}/league/${LEAGUE}/rosters`),
   fetchJson(`${API}/league/${LEAGUE}/users`)
  ]);
- // Check the newest possible week first; only fall back for unfinished
- // roster-record finalization. A missing edition is NEVER a reason to fall back.
  const newest=Math.min(INQUIRER_FINAL_WEEK,weekNow-1);
  for(let week=newest;week>=Math.max(1,newest-2);week--){
   const finalized=await completedPublicationWeek(week);
@@ -993,5 +1011,14 @@ export default async req=>{try{const u=new URL(req.url);
    return cached?json({...cached,cache_hit:true,preview_read_only:true}):json({error:'No manager history cache in preview; production backfill disabled.',preview_read_only:true},503);
   }
  }
-if(u.searchParams.get('league_latest')==='1')return json(await latestCompletedLeagueWeek());if(u.searchParams.get('weekly')==='1'){const edition=await weeklyReport(req);return json(req.method==='GET'?correctWeekNineReaderEdition(edition):edition);}if(u.searchParams.get('reporters')==='1')return json(await reporterDirectory());if(u.searchParams.get('reporter_archive'))return json(await reporterArchive(u.searchParams.get('reporter_archive')));if(u.searchParams.get('broadcast_archive')==='1')return json(await broadcastArchive());if(u.searchParams.get('broadcast_season')&&u.searchParams.get('broadcast_week')){const edition=await broadcastStored(u.searchParams.get('broadcast_season'),u.searchParams.get('broadcast_week'));return json(req.method==='GET'?correctWeekNineReaderEdition(edition):edition);}if(u.searchParams.get('weekly_awards')==='1')return json(await weeklyAwards());if(u.searchParams.get('managers')==='1'){const s=store(),cached=await s.get('managers/history-cache.json',{type:'json'}).catch(()=>null),valid=cached?.cache_version===MANAGER_CACHE_VERSION&&cached?.career?.length&&cached.career.some(x=>(Number(x.wins)||0)+(Number(x.losses)||0)>0);if(valid){const nfl=await fetchJson(`${API}/state/nfl`).catch(()=>({})),season=Number(nfl?.season)||0,through=Math.max(0,Math.min(17,(Number(nfl?.week)||1)-1)),fresh=Number(cached?.scoring_history?.through_season)===season&&Number(cached?.scoring_history?.through_week)>=through;if(fresh)return json({...cached,cache_hit:true,stale:false})}return json(await managerHistory())}if(u.searchParams.get('drafts')==='1')return json(await draftAwards());if(u.searchParams.get('draft_records')==='1')return draftRecords(req);if(u.searchParams.get('award_highs')==='1')return awardHighs(req);if(u.searchParams.get('awards')==='1')return awards(req);return json({error:'query required'},400)}catch(e){console.error('league-hub',e);return json({error:'league hub unavailable'},503)}};
+if(u.searchParams.get('league_latest')==='1')return json(await latestCompletedLeagueWeek());if(u.searchParams.get('weekly')==='1'){
+ // Public newspaper reads must NEVER invoke the old stateful generator.
+ // Draft previews still use the existing explicit read-only preview gate.
+ if(req.method==='GET'&&u.searchParams.get('preview_editorial')==='1')
+  return json(await weeklyReport(req));
+ if(req.method!=='GET')return json({error:'GitHub Actions owns Inquirer publication'},405);
+ const archive=await broadcastArchive(),latest=archive.reports?.at(-1);
+ if(!latest)return json({available:false,reason:'No verified published newspaper yet'});
+ return json(correctWeekNineReaderEdition(await broadcastStored(latest.season,latest.week)));
+}if(u.searchParams.get('reporters')==='1')return json(await reporterDirectory());if(u.searchParams.get('reporter_archive'))return json(await reporterArchive(u.searchParams.get('reporter_archive')));if(u.searchParams.get('broadcast_archive')==='1')return json(await broadcastArchive());if(u.searchParams.get('broadcast_season')&&u.searchParams.get('broadcast_week')){const edition=await broadcastStored(u.searchParams.get('broadcast_season'),u.searchParams.get('broadcast_week'));return json(req.method==='GET'?correctWeekNineReaderEdition(edition):edition);}if(u.searchParams.get('weekly_awards')==='1')return json(await weeklyAwards());if(u.searchParams.get('managers')==='1'){const s=store(),cached=await s.get('managers/history-cache.json',{type:'json'}).catch(()=>null),valid=cached?.cache_version===MANAGER_CACHE_VERSION&&cached?.career?.length&&cached.career.some(x=>(Number(x.wins)||0)+(Number(x.losses)||0)>0);if(valid){const nfl=await fetchJson(`${API}/state/nfl`).catch(()=>({})),season=Number(nfl?.season)||0,through=Math.max(0,Math.min(17,(Number(nfl?.week)||1)-1)),fresh=Number(cached?.scoring_history?.through_season)===season&&Number(cached?.scoring_history?.through_week)>=through;if(fresh)return json({...cached,cache_hit:true,stale:false})}return json(await managerHistory())}if(u.searchParams.get('drafts')==='1')return json(await draftAwards());if(u.searchParams.get('draft_records')==='1')return draftRecords(req);if(u.searchParams.get('award_highs')==='1')return awardHighs(req);if(u.searchParams.get('awards')==='1')return awards(req);return json({error:'query required'},400)}catch(e){console.error('league-hub',e);return json({error:'league hub unavailable'},503)}};
 

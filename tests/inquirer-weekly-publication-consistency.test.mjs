@@ -234,8 +234,11 @@ test('automatic release keeps the replacement publisher held until verified hist
  const scheduled=readFileSync(new URL('../netlify/functions/inquirer-publish-scheduled.mjs',import.meta.url),'utf8');
  const schedule=readFileSync(new URL('../netlify/functions/lib/inquirer-schedule-decision.mjs',import.meta.url),'utf8');
  const config=readFileSync(new URL('../netlify.toml',import.meta.url),'utf8');
- // Five-minute catch-up allows the next independently approved week after each completed job.
- assert.ok(config.includes('schedule = "*/5 * * * *"'));
+ // GitHub writes the next independently approved week; Netlify no longer polls.
+ const githubWorkflow=readFileSync(new URL('../.github/workflows/inquirer-github-native-publisher.yml',import.meta.url),'utf8');
+ assert.ok(!config.includes('[functions."inquirer-publish-scheduled"]'));
+ assert.match(githubWorkflow,/cron: '19,49 \* \* \* \*'/);
+ assert.match(githubWorkflow,/ref: inquirer-archive/);
  assert.match(scheduled,/verifiedReplacementHistory\(week3,week4\)/);
  assert.match(scheduled,/publishingEnabled!=='true'/);
  assert.match(scheduled,/inquirerScheduleDecision\(\{status,nfl:current,revision:FORWARD_EDITORIAL_REVISION,approvedHeldEdition\}\)/);

@@ -104,28 +104,6 @@ async function valueHistory(req){
   const snap={version:5,league,t,fingerprint:fp,source:'scheduled',valuation_contract:scheduledContract,valuation_model:valuationModel,rows,picks,teams};
   mkdirSync(join(process.cwd(),'.tmp'),{recursive:true});
   writeFileSync(snapshotFile,JSON.stringify(snap,null,2)+'\n');
-  // Separate award observation: failures must not fabricate highs or roll
-  // back an otherwise valid canonical valuation history capture.
-  const highsFile=process.env.ALL_TIME_HIGHS_SCHEDULED_FILE||'.tmp/all-time-highs-scheduled.json';
-  let awardCaptureStatus='not-started';
-  try{
-   const observations=await page.evaluate(()=>window.fleecedAwardHighsScheduledObservation?.());
-   if(observations?.team_count!==32||observations?.categories!==20||
-      observations?.observations?.length<500||observations?.trade_count<1)
-    throw Error('Unverified or incomplete 32-team awards from scheduled runtime');
-   writeFileSync(highsFile,JSON.stringify({
-    ...observations,canonical_fingerprint:fp,
-    model_used:valuationModel,source_commit:sourceCommit
-   },null,2)+'\n');
-   awardCaptureStatus='captured:'+observations.observations.length;
-   console.log('ALL_TIME_HIGHS_SCHEDULED_CAPTURE '+JSON.stringify({
-    captured_at:observations.captured_at,records:observations.observations.length,
-    trades:observations.trade_count,drafts:observations.draft_count
-   }));
-  }catch(error){
-   awardCaptureStatus='unavailable:'+String(error?.message||error).slice(0,200);
-   console.warn('ALL_TIME_HIGHS_SCHEDULED_CAPTURE_UNAVAILABLE',String(error?.stack||error));
-  }
   return json({ok:true,t,fingerprint:fp,source:'scheduled',count:rows.length});
 }
 // Optional V100 acceptance replay: both model variants must receive the
@@ -512,6 +490,29 @@ try{
   const snap={version:5,league,t,fingerprint:fp,source:'scheduled',valuation_contract:scheduledContract,valuation_model:valuationModel,provenance:{git_commit:sourceCommit,modeled_version:captured.modeledVersion,consensus_sources:Number(readiness.consensusMarker?.successful)||0,source_manifest:captured.sourceManifest,canonical_parity:'exact',candidate_read_only:candidateModel?true:undefined,model_blob_sha:approvedScheduledModel?V101_APPROVED_MODEL_BLOB:undefined},rows:captured.rows,picks:captured.picks,teams:captured.teams};
   mkdirSync(join(process.cwd(),'.tmp'),{recursive:true});
   writeFileSync(snapshotFile,JSON.stringify(snap,null,2)+'\n');
+  // Separate award observation: failures must not fabricate highs or roll
+  // back an otherwise valid canonical valuation history capture.
+  const highsFile=process.env.ALL_TIME_HIGHS_SCHEDULED_FILE||'.tmp/all-time-highs-scheduled.json';
+  let awardCaptureStatus='not-started';
+  try{
+   const observations=await page.evaluate(()=>window.fleecedAwardHighsScheduledObservation?.());
+   if(observations?.team_count!==32||observations?.categories!==20||
+      observations?.observations?.length<500||observations?.trade_count<1)
+    throw Error('Unverified or incomplete 32-team awards from scheduled runtime');
+   writeFileSync(highsFile,JSON.stringify({
+    ...observations,canonical_fingerprint:fp,
+    model_used:valuationModel,source_commit:sourceCommit
+   },null,2)+'\n');
+   awardCaptureStatus='captured:'+observations.observations.length;
+   console.log('ALL_TIME_HIGHS_SCHEDULED_CAPTURE '+JSON.stringify({
+    captured_at:observations.captured_at,records:observations.observations.length,
+    trades:observations.trade_count,drafts:observations.draft_count
+   }));
+  }catch(error){
+   awardCaptureStatus='unavailable:'+String(error?.message||error).slice(0,200);
+   console.warn('ALL_TIME_HIGHS_SCHEDULED_CAPTURE_UNAVAILABLE',String(error?.stack||error));
+  }
+
 
   console.log(JSON.stringify({ok:true,runtime:'github-main-local',readiness,canonicalParity:'exact',modeledVersion:captured.modeledVersion,pageErrors:pageErrors.length,failedRequests:failedRequests.length,allTimeHighs:awardCaptureStatus,snapshot:{t,source:'scheduled',count:captured.rows.length,fingerprint:fp}},null,2));
 }finally{

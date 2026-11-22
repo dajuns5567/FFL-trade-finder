@@ -1,5 +1,6 @@
 import {inquirerMarketCutoff,editionAvailability} from './lib/inquirer-market-window.mjs';
 import {completedLeagueWeekView} from './lib/league-completed-week.mjs';
+import {mergeAwardHighs} from './lib/league-all-time-highs.mjs';
 import valueHistoryHandler from './value-history.mjs';
 // Forward drafts must be reviewed as written; synthetic scoreboard sentence repair is retired.
 import {inspectEditionBeforePublication,editorialApprovalMatches,editorialCopyDigest,deterministicInquirerAdmission,isReadOnlyEditorialPreview,inspectPreviousWeekEditorialReuse} from './inquirer-publication-guard.mjs';
@@ -984,9 +985,21 @@ async function managerHistory({persist=true,snapshotSeason=null,snapshotWeek=nul
  const now=new Date().toISOString(),cache_version=MANAGER_CACHE_VERSION,registry={current:Object.fromEntries(current.map(x=>[x.roster_id,{user_id:x.user_id,sleeper_id:x.sleeper_id,since:now}])),graveyard},result={current,graveyard,career:Object.values(career),assignments,games,scoring_history,generated_at:now,cache_version};if(persist)await Promise.all([s.setJSON('managers/registry.json',registry),s.setJSON('managers/history-cache.json',{...result,cached_at:now})]);return persist?result:{...result,preview_read_only:true};
 }
 async function awardHighs(req){
- const s=store(),key='awards/highs.json',old=await s.get(key,{type:'json'}).catch(()=>null),highs=Array.isArray(old)?old:[];
- if(req.method==='POST'){const body=await req.json().catch(()=>null),records=Array.isArray(body?.records)?body.records:[],now=new Date().toISOString();for(const x of records){const award_key=String(x.award_key||''),roster_id=String(x.roster_id||''),score=Number(x.score);if(!award_key||!roster_id||!Number.isFinite(score))continue;const prev=highs.filter(h=>h.award_key===award_key&&h.roster_id===roster_id).sort((a,b)=>Number(b.score)-Number(a.score))[0];if(!prev||score>Number(prev.score)){highs.push({award_key,roster_id,score,detail:String(x.detail||''),captured_at:now})}}await s.setJSON(key,highs.slice(-10000))}
- const best={};for(const h of highs){const k=h.award_key+'|'+h.roster_id;if(!best[k]||Number(h.score)>Number(best[k].score))best[k]=h}return json({records:Object.values(best)});
+ if(!['GET','POST'].includes(req.method))return json({error:'method not allowed'},405);
+ const s=store(),key='awards/highs.json';
+ const stored=await s.get(key,{type:'json'}).catch(()=>null);
+ const previous=Array.isArray(stored)?stored:[];
+ if(req.method==='GET')return json({records:mergeAwardHighs(previous,[],new Date().toISOString())});
+ // The preview-wide read-only gate runs before this function. Never persist
+ // potentially unverified or incomplete rankings supplied by a browser.
+ const body=await req.json().catch(()=>null);
+ const records=Array.isArray(body?.records)?body.records:[];
+ if(!records.length||records.length>1000)return json({error:'missing or excessive all-time-high observations'},400);
+ const now=new Date().toISOString(),highs=mergeAwardHighs(previous,records,now);
+ if(highs.length===0)return json({error:'no valid award scores'},422);
+ const changed=JSON.stringify(highs)!==JSON.stringify(mergeAwardHighs(previous,[],now));
+ if(changed)await s.setJSON(key,highs);
+ return json({records:highs,recorded_at:now,changed,source:'league-awards-canonical'});
 }
 async function awards(req){
  const s=store();

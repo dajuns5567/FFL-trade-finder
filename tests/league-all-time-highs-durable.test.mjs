@@ -29,6 +29,15 @@ test('timestamp of an earned high is preserved until a strictly higher verified 
  assert.equal(raised[0].captured_at,now);
  assert.deepEqual(mergeAwardHighs(raised,[],now),raised);
 });
+test('equal highs across independent stores preserve the first observed timestamp',()=>{
+ const newer={award_key:'powerhouse',roster_id:'3',score:777,
+  detail:'record',captured_at:'2026-11-22T20:00:00Z'};
+ const older={...newer,captured_at:'2026-10-02T20:00:00Z'};
+ const merged=mergeAwardHighs([newer,older],[],now);
+ assert.equal(merged.length,1);
+ assert.equal(merged[0].captured_at,older.captured_at);
+});
+
 test('old 32-team historical highs never vanish when the new snapshot is smaller',()=>{
  const old=fixture(),prior=nextDurableHighs(null,old);
  const next=fixture();next.observations=next.observations.filter(x=>x.award_key!=='powerhouse');

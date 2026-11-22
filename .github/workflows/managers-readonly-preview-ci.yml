@@ -4,6 +4,7 @@ on:
     paths:
       - 'netlify/functions/league-hub.mjs'
       - 'tests/managers-preview-readonly-fallback.test.mjs'
+      - 'tests/managers-client-refresh-runtime.test.mjs'
       - '.github/workflows/managers-readonly-preview-ci.yml'
   push:
     branches:
@@ -22,4 +23,4 @@ jobs:
       - name: Validate Managers source and read-only fallback
         run: |
           node --check netlify/functions/league-hub.mjs
-          node --test tests/managers-preview-readonly-fallback.test.mjs
+          node --test tests/managers-preview-readonly-fallback.test.mjs tests/managers-client-refresh-runtime.test.mjs

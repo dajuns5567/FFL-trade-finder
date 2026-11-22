@@ -65,7 +65,7 @@ if(document.readyState==='complete')void verifyLiveValuationModelV95();
 // Experimental deploy previews may read archival history but must never
 // persist their branch-specific ranks into the canonical shared timeline.
 const isValueHistoryDeployPreview=()=>/^(?:deploy-preview-\d+|[a-f0-9]{24})--[a-z0-9-]+\.netlify\.app$/i.test(location.hostname);
-let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,marketInsightsCache=null,marketSignalCache=null,marketInsightsPending=null,marketSignalsPending=null,marketIntelPeriod='7D',marketVolatilityPool='ALL',currentPlayerId=null,trackedTeamId=null,playerHistoryTeamId=null,currentView='market',marketSort={key:'value',dir:-1},teamNetSort={key:'value',dir:-1},teamAttributionPeriod='7D',tradeHistoryCache=null,tradeHistoryCacheAt=0,tradeTeamFilter='',tradeYearFilter='',tradeMonthFilter='',marketPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D'},teamPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D',posRankRisers:'30D',posRankFallers:'30D'},marketPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL'},teamPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL',posRankRisers:'ALL',posRankFallers:'ALL'},playerScoringCache=new Map(),playerScoringPending=new Map(),teamNetCache=new Map(),tradeDetailState=new Map();
+let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,marketIntelligenceGeneration=0,marketInsightsCache=null,marketSignalCache=null,marketInsightsPending=null,marketSignalsPending=null,marketIntelPeriod='7D',marketVolatilityPool='ALL',currentPlayerId=null,trackedTeamId=null,playerHistoryTeamId=null,currentView='market',marketSort={key:'value',dir:-1},teamNetSort={key:'value',dir:-1},teamAttributionPeriod='7D',tradeHistoryCache=null,tradeHistoryCacheAt=0,tradeTeamFilter='',tradeYearFilter='',tradeMonthFilter='',marketPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D'},teamPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D',posRankRisers:'30D',posRankFallers:'30D'},marketPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL'},teamPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL',posRankRisers:'ALL',posRankFallers:'ALL'},playerScoringCache=new Map(),playerScoringPending=new Map(),teamNetCache=new Map(),tradeDetailState=new Map();
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 const tv=()=>window.tradeValueNormalizationV139||window.tradeValueNormalizationV130||{};
@@ -699,7 +699,7 @@ async function recordSnapshot(source=pendingSnapshotSource){
     if(r.ok){
       const stored=await r.json().catch(()=>({ok:true}));
       window.__vhLastSnapshot={ok:true,source,t:stored?.t||null,valuation_model:stored?.valuation_model||null};
-      marketCache=null;marketInsightsCache=null;marketSignalCache=null;teamNetCache.clear();
+      marketCache=null;marketIntelligenceGeneration++;marketInsightsCache=null;marketSignalCache=null;marketInsightsPending=null;marketSignalsPending=null;teamNetCache.clear();
       if(uiReady){
         if(currentView==='market')loadMarket(true);
         else if(currentView==='fullMarket')loadFullMarketHistory(true);
@@ -1371,14 +1371,20 @@ async function marketFetch(){let last;for(let attempt=0;attempt<3;attempt++){try
 async function marketInsightsFetch(force=false){
   if(marketInsightsCache&&!force)return marketInsightsCache;
   if(marketInsightsPending&&!force)return marketInsightsPending;
+  const generation=marketIntelligenceGeneration;
   const pending=(async()=>{const r=await fetch(`${API}?market_insights=1`,{cache:'no-store'});if(!r.ok)throw Error('market insights unavailable');return await r.json()})();
-  marketInsightsPending=pending;try{marketInsightsCache=await pending;return marketInsightsCache}finally{marketInsightsPending=null}
+  marketInsightsPending=pending;
+  try{const data=await pending;if(generation===marketIntelligenceGeneration)marketInsightsCache=data;return data}
+  finally{if(marketInsightsPending===pending)marketInsightsPending=null}
 }
 async function marketSignalsFetch(force=false){
   if(marketSignalCache&&!force)return marketSignalCache;
   if(marketSignalsPending&&!force)return marketSignalsPending;
+  const generation=marketIntelligenceGeneration;
   const pending=(async()=>{const r=await fetch(`${SIGNAL_API}?compact=1`,{cache:'no-store'});if(!r.ok)throw Error('market signals unavailable');return await r.json()})();
-  marketSignalsPending=pending;try{marketSignalCache=await pending;return marketSignalCache}finally{marketSignalsPending=null}
+  marketSignalsPending=pending;
+  try{const data=await pending;if(generation===marketIntelligenceGeneration)marketSignalCache=data;return data}
+  finally{if(marketSignalsPending===pending)marketSignalsPending=null}
 }
 async function loadMarketIntelligence(force=false){
   const tasks=[marketInsightsFetch(force).catch(()=>null),marketSignalsFetch(force).catch(()=>null)];
@@ -2378,7 +2384,7 @@ function boot(){addShell();searchTradesOnSiteOpen();window.addEventListener('fll
  window.addEventListener('fll:canonical-values-ready',()=>{
    updateLiveConsumersV102();
  });
- setInterval(refreshVisibleTradeHistory,TRADE_HISTORY_REFRESH_MS);window.addEventListener('focus',refreshVisibleTradeHistory);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshVisibleTradeHistory()});scheduleSnapshot(0,snapshotSourceFromUrl());document.getElementById('updateBtn')?.addEventListener('click',()=>{invalidateLiveMarketV97();marketCache=null;marketInsightsCache=null;marketSignalCache=null;teamNetCache.clear();scheduleSnapshot(1000,'manual-update');if(currentPlayerId)setTimeout(()=>loadPlayer(currentPlayerId),1800)},{passive:true})}
+ setInterval(refreshVisibleTradeHistory,TRADE_HISTORY_REFRESH_MS);window.addEventListener('focus',refreshVisibleTradeHistory);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshVisibleTradeHistory()});scheduleSnapshot(0,snapshotSourceFromUrl());document.getElementById('updateBtn')?.addEventListener('click',()=>{invalidateLiveMarketV97();marketCache=null;marketIntelligenceGeneration++;marketInsightsCache=null;marketSignalCache=null;marketInsightsPending=null;marketSignalsPending=null;teamNetCache.clear();scheduleSnapshot(1000,'manual-update');if(currentPlayerId)setTimeout(()=>loadPlayer(currentPlayerId),1800)},{passive:true})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 window.valueHistoryV331={liveMarketRowV97,liveMarketRowsV97,liveFullMarketRowsV97,invalidateLiveMarketV97,currentRows,currentPickRows,currentTeamRows,currentEvaluatorValue,hindsightValue,recordSnapshot,historyFetch,marketFetch,marketData:(force=false)=>ensureMarketCache(!!force),livePlayerMeta,periodPoints,openPlayer:(id)=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>selectPlayer(String(id)),0)},openPlayerHistory:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(renderPlayerHistoryHub,0)},openFullMarket:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>loadFullMarketHistory(),0)}};
 })();

@@ -2,9 +2,9 @@
   "schema_version": 1,
   "league_id": "1316867686394769408",
   "latest": {
-    "t": "2026-11-22T19:36:24.538Z",
-    "path": "value-history/snapshots/2026/11/2026-11-22T19-36-24-538Z.json",
-    "fingerprint": "qdqemr",
+    "t": "2026-11-22T23:52:19.966Z",
+    "path": "value-history/snapshots/2026/11/2026-11-22T23-52-19-966Z.json",
+    "fingerprint": "444lo3",
     "count": 1079,
     "source": "scheduled",
     "valuation_model": "idp-v101-verified-role-growth-v100-source-free-lineage",

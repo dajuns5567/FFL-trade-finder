@@ -202,3 +202,10 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -m 'Publish verified Fleeced Inquirer completed week'
           git push origin HEAD:inquirer-archive
+      # A successful git push is not sufficient: the public GitHub reader must
+      # see the new index and the exact digest-bound 32-team issue afterward.
+      - name: Verify newly committed edition is publicly readable after push
+        working-directory: source
+        env:
+          INQUIRER_GITHUB_ARCHIVE_ROOT: ../history/inquirer-archive
+        run: node scripts/verify-inquirer-published-readback.mjs

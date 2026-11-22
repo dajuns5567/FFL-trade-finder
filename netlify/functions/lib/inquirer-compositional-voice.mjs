@@ -8,6 +8,9 @@ const fmt=v=>Number(v).toFixed(1);
 const valid=v=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v));
 const norm=s=>String(s||'').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim().replace(/\s+/g,' ');
 const head=s=>norm(s).split(' ').slice(0,9).join(' ');
+// Detect the rhetorical opening shape, without treating different names or scores
+// as a new style. Only the recent archive constrains cadence; it can evolve.
+const cadence=s=>norm(s).replace(/\b\d+\b/g,'number').split(' ').slice(0,5).join(' ');
 const wc=s=>String(s||'').trim().split(/\s+/).filter(Boolean).length;
 const entity=(team)=>({club:String(team.team_name||''),foe:String(team.opponent_name||''),points:fmt(team.points),
  against:fmt(team.opponent_points),low:(team.starter_details||[]).filter(x=>x.name&&valid(x.points)).sort((a,b)=>Number(a.points)-Number(b.points))[0]});
@@ -95,13 +98,13 @@ export function rotateForwardRecapOpening(overview,teams,week,salt=0,history=[])
  if(!subjects.length)return overview;
  const past=history.filter(Boolean).flatMap(e=>(e.league_overview?.sections||[]).flatMap(s=>
   (s.blocks||[]).filter(b=>b.kind==='lead').map(b=>b.paragraphs?.[0]).filter(Boolean)));
- const old=new Set(past.map(norm)),starts=new Set(past.map(head));
+ const old=new Set(past.map(norm)),starts=new Set(past.map(head)),recentCadences=new Set(past.slice(-6).map(cadence));
  for(let attempt=0;attempt<1024;attempt++){
   const seed=[week,salt,attempt,'recap',overview?.season||''].join('|');
   const t=pick(subjects,seed+'team'),p={week,club:t.team_name,foe:t.opponent_name,score:fmt(t.points),against:fmt(t.opponent_points)};
   for(const [field,bank] of Object.entries(recapVocabulary))p[field]=pick(bank,seed+field);
   const line=pick(leadFrames,seed+'structure')(p);
-  if(old.has(norm(line))||starts.has(head(line)))continue;
+  if(old.has(norm(line))||starts.has(head(line))||recentCadences.has(cadence(line)))continue;
   lead.paragraphs[0]=line;
   feature.paragraphs=feature.blocks.flatMap(b=>b.paragraphs||[]);
   overview.paragraphs=overview.sections.flatMap(s=>s.paragraphs||[]);

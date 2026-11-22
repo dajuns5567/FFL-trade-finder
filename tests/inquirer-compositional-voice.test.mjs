@@ -116,3 +116,22 @@ test('humor never duplicates the management argument or writes consecutive fille
     'no consecutive or exact within-article repeated paragraphs');
  }
 });
+
+
+test('all rhetorical frames keep natural score verbs and never leak undefined tokens',()=>{
+ const voices=['walter-mercer','tess-delaney','mack-hollis','nora-voss'];
+ for(const week of [10,11,14,17])for(let salt=0;salt<12;salt++){
+  const teams=Array.from({length:32},(_,i)=>{
+   const t=team(i);t.inquirer_article.reporter.id=voices[i%4];return t;
+  });
+  reinforceForwardReporterVoice(teams,week,salt,[]);
+  for(const t of teams){
+   const copy=t.inquirer_article.sections.find(s=>s.kind==='sentiment').paragraphs.at(-1);
+   assert.doesNotMatch(copy,/\bundefined\b/,'invalid verb or missing interpolation');
+   assert.match(copy,new RegExp('Club '+t.roster_id));
+   assert.match(copy,new RegExp('Starter '+t.roster_id));
+   assert.equal(t.inquirer_article.sections.find(s=>s.kind==='management').paragraphs.length,1,
+    'humor should not double the management case');
+  }
+ }
+});

@@ -9,6 +9,8 @@ on:
       - 'scripts/value-history-headless-refresh.mjs'
       - 'scripts/archive-league-all-time-highs.mjs'
       - 'tests/league-all-time-highs-durable.test.mjs'
+      - 'tests/league-hot-seat-and-highs-preview.test.mjs'
+      - 'netlify/functions/lib/league-hot-seat.mjs'
       - '.github/workflows/league-all-time-highs-durable-ci.yml'
   workflow_dispatch:
 permissions:
@@ -26,13 +28,16 @@ jobs:
         run: |
           node --check league-hub-v451.js
           node --check netlify/functions/league-hub.mjs
+          node --check netlify/functions/lib/league-hot-seat.mjs
           node --check netlify/functions/lib/league-all-time-highs.mjs
           node --check netlify/functions/site-v29.mjs
           node --check scripts/value-history-headless-refresh.mjs
           node --check scripts/archive-league-all-time-highs.mjs
           node --check scripts/verify-scheduled-all-time-highs.mjs
       - name: Verify monotonic record integrity, automatic capture and fallback
-        run: node --test tests/league-all-time-highs-durable.test.mjs
+        run: |
+          node --test tests/league-all-time-highs-durable.test.mjs
+          node --test tests/league-hot-seat-and-highs-preview.test.mjs
       - name: Preserve previous League Hub and newspaper contracts
         run: |
           node --test tests/league-week-independent-news.test.mjs

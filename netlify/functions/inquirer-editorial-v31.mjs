@@ -765,7 +765,16 @@ export function reinforceForwardReporterVoice(teams,week,salt=0,history=[]){
   const start=(Math.floor((Number(team.roster_id)||1)/4)+Number(week)+Number(salt))%bank.length;
   const entities=forwardEntities({teams});
   for(let i=0;i<bank.length;i++){
-   const line=bank[(start+i)%bank.length](club,foe,String(weak.name),forwardOne(weak.points),forwardOne(score));
+   const raw=bank[(start+i)%bank.length](club,foe,String(weak.name),forwardOne(weak.points),forwardOne(score));
+   // Reporter templates mention BOTH fantasy clubs. Fix direct plural subjects
+   // after variable interpolation without rewriting facts or weakening audits.
+   let line=raw;
+   const verbs={has:'have',is:'are',does:'do',gets:'get',needs:'need',sits:'sit',keeps:'keep',projects:'project',faces:'face'};
+   for(const name of [club,foe]){
+    if(!/s$/i.test(name.split(/\\s+/).at(-1)||''))continue;
+    line=line.replace(new RegExp('\\\\b'+forwardEscRe(name)+' (has|is|does|gets|needs|sits|keeps|projects|faces)\\\\b','gi'),
+     (_,verb)=>name+' '+verbs[verb.toLowerCase()]);
+   }
    const normalized=forwardNormSentence(line,entities);
    if(prior.has(normalized)||used.has(normalized))continue;
    sentiment.paragraphs.push(line);used.add(normalized);

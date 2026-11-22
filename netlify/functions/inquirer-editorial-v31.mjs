@@ -39,6 +39,7 @@ function attributeSourceBackedRecapOpenings(overview,teams,week){
 // Week 1/2 preloads remain immutable; Week 3+ runs this layer with week-aware
 // variation, prior-edition continuity, playoff-race context and postseason rounds.
 import {finishReviewedForwardCopy} from './inquirer-reviewed-copy.mjs';
+import {reinforceForwardReporterVoice as composeReporterVoice,rotateForwardRecapOpening as composeRecapOpening,COMPOSITIONAL_VOICE_CONTRACT} from './lib/inquirer-compositional-voice.mjs';
 import {assessMinorNineWordReuse} from './lib/inquirer-minor-repetition.mjs';
 import {inspectFantasyTeamAttribution} from './lib/inquirer-attribution-audit.mjs';
 import {inspectInquirerFormatContract} from './inquirer-format-contract.mjs';
@@ -47,7 +48,7 @@ import {attributeForwardPlayerStatFragments,curateForwardTeamNarrative,inspectNa
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=111;
+export const FORWARD_EDITORIAL_REVISION=112;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -697,133 +698,13 @@ export function polishForwardTeamCopy(teams,week,salt){
  });
 }
 
-/** Future-edition voice pass. Every addition is tied to a scored starter and a
- * real matchup; old published issues remain byte-for-byte immutable. */
+// Preserve the public editorial API while routing every new issue through
+// the compositional, source-grounded newsroom voice engine. No publisher fork.
 export function reinforceForwardReporterVoice(teams,week,salt=0,history=[]){
- if(Number(week)<10)return teams;
- const prior=new Set();
- for(const issue of history.filter(Boolean)){
-  const entities=forwardEntities(issue);
-  for(const oldTeam of issue.teams||[])
-   for(const sentence of forwardArticleSentences(oldTeam))
-    prior.add(forwardNormSentence(sentence,entities));
- }
- const used=new Set();
- const tones={
-  'walter-mercer':[
-   (club,foe,weak,low,score)=>weak+' supplied '+low+' for '+club+' against '+foe+'. The scoreboard has declined the manager’s request for a more flattering translation.',
-   (club,foe,weak,low,score)=>club+' got '+low+' from '+weak+' on the way to '+score+'. That is a factual report, not the beginning of a character reference.',
-   (club,foe,weak,low,score)=>'The '+club+' starting sheet listed '+weak+' at '+low+'. The postgame press conference will need better material than the lineup did.',
-   (club,foe,weak,low,score)=>'At '+low+' for '+weak+', '+club+' gave '+foe+' a weakness that did not require a scouting department to discover.',
-   (club,foe,weak,low,score)=>'On a '+score+'-point afternoon, '+club+' still found room for '+weak+' at '+low+'. Even the arithmetic looked embarrassed.',
-   (club,foe,weak,low,score)=>'The official '+club+' tally was '+score+' against '+foe+'. '+weak+' contributed '+low+', a figure nobody should attempt to polish into a triumph.',
-   (club,foe,weak,low,score)=>'Club management may frame the '+score+' from '+club+' however it likes. '+weak+' at '+low+' will remain an inconvenient footnote.',
-   (club,foe,weak,low,score)=>'The '+club+' ledger shows '+low+' from '+weak+' versus '+foe+'. That is enough evidence for the prosecution and very little for the defense.'
-  ],
-  'tess-delaney':[
-   (club,foe,weak,low,score)=>'The '+club+' lineup accessorized its '+score+' points with '+weak+' at '+low+'. '+foe+' did not have to admire the styling.',
-   (club,foe,weak,low,score)=>'The '+club+' presentation featured '+weak+' in a '+low+'-point cameo. Unfortunately, '+foe+' was judging the actual show.',
-   (club,foe,weak,low,score)=>'A '+low+' from '+weak+' is the sort of decoration '+club+' cannot return after the '+foe+' result.',
-   (club,foe,weak,low,score)=>'The '+club+' runway ended at '+score+' against '+foe+'. '+weak+' arrived carrying '+low+' and a very small handbag of excuses.',
-   (club,foe,weak,low,score)=>'Someone dressed '+weak+' for the '+club+' starting lineup and received '+low+'. The receipt from '+foe+' is not eligible for store credit.',
-   (club,foe,weak,low,score)=>'The '+club+' ensemble included '+weak+' at '+low+'. There are bold choices, and then there is simply handing '+foe+' a conversation starter.',
-   (club,foe,weak,low,score)=>'At '+score+' against '+foe+', '+club+' had plenty to discuss. The '+low+' from '+weak+' was the least flattering photograph.',
-   (club,foe,weak,low,score)=>'The '+club+' look included '+weak+' with '+low+'. Somebody should tell the stylist that '+foe+' was keeping score, not taking requests.'
-  ],
-  'mack-hollis':[
-   (club,foe,weak,low,score)=>weak+' gave '+club+' '+low+' against '+foe+'. Call it a calculated risk if you want; the calculator has asked to be reassigned.',
-   (club,foe,weak,low,score)=>club+' finished at '+score+' while '+weak+' scraped together '+low+'. The excuse machine is going to need a larger fuel tank.',
-   (club,foe,weak,low,score)=>'Somebody started '+weak+' for '+club+' and got '+low+'. '+foe+' deserves a thank-you card, not a scouting report.',
-   (club,foe,weak,low,score)=>weak+' managed '+low+' for '+club+'. That is not a secret tactical wrinkle. It is the wrinkle nobody bothered to iron.',
-   (club,foe,weak,low,score)=>club+' posted '+score+' versus '+foe+' with '+weak+' contributing '+low+'. Keep the motivational poster; fix the lineup.',
-   (club,foe,weak,low,score)=>'At '+low+' from '+weak+', '+club+' made the '+foe+' matchup harder than the job description required.',
-   (club,foe,weak,low,score)=>weak+' put '+low+' on the '+club+' board. If that was the plan against '+foe+', the plan owes everybody an apology.',
-   (club,foe,weak,low,score)=>'The '+club+' manager will get questions about '+weak+' at '+low+'. The scoreboard has already conducted the interview.'
-  ],
-  'nora-voss':[
-   (club,foe,weak,low,score)=>'Word from the '+club+' group chat: '+weak+' posted '+low+' and the silence was louder than the '+foe+' result.',
-   (club,foe,weak,low,score)=>'The '+club+' gossip desk counted '+low+' from '+weak+'. '+foe+' has reportedly requested that this be called a strategy.',
-   (club,foe,weak,low,score)=>'Everybody noticed '+weak+' at '+low+' for '+club+'. Nobody in the '+foe+' camp seems interested in keeping that secret.',
-   (club,foe,weak,low,score)=>'Sources close to the '+club+' lineup confirm '+weak+' delivered '+low+'. The rest of the '+foe+' conversation is not fit for a family paper.',
-   (club,foe,weak,low,score)=>club+' brought '+score+' against '+foe+', and '+weak+' brought '+low+'. The group chat has already chosen its favorite screenshot.',
-   (club,foe,weak,low,score)=>'The '+club+' rumor mill has been circling '+weak+' and '+low+'. '+foe+' is trying very hard not to laugh in public.',
-   (club,foe,weak,low,score)=>'A '+low+' from '+weak+' gave '+club+' a headline nobody wanted. '+foe+' sent flowers and a very sarcastic note.',
-   (club,foe,weak,low,score)=>'The '+club+' starting-card scandal is '+weak+' at '+low+'. Some manager will call it nuance; '+foe+' will call it evidence.'
-  ]
- };
- for(const team of teams||[]){
-  const article=team.inquirer_article,sentiment=article?.sections?.find(x=>x.kind==='sentiment');
-  if(!sentiment?.paragraphs?.length)continue;
-  const club=String(team.team_name||''),foe=String(team.opponent_name||'');
-  const score=Number(team.points);
-  const weak=(team.starter_details||[]).filter(p=>p?.name&&Number.isFinite(Number(p.points)))
-   .sort((a,b)=>Number(a.points)-Number(b.points))[0];
-  if(!club||!foe||!weak||!Number.isFinite(score))continue;
-  const currentWords=forwardWordCount(article.sections.flatMap(x=>x.paragraphs||[]).join(' '));
-  if(currentWords>600)continue;
-  const reporter=String(article.reporter?.id||'walter-mercer'),bank=tones[reporter]||tones['walter-mercer'];
-  const start=(Math.floor((Number(team.roster_id)||1)/4)+Number(week)+Number(salt))%bank.length;
-  const entities=forwardEntities({teams});
-  for(let i=0;i<bank.length;i++){
-   const raw=bank[(start+i)%bank.length](club,foe,String(weak.name),forwardOne(weak.points),forwardOne(score));
-   // Reporter templates mention BOTH fantasy clubs. Fix direct plural subjects
-   // after variable interpolation without rewriting facts or weakening audits.
-   let line=raw;
-   const verbs={has:'have',is:'are',does:'do',gets:'get',needs:'need',sits:'sit',keeps:'keep',projects:'project',faces:'face'};
-   for(const name of [club,foe]){
-    if(!/s$/i.test(name.split(/\s+/).at(-1)||''))continue;
-    line=line.replace(new RegExp('\\b'+forwardEscRe(name)+' (has|is|does|gets|needs|sits|keeps|projects|faces)\\b','gi'),
-     (_,verb)=>name+' '+verbs[verb.toLowerCase()]);
-   }
-   const normalized=forwardNormSentence(line,entities);
-   if(prior.has(normalized)||used.has(normalized))continue;
-   sentiment.paragraphs.push(line);used.add(normalized);
-   article.paragraphs=article.sections.flatMap(section=>section.paragraphs||[]);
-   break;
-  }
- }
- return teams;
+ return composeReporterVoice(teams,week,salt,history);
 }
-
-/** Source-backed weekly-recap lead rotation. Reject the previous four archived
- * lead openings instead of repeatedly choosing the same small set of hooks. */
 export function rotateForwardRecapOpening(overview,teams,week,salt=0,history=[]){
- if(Number(week)<10)return overview;
- const feature=(overview?.sections||[]).find(section=>(section.blocks||[]).some(b=>b.kind==='lead'));
- const lead=feature?.blocks?.find(b=>b.kind==='lead');
- if(!lead?.paragraphs?.length)return overview;
- const top=(teams||[]).filter(t=>t.team_name&&t.opponent_name&&Number.isFinite(Number(t.points))&&Number.isFinite(Number(t.opponent_points)))
-  .slice().sort((a,b)=>Number(b.points)-Number(a.points))[0];
- if(!top)return overview;
- const club=String(top.team_name),foe=String(top.opponent_name),score=forwardOne(top.points),against=forwardOne(top.opponent_points);
- const openers=[
-  ()=>club+' put '+score+' on the Week '+week+' board against '+foe+'. Somebody in this league is going to call it an ordinary Sunday; that person probably did not have to defend the other sideline.',
-  ()=>'The Week '+week+' loudspeaker belonged to '+club+': '+score+' against '+foe+'. The box score did not ask permission before interrupting everyone else’s carefully prepared excuses.',
-  ()=>'Start with the scoreboard rather than the spin: '+club+' reached '+score+' while '+foe+' recorded '+against+'. The rest of the league may now resume arguing about what that means.',
-  ()=>'Week '+week+' offered plenty of opinions, but '+club+' supplied '+score+' measurable points against '+foe+'. Opinions can wait until the people with calculators finish laughing.',
-  ()=>'The expensive part of Week '+week+' was '+club+' posting '+score+' against '+foe+'. Everyone else still gets a column, just not the right to pretend that number was quiet.',
-  ()=>'There is a Week '+week+' headline and it has '+club+' on it: '+score+' against '+foe+'. The scoreboard, as usual, has neglected to consider anybody’s feelings.',
-  ()=>'While managers drafted explanations for Week '+week+', '+club+' finished with '+score+' against '+foe+'. The arithmetic is having an excellent day; several group chats are not.',
-  ()=>'Week '+week+' did not require a complicated opening argument. '+club+' scored '+score+' against '+foe+' and left everybody else to negotiate with reality.',
-  ()=>'The Week '+week+' record begins at '+score+' for '+club+' versus '+foe+'. Those waiting for a softer headline should try reading a restaurant menu instead.',
-  ()=>'A Week '+week+' score of '+score+' from '+club+' against '+foe+' was not particularly subtle. Subtlety did not appear on the league standings sheet anyway.',
-  ()=>'Every Week '+week+' recap needs a first witness. '+club+' volunteered '+score+' points against '+foe+', and the opposing legal team immediately requested a recess.',
-  ()=>'Nobody asked '+club+' to make Week '+week+' look simple, but '+score+' against '+foe+' is a fairly persuasive opening statement. The fantasy table can argue about the punctuation.'
- ];
- const entities=forwardEntities({teams});
- const prior=new Set(history.filter(Boolean).flatMap(e=>(e.league_overview?.sections||[])
-  .flatMap(sec=>(sec.blocks||[]).filter(b=>b.kind==='lead').map(b=>b.paragraphs?.[0]).filter(Boolean)))
-  .map(line=>forwardNormSentence(line,entities)));
- const start=((Number(week)*7+Number(salt))%openers.length+openers.length)%openers.length;
- for(let i=0;i<openers.length;i++){
-  const text=openers[(start+i)%openers.length]();
-  if(prior.has(forwardNormSentence(text,entities)))continue;
-  lead.paragraphs[0]=text;
-  feature.paragraphs=feature.blocks.flatMap(b=>b.paragraphs||[]);
-  overview.paragraphs=overview.sections.flatMap(section=>section.paragraphs||[]);
-  break;
- }
- return overview;
+ return composeRecapOpening(overview,teams,week,salt,history);
 }
 
 export function applyInquirerEditorialV31({season,week,rawInquirer,rawOverview,previousEdition=null,previousEditions=[],weekClassification=null,variationSalt=0}={}){

@@ -15,6 +15,14 @@ export const CRITICAL_ASSETS=[
  'ui-runtime-values-v140.js',
  'trade-select-all-v165.js',
  'trade-selection-sync-v534.js',
+ // Targeted acquisition modules must be tracked independently of the compiled Finder.
+ // PR #585 restores their combination; a later release cannot silently roll back one.
+ 'trade-specific-blank-router-v325.js',
+ 'trade-specific-max-tier-add-v300.js',
+ 'trade-specific-tier-up-v282.js',
+ 'trade-specific-add-assets-v282.js',
+ 'trade-specific-max-value-v279.js',
+ 'trade-specific-player-v232.js',
  'trade-finder-v256-compiled.js',
  'trade-runtime-v256-compiled.js',
  'trade-evaluator-any-team-v184.js',
@@ -56,6 +64,24 @@ export function compareVersionAssets(before,after,{critical=CRITICAL_ASSETS}={})
    must(nextN>=prevN,'Runtime script reverted to older cache key: '+pathname);
  }
  const src=JSON.stringify(fresh);
+ // Targeted Finder routing relies on the exact installed module order.
+ // The complementary outgoing-asset helper is introduced only by the isolated
+ // Finder restoration; once present it must load before targeted engines.
+ const orderedFinder=[
+  'trade-specific-blank-router-v325.js',
+  'trade-specific-max-tier-add-v300.js',
+  'trade-specific-tier-up-v282.js',
+  'trade-specific-add-assets-v282.js',
+  'trade-specific-max-value-v279.js',
+  'trade-specific-player-v232.js',
+  'trade-finder-v256-compiled.js'
+ ];
+ const positions=orderedFinder.map(filename=>fresh.findIndex(x=>path.posix.basename(x.pathname)===filename));
+ must(positions.every(x=>x>=0),'Targeted Finder router or search module removed');
+ must(positions.every((x,i)=>i===0||x>positions[i-1]),'Targeted Finder runtime load order changed');
+ const complement=fresh.findIndex(x=>path.posix.basename(x.pathname)==='trade-add-assets-complement-v1.js');
+ if(complement>=0)must(complement>positions[0]&&complement<positions[1],
+  'Finder complementary-asset helper must load before targeted search engines');
  must(src.indexOf('trade-value-normalization-v139.js')<src.indexOf('trade-finder-v256-compiled.js'),
   'Canonical valuations must initialize before Trade Finder');
  must(src.indexOf('modeled-player-values-v319.js')<src.indexOf('value-history-v276.js'),

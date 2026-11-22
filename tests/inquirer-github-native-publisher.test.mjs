@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {completeMatchups,buildSourceTeams,selectValueHistoryWindow,buildArchivedMarketContext} from '../scripts/publish-inquirer-github-native.mjs';
+import {completeMatchups,buildSourceTeams,selectValueHistoryWindow,buildArchivedMarketContext,completeVerifiedMarketDesk} from '../scripts/publish-inquirer-github-native.mjs';
 import {githubPublishedInquirerIndex,githubPublishedInquirerEdition} from '../netlify/functions/lib/inquirer-github-published.mjs';
 import {createHash} from 'node:crypto';
 const rosters=Array.from({length:32},(_,i)=>({roster_id:i+1,owner_id:'u'+(i+1),
@@ -96,4 +96,24 @@ test('real archived master values produce grounded team and player market moveme
  assert.equal(a.playerValues.p1,1100);
  const bad=make('2026-11-09T00:00:00Z',1300,1100);bad.valuation_model='other';
  assert.throws(()=>buildArchivedMarketContext({baseline:make('2026-11-01T00:00:00Z',1200,1000),latest:bad}),/Noncomparable/);
+});
+
+test('clipped value analysis gets factual detail without changing independent word minimum',()=>{
+ const team={team_name:'Fantasy Tigers',opponent_name:'Fantasy Eagles',points:132.3,
+  value_history_week:{value:51000,baseline_value:50000,delta:1000},
+  value_history_player_movers:{risers:[{player_name:'Confirmed Player',delta:500}],fallers:[]},
+  inquirer_article:{sections:[{kind:'value',paragraphs:['A measured movement.']}]}
+ };
+ const edition={teams:[team]};
+ assert.equal(completeVerifiedMarketDesk(edition),1);
+ const value=team.inquirer_article.sections[0].paragraphs.join(' ');
+ assert.match(value,/50,000/);
+ assert.match(value,/51,000/);
+ assert.match(value,/Confirmed Player/);
+ assert.match(value,/Fantasy Eagles/);
+ assert(value.split(/\s+/).length>=25);
+ assert.equal(completeVerifiedMarketDesk(edition),0);
+ team.value_history_week=null;
+ team.inquirer_article.sections[0].paragraphs=['Value unknown.'];
+ assert.equal(completeVerifiedMarketDesk(edition),0);
 });

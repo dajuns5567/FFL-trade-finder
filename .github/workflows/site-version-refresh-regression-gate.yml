@@ -12,6 +12,7 @@ on:
       - 'tests/audit-shared-release-features.test.mjs'
       - 'tests/site-release-regression-contract.test.mjs'
       - '.github/workflows/site-version-refresh-regression-gate.yml'
+      - 'docs/release-regression-policy.md'
 permissions:
   contents: read
 jobs:
@@ -30,6 +31,7 @@ jobs:
           node --check scripts/audit-site-release-contract.mjs
           node --check scripts/audit-shared-release-features.mjs
           node --check tests/site-release-regression-contract.test.mjs
+          node --check tests/audit-shared-release-features.test.mjs
       - name: Run full-site rollback, continuity and cache key regression tests
         run: |
           node --test tests/site-release-regression-contract.test.mjs

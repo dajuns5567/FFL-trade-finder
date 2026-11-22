@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - fix/inquirer-github-native-publication-20261121
+  pull_request:
+    paths:
+      - '.github/workflows/inquirer-github-native-publisher.yml'
+      - 'scripts/verify-inquirer-published-readback.mjs'
+      - 'tests/inquirer-github-public-readback.test.mjs'
   schedule:
     - cron: '19,49 * * * *'
   workflow_dispatch:

@@ -16,7 +16,7 @@ export const features=[
  {id:'projection-verified-hot-seat',pr:584,file:'netlify/functions/lib/league-hot-seat.mjs',markers:["hot_seat_basis:'projected-upset'"]},
  {id:'managers-readonly-preview-fallback',pr:586,file:'netlify/functions/league-hub.mjs',markers:['managerHistory({persist:false})','cache_hit:false,preview_read_only:true']},
  {id:'managers-visible-freshness',pr:586,file:'league-hub-v451.js',markers:['MANAGER_REFRESH_MS=300000','refreshManagersIfVisible','managerRequestGeneration','manager-trade-refresh-unavailable']},
- {id:'managers-verified-weekly-records',pr:586,file:'netlify/functions/league-hub.mjs',markers:['verifiedManagerMatchupWeek(rows)','let rw=0,rl=0;for(const rows of weekRows)']},
+ {id:'managers-verified-weekly-records',pr:586,file:'netlify/functions/league-hub.mjs',markers:['verifiedManagerMatchupWeek(rows)','let rw=0,rl=0;for(const rows of weekRows)','MANAGER_CACHE_VERSION=14']},
  {id:'managers-spotlight-independent-completed-week',pr:586,file:'league-hub-v451.js',markers:['spotlightBlock(md,leagueWeek)','spotlightChanged','g?.projection_coverage===1']},
  {id:'managers-spotlight-verified-projections',pr:586,file:'netlify/functions/league-hub.mjs',markers:['const scoredProjections=await projections(season,week,league?.scoring_settings||{})','playerProjections:scoredProjections']},
  {id:'finder-targeted-bounded-filter-routing',pr:585,file:'trade-specific-max-value-v279.js',markers:['sourceIntegrityStats','structureIndexBuilds']},

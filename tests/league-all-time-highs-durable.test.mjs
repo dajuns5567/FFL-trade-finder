@@ -85,6 +85,19 @@ test('the scheduled canonical headless collector writes an independent durable G
  assert.match(backend,/githubDurableAwardHighs/);
  assert.match(backend,/mergeAwardHighs\(fromBlob,durable,now\)/);
 });
+test('scheduled award capture executes only AFTER canonical browser parity and never in the HTTP snapshot handler',()=>{
+ const source=read('scripts/value-history-headless-refresh.mjs');
+ const handler=source.slice(source.indexOf('async function valueHistory(req){'),
+  source.indexOf('async function pinnedConsensusUpdate(req){'));
+ assert.doesNotMatch(handler,/awardCaptureStatus|fleecedAwardHighsScheduledObservation/);
+ const browserStart=source.indexOf('  const captureCurrent=');
+ const award=source.indexOf('  let awardCaptureStatus=',browserStart);
+ const finalLog=source.indexOf('allTimeHighs:awardCaptureStatus',award);
+ assert(browserStart>=0&&award>browserStart&&finalLog>award);
+ assert(source.indexOf('if(!captured)throw new Error',browserStart)<award,
+  'only an accepted canonical browser observation can earn a historical high');
+});
+
 test('saved highs remain readable when a write fails in the browser',async()=>{
  const source=read('league-hub-v451.js');
  const fragment=source.slice(source.indexOf('async function refreshAllTimeHighs('),

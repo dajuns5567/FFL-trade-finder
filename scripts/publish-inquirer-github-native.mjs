@@ -81,9 +81,13 @@ function verifiedValueSnapshot(snapshot,entry){
    snapshot?.fingerprint!==entry.fingerprint||!Array.isArray(snapshot?.rows)||
    snapshot.rows.length<100||!Array.isArray(snapshot?.teams)||snapshot.teams.length!==32)
   throw Error('Canonical dynasty value snapshot incomplete or index mismatch');
- if(!snapshot?.provenance?.source_manifest?.length||
-    snapshot.provenance.canonical_parity!=='exact')
-  throw Error('Consensus model lineage of archived player values unverified');
+ // Pre-V101 canonical GitHub snapshots did not embed the later
+ // source_manifest field. Their branch, index fingerprint, model contract and
+ // full saved player/team records remain authoritative historical evidence.
+ // Never rewrite them or pretend modern provenance was present.
+ if(!String(snapshot.valuation_contract||'').trim()||
+    (snapshot.provenance&&snapshot.provenance.canonical_parity!=='exact'))
+  throw Error('Archived dynasty market model contract is missing or invalid');
  const ids=new Set();
  for(const row of snapshot.rows){
   if(!row.id||ids.has(String(row.id))||!Number.isFinite(Number(row.value)))

@@ -23,9 +23,12 @@ test('automatic poll does not schedule an incomplete opening-week edition',()=>{
  assert.equal(inquirerScheduleDecision({nfl:{season:2026,week:1},revision}).queue,false);
  assert.equal(inquirerScheduleDecision({nfl:null,revision}).queue,false);
 });
-test('Netlify automatically catches up completed Inquirer weeks on a five-minute cadence',()=>{
+test('GitHub, rather than Netlify, periodically catches up completed Inquirer weeks',()=>{
  const config=readFileSync(new URL('../netlify.toml',import.meta.url),'utf8');
- assert.match(config,/\[functions\."inquirer-publish-scheduled"\]\s*(?:#[^\n]*\n\s*)*schedule\s*=\s*"\*\/5 \* \* \* \*"/);
+ const workflow=readFileSync(new URL('../.github/workflows/inquirer-github-native-publisher.yml',import.meta.url),'utf8');
+ assert.doesNotMatch(config,/\[functions\."inquirer-publish-scheduled"\]/);
+ assert.match(workflow,/cron: '19,49 \* \* \* \*'/);
+ assert.match(workflow,/ref: inquirer-archive/);
 });
 
 test('scheduled publisher fails closed on replacement sites and missing history',()=>{

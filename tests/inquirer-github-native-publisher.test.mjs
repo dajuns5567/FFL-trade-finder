@@ -251,3 +251,17 @@ test('forward recap retains the five locked newsroom sections and verified playo
  assert.match(race,/Week 14 wildcard round/);
  assert.equal(restoreWeeklyPlayoffDesk(edition),false,'do not double-insert race desk');
 });
+
+test('authorized initial production cutover is exact-site and exact-commit; regular weekly editions never deploy Netlify',()=>{
+ const config=readFileSync(new URL('../netlify.toml',import.meta.url),'utf8');
+ const release='Release FFL Inquirer GitHub-native reader cutover 2026-11-22';
+ assert.ok(config.includes(release),'authorized one-time Inquirer reader release must be permitted');
+ assert.match(config,/SITE_ID==='a516be3b-6c65-4f54-a9fb-23c5361bf3d2'/);
+ assert.match(config,/e\.CONTEXT==='production'&&e\.BRANCH==='main'/);
+ assert.ok(!config.includes('[functions."inquirer-publish-scheduled"]'),
+  'ongoing newspaper publication must not schedule a Netlify deployment');
+ const workflow=readFileSync(new URL('../.github/workflows/inquirer-github-native-publisher.yml',import.meta.url),'utf8');
+ assert.match(workflow,/ref: inquirer-archive/);
+ assert.match(workflow,/git push origin HEAD:inquirer-archive/);
+ assert.match(workflow,/github\.ref == 'refs\/heads\/main' && github\.event_name != 'push'/);
+});

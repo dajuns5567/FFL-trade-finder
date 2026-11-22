@@ -10,14 +10,10 @@ const base=[
  {roster_id:'2',manager_name:'Manager Two',team_name:'Team 2',won:false,points:73,opponent_points:165},
  {roster_id:'3',manager_name:'Manager Three',team_name:'Team 3',won:true,points:165,opponent_points:73}
 ];
-test('Hot Seat never vanishes merely because finalized Sleeper matchups omit projections',()=>{
- const hot=selectHotSeat(base);
- assert.equal(hot.roster_id,'2');
- assert.equal(hot.hot_seat_basis,'largest-finalized-defeat');
- assert.match(hot.hot_seat_detail,/pregame projections unavailable/);
- assert.doesNotMatch(hot.hot_seat_detail,/Projected by/);
+test('Hot Seat refuses results-only data rather than fabricating a projection',()=>{
+ assert.equal(selectHotSeat(base),null);
 });
-test('a verified projected favorite who loses wins Hot Seat over biggest loss fallback',()=>{
+test('a verified projected favorite who loses earns Hot Seat',()=>{
  const teams=base.map(x=>({...x}));
  teams[0].projected=130;teams[0].opponent_projected=110;
  const hot=selectHotSeat(teams);
@@ -27,15 +23,14 @@ test('a verified projected favorite who loses wins Hot Seat over biggest loss fa
 });
 test('zero or null projections never count as genuine pregame upset evidence',()=>{
  const hot=selectHotSeat(base.map(x=>({...x,projected:null,opponent_projected:null})));
- assert.equal(hot.roster_id,'2');
- assert.equal(hot.hot_seat_basis,'largest-finalized-defeat');
+ assert.equal(hot,null);
  assert.equal(selectHotSeat(base.map(x=>({...x,won:true}))),null);
 });
 test('read-only weekly award response fills one missing Hot Seat without rewriting cached records',()=>{
  const old={schema_version:1,records:[{season:2026,week:10,
   manager_awards:[{type:'cool-throne',roster_id:'3'}]}]};
  const completed={available:true,season:2026,week:10,teams:[
-  ...base,...Array.from({length:29},(_,i)=>({
+  {...base[0],projected:145,opponent_projected:112},...base.slice(1),...Array.from({length:29},(_,i)=>({
    roster_id:String(i+4),won:i%2===0,points:i%2===0?112:80,
    opponent_points:i%2===0?80:112
   }))
@@ -43,18 +38,19 @@ test('read-only weekly award response fills one missing Hot Seat without rewriti
  const next=supplementCompletedHotSeat(old,completed);
  assert.equal(next.records[0].manager_awards.length,2);
  assert.equal(next.records[0].manager_awards[0].type,'hot-seat');
- assert.equal(next.records[0].manager_awards[0].roster_id,'2');
+ assert.equal(next.records[0].manager_awards[0].roster_id,'1');
  assert.equal(next.records[0].manager_awards[0].provisional,true);
  assert.equal(old.records[0].manager_awards.length,1,'original locked record must not be modified');
  assert.equal(supplementCompletedHotSeat(old,{...completed,week:9}),old);
  assert.equal(supplementCompletedHotSeat(next,completed).records[0].manager_awards.length,2);
 });
 
-test('League Hub backend and spotlight both use a verified completed-week Hot Seat fallback',()=>{
+test('League Hub backend and spotlight only award verified projected upsets',()=>{
  assert.match(backend,/hot=selectHotSeat\(teams\)/);
  assert.match(backend,/item\('hot-seat','🔥 Hot Seat',hot,hot\?\.hot_seat_detail/);
  assert.match(ui,/projectedLosses=losses\.filter\(g=>g\.projected!=null&&g\.opponent_projected!=null/);
- assert.match(ui,/Largest completed-week defeat • projections unavailable/);
+ assert.match(ui,/hot=projectedLosses\.slice\(\)\.sort/);
+ assert.doesNotMatch(ui,/largest-finalized-defeat|Largest completed-week defeat/);
 });
 test('missing weekly Hot Seat card is filled by the finalized feed, marked provisional',()=>{
  const a=ui.indexOf('function pendingHotSeatFromCompletedWeek(');
@@ -62,11 +58,11 @@ test('missing weekly Hot Seat card is filled by the finalized feed, marked provi
  assert(a>=0&&b>a);
  const fixture={season:2026,week:10,manager_awards:[{type:'cool-throne',title:'🧊 Cool Throne',roster_id:'3'}]};
  const fn=new Function('latestWeeklyAwardRecord','spotlightWeeklyCache','liveLeagueWeekCache','esc','teamName',ui.slice(a,b)+'return weeklyAwardCardsHTML')(
-  d=>d.records[0],{available:true,season:2026,week:10,teams:base},null,
+  d=>d.records[0],{available:true,season:2026,week:10,teams:[{...base[0],projected:145,opponent_projected:112},...base.slice(1)]},null,
   x=>String(x??''),x=>'Team '+x);
  const markup=fn({records:[fixture]});
  assert.match(markup,/Hot Seat/);
- assert.match(markup,/pregame projections unavailable/);
+ assert.match(markup,/Projected to win by 33\.0/);
  assert.match(markup,/pending archival/);
 });
 test('a newly finalized week refreshes Hot Seat and awards even when Managers or Awards view is open',()=>{

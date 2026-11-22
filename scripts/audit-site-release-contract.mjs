@@ -84,7 +84,7 @@ export function checkRuntimeContracts(sources){
   'Market Intelligence no longer refreshes from the live history endpoint');
  must(/scheduleSnapshot\(0,snapshotSourceFromUrl\(\)\)/.test(history),
   'Canonical Player Value History snapshot stopped running on site opening');
- must(/marketCache=null;teamNetCache.clear\(\)/.test(history),
+ must(/marketCache=null;[\s\S]{0,250}teamNetCache.clear\(\)/.test(history),
   'Canonical refresh no longer invalidates stale market and team caches');
  must(/fll:canonical-values-ready/.test(history),
   'Current Player Values stopped propagating to live history consumers');

@@ -31,3 +31,12 @@ test('non-preview Managers freshness and cache behavior are not changed',()=>{
  assert.match(live,/cached\?\.cache_version===MANAGER_CACHE_VERSION/);
  assert.match(live,/return json\(await managerHistory\(\)\)/);
 });
+
+test('Netlify permits the isolated Managers PR preview, not an unsanctioned production build',()=>{
+ const toml=readFileSync(new URL('../netlify.toml',import.meta.url),'utf8');
+ assert.match(toml,/e\.CONTEXT==='deploy-preview'/);
+ assert.match(toml,/a516be3b-6c65-4f54-a9fb-23c5361bf3d2/);
+ assert.match(toml,/'586'\]\.includes\(String\(e\.REVIEW_ID\)\)/);
+ assert.match(toml,/e\.CONTEXT==='production'&&e\.BRANCH==='main'/);
+ assert.doesNotMatch(toml,/Release FFL Managers/);
+});

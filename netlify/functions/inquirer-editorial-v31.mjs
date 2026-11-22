@@ -5533,6 +5533,12 @@ function assertWeek2Originality(result,previousEdition){
       .sort((a,b)=>Number(b.points)-Number(a.points));
     const top=starters[0],second=starters[1],players=article.sections?.find(s=>s.kind==='players');
     if(!top||!second||!players||!Number.isFinite(Number(team.points)))continue;
+    // This fact-only pair summary is an emergency floor for a genuinely
+    // underdeveloped player desk, NOT a boilerplate append to every article.
+    // Repeating it across 32 rosters created exact normalized scaffolds.
+    // Preserve the independent 24-word article threshold unchanged.
+    const developedWords=(players.paragraphs||[]).join(' ').trim().split(/\s+/).filter(Boolean).length;
+    if(developedWords>=24)continue;
     const total=Number(team.points),combined=Number(top.points)+Number(second.points);
     const evidence=top.name+' and '+second.name+' combined for '+forwardOne(combined)+
       ' of '+forwardOne(total)+' recorded fantasy points for '+w2DisplayTeam(team.team_name)+

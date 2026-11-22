@@ -107,6 +107,7 @@ async function valueHistory(req){
   // Separate award observation: failures must not fabricate highs or roll
   // back an otherwise valid canonical valuation history capture.
   const highsFile=process.env.ALL_TIME_HIGHS_SCHEDULED_FILE||'.tmp/all-time-highs-scheduled.json';
+  let awardCaptureStatus='not-started';
   try{
    const observations=await page.evaluate(()=>window.fleecedAwardHighsScheduledObservation?.());
    if(observations?.team_count!==32||observations?.categories!==20||
@@ -116,11 +117,13 @@ async function valueHistory(req){
     ...observations,canonical_fingerprint:fp,
     model_used:valuationModel,source_commit:sourceCommit
    },null,2)+'\n');
+   awardCaptureStatus='captured:'+observations.observations.length;
    console.log('ALL_TIME_HIGHS_SCHEDULED_CAPTURE '+JSON.stringify({
     captured_at:observations.captured_at,records:observations.observations.length,
     trades:observations.trade_count,drafts:observations.draft_count
    }));
   }catch(error){
+   awardCaptureStatus='unavailable:'+String(error?.message||error).slice(0,200);
    console.warn('ALL_TIME_HIGHS_SCHEDULED_CAPTURE_UNAVAILABLE',String(error?.stack||error));
   }
   return json({ok:true,t,fingerprint:fp,source:'scheduled',count:rows.length});
@@ -510,7 +513,7 @@ try{
   mkdirSync(join(process.cwd(),'.tmp'),{recursive:true});
   writeFileSync(snapshotFile,JSON.stringify(snap,null,2)+'\n');
 
-  console.log(JSON.stringify({ok:true,runtime:'github-main-local',readiness,canonicalParity:'exact',modeledVersion:captured.modeledVersion,pageErrors:pageErrors.length,failedRequests:failedRequests.length,snapshot:{t,source:'scheduled',count:captured.rows.length,fingerprint:fp}},null,2));
+  console.log(JSON.stringify({ok:true,runtime:'github-main-local',readiness,canonicalParity:'exact',modeledVersion:captured.modeledVersion,pageErrors:pageErrors.length,failedRequests:failedRequests.length,allTimeHighs:awardCaptureStatus,snapshot:{t,source:'scheduled',count:captured.rows.length,fingerprint:fp}},null,2));
 }finally{
   await browser.close();
   await new Promise(resolve=>server.close(resolve));

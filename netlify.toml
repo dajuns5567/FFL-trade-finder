@@ -7,7 +7,8 @@
   # every unrelated future main commit stays skipped; allow the exact owner-
   # authorized V110 hostname correction and one verified Inquirer-only
   # Week 9 reader correction and one owner-authorized GitHub-native reader
-  # cutover and the separate League Hub completed-week release; ordinary\n  # future main commits never auto-deploy.
+  # cutover and the separate League Hub completed-week release; ordinary
+  # future main commits never auto-deploy.
   # Allow only explicitly approved Inquirer PR previews on current V101 site.
   # Keep old authorized PR previews; block all other production builds.
   # Netlify: exit 1 builds, exit 0 skips.

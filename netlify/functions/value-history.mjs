@@ -1121,9 +1121,35 @@ async function canonicalWeeklyAwards(origin){
     return Array.isArray(payload?.records)?payload.records:[];
   }catch{return[]}
 }
+// Independent Sleeper matchup finalization, not the Inquirer publication
+// cursor or NFL's calendar week, authorizes new Player-of-the-Week badges.
+let verifiedAwardWeekCache=null,verifiedAwardWeekCacheAt=0;
+async function verifiedCompletedAwardWeek(origin,season){
+ const base=String(origin||'').replace(/\/$/,'');
+ if(!base)return 0;
+ if(verifiedAwardWeekCache?.season===season&&Date.now()-verifiedAwardWeekCacheAt<30000)
+  return verifiedAwardWeekCache.week;
+ try{
+  const response=await fetch(`${base}/.netlify/functions/league-hub?league_latest=1`,
+   {headers:{accept:'application/json','user-agent':'FFL-TradeFinder-ValueHistoryScoring/1.0'},cache:'no-store'});
+  if(!response.ok)return 0;
+  const data=await response.json();
+  const week=Number(data?.week);
+  if(data?.available!==true||Number(data?.season)!==Number(season)||
+    !Number.isInteger(week)||week<1||week>18||
+    !Array.isArray(data?.teams)||data.teams.length!==32||
+    data.teams.some(row=>!Number.isFinite(Number(row?.points))||
+      !Number.isFinite(Number(row?.opponent_points))))return 0;
+  verifiedAwardWeekCache={season,week};verifiedAwardWeekCacheAt=Date.now();
+  return week;
+ }catch(error){
+  console.warn('player-weekly-awards-verification-unavailable',String(error?.message||error));
+  return 0;
+ }
+}
 async function scoringMilestones(playerId){
   const origin=String(arguments[1]||''),cacheKey=String(playerId),cachedMilestone=playerMilestoneCache.get(cacheKey),now=Date.now();
-  if(cachedMilestone&&now-cachedMilestone.t<300000)return cachedMilestone.value;
+  if(cachedMilestone&&now-cachedMilestone.t<60000)return cachedMilestone.value;
   try{
     const [league,players,canonicalRecords,nflState]=await Promise.all([
       scoringJson(`${SCORING_API}/league/${LEAGUE}`),
@@ -1132,6 +1158,7 @@ async function scoringMilestones(playerId){
       scoringJson(`${SCORING_API}/state/nfl`).catch(()=>({}))
     ]),currentSeason=Number(league?.season),currentCompletedWeek=Math.max(0,Math.min(18,(Number(nflState?.week)||1)-1)),scoring=league?.scoring_settings||{};
     if(!currentSeason||!Object.keys(scoring).length)return null;
+    const verifiedCurrentWeek=await verifiedCompletedAwardWeek(origin,currentSeason);
     const years=[currentSeason,currentSeason-1,currentSeason-2,currentSeason-3],weeklyByYear={},canonicalByKey=new Map((canonicalRecords||[]).filter(r=>r?.players_of_week).map(r=>[Number(r.season)+'|'+Number(r.week),r]));
     await Promise.all(years.map(async y=>weeklyByYear[y]=await scoringSeasonWeeks(y,currentSeason,currentCompletedWeek)));
     let highWeek=null,highSeason=null,highPpg=null;const weeklyAwards=[];
@@ -1147,7 +1174,8 @@ async function scoringMilestones(playerId){
         // Never infer an award from an in-progress or missing stat feed.
         const awards=playerWeeklyMilestoneAwards({
           playerId,season:year,week,currentSeason,currentCompletedWeek,
-          canonical,payload,players,scoring,score:leagueScore
+          canonical,payload,players,scoring,score:leagueScore,
+          verifiedCompletedWeek:year<currentSeason?18:Math.min(currentCompletedWeek,verifiedCurrentWeek)
         });
         for(const award of awards)weeklyAwards.push({
           ...award,week_started_at:nflWeekStartIso(year,week)

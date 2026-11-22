@@ -73,3 +73,18 @@ test('historical editions and non-source-backed copy are never rewritten',()=>{
  const overview=recap();rotateForwardRecapOpening(overview,[],11,0,[]);
  assert.equal(overview.sections[0].blocks[0].paragraphs[0],'Original source-backed lede.');
 });
+
+
+test('compositional writing covers Week 1 in subsequent seasons without rewriting 2026 approved Weeks 1–9',()=>{
+ const fresh=Array.from({length:32},(_,i)=>team(i));
+ const original=JSON.stringify(fresh);
+ reinforceForwardReporterVoice(fresh,1,0,[],2027);
+ assert.notEqual(JSON.stringify(fresh),original,'2027 Week 1 must use the new newsroom voice');
+ const overview=recap();
+ rotateForwardRecapOpening(overview,fresh,1,0,[],2027);
+ assert.notEqual(overview.sections[0].blocks[0].paragraphs[0],'Original source-backed lede.');
+ const preserved=Array.from({length:32},(_,i)=>team(i));
+ const before=JSON.stringify(preserved);
+ reinforceForwardReporterVoice(preserved,5,0,[],2026);
+ assert.equal(JSON.stringify(preserved),before);
+});

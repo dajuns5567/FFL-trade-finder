@@ -159,6 +159,12 @@ export function selectEditorialEdition({rawInquirer,rawOverview,season,week,prev
   const verdict=verifyEditorialEdition(edition,previous,historical);
   edition.editorial_generation.quality_metrics=verdict.quality.metrics||{};
   const score=(verdict.quality.issues?.length||0)*4+(verdict.audit.issues?.length||0)+(verdict.independent.issues?.length||0)*8;
+  console.info('github-inquirer-editorial-candidate',JSON.stringify({
+   season,week,salt,admitted:verdict.ok,quality:verdict.quality.ok,
+   audit:verdict.audit.ok,independent:verdict.independent.ok,
+   deep_issues:verdict.quality.issues?.length||0,basic_issues:verdict.audit.issues?.length||0,
+   independent_issues:verdict.independent.issue_count||0
+  }));
   if(!best||score<best.score)best={edition,verdict,score};
   if(verdict.ok){
    passing={edition,verdict,score};
@@ -205,6 +211,7 @@ export async function runGithubInquirerPublisher({archiveRoot,fetcher=fetch,now=
  if(previous.available!==true||previous.published_locked!==true||Number(previous.week)!==week-1)
   throw Error('Previous immutable GitHub edition not verified for Week '+week);
  const previousEditorial=Number(previous.week)===9?correctWeekNineReaderEdition(previous):previous;
+ console.info('github-inquirer-source',{season,week,completed_state_week:current,archive:'SHA-256 protected'});
  const [matchups,rosters,users,players,nextMatchups,transactions]=await Promise.all([
   req(API+'/league/'+LEAGUE_ID+'/matchups/'+week,fetcher),req(API+'/league/'+LEAGUE_ID+'/rosters',fetcher),
   req(API+'/league/'+LEAGUE_ID+'/users',fetcher),req(API+'/players/nfl',fetcher),
@@ -226,6 +233,7 @@ export async function runGithubInquirerPublisher({archiveRoot,fetcher=fetch,now=
   [w,await req(API+'/stats/nfl/regular/'+season+'/'+w,fetcher).catch(()=>({}))])));
  const historical=[];
  for(let w=Math.max(3,week-4);w<=week-2;w++)historical.push(await read(w<=9?'2026/week-'+pad(w)+'.json':'forward/2026/week-'+pad(w)+'.json'));
+ console.info('github-inquirer-finalized-matchups',{season,week,teams:matchups.length,stat_weeks:Object.keys(statHistory).length});
  const teams=buildSourceTeams({league,week,matchups,rosters,users,players,previousEdition:previousEditorial,
   history,nextMatchups,transactions});
  const rawInquirer=buildInquirerWeek({season,week,teams,players,weeklyStats:statHistory[week],

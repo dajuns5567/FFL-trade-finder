@@ -22,13 +22,41 @@ function starter(t,name,points){
 const leading=t=>(t.starter_details||[]).filter(x=>x.name&&Number.isFinite(Number(x.points)))
  .sort((a,b)=>Number(b.points)-Number(a.points))[0];
 function teamFix(t,kind){
- const p=leading(t),score=n(t.points)+'–'+n(t.opponent_points),won=t.won?'beat':'lost to';
+ const p=leading(t),score=n(t.points)+'–'+n(t.opponent_points),won=t.won?'beat':'fell to';
  if(!p||!t.next_opponent_name)return null;
- if(kind==='lede')return t.team_name+' '+won+' '+t.opponent_name+' '+score+' in Week 9. '+p.name+' contributed '+n(p.points)+' fantasy points to '+t.team_name+' in that matchup.';
- if(kind==='cool-throne')return p.name+' gave '+t.team_name+' '+n(p.points)+' points against '+t.opponent_name+' in Week 9. '+t.team_name+' finished '+score+'.';
- if(kind==='outlook')return t.team_name+' faces '+t.next_opponent_name+' in Week 10 after the '+score+' Week 9 result against '+t.opponent_name+'.';
- if(kind==='sentiment')return t.team_name+' manager '+t.manager_name+' has the '+score+' Week 9 result against '+t.opponent_name+' to explain. '+p.name+' delivered '+n(p.points)+' of those points.';
- if(kind==='management')return t.team_name+' manager '+t.manager_name+' set the lineup that scored '+n(t.points)+' against '+t.opponent_name+' in Week 9; '+p.name+' added '+n(p.points)+'.';
+ const reporter=t.reporter_id||'',team=t.team_name,opponent=t.opponent_name;
+ const voice=reporter==='walter-mercer'?0:reporter==='tess-delaney'?1:reporter==='mack-hollis'?2:3;
+ const opening=[
+  team+' '+won+' '+opponent+' '+score+'. The final is on the books; '+p.name+' supplied '+n(p.points)+' points of the evidence.',
+  team+' '+won+' '+opponent+' '+score+', a Sunday argument that '+p.name+' helped shape with '+n(p.points)+' points. One suspects the neighbors have already formed opinions.',
+  team+' '+won+' '+opponent+' '+score+'. '+p.name+': '+n(p.points)+' points. Put that name on the back page.',
+  team+' '+won+' '+opponent+' '+score+'. Exhibit A is '+p.name+' and '+n(p.points)+' points; the rest of the case is the lineup.'
+ ];
+ if(kind==='lede')return opening[voice];
+ if(kind==='cool-throne')return [
+  p.name+' earned his space in the clipping: '+n(p.points)+' points as '+team+' finished '+score+' against '+opponent+'.',
+  'A tip of the hat to '+p.name+'. His '+n(p.points)+' points gave '+team+' something worth framing, regardless of the '+score+' final.',
+  p.name+' delivered '+n(p.points)+' points against '+opponent+'. The rest of the card can argue over the '+score+' result.',
+  p.name+' logged '+n(p.points)+' points for '+team+' against '+opponent+'. That contribution is not in dispute.'
+ ][voice];
+ if(kind==='outlook')return [
+  team+' gets '+t.next_opponent_name+' next. After '+score+' against '+opponent+', there is no shortage of work.',
+  'Next on the invitation list: '+t.next_opponent_name+'. '+team+' carries a '+score+' result into that engagement.',
+  'NEXT UP: '+t.next_opponent_name+'. '+team+' takes the '+score+' result and all its consequences into Week 10.',
+  team+' faces '+t.next_opponent_name+' in Week 10. The '+score+' against '+opponent+' remains the case file.'
+ ][voice];
+ if(kind==='sentiment')return [
+  'Manager '+t.manager_name+' owns the '+score+' result against '+opponent+'. '+p.name+' gave the lineup '+n(p.points)+' points, a detail not to be forgotten.',
+  'For manager '+t.manager_name+', the '+score+' against '+opponent+' will linger. '+p.name+' contributed '+n(p.points)+' points to the occasion.',
+  'Manager '+t.manager_name+' has a '+score+' result to answer for or celebrate. '+p.name+' brought '+n(p.points)+' points to the party.',
+  'The score under manager '+t.manager_name+' reads '+score+' against '+opponent+'. '+p.name+' accounted for '+n(p.points)+' points; the evidence is signed.'
+ ][voice];
+ if(kind==='management')return [
+  'Manager '+t.manager_name+' sent out the '+team+' lineup for '+n(t.points)+' points against '+opponent+'. '+p.name+' accounted for '+n(p.points)+' of them.',
+  'Manager '+t.manager_name+' presented a '+team+' lineup worth '+n(t.points)+' against '+opponent+', with '+n(p.points)+' supplied by '+p.name+'.',
+  'THE LINEUP CARD: '+n(t.points)+' for '+team+' against '+opponent+'. Manager '+t.manager_name+' got '+n(p.points)+' from '+p.name+'.',
+  'Manager '+t.manager_name+' signed the '+team+' lineup that scored '+n(t.points)+' against '+opponent+'. '+p.name+' produced '+n(p.points)+'; the rest is still under review.'
+ ][voice];
  return null;
 }
 function correctTeamArticles(d){

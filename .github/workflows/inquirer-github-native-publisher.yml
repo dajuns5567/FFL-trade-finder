@@ -12,8 +12,10 @@ permissions:
   contents: write
 
 concurrency:
-  group: inquirer-github-native-single-writer
-  cancel-in-progress: false
+  # A superseding code revision cancels only stale preview verification.
+  # Live scheduled/archive publication is never cancelled halfway through.
+  group: ${{ github.event_name == 'push' && 'inquirer-github-native-validation' || 'inquirer-github-native-publication' }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
 
 jobs:
   verify:

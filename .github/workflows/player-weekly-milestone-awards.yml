@@ -7,6 +7,7 @@ on:
       - 'value-history-v276.js'
       - 'netlify/functions/lib/player-weekly-milestone-awards.mjs'
       - 'tests/player-weekly-milestone-awards.test.mjs'
+      - 'tests/player-weekly-badge-completion-readback.test.mjs'
       - '.github/workflows/player-weekly-milestone-awards.yml'
   workflow_dispatch:
 permissions:
@@ -26,4 +27,4 @@ jobs:
           node --check value-history-v276.js
           node --check netlify/functions/lib/player-weekly-milestone-awards.mjs
       - name: Test completed-week award sync
-        run: node --test tests/player-weekly-milestone-awards.test.mjs
+        run: node --test tests/player-weekly-milestone-awards.test.mjs tests/player-weekly-badge-completion-readback.test.mjs

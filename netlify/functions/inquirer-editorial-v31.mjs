@@ -3696,7 +3696,11 @@ function rewriteWeek2Overview(overview,teams,previousEdition,week=2){
     // Contextualize one decisive player; do not mandate three box-score rows
     // for every game, or then narrate all three again in the next paragraph.
     const statNames=Number(week)<=2?(i===0?wTop:[wStar,lStar,ws[1]]):[wStar];
-    paras.push(w2S(w,r,"recap-stats-"+i,w2RecapStatLead(g,i).trim()+" "+statNames.filter(Boolean).map(w2RecapStat).join('; ')));
+    // Week 9+ independent attribution requires the fantasy matchup to be
+    // identifiable even when a player-stat paragraph is lifted into the
+    // recap Players desk. Do not alter signed-off Week 2-era copy.
+    const fantasyMatchup=Number(week)>=9?("For "+wName+" against "+lName+", "):"";
+    paras.push(w2S(w,r,"recap-stats-"+i,fantasyMatchup+w2RecapStatLead(g,i).trim()+" "+statNames.filter(Boolean).map(w2RecapStat).join('; ')));
     let turn;
     if(blowout&&wTop3>Number(l.points))turn=Number(week)<=2?w2Natural(wTop.map(p=>p.name))+" combined for "+w2One(wTop3)+" points—more than "+lName+"’s entire "+w2One(l.points)+"-point lineup. That is the sort of blowout where the losing side starts checking whether the scoring app accidentally counted two Sundays.":wName+" outscored "+lName+" by "+w2One(g.margin)+". A gap that large is not one unlucky starter; it is a lineup full of unanswered questions.";
     else if(knife&&loserMiss>0&&l?.best_lineup_miss?.reserve&&l?.best_lineup_miss?.starter)turn=w2RecapBenchTurn(l,g,l.best_lineup_miss);

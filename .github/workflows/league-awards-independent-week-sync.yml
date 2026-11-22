@@ -1,0 +1,26 @@
+name: Independent League Hub weekly award contract
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/league-hub.mjs'
+      - 'tests/league-awards-independent-week-sync.test.mjs'
+      - '.github/workflows/league-awards-independent-week-sync.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  weekly-awards:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install existing project dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+      - name: Syntax and weekly award/source independence checks
+        run: |
+          node --check netlify/functions/league-hub.mjs
+          node --test tests/league-awards-independent-week-sync.test.mjs
+          node --test tests/league-week-independent-news.test.mjs

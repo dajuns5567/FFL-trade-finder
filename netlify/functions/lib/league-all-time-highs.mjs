@@ -16,7 +16,15 @@ export function mergeAwardHighs(existing=[],observations=[],observedAt=new Date(
   if(!validAwardHigh(row))return;
   const key=String(row.award_key)+'|'+String(row.roster_id);
   const score=Number(row.score),current=byKey.get(key);
-  if(current&&score<=current.score)return;
+  if(current&&score<current.score)return;
+  if(current&&score===current.score){
+   // The same peak may exist in both Netlify Blob and the independent
+   // GitHub archive. Retain the EARLIEST verified observation timestamp.
+   if(source==='historical'&&Number.isFinite(Date.parse(row.captured_at))&&
+      new Date(row.captured_at)<new Date(current.captured_at))
+    byKey.set(key,{...current,captured_at:String(row.captured_at)});
+   return;
+  }
   const captured_at=source==='historical'&&Number.isFinite(Date.parse(row.captured_at))
    ?String(row.captured_at):observedAt;
   byKey.set(key,{award_key:String(row.award_key),roster_id:String(row.roster_id),score,

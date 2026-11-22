@@ -201,8 +201,30 @@ function leagueContext(histories,teams){
    if(m&&o&&m.points!=null&&o.points!=null&&Number.isFinite(Number(m.points))&&Number.isFinite(Number(o.points)))
     games.push({week:w,roster_id:id,opponent_roster_id:opp,points:Number(m.points),opponent_points:Number(o.points),won:Number(m.points)>Number(o.points)});
   }
-  result[id]={record:{wins:games.filter(x=>x.won).length,losses:games.filter(x=>x.points<x.opponent_points).length,ties:games.filter(x=>x.points===x.opponent_points).length},recent_games:games.slice(-5)};
+  const record={wins:games.filter(x=>x.won).length,
+   losses:games.filter(x=>x.points<x.opponent_points).length,
+   ties:games.filter(x=>x.points===x.opponent_points).length};
+  const last=games.at(-1),lastResult=last?(last.points>last.opponent_points?'W':last.points<last.opponent_points?'L':'T'):null;
+  let streakLength=0;
+  if(lastResult)for(let i=games.length-1;i>=0;i--){
+   const g=games[i],outcome=g.points>g.opponent_points?'W':g.points<g.opponent_points?'L':'T';
+   if(outcome!==lastResult)break;
+   streakLength++;
+  }
+  result[id]={record,points_for:Number(games.reduce((sum,g)=>sum+g.points,0).toFixed(2)),
+   standings_rank:null,
+   streak:lastResult?{type:lastResult,length:streakLength}:null,
+   recent_games:games.slice(-5)};
  }
+ // Editorial tables must never treat missing ranks as first place. Only the
+ // regular-season completed Sleeper matchup history determines the order.
+ const ranked=Object.entries(result).sort(([id,a],[other,b])=>
+  b.record.wins-a.record.wins||
+  a.record.losses-b.record.losses||
+  b.record.ties-a.record.ties||
+  b.points_for-a.points_for||
+  Number(id)-Number(other));
+ for(let i=0;i<ranked.length;i++)ranked[i][1].standings_rank=i+1;
  return result;
 }
 export function buildSourceTeams({league,week,matchups,history=[],nextMatchups=[],rosters,users,players,previousEdition,transactions=[],market=null}){
@@ -233,7 +255,7 @@ export function buildSourceTeams({league,week,matchups,history=[],nextMatchups=[
    const rid=String(x.roster_id),rec=context[rid]?.record||{},games=context[rid]?.recent_games||[];
    return{roster_id:rid,team_name:identities.get(rid)?.team_name,
     wins:Number(rec.wins)||0,losses:Number(rec.losses)||0,ties:Number(rec.ties)||0,
-    points_for:games.reduce((n,g)=>n+Number(g.points||0),0)};
+    points_for:Number(context[rid]?.points_for)||0};
   }).sort((a,b)=>b.wins-a.wins||a.losses-b.losses||b.ties-a.ties||b.points_for-a.points_for||Number(a.roster_id)-Number(b.roster_id));
   const pos=rows.findIndex(x=>x.roster_id===String(id)),me=rows[pos],best=rows[0];
   if(!me||!best)return null;

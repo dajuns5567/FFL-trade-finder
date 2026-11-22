@@ -2,6 +2,7 @@
 // The verified Git archive and its SHA-256 digest remain byte-for-byte intact.
 // Nothing here claims a trade, a locker-room quote, or a result not in Sleeper.
 export function addWeekTenEditorialHumor(edition){
+ if(edition?.reader_tonal_addendum?.week===10)return edition;
  if(Number(edition?.season)!==2026||Number(edition?.week)!==10||
     edition?.available!==true||edition?.published_locked!==true||
     edition?.editorial_generation?.engine!=='v31-forward'||
@@ -62,7 +63,8 @@ export function addWeekTenEditorialHumor(edition){
   };
   const options=lines[voice]||lines['walter-mercer'];
   let index=((Math.floor((roster-1)/4)+10)%options.length+options.length)%options.length;
-  while(used.has(voice+'|'+index))index=(index+1)%options.length;
+  for(let attempt=0;attempt<options.length&&used.has(voice+'|'+index);attempt++)index=(index+1)%options.length;
+  if(used.has(voice+'|'+index))continue;
   used.add(voice+'|'+index);
   const sentence=options[index];
   if(desk.paragraphs.some(p=>String(p).includes(sentence)))continue;

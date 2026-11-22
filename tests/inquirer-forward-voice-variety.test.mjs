@@ -35,3 +35,18 @@ test('recap rotations look past the immediate previous edition and retain featur
  const copy=recap();rotateForwardRecapOpening(copy,[t],9,0,[]);
  assert.equal(copy.sections[0].blocks[0].paragraphs[0],'Old opening');
 });
+
+test('plural fantasy teams retain proper verb agreement across reporter and salt rotations',()=>{
+ const reporters=['walter-mercer','tess-delaney','mack-hollis','nora-voss'];
+ for(let salt=0;salt<8;salt++){
+  const rows=Array.from({length:32},(_,i)=>{
+   const t=team(i+1,reporters[i%4]);
+   t.team_name=i%2?'Los Angeles Rams':'Kansas City Chiefs';
+   t.opponent_name=i%2?'Kansas City Chiefs':'Los Angeles Rams';
+   return t;
+  });
+  reinforceForwardReporterVoice(rows,14,salt,[]);
+  const copy=rows.map(t=>t.inquirer_article.sections.find(s=>s.kind==='sentiment').paragraphs.at(-1)).join(' ');
+  assert.doesNotMatch(copy,/\\b(?:Kansas City Chiefs|Los Angeles Rams) (?:has|is|does|gets|needs|sits|keeps|projects|faces)\\b/i);
+ }
+});

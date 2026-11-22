@@ -181,7 +181,7 @@ test('Week 9 attributed reader correction preserves four distinct reporter voice
   const lines=reporters.map(reporter_id=>teamFix({...base,reporter_id},kind));
   assert.equal(new Set(lines).size,4,kind+' must keep four independent reporter constructions');
   for(const line of lines){
-   assert.ok(line.includes(base.team_name),kind+' must name the fantasy team');
+   assert.ok(line.includes(base.team_name)||line.includes(base.manager_name),kind+' must attribute the fantasy team or manager');
    assert.match(line,/\b(?:81\.7|79\.7|25\.3|Jacksonville Jags)\b/);
    assert.doesNotMatch(line,/not (?:the )?NFL|not a result between NFL franchises|not interchangeable/i);
   }

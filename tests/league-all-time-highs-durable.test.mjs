@@ -77,6 +77,7 @@ test('saved highs remain readable when a write fails in the browser',async()=>{
  assert(fragment.includes("league-award-highs-write-unavailable"));
  assert(fragment.indexOf('awardHighHistory=data.records')<fragment.indexOf("method:'POST'"));
  const setup=new Function('fetch','console','globalThis',`
+  const awardRecordKey=key=>key;
   let awardHighHistory=[],onNetlifyDeployPreview=false,inquirerPreviewMode=false,
   currentView='daily',rankingAwardKey=null,awardHighMode={},tradeCache=null,draftCache=null;
   ${fragment}

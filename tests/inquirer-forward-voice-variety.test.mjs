@@ -10,7 +10,7 @@ const team=(id,reporter='mack-hollis')=>({
 const recap=()=>({sections:[{heading:'Week 11',blocks:[{kind:'lead',paragraphs:['Old opening','Second paragraph reports league standings facts.']}],paragraphs:['Old opening','Second paragraph reports league standings facts.']}],paragraphs:[]});
 
 test('fact-grounded sarcasm is unique by voice and never mutates signed-off prior weeks',()=>{
- assert.equal(FORWARD_EDITORIAL_REVISION,111);
+ assert.equal(FORWARD_EDITORIAL_REVISION,112);
  const reporters=['walter-mercer','tess-delaney','mack-hollis','nora-voss'];
  const draft=reporters.map((r,i)=>team(i+1,r));
  reinforceForwardReporterVoice(draft,11,0,[]);

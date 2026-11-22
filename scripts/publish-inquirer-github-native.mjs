@@ -368,12 +368,13 @@ export function verifyEditorialEdition(edition,previous,historical=[]){
  const independent=auditIndependentInquirerCopy([edition],{revision:FORWARD_EDITORIAL_REVISION,mode:'publication'});
  const voiceIssues=inspectInquirerNewspaperVoice(edition);
  const standingsIssues=inspectCompletedStandingsContract(edition);
+ const recapArchitectureIssues=inspectMajorRecapArchitecture(edition);
  const admission=deterministicInquirerAdmission(edition,{quality,audit,previousEdition:previous});
  // The same canonical archive contract used by the public League Hub reader
  // must pass BEFORE any edition is committed to GitHub.
  const canonical=inspectCanonicalArchive(edition,edition?.season,edition?.week);
- return{ok:quality.ok&&audit.ok&&independent.ok&&admission.approved&&canonical.ok&&!voiceIssues.length&&!standingsIssues.length,
-  audit,quality,independent,admission,canonical,voiceIssues,standingsIssues};
+ return{ok:quality.ok&&audit.ok&&independent.ok&&admission.approved&&canonical.ok&&!voiceIssues.length&&!standingsIssues.length&&!recapArchitectureIssues.length,
+  audit,quality,independent,admission,canonical,voiceIssues,standingsIssues,recapArchitectureIssues};
 }
 // Keep the existing >=25-word independent value-desk audit unchanged.
 // Only add genuinely measured facts to a clipped deterministic desk.
@@ -410,6 +411,46 @@ export function completeVerifiedMarketDesk(edition){
  }
  return amended;
 }
+// Historical locked Weeks 8-9 have a five-section recap. A source-only
+// forward publisher omitted the playoff desk when schedule odds were missing.
+// The actual W/L standings and next opponents are sufficient for sourced
+// league-race reporting; do not invent odds or steal an old paragraph.
+export function restoreWeeklyPlayoffDesk(edition){
+ const overview=edition?.league_overview,sections=overview?.sections||[];
+ if(Number(edition?.week)<10)return false;
+ if(sections.length!==4)return false;
+ const teams=(edition.teams||[]).slice().sort((a,b)=>
+  Number(a.league_context?.standings_rank||999)-Number(b.league_context?.standings_rank||999));
+ if(teams.length!==32||teams.some((t,i)=>Number(t.league_context?.standings_rank)!==i+1))
+  throw Error('Cannot restore playoff desk without verified league standings');
+ const rec=t=>{
+  const r=t.league_context.record;return String(r.wins)+'-'+String(r.losses)+(r.ties?'-'+r.ties:'');
+ };
+ const first=teams[0],challenger=teams[1],cut=teams[3],outside=teams[4];
+ const remaining=Math.max(0,13-Number(edition.week));
+ const standings=[
+  first.team_name+' carries '+rec(first)+' and the No. 1 seed into the closing stretch, with '+
+  challenger.team_name+' at '+rec(challenger)+' chasing from second. '+remaining+
+  ' regular-season game'+(remaining===1?'':'s')+' remain before the Week 14 wildcard round; that leaves little time for anyone hoping the leaders will begin losing out of politeness.',
+  cut.team_name+' holds fourth place at '+rec(cut)+', while '+outside.team_name+
+  ' sits fifth at '+rec(outside)+'. The narrow part of a playoff race does not need a manufactured percentage. It needs the next set of results, and neither side can borrow points from a good Sunday three weeks ago.'
+ ];
+ const section={reporter:sections[1]?.reporter||sections[0]?.reporter||null,
+  heading:'The Playoff Race Is No Longer Background Noise',paragraphs:standings};
+ sections.splice(1,0,section);
+ overview.paragraphs=sections.flatMap(x=>x.paragraphs||[]);
+ return true;
+}
+export function inspectMajorRecapArchitecture(edition){
+ if(Number(edition?.week)<10)return [];
+ const sections=edition?.league_overview?.sections||[];
+ const issues=[];
+ if(sections.length!==5)issues.push({id:'missing-weekly-recap-five-desk-architecture'});
+ if(sections[1]?.heading!=='The Playoff Race Is No Longer Background Noise'||
+    (sections[1]?.paragraphs||[]).length<2)
+  issues.push({id:'missing-playoff-race-reporting'});
+ return issues;
+}
 export function selectEditorialEdition({rawInquirer,rawOverview,season,week,previous,historical=[]}){
  const classification=inquirerWeekClassification(week,season);
  let best=null,passing=null;
@@ -425,6 +466,7 @@ export function selectEditorialEdition({rawInquirer,rawOverview,season,week,prev
      quality_metrics:{}},
    teams:drafted.inquirer.teams,reporters:drafted.inquirer.reporters,
    league_overview:drafted.leagueOverview};
+  restoreWeeklyPlayoffDesk(edition);
   const completedMarketDesks=completeVerifiedMarketDesk(edition);
   const verdict=verifyEditorialEdition(edition,previous,historical);
   edition.editorial_generation.quality_metrics=verdict.quality.metrics||{};
@@ -457,7 +499,7 @@ export function selectEditorialEdition({rawInquirer,rawOverview,season,week,prev
 function statusFor(edition,verdict){
  const issues=[...(verdict?.quality?.issues||[]),...(verdict?.audit?.issues||[]),...(verdict?.independent?.issues||[]),
   ...(verdict?.canonical?.issues||[]).map(message=>({id:'canonical-reader-contract',message})),
-  ...(verdict?.voiceIssues||[]),...(verdict?.standingsIssues||[])];
+  ...(verdict?.voiceIssues||[]),...(verdict?.standingsIssues||[]),...(verdict?.recapArchitectureIssues||[])];
  return{season:Number(edition?.season),week:Number(edition?.week),editorial_revision:FORWARD_EDITORIAL_REVISION,
   state:verdict?.ok?'completed':'editorial-hold',published:!!verdict?.ok,
   issue_count:issues.length,

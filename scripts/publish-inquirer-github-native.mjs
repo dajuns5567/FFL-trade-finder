@@ -10,6 +10,7 @@ import {inspectEditionBeforePublication,deterministicInquirerAdmission,inspectPr
 import {auditIndependentInquirerCopy} from '../netlify/functions/lib/inquirer-independent-copy-audit.mjs';
 import {correctWeekNineReaderEdition} from '../netlify/functions/lib/inquirer-week09-editorial-correction.mjs';
 import {inquirerMarketCutoff} from '../netlify/functions/lib/inquirer-market-window.mjs';
+import {inspectCanonicalArchive} from '../netlify/functions/lib/inquirer-legacy-history.mjs';
 
 export const LEAGUE_ID='1316867686394769408';
 const API='https://api.sleeper.app/v1';
@@ -304,8 +305,11 @@ export function verifyEditorialEdition(edition,previous,historical=[]){
  if(quality.issues.length>priorIssueCount)quality.ok=false;
  const independent=auditIndependentInquirerCopy([edition],{revision:FORWARD_EDITORIAL_REVISION,mode:'publication'});
  const admission=deterministicInquirerAdmission(edition,{quality,audit,previousEdition:previous});
- return{ok:quality.ok&&audit.ok&&independent.ok&&admission.approved,
-  audit,quality,independent,admission};
+ // The same canonical archive contract used by the public League Hub reader
+ // must pass BEFORE any edition is committed to GitHub.
+ const canonical=inspectCanonicalArchive(edition,edition?.season,edition?.week);
+ return{ok:quality.ok&&audit.ok&&independent.ok&&admission.approved&&canonical.ok,
+  audit,quality,independent,admission,canonical};
 }
 // Keep the existing >=25-word independent value-desk audit unchanged.
 // Only add genuinely measured facts to a clipped deterministic desk.
@@ -387,7 +391,8 @@ export function selectEditorialEdition({rawInquirer,rawOverview,season,week,prev
  return passing||best;
 }
 function statusFor(edition,verdict){
- const issues=[...(verdict?.quality?.issues||[]),...(verdict?.audit?.issues||[]),...(verdict?.independent?.issues||[])];
+ const issues=[...(verdict?.quality?.issues||[]),...(verdict?.audit?.issues||[]),...(verdict?.independent?.issues||[]),
+  ...(verdict?.canonical?.issues||[]).map(message=>({id:'canonical-reader-contract',message}))];
  return{season:Number(edition?.season),week:Number(edition?.week),editorial_revision:FORWARD_EDITORIAL_REVISION,
   state:verdict?.ok?'completed':'editorial-hold',published:!!verdict?.ok,
   issue_count:issues.length,

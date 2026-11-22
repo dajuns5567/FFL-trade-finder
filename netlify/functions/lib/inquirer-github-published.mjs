@@ -1,16 +1,25 @@
 // Read-only GitHub Actions-published editions. No Netlify Blob restore or
 // internal HTTP job is needed for future issue visibility.
 import {createHash} from 'node:crypto';
-const ROOT='https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/inquirer-archive/inquirer-archive/';
+const ROOT='https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/';
+// PR 574 has an isolated, fully published preview edition. Production and
+// every other preview continue to read ONLY the approved inquirer-archive.
+export function githubInquirerArchiveBranch(env=process.env){
+ const context=String(env.CONTEXT||globalThis.Netlify?.env?.get?.('CONTEXT')||'');
+ const review=String(env.REVIEW_ID||globalThis.Netlify?.env?.get?.('REVIEW_ID')||'');
+ return context==='deploy-preview'&&review==='574'?'inquirer-preview-574':'inquirer-archive';
+}
+const publishedRoot=()=>ROOT+githubInquirerArchiveBranch()+'/inquirer-archive/';
 const hash=raw=>createHash('sha256').update(raw).digest('hex');
-let cache=null,expires=0;
+let cache=null,expires=0,cachedRoot='';
 const get=async(file,fetcher)=>{
- const response=await fetcher(ROOT+file,{cache:'no-store',headers:{accept:'application/json'}});
+ const response=await fetcher(publishedRoot()+file,{cache:'no-store',headers:{accept:'application/json'}});
  if(!response.ok){if(response.status===404)return null;throw Error('GitHub Inquirer '+file+' HTTP '+response.status)}
  return Buffer.from(await response.arrayBuffer());
 };
 export async function githubPublishedInquirerIndex(fetcher=fetch,{refresh=false}={}){
- if(!refresh&&fetcher===fetch&&cache&&Date.now()<expires)return cache;
+ const root=publishedRoot();
+ if(!refresh&&fetcher===fetch&&cache&&cachedRoot===root&&Date.now()<expires)return cache;
  const bytes=await get('forward/index.json',fetcher);
  if(bytes===null)return{reports:[],editions:new Map()};
  const data=JSON.parse(bytes.toString('utf8'));
@@ -30,7 +39,7 @@ export async function githubPublishedInquirerIndex(fetcher=fetch,{refresh=false}
  const weeks=[...seen].sort((a,b)=>a-b);
  if(weeks.some((w,i)=>w!==10+i))throw Error('Nonsequential forward issues: cannot advance Inquirer reader');
  const result={reports,editions};
- if(fetcher===fetch){cache=result;expires=Date.now()+60000}
+ if(fetcher===fetch){cache=result;cachedRoot=root;expires=Date.now()+60000}
  return result;
 }
 export async function githubPublishedInquirerEdition(season,week,fetcher=fetch){

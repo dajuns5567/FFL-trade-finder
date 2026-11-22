@@ -65,3 +65,32 @@ test('browser refreshes cached awards after league weekly update and loads the n
  assert.match(ui,/loadPlayerScoring\(key\);/);
  assert.match(site,/value-history-v276\.js\?v=542/);
 });
+
+test('the latest League Hub weekly Player of the Week badge is visible even if stat archive sync lags',()=>{
+ const offense={players_of_week:{offense:{player_id:'QB2',points:36.75},
+  defense:{player_id:'EDGE1',points:29.5}}};
+ const response=playerWeeklyMilestoneAwards(request('QB2',{
+  canonical:offense,payload:{},scoring:{}
+ }));
+ assert.deepEqual(response.map(x=>[x.title,x.points,x.season,x.week]),
+  [['Top Offensive Scorer',36.75,2026,10]]);
+ const defense=playerWeeklyMilestoneAwards(request('EDGE1',{
+  canonical:offense,payload:null,scoring:{}
+ }));
+ assert.equal(defense[0].points,29.5);
+ assert.deepEqual(playerWeeklyMilestoneAwards(request('QB2',{
+  canonical:offense,week:11,currentCompletedWeek:10
+ })),[]);
+});
+
+test('current season award sync is required on both backend and browser',()=>{
+ const backend=readFileSync(new URL('../netlify/functions/value-history.mjs',import.meta.url),'utf8');
+ const browser=readFileSync(new URL('../value-history-v276.js',import.meta.url),'utf8');
+ const loader=readFileSync(new URL('../netlify/functions/site-v29.mjs',import.meta.url),'utf8');
+ assert.match(backend,/canonicalWeeklyAwards\(origin\)/);
+ assert.match(backend,/playerWeeklyMilestoneAwards\(\{/);
+ assert.match(backend,/currentCompletedWeek,/);
+ assert.doesNotMatch(backend,/else if\(Number\(year\)<currentSeason\)/);
+ assert.match(browser,/playerScoringCacheAt/);
+ assert.match(loader,/value-history-v276\.js\?v=542/);
+});

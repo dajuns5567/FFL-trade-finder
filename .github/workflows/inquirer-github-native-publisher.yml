@@ -60,7 +60,7 @@ jobs:
           import {githubPublishedInquirerIndex,githubPublishedInquirerEdition} from './netlify/functions/lib/inquirer-github-published.mjs';
           const root=path.resolve('history/inquirer-archive');
           const fetchLocal=async url=>{
-            const relative=url.split('/inquirer-archive/').at(-1);
+            const relative='forward/'+url.split('/forward/').at(-1);
             if(!/^forward\/(index\.json|2026\/week-\d{2}\.json)$/.test(relative))
               throw Error('Reader requested unexpected archive path: '+relative);
             try{return new Response(await fs.readFile(path.join(root,relative)),{status:200})}
@@ -127,7 +127,7 @@ jobs:
           import {githubPublishedInquirerIndex,githubPublishedInquirerEdition} from './netlify/functions/lib/inquirer-github-published.mjs';
           const root=path.resolve('../history/inquirer-archive');
           const fetchLocal=async url=>{
-            const relative=url.split('/inquirer-archive/').at(-1);
+            const relative='forward/'+url.split('/forward/').at(-1);
             if(!/^forward\/(index\.json|2026\/week-\d{2}\.json)$/.test(relative))
               throw Error('Reader requested unexpected archive path: '+relative);
             try{return new Response(await fs.readFile(path.join(root,relative)),{status:200})}

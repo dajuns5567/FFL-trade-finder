@@ -1,3 +1,39 @@
+
+function attributeSourceBackedRecapOpenings(overview,teams,week){
+ if(Number(week)<9)return overview;
+ const blocks=overview?.sections?.[0]?.blocks||[];
+ const named=(text,name)=>String(text||'').toLowerCase().includes(String(name||'').toLowerCase());
+ const all=(teams||[]).filter(t=>String(t.team_name||'').trim()&&
+  Number.isFinite(Number(t.points))&&Number.isFinite(Number(t.opponent_points)));
+ let modified=false;
+ for(const block of blocks){
+  if(!['lead','players','decisions','league','outlook'].includes(block.kind)||
+     !Array.isArray(block.paragraphs)||!block.paragraphs[0])continue;
+  const first=String(block.paragraphs[0]);
+  if(all.some(t=>named(first,t.team_name)))continue;
+  // The opening's named player identifies their actual fantasy roster.
+  // Failing that, use the team already discussed later in this same beat.
+  // If neither source exists, preserve the draft for editorial rejection.
+  const byPlayer=all.flatMap(t=>(t.starter_details||[]).filter(p=>
+   String(p.name||'').length>=5&&named(first,p.name)).map(p=>({t,length:p.name.length})))
+   .sort((a,b)=>b.length-a.length)[0]?.t;
+  const byBeat=all.find(t=>(block.paragraphs||[]).slice(1).some(p=>named(p,t.team_name)));
+  const t=byPlayer||byBeat;
+  if(!t)continue;
+  const score=Number(t.points).toFixed(1)+'–'+Number(t.opponent_points).toFixed(1);
+  const opener=String(t.team_name)+' faced '+String(t.opponent_name||'its opponent')+
+   ' in the FLEECED! Week '+week+' matchup, finishing '+score+' fantasy points.';
+  block.paragraphs[0]=opener+' '+first;
+  modified=true;
+ }
+ if(modified){
+  const feature=overview.sections?.[0];
+  if(feature)feature.paragraphs=blocks.flatMap(b=>b.paragraphs||[]);
+  overview.paragraphs=(overview.sections||[]).flatMap(x=>x.paragraphs||[]);
+ }
+ return overview;
+}
+
 // Reusable Fleeced! Inquirer V31 editorial layer.
 // Derived from the locked Week 2 V31 newsroom logic.
 // Week 1/2 preloads remain immutable; Week 3+ runs this layer with week-aware
@@ -6023,6 +6059,7 @@ function assertWeek2Originality(result,previousEdition){
     overview=pruneForwardRecapLessonScaffold(overview,teams,week);
     overview=polishForwardReaderCopy(teams,overview,week);
   }
+  if(week>=9)overview=attributeSourceBackedRecapOpenings(overview,teams,week);
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 

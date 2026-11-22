@@ -1,13 +1,46 @@
 // Read-only newsroom tonal addendum for the already-published 2026 Week 10.
 // The verified Git archive and its SHA-256 digest remain byte-for-byte intact.
 // Nothing here claims a trade, a locker-room quote, or a result not in Sleeper.
+import {verifiedTwoWeekForm} from './inquirer-verified-two-week-form.mjs';
+
+// Read-only correction of a known Week 10 archive claim. This executes only
+// after the archived issue has passed its immutable SHA-256 verification.
+// If the underlying previous-week scores are missing, omit the sentence
+// rather than asserting that zero teams won two games.
+export function correctWeekTenConsecutiveWins(edition){
+ if(Number(edition?.season)!==2026||Number(edition?.week)!==10||
+    edition?.available!==true||edition?.published_locked!==true||
+    !Array.isArray(edition?.teams)||edition.teams.length!==32)return edition;
+ const statement='Nobody won both of the last two completed games. Apparently consistency has become an optional luxury.';
+ const overview=edition?.league_overview;
+ if(!overview?.sections?.some(s=>(s.paragraphs||[]).some(p=>String(p).includes(statement))))return edition;
+ const verified=verifiedTwoWeekForm(edition.teams,10);
+ const names=verified.winners.map(t=>String(t.team_name||'').trim()).filter(Boolean);
+ const replacement=!verified.complete?'':names.length?
+   'The teams that won both of the last two completed games are '+
+   new Intl.ListFormat('en-US',{style:'long',type:'conjunction'}).format(names)+
+   '. That is two verified wins, not an undefeated-season claim.':
+   statement;
+ const result=structuredClone(edition);
+ const clean=paragraphs=>(paragraphs||[]).map(p=>String(p).replace(statement,replacement).trim()).filter(Boolean);
+ for(const section of result.league_overview.sections||[]){
+  if(section.blocks?.length){
+   for(const block of section.blocks)block.paragraphs=clean(block.paragraphs);
+   section.paragraphs=section.blocks.flatMap(b=>b.paragraphs||[]);
+  }else section.paragraphs=clean(section.paragraphs);
+ }
+ result.league_overview.paragraphs=result.league_overview.sections.flatMap(s=>s.paragraphs||[]);
+ result.reader_streak_correction={week:10,source:verified.complete?'verified Sleeper weekly scores':'unverified streak claim omitted',
+   archive_original_unchanged:true};
+ return result;
+}
 export function addWeekTenEditorialHumor(edition){
  if(edition?.reader_tonal_addendum?.week===10)return edition;
  if(Number(edition?.season)!==2026||Number(edition?.week)!==10||
     edition?.available!==true||edition?.published_locked!==true||
     edition?.editorial_generation?.engine!=='v31-forward'||
     !Array.isArray(edition.teams)||edition.teams.length!==32)return edition;
- const result=structuredClone(edition),used=new Set();
+ const result=structuredClone(correctWeekTenConsecutiveWins(edition)),used=new Set();
  for(const team of result.teams){
   const article=team?.inquirer_article,desk=article?.sections?.find(x=>x.kind==='sentiment');
   const roster=Number(team?.roster_id),club=String(team?.team_name||'').trim(),

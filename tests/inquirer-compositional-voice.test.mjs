@@ -27,8 +27,8 @@ test('automatic publisher uses compositional editorial contract rather than a fi
  const newsroom=readFileSync(new URL('../netlify/functions/inquirer-editorial-v31.mjs',import.meta.url),'utf8');
  assert.match(publisher,/applyInquirerEditorialV31/);
  assert.match(publisher,/FORWARD_EDITORIAL_REVISION/);
- assert.match(newsroom,/composeReporterVoice\(teams,week,salt,history\)/);
- assert.match(newsroom,/composeRecapOpening\(overview,teams,week,salt,history\)/);
+ assert.match(newsroom,/composeReporterVoice\(teams,week,salt,history,season\)/);
+ assert.match(newsroom,/composeRecapOpening\(overview,teams,week,salt,history,season\)/);
 });
 
 test('all 32 future articles get different fact-grounded commentary with four distinct reporter voices',()=>{

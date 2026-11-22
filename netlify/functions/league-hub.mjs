@@ -961,7 +961,10 @@ async function managerHistory({persist=true,snapshotSeason=null,snapshotWeek=nul
    fetchJson(`${API}/league/${lid}/winners_bracket`).catch(()=>[]),
    Promise.all(weekNums.map(w=>fetchJson(`${API}/league/${lid}/matchups/${w}`).catch(()=>[])))
   ]);
-  if(!persist&&(rosters.length!==32||!users.length||weekRows.some(rows=>rows.length!==32)))throw Error("Manager history source incomplete; private preview held.");
+  // A partial Sleeper response must never overwrite complete production records,
+  // or be presented as verified history in read-only previews.
+  if(rosters.length!==32||!users.length||weekRows.some(rows=>rows.length!==32))
+   throw Error("Manager history source incomplete; retain previous verified records.");
   const ub=new Map(users.map(u=>[String(u.user_id),u])),rb=new Map(rosters.map(r=>[String(r.roster_id),r])),ownerByRoster={};
   for(const r of rosters){
    const rid=String(r.roster_id),primaryUid=String(r.owner_id||''),verified=!primaryUid?verifiedHistoricalAssignment(season,rid):null,uid=primaryUid||String(verified?.user_id||'');

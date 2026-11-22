@@ -984,22 +984,41 @@ async function managerHistory({persist=true,snapshotSeason=null,snapshotWeek=nul
  const currentUsers=new Set(current.map(x=>x.user_id)),scoring_history=managerScoringSummary(scoringGames,career,currentSeason,currentWeek),graveyard=Object.values(career).filter(x=>!currentUsers.has(x.user_id)).map(x=>{const as=assignments.filter(a=>a.user_id===x.user_id).sort((a,b)=>Number(a.season)-Number(b.season)),last=as[as.length-1],seasonRosterKeys=new Set(as.map(a=>Number(a.season)+'|'+String(a.roster_id))),scoring=(scoring_history.games||[]).filter(g=>seasonRosterKeys.has(Number(g.season)+'|'+String(g.roster_id))).sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));return{user_id:x.user_id,sleeper_id:x.sleeper_id,roster_id:last?.roster_id||'',retired_at:last?.season?String(last.season):'',seasons:[...new Set(as.map(a=>Number(a.season)).filter(Boolean))],played_2025:as.some(a=>Number(a.season)===2025),assignments:as,scoring_games:scoring,career:{wins:x.wins,losses:x.losses,playoff_wins:x.playoff_wins,playoff_appearances:x.playoff_appearances,championships:x.championships,division_wins:x.division_wins,division_championships:x.division_championships,regular_season_titles:x.regular_season_titles}}});
  const now=new Date().toISOString(),cache_version=MANAGER_CACHE_VERSION,registry={current:Object.fromEntries(current.map(x=>[x.roster_id,{user_id:x.user_id,sleeper_id:x.sleeper_id,since:now}])),graveyard},result={current,graveyard,career:Object.values(career),assignments,games,scoring_history,generated_at:now,cache_version};if(persist)await Promise.all([s.setJSON('managers/registry.json',registry),s.setJSON('managers/history-cache.json',{...result,cached_at:now})]);return persist?result:{...result,preview_read_only:true};
 }
+async function githubDurableAwardHighs(){
+ const url='https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/value-history-data/value-history/league-awards/all-time-highs.json';
+ try{
+  const response=await fetch(url+'?fresh='+Date.now(),{cache:'no-store',
+   headers:{accept:'application/json'}});
+  if(!response.ok)return[];
+  const result=await response.json();
+  return result?.schema_version===1&&
+   result?.source==='github-canonical-headless-all-time-highs'&&
+   result?.league_id===LEAGUE&&Array.isArray(result.records)?result.records:[];
+ }catch(error){
+  console.warn('league-awards-durable-read-unavailable',String(error?.message||error));return[];
+ }
+}
 async function awardHighs(req){
  if(!['GET','POST'].includes(req.method))return json({error:'method not allowed'},405);
- const s=store(),key='awards/highs.json';
- const stored=await s.get(key,{type:'json'}).catch(()=>null);
- const previous=Array.isArray(stored)?stored:[];
- if(req.method==='GET')return json({records:mergeAwardHighs(previous,[],new Date().toISOString())});
- // The preview-wide read-only gate runs before this function. Never persist
- // potentially unverified or incomplete rankings supplied by a browser.
- const body=await req.json().catch(()=>null);
- const records=Array.isArray(body?.records)?body.records:[];
+ let s=null;
+ try{s=store()}catch(error){
+  console.warn('league-awards-blob-store-unavailable',String(error?.message||error))
+ }
+ const key='awards/highs.json',stored=s?await s.get(key,{type:'json'}).catch(()=>null):null,
+  fromBlob=Array.isArray(stored)?stored:[],durable=await githubDurableAwardHighs(),
+  now=new Date().toISOString(),previous=mergeAwardHighs(fromBlob,durable,now);
+ if(req.method==='GET')return json({records:previous,
+  sources:{blob:fromBlob.length,durable:durable.length},cache_status:s?'available':'unavailable'});
+ const body=await req.json().catch(()=>null),records=Array.isArray(body?.records)?body.records:[];
  if(!records.length||records.length>1000)return json({error:'missing or excessive all-time-high observations'},400);
- const now=new Date().toISOString(),highs=mergeAwardHighs(previous,records,now);
+ const highs=mergeAwardHighs(previous,records,now);
  if(highs.length===0)return json({error:'no valid award scores'},422);
- const changed=JSON.stringify(highs)!==JSON.stringify(mergeAwardHighs(previous,[],now));
- if(changed)await s.setJSON(key,highs);
- return json({records:highs,recorded_at:now,changed,source:'league-awards-canonical'});
+ const changed=JSON.stringify(highs)!==JSON.stringify(previous);
+ if(changed&&s)await s.setJSON(key,highs);
+ // User-facing reads remain available from GitHub even if Netlify Blob
+ // migration makes this optional cache unreachable.
+ return json({records:highs,recorded_at:now,changed,
+  source:'league-awards-canonical',cache_written:!!(changed&&s)});
 }
 async function awards(req){
  const s=store();

@@ -302,7 +302,7 @@ export function buildSourceTeams({league,week,matchups,history=[],nextMatchups=[
 // sports analysis or harmless editorial variation.
 export function inspectInquirerNewspaperVoice(edition){
  const offenders=[];
- const banned=/\\b(?:not a result between NFL franchises|not the NFL standings|not interchangeable NFL.team prose|a comparison of league lineup totals, not a head.to.head matchup|this is a manager .*? lineup decision, not a mystery about the final|the fantasy managers, starters and specific lineup decisions explain)\\b/i;
+ const banned=/\b(?:not a result between NFL franchises|not the NFL standings|not interchangeable NFL.team prose|a comparison of league lineup totals, not a head.to.head matchup|this is a manager .*? lineup decision, not a mystery about the final|the fantasy managers, starters and specific lineup decisions explain)\b/i;
  const check=(text,where)=>{if(banned.test(String(text||'')))offenders.push({id:'newspaper-meta-prose',where})};
  for(const t of edition?.teams||[])for(const section of t.inquirer_article?.sections||[])
   for(const p of section.paragraphs||[])check(p,'team '+String(t.roster_id)+' / '+section.kind);

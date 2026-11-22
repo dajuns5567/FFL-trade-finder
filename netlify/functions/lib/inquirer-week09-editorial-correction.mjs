@@ -66,6 +66,12 @@ function correctTeamArticles(d){
   for(const section of article.sections){
    section.paragraphs=(section.paragraphs||[]).map(p=>{
     if(p.length>165||named(t,p))return p;
+    // Never discard an original fact-bearing sentence just to add fantasy
+    // attribution. Preserve its player analysis, role, trend and market facts.
+    if(/\\d/.test(p)){
+     changed++;
+     return 'For '+t.team_name+', '+p.charAt(0).toLowerCase()+p.slice(1);
+    }
     const fixed=teamFix(t,section.kind);
     if(!fixed)return p;
     changed++;return fixed;

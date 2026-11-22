@@ -8,6 +8,7 @@ import {buildInquirerWeek,buildLeagueOverview,inquirerWeekClassification} from '
 import {applyInquirerEditorialV31,evaluateInquirerEditionQuality,FORWARD_EDITORIAL_REVISION,FORWARD_INQUIRER_VERSION} from '../netlify/functions/inquirer-editorial-v31.mjs';
 import {inspectEditionBeforePublication,deterministicInquirerAdmission,inspectPreviousWeekEditorialReuse} from '../netlify/functions/inquirer-publication-guard.mjs';
 import {auditIndependentInquirerCopy} from '../netlify/functions/lib/inquirer-independent-copy-audit.mjs';
+import {correctWeekNineReaderEdition} from '../netlify/functions/lib/inquirer-week09-editorial-correction.mjs';
 
 export const LEAGUE_ID='1316867686394769408';
 const API='https://api.sleeper.app/v1';
@@ -203,6 +204,7 @@ export async function runGithubInquirerPublisher({archiveRoot,fetcher=fetch,now=
  });
  if(previous.available!==true||previous.published_locked!==true||Number(previous.week)!==week-1)
   throw Error('Previous immutable GitHub edition not verified for Week '+week);
+ const previousEditorial=Number(previous.week)===9?correctWeekNineReaderEdition(previous):previous;
  const [matchups,rosters,users,players,nextMatchups,transactions]=await Promise.all([
   req(API+'/league/'+LEAGUE_ID+'/matchups/'+week,fetcher),req(API+'/league/'+LEAGUE_ID+'/rosters',fetcher),
   req(API+'/league/'+LEAGUE_ID+'/users',fetcher),req(API+'/players/nfl',fetcher),
@@ -224,7 +226,7 @@ export async function runGithubInquirerPublisher({archiveRoot,fetcher=fetch,now=
   [w,await req(API+'/stats/nfl/regular/'+season+'/'+w,fetcher).catch(()=>({}))])));
  const historical=[];
  for(let w=Math.max(3,week-4);w<=week-2;w++)historical.push(await read(w<=9?'2026/week-'+pad(w)+'.json':'forward/2026/week-'+pad(w)+'.json'));
- const teams=buildSourceTeams({league,week,matchups,rosters,users,players,previousEdition:previous,
+ const teams=buildSourceTeams({league,week,matchups,rosters,users,players,previousEdition:previousEditorial,
   history,nextMatchups,transactions});
  const rawInquirer=buildInquirerWeek({season,week,teams,players,weeklyStats:statHistory[week],
   weeklyStatHistory:statHistory,historicalSeasonStats:{},historicalSeasonYear:season-1,
@@ -233,7 +235,7 @@ export async function runGithubInquirerPublisher({archiveRoot,fetcher=fetch,now=
   transactions,canonicalTrades:canonicalCompletedTrades(transactions,teams,season,week),
   weekClassification:inquirerWeekClassification(week,season),
   valueHistoryMeta:{source:'not available from GitHub-native snapshot'}});
- const chosen=selectEditorialEdition({rawInquirer,rawOverview,season,week,previous,historical});
+ const chosen=selectEditorialEdition({rawInquirer,rawOverview,season,week,previous:previousEditorial,historical});
  const {edition,verdict}=chosen;const resultStatus=statusFor(edition,verdict);
  if(!verdict.ok)return{...resultStatus,reason:'Editorial admission held; no published file or index changed'};
  edition.generated_at=now.toISOString();

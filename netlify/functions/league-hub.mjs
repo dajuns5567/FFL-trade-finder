@@ -866,7 +866,8 @@ async function latestCompletedLeagueWeek(){
  ]);
  // Check the newest possible week first; only fall back for unfinished
  // roster-record finalization. A missing edition is NEVER a reason to fall back.
- for(let week=Math.min(INQUIRER_FINAL_WEEK,weekNow-1);week>=1;week--){
+ const newest=Math.min(INQUIRER_FINAL_WEEK,weekNow-1);
+ for(let week=newest;week>=Math.max(1,newest-2);week--){
   const finalized=await completedPublicationWeek(week);
   if(!finalized.complete)continue;
   const view=completedLeagueWeekView({season,week,matchups:finalized.rows,rosters,users});

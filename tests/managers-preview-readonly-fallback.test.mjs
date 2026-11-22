@@ -40,3 +40,29 @@ test('Netlify permits the isolated Managers PR preview, not an unsanctioned prod
  assert.match(toml,/e\.CONTEXT==='production'&&e\.BRANCH==='main'/);
  assert.doesNotMatch(toml,/Release FFL Managers/);
 });
+
+test('preview Managers cache must match the latest verified Sleeper completed-week cutoff',()=>{
+ assert.match(preview,/fetchJson\(\`\$\{API\}\/state\/nfl\`\)/);
+ assert.match(preview,/cached\?\.cache_version===MANAGER_CACHE_VERSION/);
+ assert.match(preview,/cached\?\.scoring_history\?\.through_season\)===season/);
+ assert.match(preview,/cached\?\.scoring_history\?\.through_week\)>=through/);
+ assert.match(preview,/if\(!season\)throw Error\('Sleeper week unavailable/);
+ assert.match(preview,/managerHistory\(\{persist:false\}\)/);
+});
+
+test('browser Managers refreshes on revisits, visibility and focus without replacing verified cache on failure',()=>{
+ const ui=readFileSync(new URL('../league-hub-v451.js',import.meta.url),'utf8');
+ const loader=readFileSync(new URL('../netlify/functions/site-v29.mjs',import.meta.url),'utf8');
+ assert.match(ui,/const MANAGER_REFRESH_MS=300000/);
+ assert.match(ui,/Date\.now\(\)-managerCacheAt<MANAGER_REFRESH_MS/);
+ assert.match(ui,/setInterval\(refreshManagersIfVisible,MANAGER_REFRESH_MS\)/);
+ assert.match(ui,/window\.addEventListener\('focus',refreshManagersIfVisible\)/);
+ assert.match(ui,/document\.addEventListener\('visibilitychange',/);
+ assert.match(ui,/\['managers','career'\]\.includes\(currentView\)/);
+ assert.match(ui,/managerVersionSignature\(next\)===previous/);
+ assert.match(ui,/await render\(currentView,selectedManagerId\)/);
+ assert.match(ui,/return managerCache\|\|\{current:\[\],graveyard:\[\],career:\[\],unavailable:true\}/);
+ assert.match(ui,/if\(generation===managerRequestGeneration\)/);
+ assert.match(ui,/clearManagerHistoryCache\(\); \/\/ finalized week/);
+ assert.match(loader,/league-hub-v451\.js\?v=548/);
+});

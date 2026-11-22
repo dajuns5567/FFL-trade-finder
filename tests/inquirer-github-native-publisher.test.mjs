@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {completeMatchups,buildSourceTeams} from '../scripts/publish-inquirer-github-native.mjs';
+import {completeMatchups,buildSourceTeams,selectValueHistoryWindow,buildArchivedMarketContext} from '../scripts/publish-inquirer-github-native.mjs';
 import {githubPublishedInquirerIndex,githubPublishedInquirerEdition} from '../netlify/functions/lib/inquirer-github-published.mjs';
 import {createHash} from 'node:crypto';
 const rosters=Array.from({length:32},(_,i)=>({roster_id:i+1,owner_id:'u'+(i+1),
@@ -73,4 +73,27 @@ test('public weekly endpoint does not run the stateful old Netlify generation pa
  assert.match(route,/broadcastArchive\(\)/);
  assert.match(route,/broadcastStored\(latest.season,latest.week\)/);
  assert.match(route,/preview_editorial/);
+});
+
+test('historical dynasty snapshot window never includes future data',()=>{
+ const index={league_id:'1316867686394769408',items:[
+  {t:'2026-11-01T00:00:00Z',path:'value-history/snapshots/2026/11/a.json'},
+  {t:'2026-11-09T00:00:00Z',path:'value-history/snapshots/2026/11/b.json'},
+  {t:'2026-11-20T00:00:00Z',path:'value-history/snapshots/2026/11/c.json'}]};
+ const pair=selectValueHistoryWindow(index,'2026-11-12T00:00:00Z');
+ assert.equal(pair.latest.t,'2026-11-09T00:00:00Z');
+ assert.equal(pair.baseline.t,'2026-11-01T00:00:00Z');
+ assert.equal(selectValueHistoryWindow(index,'2026-11-01T00:00:00Z'),null);
+});
+test('real archived master values produce grounded team and player market movement',()=>{
+ const make=(t,teamValue,playerValue)=>({t,valuation_contract:'same-canonical',valuation_model:'same-model',
+  teams:[{id:'1',value:teamValue,player_count:1}],
+  rows:[{id:'p1',value:playerValue,pos:'WR'}]});
+ const a=buildArchivedMarketContext({baseline:make('2026-11-01T00:00:00Z',1200,1000),
+  latest:make('2026-11-09T00:00:00Z',1300,1100)});
+ assert.equal(a.teams[0].delta,100);
+ assert.equal(a.player_deltas[0].delta,100);
+ assert.equal(a.playerValues.p1,1100);
+ const bad=make('2026-11-09T00:00:00Z',1300,1100);bad.valuation_model='other';
+ assert.throws(()=>buildArchivedMarketContext({baseline:make('2026-11-01T00:00:00Z',1200,1000),latest:bad}),/Noncomparable/);
 });

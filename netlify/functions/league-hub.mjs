@@ -1008,7 +1008,19 @@ export default async req=>{try{const u=new URL(req.url);
   }
   if(u.searchParams.get('managers')==='1'){
    const cached=await store().get('managers/history-cache.json',{type:'json'}).catch(()=>null);
-   return cached?json({...cached,cache_hit:true,preview_read_only:true}):json({error:'No manager history cache in preview; production backfill disabled.',preview_read_only:true},503);
+   if(cached?.career?.length&&cached?.current?.length===32)return json({...cached,cache_hit:true,preview_read_only:true});
+   // A preview must never write the production Blob cache. The existing
+   // strict 32-team/weekly-completeness reader supports read-only reconstruction.
+   // Reconstruct only when the cache is missing or incomplete; never invent rows.
+   try{
+    const fresh=await managerHistory({persist:false});
+    if(fresh?.current?.length!==32||!fresh?.career?.length)
+     throw Error('incomplete read-only manager reconstruction');
+    return json({...fresh,cache_hit:false,preview_read_only:true});
+   }catch(error){
+    console.warn('manager-preview-readonly-unavailable',String(error?.message||error));
+    return json({error:'Verified manager history unavailable in preview; production backfill disabled.',preview_read_only:true},503);
+   }
   }
  }
 if(u.searchParams.get('league_latest')==='1')return json(await latestCompletedLeagueWeek());if(u.searchParams.get('weekly')==='1'){

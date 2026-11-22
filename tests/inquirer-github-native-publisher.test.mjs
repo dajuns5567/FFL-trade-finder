@@ -31,6 +31,7 @@ test('GitHub source team data are sourced from named Sleeper fantasy managers',(
  assert.equal(teams[0].projected,0);
  assert.equal(teams[0].projection_coverage,0);
  assert.equal(teams[0].trade_history.length,0);
+ assert.equal(teams[0].best_lineup_miss,null,'No eligible bench candidate in single-starter fixture');
 });
 const mockFetch=files=>async url=>{
  const rel=url.split('/inquirer-archive/inquirer-archive/')[1];

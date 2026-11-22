@@ -13,6 +13,7 @@ export function validateScheduledHighs(observation){
  const o=observation;
  if(o?.schema_version!==1||o?.source!=='canonical-live-32-team-awards'||
     o?.team_count!==32||o?.categories!==20||o?.trade_count<1||o?.draft_count<1||
+    !['idp-v96-single-source-continuous-v95-evidence','idp-v101-verified-role-growth-v100-source-free-lineage'].includes(String(o?.model_used||''))||
     !o?.canonical_fingerprint||typeof o.canonical_fingerprint!=='string'||
     !/^[a-f0-9]{40}$/.test(String(o?.source_commit||''))||
     !Number.isFinite(Date.parse(o?.captured_at))||
@@ -32,6 +33,9 @@ export function validateScheduledHighs(observation){
 }
 export function nextDurableHighs(previous,observation){
  const input=validateScheduledHighs(observation);
+ if(previous?.model_used==='idp-v101-verified-role-growth-v100-source-free-lineage'&&
+    input.model_used==='idp-v96-single-source-continuous-v95-evidence')
+  throw Error('AWARD_ARCHIVE_MODEL_ROLLBACK');
  if(previous?.latest_observation_at&&Date.parse(input.captured_at)<Date.parse(previous.latest_observation_at))
   throw Error('AWARD_ARCHIVE_STALE_OBSERVATION: previously recorded a later canonical refresh');
  const existing=Array.isArray(previous?.records)?previous.records:[];
@@ -44,7 +48,7 @@ export function nextDurableHighs(previous,observation){
  }
  return{schema_version:1,league_id:'1316867686394769408',
   source:'github-canonical-headless-all-time-highs',
-  latest_observation_at:input.captured_at,source_commit:input.source_commit,
+  latest_observation_at:input.captured_at,model_used:input.model_used,source_commit:input.source_commit,
   canonical_fingerprint:input.canonical_fingerprint,records};
 }
 async function run(){

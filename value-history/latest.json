@@ -2,10 +2,10 @@
   "schema_version": 1,
   "league_id": "1316867686394769408",
   "latest": {
-    "t": "2026-11-22T02:41:13.907Z",
-    "path": "value-history/snapshots/2026/11/2026-11-22T02-41-13-907Z.json",
-    "fingerprint": "1a288xe",
-    "count": 1079,
+    "t": "2026-11-22T06:52:44.500Z",
+    "path": "value-history/snapshots/2026/11/2026-11-22T06-52-44-500Z.json",
+    "fingerprint": "n7icdf",
+    "count": 1080,
     "source": "scheduled",
     "valuation_model": "idp-v101-verified-role-growth-v100-source-free-lineage",
     "valuation_contract": "precision-idp-runtime-v101-20261119"

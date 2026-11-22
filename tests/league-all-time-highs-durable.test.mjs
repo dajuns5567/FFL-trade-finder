@@ -12,7 +12,7 @@ const categories=['fleecer','fleeced','day-trader','pick-hoarder','deal-maker','
 const fixture=()=>({
  schema_version:1,source:'canonical-live-32-team-awards',
  captured_at:new Date().toISOString(),team_count:32,trade_count:72,draft_count:120,categories:20,
- canonical_fingerprint:'verified-123',source_commit:'a'.repeat(40),
+ canonical_fingerprint:'verified-123',model_used:'idp-v96-single-source-continuous-v95-evidence',source_commit:'a'.repeat(40),
  observations:categories.flatMap((award_key,i)=>Array.from({length:32},(_,j)=>({
   award_key,roster_id:String(j+1),score:100+i+j,detail:'verified score '+i+' '+j
  })))
@@ -53,6 +53,13 @@ test('rerunning an older scheduled job cannot roll back the durable latest obser
  const stale=fixture();
  stale.captured_at=new Date(Date.parse(prior.latest_observation_at)-60_000).toISOString();
  assert.throws(()=>nextDurableHighs(prior,stale),/STALE_OBSERVATION/);
+});
+
+test('a promoted V101 award archive cannot silently revert to V96 model history',()=>{
+ const original=fixture();original.model_used='idp-v101-verified-role-growth-v100-source-free-lineage';
+ const previous=nextDurableHighs(null,original);
+ const later=fixture();later.captured_at=new Date(Date.parse(original.captured_at)+1000).toISOString();
+ assert.throws(()=>nextDurableHighs(previous,later),/MODEL_ROLLBACK/);
 });
 
 test('no missing, duplicated or fabricated scheduled awards are archived',()=>{

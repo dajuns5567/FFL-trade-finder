@@ -223,6 +223,29 @@ export function buildSourceTeams({league,week,matchups,history=[],nextMatchups=[
   identities.set(String(m.roster_id),{team_name:String(u.metadata?.team_name||u.display_name||u.username||'Roster '+m.roster_id).trim(),
    manager_name:String(u.display_name||u.username||'Roster '+m.roster_id)});
  }
+ // The newsroom needs actual divisional competitors and records, not a
+ // stock "division race" placeholder repeated across nine articles.
+ const divisionFor=id=>{
+  const r=rosterById.get(String(id)),div=r?.settings?.division;
+  if(div==null)return null;
+  const rows=[...rosterById.values()].filter(x=>String(x?.settings?.division)===String(div)).map(x=>{
+   const rid=String(x.roster_id),rec=context[rid]?.record||{},games=context[rid]?.recent_games||[];
+   return{roster_id:rid,team_name:identities.get(rid)?.team_name,
+    wins:Number(rec.wins)||0,losses:Number(rec.losses)||0,ties:Number(rec.ties)||0,
+    points_for:games.reduce((n,g)=>n+Number(g.points||0),0)};
+  }).sort((a,b)=>b.wins-a.wins||a.losses-b.losses||b.ties-a.ties||b.points_for-a.points_for||Number(a.roster_id)-Number(b.roster_id));
+  const pos=rows.findIndex(x=>x.roster_id===String(id)),me=rows[pos],best=rows[0];
+  if(!me||!best)return null;
+  const short=x=>({roster_id:x.roster_id,team_name:x.team_name,
+   record:{wins:x.wins,losses:x.losses,ties:x.ties}});
+  return{division_name:String(league?.metadata?.['division_'+div]||'Division '+div),
+   division_rank:pos+1,division_size:rows.length,
+   record:{wins:me.wins,losses:me.losses,ties:me.ties},
+   leaders:rows.filter(x=>x.wins===best.wins&&x.losses===best.losses&&x.ties===best.ties).map(short),
+   same_record_teams:rows.filter(x=>x.roster_id!==me.roster_id&&x.wins===me.wins&&x.losses===me.losses&&x.ties===me.ties).map(short),
+   ahead_teams:rows.slice(0,pos).map(short),behind_teams:rows.slice(pos+1).map(short),
+   snapshot_through_week:week};
+ };
  return matchups.map(m=>{
   const id=String(m.roster_id),r=rosterById.get(id),owner=byUser.get(String(r.owner_id)),
    opponentId=opp.get(id),opponent=byId.get(opponentId),nextId=next.get(id),
@@ -236,7 +259,10 @@ export function buildSourceTeams({league,week,matchups,history=[],nextMatchups=[
   const original=prevTeams.get(id),identity=identities.get(id),other=identities.get(opponentId),nextTeam=identities.get(nextId);
   return{
    roster_id:id,manager_user_id:String(owner.user_id),manager_name:identity.manager_name,team_name:identity.team_name,
-   division:r.settings?.division??null,conference:'',opponent_roster_id:opponentId,opponent_name:other.team_name,
+   division:r.settings?.division??null,division_name:divisionFor(id)?.division_name||null,
+   conference:String(divisionFor(id)?.division_name||'').toUpperCase().startsWith('AFC')?'AFC':
+    String(divisionFor(id)?.division_name||'').toUpperCase().startsWith('NFC')?'NFC':'',
+   opponent_roster_id:opponentId,opponent_name:other.team_name,
    next_opponent_roster_id:nextId||null,next_opponent_name:nextTeam?.team_name||null,
    points:Number(m.points),opponent_points:Number(opponent.points),won:Number(m.points)>Number(opponent.points),
    projected:0,projection_coverage:0,opponent_projected:null,
@@ -260,8 +286,12 @@ export function buildSourceTeams({league,week,matchups,history=[],nextMatchups=[
    },value_history_week:marketByTeam.get(id)||null,
    next_week_availability:null,league_context:context[id],opponent_context:context[opponentId],
    upcoming_opponents:nextId?[{week:week+1,roster_id:nextId,team_name:nextTeam?.team_name,context:context[nextId]}]:[],
-   division_context:null,next_opponent_context:context[nextId]||null,
-   next_opponent_division_context:null,division_results:[],playoff_context:null,
+   division_context:divisionFor(id),next_opponent_context:context[nextId]||null,
+   next_opponent_division_context:nextId?divisionFor(nextId):null,
+   next_divisional:nextId&&String(rosterById.get(nextId)?.settings?.division)===String(r.settings?.division),
+   division_results:[...rosterById.values()].filter(x=>String(x.settings?.division)===String(r.settings?.division)&&String(x.roster_id)!==id)
+    .map(x=>({roster_id:String(x.roster_id),team_name:identities.get(String(x.roster_id))?.team_name,
+     record:context[String(x.roster_id)]?.record||null})),playoff_context:null,
    manager_career:null
   };
  });

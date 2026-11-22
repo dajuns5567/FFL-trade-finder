@@ -64,3 +64,13 @@ test('missing prior edition is not silently replaced by a generated copy',async(
  ]}});
  await assert.rejects(githubPublishedInquirerEdition(2026,10,fake),/digest mismatch/);
 });
+
+test('public weekly endpoint does not run the stateful old Netlify generation path',async()=>{
+ const fs=await import('node:fs');
+ const source=fs.readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
+ const route=source.slice(source.lastIndexOf("if(u.searchParams.get('weekly')==='1')"),source.lastIndexOf("if(u.searchParams.get('reporters')==='1')"));
+ assert.match(route,/GitHub Actions owns Inquirer publication/);
+ assert.match(route,/broadcastArchive\(\)/);
+ assert.match(route,/broadcastStored\(latest.season,latest.week\)/);
+ assert.match(route,/preview_editorial/);
+});

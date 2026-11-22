@@ -51,8 +51,11 @@ export function reinforceForwardReporterVoice(teams,week,salt=0,history=[],seaso
   const existing=wc(a.sections.flatMap(s=>s.paragraphs||[]).join(' '));
   if(existing>585)continue;
   const voice=voices[a.reporter?.id]||voices['walter-mercer'];
-  const desks=[reaction],management=a.sections.find(s=>s.kind==='management');
-  if(management?.paragraphs?.length&&existing<470)desks.push(management);
+  // Add one genuinely new reaction, never a second management argument.
+  // Repeating the manager's case in two desks caused the independent
+  // "repeated-management-case" publication failure (Week 14, salt 5).
+  // Management, facts and lineup analysis retain their reviewed original copy.
+  const desks=[reaction];
   for(let di=0;di<desks.length;di++){
    for(let attempt=0;attempt<512;attempt++){
     const seed=[week,salt,t.roster_id,di,attempt,a.reporter?.id].join('|');

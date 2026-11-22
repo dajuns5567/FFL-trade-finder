@@ -245,7 +245,19 @@ async function refreshManagersIfVisible(){
    globalThis.fleecedTradeHistorySharedCacheV515=tradeCache;
    globalThis.primeTradeHistoryCacheV515?.(tradeCache);
   }catch(error){console.warn('manager-trade-refresh-unavailable',String(error?.message||error))}
-  if(!managersChanged&&!tradesChanged)return;
+  // Manager Spotlight must move when the independent completed-week feed
+  // advances, even when the manager-history Blob has not changed yet.
+  const previousLeagueWeek=liveLeagueWeekCache;
+  let spotlightChanged=false;
+  try{
+   const latest=await liveLeagueWeek();
+   if(latest?.available){
+    const sig=x=>JSON.stringify([Number(x?.season)||0,Number(x?.week)||0,
+     (x?.teams||[]).map(g=>[g.roster_id,g.points,g.opponent_points,g.projected,g.opponent_projected])]);
+    spotlightChanged=sig(latest)!==sig(previousLeagueWeek);
+   }
+  }catch(error){console.warn('manager-spotlight-week-refresh-unavailable',String(error?.message||error))}
+  if(!managersChanged&&!tradesChanged&&!spotlightChanged)return;
   if(managersChanged){weeklyAwardsCache=null;spotlightWeeklyCache=null}
   if(tradesChanged)draftCache=null;
   // Rerender the active manager/card/leaderboard with current verified sources.

@@ -118,3 +118,16 @@ test('clipped value analysis gets factual detail without changing independent wo
  team.inquirer_article.sections[0].paragraphs=['Value unknown.'];
  assert.equal(completeVerifiedMarketDesk(edition),0);
 });
+
+test('Sleeper division peers and records replace stock division prose context',()=>{
+ const groups=rosters.map((r,i)=>({...r,settings:{...r.settings,division:Math.floor(i/4)+1}}));
+ const teams=buildSourceTeams({league:{roster_positions:['RB','BN'],metadata:{division_1:'AFC North'}},
+  week:10,matchups:matchup(),history:[[10,matchup()]],nextMatchups:matchup(),
+  rosters:groups,users,players,previousEdition:{teams:[]}});
+ assert.equal(teams[0].division_name,'AFC North');
+ assert.equal(teams[0].conference,'AFC');
+ assert.equal(teams[0].division_context.division_size,4);
+ assert.equal(teams[0].division_context.ahead_teams.length+teams[0].division_context.behind_teams.length,3);
+ assert.equal(teams[0].division_context.snapshot_through_week,10);
+ assert(teams[0].next_opponent_division_context);
+});

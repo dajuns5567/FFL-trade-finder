@@ -43,7 +43,19 @@ jobs:
           const authorizedHostFix=process.env.HEAD_REF==='fix/inquirer-v110-canonical-scheduled-host';
           const week9Reader=new Set([".github/workflows/inquirer-week09-voice-correction.yml",".github/workflows/netlify-v101-one-time-release-gate-ci.yml","netlify.toml","netlify/functions/inquirer-editorial-v31.mjs","netlify/functions/league-hub.mjs","netlify/functions/lib/inquirer-attribution-audit.mjs","netlify/functions/lib/inquirer-week09-editorial-correction.mjs","scripts/verify-inquirer-week09-attribution-correction.mjs","tests/inquirer-attribution-audit.test.mjs","tests/netlify-inquirer-week9-reader-release.test.mjs","tests/netlify-v101-inquirer-pr-previews-only.test.mjs"]);
           const authorizedReader=process.env.HEAD_REF==='fix/inquirer-week09-attributed-recap-correction';
-          const allowed=authorizedReader?week9Reader:authorizedHostFix?hostFix:authorized?release:legacy;
-          assert.equal(paths.length,allowed.size,authorizedReader?'Week 9 editorial reader correction must contain exactly 11 audited files':authorizedHostFix?'V110 UUID-host correction must contain exactly six approved files':authorized?'V110 cutover must contain the exact audited Inquirer files':'Netlify deploy release must contain the exact six approved files');
+          // This new release changes only the separate Inquirer publisher.
+          // Exact-scoped PR verification, never permission for a production deploy.
+          const githubNative=new Set([
+            '.github/workflows/inquirer-github-native-publisher.yml',
+            '.github/workflows/netlify-v101-one-time-release-gate-ci.yml',
+            'netlify.toml','netlify/functions/league-hub.mjs',
+            'netlify/functions/lib/inquirer-github-published.mjs',
+            'scripts/inquirer-v25-audit.mjs',
+            'scripts/publish-inquirer-github-native.mjs',
+            'tests/inquirer-github-native-publisher.test.mjs'
+          ]);
+          const authorizedGithubNative=process.env.HEAD_REF==='fix/inquirer-github-native-publication-20261121';
+          const allowed=authorizedGithubNative?githubNative:authorizedReader?week9Reader:authorizedHostFix?hostFix:authorized?release:legacy;
+          assert.equal(paths.length,allowed.size,authorizedGithubNative?'GitHub Inquirer publisher must contain exactly eight audited files':authorizedReader?'Week 9 editorial reader correction must contain exactly 11 audited files':authorizedHostFix?'V110 UUID-host correction must contain exactly six approved files':authorized?'V110 cutover must contain the exact audited Inquirer files':'Netlify deploy release must contain the exact six approved files');
           for(const path of paths)assert(allowed.has(path),'Out-of-scope file: '+path);
           JS

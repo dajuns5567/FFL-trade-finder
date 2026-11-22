@@ -10,12 +10,13 @@ assert.ok(start>=0&&end>start,'Locate actual installed Managers refresh implemen
 const managerCode=source.slice(start,end);
 
 function fixture(){
- let managerCalls=0,tradeCalls=0,rerenders=0,failManager=false,failTrades=false;
+ let managerCalls=0,tradeCalls=0,weekCalls=0,rerenders=0,failManager=false,failTrades=false,failWeek=false;
  let current={cache_version:13,generated_at:'2026-11-22T00:00:00Z',
   current:Array.from({length:32},(_,i)=>({roster_id:String(i+1),user_id:String(i+101)})),
   career:[{user_id:'101',wins:6,losses:4}],games:[],
   scoring_history:{through_season:2026,through_week:10}};
  let trades={trades:[{id:'trade-one',status:'complete',completed_at:'2026-11-15'}]};
+ let leagueWeek={available:true,season:2026,week:10,teams:[{roster_id:'1',points:110,opponent_points:100,projected:105,opponent_projected:100}]};
  const ctx={Promise,JSON,Date,Math,Number,String,Array,Set,Map,console,
   document:{hidden:false,getElementById:()=>({hidden:false}),addEventListener(){}},
   window:{addEventListener(){}},setInterval(){},
@@ -25,14 +26,20 @@ function fixture(){
    throw Error('unexpected fetch '+url);
   },
   render:async()=>{rerenders++},
+  liveLeagueWeek:async()=>{
+   weekCalls++;if(failWeek)throw Error('latest league week unavailable');
+   ctx.__nextWeek=structuredClone(leagueWeek);
+   vm.runInContext('liveLeagueWeekCache=__nextWeek',ctx);
+   return ctx.__nextWeek;
+  },
   primeTradeHistoryCacheV515:()=>{}
  };
  vm.createContext(ctx);
- vm.runInContext(`let managerCache=null,weeklyCache=null,tradeCache=null,weeklyAwardsCache=null,spotlightWeeklyCache=null,draftCache=null;
+ vm.runInContext(`let managerCache=null,weeklyCache=null,tradeCache=null,weeklyAwardsCache=null,spotlightWeeklyCache=null,liveLeagueWeekCache=null,draftCache=null;
  const inquirerPreviewMode=false;let currentView='managers',selectedManagerId='4';`+managerCode,ctx);
  return {ctx,
-  setManager:x=>{current=x},setTrades:x=>{trades=x},setFailManager:x=>{failManager=x},setFailTrades:x=>{failTrades=x},
-  get:()=>({managerCalls,tradeCalls,rerenders})
+  setManager:x=>{current=x},setTrades:x=>{trades=x},setWeek:x=>{leagueWeek=x},setFailManager:x=>{failManager=x},setFailTrades:x=>{failTrades=x},setFailWeek:x=>{failWeek=x},
+  get:()=>({managerCalls,tradeCalls,weekCalls,rerenders})
  };
 }
 const evalAsync=(ctx,script)=>vm.runInContext(script,ctx);
@@ -83,4 +90,19 @@ test('hidden and non-Manager views avoid expensive refreshes',async()=>{
  f.ctx.document.hidden=false;
  await evalAsync(f.ctx,`currentView='daily';refreshManagersIfVisible()`);
  assert.equal(f.get().managerCalls,0);
+});
+
+test('Manager Spotlight independently advances when completed Sleeper week changes, even if Manager cache does not',async()=>{
+ const f=fixture();
+ await evalAsync(f.ctx,'refreshManagersIfVisible()');
+ assert.equal(f.get().rerenders,1);
+ await evalAsync(f.ctx,'refreshManagersIfVisible()');
+ assert.equal(f.get().rerenders,1);
+ f.setWeek({available:true,season:2026,week:11,teams:[{roster_id:'1',points:98,opponent_points:105,projected:108,opponent_projected:101}]});
+ await evalAsync(f.ctx,'refreshManagersIfVisible()');
+ assert.equal(f.get().rerenders,2,'new completed week must refresh the Spotlight view without Inquirer');
+ f.setFailWeek(true);
+ await evalAsync(f.ctx,'refreshManagersIfVisible()');
+ assert.equal(f.get().rerenders,2,'temporary independent feed outage must not trigger fabricated week changes');
+ assert.equal(f.get().weekCalls,4);
 });

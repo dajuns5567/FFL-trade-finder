@@ -172,8 +172,12 @@ async function refreshLiveLeagueWeekIfAdvanced(){
  try{
   const old=liveLeagueWeekCache,latest=await liveLeagueWeek();
   if(latest&&(!old||Number(latest.season)>Number(old.season)||
-   Number(latest.season)===Number(old.season)&&Number(latest.week)>Number(old.week)))
+   Number(latest.season)===Number(old.season)&&Number(latest.week)>Number(old.week)||
+   JSON.stringify(latest.teams.map(t=>[t.roster_id,t.points,t.opponent_points]))!==
+   JSON.stringify((old.teams||[]).map(t=>[t.roster_id,t.points,t.opponent_points])))){
+   managerCache=null; // completed-week manager records are not Inquirer snapshots
    await render('daily');
+  }
  }catch(error){console.warn('league-week-refresh-unavailable',String(error?.message||error))}
  finally{liveLeagueWeekRefreshInFlight=false}
 }

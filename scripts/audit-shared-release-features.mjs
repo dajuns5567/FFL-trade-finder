@@ -13,7 +13,9 @@ export const features=[
  {id:'inquirer-published-readback',pr:581,file:'.github/workflows/inquirer-github-native-publisher.yml',markers:['verify-inquirer-published-readback.mjs']},
  {id:'market-canonical-invalidation',pr:583,file:'value-history-v276.js',markers:['marketIntelligenceGeneration','marketInsightsCache=null;marketSignalCache=null;']},
  {id:'durable-all-time-highs',pr:584,file:'netlify/functions/league-hub.mjs',markers:['githubDurableAwardHighs','mergeAwardHighs(fromBlob,durable,now)']},
- {id:'projection-verified-hot-seat',pr:584,file:'netlify/functions/lib/league-hot-seat.mjs',markers:["hot_seat_basis:'projected-upset'"]}
+ {id:'projection-verified-hot-seat',pr:584,file:'netlify/functions/lib/league-hot-seat.mjs',markers:["hot_seat_basis:'projected-upset'"]},
+ {id:'finder-targeted-bounded-filter-routing',pr:585,file:'trade-specific-max-value-v279.js',markers:['sourceIntegrityStats','structureIndexBuilds']},
+ {id:'finder-add-assets-complement',pr:585,file:'netlify/functions/site-v29.mjs',markers:['trade-add-assets-complement-v1.js?v=2','trade-specific-max-value-v279.js?v=443']}
 ];
 export function featureCoverage(read){
  return features.map(f=>{

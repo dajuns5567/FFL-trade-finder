@@ -21,6 +21,19 @@ test('fact-grounded sarcasm is available to every byline and never mutates signe
  const historical=[team(7)];reinforceForwardReporterVoice(historical,9,0,[]);
  assert.equal(historical[0].inquirer_article.sections[0].paragraphs.length,1);
 });
+test('reporter labels cannot impose distinct tonal treatment on the same verified facts',()=>{
+ const reporters=['walter-mercer','tess-delaney','mack-hollis','nora-voss'];
+ const lines=reporters.map(reporter=>{
+  const draft=team(902,reporter);
+  reinforceForwardReporterVoice([draft],11,4,[]);
+  return draft.inquirer_article.sections[0].paragraphs.at(-1);
+ });
+ assert.equal(new Set(lines).size,1,'the editorial style must be independent of reporter identity');
+ assert.match(lines[0],/Denzel Boston/);
+ assert.match(lines[0],/2\\.6/);
+ assert.match(lines[0],/New Orleans Aints/);
+});
+
 test('recap rotations look past the immediate previous edition and retain feature mirrors',()=>{
  const t=team(2),issue=recap();
  rotateForwardRecapOpening(issue,[t],11,0,[]);

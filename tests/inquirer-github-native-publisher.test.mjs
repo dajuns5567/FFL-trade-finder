@@ -1,8 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {completeMatchups,buildSourceTeams,selectValueHistoryWindow,buildArchivedMarketContext,completeVerifiedMarketDesk} from '../scripts/publish-inquirer-github-native.mjs';
+import {completeMatchups,buildSourceTeams,selectValueHistoryWindow,buildArchivedMarketContext,completeVerifiedMarketDesk,verifyForwardPublicationLedger} from '../scripts/publish-inquirer-github-native.mjs';
 import {githubPublishedInquirerIndex,githubPublishedInquirerEdition} from '../netlify/functions/lib/inquirer-github-published.mjs';
 import {createHash} from 'node:crypto';
+import {mkdtemp,writeFile,mkdir,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import path from 'node:path';
 const rosters=Array.from({length:32},(_,i)=>({roster_id:i+1,owner_id:'u'+(i+1),
  settings:{wins:i%3,losses:i%2},players:['player_'+(i+1)]}));
 const users=rosters.map(r=>({user_id:r.owner_id,display_name:'Manager '+r.roster_id,metadata:{team_name:'Fantasy Team '+r.roster_id}}));
@@ -130,4 +133,26 @@ test('Sleeper division peers and records replace stock division prose context',(
  assert.equal(teams[0].division_context.ahead_teams.length+teams[0].division_context.behind_teams.length,3);
  assert.equal(teams[0].division_context.snapshot_through_week,10);
  assert(teams[0].next_opponent_division_context);
+});
+
+test('forward publication ledger refuses missing, corrupted, and nonconsecutive editions',async()=>{
+ const root=await mkdtemp(path.join(tmpdir(),'inquirer-ledger-'));
+ try{
+  const edition={season:2026,week:10,available:true,published_locked:true,
+   teams:Array.from({length:32},(_,i)=>({roster_id:i+1})),
+   league_overview:{headline:'Verified weekly report'}};
+  const raw=JSON.stringify(edition);
+  const sha256=createHash('sha256').update(raw).digest('hex');
+  const index={schema_version:1,reports:[{season:2026,week:10,
+   path:'forward/2026/week-10.json',sha256,team_count:32}]};
+  await assert.rejects(verifyForwardPublicationLedger(index,root),/missing despite index/);
+  await mkdir(path.join(root,'forward/2026'),{recursive:true});
+  await writeFile(path.join(root,index.reports[0].path),'corrupted');
+  await assert.rejects(verifyForwardPublicationLedger(index,root),/SHA-256 integrity/);
+  await writeFile(path.join(root,index.reports[0].path),raw);
+  assert.equal(await verifyForwardPublicationLedger(index,root),1);
+  await assert.rejects(verifyForwardPublicationLedger({...index,reports:[...index.reports,index.reports[0]]},root),/Invalid forward publication ledger entry/);
+  await assert.rejects(verifyForwardPublicationLedger({...index,reports:[{...index.reports[0],week:11,path:'forward/2026/week-11.json'}]},root),/missing despite index/);
+  assert.equal(await verifyForwardPublicationLedger({schema_version:1,reports:[]},root),0);
+ }finally{await rm(root,{recursive:true,force:true})}
 });

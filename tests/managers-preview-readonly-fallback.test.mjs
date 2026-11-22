@@ -19,7 +19,7 @@ test('manager preview remains read-only and refuses fabricated or partial weekly
  assert.match(preview,/if\(req\.method!=='GET'\)return json\(\{error:'Deploy Previews are read-only/);
  assert.doesNotMatch(preview,/setJSON\(/);
  assert.match(manager,/const s=persist\?store\(\):null/);
- assert.match(manager,/if\(rosters\.length!==32\|\|!users\.length\|\|weekRows\.some\(rows=>rows\.length!==32\)\)/);
+ assert.match(manager,/if\(rosters\.length!==32\|\|!users\.length\|\|weekRows\.some\(rows=>!verifiedManagerMatchupWeek\(rows\)\)\)/);
  assert.match(manager,/Manager history source incomplete; retain previous verified records/);
  assert.match(manager,/if\(persist\)await Promise\.all\(\[s\.setJSON/);
  assert.match(preview,/Verified manager history unavailable in preview; production backfill disabled/);
@@ -66,4 +66,19 @@ test('browser Managers refreshes on revisits, visibility and focus without repla
  assert.match(ui,/if\(generation===managerRequestGeneration\)/);
  assert.match(ui,/clearManagerHistoryCache\(\); \/\/ finalized week/);
  assert.match(loader,/league-hub-v451\.js\?v=548/);
+});
+
+test('Manager records derive from scored weekly matchups rather than lagging roster standings',()=>{
+ const start=source.indexOf('function verifiedManagerMatchupWeek(rows){');
+ const end=source.indexOf('async function managerHistory(',start);
+ assert.ok(start>=0&&end>start);
+ const guard=source.slice(start,end);
+ assert.match(guard,/rows\.length!==32/);
+ assert.match(guard,/m\?\.points==null/);
+ assert.match(guard,/pairs\.size===16/);
+ assert.match(guard,/every\(n=>n===2\)/);
+ assert.match(manager,/weekRows\.some\(rows=>!verifiedManagerMatchupWeek\(rows\)\)/);
+ assert.match(manager,/let rw=0,rl=0;for\(const rows of weekRows\)/);
+ assert.doesNotMatch(manager,/let rw=Number\(r\?\.settings\?\.wins\)/);
+ assert.match(manager,/career\[uid\]\.wins\+=rw;career\[uid\]\.losses\+=rl/);
 });

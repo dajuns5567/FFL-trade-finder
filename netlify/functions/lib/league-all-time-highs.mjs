@@ -18,8 +18,7 @@ export function mergeAwardHighs(existing=[],observations=[],observedAt=new Date(
   const score=Number(row.score),current=byKey.get(key);
   if(current&&score<=current.score)return;
   const captured_at=source==='historical'&&Number.isFinite(Date.parse(row.captured_at))
-   ?String(row.captured_at):String(row.captured_at&&Number.isFinite(Date.parse(row.captured_at))?
-       row.captured_at:observedAt);
+   ?String(row.captured_at):observedAt;
   byKey.set(key,{award_key:String(row.award_key),roster_id:String(row.roster_id),score,
    detail:String(row.detail||''),captured_at});
  };

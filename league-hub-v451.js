@@ -498,6 +498,13 @@ async function captureAllTimeHighsOnSiteOpen({force=false}={}){
  catch(error){console.warn('league-award-highs-auto-capture-unavailable',String(error?.message||error));return false}
  finally{allTimeHighCapturePending=null}
 }
+// Also capture when the site opens outside League Hub. Canonical data may
+// arrive after DOM ready, so listen for the explicit values-ready signal and
+// make one bounded startup attempt.
+window.addEventListener('fll:canonical-values-ready',()=>{
+ setTimeout(()=>captureAllTimeHighsOnSiteOpen().catch(()=>{}),1500);
+});
+setTimeout(()=>captureAllTimeHighsOnSiteOpen().catch(()=>{}),12000);
 async function syncAwards(rows){
  await refreshAllTimeHighs(rows);
  try{
@@ -751,7 +758,7 @@ async function render(view=currentView,managerId=''){const previousView=currentV
  const [data,mgr,w,arc,reporters,weeklyAwardData,leagueWeek]=await Promise.all([trades(),managers(),weekly().catch(()=>null),fetch('/.netlify/functions/league-hub?broadcast_archive=1',{cache:'no-store'}).then(r=>r.ok?r.json():{reports:[]}).catch(()=>({reports:[]})),reporterDirectory().catch(()=>({reporters:[]})),weeklyAwards().catch(()=>({records:[]})),liveLeagueWeek().catch(()=>liveLeagueWeekCache)]);weeklyAwardsCache=weeklyAwardData;all=data?.trades||[];stats=teamTradeStats(all);md=mgr;weeklyCache=w;reporterDirectoryCache=reporters;broadcastArchive=arc?.reports||[];if(inquirerPreviewMode&&w?.preview_only)broadcastArchive=[{season:w.season,week:w.week,headline:w.league_overview?.headline,preview_only:true},...broadcastArchive.filter(x=>Number(x.season)!==Number(w.season)||Number(x.week)!==Number(w.week))];const spotlightW=await spotlightWeek(w,broadcastArchive).catch(()=>null);host.innerHTML=dailyHTML(all,stats,w,md,spotlightW||w,leagueWeek);
  // Site opening and a newly completed Sleeper week both opportunistically
  // capture genuine All-Time Highs, without requiring the Awards tab.
- captureAllTimeHighsOnSiteOpen({force:!!leagueWeek?.available}).catch(()=>{});
+ captureAllTimeHighsOnSiteOpen().catch(()=>{});
  }catch(error){if(inquirerPreviewMode&&view==='daily'){
   const detail=String(error?.message||'Draft not ready'),isRunning=/generation (started|in progress)/i.test(detail);
   host.innerHTML='<div class="lh-card"><h3>'+esc('Private '+(inquirerPreviewRequestedWeek?'Week '+inquirerPreviewRequestedWeek+' ':'Inquirer ')+(isRunning?'preview is generating':'preview is not ready'))+'</h3><p>This is an unpublished, isolated Deploy Preview. Nothing here publishes an edition to the live site.</p><small>'+esc(detail)+'</small></div>';

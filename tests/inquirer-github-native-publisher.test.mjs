@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {completeMatchups,buildSourceTeams,selectValueHistoryWindow,buildArchivedMarketContext,completeVerifiedMarketDesk,verifyForwardPublicationLedger,inspectInquirerNewspaperVoice} from '../scripts/publish-inquirer-github-native.mjs';
+import {completeMatchups,buildSourceTeams,selectValueHistoryWindow,buildArchivedMarketContext,completeVerifiedMarketDesk,verifyForwardPublicationLedger,inspectInquirerNewspaperVoice,inspectCompletedStandingsContract} from '../scripts/publish-inquirer-github-native.mjs';
 import {githubPublishedInquirerIndex,githubPublishedInquirerEdition,githubInquirerArchiveBranch} from '../netlify/functions/lib/inquirer-github-published.mjs';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
@@ -215,4 +215,17 @@ test('forward edition rejects explanatory non-newsroom prose but not ordinary na
  assert.equal(inspectInquirerNewspaperVoice(build('The New York Jets beat New England 81.7–79.7.')).length,0);
  assert.equal(inspectInquirerNewspaperVoice(build('This is not a result between NFL franchises.')).length,1);
  assert.equal(inspectInquirerNewspaperVoice(build('The New York Jets faced New England. Not the NFL standings.')).length,1);
+});
+
+test('published newsroom can never promote a losing team to the top of the table',()=>{
+ const teams=buildSourceTeams({league:{roster_positions:['RB','BN']},week:10,
+  matchups:matchup(),history:[[10,matchup()]],nextMatchups:matchup(),rosters,users,players,
+  previousEdition:{teams:[]}});
+ assert.deepEqual(inspectCompletedStandingsContract({week:1,teams}),[]);
+ const swapped=structuredClone(teams);
+ swapped[0].league_context.standings_rank=1;
+ assert(inspectCompletedStandingsContract({week:1,teams:swapped}).some(x=>x.id==='missing-or-incomplete-standings-rank'));
+ const missing=structuredClone(teams);
+ missing[0].league_context.standings_rank=null;
+ assert(inspectCompletedStandingsContract({week:1,teams:missing}).length>0);
 });

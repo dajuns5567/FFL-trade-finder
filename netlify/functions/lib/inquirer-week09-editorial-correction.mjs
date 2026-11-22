@@ -122,7 +122,7 @@ function correctRecap(d){
  blocks[4].heading='The High, the Low, and the Distance Between';
  blocks[4].paragraphs=[
   'The Chargers topped the Week 9 scoring sheet with '+n(chargers.points)+' against the Raiders, and Reese supplied '+n(48.8)+' of those points. A performance like that travels quickly through a 32-team league. So does the sight of the opposite end of the table.',
-  'Kansas City Chiefs managed '+n(chiefs.points)+' against the Doncos, whose '+n(doncos.points)+' did not require much suspense. The gulf between the Chargers and Chiefs reached '+n(chargers.points-chiefs.points)+' points. Nobody is suggesting those clubs faced each other this week; the scoreboard comparison alone is enough to make Kansas City reach for the aspirin.'
+  'Kansas City Chiefs managed '+n(chiefs.points)+' against the Doncos, whose '+n(doncos.points)+' did not require much suspense. The gulf between the Chargers and Chiefs reached '+n(chargers.points-chiefs.points)+' points. That distance on the weekly scoring table is enough to send Kansas City in search of answers, and perhaps a large aspirin.'
  ];
  blocks[5].heading='Next Sunday Is Already Asking Questions';
  blocks[5].paragraphs=[

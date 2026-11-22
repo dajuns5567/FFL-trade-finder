@@ -39,6 +39,10 @@ test('the award backend uses completed Sleeeper weeks independently of newspaper
  assert.match(implementation,/independent:true/);
  assert.match(implementation,/award_source:'sleeper-finalized-matchups'/);
  assert.match(implementation,/if\(persist&&/);
+ assert.match(implementation,/let s=null/);
+ assert.match(implementation,/league-awards-newspaper-catalog-unavailable/);
+ assert.match(implementation,/league-awards-cache-write-unavailable/);
+
  const preview=src.slice(src.indexOf("if(isReadOnlyEditorialPreview("));
  assert.match(preview,/weeklyAwards\(\{persist:false\}\)/);
 });

@@ -39,7 +39,9 @@ function attributeSourceBackedRecapOpenings(overview,teams,week){
 // Week 1/2 preloads remain immutable; Week 3+ runs this layer with week-aware
 // variation, prior-edition continuity, playoff-race context and postseason rounds.
 import {finishReviewedForwardCopy} from './inquirer-reviewed-copy.mjs';
+import {reinforceForwardReporterVoice as composeReporterVoice,rotateForwardRecapOpening as composeRecapOpening,COMPOSITIONAL_VOICE_CONTRACT} from './lib/inquirer-compositional-voice.mjs';
 import {assessMinorNineWordReuse} from './lib/inquirer-minor-repetition.mjs';
+import {verifiedTwoWeekForm} from './lib/inquirer-verified-two-week-form.mjs';
 import {inspectFantasyTeamAttribution} from './lib/inquirer-attribution-audit.mjs';
 import {inspectInquirerFormatContract} from './inquirer-format-contract.mjs';
 import {attributeForwardPlayerStatFragments,curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPlayerFact,restoreForwardArticleDepth} from './inquirer-narrative-architecture.mjs';
@@ -47,7 +49,7 @@ import {attributeForwardPlayerStatFragments,curateForwardTeamNarrative,inspectNa
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=110;
+export const FORWARD_EDITORIAL_REVISION=113;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -696,6 +698,16 @@ export function polishForwardTeamCopy(teams,week,salt){
   return {...t,inquirer_article:{...article,headline,sections,paragraphs:sections.flatMap(s=>s.paragraphs||[])}};
  });
 }
+
+// Preserve the public editorial API while routing every new issue through
+// the compositional, source-grounded newsroom voice engine. No publisher fork.
+export function reinforceForwardReporterVoice(teams,week,salt=0,history=[],season=2026){
+ return composeReporterVoice(teams,week,salt,history,season);
+}
+export function rotateForwardRecapOpening(overview,teams,week,salt=0,history=[],season=Number(overview?.season)||2026){
+ return composeRecapOpening(overview,teams,week,salt,history,season);
+}
+
 export function applyInquirerEditorialV31({season,week,rawInquirer,rawOverview,previousEdition=null,previousEditions=[],weekClassification=null,variationSalt=0}={}){
   season=Number(season);week=Number(week);variationSalt=Number(variationSalt)||0;
   if(!rawInquirer||!Array.isArray(rawInquirer.teams))throw new Error('V31 forward editorial layer requires raw team articles');
@@ -3724,7 +3736,7 @@ function rewriteWeek2Overview(overview,teams,previousEdition,week=2){
     paras.push(w2S(w,r,"recap-context-"+i,w2RecapContext(w,prev,i)));
     return{heading:(i===0?"Week 2’s Loudest Game: ":"")+wName+" vs. "+lName,paragraphs:paras}
   });
-  const undefeated=forwardRecentGroup(teams,week,'W'),winless=forwardRecentGroup(teams,week,'L'),upValue=(teams||[]).filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))&&Number(t.value_history_week.delta)>0).slice().sort((a,b)=>Number(b.value_history_week.delta)-Number(a.value_history_week.delta))[0],downValue=(teams||[]).filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))&&Number(t.value_history_week.delta)<0).slice().sort((a,b)=>Number(a.value_history_week.delta)-Number(b.value_history_week.delta))[0];
+  const verifiedForm=verifiedTwoWeekForm(teams,week),undefeated=verifiedForm.winners,winless=verifiedForm.losers,upValue=(teams||[]).filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))&&Number(t.value_history_week.delta)>0).slice().sort((a,b)=>Number(b.value_history_week.delta)-Number(a.value_history_week.delta))[0],downValue=(teams||[]).filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))&&Number(t.value_history_week.delta)<0).slice().sort((a,b)=>Number(a.value_history_week.delta)-Number(b.value_history_week.delta))[0];
   const moverSummary=(team,key,label)=>{
     const rows=(team?.value_history_player_movers?.[key]||[]).filter(x=>Number.isFinite(Number(x?.delta))).slice(0,3);
     if(!rows.length)return" No verified player-level "+(key==="risers"?"gain":"decline")+" is available for attribution within that same snapshot window.";
@@ -3744,9 +3756,9 @@ function rewriteWeek2Overview(overview,teams,previousEdition,week=2){
   }else blocks.push({heading:"What Two Weeks Are Starting to Say",paragraphs:
     w2TwoWeekLeagueRead(teams,trajectoryReporter).map((p,i)=>w2S(top,trajectoryReporter,"recap-two-weeks-"+i,p))
   });
-  const recentWinners=undefeated.length?("The teams that won both of the last two games are "+w2Natural(undefeated.map(t=>w2DisplayTeam(t.team_name)))+". That is form, not an undefeated-season claim; the season standings still count every result."):"Nobody won both of the last two completed games. Apparently consistency has become an optional luxury.";
+  const recentWinners=!verifiedForm.complete?null:undefeated.length?("The teams that won both of the last two games are "+w2Natural(undefeated.map(t=>w2DisplayTeam(t.team_name)))+". That is form, not an undefeated-season claim; the season standings still count every result."):"Nobody won both of the last two completed games. Apparently consistency has become an optional luxury.";
   const velvet=[
-    w2S(top,rep(1)||{},"contender-undefeated",Number(week)<=2
+    (Number(week)>2&&!verifiedForm.complete)?null:w2S(top,rep(1)||{},"contender-undefeated",Number(week)<=2
       ?(undefeated.length?"The 2-0 club now includes "+w2Natural(undefeated.map(t=>w2DisplayTeam(t.team_name)))+". Two wins are not a coronation, but they are enough to make opening-week charm look more like actual form.":"Nobody escaped Week 2 undefeated, which is rude to the optimists and excellent for the rest of us.")
       :recentWinners),
     upValue?w2S(upValue,rep(1)||{},"contender-up","The biggest positive value mover is "+w2DisplayTeam(upValue.team_name)+", up "+Math.abs(Math.round(Number(upValue.value_history_week.delta))).toLocaleString("en-US")+" points"+(Number.isFinite(Number(upValue.value_history_week.pct))?" ("+w2One(Math.abs(Number(upValue.value_history_week.pct)))+"%)":"")+"."+moverSummary(upValue,"risers","risers")+" The market has pushed this roster closer to contender territory; Sunday still decides whether that optimism survives contact."):null,
@@ -6087,6 +6099,12 @@ function assertWeek2Originality(result,previousEdition){
   if(week>=5){
     overview=pruneForwardRecapLessonScaffold(overview,teams,week);
     overview=polishForwardReaderCopy(teams,overview,week);
+  }
+  if(season>2026||week>=10){
+    // Distinct reporter voices and long-horizon recap leads are generated
+    // only for new drafts, after the normal newsroom editing stages.
+    reinforceForwardReporterVoice(teams,week,variationSalt,[previousEdition,...previousEditions],season);
+    overview=rotateForwardRecapOpening(overview,teams,week,variationSalt,[previousEdition,...previousEditions],season);
   }
   if(week>=9)overview=attributeSourceBackedRecapOpenings(overview,teams,week);
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};

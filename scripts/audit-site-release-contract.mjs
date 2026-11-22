@@ -155,11 +155,15 @@ export async function auditSite({root=process.cwd(),baseRef=null}={}){
     {cwd:root,encoding:'utf8'});return old(priorPath)+old(sitePath)})():null;
  // Verify the real previous byte contents of all critical browser assets.
  // A changed script requires a new key, not simply a nondecreasing key.
+ // Every actually loaded JS asset belongs to a visible section or dependency.
+ // Check changed bytes for all of them, not only the smaller critical-path set.
+ const allLoadedScripts=[...new Set(injectedScripts(html)
+  .filter(x=>x.pathname.endsWith('.js')).map(x=>x.pathname.slice(1)))];
  const bumped=before?verifyCacheKeysForChangedAssets(before,html,filename=>{
   try{return execFileSync('git',['show',baseRef+':'+filename],{cwd:root}) .compare(
     fs.readFileSync(path.join(root,filename)))!==0}
   catch{return false}
- }):[];
+ },{critical:allLoadedScripts}):[];
 
  const result=compareVersionAssets(
   before?before:html,html);

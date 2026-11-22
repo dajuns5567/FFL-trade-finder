@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {completeMatchups,buildSourceTeams,selectValueHistoryWindow,buildArchivedMarketContext,completeVerifiedMarketDesk,verifyForwardPublicationLedger} from '../scripts/publish-inquirer-github-native.mjs';
+import {completeMatchups,buildSourceTeams,selectValueHistoryWindow,buildArchivedMarketContext,completeVerifiedMarketDesk,verifyForwardPublicationLedger,inspectInquirerNewspaperVoice} from '../scripts/publish-inquirer-github-native.mjs';
 import {githubPublishedInquirerIndex,githubPublishedInquirerEdition,githubInquirerArchiveBranch} from '../netlify/functions/lib/inquirer-github-published.mjs';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
@@ -194,4 +194,13 @@ test('Week 9 corrected newspaper keeps the original six-beat structure and remov
  assert.doesNotMatch(src,/not a result between NFL franchises|not the NFL standings|not interchangeable NFL-team prose/);
  assert.match(src,/original_archive_unchanged:true/);
  assert.match(src,/hash\(original\)!==ORIGINAL_SHA/);
+});
+
+test('forward edition rejects explanatory non-newsroom prose but not ordinary named football copy',()=>{
+ const build=paragraph=>({teams:[{roster_id:1,inquirer_article:{sections:[{kind:'lede',paragraphs:[paragraph]}]}}],
+  league_overview:{sections:[{heading:'The back page',paragraphs:['The Jets beat New England in a close game.'],
+   blocks:[{kind:'lead',paragraphs:['The Chargers beat the Raiders with Arvell Reese leading the defense.']}]}]}});
+ assert.equal(inspectInquirerNewspaperVoice(build('The New York Jets beat New England 81.7–79.7.')).length,0);
+ assert.equal(inspectInquirerNewspaperVoice(build('This is not a result between NFL franchises.')).length,1);
+ assert.equal(inspectInquirerNewspaperVoice(build('The New York Jets faced New England. Not the NFL standings.')).length,1);
 });

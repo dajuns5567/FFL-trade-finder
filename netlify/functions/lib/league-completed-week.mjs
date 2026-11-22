@@ -9,7 +9,7 @@ export function completedLeagueWeekView({season,week,matchups,rosters,users}={})
  for(const m of matchups){
   const id=String(m?.roster_id??''),game=String(m?.matchup_id??'');
   if(!id||!game||seen.has(id)||!rosterById.has(id)||
-    !Number.isFinite(Number(m.points))||!m.players_points||
+    m.points==null||!Number.isFinite(Number(m.points))||!m.players_points||
     !Object.keys(m.players_points).length)return null;
   seen.add(id);
   if(!byMatchup.has(game))byMatchup.set(game,[]);

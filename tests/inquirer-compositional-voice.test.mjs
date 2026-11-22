@@ -100,3 +100,19 @@ test('recap grammar inflects verbs for plural and singular subjects across many 
   assert.doesNotMatch(text,/\b(?:completed-week ledger|Sunday archive|league scoreboard|matchup record|scoring summary|full-league account|morning-after accounting|finished score sheet)\s+(?:record|set out|open with|lead with|put forward|document|frame|feature|print|make room|present|file|place on)\b/i);
  }
 });
+
+
+test('humor never duplicates the management argument or writes consecutive filler',()=>{
+ const teams=Array.from({length:32},(_,i)=>team(i));
+ const before=teams.map(t=>[...(t.inquirer_article.sections.find(s=>s.kind==='management').paragraphs)]);
+ reinforceForwardReporterVoice(teams,14,5,[]);
+ for(let i=0;i<32;i++){
+  const article=teams[i].inquirer_article;
+  assert.deepEqual(article.sections.find(s=>s.kind==='management').paragraphs,before[i],
+    'a reaction joke must not turn into a second management case');
+  const paragraphs=article.sections.flatMap(s=>s.paragraphs);
+  assert.equal(article.paragraphs.join('|'),paragraphs.join('|'));
+  assert.equal(new Set(paragraphs.map(p=>p.trim().toLowerCase())).size,paragraphs.length,
+    'no consecutive or exact within-article repeated paragraphs');
+ }
+});

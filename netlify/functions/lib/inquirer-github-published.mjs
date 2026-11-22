@@ -7,7 +7,7 @@ const ROOT='https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/';
 export function githubInquirerArchiveBranch(env=process.env){
  const context=String(env.CONTEXT||globalThis.Netlify?.env?.get?.('CONTEXT')||'');
  const review=String(env.REVIEW_ID||globalThis.Netlify?.env?.get?.('REVIEW_ID')||'');
- return context==='deploy-preview'&&review==='574'?'inquirer-preview-574':'inquirer-archive';
+ return context==='deploy-preview'&&review==='574'?'inquirer-preview-574-r2':'inquirer-archive';
 }
 const publishedRoot=()=>ROOT+githubInquirerArchiveBranch()+'/inquirer-archive/';
 const hash=raw=>createHash('sha256').update(raw).digest('hex');

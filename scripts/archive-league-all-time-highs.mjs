@@ -32,6 +32,8 @@ export function validateScheduledHighs(observation){
 }
 export function nextDurableHighs(previous,observation){
  const input=validateScheduledHighs(observation);
+ if(previous?.latest_observation_at&&Date.parse(input.captured_at)<Date.parse(previous.latest_observation_at))
+  throw Error('AWARD_ARCHIVE_STALE_OBSERVATION: previously recorded a later canonical refresh');
  const existing=Array.isArray(previous?.records)?previous.records:[];
  const records=mergeAwardHighs(existing,input.observations,input.captured_at);
  if(records.length<existing.length)throw Error('AWARD_ARCHIVE_SHRINK_BLOCKED');

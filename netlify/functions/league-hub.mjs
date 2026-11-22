@@ -12,6 +12,7 @@ import {fetchBestSeason} from './history-fetch.mjs';
 import {applyInquirerEditorialV31,evaluateInquirerEditionQuality,FORWARD_INQUIRER_VERSION,FORWARD_EDITORIAL_REVISION} from './inquirer-editorial-v31.mjs';
 import {inspectCanonicalArchive} from './lib/inquirer-legacy-history.mjs';
 import {recoveredInquirerCatalog,recoveredInquirerEdition} from './lib/inquirer-github-archive.mjs';
+import {githubPublishedInquirerIndex,githubPublishedInquirerEdition} from './lib/inquirer-github-published.mjs';
 import {correctWeekNineReaderEdition} from './lib/inquirer-week09-editorial-correction.mjs';
 import {privatePreviewStoreName,isVerifiedPrivatePreviewPredecessor} from './lib/inquirer-preview-diagnostics.mjs';
 
@@ -703,6 +704,15 @@ async function broadcastArchive(){
  }catch(error){
   console.warn('inquirer-github-archive-index-unavailable',String(error?.message||error));
  }
+ // GitHub Actions publishes Week 10+ directly to its immutable-file branch.
+ // Unlike Netlify's internal publisher, this path requires no Blob migration,
+ // scheduled callback, site secrets, or editorial status from a Netlify site.
+ try{
+  const forward=await githubPublishedInquirerIndex();
+  for(const row of forward.reports)
+   if(!rows.some(x=>Number(x.season)===row.season&&Number(x.week)===row.week))
+    rows.push(row);
+ }catch(error){console.warn('inquirer-github-forward-index-unavailable',String(error?.message||error))}
  // Also discover original Weeks 3–4 already in Blobs when GitHub is
  // temporarily unreachable. Never rewrite their original publication bytes.
  for(const week of [3,4]){
@@ -715,6 +725,13 @@ async function broadcastArchive(){
  rows.sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));return{reports:rows};
 }
 async function broadcastStored(season,week){
+ // GitHub-native issues take precedence over stale/missing Netlify Blobs.
+ // Never fall back to a different Week 10+ manuscript when a GitHub-indexed
+ // issue exists but fails its checksum or published-edition verification.
+ if(Number(season)===2026&&Number(week)>=10){
+  const github=await githubPublishedInquirerEdition(season,week);
+  if(github)return github;
+ }
  const s=store(),v=await s.get(`broadcasts/${Number(season)}/week-${String(Number(week)).padStart(2,'0')}.json`,{type:'json'});
  if(v!==null&&v!==undefined){
   // The existing Blob index is NOT admission evidence. The original site

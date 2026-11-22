@@ -400,6 +400,38 @@ function statusFor(edition,verdict){
    .map(code=>[code,issues.filter(x=>String(x?.id||x?.code||'unknown')===code).length])),
   issue_codes:issues.slice(0,24).map(x=>String(x?.id||x?.code||'unknown'))};
 }
+export async function verifyForwardPublicationLedger(index,archiveRoot){
+ if(index?.schema_version!==1||!Array.isArray(index.reports))
+  throw Error('Invalid forward publication index');
+ const seen=new Set();
+ for(const row of index.reports){
+  const week=Number(row.week);
+  const expected='forward/2026/week-'+pad(week)+'.json';
+  if(Number(row.season)!==2026||!Number.isInteger(week)||week<10||week>17||
+     seen.has(week)||row.path!==expected||Number(row.team_count)!==32||
+     !/^[a-f0-9]{64}$/.test(String(row.sha256||'')))
+   throw Error('Invalid forward publication ledger entry for Week '+week);
+  seen.add(week);
+  let raw;
+  try{raw=await fs.readFile(path.join(archiveRoot,expected))}
+  catch(error){if(error.code==='ENOENT')throw Error('Forward published Week '+week+' missing despite index');throw error}
+  if(digest(raw)!==row.sha256)
+   throw Error('Forward published Week '+week+' failed SHA-256 integrity check');
+  let edition;
+  try{edition=JSON.parse(raw.toString('utf8'))}
+  catch{throw Error('Forward published Week '+week+' is not valid JSON')}
+  if(Number(edition.season)!==2026||Number(edition.week)!==week||
+     edition.available!==true||edition.published_locked!==true||
+     !Array.isArray(edition.teams)||edition.teams.length!==32||
+     new Set(edition.teams.map(t=>String(t.roster_id))).size!==32||
+     !edition.league_overview?.headline)
+   throw Error('Forward published Week '+week+' fails edition contract');
+ }
+ const weeks=[...seen].sort((a,b)=>a-b);
+ if(weeks.some((week,i)=>week!==i+10))
+  throw Error('Forward publication index has missing or out-of-order weeks');
+ return weeks.length;
+}
 export async function runGithubInquirerPublisher({archiveRoot,fetcher=fetch,now=new Date()}={}){
  if(!archiveRoot)throw Error('Required GitHub archive worktree path missing');
  const read=async(file)=>JSON.parse(await fs.readFile(path.join(archiveRoot,file),'utf8'));
@@ -422,6 +454,10 @@ export async function runGithubInquirerPublisher({archiveRoot,fetcher=fetch,now=
  const indexPath='forward/index.json';
  const index=await read(indexPath).catch(error=>{if(error.code==='ENOENT')return{schema_version:1,reports:[]};throw error});
  if(index.schema_version!==1||!Array.isArray(index.reports))throw Error('Invalid forward publication index');
+ // A ledger entry does not prove a newspaper exists. Verify every published
+ // forward issue before calculating the next week, or an orphaned index could
+ // silently skip an issue forever.
+ await verifyForwardPublicationLedger(index,archiveRoot);
  const recorded=new Set(index.reports.map(x=>Number(x.week)));
  let week=10;while(recorded.has(week))week++;
  if(week>finalWeek)return{state:'up-to-date',season,through_week:week-1};

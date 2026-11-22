@@ -59,7 +59,20 @@ jobs:
             'tests/inquirer-weekly-publication-consistency.test.mjs'
           ]);
           const authorizedGithubNative=process.env.HEAD_REF==='fix/inquirer-github-native-publication-20261121';
-          const allowed=authorizedGithubNative?githubNative:authorizedReader?week9Reader:authorizedHostFix?hostFix:authorized?release:legacy;
-          assert.equal(paths.length,allowed.size,authorizedGithubNative?'GitHub Inquirer publisher must contain exactly twelve audited files':authorizedReader?'Week 9 editorial reader correction must contain exactly 11 audited files':authorizedHostFix?'V110 UUID-host correction must contain exactly six approved files':authorized?'V110 cutover must contain the exact audited Inquirer files':'Netlify deploy release must contain the exact six approved files');
+          const leagueWeek=new Set([
+            '.github/workflows/league-week-independent-news.yml',
+            '.github/workflows/netlify-v101-one-time-release-gate-ci.yml',
+            'league-hub-v451.js','netlify.toml',
+            'netlify/functions/league-hub.mjs',
+            'netlify/functions/lib/league-completed-week.mjs',
+            'netlify/functions/site-v29.mjs',
+            'tests/inquirer-week9-unattended-publish-regression.test.mjs',
+            'tests/league-week-independent-news.test.mjs',
+            'tests/inquirer-private-preview-ci.test.mjs',
+            'tests/presentation-copy-cleanup-v539.test.mjs'
+          ]);
+          const authorizedLeagueWeek=process.env.HEAD_REF==='fix/league-week-independent-of-inquirer-20261121';
+          const allowed=authorizedLeagueWeek?leagueWeek:authorizedGithubNative?githubNative:authorizedReader?week9Reader:authorizedHostFix?hostFix:authorized?release:legacy;
+          assert.equal(paths.length,allowed.size,authorizedLeagueWeek?'League Hub weekly visibility must contain exactly eleven audited files':authorizedGithubNative?'GitHub Inquirer publisher must contain exactly twelve audited files':authorizedReader?'Week 9 editorial reader correction must contain exactly 11 audited files':authorizedHostFix?'V110 UUID-host correction must contain exactly six approved files':authorized?'V110 cutover must contain the exact audited Inquirer files':'Netlify deploy release must contain the exact six approved files');
           for(const path of paths)assert(allowed.has(path),'Out-of-scope file: '+path);
           JS

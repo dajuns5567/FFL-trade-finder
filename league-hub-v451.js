@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-let installed=false,tradeCache=null,weeklyCache=null,spotlightWeeklyCache=null,weeklyAwardsCache=null,draftCache=null,managerCache=null,reporterDirectoryCache=null,reporterArchiveCache={},openReporterArchive='',awardHistory=[],awardHighHistory=[],broadcastArchive=[],openBroadcastTeam='',currentView='daily',rankingAwardKey='',awardYearFilters={},awardHighMode={},hallExpanded=false,selectedManagerId='',inquirerPlayerLinkCache=null;
+let installed=false,tradeCache=null,weeklyCache=null,liveLeagueWeekCache=null,spotlightWeeklyCache=null,weeklyAwardsCache=null,draftCache=null,managerCache=null,reporterDirectoryCache=null,reporterArchiveCache={},openReporterArchive='',awardHistory=[],awardHighHistory=[],broadcastArchive=[],openBroadcastTeam='',currentView='daily',rankingAwardKey='',awardYearFilters={},awardHighMode={},hallExpanded=false,selectedManagerId='',inquirerPlayerLinkCache=null;
 // Unpublished editions are reviewable only on Netlify PR previews, and only
 // through the same League Hub rendering path as the published archive.
 const onNetlifyDeployPreview=/^deploy-preview-\d+--[^.]+\.netlify\.app$/i.test(location.hostname);
@@ -154,7 +154,33 @@ async function fetchPublishedInquirerArchive(){const response=await fetch('/.net
 async function weekly(){if(inquirerPreviewMode)return loadInquirerPreview();const rows=await fetchPublishedInquirerArchive(),latest=latestPublishedInquirerRow(rows);if(!latest)return{available:false,reason:'No published Inquirer edition is available yet.'};if(weeklyCache?.available&&Number(weeklyCache.season)===Number(latest.season)&&Number(weeklyCache.week)===Number(latest.week))return weeklyCache;const r=await fetch('/.netlify/functions/league-hub?broadcast_season='+Number(latest.season)+'&broadcast_week='+Number(latest.week),{cache:'no-store'});if(!r.ok)throw Error('published edition unavailable');const edition=await r.json();if(edition?.available!==true||!Array.isArray(edition.teams)||edition.teams.length!==32||!edition.league_overview?.headline)throw Error('latest indexed newspaper is not fully readable');invalidatePublishedInquirerCaches();weeklyCache=edition;return edition}
 let inquirerArchiveRefreshInstalled=false,inquirerArchiveRefreshInFlight=false;
 async function refreshPublishedInquirerIfAdvanced(){if(inquirerPreviewMode||inquirerArchiveRefreshInFlight||document.hidden||currentView!=='daily')return;const section=document.getElementById('leagueHub');if(!section||section.hidden)return;inquirerArchiveRefreshInFlight=true;try{const rows=await fetchPublishedInquirerArchive(),latest=latestPublishedInquirerRow(rows),old=latestPublishedInquirerRow(broadcastArchive);const readerBehind=!openBroadcastTeam&&!!latest&&(!weeklyCache?.available||inquirerRowIsNewer(latest,weeklyCache));if(!inquirerRowIsNewer(latest,old)&&!readerBehind)return;broadcastArchive=rows;if(openBroadcastTeam&&weeklyCache?.available){const host=document.getElementById('leagueHubContent');if(host)host.innerHTML=dailyHTML([],[],weeklyCache,managerCache);return}invalidatePublishedInquirerCaches();await render('daily')}catch(error){console.warn('inquirer-archive-refresh-unavailable',String(error?.message||error))}finally{inquirerArchiveRefreshInFlight=false}}
-function installInquirerArchiveRefresh(){if(inquirerArchiveRefreshInstalled||inquirerPreviewMode)return;inquirerArchiveRefreshInstalled=true;setInterval(refreshPublishedInquirerIfAdvanced,60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshPublishedInquirerIfAdvanced()});window.addEventListener('focus',refreshPublishedInquirerIfAdvanced)}
+function installInquirerArchiveRefresh(){if(inquirerArchiveRefreshInstalled||inquirerPreviewMode)return;inquirerArchiveRefreshInstalled=true;setInterval(refreshPublishedInquirerIfAdvanced,60000);setInterval(refreshLiveLeagueWeekIfAdvanced,60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden){refreshPublishedInquirerIfAdvanced();refreshLiveLeagueWeekIfAdvanced()}});window.addEventListener('focus',()=>{refreshPublishedInquirerIfAdvanced();refreshLiveLeagueWeekIfAdvanced()})}
+// Independent completed-week feed. Newspaper availability never controls this.
+async function liveLeagueWeek(){
+ const r=await fetch('/.netlify/functions/league-hub?league_latest=1',{cache:'no-store'});
+ if(!r.ok)throw Error('Sleeper league week unavailable');
+ const w=await r.json();
+ if(w?.available===true&&Array.isArray(w.teams)&&w.teams.length===32){liveLeagueWeekCache=w;return w}
+ return null;
+}
+let liveLeagueWeekRefreshInFlight=false;
+async function refreshLiveLeagueWeekIfAdvanced(){
+ if(inquirerPreviewMode||liveLeagueWeekRefreshInFlight||document.hidden||currentView!=='daily'||openBroadcastTeam)return;
+ const panel=document.getElementById('leagueHub');
+ if(!panel||panel.hidden)return;
+ liveLeagueWeekRefreshInFlight=true;
+ try{
+  const old=liveLeagueWeekCache,latest=await liveLeagueWeek();
+  if(latest&&(!old||Number(latest.season)>Number(old.season)||
+   Number(latest.season)===Number(old.season)&&Number(latest.week)>Number(old.week)||
+   JSON.stringify(latest.teams.map(t=>[t.roster_id,t.points,t.opponent_points]))!==
+   JSON.stringify((old.teams||[]).map(t=>[t.roster_id,t.points,t.opponent_points])))){
+   managerCache=null; // completed-week manager records are not Inquirer snapshots
+   await render('daily');
+  }
+ }catch(error){console.warn('league-week-refresh-unavailable',String(error?.message||error))}
+ finally{liveLeagueWeekRefreshInFlight=false}
+}
 async function weeklyAwards(){if(weeklyAwardsCache)return weeklyAwardsCache;const r=await fetch('/.netlify/functions/league-hub?weekly_awards=1',{cache:'no-store'});if(!r.ok)return{records:[]};weeklyAwardsCache=await r.json();return weeklyAwardsCache}
 async function spotlightWeek(w,archiveRows=null){if(w?.available&&Array.isArray(w?.teams)&&w.teams.length){spotlightWeeklyCache=w;return w}if(spotlightWeeklyCache?.available&&Array.isArray(spotlightWeeklyCache?.teams)&&spotlightWeeklyCache.teams.length)return spotlightWeeklyCache;let rows=archiveRows;if(!Array.isArray(rows)){const arc=await fetch('/.netlify/functions/league-hub?broadcast_archive=1',{cache:'no-store'}).then(r=>r.ok?r.json():{reports:[]}).catch(()=>({reports:[]}));rows=arc?.reports||[]}const season=Number(w?.season)||0,latest=(rows||[]).filter(x=>!season||Number(x.season)===season).slice().sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week))[0]||(rows||[]).slice().sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week))[0];if(!latest)return null;const x=await fetch('/.netlify/functions/league-hub?broadcast_season='+Number(latest.season)+'&broadcast_week='+Number(latest.week),{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);if(x?.available&&Array.isArray(x?.teams)&&x.teams.length){spotlightWeeklyCache=x;return x}return null}
 async function drafts(){if(draftCache)return draftCache;const r=await fetch('/.netlify/functions/league-hub?drafts=1',{cache:'no-store'});if(!r.ok)return{draft_picks:[]};draftCache=await r.json();return draftCache}
@@ -520,7 +546,7 @@ function scrollToInquirerTop(){requestAnimationFrame(()=>window.scrollTo({top:0,
 function scrollToInquirerArticle(){requestAnimationFrame(()=>{const target=document.querySelector('#leagueHub .lh-report .lh-article-picker')||document.querySelector('#leagueHub .lh-report');if(!target)return;const top=Math.max(0,window.scrollY+target.getBoundingClientRect().top-110);window.scrollTo({top,behavior:'auto'})})}
 function showWeeklyArticle(w,scroll=false,scrollMode='article'){const host=document.getElementById('leagueHubContent');if(host)host.innerHTML=dailyHTML([],[],w,managerCache);if(scroll)(scrollMode==='top'?scrollToInquirerTop():scrollToInquirerArticle())}
 function returnToLeagueHubHome(){openBroadcastTeam='';weeklyCache=null;render('daily').then(()=>scrollToInquirerTop())}
-function dailyHTML(all,stats,w,md,spotlightW=w){
+function dailyHTML(all,stats,w,md,spotlightW=w,leagueWeek=liveLeagueWeekCache){
  const latest=all.slice().sort((a,b)=>new Date(b.created||0)-new Date(a.created||0)).slice(0,3);
  const active=stats.slice().sort((a,b)=>b.trades-a.trades)[0];
  const best=all.map(t=>({t,h:hindsightDelta(t)})).filter(x=>x.h).sort((a,b)=>b.h.edge-a.h.edge)[0];
@@ -554,6 +580,16 @@ function dailyHTML(all,stats,w,md,spotlightW=w){
   report='<div class="lh-card lh-wide lh-report"><h3 class="lh-report-title">🎙️ Fleeced! Inquirer</h3><div class="lh-sub">'+esc(w?.reason||'The next completed-week report is being held until Sleeper advances the week.')+'</div>'+heldActions+archive+'</div>';
  }
 
+ const weekTeams=leagueWeek?.available?leagueWeek.teams:[],
+  pairSet=new Set(),matchups=weekTeams.filter(t=>{const key=[String(t.roster_id),String(t.opponent_roster_id)].sort().join('|');if(pairSet.has(key))return false;pairSet.add(key);return true}),
+  gameRows=matchups.map(t=>{
+   const opponent=weekTeams.find(x=>String(x.roster_id)===String(t.opponent_roster_id));
+   return '<div class="lh-stat"><span>'+esc(t.team_name)+' vs '+esc(opponent?.team_name||'Opponent')+'</span><strong>'+Number(t.points).toFixed(1)+'–'+Number(t.opponent_points).toFixed(1)+'</strong></div>';
+  }).join(''),
+  liveScoreboard='<div class="lh-card lh-wide"><h3>🏈 Fleeced! Daily — Completed Week Results</h3>'+
+   (weekTeams.length?'<div class="lh-sub">'+esc('2026'===String(leagueWeek.season)?'2026 Week '+leagueWeek.week:leagueWeek.season+' Week '+leagueWeek.week)+' • Finalized Sleeper fantasy matchups • Independent of Inquirer publication</div>'+
+    '<div class="lh-grid">'+gameRows+'</div>':
+    '<div class="lh-sub">Awaiting finalized Sleeper fantasy matchups. The newspaper does not control these results.</div>')+'</div>';
  const tradeWire='<div class="lh-card lh-wide"><h3>📰 Fleeced! Daily — Trade Wire</h3><div class="lh-sub">'+
   new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'})+
   ' • every trade below opens that exact deal in Trade History</div>'+
@@ -571,7 +607,7 @@ function dailyHTML(all,stats,w,md,spotlightW=w){
    '<div class="lh-sub">No fully-valued two-team trade is available yet.</div>')+
   '<div class="lh-action"><button class="lh-brand-button lh-brand-button-outline lh-brand-button-compact" data-lh-view="hall">Enter Hall of Fleeced</button></div></div>';
 
- return '<div class="lh-grid">'+report+tradeWire+playersOfWeekHTML(w)+awards+hall+spotlightBlock(md,spotlightW)+'</div>';
+ return '<div class="lh-grid">'+liveScoreboard+report+tradeWire+playersOfWeekHTML(w)+awards+hall+spotlightBlock(md,leagueWeek?.available?leagueWeek:spotlightW)+'</div>';
 }
 function careerRankingsHTML(key,md){const labels={wins:'Most Wins',championships:'Most Championships',division_wins:'Most Division Wins',division_championships:'Most Division Championships',losses:'Most Losses',regular_season_titles:'Regular Season Champions'},rows=(md?.career||[]).slice().sort((a,b)=>(b[key]||0)-(a[key]||0));return`<div class="lh-card lh-wide"><div class="lh-title-action"><h3>🏅 ${esc(labels[key]||'Manager Rankings')}</h3><button class="secondary small" data-lh-view="daily">← Fleeced Daily</button></div><div class="lh-sub">Comprehensive career rankings by Sleeper manager ID.</div>${rows.map((x,i)=>`<div class="lh-stat"><span><b>#${i+1}</b> ${esc(x.sleeper_id||x.user_id||'—')}</span><strong>${Number(x[key])||0}</strong></div>`).join('')||'<div class="lh-sub">No career history available yet.</div>'}</div>`}
 function latestWeeklyAwardRecord(data=weeklyAwardsCache){
@@ -620,7 +656,7 @@ async function render(view=currentView,managerId=''){const previousView=currentV
  if(view==='managers'||view==='career'){const [data,mgr,wk,weeklyAwardData]=await Promise.all([trades(),managers(),weekly().catch(()=>null),weeklyAwards().catch(()=>({records:[]}))]);weeklyAwardsCache=weeklyAwardData;all=data?.trades||[];stats=teamTradeStats(all);md=mgr;if(wk)weeklyCache=wk;await spotlightWeek(wk).catch(()=>null);if(view==='career'){host.innerHTML=careerRankingsHTML(managerId,md);return}if(managerId||selectedManagerId){draftData=await drafts();host.innerHTML=managerHTML(managerId||selectedManagerId,stats,all);return}host.innerHTML=managersHTML(stats,md);return}
  if(view==='hall'){const data=await trades();all=data?.trades||[];host.innerHTML=hallHTML(all);return}
  if(view==='awards'){const [data,draftsData,weeklyAwardData]=await Promise.all([trades(),drafts(),weeklyAwards().catch(()=>({records:[]}))]);weeklyAwardsCache=weeklyAwardData;all=data?.trades||[];stats=teamTradeStats(all);draftData=draftsData;awards=currentAwards(stats,draftData);host.innerHTML=awardsHTML(awards);syncAwards(awards);return}
- const [data,mgr,w,arc,reporters,weeklyAwardData]=await Promise.all([trades(),managers(),weekly().catch(()=>null),fetch('/.netlify/functions/league-hub?broadcast_archive=1',{cache:'no-store'}).then(r=>r.ok?r.json():{reports:[]}).catch(()=>({reports:[]})),reporterDirectory().catch(()=>({reporters:[]})),weeklyAwards().catch(()=>({records:[]}))]);weeklyAwardsCache=weeklyAwardData;all=data?.trades||[];stats=teamTradeStats(all);md=mgr;weeklyCache=w;reporterDirectoryCache=reporters;broadcastArchive=arc?.reports||[];if(inquirerPreviewMode&&w?.preview_only)broadcastArchive=[{season:w.season,week:w.week,headline:w.league_overview?.headline,preview_only:true},...broadcastArchive.filter(x=>Number(x.season)!==Number(w.season)||Number(x.week)!==Number(w.week))];const spotlightW=await spotlightWeek(w,broadcastArchive).catch(()=>null);host.innerHTML=dailyHTML(all,stats,w,md,spotlightW||w);
+ const [data,mgr,w,arc,reporters,weeklyAwardData,leagueWeek]=await Promise.all([trades(),managers(),weekly().catch(()=>null),fetch('/.netlify/functions/league-hub?broadcast_archive=1',{cache:'no-store'}).then(r=>r.ok?r.json():{reports:[]}).catch(()=>({reports:[]})),reporterDirectory().catch(()=>({reporters:[]})),weeklyAwards().catch(()=>({records:[]})),liveLeagueWeek().catch(()=>liveLeagueWeekCache)]);weeklyAwardsCache=weeklyAwardData;all=data?.trades||[];stats=teamTradeStats(all);md=mgr;weeklyCache=w;reporterDirectoryCache=reporters;broadcastArchive=arc?.reports||[];if(inquirerPreviewMode&&w?.preview_only)broadcastArchive=[{season:w.season,week:w.week,headline:w.league_overview?.headline,preview_only:true},...broadcastArchive.filter(x=>Number(x.season)!==Number(w.season)||Number(x.week)!==Number(w.week))];const spotlightW=await spotlightWeek(w,broadcastArchive).catch(()=>null);host.innerHTML=dailyHTML(all,stats,w,md,spotlightW||w,leagueWeek);
  }catch(error){if(inquirerPreviewMode&&view==='daily'){
   const detail=String(error?.message||'Draft not ready'),isRunning=/generation (started|in progress)/i.test(detail);
   host.innerHTML='<div class="lh-card"><h3>'+esc('Private '+(inquirerPreviewRequestedWeek?'Week '+inquirerPreviewRequestedWeek+' ':'Inquirer ')+(isRunning?'preview is generating':'preview is not ready'))+'</h3><p>This is an unpublished, isolated Deploy Preview. Nothing here publishes an edition to the live site.</p><small>'+esc(detail)+'</small></div>';

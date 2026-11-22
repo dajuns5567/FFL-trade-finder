@@ -1,4 +1,5 @@
 import {inquirerMarketCutoff,editionAvailability} from './lib/inquirer-market-window.mjs';
+import {completedLeagueWeekView} from './lib/league-completed-week.mjs';
 import valueHistoryHandler from './value-history.mjs';
 // Forward drafts must be reviewed as written; synthetic scoreboard sentence repair is retired.
 import {inspectEditionBeforePublication,editorialApprovalMatches,editorialCopyDigest,deterministicInquirerAdmission,isReadOnlyEditorialPreview,inspectPreviousWeekEditorialReuse} from './inquirer-publication-guard.mjs';
@@ -870,6 +871,28 @@ export async function weeklyAwards({additionalLockedEditions=[],persist=true,onl
  return{schema_version:1,records:next};
 }
 
+// League Hub week visibility is independent of the GitHub newspaper archive.
+// Only finalized Sleeper matchups and roster records can advance this feed.
+async function latestCompletedLeagueWeek(){
+ const [league,nfl]=await Promise.all([
+  fetchJson(`${API}/league/${LEAGUE}`),fetchJson(`${API}/state/nfl`)
+ ]);
+ const season=Number(league?.season||nfl?.season),weekNow=Number(nfl?.week);
+ if(!Number.isInteger(season)||!Number.isInteger(weekNow)||weekNow<2)
+  return{available:false,season,week:null,reason:'No finalized fantasy week yet'};
+ const [rosters,users]=await Promise.all([
+  fetchJson(`${API}/league/${LEAGUE}/rosters`),
+  fetchJson(`${API}/league/${LEAGUE}/users`)
+ ]);
+ const newest=Math.min(INQUIRER_FINAL_WEEK,weekNow-1);
+ for(let week=newest;week>=Math.max(1,newest-2);week--){
+  const finalized=await completedPublicationWeek(week);
+  if(!finalized.complete)continue;
+  const view=completedLeagueWeekView({season,week,matchups:finalized.rows,rosters,users});
+  if(view)return view;
+ }
+ return{available:false,season,week:null,reason:'Sleeper has not finalized league matchup results'};
+}
 async function draftAwards(){
  const league=await fetchJson(`${API}/league/${LEAGUE}`),current=Number(league?.season)||new Date().getFullYear(),years=[current,current-1,current-2,current-3],out=[];
  for(const season of years){
@@ -988,7 +1011,7 @@ export default async req=>{try{const u=new URL(req.url);
    return cached?json({...cached,cache_hit:true,preview_read_only:true}):json({error:'No manager history cache in preview; production backfill disabled.',preview_read_only:true},503);
   }
  }
-if(u.searchParams.get('weekly')==='1'){
+if(u.searchParams.get('league_latest')==='1')return json(await latestCompletedLeagueWeek());if(u.searchParams.get('weekly')==='1'){
  // Public newspaper reads must NEVER invoke the old stateful generator.
  // Draft previews still use the existing explicit read-only preview gate.
  if(req.method==='GET'&&u.searchParams.get('preview_editorial')==='1')

@@ -113,9 +113,10 @@ export function buildSourceTeams({league,week,matchups,history=[],nextMatchups=[
 }
 export function verifyEditorialEdition(edition,previous,historical=[]){
  const audit=inspectEditionBeforePublication(edition),quality=evaluateInquirerEditionQuality(edition,previous);
+ const priorIssueCount=quality.issues.length;
  for(const old of historical)for(const issue of inspectPreviousWeekEditorialReuse(edition,old))
   quality.issues.push({...issue,source_week:Number(old.week)});
- if(quality.issues.length&&!quality.ok){} // explicit legacy finding retention
+ if(quality.issues.length>priorIssueCount)quality.ok=false;
  const independent=auditIndependentInquirerCopy([edition],{revision:FORWARD_EDITORIAL_REVISION,mode:'publication'});
  const admission=deterministicInquirerAdmission(edition,{quality,audit,previousEdition:previous});
  return{ok:quality.ok&&audit.ok&&independent.ok&&admission.approved,
@@ -161,6 +162,15 @@ export async function runGithubInquirerPublisher({archiveRoot,fetcher=fetch,now=
  const previousManifest=await read('manifest.json');
  if(previousManifest?.schema_version!==1||previousManifest?.season!==2026||previousManifest?.entries?.length!==7)
   throw Error('Immutable original GitHub archive is not the expected verified Weeks 3-9 catalog');
+ // Verify the ORIGINAL bytes, not a regenerated substitute or modified JSON.
+ // Nothing in this workflow may revise the accepted historical originals.
+ for(const [i,entry] of previousManifest.entries.entries()){
+  const w=i+3,expected='2026/week-'+pad(w)+'.json';
+  if(Number(entry.week)!==w||entry.path!==expected||!/^[a-f0-9]{64}$/.test(entry.sha256||''))
+   throw Error('Protected original manifest entry is invalid for Week '+w);
+  const raw=await fs.readFile(path.join(archiveRoot,expected));
+  if(digest(raw)!==entry.sha256)throw Error('Protected original Week '+w+' archive differs from approved SHA-256');
+ }
  const indexPath='forward/index.json';
  const index=await read(indexPath).catch(error=>{if(error.code==='ENOENT')return{schema_version:1,reports:[]};throw error});
  if(index.schema_version!==1||!Array.isArray(index.reports))throw Error('Invalid forward publication index');

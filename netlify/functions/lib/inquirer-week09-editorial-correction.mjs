@@ -105,7 +105,7 @@ function correctRecap(d){
  ];
  blocks[1].heading='The Race Tightens, Even at the Top';
  blocks[1].paragraphs=[
-  'The Jets moved to 4-5 while New England slipped to 7-2. That upset will not knock the Patriots out of the race, but it gives their next lineup meeting an uncomfortable opening question: how did a '+n(patMiss.gap)+'-point bench advantage stay on the sideline in a '+n(jets.points-patriots.points)+'-point loss?',
+  'The Jets moved to 4-5 while New England slipped to 7-2. The Patriots are still in the thick of the playoff race, but a loss to a team entering the week below .500 is the kind that lingers longer than a one-week standings update.',
   'Denver Doncos kept their hands on first place, beating Kansas City Chiefs '+n(doncos.points)+'–'+n(chiefs.points)+'. Javonte Williams chipped in '+n(22.4)+' for Denver. The leaders keep winning; everyone else keeps checking the standings, which is hardly a restful way to spend November.'
  ];
  blocks[2].heading='The Back Page Belongs to the Chargers';
@@ -143,7 +143,7 @@ function correctRecap(d){
  if(back.paragraphs?.[0]?.startsWith('The moves worth keeping on the back page:'))
   back.paragraphs=back.paragraphs.slice(1);
  next.paragraphs=[
-  'After a '+n(jets.points)+'–'+n(patriots.points)+' loss to the Jets, Patriots manager '+patriots.manager_name+' will have to revisit the '+n(patMiss.gap)+'-point Henley-versus-Allen IDP FLEX decision. New England remains a contender, but contenders cannot afford to keep giving opponents such useful talking points.',
+  'Patriots manager '+patriots.manager_name+' now has '+patriots.next_opponent_name+' waiting after the '+n(jets.points)+'–'+n(patriots.points)+' loss to New York Jets. New England remains a contender; the next game will test whether this was a stumble or the start of a harder stretch.',
   'Chargers manager '+chargers.manager_name+' gets to enjoy a '+n(chargers.points)+'-point week against the Raiders. Reese brought '+n(48.8)+' and Stroud added '+n(33.76)+'. The Steelers are next; pity the defense that has to prepare for a lineup feeling this pleased with itself.',
   'Jacksonville Jags now get a Jets club that suddenly has reasons to believe, while Pittsburgh Steelers meet the high-flying Chargers. Both games will tell us more about which Week 9 headlines deserve a sequel.'
  ];

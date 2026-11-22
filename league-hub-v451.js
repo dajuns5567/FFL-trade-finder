@@ -433,7 +433,7 @@ function awardPeriod(){const d=new Date(),anchor=new Date('2026-09-14T00:00:00')
 // Always load saved highs even if this client cannot write (protected
 // preview, transient network error, or a stale browser tab). The old code
 // discarded a successful GET whenever its next POST failed.
-async function refreshAllTimeHighs(rows,{record=true}={}){
+async function refreshAllTimeHighs(rows,{record=true,verifiedInputs=false}={}){
  const endpoint='/.netlify/functions/league-hub?award_highs=1';
  try{
   const response=await fetch(endpoint,{cache:'no-store'});
@@ -445,9 +445,13 @@ async function refreshAllTimeHighs(rows,{record=true}={}){
   console.warn('league-award-highs-read-unavailable',String(error?.message||error));
  }
  const teams=globalThis.state?.teams||[];
- const ready=teams.length===32&&new Set(teams.map(t=>String(t.id))).size===32&&
+ const completeContext=verifiedInputs||Array.isArray(rows)&&rows.length===20&&
+   Array.isArray(tradeCache?.trades)&&tradeCache.trades.length>0&&
+   Array.isArray(draftCache?.draft_picks)&&draftCache.draft_picks.length>0;
+ const ready=completeContext&&teams.length===32&&
+   new Set(teams.map(t=>String(t.id))).size===32&&
    globalThis.modeledPlayerValuesV319?.ready===true&&
-   globalThis.tradeValueNormalizationV130?.canonicalValue;
+   typeof globalThis.tradeValueNormalizationV130?.canonicalValue==='function';
  if(record&&!onNetlifyDeployPreview&&!inquirerPreviewMode&&ready&&Array.isArray(rows)){
   const observations=rows.flatMap(a=>(a.standings||[]).map(x=>({
    award_key:awardRecordKey(a.key),roster_id:String(x.roster_id||''),
@@ -499,7 +503,7 @@ async function captureAllTimeHighsOnSiteOpen({force=false}={}){
      !Array.isArray(draftData?.draft_picks))return false;
   const rows=currentAwards(teamTradeStats(tradeData.trades),draftData);
   if(rows.length!==20||rows.some(x=>!x.key||!Array.isArray(x.standings)))return false;
-  await refreshAllTimeHighs(rows);
+  await refreshAllTimeHighs(rows,{verifiedInputs:true});
   allTimeHighCaptureAt=Date.now();
   return true;
  })();

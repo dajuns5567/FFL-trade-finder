@@ -22,7 +22,7 @@ const recap=()=>({sections:[{blocks:[
 
 test('automatic publisher uses compositional editorial contract rather than a finite opener bank',()=>{
  assert.equal(COMPOSITIONAL_VOICE_CONTRACT,1);
- assert.equal(FORWARD_EDITORIAL_REVISION,112);
+ assert.equal(FORWARD_EDITORIAL_REVISION,113);
  const publisher=readFileSync(new URL('../scripts/publish-inquirer-github-native.mjs',import.meta.url),'utf8');
  const newsroom=readFileSync(new URL('../netlify/functions/inquirer-editorial-v31.mjs',import.meta.url),'utf8');
  assert.match(publisher,/applyInquirerEditorialV31/);
@@ -31,7 +31,7 @@ test('automatic publisher uses compositional editorial contract rather than a fi
  assert.match(newsroom,/composeRecapOpening\(overview,teams,week,salt,history,season\)/);
 });
 
-test('all 32 future articles get different fact-grounded commentary with four distinct reporter voices',()=>{
+test('all 32 future articles get varied fact-grounded blunt commentary regardless of reporter',()=>{
  const teams=Array.from({length:32},(_,i)=>team(i));
  const original=JSON.stringify(teams);
  reinforceForwardReporterVoice(teams,11,0,[]);

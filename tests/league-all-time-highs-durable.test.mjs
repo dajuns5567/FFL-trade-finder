@@ -48,6 +48,13 @@ test('old 32-team historical highs never vanish when the new snapshot is smaller
  assert.equal(after.records.length,prior.records.length);
  assert.deepEqual(after.records,prior.records);
 });
+test('rerunning an older scheduled job cannot roll back the durable latest observation',()=>{
+ const prior=nextDurableHighs(null,fixture());
+ const stale=fixture();
+ stale.captured_at=new Date(Date.parse(prior.latest_observation_at)-60_000).toISOString();
+ assert.throws(()=>nextDurableHighs(prior,stale),/STALE_OBSERVATION/);
+});
+
 test('no missing, duplicated or fabricated scheduled awards are archived',()=>{
  const empty=fixture();empty.observations=[];
  assert.throws(()=>validateScheduledHighs(empty),/INCOMPLETE/);

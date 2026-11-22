@@ -127,7 +127,7 @@ test('saved highs remain readable when a write fails in the browser',async()=>{
  const state={state:{teams:Array.from({length:32},(_,i)=>({id:String(i+1)}))},
   modeledPlayerValuesV319:{ready:true},tradeValueNormalizationV130:{canonicalValue:()=>900}};
  const app=setup(fetcher,{warn:()=>{}},state);
- await app.run([{key:'powerhouse',standings:[{roster_id:'2',score:1000,detail:'top five'}]}]);
+ await app.run([{key:'powerhouse',standings:[{roster_id:'2',score:1000,detail:'top five'}]}],{verifiedInputs:true});
  assert.equal(posts,1);
  assert.equal(app.records()[0].score,900);
 });

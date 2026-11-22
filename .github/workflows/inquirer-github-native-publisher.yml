@@ -47,6 +47,7 @@ jobs:
         if: github.event_name == 'push'
         env:
           INQUIRER_GITHUB_ARCHIVE_ROOT: history/inquirer-archive
+          FLEECED_INQUIRER_DIAGNOSE_SALT: '1'
         run: node scripts/publish-inquirer-github-native.mjs
   publish:
     needs: verify

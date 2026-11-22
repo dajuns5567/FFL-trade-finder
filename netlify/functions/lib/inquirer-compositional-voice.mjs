@@ -25,6 +25,14 @@ const voices={
  'nora-voss':{setting:['the imaginary group chat','the fictional gossip desk','the rumor column','the league grapevine','the unofficial screenshot collection','the Monday whisper network','the imaginary fan hotline','the message-board press box','the fantasy chat log','the spectator gallery'],
   irony:['the screenshot needs no invented caption','everyone can read the decimal without an anonymous source','the group chat has enough material already','the score is doing all of the talking','the evidence has escaped into the open','there is no need to manufacture a scandal','the box score beat the rumor mill to publication','the points told the story without an insider tip','the gossip desk has decided not to embellish it','the numbers were indiscreet all by themselves']}
 };
+// Every reporter now draws from the SAME blunt, sarcastic editorial vocabulary.
+// Byline identities remain for historical archive compatibility, not tonal segregation.
+// Reuse the existing source-grounded lines from all desks rather than imposing a
+// distinct voice requirement; independent syntax and facts prevent canned repetition.
+const sharedVoice={
+ setting:[...new Set(Object.values(voices).flatMap(v=>v.setting))],
+ irony:[...new Set(Object.values(voices).flatMap(v=>v.irony))]
+};
 // Predicates must fit the subject. Avoid random lexical substitutions that
 // produce grammatical but unnatural combinations such as "Team contributed 110".
 const teamVerbs=['scored','posted','recorded','tallied','finished with','put up','notched','produced','registered','logged'];
@@ -53,7 +61,7 @@ export function reinforceForwardReporterVoice(teams,week,salt=0,history=[],seaso
   const reaction=a.sections.find(s=>s.kind==='sentiment');if(!reaction?.paragraphs?.length)continue;
   const existing=wc(a.sections.flatMap(s=>s.paragraphs||[]).join(' '));
   if(existing>585)continue;
-  const voice=voices[a.reporter?.id]||voices['walter-mercer'];
+  const voice=sharedVoice;
   // Add one genuinely new reaction, never a second management argument.
   // Repeating the manager's case in two desks caused the independent
   // "repeated-management-case" publication failure (Week 14, salt 5).
@@ -66,7 +74,7 @@ export function reinforceForwardReporterVoice(teams,week,salt=0,history=[],seaso
      setting:pick(voice.setting,seed+'s'),irony:pick(voice.irony,seed+'i'),
      teamVerb:pick(teamVerbs,seed+'team-verb'),playerVerb:pick(playerVerbs,seed+'player-verb'),reference:pick(references,seed+'r')};
     const line=pick(frames,seed+'f')(p),full=norm(line),first=head(line);
-    const punchlineKey=[a.reporter?.id||'walter-mercer',di,p.irony].join('|');
+    const punchlineKey=[di,p.irony].join('|');
     if(old.has(full)||used.has(full)||open.has(first)||starts.has(first)||voicePunchlines.has(punchlineKey))continue;
     desks[di].paragraphs.push(line);used.add(full);starts.add(first);voicePunchlines.add(punchlineKey);break;
    }

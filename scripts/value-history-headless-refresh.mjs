@@ -6,6 +6,7 @@ import { createHash } from 'node:crypto';
 import siteV29 from '../netlify/functions/site-v29.mjs';
 import updateHandler from '../netlify/functions/update.mjs';
 import picksHandler from '../netlify/functions/picks.mjs';
+import valueHistoryReadHandler from '../netlify/functions/value-history.mjs';
 
 const snapshotFile=process.env.VALUE_HISTORY_SNAPSHOT_FILE||'.tmp/value-history-scheduled.json';
 // Scheduled jobs may run from main while checking out a pinned, verified
@@ -78,6 +79,12 @@ async function send(res,response){
   const bytes=Buffer.from(await response.arrayBuffer());res.end(bytes);
 }
 function historyReadStub(url){
+ // All-Time Highs scheduled observation must see genuine completed Sleeper
+ // trades, never the collector's legacy empty-trades fixture.
+ if(url.searchParams.get('trades')==='1'){
+  const safe=new URL(url);safe.searchParams.set('readonly_preview','1');
+  return valueHistoryReadHandler(new Request(safe.toString(),{method:'GET'}));
+ }
   if(url.searchParams.get('market')==='1')return json({tracking_since:null,latest:null,snapshot_count:0,periods:{'1D':{},'7D':{},'30D':{},'90D':{},'1Y':{},'ALL':{}},marketRows:[]});
   if(url.searchParams.get('health')==='1')return json({ok:true,source:'scheduled-local-runtime',components:{githubArchive:{reachable:true},netlifyLive:{reachable:false}}});
   if(url.searchParams.get('team_net')==='1')return json({points:[],source:'scheduled-local-runtime'});
@@ -483,8 +490,31 @@ try{
   const snap={version:5,league,t,fingerprint:fp,source:'scheduled',valuation_contract:scheduledContract,valuation_model:valuationModel,provenance:{git_commit:sourceCommit,modeled_version:captured.modeledVersion,consensus_sources:Number(readiness.consensusMarker?.successful)||0,source_manifest:captured.sourceManifest,canonical_parity:'exact',candidate_read_only:candidateModel?true:undefined,model_blob_sha:approvedScheduledModel?V101_APPROVED_MODEL_BLOB:undefined},rows:captured.rows,picks:captured.picks,teams:captured.teams};
   mkdirSync(join(process.cwd(),'.tmp'),{recursive:true});
   writeFileSync(snapshotFile,JSON.stringify(snap,null,2)+'\n');
+  // Separate award observation: failures must not fabricate highs or roll
+  // back an otherwise valid canonical valuation history capture.
+  const highsFile=process.env.ALL_TIME_HIGHS_SCHEDULED_FILE||'.tmp/all-time-highs-scheduled.json';
+  let awardCaptureStatus='not-started';
+  try{
+   const observations=await page.evaluate(()=>window.fleecedAwardHighsScheduledObservation?.());
+   if(observations?.team_count!==32||observations?.categories!==20||
+      observations?.observations?.length<500||observations?.trade_count<1)
+    throw Error('Unverified or incomplete 32-team awards from scheduled runtime');
+   writeFileSync(highsFile,JSON.stringify({
+    ...observations,canonical_fingerprint:fp,
+    model_used:valuationModel,source_commit:sourceCommit
+   },null,2)+'\n');
+   awardCaptureStatus='captured:'+observations.observations.length;
+   console.log('ALL_TIME_HIGHS_SCHEDULED_CAPTURE '+JSON.stringify({
+    captured_at:observations.captured_at,records:observations.observations.length,
+    trades:observations.trade_count,drafts:observations.draft_count
+   }));
+  }catch(error){
+   awardCaptureStatus='unavailable:'+String(error?.message||error).slice(0,200);
+   console.warn('ALL_TIME_HIGHS_SCHEDULED_CAPTURE_UNAVAILABLE',String(error?.stack||error));
+  }
 
-  console.log(JSON.stringify({ok:true,runtime:'github-main-local',readiness,canonicalParity:'exact',modeledVersion:captured.modeledVersion,pageErrors:pageErrors.length,failedRequests:failedRequests.length,snapshot:{t,source:'scheduled',count:captured.rows.length,fingerprint:fp}},null,2));
+
+  console.log(JSON.stringify({ok:true,runtime:'github-main-local',readiness,canonicalParity:'exact',modeledVersion:captured.modeledVersion,pageErrors:pageErrors.length,failedRequests:failedRequests.length,allTimeHighs:awardCaptureStatus,snapshot:{t,source:'scheduled',count:captured.rows.length,fingerprint:fp}},null,2));
 }finally{
   await browser.close();
   await new Promise(resolve=>server.close(resolve));

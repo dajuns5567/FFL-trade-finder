@@ -122,3 +122,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALUE_HISTORY_SNAPSHOT_FILE: .tmp/value-history-scheduled.json
         run: node scripts/archive-value-history.mjs
+
+      # Separate award writer: the existing valuation archive commits first.
+      # An absent/incomplete awards observation fails this workflow explicitly,
+      # never fabricates high records or rolls back Value History.
+      - name: Persist validated league All-Time Highs to GitHub
+        if: steps.due.outputs.due == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ALL_TIME_HIGHS_SCHEDULED_FILE: .tmp/all-time-highs-scheduled.json
+        run: node scripts/archive-league-all-time-highs.mjs

@@ -75,6 +75,19 @@ const recapVocabulary={
  reaction:['The points are not accepting appeals.','No one has to like a figure for it to count.','The spin department cannot edit those numbers.','An explanation is not a scoring category.','The box score already has the last word.','The group chat can keep the theories; the totals remain.','There are no style points for arguing with arithmetic.','The next disagreement should at least begin with that evidence.','The fantasy scoreboard was not taking requests.','A softer adjective would not change the final score.','Those decimals have been remarkably indiscreet.','The league can now resume debating reality without improving on it.','The calculation is doing the sarcastic work itself.','The scoreboard has neglected everyone’s feelings.'],
  focus:['a completed matchup','the loudest Sunday total','the narrowest finished score','the widest completed margin','the middle of the league table','a number the league cannot unsee','a recorded contrast worth examining','the least comfortable final total','a result that outlived the predictions','an entry nobody can rewrite']
 };
+// The grammatical subject and verb are composed independently; inflect the
+// action after selection, so plurality survives every vocabulary combination.
+const recapPluralPrefixes=new Set([
+ 'The finalized fantasy scores','The scorekeeper’s notes',
+ 'The week’s finished numbers','The final fantasy totals'
+]);
+const pluralRecapAction=action=>{
+ const forms={'records':'record','sets out':'set out','opens with':'open with',
+  'leads with':'lead with','puts forward':'put forward','documents':'document',
+  'frames':'frame','features':'feature','prints':'print','makes room for':'make room for',
+  'sets down':'set down','presents':'present','files':'file','places on the page':'place on the page'};
+ return forms[action]||action;
+};
 const leadFrames=[
  p=>p.bridge+' '+p.club+' scored '+p.score+' against '+p.foe+' in Week '+p.week+'. '+p.reaction,
  p=>'For Week '+p.week+', '+p.prefix.toLowerCase()+' '+p.action+' '+p.club+' at '+p.score+' versus '+p.foe+'. '+p.reaction,
@@ -103,6 +116,7 @@ export function rotateForwardRecapOpening(overview,teams,week,salt=0,history=[],
   const seed=[week,salt,attempt,'recap',overview?.season||''].join('|');
   const t=pick(subjects,seed+'team'),p={week,club:t.team_name,foe:t.opponent_name,score:fmt(t.points),against:fmt(t.opponent_points)};
   for(const [field,bank] of Object.entries(recapVocabulary))p[field]=pick(bank,seed+field);
+  if(recapPluralPrefixes.has(p.prefix))p.action=pluralRecapAction(p.action);
   const line=pick(leadFrames,seed+'structure')(p);
   if(old.has(norm(line))||starts.has(head(line))||recentCadences.has(cadence(line)))continue;
   lead.paragraphs[0]=line;

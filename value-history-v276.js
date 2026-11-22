@@ -1784,11 +1784,6 @@ function archivedEraBoard(m){
   };
   return`<details class="vh-card vh-history-section"><summary><strong>Earlier Market History (Recorded Values)</strong></summary><div class="vh-sub">Preserved observations from ${esc(dateShort(era.tracking_since))} through ${esc(dateShort(era.through))} under the preceding valuation era. ${fmt(era.snapshot_count)} sampled observations. These are historical values, NOT current Player Values or changes across model versions.</div><div class="vh-grid-2"><div class="vh-card"><h3>Earlier Recorded Risers</h3>${recordedRows(era.valueRisers)}</div><div class="vh-card"><h3>Earlier Recorded Fallers</h3>${recordedRows(era.valueFallers)}</div></div></details>`;
 }
-function modelEraNote(m){
-  if(!m?.model_change_at)return'';
-  const comparable=Math.max(0,Number(m.comparable_snapshot_count)||0),total=Math.max(0,Number(m.snapshot_count)||0);
-  return`<div class="vh-sub" role="status">Historical tracking is preserved (${fmt(total)} snapshots). Latest valuation model began ${esc(dateTime(m.model_change_at))} (${fmt(comparable)} sampled observations). Market changes add verified movements within each model era in the selected window, excluding the artificial value jump when models changed.</div>`;
-}
 function renderMarketDashboard(){
   const box=document.getElementById('vhContent');if(!box||!marketCache)return;
   const m=marketCache,status=document.getElementById('vhStatus');
@@ -1796,8 +1791,6 @@ function renderMarketDashboard(){
   const vr=marketPeriods.valueRisers,vf=marketPeriods.valueFallers,rr=marketPeriods.rankRisers,rf=marketPeriods.rankFallers;
   const vpR=m.periods?.[vr]||{},vpF=m.periods?.[vf]||{},rpR=m.periods?.[rr]||{},rpF=m.periods?.[rf]||{};
   box.innerHTML=`
-  ${modelEraNote(m)}
-  <div class="vh-sub">Current values and ranks come from Player Values; market movement, historical records, and time-window changes are archived observations and may end before the latest live refresh.</div>
   <div class="vh-market-jump">
     <button type="button" data-vh-market-jump="vhMarketMovers">Movers</button>
     <button type="button" data-vh-market-jump="vhPositionIndexes">Position Indexes</button>
@@ -1809,7 +1802,7 @@ function renderMarketDashboard(){
     <button type="button" data-vh-market-jump="vhMarketReversals">Reversals</button>
     <button type="button" data-vh-market-jump="vhMarketVolatility">Volatility</button>
   </div>
-  <section class="vh-market-section" id="vhMarketMovers"><div class="vh-market-section-title"><h3>Market Movers</h3><p>The original finished-value and overall-rank fluctuation boards remain unchanged.</p></div>
+  <section class="vh-market-section" id="vhMarketMovers"><div class="vh-market-section-title"><h3>Market Movers</h3></div>
     <div class="vh-grid-2">
       <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>${moverTitle('Biggest Value Risers',vr,m)}</h3><div class="vh-sub">Largest increases in finished player value</div></div>${moverCardActions('market','valueRisers',vr)}</div>${moverRows(applyMoverPool(vpR.valueRisers,'market','valueRisers'))}</div>
       <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>${moverTitle('Biggest Value Fallers',vf,m)}</h3><div class="vh-sub">Largest decreases in finished player value</div></div>${moverCardActions('market','valueFallers',vf)}</div>${moverRows(applyMoverPool(vpF.valueFallers,'market','valueFallers'))}</div>

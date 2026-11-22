@@ -1,4 +1,5 @@
 import {snapshotsThroughEdition} from './lib/inquirer-market-window.mjs';
+import {playerWeeklyMilestoneAwards} from './lib/player-weekly-milestone-awards.mjs';
 import {liveTradeWeekLimit,mergeCompletedTradeAuditWeeks} from './lib/trade-history-live-source.mjs';
 import {getPickOrder5050,postCutoverTrade} from './lib/pick-order-5050.mjs';
 import { getStore } from '@netlify/blobs';
@@ -1140,22 +1141,17 @@ async function scoringMilestones(playerId){
         const payload=weeklyByYear[year]?.[week],row=weeklyPlayerRow(payload,playerId);
         if(row){const points=leagueScore(row,scoring);if(points!=null){games++;total+=points;if(!highWeek||points>highWeek.points)highWeek={points,season:year,week}}}
         const canonical=canonicalByKey.get(Number(year)+'|'+Number(week));
-        if(canonical){
-          for(const group of ['offense','defense']){
-            const leader=canonical?.players_of_week?.[group];
-            if(leader&&String(leader.player_id)===String(playerId))weeklyAwards.push({type:group==='offense'?'offensive-player-of-week':'defensive-player-of-week',title:group==='offense'?'Top Offensive Scorer':'Top Defensive Scorer',points:Number(Number(leader.points||0).toFixed(2)),season:year,week,week_started_at:nflWeekStartIso(year,week)});
-          }
-        }else if(Number(year)<currentSeason){
-          const leaders={offense:null,defense:null};
-          for(const item of scoringPayloadRows(payload)){
-            const group=weeklyAwardGroup(players?.[item.id]?.position),points=leagueScore(item.stats,scoring);
-            if(!group||points==null)continue;
-            if(!leaders[group]||points>leaders[group].points||(points===leaders[group].points&&String(item.id)<String(leaders[group].player_id)))leaders[group]={player_id:String(item.id),points};
-          }
-          for(const group of ['offense','defense']){
-            const leader=leaders[group];if(leader&&String(leader.player_id)===String(playerId))weeklyAwards.push({type:group==='offense'?'offensive-player-of-week':'defensive-player-of-week',title:group==='offense'?'Top Offensive Scorer':'Top Defensive Scorer',points:Number(leader.points.toFixed(2)),season:year,week,week_started_at:nflWeekStartIso(year,week)});
-          }
-        }
+        // Canonical League Hub awards are authoritative. During a weekly
+        // cache lag, fall back to the identical completed-week Sleeper scoring
+        // calculation for BOTH the current season and historical seasons.
+        // Never infer an award from an in-progress or missing stat feed.
+        const awards=playerWeeklyMilestoneAwards({
+          playerId,season:year,week,currentSeason,currentCompletedWeek,
+          canonical,payload,players,scoring,score:leagueScore
+        });
+        for(const award of awards)weeklyAwards.push({
+          ...award,week_started_at:nflWeekStartIso(year,week)
+        });
       }
       total=Number(total.toFixed(2));
       if(games>=8){

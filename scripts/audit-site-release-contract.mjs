@@ -74,6 +74,20 @@ export function checkRuntimeContracts(sources){
  must(/setInterval\(refreshLiveLeagueWeekIfAdvanced,\s*60000\)/.test(hub),
   'Fleeced Daily completed-week polling removed');
  must(/weekly_awards=1/.test(hub),'Weekly award read path removed');
+ must(/tradeHistoryFetch\(\{force:true\}\)/.test(history),
+  'Trade History stopped fetching fresh Sleeper trades on site open');
+ must(/setInterval\(refreshVisibleTradeHistory,TRADE_HISTORY_REFRESH_MS\)/.test(history),
+  'Visible Trade History stopped periodic refreshing');
+ must(/marketFetch\(\)/.test(history)&&/\?market=1/.test(history),
+  'Market Dashboard stopped requesting canonical market history');
+ must(/marketInsightsFetch\(force\)/.test(history)&&/\?market_insights=1/.test(history),
+  'Market Intelligence no longer refreshes from the live history endpoint');
+ must(/scheduleSnapshot\(0,snapshotSourceFromUrl\(\)\)/.test(history),
+  'Canonical Player Value History snapshot stopped running on site opening');
+ must(/marketCache=null;teamNetCache.clear\(\)/.test(history),
+  'Canonical refresh no longer invalidates stale market and team caches');
+ must(/fll:canonical-values-ready/.test(history),
+  'Current Player Values stopped propagating to live history consumers');
  must(/player_scoring=1/.test(history),'Milestones endpoint lost scoring request');
  must(/scoring_milestones/.test(history),'Player All-Time Milestones read path removed');
  must(/weeklyAwards/.test(news)&&/latestCompletedLeagueWeek/.test(news),
@@ -82,7 +96,7 @@ export function checkRuntimeContracts(sources){
   'Inquirer archive/index no longer available to site');
  must(/export async function githubPublishedInquirerIndex/.test(publisher)&&
     /sha256/.test(publisher),'SHA-256 locked GitHub newspaper reader removed');
- return{verified_paths:10};
+ return{verified_paths:17};
 }
 export async function auditSite({root=process.cwd(),baseRef=null}={}){
  const sitePath='netlify/functions/site-v29.mjs',priorPath='netlify/functions/site-v17.mjs';

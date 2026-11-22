@@ -24,5 +24,8 @@ test('player all-time milestones display explicit category top-scorer awards',()
 test('award provenance remains locked league weekly results, with historical fallback',()=>{
  assert.match(backend,/canonicalWeeklyAwards\(origin\)/);
  assert.match(backend,/canonical\?\.players_of_week/);
- assert.match(backend,/Number\(year\)<currentSeason/,'current-year unverified scoring is not promoted as a canonical award');
+ assert.match(backend,/Number\(year\)===currentSeason && Number\(week\)<=verifiedCompletedWeek/);
+ assert.match(backend,/completedLeagueWeekView\(\{season,week,matchups,rosters,users:\[\]\}\)/);
+ assert.match(backend,/Number\(st\.wins\|\|0\)\+Number\(st\.losses\|\|0\)\+Number\(st\.ties\|\|0\)<week/);
+ assert.doesNotMatch(backend.slice(backend.indexOf('async function verifiedCompletedLeagueWeek('),backend.indexOf('async function scoringMilestones(')),/\.netlify\/functions/,'current-year scorer validation must not be blocked by site SSO');
 });

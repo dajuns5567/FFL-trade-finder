@@ -62,6 +62,24 @@ export function compareVersionAssets(before,after,{critical=CRITICAL_ASSETS}={})
   'Canonical player values must initialize before market and value history');
  return{scripts:fresh.length,critical:critical.length,versions_checked:[...oldMap.keys()].filter(x=>newMap.has(x)).length};
 }
+// A changed asset with the old ?v= key can leave a user's browser on the
+// previous JavaScript indefinitely even though GitHub and Netlify are green.
+// Compare the actual file bytes against the PR base; no arbitrary timestamps.
+export function verifyCacheKeysForChangedAssets(beforeHtml,afterHtml,changed,{critical=CRITICAL_ASSETS}={}){
+ const prior=new Map(injectedScripts(beforeHtml).map(x=>[x.pathname,x]));
+ const next=new Map(injectedScripts(afterHtml).map(x=>[x.pathname,x]));
+ const bumped=[];
+ for(const filename of critical){
+  const pathname='/'+filename,old=prior.get(pathname),now=next.get(pathname);
+  if(!old||!now||!changed(filename))continue;
+  const oldVersion=numbered(old.version),newVersion=numbered(now.version);
+  must(oldVersion!==null&&newVersion!==null&&newVersion>oldVersion,
+   'Changed critical script served with stale cache key: '+filename+
+   ' ('+old.version+' -> '+now.version+')');
+  bumped.push({filename,from:oldVersion,to:newVersion});
+ }
+ return bumped;
+}
 export function checkRuntimeContracts(sources){
  const {toml,site,hub,history,news,publisher}=sources;
  must(/from\s*=\s*"\/"/.test(toml)&&/to\s*=\s*"\/\.netlify\/functions\/site-v29"/.test(toml),
@@ -109,7 +127,14 @@ export async function auditSite({root=process.cwd(),baseRef=null}={}){
  must(!/Site loader failed:/.test(html),'Site delivered stale recovery loader failure');
  const before=baseRef?(()=>{const old=(filename)=>execFileSync('git',['show',baseRef+':'+filename],
     {cwd:root,encoding:'utf8'});return old(priorPath)+old(sitePath)})():null;
- const oldAssets=before?injectedScripts(before):injectedScripts(html);
+ // Verify the real previous byte contents of all critical browser assets.
+ // A changed script requires a new key, not simply a nondecreasing key.
+ const bumped=before?verifyCacheKeysForChangedAssets(before,html,filename=>{
+  try{return execFileSync('git',['show',baseRef+':'+filename],{cwd:root}) .compare(
+    fs.readFileSync(path.join(root,filename)))!==0}
+  catch{return false}
+ }):[];
+
  const result=compareVersionAssets(
   before?before:html,html);
  const scripts=injectedScripts(html);
@@ -130,7 +155,7 @@ export async function auditSite({root=process.cwd(),baseRef=null}={}){
  // remain accessible after the dynamic HTML loader has composed them.
  for(const id of ['findShop','updateBtn'])
   must(html.includes('id="'+id+'"'),'Rendered trade control missing: '+id);
- return{...result,...contracts,rendered_scripts:scripts.length,base:baseRef||'self'};
+ return{...result,...contracts,bumped_assets:bumped,rendered_scripts:scripts.length,base:baseRef||'self'};
 }
 const cli=process.argv[1]&&path.resolve(process.argv[1])===new URL(import.meta.url).pathname;
 if(cli){

@@ -814,7 +814,15 @@ export function isTrustedWeeklyAwardCache(rec,season,week){
  return true;
 }
 export async function weeklyAwards({additionalLockedEditions=[],persist=true,onlyAdditional=false}={}){
- const s=store(),archive=onlyAdditional?{reports:[]}:await broadcastArchive(),pairs=[],seen=new Set();
+ // Awards remain readable from verified Sleeper history even when a
+ // migrated Netlify Blob account is temporarily unavailable. Blob storage
+ // is a cache, never a prerequisite for current-week award visibility.
+ let s=null;
+ try{s=store()}catch(error){console.warn('league-awards-store-unavailable',String(error?.message||error))}
+ const archive=onlyAdditional?{reports:[]}:await broadcastArchive().catch(error=>{
+  console.warn('league-awards-newspaper-catalog-unavailable',String(error?.message||error));
+  return{reports:[]};
+ }),pairs=[],seen=new Set();
  const cutoverEditions=new Map();
  for(const edition of additionalLockedEditions){
   const season=Number(edition?.season),week=Number(edition?.week);
@@ -848,7 +856,7 @@ export async function weeklyAwards({additionalLockedEditions=[],persist=true,onl
    if(!seen.has(key)){seen.add(key);pairs.push({season:Number(independent.season),week,captured_at:'',independent:true})}
   }
  }
- const old=await s.get('awards/weekly.json',{type:'json'});
+ const old=await s?.get('awards/weekly.json',{type:'json'}).catch(error=>{console.warn('league-awards-cache-unavailable',String(error?.message||error));return null});
  const records=Array.isArray(old?.records)?old.records.slice():Array.isArray(old)?old.slice():[];
  const eligible=new Set(pairs.map(p=>p.season+'|'+p.week));
  // Preserve already verified independent awards when Sleeper is temporarily
@@ -914,8 +922,9 @@ export async function weeklyAwards({additionalLockedEditions=[],persist=true,onl
  const next=(onlyAdditional?[...records,...[...byKey.values()].filter(rec=>
   !records.some(old=>Number(old.season)===Number(rec.season)&&Number(old.week)===Number(rec.week)))]:
   [...byKey.values()]).sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));
- if(persist&&(missing.length||records.length!==next.length))
-  await s.setJSON('awards/weekly.json',{schema_version:1,records:next});
+ if(persist&&s&&(missing.length||records.length!==next.length))
+  await s.setJSON('awards/weekly.json',{schema_version:1,records:next}).catch(error=>
+   console.warn('league-awards-cache-write-unavailable',String(error?.message||error)));
  return{schema_version:1,records:next};
 }
 

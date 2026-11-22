@@ -49,6 +49,19 @@ const score=(stats,scoring)=>{
  }
  return used?Number(n.toFixed(2)):null;
 };
+function canonicalCompletedTrades(transactions,teams,season,week){
+ const names=new Map(teams.map(t=>[String(t.roster_id),t.team_name]));
+ return (transactions||[]).filter(tx=>tx?.type==='trade'&&tx?.status==='complete'&&
+  Array.isArray(tx.roster_ids)&&tx.roster_ids.length===2).map(tx=>{
+  const rosterIds=tx.roster_ids.map(String);
+  return{id:String(tx.transaction_id||''),season,week,created:Number(tx.status_updated||tx.created)||null,
+   roster_ids:rosterIds,team_names:Object.fromEntries(rosterIds.map(id=>[id,names.get(id)||'Roster '+id])),
+   sides:rosterIds.map(id=>({roster_id:id,
+    player_ids:Object.keys(tx.adds||{}).filter(pid=>String(tx.adds[pid])===id),
+    picks:(tx.draft_picks||[]).filter(p=>String(p.owner_id||'')===id)
+     .map(p=>({season:Number(p.season)||null,round:Number(p.round)||null,roster_id:p.roster_id}))}))};
+ });
+}
 function leagueContext(histories,teams){
  const result={};
  for(const t of teams){
@@ -62,7 +75,7 @@ function leagueContext(histories,teams){
  }
  return result;
 }
-export function buildSourceTeams({league,week,matchups,history=[],nextMatchups=[],rosters,users,players,previousEdition}){
+export function buildSourceTeams({league,week,matchups,history=[],nextMatchups=[],rosters,users,players,previousEdition,transactions=[]}){
  if(!completeMatchups(matchups)||!Array.isArray(rosters)||rosters.length!==32||!Array.isArray(users)||users.length<1)
   throw Error('Unverified 32-team Sleeper matchup inputs');
  const rosterById=new Map(rosters.map(r=>[String(r.roster_id),r])),byUser=new Map(users.map(u=>[String(u.user_id),u]));
@@ -99,7 +112,14 @@ export function buildSourceTeams({league,week,matchups,history=[],nextMatchups=[
    projected:0,projection_coverage:0,opponent_projected:null,
    starter_count:starters.length,starter_details:details.sort(byPoints),roster_player_ids:rosterPlayers,
    best_bench:bench.sort(byPoints)[0]||null,worst_starter:details.slice().sort((a,b)=>a.points-b.points)[0]||null,
-   best_lineup_miss:null,transactions:[],trade_acquisitions:[],trade_history:[],
+   best_lineup_miss:null,
+   transactions:transactions.filter(tx=>[...(tx.roster_ids||[]).map(String),
+      ...Object.values(tx.adds||{}).map(String),...Object.values(tx.drops||{}).map(String)].includes(id))
+    .map(tx=>({id:String(tx.transaction_id||''),type:String(tx.type||'transaction'),
+      status:String(tx.status||''),created:Number(tx.status_updated||tx.created)||null,
+      adds:Object.keys(tx.adds||{}).filter(pid=>String(tx.adds[pid])===id),
+      drops:Object.keys(tx.drops||{}).filter(pid=>String(tx.drops[pid])===id)})),
+   trade_acquisitions:[],trade_history:[],
    recent_trade_count:0,current_week_trade_count:0,
    previous_fan_sentiment:original?.inquirer_article?.fan_sentiment||null,
    value_history_player_movers:{risers:[],fallers:[]},value_history_week:null,
@@ -205,12 +225,13 @@ export async function runGithubInquirerPublisher({archiveRoot,fetcher=fetch,now=
  const historical=[];
  for(let w=Math.max(3,week-4);w<=week-2;w++)historical.push(await read(w<=9?'2026/week-'+pad(w)+'.json':'forward/2026/week-'+pad(w)+'.json'));
  const teams=buildSourceTeams({league,week,matchups,rosters,users,players,previousEdition:previous,
-  history,nextMatchups});
+  history,nextMatchups,transactions});
  const rawInquirer=buildInquirerWeek({season,week,teams,players,weeklyStats:statHistory[week],
   weeklyStatHistory:statHistory,historicalSeasonStats:{},historicalSeasonYear:season-1,
   scoringSettings:league.scoring_settings||{},scoreFn:score,weekClassification:inquirerWeekClassification(week,season),playerValues:{}});
  const rawOverview=buildLeagueOverview({season,week,teams:rawInquirer.teams,players,
-  transactions,canonicalTrades:[],weekClassification:inquirerWeekClassification(week,season),
+  transactions,canonicalTrades:canonicalCompletedTrades(transactions,teams,season,week),
+  weekClassification:inquirerWeekClassification(week,season),
   valueHistoryMeta:{source:'not available from GitHub-native snapshot'}});
  const chosen=selectEditorialEdition({rawInquirer,rawOverview,season,week,previous,historical});
  const {edition,verdict}=chosen;const resultStatus=statusFor(edition,verdict);

@@ -4,6 +4,7 @@
 // variation, prior-edition continuity, playoff-race context and postseason rounds.
 import {finishReviewedForwardCopy} from './inquirer-reviewed-copy.mjs';
 import {assessMinorNineWordReuse} from './lib/inquirer-minor-repetition.mjs';
+import {inspectFantasyTeamAttribution} from './lib/inquirer-attribution-audit.mjs';
 import {inspectInquirerFormatContract} from './inquirer-format-contract.mjs';
 import {attributeForwardPlayerStatFragments,curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPlayerFact,restoreForwardArticleDepth} from './inquirer-narrative-architecture.mjs';
 
@@ -6458,7 +6459,7 @@ export function pruneForwardSharedEditorialBoilerplate(teams){
 function forwardRecapSentences(e){return forwardSentenceParts([...(e?.league_overview?.sections||[]).flatMap(s=>s.paragraphs||[]),...(e?.league_overview?.hot_takes||[]).filter(x=>!/division board/i.test(String(x?.title||''))).flatMap(x=>[x?.title,x?.take])].filter(Boolean).join(' ')).filter(x=>forwardWordCount(x)>=10)}
 
 export function evaluateInquirerEditionQuality(current,previous=null){
-  const issues=[...inspectInquirerFormatContract(current),...inspectNarrativeArchitecture(current)],teams=current?.teams||[],entities=forwardEntities(current).concat(forwardEntities(previous));
+  const issues=[...inspectInquirerFormatContract(current),...inspectNarrativeArchitecture(current),...inspectFantasyTeamAttribution(current)],teams=current?.teams||[],entities=forwardEntities(current).concat(forwardEntities(previous));
   const dated=teams.filter(t=>t.mida_outlook);
   if(Number(current?.week)>=3&&dated.length&&dated.every(t=>{
     const stamp=Date.parse(String(t.mida_outlook?.source_date||t.mida_outlook?.as_of||''));

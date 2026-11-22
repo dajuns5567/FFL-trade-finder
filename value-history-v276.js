@@ -1873,10 +1873,30 @@ async function loadPlayerScoring(id){
     playerScoringCache.set(key,value&&typeof value==='object'?value:null);playerScoringCacheAt.set(key,Date.now());
   }catch(error){
     console.warn('Player scoring milestones unavailable',key,error);
-    playerScoringCache.set(key,null);playerScoringCacheAt.set(key,Date.now());
+    // A transient Sleeper or badge endpoint failure cannot erase previously
+    // verified Player-of-the-Week awards on an open profile.
+    if(!playerScoringCache.has(key))playerScoringCache.set(key,null);
+    playerScoringCacheAt.set(key,Date.now());
   }
   if(String(currentPlayerId)!==key)return;
   const target=document.getElementById('vhScoringMilestones');if(target)target.innerHTML=scoringMilestonesRows(playerScoringCache.get(key),false);
+}
+const PLAYER_WEEKLY_BADGE_REFRESH_MS=60000;
+function refreshVisiblePlayerWeeklyBadges(){
+ const panel=document.getElementById('valueHistory');
+ if(currentView!=='player'||!currentPlayerId||document.hidden||!panel||panel.hidden)return;
+ if(Date.now()-(playerScoringCacheAt.get(String(currentPlayerId))||0)<PLAYER_WEEKLY_BADGE_REFRESH_MS)return;
+ loadPlayerScoring(String(currentPlayerId)).catch(error=>
+  console.warn('player-weekly-badges-visible-refresh-unavailable',String(error?.message||error)));
+}
+function installPlayerWeeklyBadgeRefresh(){
+ setInterval(refreshVisiblePlayerWeeklyBadges,PLAYER_WEEKLY_BADGE_REFRESH_MS);
+ window.addEventListener('focus',refreshVisiblePlayerWeeklyBadges);
+ document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden)refreshVisiblePlayerWeeklyBadges();
+ });
+ window.addEventListener('fll:canonical-values-ready',refreshVisiblePlayerWeeklyBadges);
+ window.addEventListener('fll:valuation-refreshed',refreshVisiblePlayerWeeklyBadges);
 }
 async function loadPlayer(id){
   const box=document.getElementById('vhContent');if(!box)return;box.innerHTML='<div class="vh-empty">Loading player history…</div>';
@@ -2372,7 +2392,7 @@ function updateLiveConsumersV102(){
  else if(currentView==='playerHub'&&playerHistoryTeamId&&marketCache)renderPlayerHistoryTeamRoster();
  else if(currentView==='player'&&currentPlayerId)loadPlayer(currentPlayerId).catch(()=>{});
 }
-function boot(){addShell();searchTradesOnSiteOpen();window.addEventListener('fll:valuation-refreshed',()=>{
+function boot(){addShell();searchTradesOnSiteOpen();installPlayerWeeklyBadgeRefresh();window.addEventListener('fll:valuation-refreshed',()=>{
  updateLiveConsumersV102()
 });
  window.addEventListener('fll:canonical-values-ready',()=>{

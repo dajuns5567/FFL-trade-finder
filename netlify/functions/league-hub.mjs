@@ -804,6 +804,11 @@ export function isTrustedWeeklyAwardCache(rec,season,week){
  const badges=rec?.manager_awards;
  if(!Array.isArray(badges)||!['highest-scorer','lowest-scorer'].every(kind=>badges.some(b=>b.type===kind)))
   return false;
+ // Sleeper-finalized Fleeced Daily awards are independent of the newspaper.
+ // Provenance is attached only after the same 32-roster completion gate used
+ // by the live League Hub, never to an unfinished or inferred week.
+ if(rec?.award_source==='sleeper-finalized-matchups')
+  return rec?.verified_roster_count===32;
  if(Number(season)>2026||(Number(season)===2026&&Number(week)>=5))
   return Number(rec?.newsroom_editorial_revision)>=39&&rec?.newsroom_engine==='v31-forward';
  return true;
@@ -829,9 +834,29 @@ export async function weeklyAwards({additionalLockedEditions=[],persist=true,onl
    pairs.push({season:Number(edition.season),week:Number(edition.week),captured_at:String(edition.generated_at||'')});
   }
  }
+ // Awards follow completed Sleeper results, NOT the Inquirer publication
+ // cursor. Recover missed weeks even if the newspaper is editorially held.
+ // The direct League Hub feed is independent of Inquirer and has its own
+ // score-finalization + 32-roster verification.
+ const independent=onlyAdditional?null:await latestCompletedLeagueWeek().catch(error=>{
+  console.warn('weekly-awards-independent-source-unavailable',String(error?.message||error));
+  return null;
+ });
+ if(independent?.available===true&&Array.isArray(independent.teams)&&independent.teams.length===32){
+  for(let week=1;week<=Number(independent.week);week++){
+   const key=Number(independent.season)+'|'+week;
+   if(!seen.has(key)){seen.add(key);pairs.push({season:Number(independent.season),week,captured_at:'',independent:true})}
+  }
+ }
  const old=await s.get('awards/weekly.json',{type:'json'});
  const records=Array.isArray(old?.records)?old.records.slice():Array.isArray(old)?old.slice():[];
  const eligible=new Set(pairs.map(p=>p.season+'|'+p.week));
+ // Preserve already verified independent awards when Sleeper is temporarily
+ // unavailable. An unrelated Inquirer delay cannot delete earned badges.
+ for(const rec of records)
+  if(rec?.award_source==='sleeper-finalized-matchups'&&
+     isTrustedWeeklyAwardCache(rec,rec.season,rec.week))
+   eligible.add(Number(rec.season)+'|'+Number(rec.week));
  const byKey=new Map(records.filter(rec=>{
   const season=Number(rec?.season),week=Number(rec?.week);
   return eligible.has(season+'|'+week)&&isTrustedWeeklyAwardCache(rec,season,week);
@@ -841,8 +866,29 @@ export async function weeklyAwards({additionalLockedEditions=[],persist=true,onl
  const missing=pairs.filter(p=>!byKey.has(p.season+'|'+p.week));
  if(missing.length){
   const verified=await Promise.all(missing.map(async p=>{
-   const edition=cutoverEditions.get(p.season+'|'+p.week)||await broadcastStored(p.season,p.week);
-   return isLockedInquirerEdition(edition,p.season,p.week)?{...p,edition}:null;
+   const edition=cutoverEditions.get(p.season+'|'+p.week)||await broadcastStored(p.season,p.week).catch(()=>null);
+   if(isLockedInquirerEdition(edition,p.season,p.week))return{...p,edition};
+   if(!independent?.available||Number(p.season)!==Number(independent.season)||
+      Number(p.week)>Number(independent.week))return null;
+   try{
+    const completed=Number(p.week)===Number(independent.week)
+      ?{complete:true,rows:null}:await completedPublicationWeek(Number(p.week));
+    if(!completed.complete)return null;
+    let live=Number(p.week)===Number(independent.week)?independent:null;
+    if(!live){
+     const [rosters,users]=await Promise.all([
+      fetchJson(`${API}/league/${LEAGUE}/rosters`),
+      fetchJson(`${API}/league/${LEAGUE}/users`)
+     ]);
+     live=completedLeagueWeekView({season:Number(p.season),week:Number(p.week),
+      matchups:completed.rows,rosters,users});
+    }
+    return live?.available===true&&live.teams?.length===32?
+      {...p,edition:live,independent:true}:null;
+   }catch(error){
+    console.warn('weekly-awards-completed-week-held',p.season,p.week,String(error?.message||error));
+    return null;
+   }
   }));
   const validPairs=verified.filter(Boolean);
   if(validPairs.length){
@@ -855,6 +901,8 @@ export async function weeklyAwards({additionalLockedEditions=[],persist=true,onl
      captured_at:String(broadcast.generated_at||p.captured_at||new Date().toISOString()),
      newsroom_editorial_revision:Number(broadcast.editorial_revision)||null,
      newsroom_engine:String(broadcast?.editorial_generation?.engine||''),
+     ...(p.independent?{award_source:'sleeper-finalized-matchups',
+      verified_roster_count:broadcast.teams.length}:{}),
      manager_awards:weeklyManagerAwards(broadcast),
      players_of_week:weeklyPlayersOfWeek(stats,players,scoring)};
     return rec;

@@ -46,3 +46,14 @@ test('the independent feed is not gated on news archive, awards or status',()=>{
  assert.match(frontend,/dailyHTML\(all,stats,w,md,spotlightW\|\|w,leagueWeek\)/);
  assert.match(frontend,/liveScoreboard\+report/);
 });
+
+test('League Hub release is an exact one-time production cutover, not a recurring Netlify publisher',()=>{
+ const toml=readFileSync(new URL('../netlify.toml',import.meta.url),'utf8');
+ assert.match(toml,/Release FFL League Hub completed-week cutover 2026-11-22/);
+ assert.match(toml,/SITE_ID==='a516be3b-6c65-4f54-a9fb-23c5361bf3d2'/);
+ assert.match(toml,/e.CONTEXT==='production'&&e.BRANCH==='main'/);
+ assert.doesNotMatch(toml,/\[functions\.\"inquirer-publish-scheduled\"\]/);
+ const backend=readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
+ assert.match(backend,/GitHub Actions owns Inquirer publication/);
+ assert.match(backend,/githubPublishedInquirerEdition/);
+});

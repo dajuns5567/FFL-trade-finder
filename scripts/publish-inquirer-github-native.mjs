@@ -253,6 +253,41 @@ export function verifyEditorialEdition(edition,previous,historical=[]){
  return{ok:quality.ok&&audit.ok&&independent.ok&&admission.approved,
   audit,quality,independent,admission};
 }
+// Keep the existing >=25-word independent value-desk audit unchanged.
+// Only add genuinely measured facts to a clipped deterministic desk.
+export function completeVerifiedMarketDesk(edition){
+ let amended=0;
+ for(const t of edition.teams||[]){
+  const section=t.inquirer_article?.sections?.find(x=>x.kind==='value');
+  if(!section)continue;
+  const wordCount=()=>String((section.paragraphs||[]).join(' ')).trim().split(/\s+/).filter(Boolean).length;
+  if(wordCount()>=25)continue;
+  const m=t.value_history_week;
+  if(!m||m.value==null||m.baseline_value==null||m.delta==null||
+     ![m.value,m.baseline_value,m.delta].every(x=>Number.isFinite(Number(x))))
+   continue;
+  const change=Number(m.delta),current=Math.round(Number(m.value)),base=Math.round(Number(m.baseline_value));
+  const movers=[...(t.value_history_player_movers?.risers||[]),
+   ...(t.value_history_player_movers?.fallers||[])]
+   .filter(x=>Number.isFinite(Number(x.delta))&&x.player_name)
+   .sort((a,b)=>Math.abs(Number(b.delta))-Math.abs(Number(a.delta)));
+  const leader=movers[0],name=String(t.team_name),opponent=String(t.opponent_name||'the opponent'),
+   fmt=n=>Math.abs(Math.round(n)).toLocaleString('en-US');
+  const direction=change>0?'higher':change<0?'lower':'unchanged';
+  const supporting=leader?
+   name+' had '+leader.player_name+' move '+(leader.delta>0?'up':'down')+
+    ' '+fmt(leader.delta)+' points in the same recorded player-value window.':
+   name+' has no separately verified individual player mover to attribute to this recorded team-value comparison.';
+  section.paragraphs.push(name+' entered the measured window at '+fmt(base)+
+   ' dynasty points and finished at '+fmt(current)+', '+direction+
+   (change?' by '+fmt(change):'')+'. '+supporting+
+   ' Those recorded value figures are separate from the '+Number(t.points).toFixed(1)+
+   '-point fantasy result against '+opponent+'.');
+  amended++;
+  t.inquirer_article.paragraphs=t.inquirer_article.sections.flatMap(x=>x.paragraphs||[]);
+ }
+ return amended;
+}
 export function selectEditorialEdition({rawInquirer,rawOverview,season,week,previous,historical=[]}){
  const classification=inquirerWeekClassification(week,season);
  let best=null,passing=null;
@@ -266,6 +301,7 @@ export function selectEditorialEdition({rawInquirer,rawOverview,season,week,prev
      quality_metrics:{}},
    teams:drafted.inquirer.teams,reporters:drafted.inquirer.reporters,
    league_overview:drafted.leagueOverview};
+  const completedMarketDesks=completeVerifiedMarketDesk(edition);
   const verdict=verifyEditorialEdition(edition,previous,historical);
   edition.editorial_generation.quality_metrics=verdict.quality.metrics||{};
   const score=(verdict.quality.issues?.length||0)*4+(verdict.audit.issues?.length||0)+(verdict.independent.issues?.length||0)*8;
@@ -273,7 +309,7 @@ export function selectEditorialEdition({rawInquirer,rawOverview,season,week,prev
    season,week,salt,admitted:verdict.ok,quality:verdict.quality.ok,
    audit:verdict.audit.ok,independent:verdict.independent.ok,
    deep_issues:verdict.quality.issues?.length||0,basic_issues:verdict.audit.issues?.length||0,
-   independent_issues:verdict.independent.issue_count||0
+   independent_issues:verdict.independent.issue_count||0,completed_market_desks:completedMarketDesks
   }));
   if(!best||score<best.score)best={edition,verdict,score};
   if(verdict.ok){

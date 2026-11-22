@@ -43,6 +43,15 @@ It now also **compares the byte contents** of critical scripts with the PR
 base: a changed asset must increment its `?v=` key so users cannot silently
 keep an older script.
 
+The independent **targeted Trade Finder runtime scripts** are also critical:
+blank acquisition router, max-tier, tier-up, add-assets, max-value and specific-player
+engines. They must remain present, retain their dependency order, and advance
+`?v=` when their bytes change. Once the complementary-assets helper is
+present, it must load after the router and before the targeted engines.
+This guards the exact partial rollback that had left the compiled Finder in
+place while restoring older targeted-filter logic. The test does not imply
+PR #585 is included in an unrelated preview.
+
 `audit-shared-release-features.mjs` checks the currently accepted baseline
 for previously landed Inquirer, milestone, award, market and archive fixes.
 Features still in isolated draft PRs are listed as pending, **not** silently

@@ -1,6 +1,7 @@
 import {snapshotsThroughEdition} from './lib/inquirer-market-window.mjs';
 import {liveTradeWeekLimit,mergeCompletedTradeAuditWeeks} from './lib/trade-history-live-source.mjs';
 import {getPickOrder5050,postCutoverTrade} from './lib/pick-order-5050.mjs';
+import {completedLeagueWeekView} from './lib/league-completed-week.mjs';
 import { getStore } from '@netlify/blobs';
 
 const LEAGUE='1316867686394769408';
@@ -1122,15 +1123,28 @@ async function canonicalWeeklyAwards(origin){
 }
 // Current-season award fallback is permitted only through the independently
 // finalized Sleeper league week. An NFL week number alone is not finalization.
-async function verifiedCompletedLeagueWeek(origin,season){
+// Confirm fully scored 32-team Sleeper matchups AND roster record application.
+// Do not depend on the public Netlify URL, which may require team SSO login.
+async function verifiedCompletedLeagueWeek(_origin,season){
  try{
-  const base=String(origin||'').replace(/\/$/,'');if(!base)return 0;
-  const response=await fetch(`${base}/.netlify/functions/league-hub?league_latest=1`,{headers:{accept:'application/json'},cache:'no-store'});
-  if(!response.ok)return 0;
-  const data=await response.json();
-  return data?.available===true&&Number(data.season)===Number(season)&&Array.isArray(data.teams)&&data.teams.length===32
-   ?Math.max(0,Number(data.week)||0):0;
- }catch{return 0}
+  const [league,rosters,nfl]=await Promise.all([
+   scoringJson(`${SCORING_API}/league/${LEAGUE}`),
+   scoringJson(`${SCORING_API}/league/${LEAGUE}/rosters`),
+   scoringJson(`${SCORING_API}/state/nfl`)
+  ]);
+  if(Number(league?.season)!==Number(season)||!Array.isArray(rosters)||rosters.length!==32)return 0;
+  const newest=Math.min(13,Math.max(0,(Number(nfl?.week)||1)-1));
+  for(let week=newest;week>=Math.max(1,newest-2);week--){
+   const matchups=await scoringJson(`${SCORING_API}/league/${LEAGUE}/matchups/${week}`);
+   if(!completedLeagueWeekView({season,week,matchups,rosters,users:[]}))continue;
+   if(rosters.some(r=>{
+    const st=r?.settings||{};
+    return Number(st.wins||0)+Number(st.losses||0)+Number(st.ties||0)<week;
+   }))continue;
+   return week;
+  }
+ }catch(error){console.warn('milestone-current-week-finalization-unavailable',String(error?.message||error))}
+ return 0;
 }
 async function scoringMilestones(playerId){
   const origin=String(arguments[1]||''),cacheKey=String(playerId),cachedMilestone=playerMilestoneCache.get(cacheKey),now=Date.now();

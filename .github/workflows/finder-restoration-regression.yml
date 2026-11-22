@@ -14,6 +14,7 @@ on:
       - 'tests/finder-natural-filter-matrix.test.mjs'
       - 'tests/finder-add-assets-complements.test.mjs'
       - 'tests/targeted-max-value-search-stall.test.mjs'
+      - 'tests/finder-assembled-site-loader.test.mjs'
       - '.github/workflows/finder-restoration-regression.yml'
   push:
     branches:
@@ -34,6 +35,8 @@ jobs:
           for file in trade-add-assets-complement-v1.js trade-finder-style-loader-v209.js trade-finder-v256-compiled.js trade-specific-add-assets-v282.js trade-specific-max-tier-add-v300.js trade-specific-max-value-v279.js trade-specific-player-v232.js trade-specific-tier-up-v282.js netlify/functions/site-v29.mjs; do node --check "$file"; done
       - name: Verify natural filter matrix, complementary outgoing assets and anti-freeze runtime
         run: node --test tests/finder-natural-filter-matrix.test.mjs tests/finder-add-assets-complements.test.mjs tests/targeted-max-value-search-stall.test.mjs
+      - name: Verify actual assembled site scripts, cache keys and unrelated readers
+        run: node --test tests/finder-assembled-site-loader.test.mjs
       - name: Lock canonical unrelated values and exact source-verified Finder hashes
         run: node scripts/v311-pipeline-identity-v319-smoke.cjs
       - name: Preserve existing specific player routing, Select All and package diversity

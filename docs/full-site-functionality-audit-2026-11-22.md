@@ -19,8 +19,8 @@ Legend: **Open source defect** = reproduced by directly tracing current code; **
 | Section | Subsection | Source finding / next acceptance | Status |
 |---|---|---|---|
 | Home | Main league data | `index.html` calls `updateData()` when booted, even after restoring cached data. Must test an actual live fetch and partial API failures | Source path verified |
-| Home | Ranked players | `fleeced-home-v424.js` schedules once after consensus/manual update; no focus or periodic refresh | Open source defect |
-| Home | Top-10 7D risers | `scheduleValueRisers` runs on initialization/manual update; no active-view cadence. Must use canonical refreshed market data | Open source defect |
+| Home | Ranked players | `fleeced-home-v424.js` schedules once after consensus/manual update; PR #587 adds focus and periodic refresh | Pending isolated PR #587 |
+| Home | Top-10 7D risers | `scheduleValueRisers` runs on initialization/manual update; PR #587 adds canonical active-view fetch with safe retry | Pending isolated PR #587 |
 | Player Values | Offense, IDP, young players | Canonical refresh path exists; dynasty-only consensus coverage, fallback, IDP scoring and breakout balance need source-by-source live acceptance | Not certified |
 | Player Values | Browser model version | Cache/bundle consistency tracked by PR #582; never revert script to accommodate another branch | Protected by isolated CI |
 | Trade Finder | Specific acquire / Tier Up | Main still has pre-restoration targeted engines; PR #585's filter/performance suite must be retained | Pending isolated PR #585 |
@@ -60,7 +60,7 @@ Legend: **Open source defect** = reproduced by directly tracing current code; **
 1. Keep **Trade Finder PR #585** restored and source-correct; do not merge unrelated older loader snapshots.
 2. Reconcile **Market PR #583** and **historical windows PR #561** without reverting Finder.
 3. Accept **Managers PR #586**, **Awards PRs #580/#584**, **Milestones PR #579** after preview + live readback.
-4. Isolate Home refresh and League Hub shared trade/weekly-awards/draft cache lifetimes as separate subsystem changes.
+4. Accept the isolated Home refresh PR #587 after preview checks; fix League Hub trade/weekly-awards/draft cache lifetimes in a separate subsystem release.
 5. Audit live publisher / schedule / site-opening with actual provider results. Require branch protection for PR #582 checks.
 
 ## Machine-readable risk report

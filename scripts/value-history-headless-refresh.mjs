@@ -114,7 +114,7 @@ async function valueHistory(req){
     throw Error('Unverified or incomplete 32-team awards from scheduled runtime');
    writeFileSync(highsFile,JSON.stringify({
     ...observations,canonical_fingerprint:fp,
-    valuation_model:valuationModel,source_commit:sourceCommit
+    model_used:valuationModel,source_commit:sourceCommit
    },null,2)+'\n');
    console.log('ALL_TIME_HIGHS_SCHEDULED_CAPTURE '+JSON.stringify({
     captured_at:observations.captured_at,records:observations.observations.length,

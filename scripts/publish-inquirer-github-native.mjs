@@ -315,7 +315,9 @@ export function completeVerifiedMarketDesk(edition){
 export function selectEditorialEdition({rawInquirer,rawOverview,season,week,previous,historical=[]}){
  const classification=inquirerWeekClassification(week,season);
  let best=null,passing=null;
- for(const salt of [5,0,1,2,3,4,6,7,8,9,10,11,12,13,14,15]){
+ const selectedSalts=process.env.FLEECED_INQUIRER_DIAGNOSE_SALT?
+  [Number(process.env.FLEECED_INQUIRER_DIAGNOSE_SALT)]:[5,0,1,2,3,4,6,7,8,9,10,11,12,13,14,15];
+ for(const salt of selectedSalts){
   const drafted=applyInquirerEditorialV31({season,week,rawInquirer,rawOverview,
    previousEdition:previous,previousEditions:historical,weekClassification:classification,variationSalt:salt});
   const edition={available:true,published_locked:true,season,week,
@@ -335,6 +337,17 @@ export function selectEditorialEdition({rawInquirer,rawOverview,season,week,prev
    deep_issues:verdict.quality.issues?.length||0,basic_issues:verdict.audit.issues?.length||0,
    independent_issues:verdict.independent.issue_count||0,completed_market_desks:completedMarketDesks
   }));
+  if(process.env.FLEECED_INQUIRER_DIAGNOSE_SALT){
+   console.info('github-inquirer-copy-issue-details',JSON.stringify({
+    season,week,salt,
+    deep:(verdict.quality.issues||[]).slice(0,14).map(x=>({
+     id:x.id,phrase:String(x.phrase||'').slice(0,140),
+     sentence:String(x.sentence||'').slice(0,180),
+     examples:x.examples?.slice?.(0,5),teams:x.teams,
+     count:x.count,excerpt:String(x.excerpt||'').slice(0,180)})),
+    basic:(verdict.audit.issues||[]).slice(0,5)
+   }));
+  }
   if(!best||score<best.score)best={edition,verdict,score};
   if(verdict.ok){
    passing={edition,verdict,score};

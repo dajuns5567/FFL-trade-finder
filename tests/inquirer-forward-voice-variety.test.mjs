@@ -30,7 +30,7 @@ test('reporter labels cannot impose distinct tonal treatment on the same verifie
  });
  assert.equal(new Set(lines).size,1,'the editorial style must be independent of reporter identity');
  assert.match(lines[0],/Denzel Boston/);
- assert.match(lines[0],/2\\.6/);
+ assert.match(lines[0],/2\.6/);
  assert.match(lines[0],/New Orleans Aints/);
 });
 

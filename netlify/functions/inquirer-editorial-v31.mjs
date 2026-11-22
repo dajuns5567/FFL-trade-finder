@@ -5540,11 +5540,30 @@ function assertWeek2Originality(result,previousEdition){
     const developedWords=(players.paragraphs||[]).join(' ').trim().split(/\s+/).filter(Boolean).length;
     if(developedWords>=24)continue;
     const total=Number(team.points),combined=Number(top.points)+Number(second.points);
-    const evidence=top.name+' and '+second.name+' combined for '+forwardOne(combined)+
-      ' of '+forwardOne(total)+' recorded fantasy points for '+w2DisplayTeam(team.team_name)+
-      ' in Week '+week+'. Their individual returns were '+forwardOne(top.points)+' and '+
-      forwardOne(second.points)+'; the remainder of the starting group accounted for '+
-      forwardOne(total-combined)+'.';
+    // Thirty-two roster-stable combinations prevent a normalized statistical
+    // sentence from becoming the same newsroom boilerplate in four articles.
+    // Both the pair and the rest-of-lineup total are actual Sleeper evidence.
+    const slot=((Number(team.roster_id||1)-1)%32+32)%32,who=w2DisplayTeam(team.team_name),
+      foe=w2DisplayTeam(team.opponent_name||'the opponent'),
+      a=forwardOne(top.points),b=forwardOne(second.points),
+      pair=forwardOne(combined),remainder=forwardOne(total-combined),whole=forwardOne(total);
+    const opening=[
+      'In '+who+'\'s recorded starting lineup, '+top.name+' delivered '+a+' and '+second.name+' added '+b+'; ',
+      who+' got '+a+' from '+top.name+' and '+b+' from '+second.name+' when the starts were counted; ',
+      'The individual fantasy returns for '+who+' began with '+top.name+' at '+a+' and '+second.name+' at '+b+'; ',
+      'Two counted starters for '+who+', '+top.name+' and '+second.name+', contributed '+a+' and '+b+' respectively; ',
+      'Reading the '+who+' starter sheet, '+top.name+' supplied '+a+' alongside '+b+' from '+second.name+'; ',
+      'On the '+who+' Week '+week+' ledger, '+top.name+' finished with '+a+' and '+second.name+' reached '+b+'; ',
+      'The biggest two recorded '+who+' starter contributions came from '+top.name+' with '+a+' and '+second.name+' with '+b+'; ',
+      who+' had a measurable pair at the front of the scorer list: '+top.name+' on '+a+', '+second.name+' on '+b+'; '
+    ][slot%8];
+    const ending=[
+      'the pair total was '+pair+' of '+whole+' against '+foe+', with '+remainder+' accounted for by other starters in that completed matchup.',
+      'their combined '+pair+' points belonged within a '+whole+'-point fantasy result versus '+foe+', while the remaining starting slots supplied '+remainder+'.',
+      'against '+foe+' the verified total stood at '+whole+', of which '+pair+' came from that duo and '+remainder+' from other lineup positions.',
+      'the '+whole+' fantasy points posted opposite '+foe+' included '+pair+' from those two names and '+remainder+' elsewhere among the starters.'
+    ][Math.floor(slot/8)];
+    const evidence=opening+ending;
     if(!(article.paragraphs||[]).some(p=>p.includes(evidence))){
       players.paragraphs.push(evidence);
       article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);

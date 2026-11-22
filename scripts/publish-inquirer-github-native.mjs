@@ -429,11 +429,13 @@ export function restoreWeeklyPlayoffDesk(edition){
  const first=teams[0],challenger=teams[1],cut=teams[3],outside=teams[4];
  const remaining=Math.max(0,13-Number(edition.week));
  const standings=[
-  first.team_name+' carries '+rec(first)+' and the No. 1 seed into the closing stretch, with '+
-  challenger.team_name+' at '+rec(challenger)+' chasing from second. '+remaining+
-  ' regular-season game'+(remaining===1?'':'s')+' remain before the Week 14 wildcard round; that leaves little time for anyone hoping the leaders will begin losing out of politeness.',
-  cut.team_name+' holds fourth place at '+rec(cut)+', while '+outside.team_name+
-  ' sits fifth at '+rec(outside)+'. The narrow part of a playoff race does not need a manufactured percentage. It needs the next set of results, and neither side can borrow points from a good Sunday three weeks ago.'
+  'The league table puts '+first.team_name+' ('+rec(first)+') in first place, with '+
+  challenger.team_name+' ('+rec(challenger)+') chasing in second. '+remaining+
+  ' regular-season game'+(remaining===1?'':'s')+
+  ' remain before the Week 14 wildcard round; there is little time for anyone counting on a convenient collapse at the top.',
+  'Fourth place belongs to '+cut.team_name+' ('+rec(cut)+'), with fifth-place '+
+  outside.team_name+' ('+rec(outside)+') waiting for an opening. The crowded part of this race needs the next set of results more than another prediction. Neither club can borrow points from a good Sunday three weeks ago.'
+
  ];
  const section={reporter:sections[1]?.reporter||sections[0]?.reporter||null,
   heading:'The Playoff Race Is No Longer Background Noise',paragraphs:standings};

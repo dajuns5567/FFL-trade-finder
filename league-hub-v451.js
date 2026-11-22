@@ -505,6 +505,33 @@ window.addEventListener('fll:canonical-values-ready',()=>{
  setTimeout(()=>captureAllTimeHighsOnSiteOpen().catch(()=>{}),1500);
 });
 setTimeout(()=>captureAllTimeHighsOnSiteOpen().catch(()=>{}),12000);
+// Read-only scheduled collector: reuse the ACTUAL Award standings algorithm
+// in the same canonical valuation runtime as the website. No browser writes.
+window.fleecedAwardHighsScheduledObservation=async function(){
+ const teams=globalThis.state?.teams||[],assets=globalThis.state?.allAssets||[];
+ if(teams.length!==32||new Set(teams.map(x=>String(x.id))).size!==32||
+    assets.length<100||globalThis.modeledPlayerValuesV319?.ready!==true||
+    typeof globalThis.tradeValueNormalizationV130?.canonicalValue!=='function')
+  throw Error('Award collector refused incomplete canonical league');
+ const [tradeData,draftData]=await Promise.all([trades(),drafts()]);
+ if(!Array.isArray(tradeData?.trades)||tradeData.trades.length===0||
+    !Array.isArray(draftData?.draft_picks)||!draftData.draft_picks.length)
+  throw Error('Award collector refused incomplete trade or draft source');
+ const awards=currentAwards(teamTradeStats(tradeData.trades),draftData);
+ if(awards.length!==20||awards.some(x=>!x.key||!Array.isArray(x.standings)))
+  throw Error('Award collector refused missing category');
+ const observations=awards.flatMap(a=>(a.standings||[]).map(x=>({
+  award_key:awardRecordKey(a.key),roster_id:String(x.roster_id||''),
+  score:x.score,detail:x.detail
+ }))).filter(x=>/^[1-9][0-9]*$/.test(x.roster_id)&&
+    x.score!=null&&Number.isFinite(Number(x.score))&&
+    Number(x.score)!==-999999&&!/not enough data|unavailable/i.test(String(x.detail)));
+ if(observations.length<500)throw Error('Award collector refused incomplete ranking coverage '+observations.length);
+ return{schema_version:1,season:Number(globalThis.state?.season||2026),
+  captured_at:new Date().toISOString(),source:'canonical-live-32-team-awards',
+  team_count:32,trade_count:tradeData.trades.length,draft_count:draftData.draft_picks.length,
+  categories:awards.length,observations};
+};
 async function syncAwards(rows){
  await refreshAllTimeHighs(rows);
  try{

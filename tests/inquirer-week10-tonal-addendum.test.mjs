@@ -30,6 +30,35 @@ test('Week 10 gets unique, score-backed sarcasm in all 32 team articles without 
  }
  assert.equal(addWeekTenEditorialHumor(updated),updated,'no repeated tone augmentation on cache reads');
 });
+test('Week 10 streak claim is corrected from two finalized Sleeper score pairs, without requiring result strings',()=>{
+ const original=fixture(),falseClaim='Nobody won both of the last two completed games. Apparently consistency has become an optional luxury.';
+ original.league_overview={sections:[{heading:'The Week 10 Contender Line',paragraphs:[falseClaim,'Other verified editorial reporting.']}],paragraphs:[falseClaim,'Other verified editorial reporting.']};
+ for(const [i,t] of original.teams.entries()){
+  const winning=i<3;
+  t.league_context={recent_games:[
+   {week:9,points:winning?115:60,opponent_points:winning?92:100,won:winning},
+   {week:10,points:winning?117:65,opponent_points:winning?95:105,won:winning}
+  ]};
+ }
+ const frozen=JSON.stringify(original);
+ const corrected=addWeekTenEditorialHumor(original);
+ assert.equal(JSON.stringify(original),frozen,'never change immutable archive');
+ const line=corrected.league_overview.sections[0].paragraphs[0];
+ assert.match(line,/Team 1/);
+ assert.match(line,/Team 2/);
+ assert.match(line,/Team 3/);
+ assert.doesNotMatch(line,/Nobody won both/);
+ assert.equal(corrected.reader_streak_correction.archive_original_unchanged,true);
+ assert.equal(corrected.league_overview.paragraphs[0],line);
+
+ const unavailable=structuredClone(original);
+ delete unavailable.teams[5].league_context;
+ const held=addWeekTenEditorialHumor(unavailable);
+ assert.doesNotMatch(held.league_overview.paragraphs.join(' '),/Nobody won both/);
+ assert.doesNotMatch(held.league_overview.paragraphs.join(' '),/teams that won both/);
+ assert.equal(held.reader_streak_correction.source,'unverified streak claim omitted');
+});
+
 test('no alteration of other weeks, unapproved drafts or incomplete issues',()=>{
  const w9=fixture();w9.week=9;assert.equal(addWeekTenEditorialHumor(w9),w9);
  const draft=fixture();draft.published_locked=false;assert.equal(addWeekTenEditorialHumor(draft),draft);

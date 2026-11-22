@@ -26,5 +26,16 @@ test('a fresh market view refetches insights and signals when its canonical snap
  assert.match(source,/loadMarketIntelligence\(force\)/);
  assert.match(source,/marketInsightsFetch\(force\)/);
  assert.match(source,/marketSignalsFetch\(force\)/);
- assert.match(loader,/value-history-v276\.js\?v=543/);
+ assert.match(loader,/value-history-v276\.js\?v=544/);
+});
+
+test('Market Dashboard does not reinstate removed white explanations',()=>{
+ const start=source.indexOf('function renderMarketDashboard(){');
+ const dashboard=source.slice(start,start+4500);
+ assert.ok(start>=0);
+ assert.doesNotMatch(dashboard,/modelEraNote\(m\)|Current values and ranks come from Player Values|original finished-value and overall-rank fluctuation/);
+ assert.doesNotMatch(source,/function modelEraNote\(m\)/);
+ assert.match(dashboard,/id="vhMarketMovers"/);
+ assert.match(dashboard,/data-vh-market-jump="vhMarketHeat"/);
+ assert.match(source,/function marketIntelligenceMarkup\(\)/);
 });

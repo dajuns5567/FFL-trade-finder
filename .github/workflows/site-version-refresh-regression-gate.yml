@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - ci/site-version-refresh-regression-gate-20261122
     paths:
       - 'scripts/audit-site-release-contract.mjs'
       - 'tests/site-release-regression-contract.test.mjs'

@@ -21,7 +21,7 @@ function starter(t,name,points){
 }
 const leading=t=>(t.starter_details||[]).filter(x=>x.name&&Number.isFinite(Number(x.points)))
  .sort((a,b)=>Number(b.points)-Number(a.points))[0];
-function teamFix(t,kind){
+export function teamFix(t,kind){
  const p=leading(t),score=n(t.points)+'–'+n(t.opponent_points),won=t.won?'beat':'fell to';
  if(!p||!t.next_opponent_name)return null;
  const reporter=t.reporter_id||'',team=t.team_name,opponent=t.opponent_name;
@@ -134,8 +134,8 @@ function correctRecap(d){
  if(!race||!back||!next)throw Error('Original recap supplementary sections missing');
  race.heading='Playoff Picture: Denver Leads, Patriots Hold Fourth';
  race.paragraphs=[
-  'Denver Doncos stood first in the Week 9 fantasy standings after beating Kansas City Chiefs '+n(doncos.points)+'–'+n(chiefs.points)+'. New England Patriots held No. 4 despite losing by '+n(jets.points-patriots.points)+' to New York Jets.',
-  'Four regular-season weeks remained before the Week 14 Wildcard Round. New England Patriots were 7-2 at the conference cut line while Denver Doncos led the league.'
+  'Denver Doncos still own first place after a '+n(doncos.points)+'–'+n(chiefs.points)+' win over Kansas City Chiefs. New England Patriots stayed fourth despite falling to New York Jets by '+n(jets.points-patriots.points)+'. A team can survive one upset in the standings; surviving its own lineup debate is another matter.',
+  'Four regular-season weeks remain before the Week 14 Wildcard Round. New England sits 7-2 at the conference cut line and Denver holds the top seed. The arithmetic is becoming less forgiving, which usually means the next four Sundays will be anything but quiet.'
  ];
  // The original first back-page paragraph did not identify the teams in
  // its transaction report. Drop only that unsupported attribution: the seven
@@ -143,12 +143,12 @@ function correctRecap(d){
  if(back.paragraphs?.[0]?.startsWith('The moves worth keeping on the back page:'))
   back.paragraphs=back.paragraphs.slice(1);
  next.paragraphs=[
-  'New York Jets beat New England Patriots '+n(jets.points)+'–'+n(patriots.points)+'. Patriots manager '+patriots.manager_name+' faces the concrete '+n(patMiss.gap)+'-point Henley/Allen IDP FLEX question.',
-  'Los Angeles Chargers scored '+n(chargers.points)+' against Las Vegas Raiders. Arvell Reese supplied '+n(48.8)+' and C.J. Stroud added '+n(33.76)+' for Chargers manager '+chargers.manager_name+'.',
-  'Jacksonville Jags next play New York Jets, while Pittsburgh Steelers play Los Angeles Chargers. These are the next two actual fantasy matchups, not interchangeable NFL-team prose.'
+  'After a '+n(jets.points)+'–'+n(patriots.points)+' loss to the Jets, Patriots manager '+patriots.manager_name+' will have to revisit the '+n(patMiss.gap)+'-point Henley-versus-Allen IDP FLEX decision. New England remains a contender, but contenders cannot afford to keep giving opponents such useful talking points.',
+  'Chargers manager '+chargers.manager_name+' gets to enjoy a '+n(chargers.points)+'-point week against the Raiders. Reese brought '+n(48.8)+' and Stroud added '+n(33.76)+'. The Steelers are next; pity the defense that has to prepare for a lineup feeling this pleased with itself.',
+  'Jacksonville Jags now get a Jets club that suddenly has reasons to believe, while Pittsburgh Steelers meet the high-flying Chargers. Both games will tell us more about which Week 9 headlines deserve a sequel.'
  ];
  overview.paragraphs=overview.sections.flatMap(s=>s.paragraphs||[]);
- overview.deck='New York Jets beat New England Patriots '+n(jets.points)+'–'+n(patriots.points)+'; Los Angeles Chargers overwhelmed Las Vegas Raiders '+n(chargers.points)+'–'+n(raiders.points)+'. The fantasy managers, starters and specific lineup decisions explain Week 9.';
+ overview.deck='The Jets stun New England, the Chargers bury Las Vegas, and the IDP decisions leave managers with plenty to answer for.';
 }
 export function correctWeekNineReaderEdition(original){
  if(!original||Number(original.season)!==2026||Number(original.week)!==9||

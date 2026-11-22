@@ -167,6 +167,30 @@ function canonicalCompletedTrades(transactions,teams,season,week){
      .map(p=>({season:Number(p.season)||null,round:Number(p.round)||null,roster_id:p.roster_id}))}))};
  });
 }
+// Use the same eligibility rules as the existing League Hub.
+function eligibleStarterSlot(slot,position){
+ const a=String(slot||'').toUpperCase(),p=String(position||'').toUpperCase();
+ if(!a||!p)return false;
+ if(a===p)return true;
+ if(a==='FLEX')return ['RB','WR','TE'].includes(p);
+ if(a==='REC_FLEX')return ['WR','TE'].includes(p);
+ if(a==='WRRB_FLEX')return ['WR','RB'].includes(p);
+ if(a==='SUPER_FLEX'||a==='OP')return ['QB','RB','WR','TE'].includes(p);
+ if(a==='DL')return ['DL','DE','DT'].includes(p);
+ if(a==='DB')return ['DB','CB','S'].includes(p);
+ if(a==='IDP_FLEX'||a==='IDP')return ['DL','DE','DT','NT','EDGE','LB','ILB','OLB','DB','CB','S','FS','SS'].includes(p);
+ return false;
+}
+function eligibleBenchMiss(starters,bench){
+ let best=null;
+ for(const a of starters||[])for(const b of bench||[]){
+  if(!eligibleStarterSlot(a.lineup_slot,b.position))continue;
+  const gap=Number(b.points)-Number(a.points);
+  if(!Number.isFinite(gap)||gap<=0)continue;
+  if(!best||gap>best.gap)best={slot:String(a.lineup_slot),gap,starter:a,reserve:b};
+ }
+ return best;
+}
 function leagueContext(histories,teams){
  const result={};
  for(const t of teams){
@@ -218,7 +242,7 @@ export function buildSourceTeams({league,week,matchups,history=[],nextMatchups=[
    projected:0,projection_coverage:0,opponent_projected:null,
    starter_count:starters.length,starter_details:details.sort(byPoints),roster_player_ids:rosterPlayers,
    best_bench:bench.sort(byPoints)[0]||null,worst_starter:details.slice().sort((a,b)=>a.points-b.points)[0]||null,
-   best_lineup_miss:null,
+   best_lineup_miss:eligibleBenchMiss(details,bench),
    transactions:transactions.filter(tx=>[...(tx.roster_ids||[]).map(String),
       ...Object.values(tx.adds||{}).map(String),...Object.values(tx.drops||{}).map(String)].includes(id))
     .map(tx=>({id:String(tx.transaction_id||''),type:String(tx.type||'transaction'),

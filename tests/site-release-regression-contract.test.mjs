@@ -93,7 +93,7 @@ test('all individual targeted-player Finder modules are critical, ordered and ca
 });
 
 test('all loaded scripts, including noncritical home/manager UI, require new cache keys if source bytes change',()=>{
- const extras=['fleeced-home-v424.js','fleeced-presentation-v413.js','trade-finder-style-loader-v209.js'];
+ const extras=['fleeced-home-v424.js','fleeced-presentation-v413.js','fleeced-header-v512.js'];
  const loaded=injectedScripts(baseline);
  for(const filename of extras){
   const entry=loaded.find(x=>x.pathname==='/'+filename);

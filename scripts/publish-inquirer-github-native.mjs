@@ -319,6 +319,30 @@ export function buildSourceTeams({league,week,matchups,history=[],nextMatchups=[
   };
  });
 }
+export function inspectCompletedStandingsContract(edition){
+ const teams=edition?.teams||[],issues=[];
+ const sorted=teams.map(t=>({
+  team:String(t.team_name||t.roster_id),rank:Number(t.league_context?.standings_rank),
+  wins:Number(t.league_context?.record?.wins),losses:Number(t.league_context?.record?.losses),
+  ties:Number(t.league_context?.record?.ties),points:Number(t.league_context?.points_for)
+ })).sort((a,b)=>a.rank-b.rank);
+ if(sorted.length!==32)return[{id:'standings-team-count'}];
+ for(let i=0;i<sorted.length;i++){
+  const row=sorted[i];
+  if(!Number.isInteger(row.rank)||row.rank!==i+1||
+     ![row.wins,row.losses,row.ties,row.points].every(Number.isFinite)||
+     row.wins+row.losses+row.ties!==Number(edition.week))
+   issues.push({id:'missing-or-incomplete-standings-rank',team:row.team});
+  if(i>0){
+   const prev=sorted[i-1];
+   if(prev.wins<row.wins||
+      prev.wins===row.wins&&prev.losses>row.losses||
+      prev.wins===row.wins&&prev.losses===row.losses&&prev.points<row.points)
+    issues.push({id:'standings-order-contradiction',team:row.team});
+  }
+ }
+ return issues;
+}
 // Repetition tolerance never authorizes publishing explanatory engine copy as
 // a newspaper article. Check only unmistakable meta-language, not normal
 // sports analysis or harmless editorial variation.
@@ -343,12 +367,13 @@ export function verifyEditorialEdition(edition,previous,historical=[]){
  if(quality.issues.length>priorIssueCount)quality.ok=false;
  const independent=auditIndependentInquirerCopy([edition],{revision:FORWARD_EDITORIAL_REVISION,mode:'publication'});
  const voiceIssues=inspectInquirerNewspaperVoice(edition);
+ const standingsIssues=inspectCompletedStandingsContract(edition);
  const admission=deterministicInquirerAdmission(edition,{quality,audit,previousEdition:previous});
  // The same canonical archive contract used by the public League Hub reader
  // must pass BEFORE any edition is committed to GitHub.
  const canonical=inspectCanonicalArchive(edition,edition?.season,edition?.week);
- return{ok:quality.ok&&audit.ok&&independent.ok&&admission.approved&&canonical.ok&&!voiceIssues.length,
-  audit,quality,independent,admission,canonical,voiceIssues};
+ return{ok:quality.ok&&audit.ok&&independent.ok&&admission.approved&&canonical.ok&&!voiceIssues.length&&!standingsIssues.length,
+  audit,quality,independent,admission,canonical,voiceIssues,standingsIssues};
 }
 // Keep the existing >=25-word independent value-desk audit unchanged.
 // Only add genuinely measured facts to a clipped deterministic desk.
@@ -432,7 +457,7 @@ export function selectEditorialEdition({rawInquirer,rawOverview,season,week,prev
 function statusFor(edition,verdict){
  const issues=[...(verdict?.quality?.issues||[]),...(verdict?.audit?.issues||[]),...(verdict?.independent?.issues||[]),
   ...(verdict?.canonical?.issues||[]).map(message=>({id:'canonical-reader-contract',message})),
-  ...(verdict?.voiceIssues||[])];
+  ...(verdict?.voiceIssues||[]),...(verdict?.standingsIssues||[])];
  return{season:Number(edition?.season),week:Number(edition?.week),editorial_revision:FORWARD_EDITORIAL_REVISION,
   state:verdict?.ok?'completed':'editorial-hold',published:!!verdict?.ok,
   issue_count:issues.length,

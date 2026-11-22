@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'netlify/functions/league-hub.mjs'
+      - 'league-hub-v451.js'
       - 'tests/league-awards-independent-week-sync.test.mjs'
       - '.github/workflows/league-awards-independent-week-sync.yml'
   workflow_dispatch:
@@ -22,5 +23,6 @@ jobs:
       - name: Syntax and weekly award/source independence checks
         run: |
           node --check netlify/functions/league-hub.mjs
+          node --check league-hub-v451.js
           node --test tests/league-awards-independent-week-sync.test.mjs
           node --test tests/league-week-independent-news.test.mjs

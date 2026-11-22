@@ -1138,8 +1138,10 @@ async function verifiedCompletedAwardWeek(origin,season){
   if(data?.available!==true||Number(data?.season)!==Number(season)||
     !Number.isInteger(week)||week<1||week>18||
     !Array.isArray(data?.teams)||data.teams.length!==32||
-    data.teams.some(row=>!Number.isFinite(Number(row?.points))||
-      !Number.isFinite(Number(row?.opponent_points))))return 0;
+    new Set(data.teams.map(row=>String(row?.roster_id??''))).size!==32||
+    data.teams.some(row=>row?.roster_id==null||row?.points==null||
+      row?.opponent_points==null||!Number.isFinite(Number(row.points))||
+      !Number.isFinite(Number(row.opponent_points))))return 0;
   verifiedAwardWeekCache={season,week};verifiedAwardWeekCacheAt=Date.now();
   return week;
  }catch(error){
@@ -1156,7 +1158,8 @@ async function scoringMilestones(playerId){
       scoringJson(`${SCORING_API}/players/nfl`).catch(()=>({})),
       canonicalWeeklyAwards(origin),
       scoringJson(`${SCORING_API}/state/nfl`).catch(()=>({}))
-    ]),currentSeason=Number(league?.season),currentCompletedWeek=Math.max(0,Math.min(18,(Number(nflState?.week)||1)-1)),scoring=league?.scoring_settings||{};
+    ]),currentSeason=Number(league?.season),currentCompletedWeek=Number(nflState?.season)>Number(league?.season)?18:
+      Math.max(0,Math.min(18,(Number(nflState?.week)||1)-1)),scoring=league?.scoring_settings||{};
     if(!currentSeason||!Object.keys(scoring).length)return null;
     const verifiedCurrentWeek=await verifiedCompletedAwardWeek(origin,currentSeason);
     const years=[currentSeason,currentSeason-1,currentSeason-2,currentSeason-3],weeklyByYear={},canonicalByKey=new Map((canonicalRecords||[]).filter(r=>r?.players_of_week).map(r=>[Number(r.season)+'|'+Number(r.week),r]));

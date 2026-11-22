@@ -36,7 +36,7 @@ export function teamFix(t,kind){
  if(kind==='cool-throne')return [
   p.name+' earned his space in the clipping: '+n(p.points)+' points as '+team+' finished '+score+' against '+opponent+'.',
   'A tip of the hat to '+p.name+'. His '+n(p.points)+' points gave '+team+' something worth framing, regardless of the '+score+' final.',
-  p.name+' delivered '+n(p.points)+' points against '+opponent+'. The rest of the card can argue over the '+score+' result.',
+  p.name+' delivered '+n(p.points)+' points for '+team+' against '+opponent+'. The rest of the card can argue over the '+score+' result.',
   p.name+' logged '+n(p.points)+' points for '+team+' against '+opponent+'. That contribution is not in dispute.'
  ][voice];
  if(kind==='outlook')return [

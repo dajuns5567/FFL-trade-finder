@@ -567,7 +567,7 @@ function dailyHTML(all,stats,w,md,spotlightW=w,leagueWeek=liveLeagueWeekCache){
  // Show only ONE archive picker: the top-level controls own year, week, and team.
  const archive=broadcastArchive.length?reporterArchiveHTML(w):
   '<div class="lh-archive"><span class="lh-sub">The first archived report will appear after a completed week is captured.</span></div>'+reporterArchiveHTML(w);
- const topArchive=broadcastArchive.length?'<div class="lh-archive-top"><b>Browse Fleeced! Inquirer</b><div class="lh-sub">Choose a year, week and team, or open that week’s Weekly Recap.</div>'+archiveFiltersHTML(w)+'</div>':'';
+ const topArchive=broadcastArchive.length?'<div class="lh-archive-top"><b>Browse Fleeced! Inquirer</b><div class="lh-sub">Choose a year, week and team, or open that week’s Weekly Recap. It opens on the current completed week.</div>'+archiveFiltersHTML(w)+'</div>':'';
 
  let report='';
  if(w?.available){

@@ -505,6 +505,10 @@ window.addEventListener('fll:canonical-values-ready',()=>{
  setTimeout(()=>captureAllTimeHighsOnSiteOpen().catch(()=>{}),1500);
 });
 setTimeout(()=>captureAllTimeHighsOnSiteOpen().catch(()=>{}),12000);
+setInterval(()=>captureAllTimeHighsOnSiteOpen().catch(()=>{}),180000);
+document.addEventListener('visibilitychange',()=>{
+ if(!document.hidden)captureAllTimeHighsOnSiteOpen().catch(()=>{});
+});
 // Read-only scheduled collector: reuse the ACTUAL Award standings algorithm
 // in the same canonical valuation runtime as the website. No browser writes.
 window.fleecedAwardHighsScheduledObservation=async function(){

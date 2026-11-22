@@ -227,10 +227,28 @@ async function refreshManagersIfVisible(){
  if(!panel||panel.hidden)return;
  managerVisibleRefreshPending=true;
  try{
-  const previous=managerVersionSignature(managerCache);
-  const next=await managers({force:true});
-  if(next?.unavailable||managerVersionSignature(next)===previous)return;
-  // Rerender the active manager/card/leaderboard with the verified fresh data.
+  const previous=managerVersionSignature(managerCache),next=await managers({force:true});
+  const managersChanged=!next?.unavailable&&managerVersionSignature(next)!==previous;
+  // Manager trade summaries depend on a separate shared completed-Sleeper feed.
+  // Revalidate it as well; never erase verified cached trades on fetch failure.
+  let tradesChanged=false;
+  try{
+   const response=await fetch('/.netlify/functions/value-history?trades=1',{cache:'no-store'});
+   if(!response.ok)throw Error('completed trades HTTP '+response.status);
+   const fresh=await response.json();
+   if(!Array.isArray(fresh?.trades))throw Error('completed trade feed is incomplete');
+   const tradeSignature=data=>JSON.stringify((data?.trades||[]).map(t=>[
+    String(t?.id||t?.transaction_id||''),t?.created_at||'',t?.completed_at||'',t?.status||''
+   ]));
+   tradesChanged=tradeSignature(fresh)!==tradeSignature(tradeCache);
+   tradeCache=fresh;
+   globalThis.fleecedTradeHistorySharedCacheV515=tradeCache;
+   globalThis.primeTradeHistoryCacheV515?.(tradeCache);
+  }catch(error){console.warn('manager-trade-refresh-unavailable',String(error?.message||error))}
+  if(!managersChanged&&!tradesChanged)return;
+  if(managersChanged){weeklyAwardsCache=null;spotlightWeeklyCache=null}
+  if(tradesChanged)draftCache=null;
+  // Rerender the active manager/card/leaderboard with current verified sources.
   await render(currentView,selectedManagerId);
  }catch(error){console.warn('manager-view-refresh-unavailable',String(error?.message||error))}
  finally{managerVisibleRefreshPending=false}

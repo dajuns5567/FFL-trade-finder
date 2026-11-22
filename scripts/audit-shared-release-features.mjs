@@ -14,6 +14,7 @@ export const features=[
  {id:'market-canonical-invalidation',pr:583,file:'value-history-v276.js',markers:['marketIntelligenceGeneration','marketInsightsCache=null;marketSignalCache=null;']},
  {id:'durable-all-time-highs',pr:584,file:'netlify/functions/league-hub.mjs',markers:['githubDurableAwardHighs','mergeAwardHighs(fromBlob,durable,now)']},
  {id:'projection-verified-hot-seat',pr:584,file:'netlify/functions/lib/league-hot-seat.mjs',markers:["hot_seat_basis:'projected-upset'"]},
+ {id:'league-shared-cache-expiry',pr:588,file:'league-hub-v451.js',markers:['HUB_SHARED_REFRESH_MS=5*60*1000','hubSharedRead','refreshLeagueHubSharedDataIfVisible','trades_fresh=1']},
  {id:'home-fresh-value-risers',pr:587,file:'fleeced-home-v424.js',markers:['HOME_REFRESH_MS=5*60*1000','refreshVisibleHome','setInterval(()=>refreshVisibleHome(),HOME_REFRESH_MS)']},
  {id:'managers-readonly-preview-fallback',pr:586,file:'netlify/functions/league-hub.mjs',markers:['managerHistory({persist:false})','cache_hit:false,preview_read_only:true']},
  {id:'managers-visible-freshness',pr:586,file:'league-hub-v451.js',markers:['MANAGER_REFRESH_MS=300000','refreshManagersIfVisible','managerRequestGeneration','manager-trade-refresh-unavailable']},

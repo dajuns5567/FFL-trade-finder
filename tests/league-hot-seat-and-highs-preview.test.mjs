@@ -1,0 +1,73 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {selectHotSeat} from '../netlify/functions/lib/league-hot-seat.mjs';
+
+const ui=readFileSync(new URL('../league-hub-v451.js',import.meta.url),'utf8');
+const backend=readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
+const base=[
+ {roster_id:'1',manager_name:'Manager One',team_name:'Team 1',won:false,points:90,opponent_points:112},
+ {roster_id:'2',manager_name:'Manager Two',team_name:'Team 2',won:false,points:73,opponent_points:165},
+ {roster_id:'3',manager_name:'Manager Three',team_name:'Team 3',won:true,points:165,opponent_points:73}
+];
+test('Hot Seat never vanishes merely because finalized Sleeper matchups omit projections',()=>{
+ const hot=selectHotSeat(base);
+ assert.equal(hot.roster_id,'2');
+ assert.equal(hot.hot_seat_basis,'largest-finalized-defeat');
+ assert.match(hot.hot_seat_detail,/pregame projections unavailable/);
+ assert.doesNotMatch(hot.hot_seat_detail,/Projected by/);
+});
+test('a verified projected favorite who loses wins Hot Seat over biggest loss fallback',()=>{
+ const teams=base.map(x=>({...x}));
+ teams[0].projected=130;teams[0].opponent_projected=110;
+ const hot=selectHotSeat(teams);
+ assert.equal(hot.roster_id,'1');
+ assert.equal(hot.hot_seat_basis,'projected-upset');
+ assert.match(hot.hot_seat_detail,/Projected by 20.0 to win/);
+});
+test('zero or null projections never count as genuine pregame upset evidence',()=>{
+ const hot=selectHotSeat(base.map(x=>({...x,projected:null,opponent_projected:null})));
+ assert.equal(hot.roster_id,'2');
+ assert.equal(hot.hot_seat_basis,'largest-finalized-defeat');
+ assert.equal(selectHotSeat(base.map(x=>({...x,won:true}))),null);
+});
+test('League Hub backend and spotlight both use a verified completed-week Hot Seat fallback',()=>{
+ assert.match(backend,/hot=selectHotSeat\(teams\)/);
+ assert.match(backend,/item\('hot-seat','🔥 Hot Seat',hot,hot\?\.hot_seat_detail/);
+ assert.match(ui,/projectedLosses=losses\.filter\(g=>g\.projected!=null&&g\.opponent_projected!=null/);
+ assert.match(ui,/Largest completed-week defeat • projections unavailable/);
+});
+test('missing weekly Hot Seat card is filled by the finalized feed, marked provisional',()=>{
+ const a=ui.indexOf('function pendingHotSeatFromCompletedWeek(');
+ const b=ui.indexOf('function managerWeeklyBadgesHTML(',a);
+ assert(a>=0&&b>a);
+ const fixture={season:2026,week:10,manager_awards:[{type:'cool-throne',title:'🧊 Cool Throne',roster_id:'3'}]};
+ const fn=new Function('latestWeeklyAwardRecord','spotlightWeeklyCache','liveLeagueWeekCache','esc','teamName',ui.slice(a,b)+'return weeklyAwardCardsHTML')(
+  d=>d.records[0],{available:true,season:2026,week:10,teams:base},null,
+  x=>String(x??''),x=>'Team '+x);
+ const markup=fn({records:[fixture]});
+ assert.match(markup,/Hot Seat/);
+ assert.match(markup,/pregame projections unavailable/);
+ assert.match(markup,/pending archival/);
+});
+test('All-Time Highs shows all current standings until first timestamped record, never calls them recorded peaks',()=>{
+ const a=ui.indexOf('function awardRecordsHTML('),b=ui.indexOf('function rankingsHTML(rows,key){',a);
+ assert(a>=0&&b>a);
+ const fn=new Function('awardHighHistory','awardRecordKey','esc','teamName','fmt',
+  ui.slice(a,b)+'return awardRecordsHTML')([],x=>x,x=>String(x??''),x=>'Team '+x,x=>String(x));
+ const standings=Array.from({length:32},(_,i)=>({roster_id:String(i+1),score:100+i,detail:'Current value '+i}));
+ const markup=fn({key:'deal-maker',standings});
+ assert.equal((markup.match(/data-lh-current-benchmark/g)||[]).length,32);
+ assert.match(markup,/not timestamped All-Time Highs/);
+ assert.doesNotMatch(markup,/Recorded \d/);
+});
+test('timestamped records replace the provisional list when the durable archive becomes readable',()=>{
+ const a=ui.indexOf('function awardRecordsHTML('),b=ui.indexOf('function rankingsHTML(rows,key){',a);
+ const fn=new Function('awardHighHistory','awardRecordKey','esc','teamName','fmt',
+  ui.slice(a,b)+'return awardRecordsHTML')(
+   [{award_key:'deal-maker',roster_id:'2',score:10,captured_at:'2026-11-22T13:00:00Z'}],
+   x=>x,x=>String(x??''),x=>'Team '+x,x=>String(x));
+ const markup=fn({key:'deal-maker',standings:base});
+ assert.match(markup,/Recorded/);
+ assert.doesNotMatch(markup,/data-lh-highs-pending/);
+});

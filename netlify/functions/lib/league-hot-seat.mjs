@@ -34,6 +34,10 @@ export function supplementCompletedHotSeat(cache,completed){
  const records=Array.isArray(cache?.records)?cache.records:[];
  if(completed?.available!==true||!Array.isArray(completed.teams)||
     completed.teams.length!==32||!records.length)return cache;
+ const missing=records.some(rec=>Number(rec.season)===Number(completed.season)&&
+  Number(rec.week)===Number(completed.week)&&
+  !(rec.manager_awards||[]).some(a=>a.type==='hot-seat'));
+ if(!missing)return cache;
  const hot=selectHotSeat(completed.teams);
  if(!hot)return cache;
  const next=records.map(rec=>{

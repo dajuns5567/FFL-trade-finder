@@ -771,8 +771,8 @@ export function reinforceForwardReporterVoice(teams,week,salt=0,history=[]){
    let line=raw;
    const verbs={has:'have',is:'are',does:'do',gets:'get',needs:'need',sits:'sit',keeps:'keep',projects:'project',faces:'face'};
    for(const name of [club,foe]){
-    if(!/s$/i.test(name.split(/\\s+/).at(-1)||''))continue;
-    line=line.replace(new RegExp('\\\\b'+forwardEscRe(name)+' (has|is|does|gets|needs|sits|keeps|projects|faces)\\\\b','gi'),
+    if(!/s$/i.test(name.split(/\s+/).at(-1)||''))continue;
+    line=line.replace(new RegExp('\\b'+forwardEscRe(name)+' (has|is|does|gets|needs|sits|keeps|projects|faces)\\b','gi'),
      (_,verb)=>name+' '+verbs[verb.toLowerCase()]);
    }
    const normalized=forwardNormSentence(line,entities);

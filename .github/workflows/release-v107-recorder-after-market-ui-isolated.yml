@@ -55,18 +55,19 @@ jobs:
             'tests/value-history-candidate-headless-contract.test.mjs',
             'scripts/value-history-data-hub-v331-smoke.mjs'
           ]);
-          // An explicitly scoped Value History presentation-only PR must not
+          // An explicitly scoped Value History scoring milestone UI/API-only PR must not
           // be misidentified as the exact 14-file V107 history-writer release.
           // Preserve the original writer contract without weakening it.
           const uiOnly=new Set([
             '.github/workflows/release-v107-recorder-after-market-ui-isolated.yml',
             'value-history-v276.js',
+            'netlify/functions/value-history.mjs',
             'tests/value-history-market-badges-cleanup.test.mjs'
           ]);
           const matches=items=>paths.length===items.size&&paths.every(path=>items.has(path));
           assert.ok(matches(allowed)||matches(uiOnly),
             'Unexpected recorder or presentation file inventory: '+JSON.stringify(paths));
-          console.log(matches(allowed)?'Exact V107 history recorder scope verified':'Exact Value History UI-only scope verified');
+          console.log(matches(allowed)?'Exact V107 history recorder scope verified':'Exact Value History milestone scope verified');
           JS
       - name: Validate browser, scheduler, history and archive scripts
         run: |

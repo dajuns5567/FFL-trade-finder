@@ -77,9 +77,18 @@ test('all individual targeted-player Finder modules are critical, ordered and ca
   assert.throws(()=>compareVersionAssets(baseline,baseline.replace(new RegExp('<script src="/'+filename.replaceAll('.','\\.')+'\\?v='+entry.version+'"[^>]*><\\/script>'),'')),/Critical site subsystem/);
  }
  const ordered=['trade-specific-blank-router-v325.js','trade-specific-max-tier-add-v300.js','trade-specific-tier-up-v282.js','trade-specific-add-assets-v282.js','trade-specific-max-value-v279.js','trade-specific-player-v232.js'];
- const swapped=baseline.replace('/'+ordered[0],'/TEMP-FINDER-ROUTER')
-  .replace('/'+ordered[1],'/'+ordered[0])
-  .replace('/TEMP-FINDER-ROUTER','/'+ordered[1]);
+ // Swap complete script tags, preserving each script's individual cache key.
+ // Otherwise the cache-version guard triggers before the order check.
+ const scriptTag=filename=>{
+  const start=baseline.indexOf('<script src="/'+filename+'?v=');
+  assert.ok(start>=0,'Missing script tag for '+filename);
+  const end=baseline.indexOf('</script>',start);
+  assert.ok(end>start,'Unclosed script tag for '+filename);
+  return baseline.slice(start,end+'</script>'.length);
+ };
+ const firstTag=scriptTag(ordered[0]),secondTag=scriptTag(ordered[1]);
+ const swapped=baseline.replace(firstTag,'__FINDER_ORDER_SWAP__')
+  .replace(secondTag,firstTag).replace('__FINDER_ORDER_SWAP__',secondTag);
  assert.throws(()=>compareVersionAssets(baseline,swapped),/Targeted Finder runtime load order/);
 });
 

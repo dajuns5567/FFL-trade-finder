@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - 'netlify/functions/value-history.mjs'
+      - 'netlify/functions/site-v29.mjs'
+      - 'value-history-v276.js'
       - 'netlify/functions/lib/player-weekly-milestone-awards.mjs'
       - 'tests/player-weekly-milestone-awards.test.mjs'
       - '.github/workflows/player-weekly-milestone-awards.yml'
@@ -21,6 +23,7 @@ jobs:
       - name: Check milestones syntax
         run: |
           node --check netlify/functions/value-history.mjs
+          node --check value-history-v276.js
           node --check netlify/functions/lib/player-weekly-milestone-awards.mjs
       - name: Test completed-week award sync
         run: node --test tests/player-weekly-milestone-awards.test.mjs

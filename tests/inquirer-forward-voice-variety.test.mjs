@@ -47,6 +47,6 @@ test('plural fantasy teams retain proper verb agreement across reporter and salt
   });
   reinforceForwardReporterVoice(rows,14,salt,[]);
   const copy=rows.map(t=>t.inquirer_article.sections.find(s=>s.kind==='sentiment').paragraphs.at(-1)).join(' ');
-  assert.doesNotMatch(copy,/\\b(?:Kansas City Chiefs|Los Angeles Rams) (?:has|is|does|gets|needs|sits|keeps|projects|faces)\\b/i);
+  assert.doesNotMatch(copy,/\b(?:Kansas City Chiefs|Los Angeles Rams) (?:has|is|does|gets|needs|sits|keeps|projects|faces)\b/i);
  }
 });

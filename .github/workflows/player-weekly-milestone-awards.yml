@@ -1,0 +1,26 @@
+name: Player of Week milestones contract
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/value-history.mjs'
+      - 'netlify/functions/lib/player-weekly-milestone-awards.mjs'
+      - 'tests/player-weekly-milestone-awards.test.mjs'
+      - '.github/workflows/player-weekly-milestone-awards.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  badges:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check milestones syntax
+        run: |
+          node --check netlify/functions/value-history.mjs
+          node --check netlify/functions/lib/player-weekly-milestone-awards.mjs
+      - name: Test completed-week award sync
+        run: node --test tests/player-weekly-milestone-awards.test.mjs

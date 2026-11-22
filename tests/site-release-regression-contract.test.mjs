@@ -92,6 +92,18 @@ test('all individual targeted-player Finder modules are critical, ordered and ca
  assert.throws(()=>compareVersionAssets(baseline,swapped),/Targeted Finder runtime load order/);
 });
 
+test('all loaded scripts, including noncritical home/manager UI, require new cache keys if source bytes change',()=>{
+ const extras=['fleeced-home-v424.js','fleeced-presentation-v413.js','trade-finder-style-loader-v209.js'];
+ const loaded=injectedScripts(baseline);
+ for(const filename of extras){
+  const entry=loaded.find(x=>x.pathname==='/'+filename);
+  assert.ok(entry,'source exists in assembled site: '+filename);
+  assert.throws(()=>verifyCacheKeysForChangedAssets(baseline,baseline,x=>x===filename,{critical:extras}),/stale cache key/);
+  const bumped=baseline.replace('/'+filename+'?v='+entry.version,'/'+filename+'?v='+(Number(entry.version)+1));
+  assert.ok(verifyCacheKeysForChangedAssets(baseline,bumped,x=>x===filename,{critical:extras}).some(x=>x.filename===filename));
+ }
+});
+
 test('cache guard applies to the player badge runtime and valuation runtime as well',()=>{
  for(const filename of ['value-history-v276.js','trade-value-normalization-v139.js',
   'modeled-player-values-v319.js','trade-finder-v256-compiled.js']){

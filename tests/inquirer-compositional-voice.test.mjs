@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import {COMPOSITIONAL_VOICE_CONTRACT,reinforceForwardReporterVoice,rotateForwardRecapOpening}
  from '../netlify/functions/lib/inquirer-compositional-voice.mjs';
 import {FORWARD_EDITORIAL_REVISION} from '../netlify/functions/inquirer-editorial-v31.mjs';
+import {assessMinorNineWordReuse} from '../netlify/functions/lib/inquirer-minor-repetition.mjs';
 
 const reporters=['walter-mercer','tess-delaney','mack-hollis','nora-voss'];
 const team=i=>({
@@ -134,4 +135,34 @@ test('all rhetorical frames keep natural score verbs and never leak undefined to
     'humor should not double the management case');
   }
  }
+});
+
+
+test('three isolated shared sentences are warnings; consecutive copied sentences are blocked',()=>{
+ const shared=[
+  'The scoreboard made its position clear without offering the manager any sympathetic reading today.',
+  'That particular decision will survive the week in an inconvenient corner of the lineup ledger.',
+  'A second explanation is unlikely to improve the arithmetic no matter how passionately it arrives.'
+ ];
+ const teams=Array.from({length:32},(_,i)=>({
+  roster_id:i+1,
+  inquirer_article:{sections:[{kind:'sentiment',paragraphs:(i<4?shared:[
+   'A separate observation explains this particular club and its opponent without copying another analysis.'
+  ]).map(sentence=>
+   'This factual introduction concerns Team '+(i+1)+' and its distinct lineup, with measured details that merit review. '+
+   sentence+' The final observation belongs to Team '+(i+1)+', with its own measured score and lineup decisions.'
+  )}]}
+ }));
+ const owners=new Set(['1','2','3','4']);
+ const gram=s=>(s.toLowerCase().match(/[a-z0-9]+/g)||[]).slice(0,9).join(' ');
+ const collisions=shared.map(sentence=>[gram(sentence),owners]);
+ const warning=assessMinorNineWordReuse(teams,collisions);
+ assert.equal(warning.tolerated,true);
+ assert.equal(warning.sentence_count,3);
+ assert.equal(warning.severity,'editorial-warning');
+ const consecutive=structuredClone(teams);
+ consecutive[0].inquirer_article.sections[0].paragraphs=[shared.join(' ')];
+ const blocked=assessMinorNineWordReuse(consecutive,collisions);
+ assert.equal(blocked.tolerated,false);
+ assert.equal(blocked.reason,'consecutive-repeated-sentences');
 });

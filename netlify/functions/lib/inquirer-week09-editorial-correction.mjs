@@ -96,34 +96,38 @@ function correctRecap(d){
  const overview=d.league_overview,feature=overview?.sections?.[0],blocks=feature?.blocks;
  if(!Array.isArray(blocks)||blocks.map(b=>b.kind).join(',')!=='lead,standings,players,decisions,league,outlook')
   throw Error('Original Week 9 recap has changed; correction held');
- feature.heading='Week 9: Jets Stun Patriots; Chargers Rout Raiders';
- blocks[0].heading='The Jets-Patriots Upset, With Names Attached';
+ feature.heading='Week 9: The Jets Make Their Point, the Chargers Make a Scene';
+ blocks[0].heading='The Jets Turn the Table on New England';
  blocks[0].paragraphs=[
-  'New York Jets (manager '+jets.manager_name+') beat New England Patriots (manager '+patriots.manager_name+') '+n(jets.points)+'–'+n(patriots.points)+' in the FLEECED! Week 9 fantasy matchup. The '+n(jets.points-patriots.points)+'-point finish was a fantasy-lineup upset, not a result between NFL franchises.',
-  'New England Patriots started Zach Allen for '+n(patMiss.starter.points)+' in the IDP FLEX slot and left Daiyan Henley on the bench with '+n(patMiss.reserve.points)+'. The '+n(patMiss.gap)+'-point difference exceeded New England’s losing margin; this is a manager '+patriots.manager_name+' lineup decision, not a mystery about the final.',
-  'New York Jets produced '+n(jets.points)+' points after losing to Arizona Cardinals in Week 8. Their Week 9 lineup added 21.5 to the previous total, and Tykee Smith supplied '+n(25.3)+' of the new Week 9 score.'
+  'New York Jets had been through enough already. Then came an '+n(jets.points)+'–'+n(patriots.points)+' win over New England Patriots, with manager '+jets.manager_name+' handing manager '+patriots.manager_name+' a '+n(jets.points-patriots.points)+'-point defeat that nobody on the Patriots sideline will enjoy revisiting. A 4-5 club had just found its favorite Sunday of the month.',
+  'The sting for New England was hiding on its own bench. Zach Allen started in the IDP FLEX spot for '+n(patMiss.starter.points)+'; Daiyan Henley scored '+n(patMiss.reserve.points)+' in reserve. The '+n(patMiss.gap)+'-point gap was bigger than the final margin. No need for a conspiracy board when the lineup card is this unkind.',
+  'A week earlier, the Jets had fallen to Arizona Cardinals. This time they added 21.5 points to their previous total, with Tykee Smith contributing '+n(25.3)+'. Whatever the Jets had been saying about turning the corner, at least this time the scoreboard answered.'
  ];
+ blocks[1].heading='The Race Tightens, Even at the Top';
  blocks[1].paragraphs=[
-  'The New York Jets win over New England Patriots, '+n(jets.points)+'–'+n(patriots.points)+', moved the Jets to 4-5 while the Patriots fell to 7-2. The result affected two fantasy managers, '+jets.manager_name+' and '+patriots.manager_name+', not the NFL standings.',
-  'Denver Doncos (manager '+doncos.manager_name+') held No. 1 in the FLEECED! table after beating Kansas City Chiefs '+n(doncos.points)+'–'+n(chiefs.points)+'. Javonte Williams accounted for '+n(22.4)+' points in the Doncos starting lineup.'
+  'The Jets moved to 4-5 while New England slipped to 7-2. That upset will not knock the Patriots out of the race, but it gives their next lineup meeting an uncomfortable opening question: how did a '+n(patMiss.gap)+'-point bench advantage stay on the sideline in a '+n(jets.points-patriots.points)+'-point loss?',
+  'Denver Doncos kept their hands on first place, beating Kansas City Chiefs '+n(doncos.points)+'–'+n(chiefs.points)+'. Javonte Williams chipped in '+n(22.4)+' for Denver. The leaders keep winning; everyone else keeps checking the standings, which is hardly a restful way to spend November.'
  ];
+ blocks[2].heading='The Back Page Belongs to the Chargers';
  blocks[2].paragraphs=[
-  'Los Angeles Chargers (manager '+chargers.manager_name+') beat Las Vegas Raiders '+n(chargers.points)+'–'+n(raiders.points)+'. Chargers linebacker Arvell Reese scored '+n(48.8)+' fantasy points with 10 solo tackles, three sacks and three quarterback hits.',
-  'C.J. Stroud scored '+n(33.76)+' more for Los Angeles Chargers. He and Arvell Reese combined for '+n(48.8+33.76)+' of the Chargers’ '+n(chargers.points)+' fantasy points against Las Vegas Raiders.',
-  'New York Jets defensive back Tykee Smith scored '+n(25.3)+' fantasy points in the '+n(jets.points-patriots.points)+'-point win over New England Patriots.',
-  'New England Patriots could have used Daiyan Henley ('+n(patMiss.reserve.points)+') instead of Zach Allen ('+n(patMiss.starter.points)+') in the eligible IDP FLEX slot. The unused '+n(patMiss.gap)+' points matter to that specific matchup.'
+  'Los Angeles Chargers did not bother making the Raiders game suspenseful. Manager '+chargers.manager_name+' watched a '+n(chargers.points)+'–'+n(raiders.points)+' rout of Las Vegas Raiders, powered by Arvell Reese and a defensive performance worth '+n(48.8)+' fantasy points. Ten solo tackles, three sacks and three quarterback hits: that is not a cameo, it is a full-page advertisement.',
+  'C.J. Stroud added '+n(33.76)+' for Los Angeles. Together, Stroud and Reese brought '+n(48.8+33.76)+' points to a lineup that had plenty of room to celebrate. Somewhere in the league, another manager looked at that total and quietly shut the laptop.',
+  'Tykee Smith deserves a line here too. His '+n(25.3)+' for the Jets provided a sizable share of the upset over New England, the kind of defensive output managers remember the next time an IDP slot looks like an afterthought.'
  ];
+ blocks[3].heading='The Lineup Decisions That Will Linger';
  blocks[3].paragraphs=[
-  'Cincinnati Bungals (manager '+bungals.manager_name+') started Boye Mafe ('+n(bunMiss.starter.points)+') rather than eligible bench defender Myles Garrett ('+n(bunMiss.reserve.points)+'). The '+n(bunMiss.gap)+'-point difference accompanied a '+n(bungals.points)+'–'+n(bungals.opponent_points)+' loss to Baltimore Ravens.',
-  'New England Patriots manager '+patriots.manager_name+' left '+n(patMiss.gap)+' possible IDP points on the bench in the Henley-versus-Allen decision. New York Jets still had to earn the '+n(jets.points)+'–'+n(patriots.points)+' final.'
+  'Cincinnati Bungals manager '+bungals.manager_name+' started Boye Mafe ('+n(bunMiss.starter.points)+') with eligible reserve Myles Garrett ('+n(bunMiss.reserve.points)+') on the bench. That is a '+n(bunMiss.gap)+'-point difference in a '+n(bungals.points)+'–'+n(bungals.opponent_points)+' loss to Baltimore Ravens. The lineup did not create every problem in Cincinnati, but it certainly volunteered to be questioned first.',
+  'New England has a smaller margin and its own painfully larger alternative: Henley over Allen offered '+n(patMiss.gap)+' more. The Jets earned their '+n(jets.points)+'–'+n(patriots.points)+' result; the Patriots are left wondering why they made earning it quite so manageable.'
  ];
+ blocks[4].heading='The High, the Low, and the Distance Between';
  blocks[4].paragraphs=[
-  'Los Angeles Chargers led Week 9 fantasy scoring with '+n(chargers.points)+' points against Las Vegas Raiders ('+n(raiders.points)+'). Arvell Reese delivered '+n(48.8)+' for the Chargers.',
-  'Kansas City Chiefs scored '+n(chiefs.points)+' against Denver Doncos ('+n(doncos.points)+'). The '+n(chargers.points-chiefs.points)+'-point span between the Chargers and Chiefs is a comparison of league lineup totals, not a head-to-head matchup.'
+  'The Chargers topped the Week 9 scoring sheet with '+n(chargers.points)+' against the Raiders, and Reese supplied '+n(48.8)+' of those points. A performance like that travels quickly through a 32-team league. So does the sight of the opposite end of the table.',
+  'Kansas City Chiefs managed '+n(chiefs.points)+' against the Doncos, whose '+n(doncos.points)+' did not require much suspense. The gulf between the Chargers and Chiefs reached '+n(chargers.points-chiefs.points)+' points. Nobody is suggesting those clubs faced each other this week; the scoreboard comparison alone is enough to make Kansas City reach for the aspirin.'
  ];
+ blocks[5].heading='Next Sunday Is Already Asking Questions';
  blocks[5].paragraphs=[
-  'New York Jets next play Jacksonville Jags after their '+n(jets.points)+'–'+n(patriots.points)+' win over New England Patriots. Tykee Smith’s '+n(25.3)+' points are part of the Week 9 evidence their manager takes into Week 10.',
-  'Los Angeles Chargers next face Pittsburgh Steelers after the '+n(chargers.points)+'-point win over Las Vegas Raiders. Buffalo Billiards, after losing '+n(buffalo.points)+'–'+n(buffalo.opponent_points)+' to Miami Dolphins, next face Tennessee Titans.'
+  'New York Jets draw Jacksonville Jags next. Smith and his '+n(25.3)+'-point contribution are reasons for optimism, but the '+n(jets.points)+'–'+n(patriots.points)+' upset becomes a turning point only if the Jets can carry something from it into Week 10.',
+  'Los Angeles Chargers face Pittsburgh Steelers after their '+n(chargers.points)+'-point outburst. Buffalo Billiards, beaten '+n(buffalo.points)+'–'+n(buffalo.opponent_points)+' by Miami Dolphins, have Tennessee Titans waiting. One week makes a wonderful headline. The next decides whether it was news or merely a very loud afternoon.'
  ];
  feature.paragraphs=blocks.flatMap(b=>b.paragraphs||[]);
  const race=overview.sections?.[1],back=overview.sections?.[3],next=overview.sections?.[4];

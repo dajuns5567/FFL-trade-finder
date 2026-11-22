@@ -69,6 +69,18 @@ test('missing weekly Hot Seat card is filled by the finalized feed, marked provi
  assert.match(markup,/pregame projections unavailable/);
  assert.match(markup,/pending archival/);
 });
+test('a newly finalized week refreshes Hot Seat and awards even when Managers or Awards view is open',()=>{
+ const start=ui.indexOf('async function refreshLiveLeagueWeekIfAdvanced()');
+ const stop=ui.indexOf('async function weeklyAwards()',start);
+ assert(start>=0&&stop>start);
+ const refresh=ui.slice(start,stop);
+ assert.match(refresh,/\['daily','managers','awards'\]\.includes\(currentView\)/);
+ assert.match(refresh,/weeklyAwardsCache=null/);
+ assert.match(refresh,/spotlightWeeklyCache=null/);
+ assert.match(refresh,/await render\(currentView\)/);
+ assert.doesNotMatch(refresh,/currentView!=='daily'/);
+});
+
 test('All-Time Highs shows all current standings until first timestamped record, never calls them recorded peaks',()=>{
  const a=ui.indexOf('function awardRecordsHTML('),b=ui.indexOf('function rankingsHTML(rows,key){',a);
  assert(a>=0&&b>a);

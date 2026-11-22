@@ -56,3 +56,12 @@ test('the live milestones endpoint uses the same completed-week fallback for cur
  assert.doesNotMatch(source,/else if\(Number\(year\)<currentSeason\)/);
  assert.match(source,/weeklyAwardSource:'Fleeced locked completed-week awards/);
 });
+
+test('browser refreshes cached awards after league weekly update and loads the new script',()=>{
+ const ui=readFileSync(new URL('../value-history-v276.js',import.meta.url),'utf8');
+ const site=readFileSync(new URL('../netlify/functions/site-v29.mjs',import.meta.url),'utf8');
+ assert.match(ui,/playerScoringCacheAt=new Map\(\)/);
+ assert.match(ui,/Date\.now\(\)-\(playerScoringCacheAt\.get\(key\)\|\|0\)<60000/);
+ assert.match(ui,/loadPlayerScoring\(key\);/);
+ assert.match(site,/value-history-v276\.js\?v=542/);
+});

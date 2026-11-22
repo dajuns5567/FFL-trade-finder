@@ -1008,11 +1008,21 @@ export default async req=>{try{const u=new URL(req.url);
   }
   if(u.searchParams.get('managers')==='1'){
    const cached=await store().get('managers/history-cache.json',{type:'json'}).catch(()=>null);
-   if(cached?.career?.length&&cached?.current?.length===32)return json({...cached,cache_hit:true,preview_read_only:true});
+   // A complete but outdated Blob cache is still stale after a finalized week.
+   // Verify the same completed-week season/cutoff used by the production reader.
+   const nfl=await fetchJson(`${API}/state/nfl`).catch(()=>null);
+   const season=Number(nfl?.season)||0;
+   const through=Math.max(0,Math.min(17,(Number(nfl?.week)||1)-1));
+   const verifiedCurrent=season>0&&cached?.cache_version===MANAGER_CACHE_VERSION&&
+    Number(cached?.scoring_history?.through_season)===season&&
+    Number(cached?.scoring_history?.through_week)>=through;
+   if(cached?.career?.length&&cached?.current?.length===32&&verifiedCurrent)
+    return json({...cached,cache_hit:true,stale:false,preview_read_only:true});
    // A preview must never write the production Blob cache. The existing
    // strict 32-team/weekly-completeness reader supports read-only reconstruction.
    // Reconstruct only when the cache is missing or incomplete; never invent rows.
    try{
+    if(!season)throw Error('Sleeper week unavailable for verified preview freshness');
     const fresh=await managerHistory({persist:false});
     if(fresh?.current?.length!==32||!fresh?.career?.length)
      throw Error('incomplete read-only manager reconstruction');

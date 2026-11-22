@@ -246,8 +246,8 @@ test('forward recap retains the five locked newsroom sections and verified playo
  assert.deepEqual(inspectMajorRecapArchitecture(edition),[]);
  assert.equal(edition.league_overview.sections.length,5);
  const race=edition.league_overview.sections[1].paragraphs.join(' ');
- assert.match(race,/No. 1 seed/);
- assert.match(race,/fourth place/);
+ assert.match(race,/first place/);
+ assert.match(race,/Fourth place/);
  assert.match(race,/Week 14 wildcard round/);
  assert.equal(restoreWeeklyPlayoffDesk(edition),false,'do not double-insert race desk');
 });

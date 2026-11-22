@@ -1,0 +1,23 @@
+name: Inquirer Week 9 factual attribution correction
+on:
+  push:
+    branches:
+      - fix/inquirer-week09-attributed-recap-correction
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-week09-reader:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install current dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+      - name: Verify real pinned original Week 9 editorial corrections with all 32 articles
+        run: node scripts/verify-inquirer-week09-attribution-correction.mjs
+      - name: Protect original Week 9 archive, public publication and past newsroom
+        run: node --test tests/inquirer-attribution-audit.test.mjs tests/inquirer-github-archive-reader.test.mjs tests/inquirer-publisher-archive-readiness.test.mjs tests/inquirer-private-edition-audit.test.mjs tests/inquirer-v110-editorial-candidate-retry.test.mjs tests/inquirer-week9-unattended-publish-regression.test.mjs

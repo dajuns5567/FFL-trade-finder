@@ -1,0 +1,39 @@
+name: League All-Time Highs durable capture and readback
+on:
+  pull_request:
+    paths:
+      - 'league-hub-v451.js'
+      - 'netlify/functions/league-hub.mjs'
+      - 'netlify/functions/lib/league-all-time-highs.mjs'
+      - 'netlify/functions/site-v29.mjs'
+      - 'scripts/value-history-headless-refresh.mjs'
+      - 'scripts/archive-league-all-time-highs.mjs'
+      - 'tests/league-all-time-highs-durable.test.mjs'
+      - '.github/workflows/league-all-time-highs-durable-ci.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  high-records:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate frontend, server and scheduled writer syntax
+        run: |
+          node --check league-hub-v451.js
+          node --check netlify/functions/league-hub.mjs
+          node --check netlify/functions/lib/league-all-time-highs.mjs
+          node --check netlify/functions/site-v29.mjs
+          node --check scripts/value-history-headless-refresh.mjs
+          node --check scripts/archive-league-all-time-highs.mjs
+      - name: Verify monotonic record integrity, automatic capture and fallback
+        run: node --test tests/league-all-time-highs-durable.test.mjs
+      - name: Preserve previous League Hub and newspaper contracts
+        run: |
+          node --test tests/league-week-independent-news.test.mjs
+          node --test tests/presentation-copy-cleanup-v539.test.mjs
+          node --test tests/inquirer-week9-unattended-publish-regression.test.mjs

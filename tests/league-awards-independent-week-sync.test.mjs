@@ -47,6 +47,16 @@ test('the award backend uses completed Sleeeper weeks independently of newspaper
  assert.match(preview,/weeklyAwards\(\{persist:false\}\)/);
 });
 
+test('the visible Fleeced Daily dashboard invalidates old badges when a completed week advances',()=>{
+ const browser=readFileSync(new URL('../league-hub-v451.js',import.meta.url),'utf8');
+ const begin=browser.indexOf('async function refreshLiveLeagueWeekIfAdvanced()');
+ const end=browser.indexOf('async function weeklyAwards()',begin);
+ const refresh=browser.slice(begin,end);
+ assert.match(refresh,/managerCache=null/);
+ assert.match(refresh,/weeklyAwardsCache=null/);
+ assert.match(refresh,/await render\('daily'\)/);
+});
+
 test('a missing or incomplete week cannot become independently eligible',()=>{
  const rosters=Array.from({length:32},(_,i)=>({roster_id:i+1,owner_id:'u'+i}));
  const users=rosters.map((x,i)=>({user_id:x.owner_id,display_name:'Manager '+i}));

@@ -43,7 +43,7 @@ const previousLines=history=>history.filter(Boolean).flatMap(e=>[
 ]).flatMap(s=>String(s||'').split(/(?<=[.!?])\s+/));
 export function reinforceForwardReporterVoice(teams,week,salt=0,history=[],season=2026){
  if(Number(season)<=2026&&Number(week)<10)return teams;
- const archive=previousLines(history),old=new Set(archive.map(norm)),open=new Set(archive.map(head)),used=new Set(),starts=new Set();
+ const archive=previousLines(history),old=new Set(archive.map(norm)),open=new Set(archive.map(head)),used=new Set(),starts=new Set(),voicePunchlines=new Set();
  for(const t of teams||[]){
   const a=t?.inquirer_article,subject=available(t)&&entity(t);
   if(!a?.sections?.length||!subject?.low)continue;
@@ -60,8 +60,9 @@ export function reinforceForwardReporterVoice(teams,week,salt=0,history=[],seaso
      setting:pick(voice.setting,seed+'s'),irony:pick(voice.irony,seed+'i'),
      verb:pick(verbs,seed+'v'),reference:pick(references,seed+'r')};
     const line=pick(frames,seed+'f')(p),full=norm(line),first=head(line);
-    if(old.has(full)||used.has(full)||open.has(first)||starts.has(first))continue;
-    desks[di].paragraphs.push(line);used.add(full);starts.add(first);break;
+    const punchlineKey=[a.reporter?.id||'walter-mercer',di,p.irony].join('|');
+    if(old.has(full)||used.has(full)||open.has(first)||starts.has(first)||voicePunchlines.has(punchlineKey))continue;
+    desks[di].paragraphs.push(line);used.add(full);starts.add(first);voicePunchlines.add(punchlineKey);break;
    }
   }
   a.paragraphs=a.sections.flatMap(s=>s.paragraphs||[]);

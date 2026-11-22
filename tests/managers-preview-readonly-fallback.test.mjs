@@ -93,7 +93,8 @@ test('Managers refresh revalidates completed trade activity and invalidates depe
  assert.match(refresh,/if\(!Array\.isArray\(fresh\?\.trades\)\)throw Error/);
  assert.match(refresh,/tradesChanged=tradeSignature\(fresh\)!==tradeSignature\(tradeCache\)/);
  assert.match(refresh,/globalThis\.primeTradeHistoryCacheV515\?\.\(tradeCache\)/);
- assert.match(refresh,/if\(!managersChanged&&!tradesChanged\)return/);
+ assert.match(refresh,/if\(!managersChanged&&!tradesChanged&&!spotlightChanged\)return/);
+ assert.match(refresh,/const latest=await liveLeagueWeek\(\)/);
  assert.match(refresh,/if\(managersChanged\)\{weeklyAwardsCache=null;spotlightWeeklyCache=null\}/);
  assert.match(refresh,/if\(tradesChanged\)draftCache=null/);
  assert.match(refresh,/catch\(error\)\{console\.warn\('manager-trade-refresh-unavailable'/);

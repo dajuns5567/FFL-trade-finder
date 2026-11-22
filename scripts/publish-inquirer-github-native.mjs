@@ -297,6 +297,22 @@ export function buildSourceTeams({league,week,matchups,history=[],nextMatchups=[
   };
  });
 }
+// Repetition tolerance never authorizes publishing explanatory engine copy as
+// a newspaper article. Check only unmistakable meta-language, not normal
+// sports analysis or harmless editorial variation.
+export function inspectInquirerNewspaperVoice(edition){
+ const offenders=[];
+ const banned=/\\b(?:not a result between NFL franchises|not the NFL standings|not interchangeable NFL.team prose|a comparison of league lineup totals, not a head.to.head matchup|this is a manager .*? lineup decision, not a mystery about the final|the fantasy managers, starters and specific lineup decisions explain)\\b/i;
+ const check=(text,where)=>{if(banned.test(String(text||'')))offenders.push({id:'newspaper-meta-prose',where})};
+ for(const t of edition?.teams||[])for(const section of t.inquirer_article?.sections||[])
+  for(const p of section.paragraphs||[])check(p,'team '+String(t.roster_id)+' / '+section.kind);
+ for(const sec of edition?.league_overview?.sections||[]){
+  for(const p of sec.paragraphs||[])check(p,'recap '+String(sec.heading||''));
+  for(const block of sec.blocks||[])for(const p of block.paragraphs||[])
+   check(p,'recap '+String(block.kind||''));
+ }
+ return offenders;
+}
 export function verifyEditorialEdition(edition,previous,historical=[]){
  const audit=inspectEditionBeforePublication(edition),quality=evaluateInquirerEditionQuality(edition,previous);
  const priorIssueCount=quality.issues.length;
@@ -304,12 +320,13 @@ export function verifyEditorialEdition(edition,previous,historical=[]){
   quality.issues.push({...issue,source_week:Number(old.week)});
  if(quality.issues.length>priorIssueCount)quality.ok=false;
  const independent=auditIndependentInquirerCopy([edition],{revision:FORWARD_EDITORIAL_REVISION,mode:'publication'});
+ const voiceIssues=inspectInquirerNewspaperVoice(edition);
  const admission=deterministicInquirerAdmission(edition,{quality,audit,previousEdition:previous});
  // The same canonical archive contract used by the public League Hub reader
  // must pass BEFORE any edition is committed to GitHub.
  const canonical=inspectCanonicalArchive(edition,edition?.season,edition?.week);
- return{ok:quality.ok&&audit.ok&&independent.ok&&admission.approved&&canonical.ok,
-  audit,quality,independent,admission,canonical};
+ return{ok:quality.ok&&audit.ok&&independent.ok&&admission.approved&&canonical.ok&&!voiceIssues.length,
+  audit,quality,independent,admission,canonical,voiceIssues};
 }
 // Keep the existing >=25-word independent value-desk audit unchanged.
 // Only add genuinely measured facts to a clipped deterministic desk.
@@ -392,7 +409,8 @@ export function selectEditorialEdition({rawInquirer,rawOverview,season,week,prev
 }
 function statusFor(edition,verdict){
  const issues=[...(verdict?.quality?.issues||[]),...(verdict?.audit?.issues||[]),...(verdict?.independent?.issues||[]),
-  ...(verdict?.canonical?.issues||[]).map(message=>({id:'canonical-reader-contract',message}))];
+  ...(verdict?.canonical?.issues||[]).map(message=>({id:'canonical-reader-contract',message})),
+  ...(verdict?.voiceIssues||[])];
  return{season:Number(edition?.season),week:Number(edition?.week),editorial_revision:FORWARD_EDITORIAL_REVISION,
   state:verdict?.ok?'completed':'editorial-hold',published:!!verdict?.ok,
   issue_count:issues.length,

@@ -468,7 +468,7 @@ async function refreshAllTimeHighs(rows,{record=true}={}){
  }
  if(currentView==='awards'&&rankingAwardKey&&awardHighMode[rankingAwardKey]&&
      tradeCache&&draftCache){
-  const host=document.getElementById('lhContent');
+  const host=document.getElementById('leagueHubContent');
   if(host)host.innerHTML=rankingsHTML(currentAwards(teamTradeStats(tradeCache.trades||[]),draftCache),rankingAwardKey);
  }
 }

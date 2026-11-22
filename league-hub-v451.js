@@ -806,7 +806,7 @@ function weeklyAwardCardsHTML(data=weeklyAwardsCache){
 function managerWeeklyBadgesHTML(id,mgr,data=weeklyAwardsCache){
  const uid=String(mgr?.user_id||''),rid=String(id),badges=(data?.records||[]).flatMap(rec=>(rec.manager_awards||[]).filter(a=>(uid&&a.manager_user_id&&String(a.manager_user_id)===uid)||String(a.roster_id||'')===rid).map(a=>({...a,season:rec.season,week:rec.week,captured_at:rec.captured_at||''}))).sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week));
  if(!badges.length)return'<div class="lh-sub">No weekly manager badges yet.</div>';
- return '<div class="lh-weekly-badges">'+badges.map(a=>'<span class="lh-weekly-badge">'+esc(a.title)+' • '+esc(a.season+' Week '+a.week)+(a.captured_at?' • '+esc(date(a.captured_at)):'')+'</span>').join('')+'</div>';
+ return '<div class="lh-weekly-badges">'+badges.map(a=>'<span class="lh-weekly-badge">'+esc(a.title)+' • '+esc(a.season+' Week '+a.week)+(a.provisional?' • Current completed-week result, pending archival':a.captured_at?' • '+esc(date(a.captured_at)):'')+'</span>').join('')+'</div>';
 }
 function playersOfWeekHTML(w,data=weeklyAwardsCache){
  const rows=Array.isArray(data?.records)?data.records:[],season=Number(w?.season),week=Number(w?.week),rec=rows.find(r=>Number(r.season)===season&&Number(r.week)===week)||null,p=rec?.players_of_week;if(!p?.offense&&!p?.defense)return'';

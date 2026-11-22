@@ -41,8 +41,8 @@ const previousLines=history=>history.filter(Boolean).flatMap(e=>[
  ...(e.teams||[]).flatMap(t=>t.inquirer_article?.paragraphs||[]),
  ...(e.league_overview?.sections||[]).flatMap(s=>s.blocks?.length?s.blocks.flatMap(b=>b.paragraphs||[]):s.paragraphs||[])
 ]).flatMap(s=>String(s||'').split(/(?<=[.!?])\s+/));
-export function reinforceForwardReporterVoice(teams,week,salt=0,history=[]){
- if(Number(week)<10)return teams;
+export function reinforceForwardReporterVoice(teams,week,salt=0,history=[],season=2026){
+ if(Number(season)<=2026&&Number(week)<10)return teams;
  const archive=previousLines(history),old=new Set(archive.map(norm)),open=new Set(archive.map(head)),used=new Set(),starts=new Set();
  for(const t of teams||[]){
   const a=t?.inquirer_article,subject=available(t)&&entity(t);
@@ -87,8 +87,8 @@ const leadFrames=[
  p=>'The first exhibit from Week '+p.week+': '+p.club+' on '+p.score+', '+p.foe+' on '+p.against+'. '+p.reaction,
  p=>'For Week '+p.week+', '+p.prefix.toLowerCase()+' '+p.action+' '+p.club+' and '+p.score+' versus '+p.foe+'. '+p.reaction
 ];
-export function rotateForwardRecapOpening(overview,teams,week,salt=0,history=[]){
- if(Number(week)<10)return overview;
+export function rotateForwardRecapOpening(overview,teams,week,salt=0,history=[],season=Number(overview?.season)||2026){
+ if(Number(season)<=2026&&Number(week)<10)return overview;
  const feature=(overview?.sections||[]).find(s=>(s.blocks||[]).some(b=>b.kind==='lead')),
  lead=feature?.blocks?.find(b=>b.kind==='lead');
  if(!lead?.paragraphs?.length)return overview;

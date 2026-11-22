@@ -9,6 +9,7 @@ import {applyInquirerEditorialV31,evaluateInquirerEditionQuality,FORWARD_EDITORI
 import {inspectEditionBeforePublication,deterministicInquirerAdmission,inspectPreviousWeekEditorialReuse} from '../netlify/functions/inquirer-publication-guard.mjs';
 import {auditIndependentInquirerCopy} from '../netlify/functions/lib/inquirer-independent-copy-audit.mjs';
 import {correctWeekNineReaderEdition} from '../netlify/functions/lib/inquirer-week09-editorial-correction.mjs';
+import {inquirerMarketCutoff} from '../netlify/functions/lib/inquirer-market-window.mjs';
 
 export const LEAGUE_ID='1316867686394769408';
 const API='https://api.sleeper.app/v1';
@@ -50,6 +51,105 @@ const score=(stats,scoring)=>{
  }
  return used?Number(n.toFixed(2)):null;
 };
+// The exact canonical league master-value archive, independently maintained
+// in GitHub. Never reconstruct historical market values or use today's market
+// to describe a past edition.
+const VALUE_ROOT='https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/value-history-data/';
+async function readGithubJson(relative,fetcher=fetch){
+ const res=await fetcher(VALUE_ROOT+relative,{
+  headers:{accept:'application/json','user-agent':'Fleeced-GitHub-Newspaper/1.0'},
+  cache:'no-store',signal:AbortSignal.timeout(25000)});
+ if(!res.ok)throw Error('Verified GitHub value history HTTP '+res.status+' '+relative);
+ return res.json();
+}
+export function selectValueHistoryWindow(index,asOf){
+ const cutoff=Date.parse(asOf);
+ if(!Number.isFinite(cutoff)||index?.league_id!==LEAGUE_ID||
+   !Array.isArray(index?.items))throw Error('Invalid GitHub value archive timeline');
+ const available=index.items.filter(r=>Number.isFinite(Date.parse(r.t))&&Date.parse(r.t)<=cutoff&&
+   /^value-history\/snapshots\/\d{4}\/\d{2}\/[^/]+\.json$/.test(String(r.path||'')))
+   .sort((a,b)=>Date.parse(a.t)-Date.parse(b.t));
+ if(!available.length)return null;
+ const latest=available.at(-1),target=Date.parse(latest.t)-7*86400000;
+ const earlier=available.filter(r=>Date.parse(r.t)<=target);
+ // A baseline must actually exist. No fabricated history.
+ if(!earlier.length)return null;
+ return{latest,baseline:earlier.at(-1),period:'7D'};
+}
+function verifiedValueSnapshot(snapshot,entry){
+ if(snapshot?.league!==LEAGUE_ID||snapshot?.t!==entry.t||
+   snapshot?.fingerprint!==entry.fingerprint||!Array.isArray(snapshot?.rows)||
+   snapshot.rows.length<100||!Array.isArray(snapshot?.teams)||snapshot.teams.length!==32)
+  throw Error('Canonical dynasty value snapshot incomplete or index mismatch');
+ if(!snapshot?.provenance?.source_manifest?.length||
+    snapshot.provenance.canonical_parity!=='exact')
+  throw Error('Consensus model lineage of archived player values unverified');
+ const ids=new Set();
+ for(const row of snapshot.rows){
+  if(!row.id||ids.has(String(row.id))||!Number.isFinite(Number(row.value)))
+   throw Error('Invalid or duplicate consensus-anchored player value');
+  ids.add(String(row.id));
+ }
+ return snapshot;
+}
+export function buildArchivedMarketContext({latest,baseline,players={},period='7D'}={}){
+ if(!latest||!baseline||latest.valuation_contract!==baseline.valuation_contract||
+   latest.valuation_model!==baseline.valuation_model)
+  throw Error('Noncomparable dynasty valuation model eras; market context held');
+ const baseTeams=new Map(baseline.teams.map(x=>[String(x.id),x]));
+ const basePlayers=new Map(baseline.rows.map(x=>[String(x.id),x]));
+ const currentValues=Object.fromEntries(latest.rows.map(x=>[String(x.id),Number(x.value)]));
+ const teams=latest.teams.map(row=>{
+  const old=baseTeams.get(String(row.id));
+  if(!old||!Number.isFinite(Number(old.value)))throw Error('Team baseline missing for '+row.id);
+  const delta=Math.round(Number(row.value)-Number(old.value));
+  return{team_id:String(row.id),value:Math.round(Number(row.value)),
+   baseline_value:Math.round(Number(old.value)),delta,
+   pct:Number(old.value)?100*delta/Number(old.value):null,
+   player_count:Number(row.player_count)||0,
+   baseline_t:baseline.t,latest_t:latest.t,period};
+ });
+ const player_deltas=latest.rows.flatMap(row=>{
+  const old=basePlayers.get(String(row.id));
+  if(!old||!Number.isFinite(Number(old.value)))return[];
+  const delta=Math.round(Number(row.value)-Number(old.value));
+  return delta?[{player_id:String(row.id),delta,value:Math.round(Number(row.value)),
+   baseline_value:Math.round(Number(old.value)),position:String(row.pos||''),
+   pct:Number(old.value)?delta/Number(old.value)*100:null,
+   baseline_t:baseline.t,latest_t:latest.t,period}]:[];
+ });
+ return{teams,player_deltas,playerValues:currentValues,baseline:baseline.t,
+  latest:latest.t,period,source:'github-canonical-value-history',valuation_model:latest.valuation_model};
+}
+async function archivedMarketForWeek(season,week,fetcher=fetch){
+ const url='https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates='+season+
+  '&seasontype=2&week='+week;
+ const schedule=await req(url,fetcher);
+ const dates=(schedule.events||[]).map(event=>event.date).filter(Boolean);
+ if(!dates.length)throw Error('Historical NFL schedule dates not verified for Week '+week);
+ const asOf=inquirerMarketCutoff({game_starts:dates});
+ const index=await readGithubJson('value-history/index.json',fetcher);
+ const window=selectValueHistoryWindow(index,asOf);
+ if(!window)throw Error('No authentic seven-day GitHub valuation history before Week '+week+' cutoff');
+ // A valuation model change may split the seven-day window. Walk backward
+ // by reference rather than comparing different consensus scales.
+ const latest=verifiedValueSnapshot(
+  await readGithubJson(window.latest.path,fetcher),window.latest);
+ const matching=index.items.filter(row=>Date.parse(row.t)<=Date.parse(window.latest.t)-7*86400000&&
+  Date.parse(row.t)<=Date.parse(asOf)).sort((a,b)=>Date.parse(b.t)-Date.parse(a.t));
+ let baseline=null;
+ for(const row of matching.slice(0,20)){
+  const candidate=verifiedValueSnapshot(await readGithubJson(row.path,fetcher),row);
+  if(candidate.valuation_contract===latest.valuation_contract&&
+     candidate.valuation_model===latest.valuation_model){baseline=candidate;break}
+ }
+ if(!baseline)throw Error('No comparable dynasty-model historical baseline; cannot invent a seven-day market movement');
+ const market=buildArchivedMarketContext({latest,baseline});
+ console.info('github-inquirer-dynasty-market',JSON.stringify({week,cutoff:asOf,
+  baseline:baseline.t,latest:latest.t,players:latest.rows.length,teams:latest.teams.length,
+  valuation_model:latest.valuation_model}));
+ return market;
+}
 function canonicalCompletedTrades(transactions,teams,season,week){
  const names=new Map(teams.map(t=>[String(t.roster_id),t.team_name]));
  return (transactions||[]).filter(tx=>tx?.type==='trade'&&tx?.status==='complete'&&
@@ -76,7 +176,7 @@ function leagueContext(histories,teams){
  }
  return result;
 }
-export function buildSourceTeams({league,week,matchups,history=[],nextMatchups=[],rosters,users,players,previousEdition,transactions=[]}){
+export function buildSourceTeams({league,week,matchups,history=[],nextMatchups=[],rosters,users,players,previousEdition,transactions=[],market=null}){
  if(!completeMatchups(matchups)||!Array.isArray(rosters)||rosters.length!==32||!Array.isArray(users)||users.length<1)
   throw Error('Unverified 32-team Sleeper matchup inputs');
  const rosterById=new Map(rosters.map(r=>[String(r.roster_id),r])),byUser=new Map(users.map(u=>[String(u.user_id),u]));
@@ -84,6 +184,7 @@ export function buildSourceTeams({league,week,matchups,history=[],nextMatchups=[
  const byId=new Map(matchups.map(m=>[String(m.roster_id),m])),opp=opponentMap(matchups),next=opponentMap(nextMatchups);
  const prevTeams=new Map((previousEdition?.teams||[]).map(t=>[String(t.roster_id),t]));
  const context=leagueContext(history.length?history:[[week,matchups]],matchups);
+ const marketByTeam=new Map((market?.teams||[]).map(x=>[String(x.team_id),x]));
  const slots=(league?.roster_positions||[]).filter(x=>x!=='BN'&&x!=='IR'&&x!=='TAXI');
  const pname=id=>String(players[id]?.full_name||[players[id]?.first_name,players[id]?.last_name].filter(Boolean).join(' ')||id);
  const ppos=id=>String(players[id]?.position||'FLEX');
@@ -123,7 +224,12 @@ export function buildSourceTeams({league,week,matchups,history=[],nextMatchups=[
    trade_acquisitions:[],trade_history:[],
    recent_trade_count:0,current_week_trade_count:0,
    previous_fan_sentiment:original?.inquirer_article?.fan_sentiment||null,
-   value_history_player_movers:{risers:[],fallers:[]},value_history_week:null,
+   value_history_player_movers:{
+    risers:(market?.player_deltas||[]).filter(x=>x.delta>0&&rosterPlayers.includes(x.player_id))
+     .sort((a,b)=>b.delta-a.delta).map(x=>({...x,player_name:pname(x.player_id)})),
+    fallers:(market?.player_deltas||[]).filter(x=>x.delta<0&&rosterPlayers.includes(x.player_id))
+     .sort((a,b)=>a.delta-b.delta).map(x=>({...x,player_name:pname(x.player_id)}))
+   },value_history_week:marketByTeam.get(id)||null,
    next_week_availability:null,league_context:context[id],opponent_context:context[opponentId],
    upcoming_opponents:nextId?[{week:week+1,roster_id:nextId,team_name:nextTeam?.team_name,context:context[nextId]}]:[],
    division_context:null,next_opponent_context:context[nextId]||null,
@@ -177,7 +283,10 @@ function statusFor(edition,verdict){
  const issues=[...(verdict?.quality?.issues||[]),...(verdict?.audit?.issues||[]),...(verdict?.independent?.issues||[])];
  return{season:Number(edition?.season),week:Number(edition?.week),editorial_revision:FORWARD_EDITORIAL_REVISION,
   state:verdict?.ok?'completed':'editorial-hold',published:!!verdict?.ok,
-  issue_count:issues.length,issue_codes:issues.slice(0,24).map(x=>String(x?.id||x?.code||'unknown')).slice(0,24)};
+  issue_count:issues.length,
+  issue_counts:Object.fromEntries([...new Set(issues.map(x=>String(x?.id||x?.code||'unknown')))]
+   .map(code=>[code,issues.filter(x=>String(x?.id||x?.code||'unknown')===code).length])),
+  issue_codes:issues.slice(0,24).map(x=>String(x?.id||x?.code||'unknown'))};
 }
 export async function runGithubInquirerPublisher({archiveRoot,fetcher=fetch,now=new Date()}={}){
  if(!archiveRoot)throw Error('Required GitHub archive worktree path missing');
@@ -234,15 +343,16 @@ export async function runGithubInquirerPublisher({archiveRoot,fetcher=fetch,now=
  const historical=[];
  for(let w=Math.max(3,week-4);w<=week-2;w++)historical.push(await read(w<=9?'2026/week-'+pad(w)+'.json':'forward/2026/week-'+pad(w)+'.json'));
  console.info('github-inquirer-finalized-matchups',{season,week,teams:matchups.length,stat_weeks:Object.keys(statHistory).length});
+ const market=await archivedMarketForWeek(season,week,fetcher);
  const teams=buildSourceTeams({league,week,matchups,rosters,users,players,previousEdition:previousEditorial,
-  history,nextMatchups,transactions});
+  history,nextMatchups,transactions,market});
  const rawInquirer=buildInquirerWeek({season,week,teams,players,weeklyStats:statHistory[week],
   weeklyStatHistory:statHistory,historicalSeasonStats:{},historicalSeasonYear:season-1,
-  scoringSettings:league.scoring_settings||{},scoreFn:score,weekClassification:inquirerWeekClassification(week,season),playerValues:{}});
+  scoringSettings:league.scoring_settings||{},scoreFn:score,weekClassification:inquirerWeekClassification(week,season),playerValues:market.playerValues});
  const rawOverview=buildLeagueOverview({season,week,teams:rawInquirer.teams,players,
   transactions,canonicalTrades:canonicalCompletedTrades(transactions,teams,season,week),
   weekClassification:inquirerWeekClassification(week,season),
-  valueHistoryMeta:{source:'not available from GitHub-native snapshot'}});
+  valueHistoryMeta:{source:market.source,baseline:market.baseline,latest:market.latest,period:market.period}});
  const chosen=selectEditorialEdition({rawInquirer,rawOverview,season,week,previous:previousEditorial,historical});
  const {edition,verdict}=chosen;const resultStatus=statusFor(edition,verdict);
  if(!verdict.ok)return{...resultStatus,reason:'Editorial admission held; no published file or index changed'};

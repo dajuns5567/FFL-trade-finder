@@ -4,6 +4,7 @@ on:
     paths:
       - 'netlify/functions/league-hub.mjs'
       - 'league-hub-v451.js'
+      - 'netlify/functions/site-v29.mjs'
       - 'tests/league-awards-independent-week-sync.test.mjs'
       - '.github/workflows/league-awards-independent-week-sync.yml'
   workflow_dispatch:
@@ -24,5 +25,6 @@ jobs:
         run: |
           node --check netlify/functions/league-hub.mjs
           node --check league-hub-v451.js
+          node --check netlify/functions/site-v29.mjs
           node --test tests/league-awards-independent-week-sync.test.mjs
           node --test tests/league-week-independent-news.test.mjs

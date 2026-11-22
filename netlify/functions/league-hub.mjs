@@ -1,4 +1,5 @@
 import {inquirerMarketCutoff,editionAvailability} from './lib/inquirer-market-window.mjs';
+import {completedLeagueWeekView} from './lib/league-completed-week.mjs';
 import valueHistoryHandler from './value-history.mjs';
 // Forward drafts must be reviewed as written; synthetic scoreboard sentence repair is retired.
 import {inspectEditionBeforePublication,editorialApprovalMatches,editorialCopyDigest,deterministicInquirerAdmission,isReadOnlyEditorialPreview,inspectPreviousWeekEditorialReuse} from './inquirer-publication-guard.mjs';
@@ -849,6 +850,30 @@ export async function weeklyAwards({additionalLockedEditions=[],persist=true,onl
  return{schema_version:1,records:next};
 }
 
+// League Hub game results advance from Sleeper, irrespective of the newspaper.
+// This GET endpoint never generates articles, writes Blobs, or checks an
+// editorial approval, publication cursor, archive, or matching award.
+async function latestCompletedLeagueWeek(){
+ const [league,nfl]=await Promise.all([
+  fetchJson(`${API}/league/${LEAGUE}`),fetchJson(`${API}/state/nfl`)
+ ]);
+ const season=Number(league?.season||nfl?.season),weekNow=Number(nfl?.week);
+ if(!Number.isInteger(season)||!Number.isInteger(weekNow)||weekNow<2)
+  return{available:false,season,week:null,reason:'No finalized fantasy week yet'};
+ const [rosters,users]=await Promise.all([
+  fetchJson(`${API}/league/${LEAGUE}/rosters`),
+  fetchJson(`${API}/league/${LEAGUE}/users`)
+ ]);
+ // Check the newest possible week first; only fall back for unfinished
+ // roster-record finalization. A missing edition is NEVER a reason to fall back.
+ for(let week=Math.min(INQUIRER_FINAL_WEEK,weekNow-1);week>=1;week--){
+  const finalized=await completedPublicationWeek(week);
+  if(!finalized.complete)continue;
+  const view=completedLeagueWeekView({season,week,matchups:finalized.rows,rosters,users});
+  if(view)return view;
+ }
+ return{available:false,season,week:null,reason:'Sleeper has not finalized league matchup results'};
+}
 async function draftAwards(){
  const league=await fetchJson(`${API}/league/${LEAGUE}`),current=Number(league?.season)||new Date().getFullYear(),years=[current,current-1,current-2,current-3],out=[];
  for(const season of years){
@@ -967,5 +992,5 @@ export default async req=>{try{const u=new URL(req.url);
    return cached?json({...cached,cache_hit:true,preview_read_only:true}):json({error:'No manager history cache in preview; production backfill disabled.',preview_read_only:true},503);
   }
  }
-if(u.searchParams.get('weekly')==='1'){const edition=await weeklyReport(req);return json(req.method==='GET'?correctWeekNineReaderEdition(edition):edition);}if(u.searchParams.get('reporters')==='1')return json(await reporterDirectory());if(u.searchParams.get('reporter_archive'))return json(await reporterArchive(u.searchParams.get('reporter_archive')));if(u.searchParams.get('broadcast_archive')==='1')return json(await broadcastArchive());if(u.searchParams.get('broadcast_season')&&u.searchParams.get('broadcast_week')){const edition=await broadcastStored(u.searchParams.get('broadcast_season'),u.searchParams.get('broadcast_week'));return json(req.method==='GET'?correctWeekNineReaderEdition(edition):edition);}if(u.searchParams.get('weekly_awards')==='1')return json(await weeklyAwards());if(u.searchParams.get('managers')==='1'){const s=store(),cached=await s.get('managers/history-cache.json',{type:'json'}).catch(()=>null),valid=cached?.cache_version===MANAGER_CACHE_VERSION&&cached?.career?.length&&cached.career.some(x=>(Number(x.wins)||0)+(Number(x.losses)||0)>0);if(valid){const nfl=await fetchJson(`${API}/state/nfl`).catch(()=>({})),season=Number(nfl?.season)||0,through=Math.max(0,Math.min(17,(Number(nfl?.week)||1)-1)),fresh=Number(cached?.scoring_history?.through_season)===season&&Number(cached?.scoring_history?.through_week)>=through;if(fresh)return json({...cached,cache_hit:true,stale:false})}return json(await managerHistory())}if(u.searchParams.get('drafts')==='1')return json(await draftAwards());if(u.searchParams.get('draft_records')==='1')return draftRecords(req);if(u.searchParams.get('award_highs')==='1')return awardHighs(req);if(u.searchParams.get('awards')==='1')return awards(req);return json({error:'query required'},400)}catch(e){console.error('league-hub',e);return json({error:'league hub unavailable'},503)}};
+if(u.searchParams.get('league_latest')==='1')return json(await latestCompletedLeagueWeek());if(u.searchParams.get('weekly')==='1'){const edition=await weeklyReport(req);return json(req.method==='GET'?correctWeekNineReaderEdition(edition):edition);}if(u.searchParams.get('reporters')==='1')return json(await reporterDirectory());if(u.searchParams.get('reporter_archive'))return json(await reporterArchive(u.searchParams.get('reporter_archive')));if(u.searchParams.get('broadcast_archive')==='1')return json(await broadcastArchive());if(u.searchParams.get('broadcast_season')&&u.searchParams.get('broadcast_week')){const edition=await broadcastStored(u.searchParams.get('broadcast_season'),u.searchParams.get('broadcast_week'));return json(req.method==='GET'?correctWeekNineReaderEdition(edition):edition);}if(u.searchParams.get('weekly_awards')==='1')return json(await weeklyAwards());if(u.searchParams.get('managers')==='1'){const s=store(),cached=await s.get('managers/history-cache.json',{type:'json'}).catch(()=>null),valid=cached?.cache_version===MANAGER_CACHE_VERSION&&cached?.career?.length&&cached.career.some(x=>(Number(x.wins)||0)+(Number(x.losses)||0)>0);if(valid){const nfl=await fetchJson(`${API}/state/nfl`).catch(()=>({})),season=Number(nfl?.season)||0,through=Math.max(0,Math.min(17,(Number(nfl?.week)||1)-1)),fresh=Number(cached?.scoring_history?.through_season)===season&&Number(cached?.scoring_history?.through_week)>=through;if(fresh)return json({...cached,cache_hit:true,stale:false})}return json(await managerHistory())}if(u.searchParams.get('drafts')==='1')return json(await draftAwards());if(u.searchParams.get('draft_records')==='1')return draftRecords(req);if(u.searchParams.get('award_highs')==='1')return awardHighs(req);if(u.searchParams.get('awards')==='1')return awards(req);return json({error:'query required'},400)}catch(e){console.error('league-hub',e);return json({error:'league hub unavailable'},503)}};
 

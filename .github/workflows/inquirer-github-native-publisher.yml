@@ -35,6 +35,17 @@ jobs:
         run: |
           node --test tests/inquirer-github-native-publisher.test.mjs
           node --test tests/inquirer-github-archive-reader.test.mjs tests/inquirer-week9-unattended-publish-regression.test.mjs
+      - name: Checkout historical GitHub archive for production-equivalent dry-run
+        if: github.event_name == 'push'
+        uses: actions/checkout@v4
+        with:
+          ref: inquirer-archive
+          path: history
+      - name: Actually generate Week 10+ from Sleeper and verify editorial admission without publishing
+        if: github.event_name == 'push'
+        env:
+          INQUIRER_GITHUB_ARCHIVE_ROOT: history/inquirer-archive
+        run: node scripts/publish-inquirer-github-native.mjs
   publish:
     needs: verify
     if: github.ref == 'refs/heads/main' && github.event_name != 'push'

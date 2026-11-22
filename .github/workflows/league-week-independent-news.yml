@@ -16,7 +16,7 @@ jobs:
         with:
           node-version: '22'
       - name: Install existing project dependencies
-        run: npm ci --ignore-scripts --no-audit --no-fund
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
       - name: Check edited JavaScript syntax
         run: |
           node --check league-hub-v451.js

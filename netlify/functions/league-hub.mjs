@@ -730,7 +730,11 @@ async function broadcastStored(season,week){
  // issue exists but fails its checksum or published-edition verification.
  if(Number(season)===2026&&Number(week)>=10){
   const github=await githubPublishedInquirerEdition(season,week);
-  if(github)return github;
+  if(github){
+   if(!isLockedInquirerEdition(github,season,week))
+    throw Error('GitHub published edition failed the canonical 32-team newsroom contract');
+   return github;
+  }
  }
  const s=store(),v=await s.get(`broadcasts/${Number(season)}/week-${String(Number(week)).padStart(2,'0')}.json`,{type:'json'});
  if(v!==null&&v!==undefined){

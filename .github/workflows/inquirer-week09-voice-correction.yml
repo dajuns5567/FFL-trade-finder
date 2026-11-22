@@ -20,4 +20,4 @@ jobs:
       - name: Verify real pinned original Week 9 editorial corrections with all 32 articles
         run: node scripts/verify-inquirer-week09-attribution-correction.mjs
       - name: Protect original Week 9 archive, public publication and past newsroom
-        run: node --test tests/inquirer-github-archive-reader.test.mjs tests/inquirer-publisher-archive-readiness.test.mjs tests/inquirer-private-edition-audit.test.mjs tests/inquirer-v110-editorial-candidate-retry.test.mjs tests/inquirer-week9-unattended-publish-regression.test.mjs
+        run: node --test tests/inquirer-attribution-audit.test.mjs tests/inquirer-github-archive-reader.test.mjs tests/inquirer-publisher-archive-readiness.test.mjs tests/inquirer-private-edition-audit.test.mjs tests/inquirer-v110-editorial-candidate-retry.test.mjs tests/inquirer-week9-unattended-publish-regression.test.mjs

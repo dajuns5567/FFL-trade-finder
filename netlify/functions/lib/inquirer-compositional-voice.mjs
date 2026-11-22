@@ -69,7 +69,7 @@ export function reinforceForwardReporterVoice(teams,week,salt=0,history=[],seaso
   const desks=[reaction];
   for(let di=0;di<desks.length;di++){
    for(let attempt=0;attempt<512;attempt++){
-    const seed=[week,salt,t.roster_id,di,attempt,a.reporter?.id].join('|');
+    const seed=[week,salt,t.roster_id,di,attempt].join('|');
     const p={...subject,player:subject.low.name,low:fmt(subject.low.points),
      setting:pick(voice.setting,seed+'s'),irony:pick(voice.irony,seed+'i'),
      teamVerb:pick(teamVerbs,seed+'team-verb'),playerVerb:pick(playerVerbs,seed+'player-verb'),reference:pick(references,seed+'r')};

@@ -9,7 +9,9 @@ on:
     paths:
       - 'scripts/audit-site-release-contract.mjs'
       - 'scripts/audit-shared-release-features.mjs'
+      - 'scripts/audit-section-readiness.mjs'
       - 'tests/audit-shared-release-features.test.mjs'
+      - 'tests/audit-section-readiness.test.mjs'
       - 'tests/site-release-regression-contract.test.mjs'
       - '.github/workflows/site-version-refresh-regression-gate.yml'
       - 'docs/release-regression-policy.md'
@@ -30,12 +32,17 @@ jobs:
         run: |
           node --check scripts/audit-site-release-contract.mjs
           node --check scripts/audit-shared-release-features.mjs
+          node --check scripts/audit-section-readiness.mjs
           node --check tests/site-release-regression-contract.test.mjs
           node --check tests/audit-shared-release-features.test.mjs
+          node --check tests/audit-section-readiness.test.mjs
       - name: Run full-site rollback, continuity and cache key regression tests
         run: |
           node --test tests/site-release-regression-contract.test.mjs
           node --test tests/audit-shared-release-features.test.mjs
+          node --test tests/audit-section-readiness.test.mjs
+      - name: Audit all site subsections, managers, awards, and source reader links
+        run: node scripts/audit-section-readiness.mjs
       - name: Compare rendered site runtime against current main
         if: github.event_name == 'pull_request'
         env:

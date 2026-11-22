@@ -700,11 +700,11 @@ export function polishForwardTeamCopy(teams,week,salt){
 
 // Preserve the public editorial API while routing every new issue through
 // the compositional, source-grounded newsroom voice engine. No publisher fork.
-export function reinforceForwardReporterVoice(teams,week,salt=0,history=[]){
- return composeReporterVoice(teams,week,salt,history);
+export function reinforceForwardReporterVoice(teams,week,salt=0,history=[],season=2026){
+ return composeReporterVoice(teams,week,salt,history,season);
 }
-export function rotateForwardRecapOpening(overview,teams,week,salt=0,history=[]){
- return composeRecapOpening(overview,teams,week,salt,history);
+export function rotateForwardRecapOpening(overview,teams,week,salt=0,history=[],season=Number(overview?.season)||2026){
+ return composeRecapOpening(overview,teams,week,salt,history,season);
 }
 
 export function applyInquirerEditorialV31({season,week,rawInquirer,rawOverview,previousEdition=null,previousEditions=[],weekClassification=null,variationSalt=0}={}){
@@ -6099,11 +6099,11 @@ function assertWeek2Originality(result,previousEdition){
     overview=pruneForwardRecapLessonScaffold(overview,teams,week);
     overview=polishForwardReaderCopy(teams,overview,week);
   }
-  if(week>=10){
+  if(season>2026||week>=10){
     // Distinct reporter voices and long-horizon recap leads are generated
     // only for new drafts, after the normal newsroom editing stages.
-    reinforceForwardReporterVoice(teams,week,variationSalt,[previousEdition,...previousEditions]);
-    overview=rotateForwardRecapOpening(overview,teams,week,variationSalt,[previousEdition,...previousEditions]);
+    reinforceForwardReporterVoice(teams,week,variationSalt,[previousEdition,...previousEditions],season);
+    overview=rotateForwardRecapOpening(overview,teams,week,variationSalt,[previousEdition,...previousEditions],season);
   }
   if(week>=9)overview=attributeSourceBackedRecapOpenings(overview,teams,week);
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};

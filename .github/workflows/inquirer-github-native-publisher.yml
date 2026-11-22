@@ -51,6 +51,29 @@ jobs:
         env:
           INQUIRER_GITHUB_ARCHIVE_ROOT: history/inquirer-archive
         run: node scripts/publish-inquirer-github-native.mjs
+      - name: Verify preview issue through the exact public GitHub reader
+        if: github.event_name == 'push' && github.ref == 'refs/heads/fix/inquirer-github-native-publication-20261121'
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs/promises';
+          import path from 'node:path';
+          import {githubPublishedInquirerIndex,githubPublishedInquirerEdition} from './netlify/functions/lib/inquirer-github-published.mjs';
+          const root=path.resolve('history/inquirer-archive');
+          const fetchLocal=async url=>{
+            const relative=url.split('/inquirer-archive/').at(-1);
+            if(!/^forward\/(index\.json|2026\/week-\d{2}\.json)$/.test(relative))
+              throw Error('Reader requested unexpected archive path: '+relative);
+            try{return new Response(await fs.readFile(path.join(root,relative)),{status:200})}
+            catch(error){if(error.code==='ENOENT')return new Response('',{status:404});throw error}
+          };
+          const index=await githubPublishedInquirerIndex(fetchLocal);
+          const last=index.reports.at(-1);
+          if(last){
+            const issue=await githubPublishedInquirerEdition(last.season,last.week,fetchLocal);
+            if(!issue||issue.teams.length!==32)throw Error('Website reader rejected staged issue');
+            console.log('github-inquirer-reader-acceptance',JSON.stringify({season:issue.season,week:issue.week,teams:issue.teams.length}));
+          }else console.log('No completed issue yet; reader correctly has no forward edition');
+          NODE
       - name: Publish accepted issue to preview-only GitHub archive
         if: github.event_name == 'push' && github.ref == 'refs/heads/fix/inquirer-github-native-publication-20261121'
         working-directory: history
@@ -95,6 +118,29 @@ jobs:
         env:
           INQUIRER_GITHUB_ARCHIVE_ROOT: ../history/inquirer-archive
         run: node scripts/publish-inquirer-github-native.mjs
+      - name: Verify staged production issue through public GitHub reader before commit
+        working-directory: source
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs/promises';
+          import path from 'node:path';
+          import {githubPublishedInquirerIndex,githubPublishedInquirerEdition} from './netlify/functions/lib/inquirer-github-published.mjs';
+          const root=path.resolve('../history/inquirer-archive');
+          const fetchLocal=async url=>{
+            const relative=url.split('/inquirer-archive/').at(-1);
+            if(!/^forward\/(index\.json|2026\/week-\d{2}\.json)$/.test(relative))
+              throw Error('Reader requested unexpected archive path: '+relative);
+            try{return new Response(await fs.readFile(path.join(root,relative)),{status:200})}
+            catch(error){if(error.code==='ENOENT')return new Response('',{status:404});throw error}
+          };
+          const index=await githubPublishedInquirerIndex(fetchLocal);
+          const last=index.reports.at(-1);
+          if(last){
+            const issue=await githubPublishedInquirerEdition(last.season,last.week,fetchLocal);
+            if(!issue||issue.teams.length!==32)throw Error('Website reader rejected staged issue');
+            console.log('github-inquirer-reader-acceptance',JSON.stringify({season:issue.season,week:issue.week,teams:issue.teams.length}));
+          }else console.log('No completed issue yet; reader correctly has no forward edition');
+          NODE
       - name: Commit verified edition and digest-bound index to archive branch only
         working-directory: history
         run: |

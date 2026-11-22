@@ -1,0 +1,38 @@
+name: Site version and refresh anti-regression gate
+on:
+  pull_request:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'scripts/audit-site-release-contract.mjs'
+      - 'tests/site-release-regression-contract.test.mjs'
+      - '.github/workflows/site-version-refresh-regression-gate.yml'
+permissions:
+  contents: read
+jobs:
+  site-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate release guard syntax
+        run: |
+          node --check scripts/audit-site-release-contract.mjs
+          node --check tests/site-release-regression-contract.test.mjs
+      - name: Run full-site rollback, continuity and cache key regression tests
+        run: node --test tests/site-release-regression-contract.test.mjs
+      - name: Compare rendered site runtime against current main
+        if: github.event_name == 'pull_request'
+        env:
+          SITE_VERSION_BASE_REF: ${{ github.event.pull_request.base.sha }}
+        run: node scripts/audit-site-release-contract.mjs
+      - name: Validate default branch source without mutating production
+        if: github.event_name != 'pull_request'
+        run: node scripts/audit-site-release-contract.mjs

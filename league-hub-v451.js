@@ -165,7 +165,7 @@ async function liveLeagueWeek(){
 }
 let liveLeagueWeekRefreshInFlight=false;
 async function refreshLiveLeagueWeekIfAdvanced(){
- if(inquirerPreviewMode||liveLeagueWeekRefreshInFlight||document.hidden||currentView!=='daily'||openBroadcastTeam)return;
+ if(inquirerPreviewMode||liveLeagueWeekRefreshInFlight||document.hidden||!['daily','managers','awards'].includes(currentView)||openBroadcastTeam)return;
  const panel=document.getElementById('leagueHub');
  if(!panel||panel.hidden)return;
  liveLeagueWeekRefreshInFlight=true;
@@ -176,8 +176,10 @@ async function refreshLiveLeagueWeekIfAdvanced(){
    JSON.stringify(latest.teams.map(t=>[t.roster_id,t.points,t.opponent_points]))!==
    JSON.stringify((old.teams||[]).map(t=>[t.roster_id,t.points,t.opponent_points])))){
    managerCache=null; // completed-week manager records are not Inquirer snapshots
+   weeklyAwardsCache=null;
+   spotlightWeeklyCache=null;
    allTimeHighCaptureAt=0;
-   await render('daily');
+   await render(currentView);
   }
  }catch(error){console.warn('league-week-refresh-unavailable',String(error?.message||error))}
  finally{liveLeagueWeekRefreshInFlight=false}

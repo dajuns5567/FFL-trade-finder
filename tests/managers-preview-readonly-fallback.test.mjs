@@ -99,3 +99,11 @@ test('Managers refresh revalidates completed trade activity and invalidates depe
  assert.match(refresh,/if\(tradesChanged\)draftCache=null/);
  assert.match(refresh,/catch\(error\)\{console\.warn\('manager-trade-refresh-unavailable'/);
 });
+
+test('new matchup-derived Manager records invalidate earlier stale cached standings',()=>{
+ assert.match(source,/const MANAGER_CACHE_VERSION=14;/);
+ assert.match(preview,/cached\?\.cache_version===MANAGER_CACHE_VERSION/);
+ const live=source.slice(source.indexOf("if(u.searchParams.get('league_latest')"));
+ assert.match(live,/cached\?\.cache_version===MANAGER_CACHE_VERSION/);
+ assert.match(manager,/cache_version=MANAGER_CACHE_VERSION/);
+});

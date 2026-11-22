@@ -30,6 +30,7 @@ jobs:
           node --check netlify/functions/site-v29.mjs
           node --check scripts/value-history-headless-refresh.mjs
           node --check scripts/archive-league-all-time-highs.mjs
+          node --check scripts/verify-scheduled-all-time-highs.mjs
       - name: Verify monotonic record integrity, automatic capture and fallback
         run: node --test tests/league-all-time-highs-durable.test.mjs
       - name: Preserve previous League Hub and newspaper contracts

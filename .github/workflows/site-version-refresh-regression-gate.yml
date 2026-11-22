@@ -8,6 +8,8 @@ on:
       - ci/site-version-refresh-regression-gate-20261122
     paths:
       - 'scripts/audit-site-release-contract.mjs'
+      - 'scripts/audit-shared-release-features.mjs'
+      - 'tests/audit-shared-release-features.test.mjs'
       - 'tests/site-release-regression-contract.test.mjs'
       - '.github/workflows/site-version-refresh-regression-gate.yml'
 permissions:
@@ -26,14 +28,25 @@ jobs:
       - name: Validate release guard syntax
         run: |
           node --check scripts/audit-site-release-contract.mjs
+          node --check scripts/audit-shared-release-features.mjs
           node --check tests/site-release-regression-contract.test.mjs
       - name: Run full-site rollback, continuity and cache key regression tests
-        run: node --test tests/site-release-regression-contract.test.mjs
+        run: |
+          node --test tests/site-release-regression-contract.test.mjs
+          node --test tests/audit-shared-release-features.test.mjs
       - name: Compare rendered site runtime against current main
         if: github.event_name == 'pull_request'
         env:
           SITE_VERSION_BASE_REF: ${{ github.event.pull_request.base.sha }}
         run: node scripts/audit-site-release-contract.mjs
+      - name: Detect old features reappearing and report pending PR coverage
+        if: github.event_name == 'pull_request'
+        env:
+          SITE_VERSION_BASE_REF: ${{ github.event.pull_request.base.sha }}
+        run: node scripts/audit-shared-release-features.mjs
+      - name: Verify feature coverage against current main (read-only)
+        if: github.event_name != 'pull_request'
+        run: node scripts/audit-shared-release-features.mjs
       - name: Validate default branch source without mutating production
         if: github.event_name != 'pull_request'
         run: node scripts/audit-site-release-contract.mjs

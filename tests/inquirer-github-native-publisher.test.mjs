@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import {completeMatchups,buildSourceTeams,selectValueHistoryWindow,buildArchivedMarketContext,completeVerifiedMarketDesk,verifyForwardPublicationLedger} from '../scripts/publish-inquirer-github-native.mjs';
 import {githubPublishedInquirerIndex,githubPublishedInquirerEdition,githubInquirerArchiveBranch} from '../netlify/functions/lib/inquirer-github-published.mjs';
 import {createHash} from 'node:crypto';
+import {readFileSync} from 'node:fs';
+import {teamFix} from '../netlify/functions/lib/inquirer-week09-editorial-correction.mjs';
+import {INQUIRER_TEAM_DESKS,INQUIRER_RECAP_BEATS} from '../netlify/functions/inquirer-format-contract.mjs';
 import {mkdtemp,writeFile,mkdir,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
@@ -162,4 +165,33 @@ test('only the PR 574 deploy preview reads the isolated publication archive',()=
  assert.equal(githubInquirerArchiveBranch({CONTEXT:'deploy-preview',REVIEW_ID:'573'}),'inquirer-archive');
  assert.equal(githubInquirerArchiveBranch({CONTEXT:'branch-deploy',REVIEW_ID:'574'}),'inquirer-archive');
  assert.equal(githubInquirerArchiveBranch({CONTEXT:'deploy-preview',REVIEW_ID:'574'}),'inquirer-preview-574');
+});
+
+test('approved newspaper architecture remains eight team desks and six recap beats',()=>{
+ assert.deepEqual(INQUIRER_TEAM_DESKS,['lede','players','management','hot-seat','cool-throne','value','sentiment','outlook']);
+ assert.deepEqual(INQUIRER_RECAP_BEATS,['lead','standings','players','decisions','league','outlook']);
+});
+test('Week 9 attributed reader correction preserves four distinct reporter voices',()=>{
+ const base={team_name:'New York Jets',opponent_name:'New England Patriots',
+  next_opponent_name:'Jacksonville Jags',manager_name:'kevinfalkenstein',
+  points:81.7,opponent_points:79.7,won:true,
+  starter_details:[{name:'Tykee Smith',points:25.3}]};
+ const reporters=['walter-mercer','tess-delaney','mack-hollis','nora-voss'];
+ for(const kind of ['lede','management','cool-throne','sentiment','outlook']){
+  const lines=reporters.map(reporter_id=>teamFix({...base,reporter_id},kind));
+  assert.equal(new Set(lines).size,4,kind+' must keep four independent reporter constructions');
+  for(const line of lines){
+   assert.ok(line.includes(base.team_name),kind+' must name the fantasy team');
+   assert.match(line,/\b(?:81\.7|79\.7|25\.3|Jacksonville Jags)\b/);
+   assert.doesNotMatch(line,/not (?:the )?NFL|not a result between NFL franchises|not interchangeable/i);
+  }
+ }
+});
+test('Week 9 corrected newspaper keeps the original six-beat structure and removes explanatory anti-prose',()=>{
+ const src=readFileSync(new URL('../netlify/functions/lib/inquirer-week09-editorial-correction.mjs',import.meta.url),'utf8');
+ assert.match(src,/blocks\[0\]\.paragraphs=/);
+ for(const kind of [0,1,2,3,4,5])assert.match(src,new RegExp('blocks\\['+kind+'\\]\\.paragraphs='));
+ assert.doesNotMatch(src,/not a result between NFL franchises|not the NFL standings|not interchangeable NFL-team prose/);
+ assert.match(src,/original_archive_unchanged:true/);
+ assert.match(src,/hash\(original\)!==ORIGINAL_SHA/);
 });

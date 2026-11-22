@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "reports": [
+    {
+      "season": 2026,
+      "week": 10,
+      "path": "forward/2026/week-10.json",
+      "sha256": "0565664d072ae813ec3b4786924dc3e97c34f353fe5c9b1f04e39d80f52346a0",
+      "generated_at": "2026-11-22T03:03:04.755Z",
+      "editorial_revision": 110,
+      "team_count": 32
+    }
+  ]
+}

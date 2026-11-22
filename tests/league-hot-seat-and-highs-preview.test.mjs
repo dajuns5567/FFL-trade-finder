@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {selectHotSeat} from '../netlify/functions/lib/league-hot-seat.mjs';
+import {selectHotSeat,supplementCompletedHotSeat} from '../netlify/functions/lib/league-hot-seat.mjs';
 
 const ui=readFileSync(new URL('../league-hub-v451.js',import.meta.url),'utf8');
 const backend=readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
@@ -31,6 +31,25 @@ test('zero or null projections never count as genuine pregame upset evidence',()
  assert.equal(hot.hot_seat_basis,'largest-finalized-defeat');
  assert.equal(selectHotSeat(base.map(x=>({...x,won:true}))),null);
 });
+test('read-only weekly award response fills one missing Hot Seat without rewriting cached records',()=>{
+ const old={schema_version:1,records:[{season:2026,week:10,
+  manager_awards:[{type:'cool-throne',roster_id:'3'}]}]};
+ const completed={available:true,season:2026,week:10,teams:[
+  ...base,...Array.from({length:29},(_,i)=>({
+   roster_id:String(i+4),won:i%2===0,points:i%2===0?112:80,
+   opponent_points:i%2===0?80:112
+  }))
+ ]};
+ const next=supplementCompletedHotSeat(old,completed);
+ assert.equal(next.records[0].manager_awards.length,2);
+ assert.equal(next.records[0].manager_awards[0].type,'hot-seat');
+ assert.equal(next.records[0].manager_awards[0].roster_id,'2');
+ assert.equal(next.records[0].manager_awards[0].provisional,true);
+ assert.equal(old.records[0].manager_awards.length,1,'original locked record must not be modified');
+ assert.equal(supplementCompletedHotSeat(old,{...completed,week:9}),old);
+ assert.equal(supplementCompletedHotSeat(next,completed).records[0].manager_awards.length,2);
+});
+
 test('League Hub backend and spotlight both use a verified completed-week Hot Seat fallback',()=>{
  assert.match(backend,/hot=selectHotSeat\(teams\)/);
  assert.match(backend,/item\('hot-seat','🔥 Hot Seat',hot,hot\?\.hot_seat_detail/);

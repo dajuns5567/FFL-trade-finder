@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {completeMatchups,buildSourceTeams,selectValueHistoryWindow,buildArchivedMarketContext,completeVerifiedMarketDesk,verifyForwardPublicationLedger,inspectInquirerNewspaperVoice,inspectCompletedStandingsContract} from '../scripts/publish-inquirer-github-native.mjs';
+import {completeMatchups,buildSourceTeams,selectValueHistoryWindow,buildArchivedMarketContext,completeVerifiedMarketDesk,verifyForwardPublicationLedger,inspectInquirerNewspaperVoice,inspectCompletedStandingsContract,restoreWeeklyPlayoffDesk,inspectMajorRecapArchitecture} from '../scripts/publish-inquirer-github-native.mjs';
 import {githubPublishedInquirerIndex,githubPublishedInquirerEdition,githubInquirerArchiveBranch} from '../netlify/functions/lib/inquirer-github-published.mjs';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
@@ -228,4 +228,26 @@ test('published newsroom can never promote a losing team to the top of the table
  const missing=structuredClone(teams);
  missing[0].league_context.standings_rank=null;
  assert(inspectCompletedStandingsContract({week:1,teams:missing}).length>0);
+});
+
+test('forward recap retains the five locked newsroom sections and verified playoff race',()=>{
+ const teamSource=buildSourceTeams({league:{roster_positions:['RB','BN']},week:10,
+  matchups:matchup(),history:[[10,matchup()]],nextMatchups:matchup(),rosters,users,players,
+  previousEdition:{teams:[]}});
+ const edition={season:2026,week:10,teams:teamSource,
+  league_overview:{sections:[
+   {heading:'Week 10: League-Wide Reckoning',paragraphs:['Lead story']},
+   {heading:'Contender Line',paragraphs:['Contender story']},
+   {heading:'Back Page',paragraphs:['Trades and moves']},
+   {heading:'Next Week',paragraphs:['Next week preview']}
+  ]}};
+ assert.equal(inspectMajorRecapArchitecture(edition).length,2);
+ assert.equal(restoreWeeklyPlayoffDesk(edition),true);
+ assert.deepEqual(inspectMajorRecapArchitecture(edition),[]);
+ assert.equal(edition.league_overview.sections.length,5);
+ const race=edition.league_overview.sections[1].paragraphs.join(' ');
+ assert.match(race,/No. 1 seed/);
+ assert.match(race,/fourth place/);
+ assert.match(race,/Week 14 wildcard round/);
+ assert.equal(restoreWeeklyPlayoffDesk(edition),false,'do not double-insert race desk');
 });

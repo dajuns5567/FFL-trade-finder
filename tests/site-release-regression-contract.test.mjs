@@ -60,6 +60,29 @@ test('changing a loaded critical asset without incrementing its cache key is blo
  assert.equal(changes[0].to,544);
 });
 
+test('all individual targeted-player Finder modules are critical, ordered and cache-busted after edits',()=>{
+ const targeted=[
+  'trade-specific-blank-router-v325.js','trade-specific-max-tier-add-v300.js',
+  'trade-specific-tier-up-v282.js','trade-specific-add-assets-v282.js',
+  'trade-specific-max-value-v279.js','trade-specific-player-v232.js'
+ ];
+ const scripts=injectedScripts(baseline);
+ for(const filename of targeted){
+  const entry=scripts.find(x=>x.pathname==='/'+filename);
+  assert.ok(entry,'Missing Finder module in baseline: '+filename);
+  assert.throws(()=>verifyCacheKeysForChangedAssets(baseline,baseline,x=>x===filename),/stale cache key/);
+  const changed=baseline.replace('/'+filename+'?v='+entry.version,'/'+filename+'?v='+(Number(entry.version)+1));
+  assert.equal(verifyCacheKeysForChangedAssets(baseline,changed,x=>x===filename).length,1);
+  assert.throws(()=>compareVersionAssets(baseline,baseline.replace('/'+filename+'?v='+entry.version,'/'+filename+'?v='+(Number(entry.version)-1))),/rolled backward|reverted/);
+  assert.throws(()=>compareVersionAssets(baseline,baseline.replace(new RegExp('<script src="/'+filename.replaceAll('.','\\.')+'\\?v='+entry.version+'"[^>]*><\\/script>'),'')),/Critical site subsystem/);
+ }
+ const ordered=['trade-specific-blank-router-v325.js','trade-specific-max-tier-add-v300.js','trade-specific-tier-up-v282.js','trade-specific-add-assets-v282.js','trade-specific-max-value-v279.js','trade-specific-player-v232.js'];
+ const swapped=baseline.replace('/'+ordered[0],'/TEMP-FINDER-ROUTER')
+  .replace('/'+ordered[1],'/'+ordered[0])
+  .replace('/TEMP-FINDER-ROUTER','/'+ordered[1]);
+ assert.throws(()=>compareVersionAssets(baseline,swapped),/Targeted Finder runtime load order/);
+});
+
 test('cache guard applies to the player badge runtime and valuation runtime as well',()=>{
  for(const filename of ['value-history-v276.js','trade-value-normalization-v139.js',
   'modeled-player-values-v319.js','trade-finder-v256-compiled.js']){

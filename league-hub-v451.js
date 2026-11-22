@@ -473,6 +473,15 @@ async function refreshAllTimeHighs(rows,{record=true}={}){
   if(host)host.innerHTML=rankingsHTML(currentAwards(teamTradeStats(tradeCache.trades||[]),draftCache),rankingAwardKey);
  }
 }
+async function freshAwardTradeHistory(){
+ const response=await fetch('/.netlify/functions/value-history?trades=1&trades_fresh=1',
+  {cache:'no-store'});
+ if(!response.ok)throw Error('Verified completed trade history unavailable for All-Time Highs');
+ const data=await response.json();
+ if(!Array.isArray(data?.trades)||!data.trades.length)
+  throw Error('No completed Sleeper trades verified for All-Time Highs');
+ return data;
+}
 let allTimeHighCaptureAt=0,allTimeHighCapturePending=null;
 async function captureAllTimeHighsOnSiteOpen({force=false}={}){
  if(onNetlifyDeployPreview||inquirerPreviewMode||document.hidden)return false;
@@ -485,7 +494,7 @@ async function captureAllTimeHighsOnSiteOpen({force=false}={}){
     globalThis.modeledPlayerValuesV319?.ready!==true||
     typeof globalThis.tradeValueNormalizationV130?.canonicalValue!=='function')return false;
  allTimeHighCapturePending=(async()=>{
-  const [tradeData,draftData]=await Promise.all([trades(),drafts()]);
+  const [tradeData,draftData]=await Promise.all([freshAwardTradeHistory(),drafts()]);
   if(!Array.isArray(tradeData?.trades)||tradeData.trades.length===0||
      !Array.isArray(draftData?.draft_picks))return false;
   const rows=currentAwards(teamTradeStats(tradeData.trades),draftData);
@@ -517,7 +526,7 @@ window.fleecedAwardHighsScheduledObservation=async function(){
     assets.length<100||globalThis.modeledPlayerValuesV319?.ready!==true||
     typeof globalThis.tradeValueNormalizationV130?.canonicalValue!=='function')
   throw Error('Award collector refused incomplete canonical league');
- const [tradeData,draftData]=await Promise.all([trades(),drafts()]);
+ const [tradeData,draftData]=await Promise.all([freshAwardTradeHistory(),drafts()]);
  if(!Array.isArray(tradeData?.trades)||tradeData.trades.length===0||
     !Array.isArray(draftData?.draft_picks)||!draftData.draft_picks.length)
   throw Error('Award collector refused incomplete trade or draft source');

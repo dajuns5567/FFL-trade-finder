@@ -176,7 +176,7 @@ test('only the PR 574 deploy preview reads the isolated publication archive',()=
  assert.equal(githubInquirerArchiveBranch({CONTEXT:'production',REVIEW_ID:'574'}),'inquirer-archive');
  assert.equal(githubInquirerArchiveBranch({CONTEXT:'deploy-preview',REVIEW_ID:'573'}),'inquirer-archive');
  assert.equal(githubInquirerArchiveBranch({CONTEXT:'branch-deploy',REVIEW_ID:'574'}),'inquirer-archive');
- assert.equal(githubInquirerArchiveBranch({CONTEXT:'deploy-preview',REVIEW_ID:'574'}),'inquirer-preview-574');
+ assert.equal(githubInquirerArchiveBranch({CONTEXT:'deploy-preview',REVIEW_ID:'574'}),'inquirer-preview-574-r2');
 });
 
 test('approved newspaper architecture remains eight team desks and six recap beats',()=>{

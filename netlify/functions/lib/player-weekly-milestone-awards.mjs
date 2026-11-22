@@ -5,7 +5,7 @@
 // In-progress weeks and absent stat feeds cannot award badges.
 export function playerWeeklyMilestoneAwards({
  playerId,season,week,currentSeason,currentCompletedWeek,canonical,
- payload,players={},scoring={},score
+ payload,players={},scoring={},score,verifiedCompletedWeek=null
 }={}){
  const y=Number(season),w=Number(week),current=Number(currentSeason);
  if(!Number.isInteger(y)||!Number.isInteger(w)||w<1||w>18||
@@ -20,7 +20,12 @@ export function playerWeeklyMilestoneAwards({
   }
  }
  const missing=groups.filter(g=>!winners[g]);
- if(missing.length&&payload&&Object.keys(payload).length&&Object.keys(scoring).length){
+ // Reconstruct a badge only when an independent completed-league-week
+ // readback verifies this season/week. NFL state/week number alone is not
+ // evidence that all Sleeper scores have finalized.
+ const verifiedFallback=Number.isInteger(Number(verifiedCompletedWeek))&&
+   Number(verifiedCompletedWeek)>=w;
+ if(missing.length&&verifiedFallback&&payload&&Object.keys(payload).length&&Object.keys(scoring).length){
   const rows=Array.isArray(payload)?payload.map((row,i)=>({
    id:String(row?.player_id||row?.id||i),
    stats:row?.stats&&typeof row.stats==='object'?row.stats:row

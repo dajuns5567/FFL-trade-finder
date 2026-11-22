@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {completeMatchups,buildSourceTeams,selectValueHistoryWindow,buildArchivedMarketContext,completeVerifiedMarketDesk,verifyForwardPublicationLedger} from '../scripts/publish-inquirer-github-native.mjs';
-import {githubPublishedInquirerIndex,githubPublishedInquirerEdition} from '../netlify/functions/lib/inquirer-github-published.mjs';
+import {githubPublishedInquirerIndex,githubPublishedInquirerEdition,githubInquirerArchiveBranch} from '../netlify/functions/lib/inquirer-github-published.mjs';
 import {createHash} from 'node:crypto';
 import {mkdtemp,writeFile,mkdir,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
@@ -155,4 +155,11 @@ test('forward publication ledger refuses missing, corrupted, and nonconsecutive 
   await assert.rejects(verifyForwardPublicationLedger({...index,reports:[{...index.reports[0],week:11,path:'forward/2026/week-11.json'}]},root),/missing despite index/);
   assert.equal(await verifyForwardPublicationLedger({schema_version:1,reports:[]},root),0);
  }finally{await rm(root,{recursive:true,force:true})}
+});
+
+test('only the PR 574 deploy preview reads the isolated publication archive',()=>{
+ assert.equal(githubInquirerArchiveBranch({CONTEXT:'production',REVIEW_ID:'574'}),'inquirer-archive');
+ assert.equal(githubInquirerArchiveBranch({CONTEXT:'deploy-preview',REVIEW_ID:'573'}),'inquirer-archive');
+ assert.equal(githubInquirerArchiveBranch({CONTEXT:'branch-deploy',REVIEW_ID:'574'}),'inquirer-archive');
+ assert.equal(githubInquirerArchiveBranch({CONTEXT:'deploy-preview',REVIEW_ID:'574'}),'inquirer-preview-574');
 });

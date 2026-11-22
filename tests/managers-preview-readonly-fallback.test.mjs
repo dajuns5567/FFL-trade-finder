@@ -60,7 +60,7 @@ test('browser Managers refreshes on revisits, visibility and focus without repla
  assert.match(ui,/window\.addEventListener\('focus',refreshManagersIfVisible\)/);
  assert.match(ui,/document\.addEventListener\('visibilitychange',/);
  assert.match(ui,/\['managers','career'\]\.includes\(currentView\)/);
- assert.match(ui,/managerVersionSignature\(next\)===previous/);
+ assert.match(ui,/managerVersionSignature\(next\)!==previous/);
  assert.match(ui,/await render\(currentView,selectedManagerId\)/);
  assert.match(ui,/return managerCache\|\|\{current:\[\],graveyard:\[\],career:\[\],unavailable:true\}/);
  assert.match(ui,/if\(generation===managerRequestGeneration\)/);
@@ -81,4 +81,20 @@ test('Manager records derive from scored weekly matchups rather than lagging ros
  assert.match(manager,/let rw=0,rl=0;for\(const rows of weekRows\)/);
  assert.doesNotMatch(manager,/let rw=Number\(r\?\.settings\?\.wins\)/);
  assert.match(manager,/career\[uid\]\.wins\+=rw;career\[uid\]\.losses\+=rl/);
+});
+
+test('Managers refresh revalidates completed trade activity and invalidates dependent badges only after verified changes',()=>{
+ const ui=readFileSync(new URL('../league-hub-v451.js',import.meta.url),'utf8');
+ const start=ui.indexOf('async function refreshManagersIfVisible(){');
+ const end=ui.indexOf('function installManagerRefresh(){',start);
+ assert.ok(start>=0&&end>start);
+ const refresh=ui.slice(start,end);
+ assert.match(refresh,/fetch\('\/\.netlify\/functions\/value-history\?trades=1',\{cache:'no-store'\}\)/);
+ assert.match(refresh,/if\(!Array\.isArray\(fresh\?\.trades\)\)throw Error/);
+ assert.match(refresh,/tradesChanged=tradeSignature\(fresh\)!==tradeSignature\(tradeCache\)/);
+ assert.match(refresh,/globalThis\.primeTradeHistoryCacheV515\?\.\(tradeCache\)/);
+ assert.match(refresh,/if\(!managersChanged&&!tradesChanged\)return/);
+ assert.match(refresh,/if\(managersChanged\)\{weeklyAwardsCache=null;spotlightWeeklyCache=null\}/);
+ assert.match(refresh,/if\(tradesChanged\)draftCache=null/);
+ assert.match(refresh,/catch\(error\)\{console\.warn\('manager-trade-refresh-unavailable'/);
 });

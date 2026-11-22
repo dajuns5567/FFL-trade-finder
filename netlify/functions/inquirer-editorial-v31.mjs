@@ -41,6 +41,7 @@ function attributeSourceBackedRecapOpenings(overview,teams,week){
 import {finishReviewedForwardCopy} from './inquirer-reviewed-copy.mjs';
 import {reinforceForwardReporterVoice as composeReporterVoice,rotateForwardRecapOpening as composeRecapOpening,COMPOSITIONAL_VOICE_CONTRACT} from './lib/inquirer-compositional-voice.mjs';
 import {assessMinorNineWordReuse} from './lib/inquirer-minor-repetition.mjs';
+import {verifiedTwoWeekForm} from './lib/inquirer-verified-two-week-form.mjs';
 import {inspectFantasyTeamAttribution} from './lib/inquirer-attribution-audit.mjs';
 import {inspectInquirerFormatContract} from './inquirer-format-contract.mjs';
 import {attributeForwardPlayerStatFragments,curateForwardTeamNarrative,inspectNarrativeArchitecture,restoreForwardPlayerFact,restoreForwardArticleDepth} from './inquirer-narrative-architecture.mjs';
@@ -3735,7 +3736,7 @@ function rewriteWeek2Overview(overview,teams,previousEdition,week=2){
     paras.push(w2S(w,r,"recap-context-"+i,w2RecapContext(w,prev,i)));
     return{heading:(i===0?"Week 2’s Loudest Game: ":"")+wName+" vs. "+lName,paragraphs:paras}
   });
-  const undefeated=forwardRecentGroup(teams,week,'W'),winless=forwardRecentGroup(teams,week,'L'),upValue=(teams||[]).filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))&&Number(t.value_history_week.delta)>0).slice().sort((a,b)=>Number(b.value_history_week.delta)-Number(a.value_history_week.delta))[0],downValue=(teams||[]).filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))&&Number(t.value_history_week.delta)<0).slice().sort((a,b)=>Number(a.value_history_week.delta)-Number(b.value_history_week.delta))[0];
+  const verifiedForm=verifiedTwoWeekForm(teams,week),undefeated=verifiedForm.winners,winless=verifiedForm.losers,upValue=(teams||[]).filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))&&Number(t.value_history_week.delta)>0).slice().sort((a,b)=>Number(b.value_history_week.delta)-Number(a.value_history_week.delta))[0],downValue=(teams||[]).filter(t=>Number.isFinite(Number(t?.value_history_week?.delta))&&Number(t.value_history_week.delta)<0).slice().sort((a,b)=>Number(a.value_history_week.delta)-Number(b.value_history_week.delta))[0];
   const moverSummary=(team,key,label)=>{
     const rows=(team?.value_history_player_movers?.[key]||[]).filter(x=>Number.isFinite(Number(x?.delta))).slice(0,3);
     if(!rows.length)return" No verified player-level "+(key==="risers"?"gain":"decline")+" is available for attribution within that same snapshot window.";
@@ -3755,9 +3756,9 @@ function rewriteWeek2Overview(overview,teams,previousEdition,week=2){
   }else blocks.push({heading:"What Two Weeks Are Starting to Say",paragraphs:
     w2TwoWeekLeagueRead(teams,trajectoryReporter).map((p,i)=>w2S(top,trajectoryReporter,"recap-two-weeks-"+i,p))
   });
-  const recentWinners=undefeated.length?("The teams that won both of the last two games are "+w2Natural(undefeated.map(t=>w2DisplayTeam(t.team_name)))+". That is form, not an undefeated-season claim; the season standings still count every result."):"Nobody won both of the last two completed games. Apparently consistency has become an optional luxury.";
+  const recentWinners=!verifiedForm.complete?null:undefeated.length?("The teams that won both of the last two games are "+w2Natural(undefeated.map(t=>w2DisplayTeam(t.team_name)))+". That is form, not an undefeated-season claim; the season standings still count every result."):"Nobody won both of the last two completed games. Apparently consistency has become an optional luxury.";
   const velvet=[
-    w2S(top,rep(1)||{},"contender-undefeated",Number(week)<=2
+    (Number(week)>2&&!verifiedForm.complete)?null:w2S(top,rep(1)||{},"contender-undefeated",Number(week)<=2
       ?(undefeated.length?"The 2-0 club now includes "+w2Natural(undefeated.map(t=>w2DisplayTeam(t.team_name)))+". Two wins are not a coronation, but they are enough to make opening-week charm look more like actual form.":"Nobody escaped Week 2 undefeated, which is rude to the optimists and excellent for the rest of us.")
       :recentWinners),
     upValue?w2S(upValue,rep(1)||{},"contender-up","The biggest positive value mover is "+w2DisplayTeam(upValue.team_name)+", up "+Math.abs(Math.round(Number(upValue.value_history_week.delta))).toLocaleString("en-US")+" points"+(Number.isFinite(Number(upValue.value_history_week.pct))?" ("+w2One(Math.abs(Number(upValue.value_history_week.pct)))+"%)":"")+"."+moverSummary(upValue,"risers","risers")+" The market has pushed this roster closer to contender territory; Sunday still decides whether that optimism survives contact."):null,

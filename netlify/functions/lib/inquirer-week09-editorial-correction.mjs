@@ -72,8 +72,8 @@ function correctRecap(d){
  blocks[0].heading='The Jets-Patriots Upset, With Names Attached';
  blocks[0].paragraphs=[
   'New York Jets (manager '+jets.manager_name+') beat New England Patriots (manager '+patriots.manager_name+') '+n(jets.points)+'–'+n(patriots.points)+' in the FLEECED! Week 9 fantasy matchup. The '+n(jets.points-patriots.points)+'-point finish was a fantasy-lineup upset, not a result between NFL franchises.',
-  'The Patriots started Zach Allen for '+n(patMiss.starter.points)+' in the IDP FLEX slot and left Daiyan Henley on the bench with '+n(patMiss.reserve.points)+'. The '+n(patMiss.gap)+'-point difference exceeded New England’s losing margin; this is a manager '+patriots.manager_name+' lineup decision, not a mystery about the final.',
-  'The Jets produced '+n(jets.points)+' points after losing to Arizona Cardinals in Week 8. Their Week 9 lineup added 21.5 to the previous total, and Tykee Smith supplied '+n(25.3)+' of the new Week 9 score.'
+  'New England Patriots started Zach Allen for '+n(patMiss.starter.points)+' in the IDP FLEX slot and left Daiyan Henley on the bench with '+n(patMiss.reserve.points)+'. The '+n(patMiss.gap)+'-point difference exceeded New England’s losing margin; this is a manager '+patriots.manager_name+' lineup decision, not a mystery about the final.',
+  'New York Jets produced '+n(jets.points)+' points after losing to Arizona Cardinals in Week 8. Their Week 9 lineup added 21.5 to the previous total, and Tykee Smith supplied '+n(25.3)+' of the new Week 9 score.'
  ];
  blocks[1].paragraphs=[
   'The New York Jets win over New England Patriots, '+n(jets.points)+'–'+n(patriots.points)+', moved the Jets to 4-5 while the Patriots fell to 7-2. The result affected two fantasy managers, '+jets.manager_name+' and '+patriots.manager_name+', not the NFL standings.',

@@ -51,6 +51,7 @@ jobs:
             'netlify.toml','netlify/functions/league-hub.mjs',
             'netlify/functions/inquirer-editorial-v31.mjs',
             'netlify/functions/lib/inquirer-github-published.mjs',
+            'netlify/functions/lib/inquirer-week09-editorial-correction.mjs',
             'scripts/inquirer-v25-audit.mjs',
             'scripts/publish-inquirer-github-native.mjs',
             'tests/inquirer-github-native-publisher.test.mjs',
@@ -59,6 +60,6 @@ jobs:
           ]);
           const authorizedGithubNative=process.env.HEAD_REF==='fix/inquirer-github-native-publication-20261121';
           const allowed=authorizedGithubNative?githubNative:authorizedReader?week9Reader:authorizedHostFix?hostFix:authorized?release:legacy;
-          assert.equal(paths.length,allowed.size,authorizedGithubNative?'GitHub Inquirer publisher must contain exactly eleven audited files':authorizedReader?'Week 9 editorial reader correction must contain exactly 11 audited files':authorizedHostFix?'V110 UUID-host correction must contain exactly six approved files':authorized?'V110 cutover must contain the exact audited Inquirer files':'Netlify deploy release must contain the exact six approved files');
+          assert.equal(paths.length,allowed.size,authorizedGithubNative?'GitHub Inquirer publisher must contain exactly twelve audited files':authorizedReader?'Week 9 editorial reader correction must contain exactly 11 audited files':authorizedHostFix?'V110 UUID-host correction must contain exactly six approved files':authorized?'V110 cutover must contain the exact audited Inquirer files':'Netlify deploy release must contain the exact six approved files');
           for(const path of paths)assert(allowed.has(path),'Out-of-scope file: '+path);
           JS

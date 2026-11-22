@@ -31,8 +31,8 @@ const frames=[
  p=>'Against '+p.foe+', '+p.club+' '+p.verb+' '+p.points+'. '+p.player+' supplied '+p.low+', '+p.reference+' that '+p.setting+' cannot misplace; '+p.irony+'.',
  p=>'Put '+p.player+' at '+p.low+' beside '+p.club+' at '+p.points+' in '+p.setting+'. The '+p.foe+' matchup supplies the context; '+p.irony+'.',
  p=>'For '+p.club+', '+p.player+' '+p.verb+' '+p.low+' while the team ended at '+p.points+' versus '+p.foe+'. That is '+p.reference+' in '+p.setting+'; '+p.irony+'.',
- p=>'The '+p.points+' by '+p.club+' against '+p.foe+' includes '+p.reference+': '+p.player+' at '+p.low+'. Consult '+p.setting+' and '+p.irony+'.',
- p=>p.club+' faced '+p.foe+' and '+p.verb+' '+p.points+', with '+p.player+' at '+p.low+'. The '+p.setting+' takes note; '+p.irony+'.'
+ p=>'The '+p.points+' by '+p.club+' against '+p.foe+' includes '+p.reference+': '+p.player+' at '+p.low+'. Read '+p.setting+' carefully: '+p.irony+'.',
+ p=>p.club+' faced '+p.foe+' and '+p.verb+' '+p.points+', with '+p.player+' at '+p.low+'. '+p.setting[0].toUpperCase()+p.setting.slice(1)+' takes note; '+p.irony+'.'
 ];
 const previousLines=history=>history.filter(Boolean).flatMap(e=>[
  ...(e.teams||[]).flatMap(t=>t.inquirer_article?.paragraphs||[]),
@@ -74,7 +74,7 @@ const recapVocabulary={
 };
 const leadFrames=[
  p=>p.bridge+' '+p.club+' scored '+p.score+' against '+p.foe+' in Week '+p.week+'. '+p.reaction,
- p=>'Week '+p.week+' '+p.prefix+' '+p.action+' '+p.club+' at '+p.score+' versus '+p.foe+'. '+p.reaction,
+ p=>'For Week '+p.week+', '+p.prefix.toLowerCase()+' '+p.action+' '+p.club+' at '+p.score+' versus '+p.foe+'. '+p.reaction,
  p=>'Start with '+p.club+': '+p.score+' against '+p.foe+' in Week '+p.week+'. '+p.reaction,
  p=>p.bridge+' '+p.focus+' belongs to '+p.club+' ('+p.score+'–'+p.against+' against '+p.foe+'). '+p.reaction,
  p=>p.prefix+' '+p.action+' '+p.club+' against '+p.foe+' at '+p.score+'–'+p.against+'. '+p.reaction,
@@ -82,7 +82,7 @@ const leadFrames=[
  p=>'Do not decorate '+p.club+' and '+p.score+' against '+p.foe+' in Week '+p.week+'. '+p.reaction,
  p=>p.bridge+' consider '+p.club+' and the '+p.score+' recorded against '+p.foe+'. '+p.reaction,
  p=>'The first exhibit from Week '+p.week+': '+p.club+' on '+p.score+', '+p.foe+' on '+p.against+'. '+p.reaction,
- p=>'For Week '+p.week+', '+p.prefix+' '+p.action+' '+p.club+' and '+p.score+' versus '+p.foe+'. '+p.reaction
+ p=>'For Week '+p.week+', '+p.prefix.toLowerCase()+' '+p.action+' '+p.club+' and '+p.score+' versus '+p.foe+'. '+p.reaction
 ];
 export function rotateForwardRecapOpening(overview,teams,week,salt=0,history=[]){
  if(Number(week)<10)return overview;

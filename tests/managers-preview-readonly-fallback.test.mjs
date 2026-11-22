@@ -19,7 +19,8 @@ test('manager preview remains read-only and refuses fabricated or partial weekly
  assert.match(preview,/if\(req\.method!=='GET'\)return json\(\{error:'Deploy Previews are read-only/);
  assert.doesNotMatch(preview,/setJSON\(/);
  assert.match(manager,/const s=persist\?store\(\):null/);
- assert.match(manager,/if\(!persist&&\(rosters\.length!==32\|\|!users\.length\|\|weekRows\.some\(rows=>rows\.length!==32\)\)\)throw Error/);
+ assert.match(manager,/if\(rosters\.length!==32\|\|!users\.length\|\|weekRows\.some\(rows=>rows\.length!==32\)\)/);
+ assert.match(manager,/Manager history source incomplete; retain previous verified records/);
  assert.match(manager,/if\(persist\)await Promise\.all\(\[s\.setJSON/);
  assert.match(preview,/Verified manager history unavailable in preview; production backfill disabled/);
  assert.match(preview,/preview_read_only:true\},503/);

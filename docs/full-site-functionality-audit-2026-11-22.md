@@ -39,14 +39,14 @@ Legend: **Open source defect** = reproduced by directly tracing current code; **
 | Player Value History | Player-of-Week/all-time milestones | Browser `playerScoringCache` has no TTL on main; PR #579 introduces timed cache and badge sync | Pending isolated PR #579 |
 | Track My Team | Team history / player deltas | Current `teamNetCache` only keyed by selected IDs/team and never expires; new snapshots may leave stale history | Open source defect |
 | Track My Team | Trade-linked team value | PR #555 separately restores verified trade linkage and history refresh | Pending isolated PR #555 |
-| League Hub | Hall of Fleeced | Reuses `trades()` with process-lifetime `tradeCache`; unlike Trade History there is no auto invalidation | Open source defect |
+| League Hub | Hall of Fleeced | Shared trade cache does not expire on main; PR #588 adds fresh read with server bypass and view polling | Pending isolated PR #588 |
 | League Hub | Awards live ranking | Derived using trades/drafts; both source caches can remain stale while page stays open | Open source defect |
-| League Hub | Weekly Awards / PoW | `weeklyAwardsCache` is unbounded; PR #580 backend week sync and #579 badges pending | Open source defect + pending PRs |
+| League Hub | Weekly Awards / PoW | Unbounded `weeklyAwardsCache`; PR #588 refreshes client, while #580 backend week sync and #579 badges remain pending | Pending isolated PRs #588/#580/#579 |
 | League Hub | All-Time Highs | Storage/capture/validation fix in PR #584; not main | Pending isolated PR #584 |
 | League Hub | Hot Seat / Cool Throne | Main lacks verified completed-week projections; #584 adds source helper; #586 fixes Spotlight browser path | Pending isolated PRs #584/#586 |
 | League Hub | Managers / Graveyard / career | Main `managerCache` indefinite, preview-only cache 503; verified matchup reconstruction, TTL and no-write fallback in PR #586 | Pending isolated PR #586 |
 | League Hub | Manager Spotlight | Main uses Inquirer fallback and accepts `Number(null)`; #586 verifies independent week and strict projections | Pending isolated PR #586 |
-| League Hub | Draft rankings / manager drafts | `draftCache` has no expiry. Requires completed-draft/event refresh and historical consistency checks | Open source defect |
+| League Hub | Draft rankings / manager drafts | Session-lifetime `draftCache`; PR #588 adds five-minute / focus refresh, while draft rating correctness needs separate verification | Pending isolated PR #588 |
 | Fleeced Daily | Completed-week results | Independent `league_latest=1` route polled every 60 seconds only while Daily is visible; verify week rollover and no old-Inquirer fallback | Source path verified, live unverified |
 | Fleeced Daily | Manager / team summaries | Uses `trades()` and `managers()` caches, inheriting stale data risk until independent source changes are accepted | Open inherited risk |
 | Inquirer | Latest public edition | `broadcast_archive=1` index is polled with 60s cadence; visible archive still needs PR #581 readback and actual published edition check | Pending isolated PR #581 |

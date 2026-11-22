@@ -15,6 +15,8 @@ export const features=[
  {id:'durable-all-time-highs',pr:584,file:'netlify/functions/league-hub.mjs',markers:['githubDurableAwardHighs','mergeAwardHighs(fromBlob,durable,now)']},
  {id:'projection-verified-hot-seat',pr:584,file:'netlify/functions/lib/league-hot-seat.mjs',markers:["hot_seat_basis:'projected-upset'"]},
  {id:'managers-readonly-preview-fallback',pr:586,file:'netlify/functions/league-hub.mjs',markers:['managerHistory({persist:false})','cache_hit:false,preview_read_only:true']},
+ {id:'managers-visible-freshness',pr:586,file:'league-hub-v451.js',markers:['MANAGER_REFRESH_MS=300000','refreshManagersIfVisible','managerRequestGeneration','manager-trade-refresh-unavailable']},
+ {id:'managers-verified-weekly-records',pr:586,file:'netlify/functions/league-hub.mjs',markers:['verifiedManagerMatchupWeek(rows)','let rw=0,rl=0;for(const rows of weekRows)']},
  {id:'finder-targeted-bounded-filter-routing',pr:585,file:'trade-specific-max-value-v279.js',markers:['sourceIntegrityStats','structureIndexBuilds']},
  {id:'finder-add-assets-complement',pr:585,file:'netlify/functions/site-v29.mjs',markers:['trade-add-assets-complement-v1.js?v=2','trade-specific-max-value-v279.js?v=443']}
 ];

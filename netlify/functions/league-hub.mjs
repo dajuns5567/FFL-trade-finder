@@ -1051,8 +1051,10 @@ export default async req=>{try{const u=new URL(req.url);
  if(isReadOnlyEditorialPreview(req.url,process.env.CONTEXT)){
   if(req.method!=='GET')return json({error:'Deploy Previews are read-only; no production data was changed.'},403);
   if(u.searchParams.get('weekly_awards')==='1'){
-   const cached=await store().get('awards/weekly.json',{type:'json'}).catch(()=>null);
-   return json(cached&&Array.isArray(cached.records)?cached:{schema_version:1,records:[],preview_read_only:true});
+   // Read-only preview may calculate the current verified Sleeper awards,
+   // but cannot write to the production/shared Blob store.
+   const previewAwards=await weeklyAwards({persist:false});
+   return json({...previewAwards,preview_read_only:true});
   }
   if(u.searchParams.get('managers')==='1'){
    const cached=await store().get('managers/history-cache.json',{type:'json'}).catch(()=>null);

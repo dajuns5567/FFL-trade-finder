@@ -25,16 +25,19 @@ const voices={
  'nora-voss':{setting:['the imaginary group chat','the fictional gossip desk','the rumor column','the league grapevine','the unofficial screenshot collection','the Monday whisper network','the imaginary fan hotline','the message-board press box','the fantasy chat log','the spectator gallery'],
   irony:['the screenshot needs no invented caption','everyone can read the decimal without an anonymous source','the group chat has enough material already','the score is doing all of the talking','the evidence has escaped into the open','there is no need to manufacture a scandal','the box score beat the rumor mill to publication','the points told the story without an insider tip','the gossip desk has decided not to embellish it','the numbers were indiscreet all by themselves']}
 };
-const verbs=['recorded','posted','registered','produced','logged','tallied','supplied','contributed','put on the board','turned in','delivered','finished with','offered up','ended with','notched','accounted for'];
+// Predicates must fit the subject. Avoid random lexical substitutions that
+// produce grammatical but unnatural combinations such as "Team contributed 110".
+const teamVerbs=['scored','posted','recorded','tallied','finished with','put up','notched','produced','registered','logged'];
+const playerVerbs=['scored','posted','recorded','contributed','delivered','supplied','produced','totaled','finished with','registered','logged'];
 const references=['a stubborn decimal','a rather awkward figure','a scorecard footnote','an inconvenient statistic','a conspicuous number','a very public line item','an unhelpful receipt','a memorable scoring detail','an unwelcome exhibit','a box-score complication'];
 const frames=[
- p=>p.club+' '+p.verb+' '+p.points+' against '+p.foe+', while '+p.player+' registered '+p.low+'. In '+p.setting+', that is '+p.reference+'; '+p.irony+'.',
- p=>p.player+' '+p.verb+' '+p.low+' for '+p.club+' in the '+p.foe+' matchup. The '+p.points+'-point team total makes it '+p.reference+'; '+p.irony+'.',
+ p=>p.club+' '+p.teamVerb+' '+p.points+' against '+p.foe+', while '+p.player+' registered '+p.low+'. In '+p.setting+', that is '+p.reference+'; '+p.irony+'.',
+ p=>p.player+' '+p.playerVerb+' '+p.low+' for '+p.club+' in the '+p.foe+' matchup. The '+p.points+'-point team total makes it '+p.reference+'; '+p.irony+'.',
  p=>p.setting[0].toUpperCase()+p.setting.slice(1)+' begins with '+p.club+' at '+p.points+' against '+p.foe+'. '+p.player+' at '+p.low+' is '+p.reference+'; '+p.irony+'.',
  p=>'Against '+p.foe+', '+p.club+' '+p.verb+' '+p.points+'. '+p.player+' supplied '+p.low+', '+p.reference+' that '+p.setting+' cannot misplace; '+p.irony+'.',
  p=>'Put '+p.player+' at '+p.low+' beside '+p.club+' at '+p.points+' in '+p.setting+'. The '+p.foe+' matchup supplies the context; '+p.irony+'.',
  p=>'For '+p.club+', '+p.player+' '+p.verb+' '+p.low+' while the team ended at '+p.points+' versus '+p.foe+'. That is '+p.reference+' in '+p.setting+'; '+p.irony+'.',
- p=>'The '+p.points+' by '+p.club+' against '+p.foe+' includes '+p.reference+': '+p.player+' at '+p.low+'. Read '+p.setting+' carefully: '+p.irony+'.',
+ p=>p.club+' finished at '+p.points+' against '+p.foe+'. '+p.player+' at '+p.low+' is '+p.reference+' in '+p.setting+'; '+p.irony+'.',
  p=>p.club+' faced '+p.foe+' and '+p.verb+' '+p.points+', with '+p.player+' at '+p.low+'. '+p.setting[0].toUpperCase()+p.setting.slice(1)+' takes note; '+p.irony+'.'
 ];
 const previousLines=history=>history.filter(Boolean).flatMap(e=>[
@@ -61,7 +64,7 @@ export function reinforceForwardReporterVoice(teams,week,salt=0,history=[],seaso
     const seed=[week,salt,t.roster_id,di,attempt,a.reporter?.id].join('|');
     const p={...subject,player:subject.low.name,low:fmt(subject.low.points),
      setting:pick(voice.setting,seed+'s'),irony:pick(voice.irony,seed+'i'),
-     verb:pick(verbs,seed+'v'),reference:pick(references,seed+'r')};
+     teamVerb:pick(teamVerbs,seed+'team-verb'),playerVerb:pick(playerVerbs,seed+'player-verb'),reference:pick(references,seed+'r')};
     const line=pick(frames,seed+'f')(p),full=norm(line),first=head(line);
     const punchlineKey=[a.reporter?.id||'walter-mercer',di,p.irony].join('|');
     if(old.has(full)||used.has(full)||open.has(first)||starts.has(first)||voicePunchlines.has(punchlineKey))continue;

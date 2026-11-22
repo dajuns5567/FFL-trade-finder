@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
-import {injectedScripts,compareVersionAssets,checkRuntimeContracts,auditSite} from '../scripts/audit-site-release-contract.mjs';
+import {injectedScripts,compareVersionAssets,verifyCacheKeysForChangedAssets,checkRuntimeContracts,auditSite} from '../scripts/audit-site-release-contract.mjs';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const read=file=>fs.readFileSync(path.join(root,file),'utf8');
 const baseline=read('netlify/functions/site-v17.mjs')+read('netlify/functions/site-v29.mjs');
@@ -49,4 +49,21 @@ test('newspaper, Fleeced Daily, awards and milestone reader contracts stay disco
  assert.throws(()=>checkRuntimeContracts({...src,history:src.history.replace('tradeHistoryFetch({force:true})','tradeHistoryFetch({force:false})')}),/Trade History stopped/);
  assert.throws(()=>checkRuntimeContracts({...src,history:src.history.replace('scheduleSnapshot(0,snapshotSourceFromUrl())','scheduleSnapshot(0,null)')}),/snapshot stopped/);
  assert.throws(()=>checkRuntimeContracts({...src,history:src.history.replace('fll:canonical-values-ready','legacy-values-only')}),/Player Values stopped/);
+});
+
+test('changing a loaded critical asset without incrementing its cache key is blocked',()=>{
+ const before=baseline,filename='league-hub-v451.js';
+ assert.throws(()=>verifyCacheKeysForChangedAssets(before,before,x=>x===filename),/stale cache key/);
+ const bumped=before.replace('league-hub-v451.js?v=543','league-hub-v451.js?v=544');
+ const changes=verifyCacheKeysForChangedAssets(before,bumped,x=>x===filename);
+ assert.equal(changes.length,1);
+ assert.equal(changes[0].to,544);
+});
+
+test('cache guard applies to the player badge runtime and valuation runtime as well',()=>{
+ for(const filename of ['value-history-v276.js','trade-value-normalization-v139.js',
+  'modeled-player-values-v319.js','trade-finder-v256-compiled.js']){
+  assert.throws(()=>verifyCacheKeysForChangedAssets(baseline,baseline,x=>x===filename),/stale cache key/);
+ }
+ assert.deepEqual(verifyCacheKeysForChangedAssets(baseline,baseline,()=>false),[]);
 });

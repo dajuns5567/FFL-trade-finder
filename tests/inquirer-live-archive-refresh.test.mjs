@@ -81,7 +81,8 @@ test('preview manuscripts are not published by the reader and daily archive refr
  assert.match(source,/if\(inquirerPreviewMode\)return loadInquirerPreview\(\)/);
  assert.match(source,/setInterval\(refreshPublishedInquirerIfAdvanced,60000\)/);
  assert.match(source,/document\.addEventListener\('visibilitychange'/);
- assert.match(source,/window\.addEventListener\('focus',refreshPublishedInquirerIfAdvanced\)/);
+ assert.match(source,/window\.addEventListener\('focus',/);
+ assert.match(source,/refreshPublishedInquirerIfAdvanced\(\);refreshLiveLeagueWeekIfAdvanced\(\)/,'focus must refresh both the Inquirer archive and the independent completed Sleeper week');
  assert.match(source,/installed=true;installInquirerArchiveRefresh\(\)/);
  assert.match(source,/async function fetchPublishedInquirerArchive\(\)/);
  assert.doesNotMatch(implementation,/fetch\([^\n]*method:'POST'/);

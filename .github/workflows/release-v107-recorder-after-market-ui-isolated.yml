@@ -62,6 +62,8 @@ jobs:
             '.github/workflows/release-v107-recorder-after-market-ui-isolated.yml',
             'value-history-v276.js',
             'netlify/functions/value-history.mjs',
+            'netlify/functions/site-v29.mjs',
+            'tests/presentation-copy-cleanup-v539.test.mjs',
             'tests/value-history-market-badges-cleanup.test.mjs'
           ]);
           const matches=items=>paths.length===items.size&&paths.every(path=>items.has(path));

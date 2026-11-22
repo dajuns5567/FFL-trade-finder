@@ -87,7 +87,7 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/fix/inquirer-github-native-publication-20261121'
         uses: actions/checkout@v4
         with:
-          ref: inquirer-preview-574-r2
+          ref: inquirer-preview-574-r3
           path: history
           persist-credentials: true
       - name: Generate a completed issue with real Sleeper and historical values
@@ -135,7 +135,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -m 'Preview-only: verified weekly Inquirer publication'
-          git push origin HEAD:inquirer-preview-574-r2
+          git push origin HEAD:inquirer-preview-574-r3
   publish:
     needs: verify
     if: github.ref == 'refs/heads/main' && github.event_name != 'push'

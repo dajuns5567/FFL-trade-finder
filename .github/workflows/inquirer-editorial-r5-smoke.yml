@@ -28,6 +28,9 @@ on:
       - 'tests/inquirer-narrative-architecture.test.mjs'
       - 'tests/week5-forward-editorial-repair.test.mjs'
       - 'tests/inquirer-forward-copy-regression.test.mjs'
+      - 'tests/inquirer-compositional-voice.test.mjs'
+      - 'tests/inquirer-forward-voice-variety.test.mjs'
+      - 'netlify/functions/lib/inquirer-compositional-voice.mjs'
       - 'docs/INQUIRER-EDITORIAL-GENERATION-CONTRACT.md'
       - 'scripts/inquirer-*.mjs'
       - 'scripts/migrate-fleeced-blobs.mjs'
@@ -67,6 +70,7 @@ jobs:
           node --check netlify/functions/inquirer-reporters.mjs
           node --check netlify/functions/league-hub.mjs
           node --check netlify/functions/inquirer-editorial-v31.mjs
+          node --check netlify/functions/lib/inquirer-compositional-voice.mjs
           node --check netlify/functions/inquirer-format-contract.mjs
           node --check netlify/functions/inquirer-narrative-architecture.mjs
           node --check netlify/functions/inquirer-publish-scheduled.mjs
@@ -91,6 +95,9 @@ jobs:
         run: node --test tests/inquirer-private-preview-ci.test.mjs
       - name: Enforce Week 4 format regression contract
         run: node --test tests/inquirer-forward-copy-regression.test.mjs tests/inquirer-publication-guard.test.mjs tests/week5-forward-editorial-repair.test.mjs tests/inquirer-narrative-architecture.test.mjs tests/inquirer-schedule-decision.test.mjs tests/inquirer-independent-copy-audit.test.mjs tests/inquirer-approved-cutover.test.mjs tests/netlify-third-account-preview-build.test.mjs tests/inquirer-queue-credential.test.mjs tests/inquirer-replacement-bootstrap.test.mjs tests/inquirer-preview-context.test.mjs tests/inquirer-archive-lineage.test.mjs tests/inquirer-weekly-publication-consistency.test.mjs tests/inquirer-archive-reconciliation.test.mjs tests/inquirer-legacy-history.test.mjs tests/inquirer-week9-unattended-publish-regression.test.mjs
+
+      - name: Validate compositional voices, grammatical variety and safe repetition
+        run: node --test tests/inquirer-compositional-voice.test.mjs tests/inquirer-forward-voice-variety.test.mjs tests/inquirer-week10-tonal-addendum.test.mjs
 
       - name: Capture forward V31 season smoke
         run: |

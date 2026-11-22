@@ -158,7 +158,7 @@ async function hubSharedRead(which,{force=false}={}){
  if(hubSharedPending[which])return hubSharedPending[which];
  const request=(async()=>{
   try{
-   const url=which==='trades'?'/.'+'netlify/functions/value-history?trades=1'+(force?'&trades_fresh=1':''):
+   const url=which==='trades'?'/.netlify/functions/value-history?trades=1'+(force?'&trades_fresh=1':''):
     '/.netlify/functions/league-hub?'+(which==='drafts'?'drafts=1':'weekly_awards=1');
    const response=await fetch(url,{cache:'no-store'});
    if(!response.ok)throw Error('League Hub '+which+' HTTP '+response.status);

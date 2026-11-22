@@ -68,7 +68,7 @@ function correctTeamArticles(d){
     if(p.length>165||named(t,p))return p;
     // Never discard an original fact-bearing sentence just to add fantasy
     // attribution. Preserve its player analysis, role, trend and market facts.
-    if(/\\d/.test(p)){
+    if(/\d/.test(p)){
      changed++;
      return 'For '+t.team_name+', '+p.charAt(0).toLowerCase()+p.slice(1);
     }

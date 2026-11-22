@@ -888,7 +888,11 @@ async function latestCompletedLeagueWeek(){
  for(let week=newest;week>=Math.max(1,newest-2);week--){
   const finalized=await completedPublicationWeek(week);
   if(!finalized.complete)continue;
-  const view=completedLeagueWeekView({season,week,matchups:finalized.rows,rosters,users});
+  // Use the same verified Sleeper weekly player projections and league scoring
+  // as the isolated Awards restoration (#584). Missing coverage stays null.
+  const scoredProjections=await projections(season,week,league?.scoring_settings||{});
+  const view=completedLeagueWeekView({season,week,matchups:finalized.rows,rosters,users,
+   playerProjections:scoredProjections});
   if(view)return view;
  }
  return{available:false,season,week:null,reason:'Sleeper has not finalized league matchup results'};

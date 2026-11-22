@@ -22,7 +22,7 @@ const API='https://api.sleeper.app/v1';
 const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
 const fetchJson=async url=>{const r=await fetch(url,{headers:{accept:'application/json','user-agent':'Fleeced-League-Hub/2.0'},cache:'no-store'});if(!r.ok)throw new Error(`Sleeper ${r.status}`);return r.json()};
 const store=()=>getStore('fleeced-league-hub',{consistency:'strong'});
-const MANAGER_CACHE_VERSION=13;
+const MANAGER_CACHE_VERSION=14;
 const VERIFIED_HISTORICAL_MANAGER_ASSIGNMENTS={
   2025:{
     '8':{user_id:'1114044533941133312',sleeper_id:'ryanpuccino',source:'sleeper-data audit: 2024 roster continuity + 2025 roster-8 activity'},

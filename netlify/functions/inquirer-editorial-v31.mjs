@@ -47,7 +47,7 @@ import {attributeForwardPlayerStatFragments,curateForwardTeamNarrative,inspectNa
 export const FORWARD_INQUIRER_VERSION=31;
 // Bump on any material editorial contract change so an earlier held draft
 // cannot suppress the next scheduled regeneration for the same NFL week.
-export const FORWARD_EDITORIAL_REVISION=110;
+export const FORWARD_EDITORIAL_REVISION=111;
 
 const deepStrings=(value,fn)=>{
   if(typeof value==='string')return fn(value);
@@ -755,7 +755,7 @@ export function reinforceForwardReporterVoice(teams,week,salt=0,history=[]){
    .sort((a,b)=>Number(a.points)-Number(b.points))[0];
   if(!club||!foe||!weak||!Number.isFinite(score))continue;
   const currentWords=forwardWordCount(article.sections.flatMap(x=>x.paragraphs||[]).join(' '));
-  if(currentWords>620)continue;
+  if(currentWords>600)continue;
   const reporter=String(article.reporter?.id||'walter-mercer'),bank=tones[reporter]||tones['walter-mercer'];
   const start=(Math.floor((Number(team.roster_id)||1)/4)+Number(week)+Number(salt))%bank.length;
   const entities=forwardEntities({teams});

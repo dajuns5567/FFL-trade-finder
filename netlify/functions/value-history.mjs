@@ -1178,7 +1178,7 @@ async function scoringMilestones(playerId){
         const awards=playerWeeklyMilestoneAwards({
           playerId,season:year,week,currentSeason,currentCompletedWeek,
           canonical,payload,players,scoring,score:leagueScore,
-          verifiedCompletedWeek:year<currentSeason?18:Math.min(currentCompletedWeek,verifiedCurrentWeek)
+          verifiedCompletedWeek:year<currentSeason?17:Math.min(17,currentCompletedWeek,verifiedCurrentWeek)
         });
         for(const award of awards)weeklyAwards.push({
           ...award,week_started_at:nflWeekStartIso(year,week)

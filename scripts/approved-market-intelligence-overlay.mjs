@@ -47,6 +47,8 @@ export const MARKET_OVERLAY_EDITS=[
     1
   ]
 ];
+// Additional scoped fix: remove the orphaned Full Market History call to the deleted helper.
+MARKET_OVERLAY_EDITS.push(["box.innerHTML=`${modelEraNote(m)}<div class=\"notice\">","box.innerHTML=`<div class=\"notice\">",1])
 export function applyApprovedMarketOverlay(source){
  let current=String(source);
  for(const [before,after,count] of MARKET_OVERLAY_EDITS){

@@ -49,6 +49,13 @@ function pickValue(a){
   const cap=(reference>0?reference:raw)*scale*
     Math.pow(FUTURE_PICK_YEAR_MULTIPLIER,distance);
   value=Math.min(value,cap);
+  // The nearest-year anchor limits the entire horizon, while the immediately
+  // preceding available season also constrains each successive year. This
+  // prevents an underpriced 2028 pick from being exceeded by its 2029 peer.
+  const previous=assets().find(x=>x?.type==='pick'&&Number(x.season)===year-1&&
+    Number(x.round)===round&&originalRoster(x)===roster);
+  if(previous&&sourceValue(previous)>0)
+   value=Math.min(value,pickValue(previous)*FUTURE_PICK_YEAR_MULTIPLIER);
  }
  return round5(Math.max(MIN,value));
 }

@@ -23,11 +23,33 @@ const expected={
   'pick-display-sync-v279.js':'ac0e5102c969139fade368410209ae44a6b78eff',
   'trade-recommended-pick-ownership-v301.js':'383c4cccc512d8f57692ab81a5e45102179fad02'
 };
+// Finder-only V106 release candidate: these six module hashes must transition
+// together. The entire frozen V311 suite remains the other valid state.
+// The reviewed future-year pick discount changes only pick normalization; keep
+// the frozen V311 hash valid while explicitly accepting the tested draft-pick
+// successor. All other Finder module hashes still require their exact guard.
+const reviewedFuturePickDiscountHash='b294f4330106a5c9cdc4cb9d1cf002b90135f250';
+const finderCandidateHashes={
+  'trade-finder-v256-compiled.js':'f46f80bb17b88d6e93f147dfc2f2a276e140d734',
+  'trade-specific-max-tier-add-v300.js':'c72cb456c1bcd58bd2d4654431bb38b2d6952d62',
+  'trade-specific-tier-up-v282.js':'f8fef77ce544a2161d5cb959f963b5995acd9adc',
+  'trade-specific-add-assets-v282.js':'7329e91955ea6907aca508163515ffc00de0aad9',
+  'trade-specific-max-value-v279.js':'aeec180f1c0b34b7b9eb76f3a857a5e6c7360361',
+  'trade-specific-player-v232.js':'af2e068cd94dede57019b09b6e6b94eba2a7f515'
+};
+const finderCandidate=Object.entries(finderCandidateHashes).every(([path,sha])=>{
+  try{return cp.execFileSync('git',['hash-object',path],{encoding:'utf8'}).trim()===sha}
+  catch{return false}
+});
 let bad=[];
 for(const [path,sha] of Object.entries(expected)){
   let actual='';
   try{actual=cp.execFileSync('git',['hash-object',path],{encoding:'utf8'}).trim()}catch(e){bad.push(path+': missing');continue}
-  if(actual!==sha)bad.push(path+': '+actual+' != frozen V311 '+sha);
+  const required=finderCandidate&&finderCandidateHashes[path]?finderCandidateHashes[path]:sha;
+  const reviewedPickChange=path==='trade-value-normalization-v139.js'&&
+    actual===reviewedFuturePickDiscountHash;
+  if(actual!==required&&!reviewedPickChange)
+    bad.push(path+': '+actual+' != expected '+required);
 }
 if(bad.length){
   console.error('V311 PIPELINE IDENTITY FAILURE');
@@ -35,4 +57,4 @@ if(bad.length){
   process.exit(1);
 }
 require('./offense-consensus-coverage-gate-v384-smoke.cjs');
-console.log('V322 pipeline identity verified: only the audited trade runtime hash is updated; all remaining frozen modules and offense coverage isolation passed for '+Object.keys(expected).length+' loaded modules.');
+console.log((finderCandidate?'V106 Finder candidate':'Frozen V311')+' pipeline identity verified; unrelated modules and offense coverage remain anchored across '+Object.keys(expected).length+' loaded modules.');

@@ -1,5 +1,8 @@
 import {inquirerMarketCutoff,editionAvailability} from './lib/inquirer-market-window.mjs';
 import {completedLeagueWeekView} from './lib/league-completed-week.mjs';
+import {selectHotSeat,supplementCompletedHotSeat} from './lib/league-hot-seat.mjs';
+import {mergeAwardHighs,verifiedDurableAwardHighRecords} from './lib/league-all-time-highs.mjs';
+import {mergeCompletedWeeklyAwardStats} from './lib/weekly-award-stats-merge.mjs';
 import valueHistoryHandler from './value-history.mjs';
 // Forward drafts must be reviewed as written; synthetic scoreboard sentence repair is retired.
 import {inspectEditionBeforePublication,editorialApprovalMatches,editorialCopyDigest,deterministicInquirerAdmission,isReadOnlyEditorialPreview,inspectPreviousWeekEditorialReuse} from './inquirer-publication-guard.mjs';
@@ -15,14 +18,17 @@ import {inspectCanonicalArchive} from './lib/inquirer-legacy-history.mjs';
 import {recoveredInquirerCatalog,recoveredInquirerEdition} from './lib/inquirer-github-archive.mjs';
 import {githubPublishedInquirerIndex,githubPublishedInquirerEdition} from './lib/inquirer-github-published.mjs';
 import {correctWeekNineReaderEdition} from './lib/inquirer-week09-editorial-correction.mjs';
+import {addWeekTenEditorialHumor} from './lib/inquirer-week10-humor-addendum.mjs';
 import {privatePreviewStoreName,isVerifiedPrivatePreviewPredecessor} from './lib/inquirer-preview-diagnostics.mjs';
 
 const LEAGUE='1316867686394769408';
 const API='https://api.sleeper.app/v1';
+const WEEKLY_AWARDS_STATS_ARCHIVE='https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/sleeper-data/data/sleeper';
+const reviewedReaderEdition=edition=>addWeekTenEditorialHumor(correctWeekNineReaderEdition(edition));
 const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
 const fetchJson=async url=>{const r=await fetch(url,{headers:{accept:'application/json','user-agent':'Fleeced-League-Hub/2.0'},cache:'no-store'});if(!r.ok)throw new Error(`Sleeper ${r.status}`);return r.json()};
 const store=()=>getStore('fleeced-league-hub',{consistency:'strong'});
-const MANAGER_CACHE_VERSION=13;
+const MANAGER_CACHE_VERSION=14;
 const VERIFIED_HISTORICAL_MANAGER_ASSIGNMENTS={
   2025:{
     '8':{user_id:'1114044533941133312',sleeper_id:'ryanpuccino',source:'sleeper-data audit: 2024 roster continuity + 2025 roster-8 activity'},
@@ -775,15 +781,30 @@ function weeklyManagerAwards(broadcast){
  const high=valid.slice().sort((a,b)=>Number(b.points)-Number(a.points)||String(a.roster_id).localeCompare(String(b.roster_id)))[0],
   low=valid.slice().sort((a,b)=>Number(a.points)-Number(b.points)||String(a.roster_id).localeCompare(String(b.roster_id)))[0],
   losses=valid.filter(g=>g.won===false),wins=valid.filter(g=>g.won===true),
-  hot=losses.filter(g=>Number.isFinite(Number(g.projected))&&Number.isFinite(Number(g.opponent_projected))&&Number(g.projected)>Number(g.opponent_projected)).sort((a,b)=>(Number(b.projected)-Number(b.opponent_projected))-(Number(a.projected)-Number(a.opponent_projected))||String(a.roster_id).localeCompare(String(b.roster_id)))[0],
+  hot=selectHotSeat(teams),
   cool=wins.slice().sort((a,b)=>(Number(b.points)-Number(b.opponent_points))-(Number(a.points)-Number(a.opponent_points))||String(a.roster_id).localeCompare(String(b.roster_id)))[0],
   item=(type,title,t,detail)=>t?{type,title,roster_id:String(t.roster_id||''),manager_user_id:String(t.manager_user_id||''),manager_name:String(t.manager_name||''),team_name:String(t.team_name||''),points:Number(t.points)||0,detail}:null;
  return[
-  item('hot-seat','🔥 Hot Seat',hot,hot?`Projected by ${(Number(hot.projected)-Number(hot.opponent_projected)).toFixed(1)} to win • lost by ${Math.abs(Number(hot.points)-Number(hot.opponent_points)).toFixed(1)}`:''),
+  item('hot-seat','🔥 Hot Seat',hot,hot?.hot_seat_detail||''),
   item('cool-throne','🧊 Cool Throne',cool,cool?`Won by ${Math.abs(Number(cool.points)-Number(cool.opponent_points)).toFixed(1)}`:''),
   item('highest-scorer','🔥 Highest Scorer',high,high?`${Number(high.points).toFixed(1)} fantasy points`:''),
   item('lowest-scorer','🥶 Lowest Scorer',low,low?`${Number(low.points).toFixed(1)} fantasy points`:'')
  ].filter(Boolean);
+}
+// Existing locked award caches may be missing Hot Seat because the minimal
+// finalized Sleeper feed never had projected scores. Augment only the newest
+// matching fully completed week in the response; don't rewrite locked
+// historical badges or pretend an unarchived fallback is already durable.
+async function displayWeeklyAwards(cache){
+ const list=Array.isArray(cache?.records)?cache.records:[];
+ if(!list.length)return cache;
+ const latest=list.reduce((a,b)=>!a||Number(b.season)>Number(a.season)||
+  Number(b.season)===Number(a.season)&&Number(b.week)>Number(a.week)?b:a,null);
+ if((latest.manager_awards||[]).some(a=>a.type==='hot-seat'))return cache;
+ const verified=await latestCompletedLeagueWeek().catch(error=>{
+  console.warn('league-hot-seat-live-matchups-unavailable',String(error?.message||error));return null;
+ });
+ return supplementCompletedHotSeat(cache,verified);
 }
 function weeklyPlayersOfWeek(stats,players,scoring){
  const leaders={offense:null,defense:null};
@@ -800,16 +821,33 @@ function weeklyPlayersOfWeek(stats,players,scoring){
 // view. New/missing awards are always built from a validated source edition.
 export function isTrustedWeeklyAwardCache(rec,season,week){
  if(Number(rec?.season)!==Number(season)||Number(rec?.week)!==Number(week))return false;
- if(!rec?.players_of_week?.offense?.player_id||!rec?.players_of_week?.defense?.player_id)return false;
+ for(const group of ['offense','defense']){
+  const winner=rec?.players_of_week?.[group];
+  if(!winner?.player_id||winner.points==null||!Number.isFinite(Number(winner.points)))
+   return false;
+ }
  const badges=rec?.manager_awards;
  if(!Array.isArray(badges)||!['highest-scorer','lowest-scorer'].every(kind=>badges.some(b=>b.type===kind)))
   return false;
+ // Sleeper-finalized Fleeced Daily awards are independent of the newspaper.
+ // Provenance is attached only after the same 32-roster completion gate used
+ // by the live League Hub, never to an unfinished or inferred week.
+ if(rec?.award_source==='sleeper-finalized-matchups')
+  return rec?.verified_roster_count===32;
  if(Number(season)>2026||(Number(season)===2026&&Number(week)>=5))
   return Number(rec?.newsroom_editorial_revision)>=39&&rec?.newsroom_engine==='v31-forward';
  return true;
 }
-export async function weeklyAwards({additionalLockedEditions=[],persist=true,onlyAdditional=false}={}){
- const s=store(),archive=onlyAdditional?{reports:[]}:await broadcastArchive(),pairs=[],seen=new Set();
+export async function weeklyAwards({additionalLockedEditions=[],persist=true,strictPersist=false,onlyAdditional=false}={}){
+ // Awards remain readable from verified Sleeper history even when a
+ // migrated Netlify Blob account is temporarily unavailable. Blob storage
+ // is a cache, never a prerequisite for current-week award visibility.
+ let s=null;
+ try{s=store()}catch(error){console.warn('league-awards-store-unavailable',String(error?.message||error))}
+ const archive=onlyAdditional?{reports:[]}:await broadcastArchive().catch(error=>{
+  console.warn('league-awards-newspaper-catalog-unavailable',String(error?.message||error));
+  return{reports:[]};
+ }),pairs=[],seen=new Set();
  const cutoverEditions=new Map();
  for(const edition of additionalLockedEditions){
   const season=Number(edition?.season),week=Number(edition?.week);
@@ -829,9 +867,29 @@ export async function weeklyAwards({additionalLockedEditions=[],persist=true,onl
    pairs.push({season:Number(edition.season),week:Number(edition.week),captured_at:String(edition.generated_at||'')});
   }
  }
- const old=await s.get('awards/weekly.json',{type:'json'});
+ // Awards follow completed Sleeper results, NOT the Inquirer publication
+ // cursor. Recover missed weeks even if the newspaper is editorially held.
+ // The direct League Hub feed is independent of Inquirer and has its own
+ // score-finalization + 32-roster verification.
+ const independent=onlyAdditional?null:await latestCompletedLeagueWeek().catch(error=>{
+  console.warn('weekly-awards-independent-source-unavailable',String(error?.message||error));
+  return null;
+ });
+ if(independent?.available===true&&Array.isArray(independent.teams)&&independent.teams.length===32){
+  for(let week=1;week<=Number(independent.week);week++){
+   const key=Number(independent.season)+'|'+week;
+   if(!seen.has(key)){seen.add(key);pairs.push({season:Number(independent.season),week,captured_at:'',independent:true})}
+  }
+ }
+ const old=await s?.get('awards/weekly.json',{type:'json'}).catch(error=>{console.warn('league-awards-cache-unavailable',String(error?.message||error));return null});
  const records=Array.isArray(old?.records)?old.records.slice():Array.isArray(old)?old.slice():[];
  const eligible=new Set(pairs.map(p=>p.season+'|'+p.week));
+ // Preserve ALL previously verified earned awards when Sleeper or the
+ // GitHub newspaper archive is temporarily unreachable. Requiring today's
+ // publication index would silently delete older locked weekly badges.
+ for(const rec of records)
+  if(isTrustedWeeklyAwardCache(rec,rec.season,rec.week))
+   eligible.add(Number(rec.season)+'|'+Number(rec.week));
  const byKey=new Map(records.filter(rec=>{
   const season=Number(rec?.season),week=Number(rec?.week);
   return eligible.has(season+'|'+week)&&isTrustedWeeklyAwardCache(rec,season,week);
@@ -841,20 +899,54 @@ export async function weeklyAwards({additionalLockedEditions=[],persist=true,onl
  const missing=pairs.filter(p=>!byKey.has(p.season+'|'+p.week));
  if(missing.length){
   const verified=await Promise.all(missing.map(async p=>{
-   const edition=cutoverEditions.get(p.season+'|'+p.week)||await broadcastStored(p.season,p.week);
-   return isLockedInquirerEdition(edition,p.season,p.week)?{...p,edition}:null;
+   const edition=cutoverEditions.get(p.season+'|'+p.week)||await broadcastStored(p.season,p.week).catch(()=>null);
+   if(isLockedInquirerEdition(edition,p.season,p.week))return{...p,edition};
+   if(!independent?.available||Number(p.season)!==Number(independent.season)||
+      Number(p.week)>Number(independent.week))return null;
+   try{
+    const completed=Number(p.week)===Number(independent.week)
+      ?{complete:true,rows:null}:await completedPublicationWeek(Number(p.week));
+    if(!completed.complete)return null;
+    let live=Number(p.week)===Number(independent.week)?independent:null;
+    if(!live){
+     const [rosters,users]=await Promise.all([
+      fetchJson(`${API}/league/${LEAGUE}/rosters`),
+      fetchJson(`${API}/league/${LEAGUE}/users`)
+     ]);
+     live=completedLeagueWeekView({season:Number(p.season),week:Number(p.week),
+      matchups:completed.rows,rosters,users});
+    }
+    return live?.available===true&&live.teams?.length===32?
+      {...p,edition:live,independent:true}:null;
+   }catch(error){
+    console.warn('weekly-awards-completed-week-held',p.season,p.week,String(error?.message||error));
+    return null;
+   }
   }));
   const validPairs=verified.filter(Boolean);
   if(validPairs.length){
    const [league,players]=await Promise.all([fetchJson(`${API}/league/${LEAGUE}`),fetchJson(`${API}/players/nfl`).catch(()=>({}))]);
    const scoring=league?.scoring_settings||{};
+   const archiveBySeason=new Map();
+   const archivedSeason=season=>{
+    const key=String(season);
+    if(!archiveBySeason.has(key))archiveBySeason.set(key,
+      fetchJson(`${WEEKLY_AWARDS_STATS_ARCHIVE}/${season}/weekly-stats.json?ts=${Date.now()}`).catch(()=>({})));
+    return archiveBySeason.get(key);
+   };
    const built=await Promise.all(validPairs.map(async p=>{
-    const stats=await fetchJson(`${API}/stats/nfl/regular/${p.season}/${p.week}`).catch(()=>({}));
+    const [live,archive]=await Promise.all([
+      fetchJson(`${API}/stats/nfl/regular/${p.season}/${p.week}`).catch(()=>({})),
+      archivedSeason(p.season)
+    ]);
+    const stats=mergeCompletedWeeklyAwardStats(live,archive?.[p.week]||archive?.[String(p.week)]);
     const broadcast=p.edition;
     const rec={season:p.season,week:p.week,
      captured_at:String(broadcast.generated_at||p.captured_at||new Date().toISOString()),
      newsroom_editorial_revision:Number(broadcast.editorial_revision)||null,
      newsroom_engine:String(broadcast?.editorial_generation?.engine||''),
+     ...(p.independent?{award_source:'sleeper-finalized-matchups',
+      verified_roster_count:broadcast.teams.length}:{}),
      manager_awards:weeklyManagerAwards(broadcast),
      players_of_week:weeklyPlayersOfWeek(stats,players,scoring)};
     return rec;
@@ -866,8 +958,32 @@ export async function weeklyAwards({additionalLockedEditions=[],persist=true,onl
  const next=(onlyAdditional?[...records,...[...byKey.values()].filter(rec=>
   !records.some(old=>Number(old.season)===Number(rec.season)&&Number(old.week)===Number(rec.week)))]:
   [...byKey.values()]).sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));
- if(persist&&(missing.length||records.length!==next.length))
-  await s.setJSON('awards/weekly.json',{schema_version:1,records:next});
+ // Idempotent scheduled capture: store only when a verified award changes.
+ // An unchanged missing/unfinalized week must not produce pointless writes;
+ // an updated record with the same count must not be silently ignored.
+ // Retain any older untrusted/incomplete row in storage for later repair,
+ // while returning only verified awards to the website. A stale legacy row
+ // must not block the next completed week's automatic badge publication.
+ const verifiedByWeek=new Map(next.map(rec=>[Number(rec.season)+'|'+Number(rec.week),rec]));
+ const priorWeeks=new Set(records.map(rec=>Number(rec.season)+'|'+Number(rec.week)));
+ const persisted=[...records.map(rec=>verifiedByWeek.get(Number(rec.season)+'|'+Number(rec.week))||rec),
+  ...next.filter(rec=>!priorWeeks.has(Number(rec.season)+'|'+Number(rec.week)))]
+  .sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));
+ const weeklyAwardsChanged=JSON.stringify(records)!==JSON.stringify(persisted);
+ if(persist&&strictPersist&&!s)
+  throw Error('Weekly award persistence unavailable; scheduled capture not confirmed');
+ if(persist&&s&&weeklyAwardsChanged){
+  try{await s.setJSON('awards/weekly.json',{schema_version:1,records:persisted})}
+  catch(error){
+   console.warn('league-awards-cache-write-unavailable',String(error?.message||error));
+   if(strictPersist)throw error;
+  }
+ }
+ if(persist&&strictPersist&&s){
+  const saved=await s.get('awards/weekly.json',{type:'json'});
+  if(!Array.isArray(saved?.records)||JSON.stringify(saved.records)!==JSON.stringify(persisted))
+   throw Error('Scheduled weekly badge readback disagrees with verified awards');
+ }
  return{schema_version:1,records:next};
 }
 
@@ -888,7 +1004,9 @@ async function latestCompletedLeagueWeek(){
  for(let week=newest;week>=Math.max(1,newest-2);week--){
   const finalized=await completedPublicationWeek(week);
   if(!finalized.complete)continue;
-  const view=completedLeagueWeekView({season,week,matchups:finalized.rows,rosters,users});
+  const scoredProjections=await projections(season,week,league?.scoring_settings||{});
+  const view=completedLeagueWeekView({season,week,matchups:finalized.rows,rosters,users,
+   playerProjections:scoredProjections});
   if(view)return view;
  }
  return{available:false,season,week:null,reason:'Sleeper has not finalized league matchup results'};
@@ -946,6 +1064,18 @@ function managerScoringSummary(scoringGames,career,currentSeason,currentWeek){
  const currentRows=rows.filter(g=>Number(g.season)===Number(currentSeason));
  return{since_season:2024,through_season:Number(currentSeason)||null,through_week:Math.max(0,Math.min(17,(Number(currentWeek)||1)-1)),games:rows.map(decorate),season_extremes,record_history,all_time:{highest:highest||null,lowest:lowest||null},leaderboards:{all_time_highest:ranked(rows,true).slice(0,50),all_time_lowest:ranked(rows,false).slice(0,50),year_highest:ranked(currentRows,true).slice(0,50),year_lowest:ranked(currentRows,false).slice(0,50)}};
 }
+// Managers always derive finalized regular-season W/L from verified matchup
+// pairs, not roster settings that can lag Sleeper's completed scoring.
+function verifiedManagerMatchupWeek(rows){
+ if(!Array.isArray(rows)||rows.length!==32)return false;
+ const rosterIds=new Set(),pairs=new Map();
+ for(const m of rows){
+  const rid=String(m?.roster_id??''),match=String(m?.matchup_id??'');
+  if(!rid||!match||m?.points==null||!Number.isFinite(Number(m.points))||rosterIds.has(rid))return false;
+  rosterIds.add(rid);pairs.set(match,(pairs.get(match)||0)+1);
+ }
+ return rosterIds.size===32&&pairs.size===16&&[...pairs.values()].every(n=>n===2);
+}
 async function managerHistory({persist=true,snapshotSeason=null,snapshotWeek=null}={}){
  const s=persist?store():null,nfl=await fetchJson(`${API}/state/nfl`).catch(()=>({})),currentSeason=Number(snapshotSeason)||Number(nfl?.season)||new Date().getFullYear(),currentWeek=snapshotWeek==null?(Number(nfl?.week)||1):Number(snapshotWeek)+1;
  let league=await fetchJson(`${API}/league/${LEAGUE}`),chain=[];for(let guard=0;league&&guard<12;guard++){chain.push(league);if(!league.previous_league_id)break;league=await fetchJson(`${API}/league/${league.previous_league_id}`).catch(()=>null)}chain.sort((a,b)=>Number(a.season)-Number(b.season));
@@ -961,7 +1091,10 @@ async function managerHistory({persist=true,snapshotSeason=null,snapshotWeek=nul
    fetchJson(`${API}/league/${lid}/winners_bracket`).catch(()=>[]),
    Promise.all(weekNums.map(w=>fetchJson(`${API}/league/${lid}/matchups/${w}`).catch(()=>[])))
   ]);
-  if(!persist&&(rosters.length!==32||!users.length||weekRows.some(rows=>rows.length!==32)))throw Error("Manager history source incomplete; private preview held.");
+  // A partial Sleeper response must never overwrite complete production records,
+  // or be presented as verified history in read-only previews.
+  if(rosters.length!==32||!users.length||weekRows.some(rows=>!verifiedManagerMatchupWeek(rows)))
+   throw Error("Manager history source incomplete; retain previous verified records.");
   const ub=new Map(users.map(u=>[String(u.user_id),u])),rb=new Map(rosters.map(r=>[String(r.roster_id),r])),ownerByRoster={};
   for(const r of rosters){
    const rid=String(r.roster_id),primaryUid=String(r.owner_id||''),verified=!primaryUid?verifiedHistoricalAssignment(season,rid):null,uid=primaryUid||String(verified?.user_id||'');
@@ -970,7 +1103,7 @@ async function managerHistory({persist=true,snapshotSeason=null,snapshotWeek=nul
    if(primaryUid&&String(lg.league_id)===String(LEAGUE))current.push({roster_id:rid,user_id:primaryUid,sleeper_id:career[primaryUid].sleeper_id})
   }
   const seasonWins={},seasonPoints={};
-  for(const r of rosters){const uid=ownerByRoster[String(r.roster_id)];if(!uid)continue;let rw=Number(r?.settings?.wins)||0,rl=Number(r?.settings?.losses)||0;if(!persist){rw=0;rl=0;for(const rows of weekRows){const m=rows.find(x=>String(x.roster_id)===String(r.roster_id)),o=m&&rows.find(x=>x.matchup_id===m.matchup_id&&String(x.roster_id)!==String(r.roster_id));if(!m||!o)throw Error('Manager history matchup incomplete');if(Number(m.points)>Number(o.points))rw++;else if(Number(m.points)<Number(o.points))rl++}}career[uid].wins+=rw;career[uid].losses+=rl;seasonWins[uid]=rw}
+  for(const r of rosters){const uid=ownerByRoster[String(r.roster_id)];if(!uid)continue;let rw=0,rl=0;for(const rows of weekRows){const m=rows.find(x=>String(x.roster_id)===String(r.roster_id)),o=m&&rows.find(x=>x.matchup_id===m.matchup_id&&String(x.roster_id)!==String(r.roster_id));if(!m||!o)throw Error('Manager history matchup incomplete');if(Number(m.points)>Number(o.points))rw++;else if(Number(m.points)<Number(o.points))rl++}career[uid].wins+=rw;career[uid].losses+=rl;seasonWins[uid]=rw}
   for(let wi=0;wi<weekRows.length;wi++){const w=weekNums[wi],ms=weekRows[wi]||[],groups={};for(const m of ms){const k=String(m.matchup_id??'');if(k)(groups[k]||(groups[k]=[])).push(m)}for(const pair of Object.values(groups)){if(pair.length!==2)continue;const [a,b]=pair;for(const [m,o] of [[a,b],[b,a]]){const uid=ownerByRoster[String(m.roster_id)];if(!uid)continue;const pts=Number(m.points)||0,opt=Number(o.points)||0,won=pts>opt;seasonPoints[uid]=(seasonPoints[uid]||0)+pts;const rd=rb.get(String(m.roster_id))?.settings?.division,od=rb.get(String(o.roster_id))?.settings?.division;if(won&&rd!=null&&od!=null&&String(rd)===String(od))career[uid].division_wins++;const division=rb.get(String(m.roster_id))?.settings?.division,conference=sleeperConference(lg,division),game={season,week:w,user_id:uid,roster_id:String(m.roster_id),opponent_roster_id:String(o.roster_id),points:pts,opponent_points:opt,won,playoff:false,conference,round_label:''};games.push(game);if(season>=2024)scoringGames.push(game)}}}
   if(regularMax>=regularEnd){let top=null;const divTop={};for(const r of rosters){const uid=ownerByRoster[String(r.roster_id)];if(!uid)continue;const score=(seasonWins[uid]||0)*1e9+(seasonPoints[uid]||0),d=r.settings?.division;if(!top||score>top.score)top={uid,score};if(d!=null&&(!divTop[d]||score>divTop[d].score))divTop[d]={uid,score}}if(top)career[top.uid].regular_season_titles++;for(const x of Object.values(divTop))career[x.uid].division_championships++}
   if(season<currentSeason){const playoffEnd=Math.max(playoffStart-1,Math.min(17,Number(lg?.settings?.last_scored_leg)||17)),playoffNums=Array.from({length:Math.max(0,playoffEnd-playoffStart+1)},(_,i)=>playoffStart+i),playoffWeeks=await Promise.all(playoffNums.map(w=>fetchJson(`${API}/league/${lid}/matchups/${w}`).catch(()=>[]))),bracketRosters=playoffBracketRosters(bracket),appearanceRosters=new Set(bracketRosters);for(let i=0;i<playoffWeeks.length;i++){const w=playoffNums[i],roundRosters=playoffRoundRosters(bracket,w,playoffStart),roundPairs=playoffRoundPairs(bracket,w,playoffStart),groups={};for(const m of playoffWeeks[i]){const k=String(m.matchup_id??'');if(k)(groups[k]||(groups[k]=[])).push(m)}for(const pair of Object.values(groups)){if(pair.length!==2||!matchupComplete(pair))continue;const [a,b]=pair,pairKey=playoffPairKey(a.roster_id,b.roster_id);if(!roundPairs.has(pairKey))continue;const ap=Number(a.points),bp=Number(b.points);if(!Number.isFinite(ap)||!Number.isFinite(bp))continue;if(season>=2024)for(const [m,o] of [[a,b],[b,a]]){const rid=String(m.roster_id);if(!roundRosters.has(rid))continue;const uid=ownerByRoster[rid];if(!uid)continue;const division=rb.get(rid)?.settings?.division,conference=sleeperConference(lg,division),round_label=managerPlayoffRoundLabel(w,conference);scoringGames.push({season,week:w,user_id:uid,roster_id:rid,opponent_roster_id:String(o.roster_id),points:Number(m.points),opponent_points:Number(o.points),won:Number(m.points)>Number(o.points),playoff:true,conference,round_label})}if(ap===bp)continue;const win=ap>bp?a:b,lose=ap>bp?b:a;for(const [m,o,won] of [[win,lose,true],[lose,win,false]]){const rid=String(m.roster_id);if(!roundRosters.has(rid))continue;const uid=ownerByRoster[rid];if(!uid)continue;const division=rb.get(rid)?.settings?.division,conference=sleeperConference(lg,division),round_label=managerPlayoffRoundLabel(w,conference);if(won)career[uid].playoff_wins++;games.push({season,week:w,user_id:uid,roster_id:rid,opponent_roster_id:String(o.roster_id),points:Number(m.points)||0,opponent_points:Number(o.points)||0,won,playoff:true,conference,round_label})}}}for(const rid of appearanceRosters){const uid=ownerByRoster[rid];if(uid)career[uid].playoff_appearances++}
@@ -983,10 +1116,41 @@ async function managerHistory({persist=true,snapshotSeason=null,snapshotWeek=nul
  const currentUsers=new Set(current.map(x=>x.user_id)),scoring_history=managerScoringSummary(scoringGames,career,currentSeason,currentWeek),graveyard=Object.values(career).filter(x=>!currentUsers.has(x.user_id)).map(x=>{const as=assignments.filter(a=>a.user_id===x.user_id).sort((a,b)=>Number(a.season)-Number(b.season)),last=as[as.length-1],seasonRosterKeys=new Set(as.map(a=>Number(a.season)+'|'+String(a.roster_id))),scoring=(scoring_history.games||[]).filter(g=>seasonRosterKeys.has(Number(g.season)+'|'+String(g.roster_id))).sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));return{user_id:x.user_id,sleeper_id:x.sleeper_id,roster_id:last?.roster_id||'',retired_at:last?.season?String(last.season):'',seasons:[...new Set(as.map(a=>Number(a.season)).filter(Boolean))],played_2025:as.some(a=>Number(a.season)===2025),assignments:as,scoring_games:scoring,career:{wins:x.wins,losses:x.losses,playoff_wins:x.playoff_wins,playoff_appearances:x.playoff_appearances,championships:x.championships,division_wins:x.division_wins,division_championships:x.division_championships,regular_season_titles:x.regular_season_titles}}});
  const now=new Date().toISOString(),cache_version=MANAGER_CACHE_VERSION,registry={current:Object.fromEntries(current.map(x=>[x.roster_id,{user_id:x.user_id,sleeper_id:x.sleeper_id,since:now}])),graveyard},result={current,graveyard,career:Object.values(career),assignments,games,scoring_history,generated_at:now,cache_version};if(persist)await Promise.all([s.setJSON('managers/registry.json',registry),s.setJSON('managers/history-cache.json',{...result,cached_at:now})]);return persist?result:{...result,preview_read_only:true};
 }
+async function githubDurableAwardHighs(){
+ const url='https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/value-history-data/value-history/league-awards/all-time-highs.json';
+ try{
+  const response=await fetch(url+'?fresh='+Date.now(),{cache:'no-store',
+   headers:{accept:'application/json'}});
+  if(!response.ok)return[];
+  const result=await response.json();
+  return verifiedDurableAwardHighRecords(result,LEAGUE);
+ }catch(error){
+  console.warn('league-awards-durable-read-unavailable',String(error?.message||error));return[];
+ }
+}
 async function awardHighs(req){
- const s=store(),key='awards/highs.json',old=await s.get(key,{type:'json'}).catch(()=>null),highs=Array.isArray(old)?old:[];
- if(req.method==='POST'){const body=await req.json().catch(()=>null),records=Array.isArray(body?.records)?body.records:[],now=new Date().toISOString();for(const x of records){const award_key=String(x.award_key||''),roster_id=String(x.roster_id||''),score=Number(x.score);if(!award_key||!roster_id||!Number.isFinite(score))continue;const prev=highs.filter(h=>h.award_key===award_key&&h.roster_id===roster_id).sort((a,b)=>Number(b.score)-Number(a.score))[0];if(!prev||score>Number(prev.score)){highs.push({award_key,roster_id,score,detail:String(x.detail||''),captured_at:now})}}await s.setJSON(key,highs.slice(-10000))}
- const best={};for(const h of highs){const k=h.award_key+'|'+h.roster_id;if(!best[k]||Number(h.score)>Number(best[k].score))best[k]=h}return json({records:Object.values(best)});
+ if(!['GET','POST'].includes(req.method))return json({error:'method not allowed'},405);
+ let s=null;
+ try{s=store()}catch(error){
+  console.warn('league-awards-blob-store-unavailable',String(error?.message||error))
+ }
+ const key='awards/highs.json',stored=s?await s.get(key,{type:'json'}).catch(()=>null):null,
+  fromBlob=Array.isArray(stored)?stored:[],durable=await githubDurableAwardHighs(),
+  now=new Date().toISOString(),previous=mergeAwardHighs(fromBlob,durable,now);
+ if(req.method==='GET')return json({records:previous,
+  available:previous.length>0,
+  archive_status:previous.length?'verified-historical-records':'awaiting-first-verified-capture',
+  sources:{blob:fromBlob.length,durable:durable.length},cache_status:s?'available':'unavailable'});
+ const body=await req.json().catch(()=>null),records=Array.isArray(body?.records)?body.records:[];
+ if(!records.length||records.length>1000)return json({error:'missing or excessive all-time-high observations'},400);
+ const highs=mergeAwardHighs(previous,records,now);
+ if(highs.length===0)return json({error:'no valid award scores'},422);
+ const changed=JSON.stringify(highs)!==JSON.stringify(previous);
+ if(changed&&s)await s.setJSON(key,highs);
+ // User-facing reads remain available from GitHub even if Netlify Blob
+ // migration makes this optional cache unreachable.
+ return json({records:highs,recorded_at:now,changed,
+  source:'league-awards-canonical',cache_written:!!(changed&&s)});
 }
 async function awards(req){
  const s=store();
@@ -1003,12 +1167,36 @@ export default async req=>{try{const u=new URL(req.url);
  if(isReadOnlyEditorialPreview(req.url,process.env.CONTEXT)){
   if(req.method!=='GET')return json({error:'Deploy Previews are read-only; no production data was changed.'},403);
   if(u.searchParams.get('weekly_awards')==='1'){
-   const cached=await store().get('awards/weekly.json',{type:'json'}).catch(()=>null);
-   return json(cached&&Array.isArray(cached.records)?cached:{schema_version:1,records:[],preview_read_only:true});
+   // Read-only preview may calculate the current verified Sleeper awards,
+   // but cannot write to the production/shared Blob store.
+   const previewAwards=await weeklyAwards({persist:false});
+   return json({...await displayWeeklyAwards(previewAwards),preview_read_only:true});
   }
   if(u.searchParams.get('managers')==='1'){
    const cached=await store().get('managers/history-cache.json',{type:'json'}).catch(()=>null);
-   return cached?json({...cached,cache_hit:true,preview_read_only:true}):json({error:'No manager history cache in preview; production backfill disabled.',preview_read_only:true},503);
+   // A complete but outdated Blob cache is still stale after a finalized week.
+   // Verify the same completed-week season/cutoff used by the production reader.
+   const nfl=await fetchJson(`${API}/state/nfl`).catch(()=>null);
+   const season=Number(nfl?.season)||0;
+   const through=Math.max(0,Math.min(17,(Number(nfl?.week)||1)-1));
+   const verifiedCurrent=season>0&&cached?.cache_version===MANAGER_CACHE_VERSION&&
+    Number(cached?.scoring_history?.through_season)===season&&
+    Number(cached?.scoring_history?.through_week)>=through;
+   if(cached?.career?.length&&cached?.current?.length===32&&verifiedCurrent)
+    return json({...cached,cache_hit:true,stale:false,preview_read_only:true});
+   // A preview must never write the production Blob cache. The existing
+   // strict 32-team/weekly-completeness reader supports read-only reconstruction.
+   // Reconstruct only when the cache is missing or incomplete; never invent rows.
+   try{
+    if(!season)throw Error('Sleeper week unavailable for verified preview freshness');
+    const fresh=await managerHistory({persist:false});
+    if(fresh?.current?.length!==32||!fresh?.career?.length)
+     throw Error('incomplete read-only manager reconstruction');
+    return json({...fresh,cache_hit:false,preview_read_only:true});
+   }catch(error){
+    console.warn('manager-preview-readonly-unavailable',String(error?.message||error));
+    return json({error:'Verified manager history unavailable in preview; production backfill disabled.',preview_read_only:true},503);
+   }
   }
  }
 if(u.searchParams.get('league_latest')==='1')return json(await latestCompletedLeagueWeek());if(u.searchParams.get('weekly')==='1'){
@@ -1019,6 +1207,6 @@ if(u.searchParams.get('league_latest')==='1')return json(await latestCompletedLe
  if(req.method!=='GET')return json({error:'GitHub Actions owns Inquirer publication'},405);
  const archive=await broadcastArchive(),latest=archive.reports?.at(-1);
  if(!latest)return json({available:false,reason:'No verified published newspaper yet'});
- return json(correctWeekNineReaderEdition(await broadcastStored(latest.season,latest.week)));
-}if(u.searchParams.get('reporters')==='1')return json(await reporterDirectory());if(u.searchParams.get('reporter_archive'))return json(await reporterArchive(u.searchParams.get('reporter_archive')));if(u.searchParams.get('broadcast_archive')==='1')return json(await broadcastArchive());if(u.searchParams.get('broadcast_season')&&u.searchParams.get('broadcast_week')){const edition=await broadcastStored(u.searchParams.get('broadcast_season'),u.searchParams.get('broadcast_week'));return json(req.method==='GET'?correctWeekNineReaderEdition(edition):edition);}if(u.searchParams.get('weekly_awards')==='1')return json(await weeklyAwards());if(u.searchParams.get('managers')==='1'){const s=store(),cached=await s.get('managers/history-cache.json',{type:'json'}).catch(()=>null),valid=cached?.cache_version===MANAGER_CACHE_VERSION&&cached?.career?.length&&cached.career.some(x=>(Number(x.wins)||0)+(Number(x.losses)||0)>0);if(valid){const nfl=await fetchJson(`${API}/state/nfl`).catch(()=>({})),season=Number(nfl?.season)||0,through=Math.max(0,Math.min(17,(Number(nfl?.week)||1)-1)),fresh=Number(cached?.scoring_history?.through_season)===season&&Number(cached?.scoring_history?.through_week)>=through;if(fresh)return json({...cached,cache_hit:true,stale:false})}return json(await managerHistory())}if(u.searchParams.get('drafts')==='1')return json(await draftAwards());if(u.searchParams.get('draft_records')==='1')return draftRecords(req);if(u.searchParams.get('award_highs')==='1')return awardHighs(req);if(u.searchParams.get('awards')==='1')return awards(req);return json({error:'query required'},400)}catch(e){console.error('league-hub',e);return json({error:'league hub unavailable'},503)}};
+ return json(reviewedReaderEdition(await broadcastStored(latest.season,latest.week)));
+}if(u.searchParams.get('reporters')==='1')return json(await reporterDirectory());if(u.searchParams.get('reporter_archive'))return json(await reporterArchive(u.searchParams.get('reporter_archive')));if(u.searchParams.get('broadcast_archive')==='1')return json(await broadcastArchive());if(u.searchParams.get('broadcast_season')&&u.searchParams.get('broadcast_week')){const edition=await broadcastStored(u.searchParams.get('broadcast_season'),u.searchParams.get('broadcast_week'));return json(req.method==='GET'?reviewedReaderEdition(edition):edition);}if(u.searchParams.get('weekly_awards')==='1')return json(await displayWeeklyAwards(await weeklyAwards()));if(u.searchParams.get('managers')==='1'){const s=store(),cached=await s.get('managers/history-cache.json',{type:'json'}).catch(()=>null),valid=cached?.cache_version===MANAGER_CACHE_VERSION&&cached?.career?.length&&cached.career.some(x=>(Number(x.wins)||0)+(Number(x.losses)||0)>0);if(valid){const nfl=await fetchJson(`${API}/state/nfl`).catch(()=>({})),season=Number(nfl?.season)||0,through=Math.max(0,Math.min(17,(Number(nfl?.week)||1)-1)),fresh=Number(cached?.scoring_history?.through_season)===season&&Number(cached?.scoring_history?.through_week)>=through;if(fresh)return json({...cached,cache_hit:true,stale:false})}return json(await managerHistory())}if(u.searchParams.get('drafts')==='1')return json(await draftAwards());if(u.searchParams.get('draft_records')==='1')return draftRecords(req);if(u.searchParams.get('award_highs')==='1')return awardHighs(req);if(u.searchParams.get('awards')==='1')return awards(req);return json({error:'query required'},400)}catch(e){console.error('league-hub',e);return json({error:'league hub unavailable'},503)}};
 

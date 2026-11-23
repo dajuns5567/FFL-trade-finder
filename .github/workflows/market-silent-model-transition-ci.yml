@@ -1,0 +1,27 @@
+name: Market silent model transition provenance
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/value-history.mjs'
+      - 'tests/market-silent-model-handoff-20261123.test.mjs'
+      - '.github/workflows/market-silent-model-transition-ci.yml'
+permissions:
+  contents: read
+jobs:
+  market-model-boundaries:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Netlify read-only backend dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Validate canonical Market backend
+        run: node --check netlify/functions/value-history.mjs
+      - name: Exclude verified silent V101 handoff from 7D movers and heat-map history
+        run: |
+          node --test tests/market-silent-model-handoff-20261123.test.mjs
+          node --test tests/market-period-canonical-parity-v116.test.mjs
+          node --test tests/market-movers-canonical-era-audit.test.mjs

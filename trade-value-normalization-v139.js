@@ -31,7 +31,34 @@ function sourceValue(a){
 }
 function sourceAnchor(){const y=nearestSeason();if(!y)return 0;const vals=assets().filter(x=>x?.type==='pick'&&Number(x.season)===y&&Number(x.round)===1).map(sourceValue).filter(v=>v>0);return vals.length?Math.max(...vals):0}
 function pickScale(){const a=sourceAnchor();return a>0?ELITE_FIRST/a:1}
-function pickValue(a){const raw=sourceValue(a);if(!(raw>0))return MIN;return round5(Math.max(MIN,raw*pickScale()))}
+// Dynasty pick values cannot flatline in consecutive future drafts. The existing
+// v92 source provides a .88 annual horizon; enforce it as an upper bound
+// against the SAME round and original team's nearest-draft source value.
+// This avoids double-discounting an already-conservative source while keeping
+// the verified 50/50 projected slot and original pick ownership intact.
+const FUTURE_PICK_YEAR_MULTIPLIER=.88;
+function pickValue(a){
+ const raw=sourceValue(a);if(!(raw>0))return MIN;
+ const scale=pickScale(),year=Number(a?.season),near=nearestSeason();
+ let value=raw*scale;
+ if(Number.isInteger(year)&&Number.isInteger(near)&&year>near){
+  const distance=year-near,roster=originalRoster(a),round=Number(a?.round);
+  const comparable=assets().find(x=>x?.type==='pick'&&Number(x.season)===near&&
+    Number(x.round)===round&&originalRoster(x)===roster);
+  const reference=comparable?sourceValue(comparable):0;
+  const cap=(reference>0?reference:raw)*scale*
+    Math.pow(FUTURE_PICK_YEAR_MULTIPLIER,distance);
+  value=Math.min(value,cap);
+  // The nearest-year anchor limits the entire horizon, while the immediately
+  // preceding available season also constrains each successive year. This
+  // prevents an underpriced 2028 pick from being exceeded by its 2029 peer.
+  const previous=assets().find(x=>x?.type==='pick'&&Number(x.season)===year-1&&
+    Number(x.round)===round&&originalRoster(x)===roster);
+  if(previous&&sourceValue(previous)>0)
+   value=Math.min(value,pickValue(previous)*FUTURE_PICK_YEAR_MULTIPLIER);
+ }
+ return round5(Math.max(MIN,value));
+}
 function canonicalValue(a){if(a?.type==='player')return playerValue(a);if(a?.type==='pick')return pickValue(a);try{const v=Number(originalBaseValue?.(a));return Number.isFinite(v)&&v>0?v:0}catch(_){return 0}}
 function canonicalPackageValue(items){return (items||[]).reduce((s,a)=>s+canonicalValue(a),0)}
 function pickContext(a){let p={};try{p=sourceProjectionFn()?.(a)||{}}catch(_){}const rid=originalRoster(a);return{...p,originalRoster:rid,originalTeam:p.originalTeam||teamName(rid),currentOwner:Number(a?.owner)||0,currentOwnerTeam:p.currentOwnerTeam||teamName(Number(a?.owner)),projectedSlot:Number(p.projectedSlot)||16,value:pickValue(a),sourceValue:sourceValue(a),displayScale:pickScale(),source:p.source||'existing draft-pick valuation source'}}

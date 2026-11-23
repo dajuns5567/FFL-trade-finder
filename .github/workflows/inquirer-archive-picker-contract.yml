@@ -1,0 +1,32 @@
+name: Inquirer archive picker and regression contract
+on:
+  pull_request:
+    paths:
+      - 'league-hub-v451.js'
+      - 'netlify/functions/site-v29.mjs'
+      - 'tests/inquirer-single-archive-picker-regression.test.mjs'
+      - '.github/workflows/inquirer-archive-picker-contract.yml'
+  push:
+    branches:
+      - fix/inquirer-forward-voice-opener-variety-20261122
+    paths:
+      - 'league-hub-v451.js'
+      - 'netlify/functions/site-v29.mjs'
+      - 'tests/inquirer-single-archive-picker-regression.test.mjs'
+      - '.github/workflows/inquirer-archive-picker-contract.yml'
+permissions:
+  contents: read
+jobs:
+  archive-picker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          node --check league-hub-v451.js
+          node --check netlify/functions/site-v29.mjs
+          node --test tests/inquirer-single-archive-picker-regression.test.mjs
+          node --test tests/inquirer-week9-unattended-publish-regression.test.mjs

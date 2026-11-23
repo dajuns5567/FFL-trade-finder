@@ -20,6 +20,8 @@ test('audit cannot conflate a present script with an up-to-date data lifecycle',
   assert.ok(finding,id+' must be monitored');
   assert.equal(finding.status,'risk',id+' has an uncorrected mainline freshness gap');
  }
+ assert.equal(x.results.find(z=>z.id==='badge-autonomous-capture').status,'risk');
+ assert.equal(x.results.find(z=>z.id==='badge-finalized-week-proof').status,'risk');
  assert.equal(x.results.find(z=>z.id==='trade-history').status,'source-path-present',
   'dedicated Trade History timer and live fetch should remain documented');
 });
@@ -41,7 +43,7 @@ test('every behavior rule detects removal of each required data freshness safegu
 test('an implemented freshness mechanism clears its own finding without masking unrelated defects',()=>{
  const sources=new Map([...new Set(LIVE_FRESHNESS_RULES.map(x=>x.file))].map(file=>[file,read(file)]));
  const home=sources.get('fleeced-home-v424.js');
- sources.set('fleeced-home-v424.js',home+"\nsetInterval(refreshVisibleHome,300000);window.addEventListener('focus',refreshVisibleHome);");
+ sources.set('fleeced-home-v424.js',home+"\nsetInterval(()=>refreshVisibleHome(),HOME_REFRESH_MS);window.addEventListener('focus',()=>refreshVisibleHome());");
  const report=inspectLiveFreshness(file=>sources.get(file));
  assert.equal(report.results.find(x=>x.id==='home-risers').status,'mitigation-source-present');
  assert.equal(report.results.find(x=>x.id==='home-top-players').status,'mitigation-source-present');

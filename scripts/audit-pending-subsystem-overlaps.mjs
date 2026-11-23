@@ -40,6 +40,7 @@ export function makeIntegrationReport(rows){
  const collisions=computeIntegrationCollisions(rows);
  const unresolved=rows.filter(x=>!x.available).map(x=>x.pr);
  return{prs:rows.length,available:rows.length-unresolved.length,unresolved,
+  inspected_heads:rows.map(({pr,available,head_sha})=>({pr,available,head_sha:head_sha||null})),
   shared_collisions:collisions,
   rule:'Review every overlapping script and cache key; no whole-file replacement, automatic merge or production deployment'};
 }
@@ -48,9 +49,9 @@ export function auditLocalRefs(){
  const rows=SUBSYSTEM_PRS.map(row=>{
   const ref='refs/remotes/pr-audit/'+row.pr;
   try{
-   git('rev-parse','--verify',ref);
+   const head_sha=git('rev-parse','--verify',ref);
    const files=git('diff','--name-only','refs/remotes/origin/main...'+ref).split('\n').filter(Boolean);
-   return{...row,available:true,files};
+   return{...row,available:true,head_sha,files};
   }catch{return{...row,available:false,files:[]}}
  });
  return makeIntegrationReport(rows);

@@ -1,0 +1,147 @@
+/* FFL Preview QA v1 • safe read-only • run from Ctrl+Alt+J on a Deploy Preview */
+(async()=>{
+ if(window.__FFL_QA_RUNNING){console.warn('FFL audit already running');return}
+ window.__FFL_QA_RUNNING=true;
+ const started=new Date().toISOString(),checks=[],pages={},api={},errors=[],screens={};
+ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+ const text=n=>String(n?.innerText||n?.textContent||'').trim();
+ const norm=s=>String(s||'').replace(/\s+/g,' ').trim();
+ const cap=(s,n=320)=>String(s||'').slice(0,n);
+ const add=(area,name,status,detail='')=>checks.push({area,name,status,detail:cap(detail,700)});
+ const jsonish=x=>JSON.parse(JSON.stringify(x,(k,v)=>/token|cookie|authorization|secret|password|email|access_key/i.test(k)?'[redacted]':v));
+ const visible=e=>{if(!e||!e.isConnected)return false;const st=getComputedStyle(e),r=e.getBoundingClientRect();return st.display!=='none'&&st.visibility!=='hidden'&&r.width>3&&r.height>3};
+ const elements=(sel,root=document)=>[...root.querySelectorAll(sel)].filter(visible);
+ const appRoot=()=>document.querySelector('main')||document.body;
+ const pick=(parts,root=document)=>elements('button,a,[role="tab"]',root).find(e=>parts.some(x=>norm(text(e)).toLowerCase()===x.toLowerCase()))||
+  elements('button,a,[role="tab"]',root).find(e=>parts.some(x=>norm(text(e)).toLowerCase().includes(x.toLowerCase())));
+ const click=async (el,ms=750)=>{if(!el)return false;el.click();await sleep(ms);return true};
+ const snap=(label)=>{
+  const root=appRoot(),head=elements('h1,h2,h3',root).slice(0,24).map(e=>cap(norm(text(e)),90));
+  const nav=elements('[data-lh-view],[role="tab"],.tabs button',root).slice(0,30)
+    .map(e=>({label:cap(norm(text(e)),60),active:e.classList.contains('active')||e.getAttribute('aria-selected')==='true'}));
+  const over=elements('body *').filter(e=>{if(e.children.length>7)return false;const r=e.getBoundingClientRect();return r.right>innerWidth+12&&r.width<innerWidth*2&&r.left<innerWidth}).slice(0,12)
+    .map(e=>({tag:e.tagName,cls:cap(e.className,70),right:Math.round(e.getBoundingClientRect().right)}));
+  const stuck=elements('main *').filter(e=>/loading|please wait|fetching/i.test(norm(text(e)))&&text(e).length<90).slice(0,9).map(e=>cap(text(e),85));
+  const screenshot={url:location.href,headings:head,subtabs:nav,overflow:over,stuck,bodyExcerpt:cap(norm(text(root)),1100)};
+  screens[label]=screenshot;
+  add(label,'visible headings',head.length?'PASS':'WARN',head.join(' | '));
+  add(label,'horizontal overflow',document.documentElement.scrollWidth>innerWidth+24?'WARN':'PASS',
+    'document='+document.documentElement.scrollWidth+' viewport='+innerWidth);
+  if(over.length)add(label,'clipped elements','WARN',JSON.stringify(over));
+  if(stuck.length)add(label,'possible loading state','WARN',stuck.join('; '));
+  if(/League Hub|Market|History|Awards|Managers/i.test(label)&&/current values and ranks come from player values|original finished-value and overall-rank fluctuation boards remain unchanged/i.test(text(root)))
+   add(label,'removed explanatory copy','FAIL','Old Market helper text is visible');
+ };
+ const fetchJson=async (label,path)=>{
+  try{
+   const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),10000);
+   const r=await fetch(path,{method:'GET',cache:'no-store',credentials:'same-origin',signal:ctl.signal,headers:{Accept:'application/json'}});clearTimeout(timer);
+   const type=r.headers.get('content-type')||'';
+   let val=type.includes('json')?await r.json():{non_json:true,preview:(await r.text()).slice(0,90)};
+   api[label]={status:r.status,ok:r.ok,url:path,topKeys:Object.keys(val||{}).slice(0,20)};
+   if(!r.ok){add('API',label,'WARN','HTTP '+r.status);return null}
+   add('API',label,'PASS','HTTP '+r.status);
+   return val;
+  }catch(e){add('API',label,'WARN',e.message);return null}
+ };
+ const consoleError=(type,...args)=>{errors.push({type,message:cap(args.map(x=>typeof x==='string'?x:x?.message||String(x)).join(' '),350)})};
+ const prevError=console.error,prevWarn=console.warn,onError=e=>consoleError('window',e.message),onRejection=e=>consoleError('rejection',e.reason?.message||e.reason);
+ console.error=function(...args){consoleError('console',...args);prevError.apply(this,args)};
+ console.warn=function(...args){consoleError('warning',...args);prevWarn.apply(this,args)};
+ window.addEventListener('error',onError);window.addEventListener('unhandledrejection',onRejection);
+ try{
+  add('Environment','host',/deploy-preview-\d+--/.test(location.hostname)?'PASS':'WARN',location.hostname);
+  add('Environment','viewport','INFO',innerWidth+'×'+innerHeight+' DPR '+devicePixelRatio);
+  add('Environment','expected JS assets', [...document.scripts].some(s=>/trade-value-normalization-v139\.js\?v=142/.test(s.src))?'PASS':'FAIL','pick normalizer ?v=142');
+  add('Environment','League Hub key', [...document.scripts].some(s=>/league-hub-v451\.js\?v=557/.test(s.src))?'PASS':'FAIL','Hall and tab fixes ?v=557');
+  add('Environment','Value History key', [...document.scripts].some(s=>/value-history-v276\.js\?v=549/.test(s.src))?'PASS':'FAIL','history ?v=549');
+  snap('Initial page');
+  const menu=['HOME','TRADE FINDER','TRADE EVALUATOR','TRADE HISTORY','PLAYER VALUES','VALUE HISTORY','LEAGUE HUB'];
+  for(const name of menu){
+   const nav=pick([name],document.querySelector('header')||document);
+   if(!nav){add('Navigation',name,'WARN','Navigation target not visible');continue}
+   await click(nav,1000);
+   snap(name);
+   pages[name]={headings:screens[name].headings,excerpt:screens[name].bodyExcerpt};
+   add('Navigation',name,/error|failed to load|undefined is not|something went wrong/i.test(text(appRoot()).slice(0,260))?'WARN':'PASS',cap(text(appRoot()),170));
+   if(name==='PLAYER VALUES'){
+    const body=norm(text(appRoot()));
+    const p=[...body.matchAll(/(?:2027|2028|2029|2030|2031)\s*R[123][\s\S]{0,70}?(?:Value\s*([\d,]+))/gi)].slice(0,50).map(m=>({year:+m[0].slice(0,4),round:+m[0].match(/R([123])/i)[1],value:+m[1].replace(/,/g,'')}));
+    pages.pickSamples=p;
+    for(const round of [1,2,3]){
+     const vals=p.filter(x=>x.round===round),grp={};
+     vals.forEach(x=>(grp[x.year]??=[]).push(x.value));
+     const years=Object.keys(grp).sort(),first=years.map(y=>Math.max(...grp[y]));
+     if(years.length>=2)add('Draft picks','round '+round+' decreasing year-over-year',first.every((v,i)=>!i||v<first[i-1])?'PASS':'WARN',JSON.stringify({years,highestValues:first}));
+     else add('Draft picks','round '+round+' source sample','INFO','Not all years visible in rendered page; inspect pick values manually');
+    }
+   }
+   if(name==='VALUE HISTORY'){
+    const choices=['Market Dashboard','Player Value History','Full Market Value History','Track my team','Team Value History'];
+    for(const choice of choices){const tab=pick([choice],appRoot());if(tab){await click(tab,850);snap('History: '+choice)}}
+    const rows=norm(text(appRoot()));
+    if(/Market Movers|Risers|Fallers/i.test(rows))add('Market','mover panels','PASS','Market content rendered');
+    else add('Market','mover panels','WARN','Search separate Market Dashboard tab');
+   }
+   if(name==='LEAGUE HUB'){
+    const root=appRoot(),tabNames=['Fleeced Daily','Awards','Hall of Fleeced','Managers'];
+    for(const tabName of tabNames){
+     const el=pick([tabName],root);
+     if(!el){add('League Hub',tabName,'WARN','Tab absent');continue}
+     await click(el,1250);snap('Hub: '+tabName);
+     if(tabName==='Awards'){
+      const body=norm(text(root));
+      add('League Hub','Awards retained after async navigation',/Fleeced! Daily\s*—\s*Completed Week Results/i.test(body.slice(0,350))?'FAIL':'PASS',cap(body,220));
+     }
+    }
+    // Stress the former stale-response race. Avoid clicking mutation controls.
+    for(const name of ['Fleeced Daily','Awards','Hall of Fleeced','Awards']){
+     const el=pick([name],root);if(el)el.click();
+     await sleep(90);
+    }
+    await sleep(1400);
+    snap('Hub: rapid tab switch');
+    const active=elements('[data-lh-view].active',root).map(e=>e.getAttribute('data-lh-view'));
+    add('League Hub','rapid tab: Awards remains selected',active.includes('awards')?'PASS':'WARN',JSON.stringify(active));
+   }
+  }
+  // Read-only endpoints: no UPDATE button, POST, mutations, form submissions, or schedule triggers.
+  const [awards,latest,highs,managers,market]=await Promise.all([
+   fetchJson('weekly awards','/.netlify/functions/league-hub?awards=1'),
+   fetchJson('completed week','/.netlify/functions/league-hub?league_latest=1'),
+   fetchJson('All-Time Highs','/.netlify/functions/league-hub?award_highs=1'),
+   fetchJson('Managers','/.netlify/functions/league-hub?managers=1'),
+   fetchJson('Market snapshots','/.netlify/functions/value-history?market=1')
+  ]);
+  const records=awards?.records||awards?.weekly_awards?.records||[];
+  api.weeklyRecordSummary=Array.isArray(records)?records.slice(-8).map(r=>({
+   season:r.season,week:r.week,offense:r.players_of_week?.offense||r.players_of_week?.offensive||null,
+   idp:r.players_of_week?.idp||null,source:r.award_source
+  })):null;
+  const ten=Array.isArray(records)?records.find(r=>Number(r.season)===2026&&Number(r.week)===10):null;
+  add('Badges','2026 Week 10 canonical awards record',ten?'PASS':'WARN',ten?'Record exists; inspect CMC player IDs in downloaded report':'No verified Week 10 award record returned');
+  api.completedWeek={season:latest?.season,week:latest?.week,available:latest?.available,teams:latest?.teams?.length};
+  add('Weekly','completed Sleeper matchup coverage',latest?.available&&latest?.teams?.length===32?'PASS':'WARN',JSON.stringify(api.completedWeek));
+  api.highsSummary={keys:Object.keys(highs||{}),recordCount:highs?.records?.length};
+  api.managerSummary={keys:Object.keys(managers||{}),currentManagers:managers?.current?.length};
+  api.marketSummary={keys:Object.keys(market||{}),snapshotCount:market?.snapshot_count??market?.snapshotCount};
+  // Only inspect; real historical accuracy needs archive-versus-displayed-value reconciliation.
+  add('Data provenance','Market history coverage','INFO',JSON.stringify(api.marketSummary));
+ }catch(e){add('Script','runner','FAIL',e.stack||e.message)}
+ finally{
+  console.error=prevError;console.warn=prevWarn;
+  window.removeEventListener('error',onError);window.removeEventListener('unhandledrejection',onRejection);
+  window.__FFL_QA_RUNNING=false;
+  const summary={pass:checks.filter(x=>x.status==='PASS').length,fail:checks.filter(x=>x.status==='FAIL').length,warn:checks.filter(x=>x.status==='WARN').length};
+  const report=jsonish({audit:'FFL Preview read-only visual/function audit v1',started,finished:new Date().toISOString(),location:location.origin,viewport:{width:innerWidth,height:innerHeight},summary,checks,pages,api,errors:errors.slice(0,65),screens});
+  window.__FFL_QA_REPORT=report;
+  console.group('%cFFL QA AUDIT — '+summary.pass+' passed / '+summary.fail+' failed / '+summary.warn+' warnings','color:#f4be30;font-size:17px');
+  console.table(checks);console.log('Complete report:',report);console.groupEnd();
+  try{
+   const blob=new Blob([JSON.stringify(report,null,2)],{type:'application/json'});
+   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ffl-preview-audit-'+Date.now()+'.json';
+   document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),30000);
+  }catch(e){console.warn('Report download blocked; run copy(JSON.stringify(__FFL_QA_REPORT))')}
+  console.info('Send the downloaded JSON to ChatGPT. For screenshot appearance, also attach 3–5 viewport captures of any flagged areas.');
+ }
+})();

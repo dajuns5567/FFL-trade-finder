@@ -23,3 +23,11 @@ test('read-only and production guards are preserved while waiting',()=>{
  assert.match(audit,/await sleep\(350\)/);
  assert.match(audit,/FFL QA AUDIT/);
 });
+
+test('server weekly badges and durable highs are measured independently of UI and Blob',()=>{
+ assert.match(audit,/Server milestone parity with five visible wins/);
+ assert.match(audit,/serverHasBoth&&badges\.length>=5\?'PASS':'FAIL'/);
+ assert.match(audit,/independent GitHub historical archive populated/);
+ assert.match(audit,/Number\(highs\.sources\?\.durable\)>0\?'PASS':'WARN'/);
+ assert.match(audit,/2026 weekly badge date provenance/);
+});

@@ -749,7 +749,7 @@ function reporterArchiveHTML(w){
  const reporters=w?.reporters||reporterDirectoryCache?.reporters||[],buttons=reporters.map(r=>'<button type="button" class="lh-reporter-desk '+(openReporterArchive===r.id?'active':'')+'" data-lh-reporter-archive="'+esc(r.id)+'"><b>'+esc(r.name)+'</b><small>'+esc(r.title)+'<br>'+esc(r.desk)+'</small></button>').join('');
  let panel='';
  if(openReporterArchive){const data=reporterArchiveCache[openReporterArchive],r=reporters.find(x=>x.id===openReporterArchive)||data?.reporter;if(data){const rows=data.articles||[];panel='<div class="lh-reporter-archive"><div class="lh-title-action"><h4>'+esc(r?.name||'Reporter')+' — Article Archive</h4><button type="button" class="secondary small" data-lh-reporter-close>Close</button></div><div class="lh-sub">'+esc((r?.desk||'')+(r?.signature?' • '+r.signature:''))+'</div>'+(rows.length?rows.map(x=>'<button type="button" class="secondary small lh-reporter-article-link" data-lh-reporter-article-season="'+x.season+'" data-lh-reporter-article-week="'+x.week+'" data-lh-reporter-article-team="'+esc(x.roster_id)+'"><b>'+esc(x.headline||x.team_name)+'</b><small>'+esc(x.season+' Week '+x.week+' • '+x.team_name+(String(x.roster_id)==='__league__'?' • Co-authored by all four desks':' • GM '+x.manager_name))+'</small></button>').join(''):'<div class="lh-sub">No archived articles yet.</div>')+'</div>'}else panel='<div class="lh-reporter-archive"><div class="lh-title-action"><div class="lh-sub">Loading reporter archive…</div><button type="button" class="secondary small" data-lh-reporter-close>Close</button></div></div>'}
- return '<div class="lh-archive"><b>Reporter Desks</b><div class="lh-sub">Four distinct Fleeced! Inquirer voices rotate across all 32 teams. Over four weeks, every reporter covers every team once.</div><div class="lh-reporter-desks">'+buttons+'</div>'+panel+'</div>'
+ return '<div class="lh-archive"><b>Reporter Desks</b><div class="lh-sub">Browse the four reporter desks and their archived team coverage.</div><div class="lh-reporter-desks">'+buttons+'</div>'+panel+'</div>'
 }
 function inquirerPlayerEntities(){
  if(inquirerPlayerLinkCache)return inquirerPlayerLinkCache;
@@ -836,7 +836,9 @@ function dailyHTML(all,stats,w,md,spotlightW=w,leagueWeek=liveLeagueWeekCache){
  const archive='<div class="lh-archive"><b>Fleeced! Inquirer Archive</b><div class="lh-sub">Jump straight to a season, week and team. It opens on the current completed week.</div>'+
   (broadcastArchive.length?archiveFiltersHTML(w):'<span class="lh-sub">The first archived report will appear after a completed week is captured.</span>')+
   '</div>'+reporterArchiveHTML(w);
- const topArchive=broadcastArchive.length?'<div class="lh-archive-top"><b>Browse Fleeced! Inquirer</b><div class="lh-sub">Choose a year, week and team, or open that week’s Weekly Recap.</div>'+archiveFiltersHTML(w)+'</div>':'';
+ // The archive section below is the ONLY year/week/team navigation.
+ // The retired top picker duplicated the same controls on each edition.
+ const topArchive='';
 
  let report='';
  if(w?.available){

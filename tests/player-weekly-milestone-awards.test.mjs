@@ -34,6 +34,15 @@ test('no fallback badge is awarded when the independent completed-league feed ha
  assert.equal(playerWeeklyMilestoneAwards(request('QB2',{verifiedCompletedWeek:0,canonical})).length,1);
 });
 
+test('historical weeks after the league fantasy season ends never earn invented weekly badges',()=>{
+ assert.deepEqual(playerWeeklyMilestoneAwards(request('QB2',{
+  season:2025,week:18,verifiedCompletedWeek:17,currentSeason:2026
+ })),[]);
+ assert.equal(playerWeeklyMilestoneAwards(request('QB2',{
+  season:2025,week:17,verifiedCompletedWeek:17,currentSeason:2026
+ })).length,1);
+});
+
 test('a verified League Hub weekly winner overrides a competing reconstructed winner',()=>{
  const canonical={players_of_week:{
   offense:{player_id:'QB1',points:10},
@@ -64,7 +73,7 @@ test('the live milestones endpoint uses the same completed-week fallback for cur
  const source=readFileSync(new URL('../netlify/functions/value-history.mjs',import.meta.url),'utf8');
  assert.match(source,/playerWeeklyMilestoneAwards\(\{/);
  assert.match(source,/currentCompletedWeek,/);
- assert.match(source,/verifiedCompletedWeek:year<currentSeason\?18:Math.min\(currentCompletedWeek,verifiedCurrentWeek\)/);
+ assert.match(source,/verifiedCompletedWeek:year<currentSeason\?17:Math.min\(17,currentCompletedWeek,verifiedCurrentWeek\)/);
  assert.doesNotMatch(source,/else if\(Number\(year\)<currentSeason\)/);
  assert.match(source,/weeklyAwardSource:'Fleeced locked completed-week awards/);
 });

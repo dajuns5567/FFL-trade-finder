@@ -114,17 +114,23 @@
      if(history){
       await click(history,950);
       let rendered='',loaded=false;
-      for(let t=0;t<10;t++){
+      for(let t=0;t<35;t++){
        const node=document.querySelector('#vhScoringMilestones');
        rendered=norm(text(node));
-       if(node&&(/2026\s*Week\s*10/i.test(rendered)||/Top Offensive Scorer/i.test(rendered))){loaded=true;break}
+       const complete=/2026\s*Week\s*10/i.test(rendered)&&
+         (rendered.match(/Top Offensive Scorer/g)||[]).length>=5;
+       if(node&&complete){loaded=true;break}
        await sleep(550);
       }
       api.cmcRenderedMilestones=cap(rendered,1400);
       const hasWeek10=/2026\s*Week\s*10/i.test(rendered);
-      add('Badges','McCaffrey Week 10 visibly rendered',hasWeek10?'PASS':loaded?'FAIL':'WARN',cap(rendered,600));
       const count=(rendered.match(/Top Offensive Scorer/g)||[]).length;
-      add('Badges','McCaffrey historical wins displayed',count>=5?'PASS':'WARN','Visible offensive scoring milestones: '+count);
+      const pending=/Loading completed-week scoring/i.test(rendered);
+      add('Badges','McCaffrey Week 10 visibly rendered',
+       hasWeek10?'PASS':pending?'WARN':'FAIL',cap(rendered,600));
+      add('Badges','McCaffrey historical wins displayed',
+       count>=5?'PASS':pending?'WARN':'FAIL','Visible offensive scoring milestones: '+count+
+       (loaded?' (verified settled)':''));
      }else add('Badges','McCaffrey profile link','WARN','Search did not render Sleeper player 4034');
      const navBack=pick(['PLAYER VALUES'],document.querySelector('header')||document);
      if(navBack)await click(navBack,380);

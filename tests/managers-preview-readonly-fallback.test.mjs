@@ -37,7 +37,7 @@ test('Netlify permits the isolated Managers PR preview, not an unsanctioned prod
  const toml=readFileSync(new URL('../netlify.toml',import.meta.url),'utf8');
  assert.match(toml,/e\.CONTEXT==='deploy-preview'/);
  assert.match(toml,/a516be3b-6c65-4f54-a9fb-23c5361bf3d2/);
- assert.match(toml,/'604'\]\.includes\(String\(e\.REVIEW_ID\)\)/,'current integrated preview must be explicitly allowlisted');
+ assert.match(toml,/'606'\]\.includes\(String\(e\.REVIEW_ID\)\)/,'current integrated preview must be explicitly allowlisted');
  assert.match(toml,/e\.CONTEXT==='production'&&e\.BRANCH==='main'/);
  assert.doesNotMatch(toml,/Release FFL Managers/);
 });

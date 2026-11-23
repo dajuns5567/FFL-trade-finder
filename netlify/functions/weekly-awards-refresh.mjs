@@ -17,7 +17,7 @@ export default async function weeklyAwardRefresh(){
   // Never depend on Inquirer publishing. weeklyAwards independently confirms
   // a complete Sleeper league week, both offensive/IDP winners and manager
   // awards before retaining results. Writes only if verified data changed.
-  const result=await weeklyAwards({persist:true});
+  const result=await weeklyAwards({persist:true,strictPersist:true});
   const records=Array.isArray(result?.records)?result.records:[];
   const latest=records.at(-1)||null;
   return new Response(JSON.stringify({

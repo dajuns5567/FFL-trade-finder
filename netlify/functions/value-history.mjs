@@ -213,21 +213,52 @@ function valuationModelId(snapshot){
  // explicitly supplied, well-formed valuation_model can establish an era.
  return /^[a-z0-9][a-z0-9._:-]{2,95}$/i.test(raw)?raw:null;
 }
+// Market-only provenance reconciliation for a verified silent handoff:
+// the final untagged archive observation may already contain the next
+// explicitly tagged model's values. Assign the preceding observation to
+// that model ONLY when the full player population is near-identical.
+// Do not modify immutable historical snapshots or infer from a single player.
+function marketSilentModelBridge(before,tagged){
+ if(valuationModelId(before)!==null||valuationModelId(tagged)===null)return false;
+ const old=rowMap(before),next=rowMap(tagged),min=Math.min(old.size,next.size);
+ if(min<100)return false;
+ let shared=0,near=0,totalDiff=0;
+ for(const [id,row] of old){
+  const other=next.get(id);
+  if(!other||String(other.pos)!==String(row.pos))continue;
+  const a=Number(row.value),b=Number(other.value);
+  if(!Number.isFinite(a)||!Number.isFinite(b))continue;
+  shared++;
+  const delta=Math.abs(a-b);
+  if(delta<=10)near++;
+  totalDiff+=delta;
+ }
+ return shared>=Math.ceil(min*.9)&&near>=Math.ceil(shared*.96)&&
+  totalDiff/shared<=6;
+}
+function effectiveMarketModels(ordered){
+ const ids=ordered.map(valuationModelId);
+ for(let i=1;i<ordered.length;i++){
+  const current=ids[i],previous=ids[i-1];
+  if(current&&previous===null&&marketSilentModelBridge(ordered[i-1],ordered[i]))
+   ids[i-1]=current;
+ }
+ return ids;
+}
 function comparableMarketEra(snaps){
  const ordered=(snaps||[]).filter(x=>x?.t&&Array.isArray(x?.rows))
   .slice().sort((a,b)=>String(a.t).localeCompare(String(b.t)));
  if(!ordered.length)return{snaps:[],model:null,changedAt:null,priorModel:null};
- const model=valuationModelId(ordered.at(-1));
- // An entirely unversioned archive keeps its historical behavior. But an
- // unversioned snapshot after a tagged one is NOT evidence that it shares
- // that model: isolate that suffix to avoid fabricated market movement.
- if(!model&&!ordered.some(s=>valuationModelId(s)!==null))
+ const modelIds=effectiveMarketModels(ordered),model=modelIds.at(-1);
+ // Unversioned history remains unversioned unless population-level evidence
+ // identifies a silent transition immediately before a tagged snapshot.
+ if(!model&&!modelIds.some(Boolean))
   return{snaps:ordered,model:null,changedAt:null,priorModel:null};
  let first=ordered.length-1;
- while(first>0&&valuationModelId(ordered[first-1])===model)first--;
+ while(first>0&&modelIds[first-1]===model)first--;
  return{snaps:ordered.slice(first),model,
   changedAt:first>0?ordered[first].t:null,
-  priorModel:first>0?valuationModelId(ordered[first-1]):null};
+  priorModel:first>0?modelIds[first-1]:null};
 }
 function pointsFromSnapshots(snaps,playerId){
   const points=[];
@@ -651,9 +682,9 @@ function contiguousMarketMovement(snaps,days){
   const anchor=before&&start-Date.parse(before.t)<=tolerance?before:null;
   const windowed=anchor?[anchor,...inside]:inside;
   const base=windowed[0]||null;
-  const groups=[];
-  for(const snap of windowed){
-    const model=valuationModelId(snap),last=groups.at(-1);
+  const groups=[],modelIds=effectiveMarketModels(windowed);
+  for(let i=0;i<windowed.length;i++){
+    const snap=windowed[i],model=modelIds[i],last=groups.at(-1);
     if(last&&last.model===model)last.snaps.push(snap);
     else groups.push({model,snaps:[snap]});
   }

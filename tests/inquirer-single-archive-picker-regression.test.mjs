@@ -24,5 +24,7 @@ test('one reporter archive remains but no mandatory four distinct voices copy',(
  assert.doesNotMatch(ui,/Four distinct Fleeced! Inquirer voices rotate/);
 });
 test('site version key ensures cached duplicate-selector UI is not reused',()=>{
- assert.match(loader,/league-hub-v451\.js\?v=547/);
+ const match=loader.match(/league-hub-v451\.js\?v=(\d+)/);
+ assert.ok(match,'League Hub browser version must be explicitly keyed');
+ assert.ok(Number(match[1])>=547,'do not fall back to pre-selector-fix League Hub assets');
 });

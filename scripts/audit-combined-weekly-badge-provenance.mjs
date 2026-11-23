@@ -10,6 +10,7 @@ import {applyApprovedAwardsBrowser} from './approved-awards-browser-overlay.mjs'
 import {applyApprovedAwardsServer} from './approved-awards-server-overlay.mjs';
 import {applyApprovedManagersBrowser} from './approved-managers-browser-overlay.mjs';
 import {applyApprovedManagersServer} from './approved-managers-server-overlay.mjs';
+import {applyApprovedHubRefresh} from './approved-hub-refresh-overlay.mjs';
 import {readFileSync} from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -22,7 +23,7 @@ export const VERIFIED_SOURCES=[
  {pr:579,file:'value-history-v276.js'},
  {pr:579,file:'netlify/functions/lib/player-weekly-milestone-awards.mjs'}
 ];
-export function verifyCombinedBadgeProvenance(readCurrent,readRef,{approvedMarketOverlay=false,approvedAwardsOverlay=false,approvedManagersOverlay=false}={}){
+export function verifyCombinedBadgeProvenance(readCurrent,readRef,{approvedMarketOverlay=false,approvedAwardsOverlay=false,approvedManagersOverlay=false,approvedHubRefresh=false}={}){
  const mismatch=[];
  for(const x of VERIFIED_SOURCES){
   const current=readCurrent(x.file),source=readRef(x.pr,x.file);
@@ -39,6 +40,7 @@ export function verifyCombinedBadgeProvenance(readCurrent,readRef,{approvedMarke
    if(x.file==='league-hub-v451.js')expected=applyApprovedManagersBrowser(expected);
    if(x.file==='netlify/functions/league-hub.mjs')expected=applyApprovedManagersServer(expected);
   }
+  if(approvedHubRefresh&&x.file==='league-hub-v451.js')expected=applyApprovedHubRefresh(expected);
   if(current!==expected)mismatch.push({pr:x.pr,file:x.file,
    reason:'integration source differs from independently tested PR head'});
  }
@@ -50,7 +52,7 @@ export function verifyLocalBadgeIntegration(){
  return verifyCombinedBadgeProvenance(
   file=>readFileSync(path.join(process.cwd(),file),'utf8'),
   (pr,file)=>git('show','refs/remotes/pr-badge-source/'+pr+':'+file),
-  {approvedMarketOverlay:true,approvedAwardsOverlay:true,approvedManagersOverlay:true}
+  {approvedMarketOverlay:true,approvedAwardsOverlay:true,approvedManagersOverlay:true,approvedHubRefresh:true}
  );
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){

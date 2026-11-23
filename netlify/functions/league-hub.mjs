@@ -928,12 +928,19 @@ export async function weeklyAwards({additionalLockedEditions=[],persist=true,str
  const weeklyAwardsChanged=JSON.stringify(records)!==JSON.stringify(next);
  if(persist&&strictPersist&&!s)
   throw Error('Weekly award persistence unavailable; scheduled capture not confirmed');
+ if(persist&&strictPersist&&next.length<records.length)
+  throw Error('Scheduled awards would erase prior history; retain existing verified records');
  if(persist&&s&&weeklyAwardsChanged){
   try{await s.setJSON('awards/weekly.json',{schema_version:1,records:next})}
   catch(error){
    console.warn('league-awards-cache-write-unavailable',String(error?.message||error));
    if(strictPersist)throw error;
   }
+ }
+ if(persist&&strictPersist&&s){
+  const saved=await s.get('awards/weekly.json',{type:'json'});
+  if(!Array.isArray(saved?.records)||JSON.stringify(saved.records)!==JSON.stringify(next))
+   throw Error('Scheduled weekly badge readback disagrees with verified awards');
  }
  return{schema_version:1,records:next};
 }

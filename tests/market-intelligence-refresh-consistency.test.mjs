@@ -34,7 +34,7 @@ test('Market Dashboard does not reinstate removed white explanations',()=>{
  const dashboard=source.slice(start,start+4500);
  assert.ok(start>=0);
  assert.doesNotMatch(dashboard,/modelEraNote\(m\)|Current values and ranks come from Player Values|original finished-value and overall-rank fluctuation/);
- assert.doesNotMatch(source,/function modelEraNote\(m\)/);
+ assert.doesNotMatch(source,/\bmodelEraNote\(/,'removed helper must have no dangling callers');
  assert.match(dashboard,/id="vhMarketMovers"/);
  assert.match(dashboard,/data-vh-market-jump="vhMarketHeat"/);
  assert.match(source,/function marketIntelligenceMarkup\(\)/);

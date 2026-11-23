@@ -19,6 +19,8 @@ test('verified Sleeper League Hub week awards are valid with no Inquirer publica
  assert.equal(isTrustedWeeklyAwardCache(withoutSource,2026,11),false);
  assert.equal(isTrustedWeeklyAwardCache({...rec(),verified_roster_count:31},2026,11),false);
  assert.equal(isTrustedWeeklyAwardCache({...rec(),players_of_week:{offense:winner}},2026,11),false);
+ assert.equal(isTrustedWeeklyAwardCache({...rec(),players_of_week:{offense:{player_id:'QB-verified',points:null},defense:defender}},2026,11),false);
+ assert.equal(isTrustedWeeklyAwardCache({...rec(),players_of_week:{offense:winner,defense:{player_id:'EDGE-verified',points:'not-scored'}}},2026,11),false);
  assert.equal(isTrustedWeeklyAwardCache({...rec(),manager_awards:[]},2026,11),false);
 });
 

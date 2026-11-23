@@ -1862,7 +1862,7 @@ function scoringMilestonesRows(scoring,loading=false){
     '<span class="vh-milestone-time">'+esc(String(a.season))+' Week '+esc(String(a.week))+
     ' • '+(a.week_started_at?esc(dateShort(a.week_started_at)):'date unavailable')+
     '</span></span><span class="vh-milestone-award">🏅 '+
-    (Number.isFinite(Number(a.points))?Number(a.points).toFixed(2):'—')+' pts</span></div>').join('');
+    (a.points!=null&&Number.isFinite(Number(a.points))?Number(a.points).toFixed(2):'—')+' pts</span></div>').join('');
   return rows+awards;
 }
 async function loadPlayerScoring(id){

@@ -14,6 +14,8 @@ on:
       - 'scripts/approved-market-intelligence-overlay.mjs'
       - 'scripts/approved-market-period-browser-overlay.mjs'
       - 'scripts/approved-market-period-server-overlay.mjs'
+      - 'scripts/approved-awards-browser-overlay.mjs'
+      - 'scripts/approved-awards-server-overlay.mjs'
       - 'tests/audit-combined-weekly-badge-provenance.test.mjs'
       - 'tests/player-weekly-milestone-awards.test.mjs'
       - 'tests/player-weekly-badge-completion-readback.test.mjs'
@@ -51,6 +53,8 @@ jobs:
           node --check scripts/approved-market-intelligence-overlay.mjs
           node --check scripts/approved-market-period-browser-overlay.mjs
           node --check scripts/approved-market-period-server-overlay.mjs
+          node --check scripts/approved-awards-browser-overlay.mjs
+          node --check scripts/approved-awards-server-overlay.mjs
           node --test tests/audit-combined-weekly-badge-provenance.test.mjs
           node scripts/audit-combined-weekly-badge-provenance.mjs
       - name: Check combined runtime syntax and asset loader

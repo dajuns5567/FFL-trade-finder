@@ -57,7 +57,23 @@ export function loadPendingFeaturePrSources(){
  return verifyPendingFeaturePrSources((pr,file)=>execFileSync('git',
   ['show','refs/remotes/pr-audit/'+pr+':'+file],{encoding:'utf8'}));
 }
+// Negative contracts: once approved copy has been removed from main, it may
+// never be reintroduced by an older browser bundle or overlapping PR.
+// The clean-main precondition permits isolated #583 to ship independently.
+export const removedMarketCopy=[
+ 'Current values and ranks come from Player Values; market movement, historical records, and time-window changes are archived observations',
+ 'The original finished-value and overall-rank fluctuation boards remain unchanged.',
+ 'function modelEraNote(m)'
+];
+export function verifyRemovedCopyStaysRemoved(base,candidate){
+ const filename='value-history-v276.js';
+ const old=base(filename)||'',now=candidate(filename)||'';
+ const regressed=removedMarketCopy.filter(copy=>!old.includes(copy)&&now.includes(copy));
+ if(regressed.length)throw Error('Removed Market Dashboard explanations reappeared: '+JSON.stringify(regressed));
+ return{removed_copy_protected:removedMarketCopy.filter(copy=>!old.includes(copy)).length};
+}
 export function verifyNoFeatureRollback(base,candidate){
+ verifyRemovedCopyStaysRemoved(base,candidate);
  const old=featureCoverage(base),now=featureCoverage(candidate),broken=[];
  for(const before of old)if(before.present&&!now.find(x=>x.id===before.id)?.present)
   broken.push(before.id);

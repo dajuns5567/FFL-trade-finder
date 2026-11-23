@@ -84,7 +84,7 @@ test('fail closed when both responses are blocked, incomplete, or fabricated',as
   assert.equal(result.valid,false);
   assert.equal(result.status,'failed');
   assert.equal(result.rankings.length,0);
-  assert.match(result.error,/previous verified consensus must be retained/);
+  assert.match(result.error,/previous verified consensus must be retained/i);
   assert.equal(result.diagnostics.attempts.length,2);
  }
 });

@@ -65,7 +65,7 @@ if(document.readyState==='complete')void verifyLiveValuationModelV95();
 // Experimental deploy previews may read archival history but must never
 // persist their branch-specific ranks into the canonical shared timeline.
 const isValueHistoryDeployPreview=()=>/^(?:deploy-preview-\d+|[a-f0-9]{24})--[a-z0-9-]+\.netlify\.app$/i.test(location.hostname);
-let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,marketInsightsCache=null,marketSignalCache=null,marketInsightsPending=null,marketSignalsPending=null,marketIntelPeriod='7D',marketVolatilityPool='ALL',currentPlayerId=null,trackedTeamId=null,playerHistoryTeamId=null,currentView='market',marketSort={key:'value',dir:-1},teamNetSort={key:'value',dir:-1},teamAttributionPeriod='7D',tradeHistoryCache=null,tradeHistoryCacheAt=0,tradeTeamFilter='',tradeYearFilter='',tradeMonthFilter='',marketPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D'},teamPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D',posRankRisers:'30D',posRankFallers:'30D'},marketPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL'},teamPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL',posRankRisers:'ALL',posRankFallers:'ALL'},playerScoringCache=new Map(),playerScoringPending=new Map(),teamNetCache=new Map(),tradeDetailState=new Map();
+let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,marketInsightsCache=null,marketSignalCache=null,marketInsightsPending=null,marketSignalsPending=null,marketIntelPeriod='7D',marketVolatilityPool='ALL',currentPlayerId=null,trackedTeamId=null,playerHistoryTeamId=null,currentView='market',marketSort={key:'value',dir:-1},teamNetSort={key:'value',dir:-1},teamAttributionPeriod='7D',tradeHistoryCache=null,tradeHistoryCacheAt=0,tradeTeamFilter='',tradeYearFilter='',tradeMonthFilter='',marketPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D'},teamPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D',posRankRisers:'30D',posRankFallers:'30D'},marketPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL'},teamPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL',posRankRisers:'ALL',posRankFallers:'ALL'},playerScoringCache=new Map(),playerScoringCacheAt=new Map(),playerScoringPending=new Map(),teamNetCache=new Map(),tradeDetailState=new Map();
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 const tv=()=>window.tradeValueNormalizationV139||window.tradeValueNormalizationV130||{};
@@ -1343,7 +1343,7 @@ function teamTradeImpactCard(teamId){
 }
 async function historyFetch(id){let last;for(let attempt=0;attempt<2;attempt++){try{const r=await fetch(`${API}?player_id=${encodeURIComponent(id)}`,{cache:'no-store'});if(!r.ok)throw Error('history unavailable');return await r.json()}catch(e){last=e;if(attempt===0)await new Promise(r=>setTimeout(r,220))}}throw last||Error('history unavailable')}
 async function scoringFetch(id){
-  const key=String(id);if(playerScoringCache.has(key))return{player_id:key,scoring_milestones:playerScoringCache.get(key)};
+  const key=String(id);if(playerScoringCache.has(key)&&Date.now()-(playerScoringCacheAt.get(key)||0)<60000)return{player_id:key,scoring_milestones:playerScoringCache.get(key)};
   if(playerScoringPending.has(key))return playerScoringPending.get(key);
   const pending=(async()=>{let last;for(let attempt=0;attempt<2;attempt++){try{const r=await fetch(`${API}?player_scoring=1&player_id=${encodeURIComponent(key)}`,{cache:'no-store'});if(!r.ok)throw Error('scoring milestones unavailable');return await r.json()}catch(e){last=e;if(attempt===0)await new Promise(r=>setTimeout(r,220))}}throw last||Error('scoring milestones unavailable')})();
   playerScoringPending.set(key,pending);try{return await pending}finally{playerScoringPending.delete(key)}
@@ -1862,21 +1862,41 @@ function scoringMilestonesRows(scoring,loading=false){
     '<span class="vh-milestone-time">'+esc(String(a.season))+' Week '+esc(String(a.week))+
     ' • '+(a.week_started_at?esc(dateShort(a.week_started_at)):'date unavailable')+
     '</span></span><span class="vh-milestone-award">🏅 '+
-    (Number.isFinite(Number(a.points))?Number(a.points).toFixed(2):'—')+' pts</span></div>').join('');
+    (a.points!=null&&Number.isFinite(Number(a.points))?Number(a.points).toFixed(2):'—')+' pts</span></div>').join('');
   return rows+awards;
 }
 async function loadPlayerScoring(id){
-  const key=String(id);if(playerScoringCache.has(key))return;
+  const key=String(id);if(playerScoringCache.has(key)&&Date.now()-(playerScoringCacheAt.get(key)||0)<60000)return;
   try{
     const data=await scoringFetch(key);
     const value=data?.scoring_milestones;
-    playerScoringCache.set(key,value&&typeof value==='object'?value:null);
+    playerScoringCache.set(key,value&&typeof value==='object'?value:null);playerScoringCacheAt.set(key,Date.now());
   }catch(error){
     console.warn('Player scoring milestones unavailable',key,error);
-    playerScoringCache.set(key,null);
+    // A transient Sleeper or badge endpoint failure cannot erase previously
+    // verified Player-of-the-Week awards on an open profile.
+    if(!playerScoringCache.has(key))playerScoringCache.set(key,null);
+    playerScoringCacheAt.set(key,Date.now());
   }
   if(String(currentPlayerId)!==key)return;
   const target=document.getElementById('vhScoringMilestones');if(target)target.innerHTML=scoringMilestonesRows(playerScoringCache.get(key),false);
+}
+const PLAYER_WEEKLY_BADGE_REFRESH_MS=60000;
+function refreshVisiblePlayerWeeklyBadges(){
+ const panel=document.getElementById('valueHistory');
+ if(currentView!=='player'||!currentPlayerId||document.hidden||!panel||panel.hidden)return;
+ if(Date.now()-(playerScoringCacheAt.get(String(currentPlayerId))||0)<PLAYER_WEEKLY_BADGE_REFRESH_MS)return;
+ loadPlayerScoring(String(currentPlayerId)).catch(error=>
+  console.warn('player-weekly-badges-visible-refresh-unavailable',String(error?.message||error)));
+}
+function installPlayerWeeklyBadgeRefresh(){
+ setInterval(refreshVisiblePlayerWeeklyBadges,PLAYER_WEEKLY_BADGE_REFRESH_MS);
+ window.addEventListener('focus',refreshVisiblePlayerWeeklyBadges);
+ document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden)refreshVisiblePlayerWeeklyBadges();
+ });
+ window.addEventListener('fll:canonical-values-ready',refreshVisiblePlayerWeeklyBadges);
+ window.addEventListener('fll:valuation-refreshed',refreshVisiblePlayerWeeklyBadges);
 }
 async function loadPlayer(id){
   const box=document.getElementById('vhContent');if(!box)return;box.innerHTML='<div class="vh-empty">Loading player history…</div>';
@@ -1884,7 +1904,7 @@ async function loadPlayer(id){
     const data=await historyFetch(id),pts=Array.isArray(data.points)?data.points:[],key=String(id);
     if(data.scoring_milestones)playerScoringCache.set(key,data.scoring_milestones);
     renderPlayerProfile(id,pts,'ALL');
-    if(!playerScoringCache.has(key))loadPlayerScoring(key);
+    loadPlayerScoring(key);
   }catch{box.innerHTML='<div class="notice">Historical data is temporarily unavailable. Current values and all trade tools are unaffected.</div>'}
 }
 
@@ -2372,7 +2392,7 @@ function updateLiveConsumersV102(){
  else if(currentView==='playerHub'&&playerHistoryTeamId&&marketCache)renderPlayerHistoryTeamRoster();
  else if(currentView==='player'&&currentPlayerId)loadPlayer(currentPlayerId).catch(()=>{});
 }
-function boot(){addShell();searchTradesOnSiteOpen();window.addEventListener('fll:valuation-refreshed',()=>{
+function boot(){addShell();searchTradesOnSiteOpen();installPlayerWeeklyBadgeRefresh();window.addEventListener('fll:valuation-refreshed',()=>{
  updateLiveConsumersV102()
 });
  window.addEventListener('fll:canonical-values-ready',()=>{

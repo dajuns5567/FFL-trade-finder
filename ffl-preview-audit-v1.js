@@ -55,7 +55,7 @@
   add('Environment','viewport','INFO',innerWidth+'×'+innerHeight+' DPR '+devicePixelRatio);
   add('Environment','expected JS assets', [...document.scripts].some(s=>/trade-value-normalization-v139\.js\?v=142/.test(s.src))?'PASS':'FAIL','pick normalizer ?v=142');
   add('Environment','League Hub key', [...document.scripts].some(s=>/league-hub-v451\.js\?v=557/.test(s.src))?'PASS':'FAIL','Hall and tab fixes ?v=557');
-  add('Environment','Value History key', [...document.scripts].some(s=>/value-history-v276\.js\?v=549/.test(s.src))?'PASS':'FAIL','history ?v=549');
+  add('Environment','Value History key', [...document.scripts].some(s=>/value-history-v276\.js\?v=550/.test(s.src))?'PASS':'FAIL','history ?v=550');
   snap('Initial page');
   if(document.querySelector('#vhScoringMilestones')&&/Christian McCaffrey/i.test(document.body.innerText)){
     await sleep(1600);
@@ -74,26 +74,60 @@
    pages[name]={headings:screens[name].headings,excerpt:screens[name].bodyExcerpt};
    add('Navigation',name,/error|failed to load|undefined is not|something went wrong/i.test(text(appRoot()).slice(0,260))?'WARN':'PASS',cap(text(appRoot()),170));
    if(name==='PLAYER VALUES'){
-    const body=norm(text(appRoot()));
-    const p=[...body.matchAll(/(?:2027|2028|2029|2030|2031)\s*R[123][\s\S]{0,70}?(?:Value\s*([\d,]+))/gi)].slice(0,50).map(m=>({year:+m[0].slice(0,4),round:+m[0].match(/R([123])/i)[1],value:+m[1].replace(/,/g,'')}));
-    pages.pickSamples=p;
-    const visiblePickValues=[...document.querySelectorAll('#playerValuesBody .asset')]
-     .filter(visible).map(row=>{
-      const m=text(row).match(/Value\s*([\d,]+)/i);
-      return m?Number(m[1].replaceAll(',','')):NaN;
-     }).filter(Number.isFinite);
-    if(visiblePickValues.length>1){
-     const misordered=visiblePickValues.flatMap((v,i)=>
-      i&&v>visiblePickValues[i-1]?[{position:i+1,previous:visiblePickValues[i-1],value:v}]:[]);
-     add('Draft picks','global displayed-value sort',misordered.length?'FAIL':'PASS',
-      JSON.stringify({count:visiblePickValues.length,first:visiblePickValues.slice(0,12),misordered:misordered.slice(0,8)}));
-    }else add('Draft picks','global displayed-value sort','WARN','No visible draft pick rows found');
-    for(const round of [1,2,3]){
-     const vals=p.filter(x=>x.round===round),grp={};
-     vals.forEach(x=>(grp[x.year]??=[]).push(x.value));
-     const years=Object.keys(grp).sort(),first=years.map(y=>Math.max(...grp[y]));
-     if(years.length>=2)add('Draft picks','round '+round+' decreasing year-over-year',first.every((v,i)=>!i||v<first[i-1])?'PASS':'WARN',JSON.stringify({years,highestValues:first}));
-     else add('Draft picks','round '+round+' source sample','INFO','Not all years visible in rendered page; inspect pick values manually');
+    // Select the Draft Picks subsection. Comparing the ALL player list with
+    // Draft Picks as one array creates a false discontinuity around row 579.
+    const draftTab=document.querySelector('[data-value-filter="DRAFT"]');
+    if(!draftTab){add('Draft picks','dedicated Draft Picks filter','FAIL','Cannot locate data-value-filter=DRAFT');}
+    else{
+     await click(draftTab,500);
+     const pickNodes=elements('#playerValuesBody .asset');
+     const picks=pickNodes.map(row=>{
+      const label=norm(text(row)),m=label.match(/\b(20\d{2})\s+R([123])\b/i),v=label.match(/\bValue\s*([\d,]+)/i);
+      return m&&v?{year:Number(m[1]),round:Number(m[2]),value:Number(v[1].replace(/,/g,'')),label:cap(label,115)}:null;
+     }).filter(Boolean);
+     pages.pickSamples=picks.slice(0,55);
+     add('Draft picks','dedicated Draft Picks list populated',picks.length?'PASS':'FAIL','Recognized '+picks.length+' pick rows / '+pickNodes.length+' visible rows');
+     if(picks.length>1){
+      const wrong=picks.flatMap((p,i)=>i&&p.value>picks[i-1].value?[{row:i+1,previous:picks[i-1],current:p}]:[]);
+      add('Draft picks','descending canonical displayed values',wrong.length?'FAIL':'PASS',
+       JSON.stringify({total:picks.length,first:picks.slice(0,6),wrong:wrong.slice(0,8)}));
+      for(const round of [1,2,3]){
+       const yearTop={};
+       picks.filter(x=>x.round===round).forEach(x=>{yearTop[x.year]=Math.max(yearTop[x.year]||0,x.value)});
+       const years=Object.keys(yearTop).map(Number).sort((a,b)=>a-b);
+       const wrongYears=years.slice(1).filter((y,i)=>yearTop[y]>yearTop[years[i]]);
+       add('Draft picks','round '+round+' year-to-year cap',years.length<2?'WARN':wrongYears.length?'WARN':'PASS',
+        JSON.stringify({years:years.map(y=>({year:y,highest:yearTop[y]})),violations:wrongYears}));
+      }
+     }else add('Draft picks','descending canonical displayed values','WARN','Insufficient rendered pick rows');
+     const allTab=document.querySelector('[data-value-filter="ALL"]');
+     if(allTab)await click(allTab,220);
+    }
+    // Open the actual McCaffrey profile to validate rendered milestones, rather
+    // than assuming a successful canonical API record equals a visible badge.
+    const search=document.querySelector('#allValueSearch');
+    if(search){
+     search.value='Christian McCaffrey';
+     search.dispatchEvent(new Event('input',{bubbles:true}));
+     await sleep(250);
+     const history=document.querySelector('[data-pv-history="4034"]');
+     if(history){
+      await click(history,950);
+      let rendered='',loaded=false;
+      for(let t=0;t<10;t++){
+       const node=document.querySelector('#vhScoringMilestones');
+       rendered=norm(text(node));
+       if(node&&(/2026\s*Week\s*10/i.test(rendered)||/Top Offensive Scorer/i.test(rendered))){loaded=true;break}
+       await sleep(550);
+      }
+      api.cmcRenderedMilestones=cap(rendered,1400);
+      const hasWeek10=/2026\s*Week\s*10/i.test(rendered);
+      add('Badges','McCaffrey Week 10 visibly rendered',hasWeek10?'PASS':loaded?'FAIL':'WARN',cap(rendered,600));
+      const count=(rendered.match(/Top Offensive Scorer/g)||[]).length;
+      add('Badges','McCaffrey historical wins displayed',count>=5?'PASS':'WARN','Visible offensive scoring milestones: '+count);
+     }else add('Badges','McCaffrey profile link','WARN','Search did not render Sleeper player 4034');
+     const navBack=pick(['PLAYER VALUES'],document.querySelector('header')||document);
+     if(navBack)await click(navBack,380);
     }
    }
    if(name==='VALUE HISTORY'){

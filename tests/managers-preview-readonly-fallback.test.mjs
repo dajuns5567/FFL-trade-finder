@@ -37,7 +37,7 @@ test('Netlify permits the isolated Managers PR preview, not an unsanctioned prod
  const toml=readFileSync(new URL('../netlify.toml',import.meta.url),'utf8');
  assert.match(toml,/e\.CONTEXT==='deploy-preview'/);
  assert.match(toml,/a516be3b-6c65-4f54-a9fb-23c5361bf3d2/);
- assert.match(toml,/'586'\]\.includes\(String\(e\.REVIEW_ID\)\)/);
+ assert.match(toml,/'586'(?:,'\\d+')+\]\.includes\(String\(e\.REVIEW_ID\)\)/,'approved Manager preview remains allowlisted alongside later preview PRs');
  assert.match(toml,/e\.CONTEXT==='production'&&e\.BRANCH==='main'/);
  assert.doesNotMatch(toml,/Release FFL Managers/);
 });
@@ -64,7 +64,7 @@ test('browser Managers refreshes on revisits, visibility and focus without repla
  assert.match(ui,/await render\(currentView,selectedManagerId\)/);
  assert.match(ui,/return managerCache\|\|\{current:\[\],graveyard:\[\],career:\[\],unavailable:true\}/);
  assert.match(ui,/if\(generation===managerRequestGeneration\)/);
- assert.match(ui,/clearManagerHistoryCache\(\); \/\/ finalized week/);
+ assert.match(ui,/clearManagerHistoryCache\(\); \/\/ verified completed week invalidates stale manager history/);
  assert.match(loader,/league-hub-v451\.js\?v=557/);
 });
 

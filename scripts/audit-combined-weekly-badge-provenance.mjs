@@ -4,6 +4,8 @@
 // whole-file replacement during feature reconciliation.
 import {execFileSync} from 'node:child_process';
 import {applyApprovedMarketOverlay} from './approved-market-intelligence-overlay.mjs';
+import {applyApprovedMarketBrowserPeriods} from './approved-market-period-browser-overlay.mjs';
+import {applyApprovedMarketServerPeriods} from './approved-market-period-server-overlay.mjs';
 import {readFileSync} from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -20,7 +22,9 @@ export function verifyCombinedBadgeProvenance(readCurrent,readRef,{approvedMarke
  const mismatch=[];
  for(const x of VERIFIED_SOURCES){
   const current=readCurrent(x.file),source=readRef(x.pr,x.file);
-  const expected=approvedMarketOverlay&&x.file==='value-history-v276.js'?applyApprovedMarketOverlay(source):source;
+  const expected=!approvedMarketOverlay?source:
+   x.file==='value-history-v276.js'?applyApprovedMarketBrowserPeriods(applyApprovedMarketOverlay(source)):
+   x.file==='netlify/functions/value-history.mjs'?applyApprovedMarketServerPeriods(source):source;
   if(current!==expected)mismatch.push({pr:x.pr,file:x.file,
    reason:'integration source differs from independently tested PR head'});
  }

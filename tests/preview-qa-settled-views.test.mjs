@@ -31,3 +31,9 @@ test('server weekly badges and durable highs are measured independently of UI an
  assert.match(audit,/Number\(highs\.sources\?\.durable\)>0\?'PASS':'WARN'/);
  assert.match(audit,/2026 weekly badge date provenance/);
 });
+
+test('season-long server scoring acceptance has an explicit timeout independent of fast API calls',()=>{
+ assert.match(audit,/const fetchJson=async \(label,path,\{timeoutMs=10000\}=\{\}\)/);
+ assert.match(audit,/setTimeout\(\(\)=>ctl\.abort\(\),timeoutMs\)/);
+ assert.match(audit,/player_scoring=1&player_id=4034'\,\{timeoutMs:45000\}\)/);
+});

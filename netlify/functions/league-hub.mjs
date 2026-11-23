@@ -1,7 +1,7 @@
 import {inquirerMarketCutoff,editionAvailability} from './lib/inquirer-market-window.mjs';
 import {completedLeagueWeekView} from './lib/league-completed-week.mjs';
 import {selectHotSeat,supplementCompletedHotSeat} from './lib/league-hot-seat.mjs';
-import {mergeAwardHighs} from './lib/league-all-time-highs.mjs';
+import {mergeAwardHighs,verifiedDurableAwardHighRecords} from './lib/league-all-time-highs.mjs';
 import {mergeCompletedWeeklyAwardStats} from './lib/weekly-award-stats-merge.mjs';
 import valueHistoryHandler from './value-history.mjs';
 // Forward drafts must be reviewed as written; synthetic scoreboard sentence repair is retired.
@@ -1123,9 +1123,7 @@ async function githubDurableAwardHighs(){
    headers:{accept:'application/json'}});
   if(!response.ok)return[];
   const result=await response.json();
-  return result?.schema_version===1&&
-   result?.source==='github-canonical-headless-all-time-highs'&&
-   result?.league_id===LEAGUE&&Array.isArray(result.records)?result.records:[];
+  return verifiedDurableAwardHighRecords(result,LEAGUE);
  }catch(error){
   console.warn('league-awards-durable-read-unavailable',String(error?.message||error));return[];
  }

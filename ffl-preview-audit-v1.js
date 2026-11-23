@@ -69,6 +69,17 @@
     const body=norm(text(appRoot()));
     const p=[...body.matchAll(/(?:2027|2028|2029|2030|2031)\s*R[123][\s\S]{0,70}?(?:Value\s*([\d,]+))/gi)].slice(0,50).map(m=>({year:+m[0].slice(0,4),round:+m[0].match(/R([123])/i)[1],value:+m[1].replace(/,/g,'')}));
     pages.pickSamples=p;
+    const visiblePickValues=[...document.querySelectorAll('#playerValuesBody .asset')]
+     .filter(visible).map(row=>{
+      const m=text(row).match(/Value\s*([\d,]+)/i);
+      return m?Number(m[1].replaceAll(',','')):NaN;
+     }).filter(Number.isFinite);
+    if(visiblePickValues.length>1){
+     const misordered=visiblePickValues.flatMap((v,i)=>
+      i&&v>visiblePickValues[i-1]?[{position:i+1,previous:visiblePickValues[i-1],value:v}]:[]);
+     add('Draft picks','global displayed-value sort',misordered.length?'FAIL':'PASS',
+      JSON.stringify({count:visiblePickValues.length,first:visiblePickValues.slice(0,12),misordered:misordered.slice(0,8)}));
+    }else add('Draft picks','global displayed-value sort','WARN','No visible draft pick rows found');
     for(const round of [1,2,3]){
      const vals=p.filter(x=>x.round===round),grp={};
      vals.forEach(x=>(grp[x.year]??=[]).push(x.value));
@@ -120,7 +131,19 @@
    idp:r.players_of_week?.idp||null,source:r.award_source
   })):null;
   const ten=Array.isArray(records)?records.find(r=>Number(r.season)===2026&&Number(r.week)===10):null;
-  add('Badges','2026 Week 10 canonical awards record',ten?'PASS':'WARN',ten?'Record exists; inspect CMC player IDs in downloaded report':'No verified Week 10 award record returned');
+  const cmcWinner=ten?.players_of_week?.offense||ten?.players_of_week?.offensive;
+  add('Badges','Week 10 McCaffrey canonical result',
+   String(cmcWinner?.player_id||'')==='4034'&&Number(cmcWinner?.points)===46.3?'PASS':'FAIL',
+   JSON.stringify({id:cmcWinner?.player_id,points:cmcWinner?.points}));
+  const history=await fetchJson('McCaffrey scoring milestones',
+   '/.netlify/functions/value-history?player_scoring=1&player_id=4034');
+  const badges=history?.scoring_milestones?.weeklyAwards||[];
+  api.cmcMilestoneBadgeSummary=badges.map(b=>({season:b.season,week:b.week,points:b.points,type:b.type}));
+  const matched=badges.some(b=>Number(b.season)===2026&&Number(b.week)===10);
+  add('Badges','McCaffrey Week 10 present in player scoring endpoint',matched?'PASS':'FAIL',
+   JSON.stringify({total:badges.length,recent:api.cmcMilestoneBadgeSummary.slice(0,8)}));
+  add('Badges','No three-badge limit',badges.length>3?'PASS':'WARN',
+   'Scoring endpoint awarded '+badges.length+' badges');
   api.completedWeek={season:latest?.season,week:latest?.week,available:latest?.available,teams:latest?.teams?.length};
   add('Weekly','completed Sleeper matchup coverage',latest?.available&&latest?.teams?.length===32?'PASS':'WARN',JSON.stringify(api.completedWeek));
   api.highsSummary={keys:Object.keys(highs||{}),recordCount:highs?.records?.length};

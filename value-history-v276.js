@@ -1881,6 +1881,63 @@ function renderMarketTable(){
   const rows=sortedMarketRows(liveFullMarketRowsV97(marketCache.marketRows||[]),document.getElementById('vhMarketSearch')?.value||'');
   host.innerHTML=marketTableRowsMarkup(rows);
 }
+// League Hub's independently verified completed-week awards are canonical.
+// Read them directly from the same-origin public endpoint: a server-side
+// value-history -> league-hub fetch can fail on a protected Deploy Preview even
+// when the browser can read both endpoints. Never impose a badge count limit.
+let canonicalPlayerAwardRecordsCache=null,canonicalPlayerAwardRecordsAt=0,canonicalPlayerAwardRecordsPending=null;
+async function canonicalPlayerAwardRecords(){
+ if(canonicalPlayerAwardRecordsCache&&Date.now()-canonicalPlayerAwardRecordsAt<30000)
+  return canonicalPlayerAwardRecordsCache;
+ if(canonicalPlayerAwardRecordsPending)return canonicalPlayerAwardRecordsPending;
+ canonicalPlayerAwardRecordsPending=(async()=>{
+  const response=await fetch('/.netlify/functions/league-hub?weekly_awards=1',
+   {cache:'no-store',headers:{accept:'application/json'}});
+  if(!response.ok)throw Error('Verified weekly award readback unavailable');
+  const payload=await response.json();
+  if(!Array.isArray(payload?.records))throw Error('Verified weekly award records missing');
+  canonicalPlayerAwardRecordsCache=payload.records;
+  canonicalPlayerAwardRecordsAt=Date.now();
+  return payload.records;
+ })();
+ try{return await canonicalPlayerAwardRecordsPending}
+ finally{canonicalPlayerAwardRecordsPending=null}
+}
+function mergeCanonicalPlayerAwardMilestones(scoring,records,playerId){
+ const existing=scoring&&typeof scoring==='object'?scoring:{};
+ const original=Array.isArray(existing.weeklyAwards)?existing.weeklyAwards:[];
+ const awards=new Map();
+ const awardKey=a=>Number(a?.season)+'|'+Number(a?.week)+'|'+
+  (String(a?.type||'').includes('defensive')?'defense':'offense');
+ for(const a of original){
+  if(Number.isInteger(Number(a?.season))&&Number.isInteger(Number(a?.week)))
+   awards.set(awardKey(a),a);
+ }
+ for(const record of Array.isArray(records)?records:[]){
+  const year=Number(record?.season),week=Number(record?.week);
+  if(!Number.isInteger(year)||!Number.isInteger(week)||week<1||week>17)continue;
+  const sleeperVerified=record?.award_source==='sleeper-finalized-matchups'&&
+   Number(record?.verified_roster_count)===32;
+  const newsroomVerified=Number(record?.newsroom_editorial_revision)>=39&&
+   record?.newsroom_engine==='v31-forward';
+  if(!sleeperVerified&&!newsroomVerified)continue;
+  for(const [group,type,title] of [
+   ['offense','offensive-player-of-week','Top Offensive Scorer'],
+   ['defense','defensive-player-of-week','Top Defensive Scorer']
+  ]){
+   const winner=record?.players_of_week?.[group];
+   if(String(winner?.player_id||'')!==String(playerId)||winner?.points==null||
+     !Number.isFinite(Number(winner.points)))continue;
+   const key=year+'|'+week+'|'+group,previous=awards.get(key);
+   awards.set(key,{...previous,type,title,season:year,week,
+     points:Number(Number(winner.points).toFixed(2)),
+     week_started_at:previous?.week_started_at||record?.week_started_at||null});
+  }
+ }
+ return {...existing,weeklyAwards:[...awards.values()].sort((a,b)=>
+  Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week)||
+  String(a.type).localeCompare(String(b.type)))};
+}
 function scoringMilestonesRows(scoring,loading=false){
   if(!scoring){
     const msg=loading?'Loading completed-week scoring in the background…':'Scoring milestones unavailable; historical value and rank records remain available.';

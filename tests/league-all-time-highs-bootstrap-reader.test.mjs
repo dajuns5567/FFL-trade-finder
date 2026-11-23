@@ -50,7 +50,7 @@ test('same-score scheduled writes promote bootstrap provenance and retain dates'
  const obs={schema_version:1,source:'canonical-live-32-team-awards',team_count:32,
   trade_count:1,draft_count:1,categories:20,canonical_fingerprint:'real-source-token',
   model_used:'idp-v96-single-source-continuous-v95-evidence',source_commit:'b'.repeat(40),
-  captured_at:'2026-11-23T05:30:00Z',
+  captured_at:new Date().toISOString(),
   observations:before.records.map(({award_key,roster_id,score,detail})=>({award_key,roster_id,score,detail}))};
  assert.equal(categories.length,20);
  const next=nextDurableHighs(before,obs);

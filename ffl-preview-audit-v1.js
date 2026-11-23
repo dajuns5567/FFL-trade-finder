@@ -16,6 +16,21 @@
  const pick=(parts,root=document)=>elements('button,a,[role="tab"]',root).find(e=>parts.some(x=>norm(text(e)).toLowerCase()===x.toLowerCase()))||
   elements('button,a,[role="tab"]',root).find(e=>parts.some(x=>norm(text(e)).toLowerCase().includes(x.toLowerCase())));
  const click=async (el,ms=750)=>{if(!el)return false;el.click();await sleep(ms);return true};
+ const settle=async (selector,loading,maxMs=14000)=>{
+  const startedAt=Date.now();
+  while(Date.now()-startedAt<maxMs){
+   const box=document.querySelector(selector);
+   if(box){
+    const content=norm(text(box));
+    if(content&&!loading.test(content)){
+     return {settled:true,text:content,failed:/temporarily unavailable|failed to load|unexpected error/i.test(content)};
+    }
+   }
+   await sleep(350);
+  }
+  const box=document.querySelector(selector);
+  return {settled:false,text:cap(norm(text(box)),350),failed:false};
+ };
  const snap=(label)=>{
   const root=appRoot(),head=elements('h1,h2,h3',root).slice(0,24).map(e=>cap(norm(text(e)),90));
   const nav=elements('[data-lh-view],[role="tab"],.tabs button',root).slice(0,30)
@@ -70,6 +85,9 @@
    const nav=pick([name],document.querySelector('header')||document);
    if(!nav){add('Navigation',name,'WARN','Navigation target not visible');continue}
    await click(nav,1000);
+   // Keep the first page navigation snapshot after the async page has settled.
+   // A 1-second loading placeholder is not proof of a stalled application.
+   if(name==='LEAGUE HUB')await settle('#leagueHubContent',/^Loading league intelligence…$/,14000);
    snap(name);
    pages[name]={headings:screens[name].headings,excerpt:screens[name].bodyExcerpt};
    add('Navigation',name,/error|failed to load|undefined is not|something went wrong/i.test(text(appRoot()).slice(0,260))?'WARN':'PASS',cap(text(appRoot()),170));
@@ -138,20 +156,39 @@
    }
    if(name==='VALUE HISTORY'){
     const choices=['Market Dashboard','Player Value History','Full Market Value History','Track my team','Team Value History'];
-    for(const choice of choices){const tab=pick([choice],appRoot());if(tab){await click(tab,850);snap('History: '+choice)}}
-    const rows=norm(text(appRoot()));
-    if(/Market Movers|Risers|Fallers/i.test(rows))add('Market','mover panels','PASS','Market content rendered');
-    else add('Market','mover panels','WARN','Search separate Market Dashboard tab');
+    for(const choice of choices){
+     const tab=pick([choice],appRoot());if(!tab)continue;
+     await click(tab,850);
+     if(choice==='Market Dashboard'){
+      const result=await settle('#vhContent',/^Loading market dashboard…$/,18000);
+      const loaded=/Market Intelligence|Value Risers|Risers|Fallers|Market Heat Map/i.test(result.text);
+      add('Market','selected Market Dashboard finishes loading',
+       result.failed?'FAIL':loaded?'PASS':result.settled?'WARN':'WARN',
+       cap(result.text,360));
+      add('Market','mover panels',loaded?'PASS':'WARN',
+       loaded?'Market content rendered after settled fetch':'Market data still loading or unavailable after wait');
+     }
+     snap('History: '+choice);
+    }
    }
    if(name==='LEAGUE HUB'){
     const root=appRoot(),tabNames=['Fleeced Daily','Awards','Hall of Fleeced','Managers'];
     for(const tabName of tabNames){
      const el=pick([tabName],root);
      if(!el){add('League Hub',tabName,'WARN','Tab absent');continue}
-     await click(el,1250);snap('Hub: '+tabName);
+     await click(el,1250);
+     const settled=await settle('#leagueHubContent',/^Loading league intelligence…$/,14000);
+     add('League Hub',tabName+' settles after navigation',
+       settled.failed?'FAIL':settled.settled?'PASS':'WARN',cap(settled.text,280));
+     snap('Hub: '+tabName);
      if(tabName==='Awards'){
-      const body=norm(text(root));
-      add('League Hub','Awards retained after async navigation',/Fleeced! Daily\s*—\s*Completed Week Results/i.test(body.slice(0,350))?'FAIL':'PASS',cap(body,220));
+      const body=norm(text(document.querySelector('#leagueHubContent')));
+      const selected=elements('[data-lh-view].active',root)
+       .some(node=>node.getAttribute('data-lh-view')==='awards');
+      add('League Hub','Awards retained after async navigation',
+       !selected||/Fleeced! Daily\s*—\s*Completed Week Results/i.test(body.slice(0,350))?'FAIL':
+       /WEEKLY MANAGER AWARDS|THE FLEECER|HOT SEAT/i.test(body)?'PASS':'WARN',
+       cap(body,220));
      }
     }
     // Stress the former stale-response race. Avoid clicking mutation controls.

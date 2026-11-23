@@ -131,8 +131,10 @@ async function renderValueRisers(force=false){
     host.innerHTML='<div class="fleeced-home-list-title">Top 10 Value Risers • 7D • Top 300</div><div class="fleeced-home-two-col"><div>'+left+'</div><div>'+right+'</div></div>';
     return true;
   }catch{
-    host.innerHTML='<div class="fleeced-home-list-title">Top 10 Value Risers • 7D • Top 300</div><div class="fleeced-home-loading">Value-history summary is temporarily unavailable.</div>';
-    return true;
+    // An unavailable market feed must not erase previously verified risers.
+    if(!host.querySelector('.fleeced-home-data-row'))
+      host.innerHTML='<div class="fleeced-home-list-title">Top 10 Value Risers • 7D • Top 300</div><div class="fleeced-home-loading">Value-history summary is temporarily unavailable.</div>';
+    return false;
   }
 }
 function setHomePreviewWaiting(){
@@ -159,6 +161,42 @@ function scheduleValueRisers(force=false){
     setTimeout(run,500);
   };
   run();
+}
+const HOME_REFRESH_MS=5*60*1000;
+let homeRefreshAt=0,homeRefreshPending=null;
+async function refreshVisibleHome(force=false){
+ const home=document.getElementById('home');
+ if(!home||home.hidden||document.hidden||!consensusRefreshComplete())return false;
+ if(!force&&Date.now()-homeRefreshAt<HOME_REFRESH_MS)return true;
+ if(homeRefreshPending)return homeRefreshPending;
+ const request=(async()=>{
+  try{
+   const ranked=renderTopPlayers();
+   const risers=await renderValueRisers(true);
+   if(ranked&&risers){homeRefreshAt=Date.now();return true}
+   return false;
+  }catch(error){
+   console.warn('home-preview-freshness-unavailable',String(error?.message||error));
+   return false;
+  }
+ })();
+ homeRefreshPending=request;
+ try{return await request}finally{if(homeRefreshPending===request)homeRefreshPending=null}
+}
+function installHomeFreshness(){
+ setInterval(()=>refreshVisibleHome(),HOME_REFRESH_MS);
+ window.addEventListener('focus',()=>refreshVisibleHome());
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshVisibleHome()});
+ document.querySelector('.tabs')?.addEventListener('click',event=>{
+  if(event.target.closest('[data-tab="home"]'))
+   requestAnimationFrame(()=>refreshVisibleHome());
+ });
+ window.addEventListener('fll:valuation-refreshed',()=>{
+  homeRefreshAt=0;refreshVisibleHome(true);
+ });
+ window.addEventListener('fll:canonical-values-ready',()=>{
+  homeRefreshAt=0;refreshVisibleHome(true);
+ });
 }
 function refreshHomePreviewsAfterConsensus(){
   if(!consensusRefreshComplete())return false;
@@ -198,6 +236,7 @@ function install(){
   normalizeTabOrder();
   scheduleTopPlayers();
   scheduleValueRisers();
+  installHomeFreshness();
   const finder=document.querySelector('#finder>.card');
   if(finder)new MutationObserver(()=>queueMicrotask(relocateFinderDiagnostics)).observe(finder,{childList:true});
   const tabs=document.querySelector('.tabs');

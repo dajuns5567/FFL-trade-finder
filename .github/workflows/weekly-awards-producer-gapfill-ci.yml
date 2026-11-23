@@ -1,0 +1,21 @@
+name: Independent weekly awards completed-stat source parity
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/league-hub.mjs'
+      - 'netlify/functions/lib/weekly-award-stats-merge.mjs'
+      - 'tests/weekly-awards-producer-partial-week.test.mjs'
+      - '.github/workflows/weekly-awards-producer-gapfill-ci.yml'
+permissions:
+  contents: read
+jobs:
+  verified-award-stat-merge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check netlify/functions/league-hub.mjs
+      - run: node --test tests/weekly-awards-producer-partial-week.test.mjs tests/player-weekly-awards-partial-live-week-gap.test.mjs tests/player-weekly-milestone-awards.test.mjs

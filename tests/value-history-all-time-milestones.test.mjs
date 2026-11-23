@@ -34,5 +34,7 @@ test('all-time scoring unavailable is explicit and historical observation lines 
  assert.match(source,/High value<span class="vh-milestone-time">/);
  assert.match(source,/Low value<span class="vh-milestone-time">/);
  assert.match(source,/Observations<\/span><b>\$\{fmt\(allPts.length\)\}/);
- assert.match(source,/playerScoringCache\.set\(key,null\)/);
+ assert.match(source,/if\(!playerScoringCache\.has\(key\)\)applyUpdate\(null,canonicalRecords\)/);
+ assert.match(source,/for\(const award of previous\?\.weeklyAwards\|\|\[\]\)/);
+ assert.doesNotMatch(source,/playerScoringCache\.set\(key,null\)/,'unavailable stats cannot erase verified awards');
 });

@@ -1,0 +1,29 @@
+name: Canonical weekly player badges and pick-order integration
+on:
+  pull_request:
+    paths:
+      - 'value-history-v276.js'
+      - 'ui-player-values-v139.js'
+      - 'netlify/functions/site-v29.mjs'
+      - 'tests/player-badge-canonical-readback-all-wins.test.mjs'
+      - 'tests/player-values-pick-canonical-sort.test.mjs'
+      - '.github/workflows/player-weekly-badge-readback-ci.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verified-player-awards:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax validation
+        run: |
+          node --check value-history-v276.js
+          node --check ui-player-values-v139.js
+      - name: Canonical badge readback, unlimited award history, pick sort
+        run: |
+          node --test tests/player-badge-canonical-readback-all-wins.test.mjs tests/player-weekly-milestone-awards.test.mjs tests/player-values-pick-canonical-sort.test.mjs tests/future-pick-dynasty-year-discount.test.mjs

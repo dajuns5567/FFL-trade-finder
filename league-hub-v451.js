@@ -144,7 +144,44 @@ function addStyles(){if(document.getElementById('leagueHubStyles'))return;const 
 @media(max-width:620px){#leagueHub .lh-scoreboard-row{grid-template-columns:34px minmax(0,1fr) 58px 54px 70px;gap:6px;font-size:11px}.lh-scoreboard-modal{padding:12px!important}}#leagueHub .lh-overview-section{margin:18px 0;padding-top:14px;border-top:1px solid var(--line)}#leagueHub .lh-overview-section:first-of-type{border-top:0;padding-top:0}#leagueHub .lh-hot-takes{margin:22px 0 8px;padding:14px 0;border:0;border-top:1px solid var(--line);border-radius:0;background:transparent}#leagueHub .lh-hot-takes h4{margin:0 0 4px;color:#e4b53f}#leagueHub .lh-hot-take{margin-top:12px;padding-top:10px;border-top:1px dashed color-mix(in srgb,#e4b53f 30%,var(--line))}#leagueHub .lh-hot-take:first-of-type{border-top:0}#leagueHub .lh-hot-take b{font-size:12px}#leagueHub .lh-hot-take p{margin:5px 0 0;line-height:1.55}#leagueHub .lh-overview-section{margin:26px 0 32px;padding-top:4px}#leagueHub .lh-overview-section p{margin:0 0 17px;line-height:1.72;color:var(--muted)}#leagueHub .lh-overview-section p:last-child{margin-bottom:0}#leagueHub .lh-overview-story{margin:22px 0 28px;padding-top:4px}#leagueHub .lh-overview-story+ .lh-overview-story{padding-top:20px;border-top:1px solid color-mix(in srgb,var(--line) 72%,transparent)}#leagueHub .lh-overview-story h5{margin:0 0 12px;color:var(--gold);font-size:15px;line-height:1.35;letter-spacing:.01em}#leagueHub .lh-team-story-section{margin:22px 0 26px}#leagueHub .lh-team-story-section h5{margin:0 0 10px;color:var(--gold);font-size:14px;line-height:1.3;letter-spacing:.01em}#leagueHub .lh-team-story-section p{margin:0 0 12px;line-height:1.72}#leagueHub .lh-team-story-section p:last-child{margin-bottom:0}#leagueHub .lh-fan-sentiment{margin:22px 0 26px;padding:16px 18px;border:1px solid color-mix(in srgb,#e4b53f 28%,var(--line));border-radius:12px;background:color-mix(in srgb,#e4b53f 4%,var(--card))}#leagueHub .lh-fan-sentiment p{margin:0 0 12px;line-height:1.7}#leagueHub .lh-fan-sentiment p:last-child{margin-bottom:0}#leagueHub .lh-sentiment-meter{margin:2px 0 16px;padding:12px 12px 10px;border:1px solid color-mix(in srgb,#e4b53f 20%,var(--line));border-radius:10px;background:color-mix(in srgb,var(--card) 92%,black)}#leagueHub .lh-sentiment-meter-head{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:end;gap:14px;margin-bottom:10px}#leagueHub .lh-sentiment-meter-mood,#leagueHub .lh-sentiment-meter-rating{display:flex;flex-direction:column;gap:3px}#leagueHub .lh-sentiment-meter-mood{justify-self:start}#leagueHub .lh-sentiment-meter-rating{justify-self:center;text-align:center}#leagueHub .lh-sentiment-meter-field{color:var(--muted);font-size:8px;font-weight:900;text-transform:uppercase;letter-spacing:.11em}#leagueHub .lh-sentiment-meter-label{color:#e4b53f;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.045em}#leagueHub .lh-sentiment-meter-score{color:#e4b53f;font-size:30px;line-height:1;font-weight:950;letter-spacing:-.03em}#leagueHub .lh-sentiment-meter-head small{color:var(--muted);font-size:10px;text-align:right;align-self:center;justify-self:end}@media(max-width:720px){#leagueHub .lh-sentiment-meter-head{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px}#leagueHub .lh-sentiment-meter-head small{grid-column:auto;justify-self:end;text-align:right;font-size:8px;line-height:1.25}}#leagueHub .lh-sentiment-track{position:relative;height:14px;border-radius:999px;background:linear-gradient(90deg,color-mix(in srgb,#7f1d1d 68%,var(--card)) 0%,color-mix(in srgb,#7f1d1d 28%,var(--card)) 25%,color-mix(in srgb,var(--muted) 26%,var(--card)) 50%,color-mix(in srgb,#e4b53f 30%,var(--card)) 75%,color-mix(in srgb,#e4b53f 72%,var(--card)) 100%);border:1px solid color-mix(in srgb,var(--line) 82%,transparent)}#leagueHub .lh-sentiment-zero{position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:color-mix(in srgb,var(--muted) 65%,transparent)}#leagueHub .lh-sentiment-marker{position:absolute;top:50%;width:16px;height:16px;border-radius:50%;transform:translate(-50%,-50%);background:#e4b53f;border:2px solid #111;box-shadow:0 0 0 1px color-mix(in srgb,#e4b53f 72%,white);cursor:pointer;z-index:2;outline:none;transition:transform .14s ease,box-shadow .14s ease,filter .14s ease}#leagueHub .lh-sentiment-marker::after{content:"";position:absolute;inset:-8px;border-radius:50%}#leagueHub .lh-sentiment-marker:hover,#leagueHub .lh-sentiment-marker:focus-visible{transform:translate(-50%,-50%) scale(1.35);box-shadow:0 0 0 2px #111,0 0 0 4px color-mix(in srgb,#e4b53f 78%,white),0 0 14px color-mix(in srgb,#e4b53f 66%,transparent);filter:brightness(1.08);z-index:4}#leagueHub .lh-sentiment-marker.previous{width:12px;height:12px;background:var(--muted);box-shadow:0 0 0 1px color-mix(in srgb,var(--muted) 70%,white)}#leagueHub .lh-sentiment-marker.previous:hover,#leagueHub .lh-sentiment-marker.previous:focus-visible{box-shadow:0 0 0 2px #111,0 0 0 4px color-mix(in srgb,var(--muted) 75%,white),0 0 12px color-mix(in srgb,var(--muted) 62%,transparent)}#leagueHub .lh-sentiment-track.clustered .lh-sentiment-marker.previous{transform:translate(calc(-50% - 7px),-50%);z-index:3}#leagueHub .lh-sentiment-track.clustered .lh-sentiment-marker:not(.previous){transform:translate(calc(-50% + 7px),-50%)}#leagueHub .lh-sentiment-track.clustered .lh-sentiment-marker.previous:hover,#leagueHub .lh-sentiment-track.clustered .lh-sentiment-marker.previous:focus-visible{transform:translate(calc(-50% - 7px),-50%) scale(1.35);z-index:5}#leagueHub .lh-sentiment-track.clustered .lh-sentiment-marker:not(.previous):hover,#leagueHub .lh-sentiment-track.clustered .lh-sentiment-marker:not(.previous):focus-visible{transform:translate(calc(-50% + 7px),-50%) scale(1.35);z-index:5}#leagueHub .lh-sentiment-scale{position:relative;height:34px;margin-top:8px;color:var(--muted);font-size:11px;font-weight:800;line-height:1.25;text-transform:uppercase;letter-spacing:.035em}#leagueHub .lh-sentiment-scale span{position:absolute;top:0;white-space:nowrap;text-align:center;transform:translateX(-50%)}#leagueHub .lh-sentiment-scale span:nth-child(1){left:0;transform:none;text-align:left}#leagueHub .lh-sentiment-scale span:nth-child(2){left:25%}#leagueHub .lh-sentiment-scale span:nth-child(3){left:50%}#leagueHub .lh-sentiment-scale span:nth-child(4){left:75%}#leagueHub .lh-sentiment-scale span:nth-child(5){left:100%;transform:translateX(-100%);text-align:right}#leagueHub .lh-sentiment-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;color:var(--muted);font-size:10px}#leagueHub .lh-column-kicker{margin-top:24px;padding-top:14px;border-top:1px solid var(--line)}#leagueHub .lh-source-note{margin-top:22px;padding-top:10px;border-top:1px solid var(--line)}#leagueHub .lh-source-note summary{cursor:pointer;color:var(--muted);font-size:10px;font-weight:800}#leagueHub .lh-source-note .lh-sub{margin:7px 0 0}
 #leagueHub .lh-spotlight{border-top:1px solid var(--line);background:var(--card)!important}#leagueHub .lh-spot-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px}#leagueHub .lh-spot-card{display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:4px;text-align:center;border:1px solid color-mix(in srgb,#e4b53f 25%,var(--line));border-radius:12px;padding:12px;background:color-mix(in srgb,var(--card) 94%,black)}#leagueHub .lh-spot-icon{display:none}#leagueHub .lh-spot-card small{display:block;color:var(--muted);text-transform:uppercase;font-size:9px;letter-spacing:.08em}#leagueHub .lh-spot-card b{display:block;margin-top:3px;text-align:center}#leagueHub .lh-spot-card>div:nth-child(2){text-align:center}#leagueHub .lh-spot-card strong{display:block;color:#e4b53f;font-size:20px;margin-top:2px;text-align:center}#leagueHub .lh-spot-card button{width:100%;margin-top:6px}#leagueHub .lh-report{border-left:3px solid #e4b53f;padding-left:13px}#leagueHub .lh-broadcast-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer}#leagueHub .lh-broadcast-summary button{white-space:nowrap}#leagueHub .lh-article{padding:15px 0;border-top:1px solid var(--line)}#leagueHub .lh-article h4{margin:10px 0 5px;color:#e4b53f}#leagueHub .lh-article p{margin:0 0 16px;line-height:1.68;color:var(--muted)}#leagueHub .lh-archive{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}#leagueHub .lh-archive-top{margin:12px 0 10px;padding:10px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}#leagueHub .lh-archive-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:7px}#leagueHub .lh-report-title{font-size:18px!important;text-transform:none!important;letter-spacing:0!important}#leagueHub .lh-brand-button{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;width:auto!important;margin:0!important;padding:8px 12px!important;border:1px solid #e4b53f!important;border-radius:9px!important;background:color-mix(in srgb,#e4b53f 8%,#0b0d11)!important;color:#f0c85c!important;font-family:inherit!important;font-size:12px!important;font-weight:950!important;line-height:1.15!important;letter-spacing:.025em!important;text-decoration:none!important;box-shadow:inset 0 0 0 1px color-mix(in srgb,#e4b53f 12%,transparent)!important;cursor:pointer!important;transition:background .14s ease,color .14s ease,border-color .14s ease,transform .14s ease!important}#leagueHub .lh-brand-button:hover,#leagueHub .lh-brand-button:focus-visible{background:color-mix(in srgb,#e4b53f 16%,#0b0d11)!important;color:#ffd967!important;border-color:#ffd967!important;transform:translateY(-1px)!important;outline:none!important}#leagueHub .lh-brand-button-primary{background:#e4b53f!important;color:#0d1016!important;border-color:#e4b53f!important;box-shadow:0 0 0 1px color-mix(in srgb,#e4b53f 24%,transparent),0 4px 12px rgba(0,0,0,.22)!important}#leagueHub .lh-brand-button-primary:hover,#leagueHub .lh-brand-button-primary:focus-visible{background:#f0c85c!important;color:#090b10!important;border-color:#f0c85c!important}#leagueHub .lh-brand-button-outline,#leagueHub .lh-brand-button-outline:hover,#leagueHub .lh-brand-button-outline:focus-visible{background:transparent!important;color:#e4b53f!important;border-color:#e4b53f!important;box-shadow:none!important;text-shadow:none!important;filter:none!important}#leagueHub .lh-brand-button-outline:hover,#leagueHub .lh-brand-button-outline:focus-visible{color:#ffd967!important;border-color:#ffd967!important}#leagueHub .lh-brand-button-compact{padding:6px 9px!important;font-size:10px!important;border-radius:8px!important}#leagueHub .lh-awards-page button,#leagueHub .lh-hall-page button{background:transparent!important;color:#e4b53f!important;border:1px solid #e4b53f!important;border-radius:8px!important;font-family:inherit!important;font-weight:950!important;letter-spacing:.025em!important;box-shadow:none!important;text-shadow:none!important;filter:none!important;cursor:pointer!important}#leagueHub .lh-awards-page button:hover,#leagueHub .lh-awards-page button:focus-visible,#leagueHub .lh-hall-page button:hover,#leagueHub .lh-hall-page button:focus-visible{background:transparent!important;color:#ffd967!important;border-color:#ffd967!important;box-shadow:none!important;outline:none!important}#leagueHub .lh-awards-main button,#leagueHub .lh-awards-main button:hover,#leagueHub .lh-awards-main button:focus-visible{color:#fff!important}#leagueHub .lh-inquirer-section-nav{margin:15px 0 13px;padding:12px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}#leagueHub .lh-inquirer-section-nav>span{display:block;margin-bottom:8px;color:#e4b53f;font-size:10px;font-weight:950;letter-spacing:.08em;text-transform:uppercase}#leagueHub .lh-inquirer-section-nav>div{display:flex;gap:7px;flex-wrap:wrap}#leagueHub .lh-inquirer-section-nav .lh-brand-button{background:transparent!important;border-color:transparent!important;box-shadow:none!important;color:#e4b53f!important}#leagueHub .lh-inquirer-section-nav .lh-brand-button:hover,#leagueHub .lh-inquirer-section-nav .lh-brand-button:focus-visible{background:transparent!important;border-color:transparent!important;box-shadow:none!important;color:#ffd967!important}#leagueHub .lh-badge{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:3px 7px;margin:4px 5px 0 0;color:var(--muted);font-size:10px}#leagueHub .lh-weekly-badges{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}#leagueHub .lh-weekly-badge{display:inline-flex;align-items:center;gap:5px;padding:6px 9px;border:1px solid color-mix(in srgb,#e4b53f 34%,var(--line));border-radius:999px;background:transparent;color:#f4f4f5;font-size:10px;font-weight:900;letter-spacing:.02em}#leagueHub .lh-player-week{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}#leagueHub .lh-player-week-card{border:1px solid var(--line);border-radius:11px;padding:11px;background:transparent}#leagueHub .lh-player-week-card small{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;font-weight:900;letter-spacing:.06em}#leagueHub .lh-player-week-card button{display:inline!important;width:auto!important;padding:0!important;border:0!important;background:transparent!important;color:#f4f4f5!important;font:inherit!important;font-weight:900!important;text-align:left!important;box-shadow:none!important}#leagueHub .lh-player-week-card button:hover{color:#e4b53f!important}
 @media(max-width:800px){#leagueHub .lh-archive-filters{grid-template-columns:1fr}#leagueHub .lh-reporter-desks{grid-template-columns:1fr 1fr}#leagueHub .lh-spot-grid{grid-template-columns:1fr 1fr}#leagueHub .lh-grid{grid-template-columns:1fr}#leagueHub .lh-wide{grid-column:auto}#leagueHub .lh-manager-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}`;document.head.appendChild(st)}
-async function trades(){if(tradeCache){globalThis.fleecedTradeHistorySharedCacheV515=tradeCache;globalThis.primeTradeHistoryCacheV515?.(tradeCache);return tradeCache}const r=await fetch('/.netlify/functions/value-history?trades=1',{cache:'no-store'});if(!r.ok)throw Error('trade history unavailable');tradeCache=await r.json();globalThis.fleecedTradeHistorySharedCacheV515=tradeCache;globalThis.primeTradeHistoryCacheV515?.(tradeCache);return tradeCache}
+const HUB_SHARED_REFRESH_MS=5*60*1000;
+const hubSharedCacheAt={trades:0,drafts:0,awards:0},hubSharedPending={trades:null,drafts:null,awards:null};
+let hubSharedVisibleRefreshPending=false;
+function hubSharedSignature(value,which){
+ if(which==='trades')return JSON.stringify((value?.trades||[]).map(t=>[String(t?.id||t?.transaction_id||''),t?.created||t?.created_at||'',t?.completed_at||'',t?.status||'',t?.roster_ids||[],t?.sides||[]]));
+ if(which==='drafts')return JSON.stringify((value?.draft_picks||[]).map(p=>[p.draft_id,p.player_id,p.pick_no,p.roster_id,p.season]));
+ return JSON.stringify((value?.records||[]).map(r=>[r.season,r.week,r.captured_at,r.generated_at,JSON.stringify(r.manager_awards||[]),JSON.stringify(r.players_of_week||{})]));
+}
+async function hubSharedRead(which,{force=false}={}){
+ const previous=which==='trades'?tradeCache:which==='drafts'?draftCache:weeklyAwardsCache;
+ if(!force&&previous&&Date.now()-hubSharedCacheAt[which]<HUB_SHARED_REFRESH_MS)return previous;
+ if(hubSharedPending[which])return hubSharedPending[which];
+ const request=(async()=>{
+  try{
+   const url=which==='trades'?'/.netlify/functions/value-history?trades=1'+(force?'&trades_fresh=1':''):
+    '/.netlify/functions/league-hub?'+(which==='drafts'?'drafts=1':'weekly_awards=1');
+   const response=await fetch(url,{cache:'no-store'});
+   if(!response.ok)throw Error('League Hub '+which+' HTTP '+response.status);
+   const data=await response.json();
+   const key=which==='trades'?'trades':which==='drafts'?'draft_picks':'records';
+   if(!Array.isArray(data?.[key]))throw Error('Incomplete League Hub '+which+' response');
+   if(which==='trades'){
+    tradeCache=data;globalThis.fleecedTradeHistorySharedCacheV515=tradeCache;
+    globalThis.primeTradeHistoryCacheV515?.(tradeCache);
+   }else if(which==='drafts')draftCache=data;
+   else weeklyAwardsCache=data;
+   hubSharedCacheAt[which]=Date.now();return data;
+  }catch(error){
+   console.warn('league-hub-shared-refresh-unavailable',which,String(error?.message||error));
+   if(previous)return previous;
+   throw error;
+  }
+ })();
+ hubSharedPending[which]=request;
+ try{return await request}finally{if(hubSharedPending[which]===request)hubSharedPending[which]=null}
+}
+async function trades(options){return hubSharedRead('trades',options)}
+
 // The Blob archive index is the publication commit marker. Always check it
 // before trusting an in-browser weeklyCache: newspapers update without deploys.
 function latestPublishedInquirerRow(rows){return(Array.isArray(rows)?rows:[]).filter(x=>Number(x?.season)>0&&Number(x?.week)>0).sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week))[0]||null}
@@ -165,7 +202,7 @@ async function liveLeagueWeek(){
 }
 let liveLeagueWeekRefreshInFlight=false;
 async function refreshLiveLeagueWeekIfAdvanced(){
- if(inquirerPreviewMode||liveLeagueWeekRefreshInFlight||document.hidden||currentView!=='daily'||openBroadcastTeam)return;
+ if(inquirerPreviewMode||liveLeagueWeekRefreshInFlight||document.hidden||!['daily','managers','awards'].includes(currentView)||openBroadcastTeam)return;
  const panel=document.getElementById('leagueHub');
  if(!panel||panel.hidden)return;
  liveLeagueWeekRefreshInFlight=true;
@@ -175,22 +212,122 @@ async function refreshLiveLeagueWeekIfAdvanced(){
    Number(latest.season)===Number(old.season)&&Number(latest.week)>Number(old.week)||
    JSON.stringify(latest.teams.map(t=>[t.roster_id,t.points,t.opponent_points]))!==
    JSON.stringify((old.teams||[]).map(t=>[t.roster_id,t.points,t.opponent_points])))){
-   managerCache=null; // completed-week manager records are not Inquirer snapshots
-   await render('daily');
+   clearManagerHistoryCache(); // verified completed week invalidates stale manager history
+   weeklyAwardsCache=null; // completed Sleeper weeks also earn new weekly badges
+   spotlightWeeklyCache=null;
+   allTimeHighCaptureAt=0;
+   await render(currentView);
   }
  }catch(error){console.warn('league-week-refresh-unavailable',String(error?.message||error))}
  finally{liveLeagueWeekRefreshInFlight=false}
 }
-async function weeklyAwards(){if(weeklyAwardsCache)return weeklyAwardsCache;const r=await fetch('/.netlify/functions/league-hub?weekly_awards=1',{cache:'no-store'});if(!r.ok)return{records:[]};weeklyAwardsCache=await r.json();return weeklyAwardsCache}
+async function weeklyAwards(options){return hubSharedRead('awards',options)}
 async function spotlightWeek(w,archiveRows=null){if(w?.available&&Array.isArray(w?.teams)&&w.teams.length){spotlightWeeklyCache=w;return w}if(spotlightWeeklyCache?.available&&Array.isArray(spotlightWeeklyCache?.teams)&&spotlightWeeklyCache.teams.length)return spotlightWeeklyCache;let rows=archiveRows;if(!Array.isArray(rows)){const arc=await fetch('/.netlify/functions/league-hub?broadcast_archive=1',{cache:'no-store'}).then(r=>r.ok?r.json():{reports:[]}).catch(()=>({reports:[]}));rows=arc?.reports||[]}const season=Number(w?.season)||0,latest=(rows||[]).filter(x=>!season||Number(x.season)===season).slice().sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week))[0]||(rows||[]).slice().sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week))[0];if(!latest)return null;const x=await fetch('/.netlify/functions/league-hub?broadcast_season='+Number(latest.season)+'&broadcast_week='+Number(latest.week),{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);if(x?.available&&Array.isArray(x?.teams)&&x.teams.length){spotlightWeeklyCache=x;return x}return null}
-async function drafts(){if(draftCache)return draftCache;const r=await fetch('/.netlify/functions/league-hub?drafts=1',{cache:'no-store'});if(!r.ok)return{draft_picks:[]};draftCache=await r.json();return draftCache}
-async function managers(){if(managerCache)return managerCache;if(inquirerPreviewMode){const edition=weeklyCache||await weekly();managerCache=edition?.manager_history_snapshot||{current:[],graveyard:[],career:[],unavailable:true};return managerCache;}const r=await fetch('/.netlify/functions/league-hub?managers=1',{cache:'no-store'});if(!r.ok)return{current:[],graveyard:[],career:[]};managerCache=await r.json();return managerCache}
+async function drafts(options){return hubSharedRead('drafts',options)}
+const MANAGER_REFRESH_MS=300000;
+let managerCacheAt=0,managerRequest=null,managerRequestGeneration=0,managerVisibleRefreshPending=false;
+function clearManagerHistoryCache(){managerCache=null;managerCacheAt=0;managerRequestGeneration++;managerRequest=null}
+function managerVersionSignature(data){return JSON.stringify([
+ data?.cache_version||0,data?.generated_at||'',data?.scoring_history?.through_season||0,
+ data?.scoring_history?.through_week||0,(data?.current||[]).length,
+ (data?.career||[]).length,(data?.games||[]).length
+])}
+async function managers({force=false}={}){
+ if(inquirerPreviewMode){
+  if(managerCache&&!force)return managerCache;
+  const edition=weeklyCache||await weekly();
+  managerCache=edition?.manager_history_snapshot||{current:[],graveyard:[],career:[],unavailable:true};
+  managerCacheAt=Date.now();return managerCache;
+ }
+ if(!force&&managerCache&&Date.now()-managerCacheAt<MANAGER_REFRESH_MS)return managerCache;
+ if(managerRequest)return managerRequest;
+ const generation=managerRequestGeneration;
+ const request=(async()=>{
+  try{
+   const response=await fetch('/.netlify/functions/league-hub?managers=1',{cache:'no-store'});
+   if(!response.ok)throw Error('Managers history HTTP '+response.status);
+   const fresh=await response.json();
+   if(!Array.isArray(fresh?.current)||fresh.current.length!==32||!Array.isArray(fresh?.career)||!fresh.career.length)
+    throw Error('Managers history is incomplete');
+   if(generation===managerRequestGeneration){managerCache=fresh;managerCacheAt=Date.now()}
+   return generation===managerRequestGeneration?fresh:(managerCache||fresh);
+  }catch(error){
+   console.warn('managers-refresh-unavailable',String(error?.message||error));
+   // A temporary Sleeper outage must not replace verified manager records
+   // with an empty or incomplete response.
+   return managerCache||{current:[],graveyard:[],career:[],unavailable:true};
+  }
+ })();
+ managerRequest=request;
+ try{return await request}finally{if(managerRequest===request)managerRequest=null}
+}
+async function refreshManagersIfVisible(){
+ if(managerVisibleRefreshPending||inquirerPreviewMode||document.hidden||!['managers','career'].includes(currentView))return;
+ const panel=document.getElementById('leagueHub');
+ if(!panel||panel.hidden)return;
+ managerVisibleRefreshPending=true;
+ try{
+  const previous=managerVersionSignature(managerCache),next=await managers({force:true});
+  const managersChanged=!next?.unavailable&&managerVersionSignature(next)!==previous;
+  // Manager trade summaries depend on a separate shared completed-Sleeper feed.
+  // Revalidate it as well; never erase verified cached trades on fetch failure.
+  let tradesChanged=false;
+  try{
+   const response=await fetch('/.netlify/functions/value-history?trades=1',{cache:'no-store'});
+   if(!response.ok)throw Error('completed trades HTTP '+response.status);
+   const fresh=await response.json();
+   if(!Array.isArray(fresh?.trades))throw Error('completed trade feed is incomplete');
+   const tradeSignature=data=>JSON.stringify((data?.trades||[]).map(t=>[
+    String(t?.id||t?.transaction_id||''),t?.created_at||'',t?.completed_at||'',t?.status||''
+   ]));
+   tradesChanged=tradeSignature(fresh)!==tradeSignature(tradeCache);
+   tradeCache=fresh;
+   globalThis.fleecedTradeHistorySharedCacheV515=tradeCache;
+   globalThis.primeTradeHistoryCacheV515?.(tradeCache);
+  }catch(error){console.warn('manager-trade-refresh-unavailable',String(error?.message||error))}
+  // Manager Spotlight must move when the independent completed-week feed
+  // advances, even when the manager-history Blob has not changed yet.
+  const previousLeagueWeek=liveLeagueWeekCache;
+  let spotlightChanged=false;
+  try{
+   const latest=await liveLeagueWeek();
+   if(latest?.available){
+    const sig=x=>JSON.stringify([Number(x?.season)||0,Number(x?.week)||0,
+     (x?.teams||[]).map(g=>[g.roster_id,g.points,g.opponent_points,g.projected,g.opponent_projected])]);
+    spotlightChanged=sig(latest)!==sig(previousLeagueWeek);
+   }
+  }catch(error){console.warn('manager-spotlight-week-refresh-unavailable',String(error?.message||error))}
+  if(!managersChanged&&!tradesChanged&&!spotlightChanged)return;
+  if(managersChanged){weeklyAwardsCache=null;spotlightWeeklyCache=null}
+  if(tradesChanged)draftCache=null;
+  // Rerender the active manager/card/leaderboard with current verified sources.
+  await render(currentView,selectedManagerId);
+ }catch(error){console.warn('manager-view-refresh-unavailable',String(error?.message||error))}
+ finally{managerVisibleRefreshPending=false}
+}
+function installManagerRefresh(){
+ if(inquirerPreviewMode)return;
+ setInterval(refreshManagersIfVisible,MANAGER_REFRESH_MS);
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshManagersIfVisible()});
+ window.addEventListener('focus',refreshManagersIfVisible);
+}
+
 async function reporterDirectory(){if(reporterDirectoryCache)return reporterDirectoryCache;const r=await fetch('/.netlify/functions/league-hub?reporters=1',{cache:'no-store'});if(!r.ok)return{reporters:[]};reporterDirectoryCache=await r.json();return reporterDirectoryCache}
 async function reporterArchive(id){const k=String(id||'');if(!k)return null;if(reporterArchiveCache[k])return reporterArchiveCache[k];const r=await fetch('/.netlify/functions/league-hub?reporter_archive='+encodeURIComponent(k),{cache:'no-store'});if(!r.ok)return null;const j=await r.json();reporterArchiveCache[k]=j;return j}
 
 function managerNameForRoster(id){const rid=String(id);const cur=(managerCache?.current||[]).find(x=>String(x.roster_id)===rid);if(cur?.sleeper_id)return String(cur.sleeper_id);const assignment=(managerCache?.assignments||[]).filter(x=>String(x.roster_id)===rid).sort((a,b)=>(Number(b.season)||0)-(Number(a.season)||0))[0];if(assignment?.sleeper_id)return String(assignment.sleeper_id);const team=(globalThis.state?.teams||[]).find(x=>String(x.id)===rid);return String(team?.manager||team?.owner_name||team?.name||teamName(rid))}
 function tradeKey(t){return String(t?.id||t?.transaction_id||((t?.created||'unknown')+':'+(t?.roster_ids||[]).join('-')))}
-function hindsightDelta(trade){try{const fn=globalThis.tradeHistoryAdjustedHindsightV477;if(typeof fn!=='function')return null;const h=fn(trade);if(!h||!Number.isFinite(Number(h.a))||!Number.isFinite(Number(h.b))||!Number.isFinite(Number(h.edge)))return null;return h}catch{return null}}
+function hindsightDelta(trade){try{
+ const sides=trade?.sides||[],rosters=sides.map(s=>String(s?.roster_id||''));
+ if(sides.length!==2||new Set(rosters).size!==2||rosters.some(x=>!x||x==='0'))return null;
+ const fn=globalThis.tradeHistoryAdjustedHindsightV477;
+ if(typeof fn!=='function')return null;
+ const h=fn(trade);
+ if(!h||![h.a,h.b,h.edge].every(v=>Number.isFinite(Number(v)))||
+    ![0,1].includes(Number(h.winner))||Number(h.edge)<0||
+    Math.abs(Math.abs(Number(h.a)-Number(h.b))-Number(h.edge))>0.001)return null;
+ return h;
+}catch{return null}}
 function originalTradeDelta(trade){try{const fn=globalThis.tradeHistoryAdjustedOriginalV505;if(typeof fn!=='function')return null;const h=fn(trade);if(!h||!Number.isFinite(Number(h.aRaw))||!Number.isFinite(Number(h.bRaw))||!Number.isFinite(Number(h.edge))||!String(h.label||'').trim())return null;return h}catch{return null}}
 function inquirerTradeClassificationQuip(label,rid,context={}){
  const key=/^fleeced!?$/i.test(label)?'fleeced':/^fair$/i.test(label)?'fair':/^excellent fit$/i.test(label)?'excellent':/^negotiable$/i.test(label)?'negotiable':'other',
@@ -429,9 +566,162 @@ function currentAwards(stats,draftData){return awardStandings(stats,draftData).m
 const tradeAdjustedAwardKeys=new Set(['fleecer','fleeced','deal-maker','efficiency','big-swing','trade-average','volume-wins','big-regret','balanced']);
 function awardRecordKey(key){const k=String(key||'');return tradeAdjustedAwardKeys.has(k)?k+':trade-adjusted-v1':k}
 function awardPeriod(){const d=new Date(),anchor=new Date('2026-09-14T00:00:00');if(d<anchor)return'Sep 14 2026';const months=(d.getFullYear()-anchor.getFullYear())*12+d.getMonth()-anchor.getMonth(),step=Math.floor(months/6)*6,x=new Date(anchor);x.setMonth(x.getMonth()+step);return x.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
-async function syncAwards(rows){try{try{let h=await fetch('/.netlify/functions/league-hub?award_highs=1',{cache:'no-store'}).then(r=>r.json()),records=rows.flatMap(a=>(a.standings||[]).map(x=>({award_key:awardRecordKey(a.key),roster_id:x.roster_id,score:x.score,detail:x.detail})));h=await fetch('/.netlify/functions/league-hub?award_highs=1',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({records})}).then(r=>r.json());awardHighHistory=h.records||[]}catch{}const draftAward=rows.find(x=>x.key==='best-draft-pick');if(draftAward){const records=(draftCache?.draft_picks||[]).map(p=>{const v=Number(globalThis.tradeValueNormalizationV130?.canonicalValue?.({type:'player',id:String(p.player_id),owner:0}))||0;return v&&p.pick_no?{season:p.season,roster_id:p.roster_id,player_id:p.player_id,pick_no:p.pick_no,captured_value:v,delta:Math.round(v-retroPick(p.season,p.pick_no))}:null}).filter(Boolean);fetch('/.netlify/functions/league-hub?draft_records=1',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({records})}).catch(()=>{})}let r=await fetch('/.netlify/functions/league-hub?awards=1',{cache:'no-store'}),j=await r.json();awardHistory=j.history||[];const p=awardPeriod();if(!awardHistory.some(x=>x.period===p)){r=await fetch('/.netlify/functions/league-hub?awards=1',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({period:p,awards:rows})});j=await r.json();awardHistory=j.history||awardHistory}}catch{}}
+// Always load saved highs even if this client cannot write (protected
+// preview, transient network error, or a stale browser tab). The old code
+// discarded a successful GET whenever its next POST failed.
+async function refreshAllTimeHighs(rows,{record=true,verifiedInputs=false}={}){
+ const endpoint='/.netlify/functions/league-hub?award_highs=1';
+ try{
+  const response=await fetch(endpoint,{cache:'no-store'});
+  if(!response.ok)throw Error('All-Time Highs read returned '+response.status);
+  const data=await response.json();
+  if(!Array.isArray(data?.records))throw Error('Invalid All-Time Highs archive');
+  awardHighHistory=data.records;
+ }catch(error){
+  console.warn('league-award-highs-read-unavailable',String(error?.message||error));
+ }
+ const teams=globalThis.state?.teams||[];
+ const completeContext=verifiedInputs||Array.isArray(rows)&&rows.length===20&&
+   Array.isArray(tradeCache?.trades)&&tradeCache.trades.length>0&&
+   Array.isArray(draftCache?.draft_picks)&&draftCache.draft_picks.length>0;
+ const ready=completeContext&&teams.length===32&&
+   new Set(teams.map(t=>String(t.id))).size===32&&
+   globalThis.modeledPlayerValuesV319?.ready===true&&
+   typeof globalThis.tradeValueNormalizationV130?.canonicalValue==='function';
+ if(record&&!onNetlifyDeployPreview&&!inquirerPreviewMode&&ready&&Array.isArray(rows)){
+  const observations=rows.flatMap(a=>(a.standings||[]).map(x=>({
+   award_key:awardRecordKey(a.key),roster_id:String(x.roster_id||''),
+   score:x.score,detail:x.detail
+  }))).filter(x=>x.roster_id&&Number.isFinite(Number(x.score))&&
+     Number(x.score)!==-999999&&Number(x.score)>-1e8);
+  if(observations.length){
+   try{
+    const response=await fetch(endpoint,{method:'POST',
+     headers:{'content-type':'application/json'},
+     body:JSON.stringify({records:observations})});
+    if(!response.ok)throw Error('All-Time Highs write returned '+response.status);
+    const data=await response.json();
+    if(Array.isArray(data?.records))awardHighHistory=data.records;
+   }catch(error){
+    console.warn('league-award-highs-write-unavailable',String(error?.message||error));
+   }
+  }
+ }
+ if(currentView==='awards'&&rankingAwardKey&&awardHighMode[rankingAwardKey]&&
+     tradeCache&&draftCache){
+  const host=document.getElementById('leagueHubContent');
+  if(host)host.innerHTML=rankingsHTML(currentAwards(teamTradeStats(tradeCache.trades||[]),draftCache),rankingAwardKey);
+ }
+}
+async function freshAwardTradeHistory(){
+ const response=await fetch('/.netlify/functions/value-history?trades=1&trades_fresh=1',
+  {cache:'no-store'});
+ if(!response.ok)throw Error('Verified completed trade history unavailable for All-Time Highs');
+ const data=await response.json();
+ if(!Array.isArray(data?.trades)||!data.trades.length)
+  throw Error('No completed Sleeper trades verified for All-Time Highs');
+ return data;
+}
+let allTimeHighCaptureAt=0,allTimeHighCapturePending=null;
+async function captureAllTimeHighsOnSiteOpen({force=false}={}){
+ if(onNetlifyDeployPreview||inquirerPreviewMode||document.hidden)return false;
+ if(allTimeHighCapturePending)return allTimeHighCapturePending;
+ if(!force&&Date.now()-allTimeHighCaptureAt<15*60*1000)return true;
+ // A site-open or completed-week capture must use real current assets,
+ // canonical values and completed trade history. Never write empty placeholders.
+ const teams=globalThis.state?.teams||[],assets=globalThis.state?.allAssets||[];
+ if(teams.length!==32||assets.length<100||
+    globalThis.modeledPlayerValuesV319?.ready!==true||
+    typeof globalThis.tradeValueNormalizationV130?.canonicalValue!=='function')return false;
+ allTimeHighCapturePending=(async()=>{
+  const [tradeData,draftData]=await Promise.all([freshAwardTradeHistory(),drafts()]);
+  if(!Array.isArray(tradeData?.trades)||tradeData.trades.length===0||
+     !Array.isArray(draftData?.draft_picks))return false;
+  const rows=currentAwards(teamTradeStats(tradeData.trades),draftData);
+  if(rows.length!==20||rows.some(x=>!x.key||!Array.isArray(x.standings)))return false;
+  await refreshAllTimeHighs(rows,{verifiedInputs:true});
+  allTimeHighCaptureAt=Date.now();
+  return true;
+ })();
+ try{return await allTimeHighCapturePending}
+ catch(error){console.warn('league-award-highs-auto-capture-unavailable',String(error?.message||error));return false}
+ finally{allTimeHighCapturePending=null}
+}
+// Also capture when the site opens outside League Hub. Canonical data may
+// arrive after DOM ready, so listen for the explicit values-ready signal and
+// make one bounded startup attempt.
+window.addEventListener('fll:canonical-values-ready',()=>{
+ setTimeout(()=>captureAllTimeHighsOnSiteOpen().catch(()=>{}),1500);
+});
+setTimeout(()=>captureAllTimeHighsOnSiteOpen().catch(()=>{}),12000);
+setInterval(()=>captureAllTimeHighsOnSiteOpen().catch(()=>{}),180000);
+document.addEventListener('visibilitychange',()=>{
+ if(!document.hidden)captureAllTimeHighsOnSiteOpen().catch(()=>{});
+});
+// Read-only scheduled collector: reuse the ACTUAL Award standings algorithm
+// in the same canonical valuation runtime as the website. No browser writes.
+window.fleecedAwardHighsScheduledObservation=async function(){
+ const teams=globalThis.state?.teams||[],assets=globalThis.state?.allAssets||[];
+ if(teams.length!==32||new Set(teams.map(x=>String(x.id))).size!==32||
+    assets.length<100||globalThis.modeledPlayerValuesV319?.ready!==true||
+    typeof globalThis.tradeValueNormalizationV130?.canonicalValue!=='function')
+  throw Error('Award collector refused incomplete canonical league');
+ const [tradeData,draftData]=await Promise.all([freshAwardTradeHistory(),drafts()]);
+ if(!Array.isArray(tradeData?.trades)||tradeData.trades.length===0||
+    !Array.isArray(draftData?.draft_picks)||!draftData.draft_picks.length)
+  throw Error('Award collector refused incomplete trade or draft source');
+ const awards=currentAwards(teamTradeStats(tradeData.trades),draftData);
+ if(awards.length!==20||awards.some(x=>!x.key||!Array.isArray(x.standings)))
+  throw Error('Award collector refused missing category');
+ const observations=awards.flatMap(a=>(a.standings||[]).map(x=>({
+  award_key:awardRecordKey(a.key),roster_id:String(x.roster_id||''),
+  score:x.score,detail:x.detail
+ }))).filter(x=>/^[1-9][0-9]*$/.test(x.roster_id)&&
+    x.score!=null&&Number.isFinite(Number(x.score))&&
+    Number(x.score)!==-999999&&!/not enough data|unavailable/i.test(String(x.detail)));
+ if(observations.length<500)throw Error('Award collector refused incomplete ranking coverage '+observations.length);
+ return{schema_version:1,season:Number(globalThis.state?.season||2026),
+  captured_at:new Date().toISOString(),source:'canonical-live-32-team-awards',
+  team_count:32,trade_count:tradeData.trades.length,draft_count:draftData.draft_picks.length,
+  categories:awards.length,observations};
+};
+async function syncAwards(rows){
+ await refreshAllTimeHighs(rows);
+ try{
+  const draftAward=rows.find(x=>x.key==='best-draft-pick');
+  if(draftAward&&!onNetlifyDeployPreview){
+   const records=(draftCache?.draft_picks||[]).map(p=>{
+    const v=Number(globalThis.tradeValueNormalizationV130?.canonicalValue?.({type:'player',id:String(p.player_id),owner:0}))||0;
+    return v&&p.pick_no?{season:p.season,roster_id:p.roster_id,player_id:p.player_id,
+     pick_no:p.pick_no,captured_value:v,delta:Math.round(v-retroPick(p.season,p.pick_no))}:null
+   }).filter(Boolean);
+   fetch('/.netlify/functions/league-hub?draft_records=1',{method:'POST',
+    headers:{'content-type':'application/json'},body:JSON.stringify({records})}).catch(()=>{});
+  }
+  const response=await fetch('/.netlify/functions/league-hub?awards=1',{cache:'no-store'});
+  if(!response.ok)throw Error('Awards history read unavailable');
+  const data=await response.json();awardHistory=data.history||[];
+  const p=awardPeriod();
+  if(!onNetlifyDeployPreview&&!awardHistory.some(x=>x.period===p)){
+   const next=await fetch('/.netlify/functions/league-hub?awards=1',{method:'POST',
+    headers:{'content-type':'application/json'},body:JSON.stringify({period:p,awards:rows})});
+   if(next.ok){const value=await next.json();awardHistory=value.history||awardHistory}
+  }
+ }catch(error){console.warn('league-awards-history-unavailable',String(error?.message||error))}
+}
 function awardCard(a){const yf=a.yearFilter?`<label class="lh-year-filter"><b>YEAR</b><select data-lh-award-year="${esc(a.key)}"><option value="all">All</option>${(a.years||[]).map(y=>`<option value="${y}" ${String(awardYearFilters[a.key]||'all')===String(y)?'selected':''}>${y}</option>`).join('')}</select></label>`:'';const win=a.standings?.[0],link=a.leagueNetModal?`<button class="secondary small" data-lh-loaded-roster>Open Value History chart</button>`:a.teamTradeLink&&win?`<button class="secondary small" data-lh-manager-trades="${esc(win.roster_id)}">Winner Trade History</button>`:a.specificTradeLink&&win?.trade_id?`<button class="secondary small" data-lh-trade="${esc(win.trade_id)}">View Winning Trade</button>`:'';return`<div class="lh-card"><h3>${esc(a.title)}</h3><div class="lh-sub">${esc(a.desc||'')}</div>${yf}<div class="lh-story"><b>${a.roster_id?esc(teamName(a.roster_id)):'—'}</b><small>${esc(a.detail)}</small></div><div class="lh-action"><button class="secondary small" data-lh-rankings="${esc(a.key)}">View all rankings</button> ${link}</div></div>`}
-function awardRecordsHTML(a){const hist=awardHighHistory.filter(x=>x.award_key===awardRecordKey(a.key)),rows=hist.slice().sort((x,y)=>Number(y.score)-Number(x.score));return`<div class="lh-records"><h3>📈 All-Time Highs</h3><div class="lh-sub">Each team's highest recorded performance for this award. The timestamp is when that exact high was first captured and remains attached until a new high replaces it.</div>${rows.map((x,i)=>`<div class="lh-stat"><span><b>#${i+1}</b> ${esc(teamName(x.roster_id))}</span><span><small>${esc(x.detail||fmt(x.score))}</small><small style="display:block;color:var(--muted);margin-top:3px">Recorded ${esc(x.captured_at?new Date(x.captured_at).toLocaleString():'Timestamp unavailable')}</small></span></div>`).join('')||'<div class="lh-sub">No timestamped high has been captured yet.</div>'}</div>`}
+function awardRecordsHTML(a){
+ const hist=awardHighHistory.filter(x=>x.award_key===awardRecordKey(a.key)),
+  rows=hist.slice().sort((x,y)=>Number(y.score)-Number(x.score));
+ const stored=rows.map((x,i)=>`<div class="lh-stat"><span><b>#${i+1}</b> ${esc(teamName(x.roster_id))}</span><span><small>${esc(x.detail||fmt(x.score))}</small><small style="display:block;color:var(--muted);margin-top:3px">Recorded ${esc(x.captured_at?new Date(x.captured_at).toLocaleString():'Timestamp unavailable')}</small></span></div>`).join('');
+ // Deploy Previews cannot write to the archive. Always show the actual live
+ // award rankings if no historical observation has been persisted yet, but
+ // NEVER mislabel the current value as a timestamped historical peak.
+ const provisional=!rows.length&&Array.isArray(a?.standings)?
+  `<div class="lh-sub" data-lh-highs-pending>Historical records are not archived yet. These are the CURRENT verified award standings, not timestamped All-Time Highs. A successful scheduled capture will preserve the true highs and observation dates automatically.</div>`+
+  a.standings.map((x,i)=>`<div class="lh-stat" data-lh-current-benchmark><span><b>#${i+1}</b> ${esc(teamName(x.roster_id))}</span><span><small>${esc(x.detail||fmt(x.score))}</small><small>Current result • not yet recorded as a historical high</small></span></div>`).join(''):'';
+ return`<div class="lh-records"><h3>📈 All-Time Highs</h3><div class="lh-sub">Each team's highest captured performance for this award, with the timestamp of its first verified observation.</div>${stored||provisional||'<div class="lh-sub">No verified observations or current standings are available yet.</div>'}</div>`;
+}
 function rankingsHTML(rows,key){const a=rows.find(x=>x.key===key)||rows[0];if(!a)return'<div class="lh-awards-page"><div class="lh-card">No rankings available.</div></div>';if(a.key==='roster-value')return loadedRosterRankingsHTML(a);const high=!!awardHighMode[a.key],yf=`<div class="lh-action"><button type="button" class="secondary small ${high?'active':''}" data-lh-award-high="${esc(a.key)}">${high?'Turn off All-Time Highs':'📈 All-Time Highs'}</button>${a.yearFilter?` <label class="lh-year-filter"><b>YEAR</b><select data-lh-award-year="${esc(a.key)}"><option value="all">All</option>${(a.years||[]).map(y=>`<option value="${y}" ${String(awardYearFilters[a.key]||'all')===String(y)?'selected':''}>${y}</option>`).join('')}</select></label>`:''}</div>`;return`<div class="lh-awards-page"><div class="lh-card"><div class="lh-action"><button class="secondary small" data-lh-rankings-back>← All Awards</button></div><h3 style="margin-top:12px">${esc(a.title)} — All 32 Teams</h3><div class="lh-sub">${esc(a.desc||'Current standings')}</div>${yf}${high?awardRecordsHTML(a):a.standings.map(x=>`<div class="lh-stat"><span><b>#${x.rank}</b> ${esc(teamName(x.roster_id))}</span><span><small>${esc(x.detail)}</small>${a.teamTradeLink?` <button class="secondary small" data-lh-manager-trades="${esc(x.roster_id)}">Trade History</button>`:''}${a.specificTradeLink&&x.trade_id?` <button class="secondary small" data-lh-trade="${esc(x.trade_id)}">View Trade</button>`:''}</span></div>`).join('')}</div></div>`}
 function loadedRosterRankingsHTML(a){return`<div class="lh-awards-page"><div class="lh-card"><div class="lh-action"><button class="secondary small" data-lh-rankings-back>← All Awards</button></div><h3 style="margin-top:12px">${esc(a.title)} — All 32 Teams</h3><div class="lh-sub">Current loaded-roster net value ranking. Use View chart to open the same league comparison pop-out.</div>${a.standings.map(x=>`<div class="lh-stat"><span><b>#${x.rank}</b> ${esc(teamName(x.roster_id))}</span><span><small>${esc(x.detail)}</small> <button class="secondary small" data-lh-loaded-roster>View chart</button></span></div>`).join('')}</div></div>`}
 function weeklyCopy(t){const margin=Math.abs(t.points-t.opponent_points),projOk=t.projection_coverage>=Math.max(1,Math.ceil(t.starter_count*.65)),proj=t.projected||0;let opener=t.won?`${t.team_name} walked out with a ${t.points.toFixed(1)}–${t.opponent_points.toFixed(1)} win`:`${t.team_name} took a ${t.opponent_points.toFixed(1)}–${t.points.toFixed(1)} loss`;if(margin<8)opener+=', and this one was a fourth-quarter stomach ache.';else if(margin>35)opener+=t.won?', and it was never especially polite.':', and the scoreboard got ugly in a hurry.';else opener+='.';
@@ -469,7 +759,7 @@ function reporterArchiveHTML(w){
  const reporters=w?.reporters||reporterDirectoryCache?.reporters||[],buttons=reporters.map(r=>'<button type="button" class="lh-reporter-desk '+(openReporterArchive===r.id?'active':'')+'" data-lh-reporter-archive="'+esc(r.id)+'"><b>'+esc(r.name)+'</b><small>'+esc(r.title)+'<br>'+esc(r.desk)+'</small></button>').join('');
  let panel='';
  if(openReporterArchive){const data=reporterArchiveCache[openReporterArchive],r=reporters.find(x=>x.id===openReporterArchive)||data?.reporter;if(data){const rows=data.articles||[];panel='<div class="lh-reporter-archive"><div class="lh-title-action"><h4>'+esc(r?.name||'Reporter')+' — Article Archive</h4><button type="button" class="secondary small" data-lh-reporter-close>Close</button></div><div class="lh-sub">'+esc((r?.desk||'')+(r?.signature?' • '+r.signature:''))+'</div>'+(rows.length?rows.map(x=>'<button type="button" class="secondary small lh-reporter-article-link" data-lh-reporter-article-season="'+x.season+'" data-lh-reporter-article-week="'+x.week+'" data-lh-reporter-article-team="'+esc(x.roster_id)+'"><b>'+esc(x.headline||x.team_name)+'</b><small>'+esc(x.season+' Week '+x.week+' • '+x.team_name+(String(x.roster_id)==='__league__'?' • Co-authored by all four desks':' • GM '+x.manager_name))+'</small></button>').join(''):'<div class="lh-sub">No archived articles yet.</div>')+'</div>'}else panel='<div class="lh-reporter-archive"><div class="lh-title-action"><div class="lh-sub">Loading reporter archive…</div><button type="button" class="secondary small" data-lh-reporter-close>Close</button></div></div>'}
- return '<div class="lh-archive"><b>Reporter Desks</b><div class="lh-sub">Four distinct Fleeced! Inquirer voices rotate across all 32 teams. Over four weeks, every reporter covers every team once.</div><div class="lh-reporter-desks">'+buttons+'</div>'+panel+'</div>'
+ return '<div class="lh-archive"><b>Reporter Desks</b><div class="lh-sub">Browse the four reporter desks and their archived team coverage.</div><div class="lh-reporter-desks">'+buttons+'</div>'+panel+'</div>'
 }
 function inquirerPlayerEntities(){
  if(inquirerPlayerLinkCache)return inquirerPlayerLinkCache;
@@ -556,7 +846,9 @@ function dailyHTML(all,stats,w,md,spotlightW=w,leagueWeek=liveLeagueWeekCache){
  const archive='<div class="lh-archive"><b>Fleeced! Inquirer Archive</b><div class="lh-sub">Jump straight to a season, week and team. It opens on the current completed week.</div>'+
   (broadcastArchive.length?archiveFiltersHTML(w):'<span class="lh-sub">The first archived report will appear after a completed week is captured.</span>')+
   '</div>'+reporterArchiveHTML(w);
- const topArchive=broadcastArchive.length?'<div class="lh-archive-top"><b>Browse Fleeced! Inquirer</b><div class="lh-sub">Choose a year, week and team, or open that week’s Weekly Recap.</div>'+archiveFiltersHTML(w)+'</div>':'';
+ // The archive section below is the ONLY year/week/team navigation.
+ // The retired top picker duplicated the same controls on each edition.
+ const topArchive='';
 
  let report='';
  if(w?.available){
@@ -607,20 +899,49 @@ function dailyHTML(all,stats,w,md,spotlightW=w,leagueWeek=liveLeagueWeekCache){
    '<div class="lh-sub">No fully-valued two-team trade is available yet.</div>')+
   '<div class="lh-action"><button class="lh-brand-button lh-brand-button-outline lh-brand-button-compact" data-lh-view="hall">Enter Hall of Fleeced</button></div></div>';
 
- return '<div class="lh-grid">'+liveScoreboard+report+tradeWire+playersOfWeekHTML(w)+awards+hall+spotlightBlock(md,leagueWeek?.available?leagueWeek:spotlightW)+'</div>';
+ return '<div class="lh-grid">'+liveScoreboard+report+tradeWire+playersOfWeekHTML(w)+awards+hall+spotlightBlock(md,leagueWeek)+'</div>';
 }
 function careerRankingsHTML(key,md){const labels={wins:'Most Wins',championships:'Most Championships',division_wins:'Most Division Wins',division_championships:'Most Division Championships',losses:'Most Losses',regular_season_titles:'Regular Season Champions'},rows=(md?.career||[]).slice().sort((a,b)=>(b[key]||0)-(a[key]||0));return`<div class="lh-card lh-wide"><div class="lh-title-action"><h3>🏅 ${esc(labels[key]||'Manager Rankings')}</h3><button class="secondary small" data-lh-view="daily">← Fleeced Daily</button></div><div class="lh-sub">Comprehensive career rankings by Sleeper manager ID.</div>${rows.map((x,i)=>`<div class="lh-stat"><span><b>#${i+1}</b> ${esc(x.sleeper_id||x.user_id||'—')}</span><strong>${Number(x[key])||0}</strong></div>`).join('')||'<div class="lh-sub">No career history available yet.</div>'}</div>`}
 function latestWeeklyAwardRecord(data=weeklyAwardsCache){
  const rows=Array.isArray(data?.records)?data.records:[];return rows.slice().sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week))[0]||null;
 }
+function pendingHotSeatFromCompletedWeek(w){
+ const favorites=(w?.available&&Array.isArray(w.teams)?w.teams:[]).filter(g=>
+  g?.won===false&&g.points!=null&&g.opponent_points!=null&&
+  Number.isFinite(Number(g.points))&&Number.isFinite(Number(g.opponent_points))&&
+  Number(g.points)<Number(g.opponent_points)&&
+  g.projected!=null&&g.opponent_projected!=null&&
+  Number.isFinite(Number(g.projected))&&Number.isFinite(Number(g.opponent_projected))&&
+  Number(g.projected)>Number(g.opponent_projected));
+ if(!favorites.length)return null;
+ const g=favorites.slice().sort((a,b)=>
+  (Number(b.projected)-Number(b.opponent_projected))-
+  (Number(a.projected)-Number(a.opponent_projected))||
+  String(a.roster_id).localeCompare(String(b.roster_id)))[0];
+ return{type:'hot-seat',title:'🔥 Hot Seat',roster_id:g.roster_id,
+  manager_name:g.manager_name,team_name:g.team_name,
+  detail:'Projected to win by '+(Number(g.projected)-Number(g.opponent_projected)).toFixed(1)+
+   ' • lost by '+(Number(g.opponent_points)-Number(g.points)).toFixed(1),
+  provisional:true};
+}
 function weeklyAwardCardsHTML(data=weeklyAwardsCache){
- const rec=latestWeeklyAwardRecord(data),rows=rec?.manager_awards||[];if(!rec||!rows.length)return'';
- return '<div class="lh-card lh-wide"><h3>🏅 Weekly Manager Awards — '+esc(rec.season+' Week '+rec.week)+'</h3><div class="lh-sub">These badges are locked to the completed week and remain on the winning manager’s profile.</div><div class="lh-grid">'+rows.map(a=>'<div class="lh-card"><h3>'+esc(a.title)+'</h3><div class="lh-story"><b>'+esc(a.manager_name||teamName(a.roster_id))+'</b><small>'+esc(a.team_name||teamName(a.roster_id))+' • '+esc(a.detail||'')+'</small></div></div>').join('')+'</div></div>';
+ const rec=latestWeeklyAwardRecord(data);
+ if(!rec)return'';
+ const live=spotlightWeeklyCache?.available?spotlightWeeklyCache:liveLeagueWeekCache;
+ const currentWeek=live?.available&&Number(live.season)===Number(rec.season)&&
+  Number(live.week)===Number(rec.week);
+ const rows=Array.isArray(rec.manager_awards)?rec.manager_awards.slice():[];
+ if(currentWeek&&!rows.some(x=>x.type==='hot-seat')){
+  const derived=pendingHotSeatFromCompletedWeek(live);
+  if(derived)rows.unshift(derived);
+ }
+ if(!rows.length)return'';
+ return '<div class="lh-card lh-wide"><h3>🏅 Weekly Manager Awards — '+esc(rec.season+' Week '+rec.week)+'</h3><div class="lh-sub">Archived badges are locked to their completed week; provisional finalized-score Hot Seat results are labeled until the weekly award archive catches up.</div><div class="lh-grid">'+rows.map(a=>'<div class="lh-card"><h3>'+esc(a.title)+'</h3><div class="lh-story"><b>'+esc(a.manager_name||teamName(a.roster_id))+'</b><small>'+esc(a.team_name||teamName(a.roster_id))+' • '+esc(a.detail||'')+(a.provisional?' • Current verified result, pending archival':'')+'</small></div></div>').join('')+'</div></div>';
 }
 function managerWeeklyBadgesHTML(id,mgr,data=weeklyAwardsCache){
  const uid=String(mgr?.user_id||''),rid=String(id),badges=(data?.records||[]).flatMap(rec=>(rec.manager_awards||[]).filter(a=>(uid&&a.manager_user_id&&String(a.manager_user_id)===uid)||String(a.roster_id||'')===rid).map(a=>({...a,season:rec.season,week:rec.week,captured_at:rec.captured_at||''}))).sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week));
  if(!badges.length)return'<div class="lh-sub">No weekly manager badges yet.</div>';
- return '<div class="lh-weekly-badges">'+badges.map(a=>'<span class="lh-weekly-badge">'+esc(a.title)+' • '+esc(a.season+' Week '+a.week)+(a.captured_at?' • '+esc(date(a.captured_at)):'')+'</span>').join('')+'</div>';
+ return '<div class="lh-weekly-badges">'+badges.map(a=>'<span class="lh-weekly-badge">'+esc(a.title)+' • '+esc(a.season+' Week '+a.week)+(a.provisional?' • Current completed-week result, pending archival':a.captured_at?' • '+esc(date(a.captured_at)):'')+'</span>').join('')+'</div>';
 }
 function playersOfWeekHTML(w,data=weeklyAwardsCache){
  const rows=Array.isArray(data?.records)?data.records:[],season=Number(w?.season),week=Number(w?.week),rec=rows.find(r=>Number(r.season)===season&&Number(r.week)===week)||null,p=rec?.players_of_week;if(!p?.offense&&!p?.defense)return'';
@@ -630,7 +951,7 @@ function playersOfWeekHTML(w,data=weeklyAwardsCache){
 function awardsHTML(rows){if(rankingAwardKey)return rankingsHTML(rows,rankingAwardKey);return`<div class="lh-awards-page lh-awards-main"><div class="lh-sub">20 live awards are recalculated from current league data, plus four locked weekly manager awards: Hot Seat, Cool Throne, Highest Scorer and Lowest Scorer. Historic live-award snapshots begin Sep 14, 2026; weekly awards are tracked independently by season and week.</div><div class="lh-grid">${weeklyAwardCardsHTML()}${rows.map(awardCard).join('')}</div></div>`}
 function hallHTML(all){const rows=all.map(t=>({t,h:hindsightDelta(t)})).filter(x=>x.h).sort((a,b)=>b.h.edge-a.h.edge),fairRows=rows.filter(x=>Number(x.h.playerValueExchanged)>=500).slice().sort((a,b)=>a.h.edge-b.h.edge),shown=hallExpanded?rows:rows.slice(0,10),fairShown=hallExpanded?fairRows:fairRows.slice(0,10),renderFair=(x,i)=>{const winner=x.t.sides?.[x.h.winner]?.roster_id,detail=x.h.edge===0?'even trade-adjusted current outcome':'trade-adjusted current outcome gap '+fmtHall(x.h.edge)+' • slight advantage '+teamName(winner);return`<div class="lh-story lh-click" data-lh-trade="${esc(tradeKey(x.t))}"><b>#${i+1} ${esc((x.t.roster_ids||[]).map(teamName).join(' ↔ '))}</b><small>${esc(date(x.t.created))} • ${esc(detail)} • open exact trade →</small></div>`};
  return`<div class="lh-hall-page"><div class="lh-grid"><div class="lh-card"><div class="lh-title-action"><h3>👑 Hall of Fame</h3>${fairRows.length>10?`<button class="secondary small" data-lh-hall-all>${hallExpanded?'Show Top 10':'View All'}</button>`:''}</div><div class="lh-sub">The most balanced fully-valued two-team trades in league Trade History, ranked by the smallest trade-adjusted current outcome gap. Hall of Fame requires at least 500 combined current player-value points among the players actually exchanged.</div>${fairShown.map(renderFair).join('')||'<div class="lh-sub">No fully-valued trades available.</div>'}</div><div class="lh-card"><div class="lh-title-action"><h3>💀 Hall of Fleeced</h3>${rows.length>10?`<button class="secondary small" data-lh-hall-all>${hallExpanded?'Show Top 10':'View All'}</button>`:''}</div><div class="lh-sub">All trades ranked by the size of the trade-adjusted current hindsight gap, highlighting the manager on the losing side.</div>${shown.map((x,i)=>{const loser=x.t.sides?.[x.h.winner?0:1]?.roster_id;return`<div class="lh-story lh-click" data-lh-trade="${esc(tradeKey(x.t))}"><b>#${i+1} ${esc(teamName(loser))}</b><small>${esc(date(x.t.created))} • ${fmtHall(x.h.edge)} behind in trade-adjusted current outcome value • open exact trade →</small></div>`}).join('')||'<div class="lh-sub">No fully-valued trades available.</div>'}</div></div></div>`}
-function spotlightBlock(md,w){const cr=md?.career||[],metric=(key,label,icon)=>{const rows=cr.slice().sort((a,b)=>(b[key]||0)-(a[key]||0)),winner=rows[0];return`<div class="lh-spot-card"><div><small>${label}</small><b>${esc(winner?.sleeper_id||'—')}</b><strong>${winner?.[key]||0}</strong></div><button class="lh-brand-button lh-brand-button-outline lh-brand-button-compact" data-lh-career-rank="${key}">View all</button></div>`},weekTeams=w?.available?(w.teams||[]):[],wins=weekTeams.filter(g=>g.won),losses=weekTeams.filter(g=>g.won===false),hot=losses.filter(g=>Number.isFinite(Number(g.projected))&&Number.isFinite(Number(g.opponent_projected))&&Number(g.projected)>Number(g.opponent_projected)).sort((a,b)=>(Number(b.projected)-Number(b.opponent_projected))-(Number(a.projected)-Number(a.opponent_projected)))[0],cool=wins.slice().sort((a,b)=>(Number(b.points)-Number(b.opponent_points))-(Number(a.points)-Number(a.opponent_points)))[0],managerForGame=g=>{const cur=(md?.current||[]).find(x=>String(x.roster_id)===String(g?.roster_id));return cur?.sleeper_id||g?.manager_name||'n/a'},signed=n=>(Number(n)>=0?'+':'')+Number(n).toFixed(1),gameCard=(g,label,icon)=>{if(!g)return`<div class="lh-spot-card"><div><small>${label}</small><b>n/a</b><strong>n/a</strong><small>Available after a completed Sleeper week.</small></div></div>`;const projectedMargin=Number(g.projected)-Number(g.opponent_projected),resultMargin=Number(g.points)-Number(g.opponent_points);return`<div class="lh-spot-card"><div><small>${label}</small><b>${esc(managerForGame(g))}</b><strong>${signed(resultMargin)}</strong><small>Projected ${signed(projectedMargin)} • ${resultMargin>=0?'won':'lost'} by ${Math.abs(resultMargin).toFixed(1)}</small></div></div>`},scoring=md?.scoring_history||{},season=Number(w?.season)||Number(scoring.through_season)||0,seasonRow=(scoring.season_extremes||[]).find(x=>Number(x.season)===season),managerForScore=g=>String(g?.manager_name||cr.find(x=>String(x.user_id)===String(g?.user_id))?.sleeper_id||managerForGame(g)),scoreCard=(g,label,board)=>g?`<div class="lh-spot-card"><div><small>${label}</small><b>${esc(managerForScore(g))}</b><strong>${Number(g.score).toFixed(1)}</strong><small>Fantasy points • ${esc(g.season)} • ${esc(g.playoff?(g.round_label||('Week '+g.week+' Playoffs')):('Week '+g.week))}</small></div><button class="lh-brand-button lh-brand-button-outline lh-brand-button-compact" data-lh-scoreboard="${esc(board)}">View all</button></div>`:`<div class="lh-spot-card"><div><small>${label}</small><b>n/a</b><strong>n/a</strong><small>Available after completed fantasy matchups.</small></div><button class="lh-brand-button lh-brand-button-outline lh-brand-button-compact" data-lh-scoreboard="${esc(board)}">View all</button></div>`;return`<div class="lh-card lh-wide lh-spotlight"><div class="lh-title-action"><h3>Manager Spotlight</h3></div><div class="lh-sub">Regular-season career records use Sleeper's all-time league standings (ties ignored). Hot Seat and Cool Throne keep the completed-week logic already in use. Scoring records use completed fantasy matchup scores; yearly highs/lows show the current season, and all-time records cover every completed scoring week since 2024.</div><div class="lh-spot-grid">${metric('wins','Most Wins','🏆')}${metric('losses','Most Losses','📉')}${metric('championships','Most Championships','👑')}${metric('division_wins','Most Division Wins','🏅')}${metric('division_championships','Most Division Championships','🏆')}${metric('regular_season_titles','Regular Season Champions','🥇')}${gameCard(hot,'Hot Seat','🔥')}${gameCard(cool,'Cool Throne','🧊')}${scoreCard(seasonRow?.highest,'Highest Scorer of the Year','year_highest')}${scoreCard(seasonRow?.lowest,'Lowest Scorer of the Year','year_lowest')}${scoreCard(scoring?.all_time?.highest,'All-Time Highest Scorer','all_time_highest')}${scoreCard(scoring?.all_time?.lowest,'All-Time Lowest Scorer','all_time_lowest')}</div></div>`}
+function spotlightBlock(md,w){const cr=md?.career||[],metric=(key,label,icon)=>{const rows=cr.slice().sort((a,b)=>(b[key]||0)-(a[key]||0)),winner=rows.find(x=>Number(x?.[key])>0)||null;return`<div class="lh-spot-card"><div><small>${label}</small><b>${esc(winner?.sleeper_id||'—')}</b><strong>${winner?.[key]??'n/a'}</strong></div><button class="lh-brand-button lh-brand-button-outline lh-brand-button-compact" data-lh-career-rank="${key}">View all</button></div>`},weekTeams=w?.available&&Array.isArray(w?.teams)&&w.teams.length===32?w.teams:[],wins=weekTeams.filter(g=>g.won),losses=weekTeams.filter(g=>g.won===false),hot=losses.filter(g=>g?.projected!=null&&g?.opponent_projected!=null&&g?.projection_coverage===1&&Number.isFinite(Number(g.projected))&&Number.isFinite(Number(g.opponent_projected))&&Number(g.projected)>Number(g.opponent_projected)&&Number(g.points)<Number(g.opponent_points)).sort((a,b)=>(Number(b.projected)-Number(b.opponent_projected))-(Number(a.projected)-Number(a.opponent_projected)))[0],cool=wins.slice().sort((a,b)=>(Number(b.points)-Number(b.opponent_points))-(Number(a.points)-Number(a.opponent_points)))[0],managerForGame=g=>{const cur=(md?.current||[]).find(x=>String(x.roster_id)===String(g?.roster_id));return cur?.sleeper_id||g?.manager_name||'n/a'},signed=n=>(Number(n)>=0?'+':'')+Number(n).toFixed(1),gameCard=(g,label,icon)=>{if(!g)return`<div class="lh-spot-card"><div><small>${label}</small><b>n/a</b><strong>n/a</strong><small>${weekTeams.length?(label==='Hot Seat'?'No verified projected upset for this completed week.':'No qualifying finalized matchup.'): 'Available after a completed Sleeper week.'}</small></div></div>`;const hasProjection=g.projected!=null&&g.opponent_projected!=null&&Number.isFinite(Number(g.projected))&&Number.isFinite(Number(g.opponent_projected)),projectedMargin=hasProjection?Number(g.projected)-Number(g.opponent_projected):null,resultMargin=Number(g.points)-Number(g.opponent_points);return`<div class="lh-spot-card"><div><small>${label}</small><b>${esc(managerForGame(g))}</b><strong>${signed(resultMargin)}</strong><small>Projected ${hasProjection?signed(projectedMargin):'unavailable'} • ${resultMargin>=0?'won':'lost'} by ${Math.abs(resultMargin).toFixed(1)}</small></div></div>`},scoring=md?.scoring_history||{},season=Number(w?.season)||Number(scoring.through_season)||0,seasonRow=(scoring.season_extremes||[]).find(x=>Number(x.season)===season),managerForScore=g=>String(g?.manager_name||cr.find(x=>String(x.user_id)===String(g?.user_id))?.sleeper_id||managerForGame(g)),scoreCard=(g,label,board)=>g?`<div class="lh-spot-card"><div><small>${label}</small><b>${esc(managerForScore(g))}</b><strong>${Number(g.score).toFixed(1)}</strong><small>Fantasy points • ${esc(g.season)} • ${esc(g.playoff?(g.round_label||('Week '+g.week+' Playoffs')):('Week '+g.week))}</small></div><button class="lh-brand-button lh-brand-button-outline lh-brand-button-compact" data-lh-scoreboard="${esc(board)}">View all</button></div>`:`<div class="lh-spot-card"><div><small>${label}</small><b>n/a</b><strong>n/a</strong><small>Available after completed fantasy matchups.</small></div><button class="lh-brand-button lh-brand-button-outline lh-brand-button-compact" data-lh-scoreboard="${esc(board)}">View all</button></div>`;return`<div class="lh-card lh-wide lh-spotlight"><div class="lh-title-action"><h3>Manager Spotlight${weekTeams.length?' • '+esc(w.season)+' Week '+esc(w.week):''}</h3></div><div class="lh-sub">Regular-season career records are reconstructed from verified Sleeper matchups (ties excluded). Hot Seat requires complete Sleeper starter projections and a projected favorite that lost; Cool Throne uses the latest independently verified completed week. Scoring records use completed fantasy matchup scores; yearly highs/lows show the current season, and all-time records cover every completed scoring week since 2024.</div><div class="lh-spot-grid">${metric('wins','Most Wins','🏆')}${metric('losses','Most Losses','📉')}${metric('championships','Most Championships','👑')}${metric('division_wins','Most Division Wins','🏅')}${metric('division_championships','Most Division Championships','🏆')}${metric('regular_season_titles','Regular Season Champions','🥇')}${gameCard(hot,'Hot Seat','🔥')}${gameCard(cool,'Cool Throne','🧊')}${scoreCard(seasonRow?.highest,'Highest Scorer of the Year','year_highest')}${scoreCard(seasonRow?.lowest,'Lowest Scorer of the Year','year_lowest')}${scoreCard(scoring?.all_time?.highest,'All-Time Highest Scorer','all_time_highest')}${scoreCard(scoring?.all_time?.lowest,'All-Time Lowest Scorer','all_time_lowest')}</div></div>`}
 function graveyardScoringHTML(g){
  const rows=Array.isArray(g?.scoring_games)?g.scoring_games:[],seasons=(g?.seasons||[...new Set(rows.map(x=>Number(x.season)).filter(Boolean))]).slice().sort((a,b)=>a-b),seasonText=seasons.length?seasons.join(', '):'No scoring seasons located';
  return`<div class="lh-story"><b>${esc(g.sleeper_id||g.user_id)}</b><small>${g.career?.wins||0}-${g.career?.losses||0} • ${g.career?.playoff_wins||0} playoff wins • ${g.career?.championships||0} championships</small><small>League seasons: ${esc(seasonText)}${g.played_2025?' • Played in 2025':''} • ${rows.length} completed scoring weeks retained</small>${rows.length?`<details class="lh-grave-history"><summary>View scoring history</summary>${rows.map(r=>`<div class="lh-grave-score"><span>${esc(r.season)}</span><span>${esc(r.playoff?(r.round_label||('Week '+r.week+' Playoffs')):('Week '+r.week))}</span><b>${Number(r.score||0).toFixed(1)} pts</b></div>`).join('')}</details>`:''}</div>`;
@@ -644,26 +965,53 @@ function managerScoringRecordBadgesHTML(mgr,data=managerCache){
 function managerHTML(id,stats,all){selectedManagerId=String(id);const s=stats.find(x=>x.id===String(id))||{id:String(id),trades:0,wins:0,losses:0,net:0},mgr=(managerCache?.current||[]).find(x=>String(x.roster_id)===String(id)),career=(managerCache?.career||[]).find(x=>String(x.user_id)===String(mgr?.user_id))||{},draftsNow=currentAwards(stats,draftCache),bdp=draftsNow.find(x=>x.key==='best-draft-pick')?.standings?.find(x=>String(x.roster_id)===String(id)),bd=draftsNow.find(x=>x.key==='best-draft')?.standings?.find(x=>String(x.roster_id)===String(id)),mine=all.filter(t=>(t.roster_ids||[]).map(String).includes(String(id))).map(t=>({t,h:hindsightDelta(t)})).filter(x=>x.h).sort((a,b)=>b.h.edge-a.h.edge),best=mine.find(x=>String(x.t.sides?.[x.h.winner]?.roster_id)===String(id)),worst=mine.find(x=>String(x.t.sides?.[x.h.winner]?.roster_id)!==String(id)),history=awardHistory.flatMap(c=>(c.awards||[]).filter(a=>String(a.roster_id)===String(id)).map(a=>({...a,period:c.period,captured_at:c.captured_at}))).sort((a,b)=>String(b.captured_at).localeCompare(String(a.captured_at)));
  const managerAssignments=(managerCache?.assignments||[]).filter(a=>String(a.user_id)===String(mgr?.user_id)),managerRosterIds=new Set(managerAssignments.map(a=>String(a.roster_id))),managerTrades=all.filter(t=>(t.roster_ids||[]).some(r=>managerRosterIds.has(String(r)))),draftYears=[...new Set((draftCache?.draft_picks||[]).map(p=>Number(p.season)).filter(y=>y>=2024))].sort((a,b)=>a-b),draftRatingRows=draftYears.map(y=>{const old=awardYearFilters['best-draft'];awardYearFilters['best-draft']=String(y);const row=currentAwards(stats,draftCache).find(x=>x.key==='best-draft')?.standings?.find(x=>String(x.roster_id)===String(id));if(old==null)delete awardYearFilters['best-draft'];else awardYearFilters['best-draft']=old;const m=String(row?.detail||'').match(/(?:delta|Δ)\s*[:+]?\s*([+-]?[\d,]+)/i);return{year:y,detail:row?.detail||'n/a',delta:m?m[1]:null}});
  return`<div class="lh-grid"><div class="lh-manager-profile-head lh-wide"><h3 class="lh-manager-profile-name">${esc(managerNameForRoster(id))}</h3><div class="lh-manager-team-name">${esc(teamName(id))}</div><button class="secondary small" data-lh-all-managers>← All Managers</button></div><div class="lh-stat"><span>Completed trades</span><strong>${managerTrades.length}</strong></div><div class="lh-stat"><span>Current hindsight record</span><b>${s.wins}-${s.losses}</b></div><div class="lh-stat"><span>Cumulative trade-adjusted outcome edge</span><b class="${s.net>=0?'lh-positive':'lh-negative'}">${s.net>=0?'+':''}${fmt(s.net)}</b></div><div class="lh-action"><button class="secondary small" data-lh-manager-spotlight>Manager Spotlight</button> <button class="secondary small" data-lh-manager-trades="${esc(id)}">Open this team's Trade History</button> <button class="secondary small" data-lh-value-team="${esc(id)}">Track My Team</button></div></div><div class="lh-card lh-wide"><h3>🏈 Gameday Stats</h3><div class="lh-stat"><span>Overall Record</span><strong>${career.wins||0}-${career.losses||0}</strong></div><div class="lh-stat"><span>Playoff Appearances</span><strong>${career.playoff_appearances||0}</strong></div><div class="lh-stat"><span>Playoff Wins</span><strong>${career.playoff_wins||0}</strong></div><div class="lh-stat"><span>Division Championships</span><strong>${career.division_championships||0}</strong></div><div class="lh-stat"><span>Championships</span><strong>${career.championships||0}</strong></div><div class="lh-stat"><span>Best Draft Pick</span><small>${esc(bdp?.detail||'—')}</small></div><div class="lh-stat"><span>Best Draft</span><small>${esc(bd?.detail||'—')}</small></div>${draftRatingRows.map(x=>`<div class="lh-stat"><span>${x.year} Draft Rating</span><small>${esc(x.detail)}${x.delta!=null?` • Δ ${esc(x.delta)}`:''}</small></div>`).join('')}</div><div class="lh-card"><h3>👑 Best Current Trade</h3>${best?`<div class="lh-story lh-click" data-lh-trade="${esc(tradeKey(best.t))}"><b>${esc(date(best.t.created))}</b><small>Trade-adjusted current outcome advantage: ${fmt(best.h.edge)} • open exact trade →</small></div>`:'<div class="lh-sub">No qualifying current win found.</div>'}</div><div class="lh-card"><h3>💀 Biggest Current Regret</h3>${worst?`<div class="lh-story lh-click" data-lh-trade="${esc(tradeKey(worst.t))}"><b>${esc(date(worst.t.created))}</b><small>Trade-adjusted current outcome deficit: ${fmt(worst.h.edge)} • open exact trade →</small></div>`:'<div class="lh-sub">No qualifying current loss found.</div>'}</div><div class="lh-card lh-wide"><h3>🏅 Weekly Badges</h3><div class="lh-sub">Hot Seat, Cool Throne, Highest Scorer and Lowest Scorer are tracked separately for every completed week.</div>${managerWeeklyBadgesHTML(id,mgr)}</div><div class="lh-card lh-wide"><h3>🏆 Historic Awards</h3><div class="lh-sub">All-time scoring record badges are reconstructed from completed team scores since 2024 and remain on the manager profile after the record is surpassed. Six-month award snapshots remain unchanged.</div>${managerScoringRecordBadgesHTML(mgr)}${history.length?history.map(a=>`<div class="lh-stat"><span>${esc(a.title.replace(/^[^A-Za-z]+/,''))} <b>${esc(a.period)}</b></span><small>${esc(a.detail)}</small></div>`).join(''):'<div class="lh-sub">No six-month award snapshot has been won by this manager yet.</div>'}</div></div>`}
-async function render(view=currentView,managerId=''){const previousView=currentView;currentView=view;if(view==='managers'&&managerId)selectedManagerId=String(managerId);else if(view!=='managers')selectedManagerId='';const host=document.getElementById('leagueHubContent');if(!host)return;const preserveY=view==='daily'&&previousView==='daily'?window.scrollY:null,priorMinHeight=host.style.minHeight;if(preserveY!=null)host.style.minHeight=Math.max(host.getBoundingClientRect().height,window.innerHeight)+'px';document.querySelectorAll('#leagueHub .lh-nav button').forEach(b=>b.classList.toggle('active',b.dataset.lhView===view));host.innerHTML='<div class="lh-card"><div class="empty">Loading league intelligence…</div></div>';try{
+let leagueHubRenderGeneration=0;
+async function render(view=currentView,managerId=''){const requestGeneration=++leagueHubRenderGeneration;const previousView=currentView;currentView=view;if(view==='managers'&&managerId)selectedManagerId=String(managerId);else if(view!=='managers')selectedManagerId='';const host=document.getElementById('leagueHubContent');if(!host)return;const preserveY=view==='daily'&&previousView==='daily'?window.scrollY:null,priorMinHeight=host.style.minHeight;if(preserveY!=null)host.style.minHeight=Math.max(host.getBoundingClientRect().height,window.innerHeight)+'px';document.querySelectorAll('#leagueHub .lh-nav button').forEach(b=>b.classList.toggle('active',b.dataset.lhView===view));host.innerHTML='<div class="lh-card"><div class="empty">Loading league intelligence…</div></div>';try{
  let all=[],stats=[],md=null,draftData=null,awards=null;
  if(inquirerPreviewMode&&view==='daily'){
-  const edition=await loadInquirerPreview();weeklyCache=edition;
+  const edition=await loadInquirerPreview();if(requestGeneration!==leagueHubRenderGeneration||currentView!==view)return;weeklyCache=edition;
   inquirerPreviewPollAttempts=0;
   broadcastArchive=[{season:edition.season,week:edition.week,preview_only:true}];
   host.innerHTML=dailyHTML([],[],edition,null,edition);
   return;
  }
- if(view==='managers'||view==='career'){const [data,mgr,wk,weeklyAwardData]=await Promise.all([trades(),managers(),weekly().catch(()=>null),weeklyAwards().catch(()=>({records:[]}))]);weeklyAwardsCache=weeklyAwardData;all=data?.trades||[];stats=teamTradeStats(all);md=mgr;if(wk)weeklyCache=wk;await spotlightWeek(wk).catch(()=>null);if(view==='career'){host.innerHTML=careerRankingsHTML(managerId,md);return}if(managerId||selectedManagerId){draftData=await drafts();host.innerHTML=managerHTML(managerId||selectedManagerId,stats,all);return}host.innerHTML=managersHTML(stats,md);return}
- if(view==='hall'){const data=await trades();all=data?.trades||[];host.innerHTML=hallHTML(all);return}
- if(view==='awards'){const [data,draftsData,weeklyAwardData]=await Promise.all([trades(),drafts(),weeklyAwards().catch(()=>({records:[]}))]);weeklyAwardsCache=weeklyAwardData;all=data?.trades||[];stats=teamTradeStats(all);draftData=draftsData;awards=currentAwards(stats,draftData);host.innerHTML=awardsHTML(awards);syncAwards(awards);return}
- const [data,mgr,w,arc,reporters,weeklyAwardData,leagueWeek]=await Promise.all([trades(),managers(),weekly().catch(()=>null),fetch('/.netlify/functions/league-hub?broadcast_archive=1',{cache:'no-store'}).then(r=>r.ok?r.json():{reports:[]}).catch(()=>({reports:[]})),reporterDirectory().catch(()=>({reporters:[]})),weeklyAwards().catch(()=>({records:[]})),liveLeagueWeek().catch(()=>liveLeagueWeekCache)]);weeklyAwardsCache=weeklyAwardData;all=data?.trades||[];stats=teamTradeStats(all);md=mgr;weeklyCache=w;reporterDirectoryCache=reporters;broadcastArchive=arc?.reports||[];if(inquirerPreviewMode&&w?.preview_only)broadcastArchive=[{season:w.season,week:w.week,headline:w.league_overview?.headline,preview_only:true},...broadcastArchive.filter(x=>Number(x.season)!==Number(w.season)||Number(x.week)!==Number(w.week))];const spotlightW=await spotlightWeek(w,broadcastArchive).catch(()=>null);host.innerHTML=dailyHTML(all,stats,w,md,spotlightW||w,leagueWeek);
- }catch(error){if(inquirerPreviewMode&&view==='daily'){
+ if(view==='managers'||view==='career'){const [data,mgr,weeklyAwardData,leagueWeek]=await Promise.all([trades(),managers(),weeklyAwards().catch(()=>({records:[]})),liveLeagueWeek().catch(()=>null)]);if(requestGeneration!==leagueHubRenderGeneration||currentView!==view)return;weeklyAwardsCache=weeklyAwardData;all=data?.trades||[];stats=teamTradeStats(all);md=mgr;if(view==='career'){host.innerHTML=careerRankingsHTML(managerId,md);return}if(managerId||selectedManagerId){draftData=await drafts();if(requestGeneration!==leagueHubRenderGeneration||currentView!==view)return;host.innerHTML=managerHTML(managerId||selectedManagerId,stats,all);return}host.innerHTML=managersHTML(stats,md,leagueWeek);return}
+ if(view==='hall'){const data=await trades();if(requestGeneration!==leagueHubRenderGeneration||currentView!==view)return;all=data?.trades||[];host.innerHTML=hallHTML(all);return}
+ if(view==='awards'){const [data,draftsData,weeklyAwardData]=await Promise.all([trades(),drafts(),weeklyAwards().catch(()=>({records:[]}))]);if(requestGeneration!==leagueHubRenderGeneration||currentView!==view)return;weeklyAwardsCache=weeklyAwardData;all=data?.trades||[];stats=teamTradeStats(all);draftData=draftsData;awards=currentAwards(stats,draftData);host.innerHTML=awardsHTML(awards);syncAwards(awards);return}
+ const [data,mgr,w,arc,reporters,weeklyAwardData,leagueWeek]=await Promise.all([trades(),managers(),weekly().catch(()=>null),fetch('/.netlify/functions/league-hub?broadcast_archive=1',{cache:'no-store'}).then(r=>r.ok?r.json():{reports:[]}).catch(()=>({reports:[]})),reporterDirectory().catch(()=>({reporters:[]})),weeklyAwards().catch(()=>({records:[]})),liveLeagueWeek().catch(()=>liveLeagueWeekCache)]);if(requestGeneration!==leagueHubRenderGeneration||currentView!==view)return;weeklyAwardsCache=weeklyAwardData;all=data?.trades||[];stats=teamTradeStats(all);md=mgr;weeklyCache=w;reporterDirectoryCache=reporters;broadcastArchive=arc?.reports||[];if(inquirerPreviewMode&&w?.preview_only)broadcastArchive=[{season:w.season,week:w.week,headline:w.league_overview?.headline,preview_only:true},...broadcastArchive.filter(x=>Number(x.season)!==Number(w.season)||Number(x.week)!==Number(w.week))];const spotlightW=await spotlightWeek(w,broadcastArchive).catch(()=>null);if(requestGeneration!==leagueHubRenderGeneration||currentView!==view)return;host.innerHTML=dailyHTML(all,stats,w,md,spotlightW||w,leagueWeek);
+ // Site opening and a newly completed Sleeper week both opportunistically
+ // capture genuine All-Time Highs, without requiring the Awards tab.
+ captureAllTimeHighsOnSiteOpen().catch(()=>{});
+ }catch(error){if(requestGeneration!==leagueHubRenderGeneration||currentView!==view)return;if(inquirerPreviewMode&&view==='daily'){
   const detail=String(error?.message||'Draft not ready'),isRunning=/generation (started|in progress)/i.test(detail);
   host.innerHTML='<div class="lh-card"><h3>'+esc('Private '+(inquirerPreviewRequestedWeek?'Week '+inquirerPreviewRequestedWeek+' ':'Inquirer ')+(isRunning?'preview is generating':'preview is not ready'))+'</h3><p>This is an unpublished, isolated Deploy Preview. Nothing here publishes an edition to the live site.</p><small>'+esc(detail)+'</small></div>';
   if(isRunning&&++inquirerPreviewPollAttempts<=80)setTimeout(()=>{if(currentView==='daily'&&document.getElementById('leagueHubContent')===host)render('daily')},15000);
- }else host.innerHTML='<div class="notice">League Hub intelligence is temporarily unavailable. Trade Finder, Value History, and Trade History are unaffected.</div>'}if(preserveY!=null)requestAnimationFrame(()=>{host.style.minHeight=priorMinHeight;window.scrollTo({top:preserveY,behavior:'auto'})})}
+ }else host.innerHTML='<div class="notice">League Hub intelligence is temporarily unavailable. Trade Finder, Value History, and Trade History are unaffected.</div>'}if(preserveY!=null&&requestGeneration===leagueHubRenderGeneration)requestAnimationFrame(()=>{host.style.minHeight=priorMinHeight;window.scrollTo({top:preserveY,behavior:'auto'})})}
 function wireSection(s){if(!s||s.dataset.lhWired==='1')return;s.dataset.lhWired='1';s.addEventListener('click',e=>{if(e.target.closest('[data-lh-reporter-close]')){openReporterArchive='';render('daily');return}const ra=e.target.closest('[data-lh-reporter-archive]');if(ra){const id=String(ra.dataset.lhReporterArchive||'');openReporterArchive=openReporterArchive===id?'':id;if(openReporterArchive&&!reporterArchiveCache[id]){render('daily');reporterArchive(id).then(()=>render('daily'));}else render('daily');return}const art=e.target.closest('[data-lh-reporter-article-season]');if(art){fetch('/.netlify/functions/league-hub?broadcast_season='+art.dataset.lhReporterArticleSeason+'&broadcast_week='+art.dataset.lhReporterArticleWeek,{cache:'no-store'}).then(r=>r.json()).then(x=>{weeklyCache=x;openBroadcastTeam=art.dataset.lhReporterArticleTeam||'';showWeeklyArticle(x,true)});return}if(e.target.closest('[data-lh-inquirer-back]')){returnToLeagueHubHome();return}const jump=e.target.closest('[data-lh-inquirer-jump]');if(jump){const target=document.getElementById(jump.dataset.lhInquirerJump);if(target){const top=Math.max(0,window.scrollY+target.getBoundingClientRect().top-110);window.scrollTo({top,behavior:'smooth'})}return}const bt=e.target.closest('[data-lh-broadcast-toggle]');if(bt){const opening=!openBroadcastTeam;openBroadcastTeam=openBroadcastTeam?'':bt.dataset.lhBroadcastToggle;render('daily').then(()=>{if(opening)scrollToInquirerTop()});return}const btm=e.target.closest('[data-lh-broadcast-team]');if(btm){openBroadcastTeam=btm.dataset.lhBroadcastTeam;showWeeklyArticle(weeklyCache,true);return}const ba=e.target.closest('[data-lh-archive-season]');if(ba){loadArchivedEdition(ba.dataset.lhArchiveSeason,ba.dataset.lhArchiveWeek,'__league__','top');return}const tr=e.target.closest('[data-lh-trade]');if(tr){openSpecificTrade(tr.dataset.lhTrade);return}const ito=e.target.closest('[data-lh-inquirer-trade-options]');if(ito){openInquirerTradeChoice(ito.dataset.lhInquirerTradeOptions);return}const ith=e.target.closest('[data-lh-inquirer-trade-history]');if(ith){const id=ith.dataset.lhInquirerTradeHistory;closeInquirerTradeChoice();openSpecificTrade(id);return}const itv=e.target.closest('[data-lh-inquirer-trade-team-value]');if(itv){const id=itv.dataset.lhInquirerTradeTeamValue;closeInquirerTradeChoice();openValueHistoryTeam(id,false);return}const ipv=e.target.closest('[data-lh-inquirer-trade-player-value]');if(ipv){const id=ipv.dataset.lhInquirerTradePlayerValue;closeInquirerTradeChoice();openValueHistoryPlayer(id);return}const ip=e.target.closest('[data-lh-inquirer-player]');if(ip){openValueHistoryPlayer(ip.dataset.lhInquirerPlayer);return}if(e.target.closest('[data-lh-inquirer-trade-close]')||e.target.id==='lhInquirerTradeChoice'){closeInquirerTradeChoice();return}const it=e.target.closest('[data-lh-inquirer-team]');if(it){openInquirerTeamChoice(it.dataset.lhInquirerTeam,it.dataset.lhInquirerName||it.textContent);return}const iv=e.target.closest('[data-lh-inquirer-value]');if(iv){const id=iv.dataset.lhInquirerValue;closeInquirerTeamChoice();openValueHistoryTeam(id,false);return}const ir=e.target.closest('[data-lh-inquirer-report]');if(ir){const id=ir.dataset.lhInquirerReport;closeInquirerTeamChoice();openInquirerWeeklyTeamReport(id);return}if(e.target.closest('[data-lh-inquirer-close]')||e.target.id==='lhInquirerTeamChoice'){closeInquirerTeamChoice();return}const vt=e.target.closest('[data-lh-value-team]');if(vt){openValueHistoryTeam(vt.dataset.lhValueTeam,vt.dataset.lhValueComparison==='1');return}if(e.target.closest('[data-lh-loaded-roster]')){openLoadedRoster();return}if(e.target.closest('[data-lh-hall-all]')){hallExpanded=!hallExpanded;render('hall');return}const rk=e.target.closest('[data-lh-rankings]');if(rk){rankingAwardKey=rk.dataset.lhRankings;render('awards');return}if(e.target.closest('[data-lh-rankings-back]')){rankingAwardKey='';render('awards');return}if(e.target.closest('[data-lh-all-managers]')){selectedManagerId='';render('managers');return}if(e.target.closest('[data-lh-manager-spotlight]')){selectedManagerId='';render('managers').then(()=>requestAnimationFrame(()=>document.querySelector('#leagueHub .lh-spotlight')?.scrollIntoView({block:'start'})));return}const ah=e.target.closest('[data-lh-award-high]');if(ah){awardHighMode[ah.dataset.lhAwardHigh]=!awardHighMode[ah.dataset.lhAwardHigh];render('awards');return}if(e.target.closest('[data-lh-scoreboard-close]')||e.target.id==='lhScoringLeaderboard'){closeScoringLeaderboard();return}const sb=e.target.closest('[data-lh-scoreboard]');if(sb){openScoringLeaderboard(sb.dataset.lhScoreboard);return}const cr=e.target.closest('[data-lh-career-rank]');if(cr){render('career',cr.dataset.lhCareerRank).then(()=>requestAnimationFrame(()=>{const h=document.getElementById('leagueHubContent');if(h){const top=Math.max(0,window.scrollY+h.getBoundingClientRect().top-110);window.scrollTo({top,behavior:'auto'})}}));return}const v=e.target.closest('[data-lh-view]');if(v){render(v.dataset.lhView);return}const mt=e.target.closest('[data-lh-manager-trades]');if(mt){openTradeHistory(mt.dataset.lhManagerTrades);return}const m=e.target.closest('[data-lh-manager]');if(m){render('managers',m.dataset.lhManager);return}if(e.target.closest('[data-lh-trades]'))openTradeHistory()});s.addEventListener('change',e=>{const article=e.target.closest('[data-lh-broadcast-article]');if(article){openBroadcastTeam=article.value||'__league__';showWeeklyArticle(weeklyCache,true);return}const ay=e.target.closest('[data-lh-archive-year]');if(ay){const group=ay.closest('.lh-archive-filters'),y=Number(ay.value),weeks=(broadcastArchive||[]).filter(x=>Number(x.season)===y).map(x=>Number(x.week)).filter(Boolean).sort((a,b)=>b-a),team=group?.querySelector('[data-lh-archive-team]')?.value||openBroadcastTeam||'__league__';loadArchivedEdition(y,weeks[0]||1,team);return}const aw=e.target.closest('[data-lh-archive-week]');if(aw){const group=aw.closest('.lh-archive-filters'),y=Number(group?.querySelector('[data-lh-archive-year]')?.value||weeklyCache?.season),team=group?.querySelector('[data-lh-archive-team]')?.value||'__league__';loadArchivedEdition(y,Number(aw.value),team);return}const at=e.target.closest('[data-lh-archive-team]');if(at){const group=at.closest('.lh-archive-filters'),y=Number(group?.querySelector('[data-lh-archive-year]')?.value||weeklyCache?.season),wk=Number(group?.querySelector('[data-lh-archive-week]')?.value||weeklyCache?.week);loadArchivedEdition(y,wk,at.value||'__league__');return}const yf=e.target.closest('[data-lh-award-year]');if(!yf)return;const y=window.scrollY;awardYearFilters[yf.dataset.lhAwardYear]=yf.value;render('awards').then(()=>requestAnimationFrame(()=>window.scrollTo(0,y)))})}
-function install(){addStyles();const tabs=document.querySelector('.tabs'),main=document.querySelector('main');if(!tabs||!main){setTimeout(install,100);return}let s=document.getElementById('leagueHub');if(!s){s=document.createElement('section');s.id='leagueHub';s.className='tab';s.hidden=true;main.appendChild(s)}if(!s.querySelector('#leagueHubContent'))s.innerHTML='<div class="card"><div class="lh-head"><h2>Fleeced! League Hub</h2></div><div class="lh-nav"><button type="button" class="active" data-lh-view="daily">Fleeced Daily</button><button type="button" data-lh-view="awards">Awards</button><button type="button" data-lh-view="hall">Hall of Fleeced</button><button type="button" data-lh-view="managers">Managers</button></div><div id="leagueHubContent"><div class="empty">Open League Hub to load league intelligence.</div></div></div>';wireSection(s);let b=document.querySelector('.tabs button[data-tab="leagueHub"]');if(!b){b=document.createElement('button');b.type='button';b.dataset.tab='leagueHub';b.textContent='League Hub';tabs.appendChild(b)}if(b.dataset.lhWired!=='1'){b.dataset.lhWired='1';b.addEventListener('click',()=>{activate('leagueHub');render(currentView)})}installed=true;installInquirerArchiveRefresh();if(inquirerPreviewMode&&!window.__inquirerPreviewOpened){window.__inquirerPreviewOpened=true;openBroadcastTeam='__league__';b.click()}else if(b.classList.contains('active')&&!s.hidden)render(currentView)}
+async function refreshLeagueHubSharedDataIfVisible(){
+ if(hubSharedVisibleRefreshPending||inquirerPreviewMode||document.hidden)return;
+ const panel=document.getElementById('leagueHub');
+ if(!panel||panel.hidden||!['hall','awards','daily'].includes(currentView)||currentView==='daily'&&openBroadcastTeam)return;
+ hubSharedVisibleRefreshPending=true;
+ try{
+  const parts=currentView==='hall'?['trades']:currentView==='awards'?['trades','drafts','awards']:['trades','awards'];
+  let changed=false;
+  for(const part of parts){
+   const before=part==='trades'?tradeCache:part==='drafts'?draftCache:weeklyAwardsCache;
+   const previous=hubSharedSignature(before,part);
+   const next=await hubSharedRead(part,{force:true}).catch(()=>null);
+   if(next&&hubSharedSignature(next,part)!==previous)changed=true;
+  }
+  if(changed)await render(currentView);
+ }catch(error){console.warn('league-hub-visible-refresh-unavailable',String(error?.message||error))}
+ finally{hubSharedVisibleRefreshPending=false}
+}
+function installLeagueHubSharedRefresh(){
+ setInterval(refreshLeagueHubSharedDataIfVisible,HUB_SHARED_REFRESH_MS);
+ window.addEventListener('focus',refreshLeagueHubSharedDataIfVisible);
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshLeagueHubSharedDataIfVisible()});
+}
+function install(){addStyles();const tabs=document.querySelector('.tabs'),main=document.querySelector('main');if(!tabs||!main){setTimeout(install,100);return}let s=document.getElementById('leagueHub');if(!s){s=document.createElement('section');s.id='leagueHub';s.className='tab';s.hidden=true;main.appendChild(s)}if(!s.querySelector('#leagueHubContent'))s.innerHTML='<div class="card"><div class="lh-head"><h2>Fleeced! League Hub</h2></div><div class="lh-nav"><button type="button" class="active" data-lh-view="daily">Fleeced Daily</button><button type="button" data-lh-view="awards">Awards</button><button type="button" data-lh-view="hall">Hall of Fleeced</button><button type="button" data-lh-view="managers">Managers</button></div><div id="leagueHubContent"><div class="empty">Open League Hub to load league intelligence.</div></div></div>';wireSection(s);let b=document.querySelector('.tabs button[data-tab="leagueHub"]');if(!b){b=document.createElement('button');b.type='button';b.dataset.tab='leagueHub';b.textContent='League Hub';tabs.appendChild(b)}if(b.dataset.lhWired!=='1'){b.dataset.lhWired='1';b.addEventListener('click',()=>{activate('leagueHub');render(currentView)})}installed=true;installInquirerArchiveRefresh();installManagerRefresh();installLeagueHubSharedRefresh();if(inquirerPreviewMode&&!window.__inquirerPreviewOpened){window.__inquirerPreviewOpened=true;openBroadcastTeam='__league__';b.click()}else if(b.classList.contains('active')&&!s.hidden)render(currentView)}
 // Manager and Hall rankings depend on Hindsight's live evaluator value.
 window.addEventListener('fll:valuation-refreshed',()=>{
  const panel=document.getElementById('leagueHub');

@@ -1,0 +1,57 @@
+name: Independent League All-Time Highs durable capture
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '27 5 * * *'
+permissions:
+  contents: write
+concurrency:
+  # Share the writer lock with Scheduled Value History to avoid competing
+  # updates to the same durable GitHub data branch.
+  group: value-history-durable-write
+  cancel-in-progress: false
+jobs:
+  capture-verified-highs:
+    # This workflow is only effective after explicit approval/merge to main.
+    # PRs cannot write the production or historical archive.
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      VALUE_HISTORY_SNAPSHOT_FILE: .tmp/value-history-awards-only.json
+      ALL_TIME_HIGHS_SCHEDULED_FILE: .tmp/all-time-highs-scheduled.json
+      VALUE_HISTORY_SCHEDULED_MODEL: ${{ vars.FFL_HISTORY_SCHEDULED_MODEL || 'idp-v96-single-source-continuous-v95-evidence' }}
+      VALUE_HISTORY_V101_APPROVED: ${{ vars.FFL_HISTORY_V101_APPROVED || '0' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Protect unapproved valuation model changes
+        run: |
+          case "$VALUE_HISTORY_SCHEDULED_MODEL" in
+            idp-v96-single-source-continuous-v95-evidence) ;;
+            idp-v101-verified-role-growth-v100-source-free-lineage)
+              if [ "$VALUE_HISTORY_V101_APPROVED" != '1' ]; then
+                echo 'V101 award capture is not approved' >&2; exit 1
+              fi ;;
+            *) echo 'Invalid scheduled model' >&2; exit 1 ;;
+          esac
+      - name: Install audited local browser runtime
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Capture read-only canonical valuations and exact league award standings
+        run: |
+          node scripts/value-history-headless-refresh.mjs
+      - name: Reject incomplete or stale canonical highs before writing
+        run: node scripts/verify-scheduled-all-time-highs.mjs
+      - name: Persist verified All-Time Highs only
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/archive-league-all-time-highs.mjs
+      - name: Acceptance: independently read back durable GitHub records
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/verify-durable-all-time-highs-readback.mjs

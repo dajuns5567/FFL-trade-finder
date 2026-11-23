@@ -1,0 +1,43 @@
+name: V116 Market window parity and canonical history (read-only)
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/value-history.mjs'
+      - 'value-history-v276.js'
+      - 'tests/market-period-canonical-parity-v116.test.mjs'
+      - 'tests/market-intelligence-original-recovery.test.mjs'
+      - 'tests/value-history-model-era-v90.test.mjs'
+      - '.github/workflows/release-v116-market-period-parity-ci.yml'
+permissions:
+  contents: read
+jobs:
+  period-parity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install existing API test dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Validate complete historical source and exact 1D–ALL market periods
+        env:
+          NODE_OPTIONS: '--max-old-space-size=4096'
+        run: |
+          node --check netlify/functions/value-history.mjs
+          node --check value-history-v276.js
+          node --test tests/market-period-canonical-parity-v116.test.mjs tests/market-intelligence-original-recovery.test.mjs tests/value-history-model-era-v90.test.mjs tests/value-history-era-market-backend-isolated.test.mjs tests/canonical-live-values-refresh-isolated.test.mjs
+      - name: Enforce single-market-subsystem scope
+        run: |
+          node --input-type=module <<'JS'
+          import {execFileSync} from 'node:child_process';
+          import assert from 'node:assert/strict';
+          const files=execFileSync('git',['diff','--name-only','origin/main...HEAD'],{encoding:'utf8'}).trim().split('\n').filter(Boolean);
+          const allow=new Set(['netlify/functions/value-history.mjs','value-history-v276.js','tests/market-period-canonical-parity-v116.test.mjs','tests/market-intelligence-original-recovery.test.mjs','tests/value-history-model-era-v90.test.mjs','.github/workflows/release-v116-market-period-parity-ci.yml']);
+          assert.equal(files.length,allow.size,'Exact six-file market release required');
+          for(const file of files)assert(allow.has(file),'Out-of-scope change '+file);
+          JS
+      # No production deployment, archive writes, Inquirer publish or valuation adjustment.

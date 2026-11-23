@@ -1,0 +1,31 @@
+name: All-Time Highs independent capture CI
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/league-all-time-highs-independent-capture.yml'
+      - '.github/workflows/league-all-time-highs-independent-ci.yml'
+      - 'scripts/archive-league-all-time-highs.mjs'
+      - 'netlify/functions/league-hub.mjs'
+      - 'scripts/approved-all-time-highs-status-overlay.mjs'
+      - 'scripts/verify-durable-all-time-highs-readback.mjs'
+      - 'tests/league-all-time-highs-independent-capture.test.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  all-time-highs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate scheduled capture/readback files
+        run: |
+          node --check scripts/archive-league-all-time-highs.mjs
+          node --check scripts/verify-durable-all-time-highs-readback.mjs
+      - name: Verify source-valid persistent highs, archive timestamps and safe branch gating
+        run: |
+          node --test tests/league-all-time-highs-independent-capture.test.mjs
+          node --test tests/league-all-time-highs-durable.test.mjs

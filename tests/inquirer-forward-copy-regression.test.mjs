@@ -80,11 +80,13 @@ test('edition market selection excludes subsequent snapshots and never guesses a
 test('preview manager provenance uses only completed issue-week games and cannot write shared keys',async()=>{
  const hub=readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
  const body=hub.slice(hub.indexOf('async function managerHistory('),hub.indexOf('async function awardHighs('));
+ const helper=hub.slice(hub.indexOf('function verifiedManagerMatchupWeek('),hub.indexOf('async function managerHistory('));
+ assert.ok(helper.startsWith('function verifiedManagerMatchupWeek('),'test uses the real completed-week verifier');
  const rosters=Array.from({length:32},(_,i)=>({roster_id:i+1,owner_id:'u'+i,settings:{wins:9,losses:0,division:1}}));
  const users=rosters.map((r,i)=>({user_id:r.owner_id,display_name:'Manager '+i}));
  const fetchJson=async url=>url.endsWith('/state/nfl')?{season:2026,week:10}:url.endsWith('/rosters')?rosters:url.endsWith('/users')?users:url.endsWith('/winners_bracket')?[]:/\/matchups\/\d+$/.test(url)?rosters.map((r,i)=>({roster_id:r.roster_id,matchup_id:Math.floor(i/2)+1,points:i%2?50:100})):{league_id:'fixture',season:'2026',settings:{playoff_week_start:15}};
  const scoring=(games,_career,season,week)=>({games,through_season:season,through_week:week-1});
- const build=new Function('fetchJson','store','LEAGUE','API','VERIFIED_HISTORICAL_MANAGER_ASSIGNMENTS','sleeperConference','managerScoringSummary','MANAGER_CACHE_VERSION',body+';return managerHistory;')(fetchJson,()=>{throw Error('Shared store must not be accessed')},'fixture','https://sleeper.invalid',{},()=> 'AFC',scoring,Number(hub.match(/MANAGER_CACHE_VERSION=(\d+)/)[1]));
+ const build=new Function('fetchJson','store','LEAGUE','API','VERIFIED_HISTORICAL_MANAGER_ASSIGNMENTS','sleeperConference','managerScoringSummary','MANAGER_CACHE_VERSION',helper+body+';return managerHistory;')(fetchJson,()=>{throw Error('Shared store must not be accessed')},'fixture','https://sleeper.invalid',{},()=> 'AFC',scoring,Number(hub.match(/MANAGER_CACHE_VERSION=(\d+)/)[1]));
  const result=await build({persist:false,snapshotSeason:2026,snapshotWeek:5});
  assert.equal(result.current.length,32);assert.equal(result.career[0].wins,5);assert.equal(result.career[1].losses,5);assert.equal(result.scoring_history.through_week,5);assert.ok(result.games.every(g=>g.week<=5));assert.equal(result.preview_read_only,true);
 });
@@ -130,7 +132,7 @@ test('Week 7 final writer removes the inherited transaction-wire joke only when 
 });
 
 test('revision 105 keeps final recap originality without relaxing the independent deep quality checks',()=>{
- assert.match(source,/FORWARD_EDITORIAL_REVISION=110/);
+ assert.match(source,/FORWARD_EDITORIAL_REVISION=113/);
  assert.match(source,/if\(week>=7&&week%2===1\)/);
  assert.match(source,/previousNorm=new Set\(forwardRecapSentences\(previousEdition\)/);
  assert.match(source,/if\(collisions\.length\)/);
@@ -224,7 +226,7 @@ test('market value repairs do not reuse the rejected next-opponent price scaffol
 import {polishForwardAcrossWeeks,FORWARD_EDITORIAL_REVISION} from '../netlify/functions/inquirer-editorial-v31.mjs';
 
 test('editorial revision 105 replaces shared jokes from any previous team, not only its own',()=>{
- assert.equal(FORWARD_EDITORIAL_REVISION,110);
+ assert.equal(FORWARD_EDITORIAL_REVISION,113);
  const recycled='The hosts disagree about almost everything. Even they know the next opponent will care more about the starting lineup than the episode title.';
  const previous={week:7,teams:[{roster_id:1,team_name:'North Dogs',inquirer_article:{paragraphs:[recycled]}}]};
  const make=(roster_id,team_name)=>({

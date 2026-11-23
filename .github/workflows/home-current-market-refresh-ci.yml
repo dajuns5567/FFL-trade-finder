@@ -1,0 +1,27 @@
+name: Home ranking and 7D risers auto freshness
+on:
+  pull_request:
+    paths:
+      - 'fleeced-home-v424.js'
+      - 'netlify/functions/site-v29.mjs'
+      - 'tests/home-live-refresh-runtime.test.mjs'
+      - '.github/workflows/home-current-market-refresh-ci.yml'
+  push:
+    branches:
+      - fix/home-ranked-risers-auto-freshness-20261122
+permissions:
+  contents: read
+jobs:
+  home-refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate Home source, market refresh and cache versions
+        run: |
+          node --check fleeced-home-v424.js
+          node --check netlify/functions/site-v29.mjs
+          node --test tests/home-live-refresh-runtime.test.mjs

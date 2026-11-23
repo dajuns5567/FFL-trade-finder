@@ -1,0 +1,22 @@
+name: Hall of Fleeced Hindsight parity and refresh contract
+on:
+  pull_request:
+    paths:
+      - 'league-hub-v451.js'
+      - 'value-history-v276.js'
+      - 'netlify/functions/site-v29.mjs'
+      - 'tests/hall-of-fleeced-hindsight-parity-refresh.test.mjs'
+      - '.github/workflows/hall-of-fleeced-parity-ci.yml'
+permissions:
+  contents: read
+jobs:
+  hall-hindsight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check league-hub-v451.js
+      - run: node --test tests/hall-of-fleeced-hindsight-parity-refresh.test.mjs tests/league-hub-shared-freshness.test.mjs tests/league-hub-async-tab-race.test.mjs

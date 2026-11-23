@@ -20,6 +20,31 @@ test('Fleeced Daily can show finalized Week 10 with no published Inquirer Week 1
  assert.equal('newspaper' in view,false);
  assert.equal('editorial' in view,false);
 });
+test('finalized Sleeper feed reuses fully covered weekly projections under actual fantasy starters',()=>{
+ const m=matchups().map((row,i)=>({...row,starters:['player_'+(i+1)]}));
+ const projection=Object.fromEntries(m.map((_,i)=>['player_'+(i+1),100+i]));
+ const view=completedLeagueWeekView({season:2026,week:10,matchups:m,
+  rosters,users,playerProjections:projection});
+ assert.equal(view.teams[0].projected,100);
+ assert.equal(view.teams[0].opponent_projected,101);
+ assert.equal(view.teams[0].projection_source,'sleeper-weekly-player-projections');
+ assert.equal(view.teams[0].projection_coverage,1);
+ const incomplete={...projection};delete incomplete.player_2;
+ const missing=completedLeagueWeekView({season:2026,week:10,matchups:m,
+  rosters,users,playerProjections:incomplete});
+ assert.equal(missing.teams[0].projected,100);
+ assert.equal(missing.teams[0].opponent_projected,null);
+ assert.equal(missing.teams[1].projected,null);
+ assert.equal(missing.teams[1].projection_coverage,0);
+});
+test('a completed scoreboard never mistakes a missing starter projection for a projected zero',()=>{
+ const m=matchups().map((row,i)=>({...row,starters:['player_'+(i+1),'missing']})),
+  view=completedLeagueWeekView({season:2026,week:10,matchups:m,
+   rosters,users,playerProjections:{player_1:100}});
+ assert.equal(view.available,true);
+ assert.equal(view.teams[0].projected,null);
+ assert.equal(view.teams[0].opponent_projected,null);
+});
 test('incomplete player scoring cannot claim a finalized week',()=>{
  const rows=matchups();rows[0].players_points={};
  assert.equal(completedLeagueWeekView({season:2026,week:10,matchups:rows,rosters,users}),null);

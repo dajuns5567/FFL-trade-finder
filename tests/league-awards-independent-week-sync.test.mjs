@@ -54,11 +54,13 @@ test('the award backend uses completed Sleeeper weeks independently of newspaper
 test('the visible Fleeced Daily dashboard invalidates old badges when a completed week advances',()=>{
  const browser=readFileSync(new URL('../league-hub-v451.js',import.meta.url),'utf8');
  const begin=browser.indexOf('async function refreshLiveLeagueWeekIfAdvanced()');
- const end=browser.indexOf('async function weeklyAwards()',begin);
+ const end=browser.indexOf('async function weeklyAwards(',begin);
+ assert.ok(end>begin,'completed-week refresh boundary must remain explicit');
  const refresh=browser.slice(begin,end);
- assert.match(refresh,/managerCache=null/);
+ assert.match(refresh,/clearManagerHistoryCache\(\)/,'completed week invalidates manager cache and in-flight generation');
+ assert.match(browser,/function clearManagerHistoryCache\(/,'manager invalidator must exist');
  assert.match(refresh,/weeklyAwardsCache=null/);
- assert.match(refresh,/await render\('daily'\)/);
+ assert.match(refresh,/await render\(currentView\)/,'refresh correct active awards, daily or manager view');
  const loader=readFileSync(new URL('../netlify/functions/site-v29.mjs',import.meta.url),'utf8');
  assert.match(loader,/league-hub-v451\.js\?v=555/);
 });

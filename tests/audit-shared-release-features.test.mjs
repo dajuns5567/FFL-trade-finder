@@ -13,7 +13,7 @@ test('all approved features are retained once they reach main',()=>{
 test('a new PR that drops an established Inquirer selector or badge update is blocked',()=>{
  for(const target of ['inquirer-single-picker','milestone-current-week-badges','milestone-finalized-week-gate','milestone-visible-weekly-poll','milestone-no-invented-zero-points','weekly-awards-finite-scored-winners','weekly-awards-autonomous-capture','weekly-awards-idempotent-write','market-canonical-invalidation','league-awards-independent','league-shared-cache-expiry','home-fresh-value-risers','managers-readonly-preview-fallback','managers-visible-freshness','managers-verified-weekly-records','managers-spotlight-independent-completed-week','managers-spotlight-verified-projections']){
   const candidate=new Map(all),f=features.find(x=>x.id===target);
-  candidate.set(f.file,candidate.get(f.file).replace(f.markers[0],'old-regressed-behavior'));
+  candidate.set(f.file,candidate.get(f.file).replaceAll(f.markers[0],'old-regressed-behavior'));
   assert.throws(()=>verifyNoFeatureRollback(read(all),read(candidate)),new RegExp(target));
  }
 });

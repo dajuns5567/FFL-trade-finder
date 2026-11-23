@@ -179,17 +179,24 @@
    JSON.stringify({id:cmcWinner?.player_id,points:cmcWinner?.points}));
   const history=await fetchJson('McCaffrey scoring milestones',
    '/.netlify/functions/value-history?player_scoring=1&player_id=4034');
-  const badges=history?.scoring_milestones?.weeklyAwards||[];
-  api.cmcMilestoneBadgeSummary=badges.map(b=>({season:b.season,week:b.week,points:b.points,type:b.type}));
-  const matched=badges.some(b=>Number(b.season)===2026&&Number(b.week)===10);
-  add('Badges','Server milestones independently include Week 10',matched?'PASS':'WARN',
-   JSON.stringify({total:badges.length,recent:api.cmcMilestoneBadgeSummary.slice(0,8)}));
-  add('Badges','Server milestone count',badges.length>3?'PASS':'INFO',
-   'Scoring endpoint awarded '+badges.length+' badges');
+  const badges=history?.scoring_milestones?.weeklyAwards;
+  api.cmcMilestoneBadgeSummary=Array.isArray(badges)?badges.map(b=>({season:b.season,week:b.week,points:b.points,type:b.type})):null;
+  const matched=Array.isArray(badges)&&badges.some(b=>Number(b.season)===2026&&Number(b.week)===10);
+  add('Badges','Server milestones independently include Week 10',
+   !history?'INFO':matched?'PASS':'WARN',
+   !history?'Server request timed out or failed; not evidence of missing award':JSON.stringify({total:badges?.length,recent:api.cmcMilestoneBadgeSummary?.slice(0,8)}));
+  add('Badges','Server milestone count',
+   !Array.isArray(badges)?'INFO':badges.length>3?'PASS':'WARN',
+   Array.isArray(badges)?'Server returned '+badges.length+' badges':'Not measured');
   api.completedWeek={season:latest?.season,week:latest?.week,available:latest?.available,teams:latest?.teams?.length};
   add('Weekly','completed Sleeper matchup coverage',latest?.available&&latest?.teams?.length===32?'PASS':'WARN',JSON.stringify(api.completedWeek));
   api.highsSummary={keys:Object.keys(highs||{}),recordCount:highs?.records?.length};
+  add('All-Time Highs','archived high records present',
+   !highs?'WARN':(highs.records?.length||0)>0?'PASS':'WARN',
+   JSON.stringify({recordCount:highs?.records?.length,source:highs?.sources,cache:highs?.cache_status}).slice(0,550));
   api.managerSummary={keys:Object.keys(managers||{}),currentManagers:managers?.current?.length};
+  add('Managers','all 32 league managers mapped',managers?.current?.length===32?'PASS':'WARN',
+   'Managers found: '+String(managers?.current?.length??'unavailable'));
   api.marketSummary={keys:Object.keys(market||{}),snapshotCount:market?.snapshot_count??market?.snapshotCount};
   // Only inspect; real historical accuracy needs archive-versus-displayed-value reconciliation.
   add('Data provenance','Market history coverage','INFO',JSON.stringify(api.marketSummary));

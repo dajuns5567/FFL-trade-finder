@@ -2,6 +2,7 @@ import {inquirerMarketCutoff,editionAvailability} from './lib/inquirer-market-wi
 import {completedLeagueWeekView} from './lib/league-completed-week.mjs';
 import {selectHotSeat,supplementCompletedHotSeat} from './lib/league-hot-seat.mjs';
 import {mergeAwardHighs} from './lib/league-all-time-highs.mjs';
+import {mergeCompletedWeeklyAwardStats} from './lib/weekly-award-stats-merge.mjs';
 import valueHistoryHandler from './value-history.mjs';
 // Forward drafts must be reviewed as written; synthetic scoreboard sentence repair is retired.
 import {inspectEditionBeforePublication,editorialApprovalMatches,editorialCopyDigest,deterministicInquirerAdmission,isReadOnlyEditorialPreview,inspectPreviousWeekEditorialReuse} from './inquirer-publication-guard.mjs';
@@ -22,6 +23,7 @@ import {privatePreviewStoreName,isVerifiedPrivatePreviewPredecessor} from './lib
 
 const LEAGUE='1316867686394769408';
 const API='https://api.sleeper.app/v1';
+const WEEKLY_AWARDS_STATS_ARCHIVE='https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/sleeper-data/data/sleeper';
 const reviewedReaderEdition=edition=>addWeekTenEditorialHumor(correctWeekNineReaderEdition(edition));
 const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
 const fetchJson=async url=>{const r=await fetch(url,{headers:{accept:'application/json','user-agent':'Fleeced-League-Hub/2.0'},cache:'no-store'});if(!r.ok)throw new Error(`Sleeper ${r.status}`);return r.json()};
@@ -925,8 +927,19 @@ export async function weeklyAwards({additionalLockedEditions=[],persist=true,str
   if(validPairs.length){
    const [league,players]=await Promise.all([fetchJson(`${API}/league/${LEAGUE}`),fetchJson(`${API}/players/nfl`).catch(()=>({}))]);
    const scoring=league?.scoring_settings||{};
+   const archiveBySeason=new Map();
+   const archivedSeason=season=>{
+    const key=String(season);
+    if(!archiveBySeason.has(key))archiveBySeason.set(key,
+      fetchJson(`${WEEKLY_AWARDS_STATS_ARCHIVE}/${season}/weekly-stats.json?ts=${Date.now()}`).catch(()=>({})));
+    return archiveBySeason.get(key);
+   };
    const built=await Promise.all(validPairs.map(async p=>{
-    const stats=await fetchJson(`${API}/stats/nfl/regular/${p.season}/${p.week}`).catch(()=>({}));
+    const [live,archive]=await Promise.all([
+      fetchJson(`${API}/stats/nfl/regular/${p.season}/${p.week}`).catch(()=>({})),
+      archivedSeason(p.season)
+    ]);
+    const stats=mergeCompletedWeeklyAwardStats(live,archive?.[p.week]||archive?.[String(p.week)]);
     const broadcast=p.edition;
     const rec={season:p.season,week:p.week,
      captured_at:String(broadcast.generated_at||p.captured_at||new Date().toISOString()),

@@ -204,7 +204,10 @@ export async function refreshKtc(opts={}){
   format:"dynasty-superflex",reducedWeight:true,
   players_extracted:0,ranking_rows:0,rankings:[],
   timestamp:now,stage:"extract",
-  error:"KTC dynasty Superflex rankings could not be validated; previous verified consensus must be retained",
+  error:"KTC dynasty Superflex source unavailable: "+attempts.map(a=>
+    (a.url===KTC_URL?"Superflex":"base")+" "+
+    (a.error||("only "+(a.ranking_rows||0)+" ranking rows"))).join("; ")+
+    ". Previous verified consensus must be retained.",
   urls:[KTC_URL,KTC_FALLBACK_URL],diagnostics:{attempts,validation_result:false}
  };
 }

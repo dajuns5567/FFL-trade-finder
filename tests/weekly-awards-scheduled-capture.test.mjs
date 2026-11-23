@@ -15,7 +15,7 @@ function handler(context='production',branch='main',result={records:[
  let writes=0;
  const scope={process:{env:{CONTEXT:context,BRANCH:branch}},Response,console,
  weeklyAwards:async args=>{
-  assert.deepEqual(JSON.parse(JSON.stringify(args)),{persist:true});
+  assert.deepEqual(JSON.parse(JSON.stringify(args)),{persist:true,strictPersist:true});
   writes++;
   if(throws)throw Error('provider unavailable');
   return result;
@@ -56,6 +56,7 @@ test('temporary incomplete source failure is explicit rather than claiming badge
 test('only actual changes to verified awards are persisted, including same-length record corrections',()=>{
  assert.match(hub,/const weeklyAwardsChanged=JSON\.stringify\(records\)!==JSON\.stringify\(next\)/);
  assert.match(hub,/if\(persist&&s&&weeklyAwardsChanged\)/);
+ assert.match(hub,/if\(persist&&strictPersist&&!s\)/);
  assert.doesNotMatch(hub,/if\(persist&&s&&\(missing\.length\|\|records\.length!==next\.length\)\)/);
  assert.match(hub,/isTrustedWeeklyAwardCache\(rec,rec\.season,rec\.week\)/);
  assert.match(hub,/award_source:'sleeper-finalized-matchups'/);

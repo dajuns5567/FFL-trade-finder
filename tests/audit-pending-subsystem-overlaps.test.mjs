@@ -35,3 +35,16 @@ test('standalone independent feature files are not false-positive merge conflict
  ]);
  assert.deepEqual(x,[]);
 });
+
+test('integration report records inspected PR heads and marks missing refs explicitly',()=>{
+ const sha='a'.repeat(40);
+ const report=makeIntegrationReport([
+  {pr:579,available:true,head_sha:sha,files:[]},
+  {pr:580,available:false,files:[]}
+ ]);
+ assert.deepEqual(report.inspected_heads,[
+  {pr:579,available:true,head_sha:sha},
+  {pr:580,available:false,head_sha:null}
+ ]);
+ assert.deepEqual(report.unresolved,[580]);
+});

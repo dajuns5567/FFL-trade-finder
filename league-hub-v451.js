@@ -165,7 +165,7 @@ async function liveLeagueWeek(){
 }
 let liveLeagueWeekRefreshInFlight=false;
 async function refreshLiveLeagueWeekIfAdvanced(){
- if(inquirerPreviewMode||liveLeagueWeekRefreshInFlight||document.hidden||currentView!=='daily'||openBroadcastTeam)return;
+ if(inquirerPreviewMode||liveLeagueWeekRefreshInFlight||document.hidden||!['daily','managers','awards'].includes(currentView)||openBroadcastTeam)return;
  const panel=document.getElementById('leagueHub');
  if(!panel||panel.hidden)return;
  liveLeagueWeekRefreshInFlight=true;
@@ -177,7 +177,9 @@ async function refreshLiveLeagueWeekIfAdvanced(){
    JSON.stringify((old.teams||[]).map(t=>[t.roster_id,t.points,t.opponent_points])))){
    managerCache=null; // completed-week manager records are not Inquirer snapshots
    weeklyAwardsCache=null; // completed Sleeper weeks also earn new weekly badges
-   await render('daily');
+   spotlightWeeklyCache=null;
+   allTimeHighCaptureAt=0;
+   await render(currentView);
   }
  }catch(error){console.warn('league-week-refresh-unavailable',String(error?.message||error))}
  finally{liveLeagueWeekRefreshInFlight=false}
@@ -430,9 +432,162 @@ function currentAwards(stats,draftData){return awardStandings(stats,draftData).m
 const tradeAdjustedAwardKeys=new Set(['fleecer','fleeced','deal-maker','efficiency','big-swing','trade-average','volume-wins','big-regret','balanced']);
 function awardRecordKey(key){const k=String(key||'');return tradeAdjustedAwardKeys.has(k)?k+':trade-adjusted-v1':k}
 function awardPeriod(){const d=new Date(),anchor=new Date('2026-09-14T00:00:00');if(d<anchor)return'Sep 14 2026';const months=(d.getFullYear()-anchor.getFullYear())*12+d.getMonth()-anchor.getMonth(),step=Math.floor(months/6)*6,x=new Date(anchor);x.setMonth(x.getMonth()+step);return x.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
-async function syncAwards(rows){try{try{let h=await fetch('/.netlify/functions/league-hub?award_highs=1',{cache:'no-store'}).then(r=>r.json()),records=rows.flatMap(a=>(a.standings||[]).map(x=>({award_key:awardRecordKey(a.key),roster_id:x.roster_id,score:x.score,detail:x.detail})));h=await fetch('/.netlify/functions/league-hub?award_highs=1',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({records})}).then(r=>r.json());awardHighHistory=h.records||[]}catch{}const draftAward=rows.find(x=>x.key==='best-draft-pick');if(draftAward){const records=(draftCache?.draft_picks||[]).map(p=>{const v=Number(globalThis.tradeValueNormalizationV130?.canonicalValue?.({type:'player',id:String(p.player_id),owner:0}))||0;return v&&p.pick_no?{season:p.season,roster_id:p.roster_id,player_id:p.player_id,pick_no:p.pick_no,captured_value:v,delta:Math.round(v-retroPick(p.season,p.pick_no))}:null}).filter(Boolean);fetch('/.netlify/functions/league-hub?draft_records=1',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({records})}).catch(()=>{})}let r=await fetch('/.netlify/functions/league-hub?awards=1',{cache:'no-store'}),j=await r.json();awardHistory=j.history||[];const p=awardPeriod();if(!awardHistory.some(x=>x.period===p)){r=await fetch('/.netlify/functions/league-hub?awards=1',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({period:p,awards:rows})});j=await r.json();awardHistory=j.history||awardHistory}}catch{}}
+// Always load saved highs even if this client cannot write (protected
+// preview, transient network error, or a stale browser tab). The old code
+// discarded a successful GET whenever its next POST failed.
+async function refreshAllTimeHighs(rows,{record=true,verifiedInputs=false}={}){
+ const endpoint='/.netlify/functions/league-hub?award_highs=1';
+ try{
+  const response=await fetch(endpoint,{cache:'no-store'});
+  if(!response.ok)throw Error('All-Time Highs read returned '+response.status);
+  const data=await response.json();
+  if(!Array.isArray(data?.records))throw Error('Invalid All-Time Highs archive');
+  awardHighHistory=data.records;
+ }catch(error){
+  console.warn('league-award-highs-read-unavailable',String(error?.message||error));
+ }
+ const teams=globalThis.state?.teams||[];
+ const completeContext=verifiedInputs||Array.isArray(rows)&&rows.length===20&&
+   Array.isArray(tradeCache?.trades)&&tradeCache.trades.length>0&&
+   Array.isArray(draftCache?.draft_picks)&&draftCache.draft_picks.length>0;
+ const ready=completeContext&&teams.length===32&&
+   new Set(teams.map(t=>String(t.id))).size===32&&
+   globalThis.modeledPlayerValuesV319?.ready===true&&
+   typeof globalThis.tradeValueNormalizationV130?.canonicalValue==='function';
+ if(record&&!onNetlifyDeployPreview&&!inquirerPreviewMode&&ready&&Array.isArray(rows)){
+  const observations=rows.flatMap(a=>(a.standings||[]).map(x=>({
+   award_key:awardRecordKey(a.key),roster_id:String(x.roster_id||''),
+   score:x.score,detail:x.detail
+  }))).filter(x=>x.roster_id&&Number.isFinite(Number(x.score))&&
+     Number(x.score)!==-999999&&Number(x.score)>-1e8);
+  if(observations.length){
+   try{
+    const response=await fetch(endpoint,{method:'POST',
+     headers:{'content-type':'application/json'},
+     body:JSON.stringify({records:observations})});
+    if(!response.ok)throw Error('All-Time Highs write returned '+response.status);
+    const data=await response.json();
+    if(Array.isArray(data?.records))awardHighHistory=data.records;
+   }catch(error){
+    console.warn('league-award-highs-write-unavailable',String(error?.message||error));
+   }
+  }
+ }
+ if(currentView==='awards'&&rankingAwardKey&&awardHighMode[rankingAwardKey]&&
+     tradeCache&&draftCache){
+  const host=document.getElementById('leagueHubContent');
+  if(host)host.innerHTML=rankingsHTML(currentAwards(teamTradeStats(tradeCache.trades||[]),draftCache),rankingAwardKey);
+ }
+}
+async function freshAwardTradeHistory(){
+ const response=await fetch('/.netlify/functions/value-history?trades=1&trades_fresh=1',
+  {cache:'no-store'});
+ if(!response.ok)throw Error('Verified completed trade history unavailable for All-Time Highs');
+ const data=await response.json();
+ if(!Array.isArray(data?.trades)||!data.trades.length)
+  throw Error('No completed Sleeper trades verified for All-Time Highs');
+ return data;
+}
+let allTimeHighCaptureAt=0,allTimeHighCapturePending=null;
+async function captureAllTimeHighsOnSiteOpen({force=false}={}){
+ if(onNetlifyDeployPreview||inquirerPreviewMode||document.hidden)return false;
+ if(allTimeHighCapturePending)return allTimeHighCapturePending;
+ if(!force&&Date.now()-allTimeHighCaptureAt<15*60*1000)return true;
+ // A site-open or completed-week capture must use real current assets,
+ // canonical values and completed trade history. Never write empty placeholders.
+ const teams=globalThis.state?.teams||[],assets=globalThis.state?.allAssets||[];
+ if(teams.length!==32||assets.length<100||
+    globalThis.modeledPlayerValuesV319?.ready!==true||
+    typeof globalThis.tradeValueNormalizationV130?.canonicalValue!=='function')return false;
+ allTimeHighCapturePending=(async()=>{
+  const [tradeData,draftData]=await Promise.all([freshAwardTradeHistory(),drafts()]);
+  if(!Array.isArray(tradeData?.trades)||tradeData.trades.length===0||
+     !Array.isArray(draftData?.draft_picks))return false;
+  const rows=currentAwards(teamTradeStats(tradeData.trades),draftData);
+  if(rows.length!==20||rows.some(x=>!x.key||!Array.isArray(x.standings)))return false;
+  await refreshAllTimeHighs(rows,{verifiedInputs:true});
+  allTimeHighCaptureAt=Date.now();
+  return true;
+ })();
+ try{return await allTimeHighCapturePending}
+ catch(error){console.warn('league-award-highs-auto-capture-unavailable',String(error?.message||error));return false}
+ finally{allTimeHighCapturePending=null}
+}
+// Also capture when the site opens outside League Hub. Canonical data may
+// arrive after DOM ready, so listen for the explicit values-ready signal and
+// make one bounded startup attempt.
+window.addEventListener('fll:canonical-values-ready',()=>{
+ setTimeout(()=>captureAllTimeHighsOnSiteOpen().catch(()=>{}),1500);
+});
+setTimeout(()=>captureAllTimeHighsOnSiteOpen().catch(()=>{}),12000);
+setInterval(()=>captureAllTimeHighsOnSiteOpen().catch(()=>{}),180000);
+document.addEventListener('visibilitychange',()=>{
+ if(!document.hidden)captureAllTimeHighsOnSiteOpen().catch(()=>{});
+});
+// Read-only scheduled collector: reuse the ACTUAL Award standings algorithm
+// in the same canonical valuation runtime as the website. No browser writes.
+window.fleecedAwardHighsScheduledObservation=async function(){
+ const teams=globalThis.state?.teams||[],assets=globalThis.state?.allAssets||[];
+ if(teams.length!==32||new Set(teams.map(x=>String(x.id))).size!==32||
+    assets.length<100||globalThis.modeledPlayerValuesV319?.ready!==true||
+    typeof globalThis.tradeValueNormalizationV130?.canonicalValue!=='function')
+  throw Error('Award collector refused incomplete canonical league');
+ const [tradeData,draftData]=await Promise.all([freshAwardTradeHistory(),drafts()]);
+ if(!Array.isArray(tradeData?.trades)||tradeData.trades.length===0||
+    !Array.isArray(draftData?.draft_picks)||!draftData.draft_picks.length)
+  throw Error('Award collector refused incomplete trade or draft source');
+ const awards=currentAwards(teamTradeStats(tradeData.trades),draftData);
+ if(awards.length!==20||awards.some(x=>!x.key||!Array.isArray(x.standings)))
+  throw Error('Award collector refused missing category');
+ const observations=awards.flatMap(a=>(a.standings||[]).map(x=>({
+  award_key:awardRecordKey(a.key),roster_id:String(x.roster_id||''),
+  score:x.score,detail:x.detail
+ }))).filter(x=>/^[1-9][0-9]*$/.test(x.roster_id)&&
+    x.score!=null&&Number.isFinite(Number(x.score))&&
+    Number(x.score)!==-999999&&!/not enough data|unavailable/i.test(String(x.detail)));
+ if(observations.length<500)throw Error('Award collector refused incomplete ranking coverage '+observations.length);
+ return{schema_version:1,season:Number(globalThis.state?.season||2026),
+  captured_at:new Date().toISOString(),source:'canonical-live-32-team-awards',
+  team_count:32,trade_count:tradeData.trades.length,draft_count:draftData.draft_picks.length,
+  categories:awards.length,observations};
+};
+async function syncAwards(rows){
+ await refreshAllTimeHighs(rows);
+ try{
+  const draftAward=rows.find(x=>x.key==='best-draft-pick');
+  if(draftAward&&!onNetlifyDeployPreview){
+   const records=(draftCache?.draft_picks||[]).map(p=>{
+    const v=Number(globalThis.tradeValueNormalizationV130?.canonicalValue?.({type:'player',id:String(p.player_id),owner:0}))||0;
+    return v&&p.pick_no?{season:p.season,roster_id:p.roster_id,player_id:p.player_id,
+     pick_no:p.pick_no,captured_value:v,delta:Math.round(v-retroPick(p.season,p.pick_no))}:null
+   }).filter(Boolean);
+   fetch('/.netlify/functions/league-hub?draft_records=1',{method:'POST',
+    headers:{'content-type':'application/json'},body:JSON.stringify({records})}).catch(()=>{});
+  }
+  const response=await fetch('/.netlify/functions/league-hub?awards=1',{cache:'no-store'});
+  if(!response.ok)throw Error('Awards history read unavailable');
+  const data=await response.json();awardHistory=data.history||[];
+  const p=awardPeriod();
+  if(!onNetlifyDeployPreview&&!awardHistory.some(x=>x.period===p)){
+   const next=await fetch('/.netlify/functions/league-hub?awards=1',{method:'POST',
+    headers:{'content-type':'application/json'},body:JSON.stringify({period:p,awards:rows})});
+   if(next.ok){const value=await next.json();awardHistory=value.history||awardHistory}
+  }
+ }catch(error){console.warn('league-awards-history-unavailable',String(error?.message||error))}
+}
 function awardCard(a){const yf=a.yearFilter?`<label class="lh-year-filter"><b>YEAR</b><select data-lh-award-year="${esc(a.key)}"><option value="all">All</option>${(a.years||[]).map(y=>`<option value="${y}" ${String(awardYearFilters[a.key]||'all')===String(y)?'selected':''}>${y}</option>`).join('')}</select></label>`:'';const win=a.standings?.[0],link=a.leagueNetModal?`<button class="secondary small" data-lh-loaded-roster>Open Value History chart</button>`:a.teamTradeLink&&win?`<button class="secondary small" data-lh-manager-trades="${esc(win.roster_id)}">Winner Trade History</button>`:a.specificTradeLink&&win?.trade_id?`<button class="secondary small" data-lh-trade="${esc(win.trade_id)}">View Winning Trade</button>`:'';return`<div class="lh-card"><h3>${esc(a.title)}</h3><div class="lh-sub">${esc(a.desc||'')}</div>${yf}<div class="lh-story"><b>${a.roster_id?esc(teamName(a.roster_id)):'—'}</b><small>${esc(a.detail)}</small></div><div class="lh-action"><button class="secondary small" data-lh-rankings="${esc(a.key)}">View all rankings</button> ${link}</div></div>`}
-function awardRecordsHTML(a){const hist=awardHighHistory.filter(x=>x.award_key===awardRecordKey(a.key)),rows=hist.slice().sort((x,y)=>Number(y.score)-Number(x.score));return`<div class="lh-records"><h3>📈 All-Time Highs</h3><div class="lh-sub">Each team's highest recorded performance for this award. The timestamp is when that exact high was first captured and remains attached until a new high replaces it.</div>${rows.map((x,i)=>`<div class="lh-stat"><span><b>#${i+1}</b> ${esc(teamName(x.roster_id))}</span><span><small>${esc(x.detail||fmt(x.score))}</small><small style="display:block;color:var(--muted);margin-top:3px">Recorded ${esc(x.captured_at?new Date(x.captured_at).toLocaleString():'Timestamp unavailable')}</small></span></div>`).join('')||'<div class="lh-sub">No timestamped high has been captured yet.</div>'}</div>`}
+function awardRecordsHTML(a){
+ const hist=awardHighHistory.filter(x=>x.award_key===awardRecordKey(a.key)),
+  rows=hist.slice().sort((x,y)=>Number(y.score)-Number(x.score));
+ const stored=rows.map((x,i)=>`<div class="lh-stat"><span><b>#${i+1}</b> ${esc(teamName(x.roster_id))}</span><span><small>${esc(x.detail||fmt(x.score))}</small><small style="display:block;color:var(--muted);margin-top:3px">Recorded ${esc(x.captured_at?new Date(x.captured_at).toLocaleString():'Timestamp unavailable')}</small></span></div>`).join('');
+ // Deploy Previews cannot write to the archive. Always show the actual live
+ // award rankings if no historical observation has been persisted yet, but
+ // NEVER mislabel the current value as a timestamped historical peak.
+ const provisional=!rows.length&&Array.isArray(a?.standings)?
+  `<div class="lh-sub" data-lh-highs-pending>Historical records are not archived yet. These are the CURRENT verified award standings, not timestamped All-Time Highs. A successful scheduled capture will preserve the true highs and observation dates automatically.</div>`+
+  a.standings.map((x,i)=>`<div class="lh-stat" data-lh-current-benchmark><span><b>#${i+1}</b> ${esc(teamName(x.roster_id))}</span><span><small>${esc(x.detail||fmt(x.score))}</small><small>Current result • not yet recorded as a historical high</small></span></div>`).join(''):'';
+ return`<div class="lh-records"><h3>📈 All-Time Highs</h3><div class="lh-sub">Each team's highest captured performance for this award, with the timestamp of its first verified observation.</div>${stored||provisional||'<div class="lh-sub">No verified observations or current standings are available yet.</div>'}</div>`;
+}
 function rankingsHTML(rows,key){const a=rows.find(x=>x.key===key)||rows[0];if(!a)return'<div class="lh-awards-page"><div class="lh-card">No rankings available.</div></div>';if(a.key==='roster-value')return loadedRosterRankingsHTML(a);const high=!!awardHighMode[a.key],yf=`<div class="lh-action"><button type="button" class="secondary small ${high?'active':''}" data-lh-award-high="${esc(a.key)}">${high?'Turn off All-Time Highs':'📈 All-Time Highs'}</button>${a.yearFilter?` <label class="lh-year-filter"><b>YEAR</b><select data-lh-award-year="${esc(a.key)}"><option value="all">All</option>${(a.years||[]).map(y=>`<option value="${y}" ${String(awardYearFilters[a.key]||'all')===String(y)?'selected':''}>${y}</option>`).join('')}</select></label>`:''}</div>`;return`<div class="lh-awards-page"><div class="lh-card"><div class="lh-action"><button class="secondary small" data-lh-rankings-back>← All Awards</button></div><h3 style="margin-top:12px">${esc(a.title)} — All 32 Teams</h3><div class="lh-sub">${esc(a.desc||'Current standings')}</div>${yf}${high?awardRecordsHTML(a):a.standings.map(x=>`<div class="lh-stat"><span><b>#${x.rank}</b> ${esc(teamName(x.roster_id))}</span><span><small>${esc(x.detail)}</small>${a.teamTradeLink?` <button class="secondary small" data-lh-manager-trades="${esc(x.roster_id)}">Trade History</button>`:''}${a.specificTradeLink&&x.trade_id?` <button class="secondary small" data-lh-trade="${esc(x.trade_id)}">View Trade</button>`:''}</span></div>`).join('')}</div></div>`}
 function loadedRosterRankingsHTML(a){return`<div class="lh-awards-page"><div class="lh-card"><div class="lh-action"><button class="secondary small" data-lh-rankings-back>← All Awards</button></div><h3 style="margin-top:12px">${esc(a.title)} — All 32 Teams</h3><div class="lh-sub">Current loaded-roster net value ranking. Use View chart to open the same league comparison pop-out.</div>${a.standings.map(x=>`<div class="lh-stat"><span><b>#${x.rank}</b> ${esc(teamName(x.roster_id))}</span><span><small>${esc(x.detail)}</small> <button class="secondary small" data-lh-loaded-roster>View chart</button></span></div>`).join('')}</div></div>`}
 function weeklyCopy(t){const margin=Math.abs(t.points-t.opponent_points),projOk=t.projection_coverage>=Math.max(1,Math.ceil(t.starter_count*.65)),proj=t.projected||0;let opener=t.won?`${t.team_name} walked out with a ${t.points.toFixed(1)}–${t.opponent_points.toFixed(1)} win`:`${t.team_name} took a ${t.opponent_points.toFixed(1)}–${t.points.toFixed(1)} loss`;if(margin<8)opener+=', and this one was a fourth-quarter stomach ache.';else if(margin>35)opener+=t.won?', and it was never especially polite.':', and the scoreboard got ugly in a hurry.';else opener+='.';
@@ -614,14 +769,43 @@ function careerRankingsHTML(key,md){const labels={wins:'Most Wins',championships
 function latestWeeklyAwardRecord(data=weeklyAwardsCache){
  const rows=Array.isArray(data?.records)?data.records:[];return rows.slice().sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week))[0]||null;
 }
+function pendingHotSeatFromCompletedWeek(w){
+ const favorites=(w?.available&&Array.isArray(w.teams)?w.teams:[]).filter(g=>
+  g?.won===false&&g.points!=null&&g.opponent_points!=null&&
+  Number.isFinite(Number(g.points))&&Number.isFinite(Number(g.opponent_points))&&
+  Number(g.points)<Number(g.opponent_points)&&
+  g.projected!=null&&g.opponent_projected!=null&&
+  Number.isFinite(Number(g.projected))&&Number.isFinite(Number(g.opponent_projected))&&
+  Number(g.projected)>Number(g.opponent_projected));
+ if(!favorites.length)return null;
+ const g=favorites.slice().sort((a,b)=>
+  (Number(b.projected)-Number(b.opponent_projected))-
+  (Number(a.projected)-Number(a.opponent_projected))||
+  String(a.roster_id).localeCompare(String(b.roster_id)))[0];
+ return{type:'hot-seat',title:'🔥 Hot Seat',roster_id:g.roster_id,
+  manager_name:g.manager_name,team_name:g.team_name,
+  detail:'Projected to win by '+(Number(g.projected)-Number(g.opponent_projected)).toFixed(1)+
+   ' • lost by '+(Number(g.opponent_points)-Number(g.points)).toFixed(1),
+  provisional:true};
+}
 function weeklyAwardCardsHTML(data=weeklyAwardsCache){
- const rec=latestWeeklyAwardRecord(data),rows=rec?.manager_awards||[];if(!rec||!rows.length)return'';
- return '<div class="lh-card lh-wide"><h3>🏅 Weekly Manager Awards — '+esc(rec.season+' Week '+rec.week)+'</h3><div class="lh-sub">These badges are locked to the completed week and remain on the winning manager’s profile.</div><div class="lh-grid">'+rows.map(a=>'<div class="lh-card"><h3>'+esc(a.title)+'</h3><div class="lh-story"><b>'+esc(a.manager_name||teamName(a.roster_id))+'</b><small>'+esc(a.team_name||teamName(a.roster_id))+' • '+esc(a.detail||'')+'</small></div></div>').join('')+'</div></div>';
+ const rec=latestWeeklyAwardRecord(data);
+ if(!rec)return'';
+ const live=spotlightWeeklyCache?.available?spotlightWeeklyCache:liveLeagueWeekCache;
+ const currentWeek=live?.available&&Number(live.season)===Number(rec.season)&&
+  Number(live.week)===Number(rec.week);
+ const rows=Array.isArray(rec.manager_awards)?rec.manager_awards.slice():[];
+ if(currentWeek&&!rows.some(x=>x.type==='hot-seat')){
+  const derived=pendingHotSeatFromCompletedWeek(live);
+  if(derived)rows.unshift(derived);
+ }
+ if(!rows.length)return'';
+ return '<div class="lh-card lh-wide"><h3>🏅 Weekly Manager Awards — '+esc(rec.season+' Week '+rec.week)+'</h3><div class="lh-sub">Archived badges are locked to their completed week; provisional finalized-score Hot Seat results are labeled until the weekly award archive catches up.</div><div class="lh-grid">'+rows.map(a=>'<div class="lh-card"><h3>'+esc(a.title)+'</h3><div class="lh-story"><b>'+esc(a.manager_name||teamName(a.roster_id))+'</b><small>'+esc(a.team_name||teamName(a.roster_id))+' • '+esc(a.detail||'')+(a.provisional?' • Current verified result, pending archival':'')+'</small></div></div>').join('')+'</div></div>';
 }
 function managerWeeklyBadgesHTML(id,mgr,data=weeklyAwardsCache){
  const uid=String(mgr?.user_id||''),rid=String(id),badges=(data?.records||[]).flatMap(rec=>(rec.manager_awards||[]).filter(a=>(uid&&a.manager_user_id&&String(a.manager_user_id)===uid)||String(a.roster_id||'')===rid).map(a=>({...a,season:rec.season,week:rec.week,captured_at:rec.captured_at||''}))).sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week));
  if(!badges.length)return'<div class="lh-sub">No weekly manager badges yet.</div>';
- return '<div class="lh-weekly-badges">'+badges.map(a=>'<span class="lh-weekly-badge">'+esc(a.title)+' • '+esc(a.season+' Week '+a.week)+(a.captured_at?' • '+esc(date(a.captured_at)):'')+'</span>').join('')+'</div>';
+ return '<div class="lh-weekly-badges">'+badges.map(a=>'<span class="lh-weekly-badge">'+esc(a.title)+' • '+esc(a.season+' Week '+a.week)+(a.provisional?' • Current completed-week result, pending archival':a.captured_at?' • '+esc(date(a.captured_at)):'')+'</span>').join('')+'</div>';
 }
 function playersOfWeekHTML(w,data=weeklyAwardsCache){
  const rows=Array.isArray(data?.records)?data.records:[],season=Number(w?.season),week=Number(w?.week),rec=rows.find(r=>Number(r.season)===season&&Number(r.week)===week)||null,p=rec?.players_of_week;if(!p?.offense&&!p?.defense)return'';
@@ -631,7 +815,8 @@ function playersOfWeekHTML(w,data=weeklyAwardsCache){
 function awardsHTML(rows){if(rankingAwardKey)return rankingsHTML(rows,rankingAwardKey);return`<div class="lh-awards-page lh-awards-main"><div class="lh-sub">20 live awards are recalculated from current league data, plus four locked weekly manager awards: Hot Seat, Cool Throne, Highest Scorer and Lowest Scorer. Historic live-award snapshots begin Sep 14, 2026; weekly awards are tracked independently by season and week.</div><div class="lh-grid">${weeklyAwardCardsHTML()}${rows.map(awardCard).join('')}</div></div>`}
 function hallHTML(all){const rows=all.map(t=>({t,h:hindsightDelta(t)})).filter(x=>x.h).sort((a,b)=>b.h.edge-a.h.edge),fairRows=rows.filter(x=>Number(x.h.playerValueExchanged)>=500).slice().sort((a,b)=>a.h.edge-b.h.edge),shown=hallExpanded?rows:rows.slice(0,10),fairShown=hallExpanded?fairRows:fairRows.slice(0,10),renderFair=(x,i)=>{const winner=x.t.sides?.[x.h.winner]?.roster_id,detail=x.h.edge===0?'even trade-adjusted current outcome':'trade-adjusted current outcome gap '+fmtHall(x.h.edge)+' • slight advantage '+teamName(winner);return`<div class="lh-story lh-click" data-lh-trade="${esc(tradeKey(x.t))}"><b>#${i+1} ${esc((x.t.roster_ids||[]).map(teamName).join(' ↔ '))}</b><small>${esc(date(x.t.created))} • ${esc(detail)} • open exact trade →</small></div>`};
  return`<div class="lh-hall-page"><div class="lh-grid"><div class="lh-card"><div class="lh-title-action"><h3>👑 Hall of Fame</h3>${fairRows.length>10?`<button class="secondary small" data-lh-hall-all>${hallExpanded?'Show Top 10':'View All'}</button>`:''}</div><div class="lh-sub">The most balanced fully-valued two-team trades in league Trade History, ranked by the smallest trade-adjusted current outcome gap. Hall of Fame requires at least 500 combined current player-value points among the players actually exchanged.</div>${fairShown.map(renderFair).join('')||'<div class="lh-sub">No fully-valued trades available.</div>'}</div><div class="lh-card"><div class="lh-title-action"><h3>💀 Hall of Fleeced</h3>${rows.length>10?`<button class="secondary small" data-lh-hall-all>${hallExpanded?'Show Top 10':'View All'}</button>`:''}</div><div class="lh-sub">All trades ranked by the size of the trade-adjusted current hindsight gap, highlighting the manager on the losing side.</div>${shown.map((x,i)=>{const loser=x.t.sides?.[x.h.winner?0:1]?.roster_id;return`<div class="lh-story lh-click" data-lh-trade="${esc(tradeKey(x.t))}"><b>#${i+1} ${esc(teamName(loser))}</b><small>${esc(date(x.t.created))} • ${fmtHall(x.h.edge)} behind in trade-adjusted current outcome value • open exact trade →</small></div>`}).join('')||'<div class="lh-sub">No fully-valued trades available.</div>'}</div></div></div>`}
-function spotlightBlock(md,w){const cr=md?.career||[],metric=(key,label,icon)=>{const rows=cr.slice().sort((a,b)=>(b[key]||0)-(a[key]||0)),winner=rows[0];return`<div class="lh-spot-card"><div><small>${label}</small><b>${esc(winner?.sleeper_id||'—')}</b><strong>${winner?.[key]||0}</strong></div><button class="lh-brand-button lh-brand-button-outline lh-brand-button-compact" data-lh-career-rank="${key}">View all</button></div>`},weekTeams=w?.available?(w.teams||[]):[],wins=weekTeams.filter(g=>g.won),losses=weekTeams.filter(g=>g.won===false),hot=losses.filter(g=>Number.isFinite(Number(g.projected))&&Number.isFinite(Number(g.opponent_projected))&&Number(g.projected)>Number(g.opponent_projected)).sort((a,b)=>(Number(b.projected)-Number(b.opponent_projected))-(Number(a.projected)-Number(a.opponent_projected)))[0],cool=wins.slice().sort((a,b)=>(Number(b.points)-Number(b.opponent_points))-(Number(a.points)-Number(a.opponent_points)))[0],managerForGame=g=>{const cur=(md?.current||[]).find(x=>String(x.roster_id)===String(g?.roster_id));return cur?.sleeper_id||g?.manager_name||'n/a'},signed=n=>(Number(n)>=0?'+':'')+Number(n).toFixed(1),gameCard=(g,label,icon)=>{if(!g)return`<div class="lh-spot-card"><div><small>${label}</small><b>n/a</b><strong>n/a</strong><small>Available after a completed Sleeper week.</small></div></div>`;const projectedMargin=Number(g.projected)-Number(g.opponent_projected),resultMargin=Number(g.points)-Number(g.opponent_points);return`<div class="lh-spot-card"><div><small>${label}</small><b>${esc(managerForGame(g))}</b><strong>${signed(resultMargin)}</strong><small>Projected ${signed(projectedMargin)} • ${resultMargin>=0?'won':'lost'} by ${Math.abs(resultMargin).toFixed(1)}</small></div></div>`},scoring=md?.scoring_history||{},season=Number(w?.season)||Number(scoring.through_season)||0,seasonRow=(scoring.season_extremes||[]).find(x=>Number(x.season)===season),managerForScore=g=>String(g?.manager_name||cr.find(x=>String(x.user_id)===String(g?.user_id))?.sleeper_id||managerForGame(g)),scoreCard=(g,label,board)=>g?`<div class="lh-spot-card"><div><small>${label}</small><b>${esc(managerForScore(g))}</b><strong>${Number(g.score).toFixed(1)}</strong><small>Fantasy points • ${esc(g.season)} • ${esc(g.playoff?(g.round_label||('Week '+g.week+' Playoffs')):('Week '+g.week))}</small></div><button class="lh-brand-button lh-brand-button-outline lh-brand-button-compact" data-lh-scoreboard="${esc(board)}">View all</button></div>`:`<div class="lh-spot-card"><div><small>${label}</small><b>n/a</b><strong>n/a</strong><small>Available after completed fantasy matchups.</small></div><button class="lh-brand-button lh-brand-button-outline lh-brand-button-compact" data-lh-scoreboard="${esc(board)}">View all</button></div>`;return`<div class="lh-card lh-wide lh-spotlight"><div class="lh-title-action"><h3>Manager Spotlight</h3></div><div class="lh-sub">Regular-season career records use Sleeper's all-time league standings (ties ignored). Hot Seat and Cool Throne keep the completed-week logic already in use. Scoring records use completed fantasy matchup scores; yearly highs/lows show the current season, and all-time records cover every completed scoring week since 2024.</div><div class="lh-spot-grid">${metric('wins','Most Wins','🏆')}${metric('losses','Most Losses','📉')}${metric('championships','Most Championships','👑')}${metric('division_wins','Most Division Wins','🏅')}${metric('division_championships','Most Division Championships','🏆')}${metric('regular_season_titles','Regular Season Champions','🥇')}${gameCard(hot,'Hot Seat','🔥')}${gameCard(cool,'Cool Throne','🧊')}${scoreCard(seasonRow?.highest,'Highest Scorer of the Year','year_highest')}${scoreCard(seasonRow?.lowest,'Lowest Scorer of the Year','year_lowest')}${scoreCard(scoring?.all_time?.highest,'All-Time Highest Scorer','all_time_highest')}${scoreCard(scoring?.all_time?.lowest,'All-Time Lowest Scorer','all_time_lowest')}</div></div>`}
+function spotlightBlock(md,w){const cr=md?.career||[],metric=(key,label,icon)=>{const rows=cr.slice().sort((a,b)=>(b[key]||0)-(a[key]||0)),winner=rows[0];return`<div class="lh-spot-card"><div><small>${label}</small><b>${esc(winner?.sleeper_id||'—')}</b><strong>${winner?.[key]||0}</strong></div><button class="lh-brand-button lh-brand-button-outline lh-brand-button-compact" data-lh-career-rank="${key}">View all</button></div>`},weekTeams=w?.available?(w.teams||[]):[],wins=weekTeams.filter(g=>g.won),losses=weekTeams.filter(g=>g.won===false&&g.points!=null&&g.opponent_points!=null&&Number(g.points)<Number(g.opponent_points)),projectedLosses=losses.filter(g=>g.projected!=null&&g.opponent_projected!=null&&Number.isFinite(Number(g.projected))&&Number.isFinite(Number(g.opponent_projected))&&Number(g.projected)>Number(g.opponent_projected)),
+ hot=projectedLosses.slice().sort((a,b)=>(Number(b.projected)-Number(b.opponent_projected))-(Number(a.projected)-Number(a.opponent_projected)))[0],cool=wins.slice().sort((a,b)=>(Number(b.points)-Number(b.opponent_points))-(Number(a.points)-Number(a.opponent_points)))[0],managerForGame=g=>{const cur=(md?.current||[]).find(x=>String(x.roster_id)===String(g?.roster_id));return cur?.sleeper_id||g?.manager_name||'n/a'},signed=n=>(Number(n)>=0?'+':'')+Number(n).toFixed(1),gameCard=(g,label,icon)=>{if(!g)return`<div class="lh-spot-card"><div><small>${label}</small><b>n/a</b><strong>n/a</strong><small>Available after a completed Sleeper week.</small></div></div>`;const hasProjections=g.projected!=null&&g.opponent_projected!=null&&Number.isFinite(Number(g.projected))&&Number.isFinite(Number(g.opponent_projected)),projectedMargin=hasProjections?Number(g.projected)-Number(g.opponent_projected):null,resultMargin=Number(g.points)-Number(g.opponent_points);return`<div class="lh-spot-card"><div><small>${label}</small><b>${esc(managerForGame(g))}</b><strong>${signed(resultMargin)}</strong><small>${label==='Hot Seat'&&!projectedLosses.length?'Projected upset':hasProjections?'Projected '+signed(projectedMargin):'Completed Sleeper matchup'} • ${resultMargin>=0?'won':'lost'} by ${Math.abs(resultMargin).toFixed(1)}</small></div></div>`},scoring=md?.scoring_history||{},season=Number(w?.season)||Number(scoring.through_season)||0,seasonRow=(scoring.season_extremes||[]).find(x=>Number(x.season)===season),managerForScore=g=>String(g?.manager_name||cr.find(x=>String(x.user_id)===String(g?.user_id))?.sleeper_id||managerForGame(g)),scoreCard=(g,label,board)=>g?`<div class="lh-spot-card"><div><small>${label}</small><b>${esc(managerForScore(g))}</b><strong>${Number(g.score).toFixed(1)}</strong><small>Fantasy points • ${esc(g.season)} • ${esc(g.playoff?(g.round_label||('Week '+g.week+' Playoffs')):('Week '+g.week))}</small></div><button class="lh-brand-button lh-brand-button-outline lh-brand-button-compact" data-lh-scoreboard="${esc(board)}">View all</button></div>`:`<div class="lh-spot-card"><div><small>${label}</small><b>n/a</b><strong>n/a</strong><small>Available after completed fantasy matchups.</small></div><button class="lh-brand-button lh-brand-button-outline lh-brand-button-compact" data-lh-scoreboard="${esc(board)}">View all</button></div>`;return`<div class="lh-card lh-wide lh-spotlight"><div class="lh-title-action"><h3>Manager Spotlight</h3></div><div class="lh-sub">Regular-season career records use Sleeper's all-time league standings (ties ignored). Hot Seat requires a verified projected favorite who lost; Cool Throne uses the completed score margin. Scoring records use completed fantasy matchup scores; yearly highs/lows show the current season, and all-time records cover every completed scoring week since 2024.</div><div class="lh-spot-grid">${metric('wins','Most Wins','🏆')}${metric('losses','Most Losses','📉')}${metric('championships','Most Championships','👑')}${metric('division_wins','Most Division Wins','🏅')}${metric('division_championships','Most Division Championships','🏆')}${metric('regular_season_titles','Regular Season Champions','🥇')}${gameCard(hot,'Hot Seat','🔥')}${gameCard(cool,'Cool Throne','🧊')}${scoreCard(seasonRow?.highest,'Highest Scorer of the Year','year_highest')}${scoreCard(seasonRow?.lowest,'Lowest Scorer of the Year','year_lowest')}${scoreCard(scoring?.all_time?.highest,'All-Time Highest Scorer','all_time_highest')}${scoreCard(scoring?.all_time?.lowest,'All-Time Lowest Scorer','all_time_lowest')}</div></div>`}
 function graveyardScoringHTML(g){
  const rows=Array.isArray(g?.scoring_games)?g.scoring_games:[],seasons=(g?.seasons||[...new Set(rows.map(x=>Number(x.season)).filter(Boolean))]).slice().sort((a,b)=>a-b),seasonText=seasons.length?seasons.join(', '):'No scoring seasons located';
  return`<div class="lh-story"><b>${esc(g.sleeper_id||g.user_id)}</b><small>${g.career?.wins||0}-${g.career?.losses||0} • ${g.career?.playoff_wins||0} playoff wins • ${g.career?.championships||0} championships</small><small>League seasons: ${esc(seasonText)}${g.played_2025?' • Played in 2025':''} • ${rows.length} completed scoring weeks retained</small>${rows.length?`<details class="lh-grave-history"><summary>View scoring history</summary>${rows.map(r=>`<div class="lh-grave-score"><span>${esc(r.season)}</span><span>${esc(r.playoff?(r.round_label||('Week '+r.week+' Playoffs')):('Week '+r.week))}</span><b>${Number(r.score||0).toFixed(1)} pts</b></div>`).join('')}</details>`:''}</div>`;
@@ -658,6 +843,9 @@ async function render(view=currentView,managerId=''){const previousView=currentV
  if(view==='hall'){const data=await trades();all=data?.trades||[];host.innerHTML=hallHTML(all);return}
  if(view==='awards'){const [data,draftsData,weeklyAwardData]=await Promise.all([trades(),drafts(),weeklyAwards().catch(()=>({records:[]}))]);weeklyAwardsCache=weeklyAwardData;all=data?.trades||[];stats=teamTradeStats(all);draftData=draftsData;awards=currentAwards(stats,draftData);host.innerHTML=awardsHTML(awards);syncAwards(awards);return}
  const [data,mgr,w,arc,reporters,weeklyAwardData,leagueWeek]=await Promise.all([trades(),managers(),weekly().catch(()=>null),fetch('/.netlify/functions/league-hub?broadcast_archive=1',{cache:'no-store'}).then(r=>r.ok?r.json():{reports:[]}).catch(()=>({reports:[]})),reporterDirectory().catch(()=>({reporters:[]})),weeklyAwards().catch(()=>({records:[]})),liveLeagueWeek().catch(()=>liveLeagueWeekCache)]);weeklyAwardsCache=weeklyAwardData;all=data?.trades||[];stats=teamTradeStats(all);md=mgr;weeklyCache=w;reporterDirectoryCache=reporters;broadcastArchive=arc?.reports||[];if(inquirerPreviewMode&&w?.preview_only)broadcastArchive=[{season:w.season,week:w.week,headline:w.league_overview?.headline,preview_only:true},...broadcastArchive.filter(x=>Number(x.season)!==Number(w.season)||Number(x.week)!==Number(w.week))];const spotlightW=await spotlightWeek(w,broadcastArchive).catch(()=>null);host.innerHTML=dailyHTML(all,stats,w,md,spotlightW||w,leagueWeek);
+ // Site opening and a newly completed Sleeper week both opportunistically
+ // capture genuine All-Time Highs, without requiring the Awards tab.
+ captureAllTimeHighsOnSiteOpen().catch(()=>{});
  }catch(error){if(inquirerPreviewMode&&view==='daily'){
   const detail=String(error?.message||'Draft not ready'),isRunning=/generation (started|in progress)/i.test(detail);
   host.innerHTML='<div class="lh-card"><h3>'+esc('Private '+(inquirerPreviewRequestedWeek?'Week '+inquirerPreviewRequestedWeek+' ':'Inquirer ')+(isRunning?'preview is generating':'preview is not ready'))+'</h3><p>This is an unpublished, isolated Deploy Preview. Nothing here publishes an edition to the live site.</p><small>'+esc(detail)+'</small></div>';

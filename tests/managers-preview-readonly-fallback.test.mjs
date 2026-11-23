@@ -37,7 +37,12 @@ test('Netlify permits the isolated Managers PR preview, not an unsanctioned prod
  const toml=readFileSync(new URL('../netlify.toml',import.meta.url),'utf8');
  assert.match(toml,/e\.CONTEXT==='deploy-preview'/);
  assert.match(toml,/a516be3b-6c65-4f54-a9fb-23c5361bf3d2/);
- assert.match(toml,/'606'\]\.includes\(String\(e\.REVIEW_ID\)\)/,'current integrated preview must be explicitly allowlisted');
+ const allow=toml.match(/e\\.CONTEXT==='deploy-preview'&&\\[([^\\]]+)\\]\\.includes\\(String\\(e\\.REVIEW_ID\\)\\)/);
+ assert.ok(allow,'Deploy Previews require a finite explicit review-ID allowlist');
+ const ids=[...allow[1].matchAll(/'(\\d+)'/g)].map(m=>m[1]);
+ assert.ok(ids.includes('586'),'approved isolated Managers preview must remain permitted');
+ const activePR=String(process.env.GITHUB_REF||'').match(/^refs\\/pull\\/(\\d+)\\//)?.[1];
+ if(activePR)assert.ok(ids.includes(activePR),'current reviewed PR '+activePR+' must be explicitly allowlisted');
  assert.match(toml,/e\.CONTEXT==='production'&&e\.BRANCH==='main'/);
  assert.doesNotMatch(toml,/Release FFL Managers/);
 });

@@ -1,5 +1,6 @@
 import {snapshotsThroughEdition} from './lib/inquirer-market-window.mjs';
 import {playerWeeklyMilestoneAwards} from './lib/player-weekly-milestone-awards.mjs';
+import {verifiedSleeperCompletedAwardWeek} from './lib/league-award-completion-fallback.mjs';
 import {liveTradeWeekLimit,mergeCompletedTradeAuditWeeks} from './lib/trade-history-live-source.mjs';
 import {getPickOrder5050,postCutoverTrade} from './lib/pick-order-5050.mjs';
 import { getStore } from '@netlify/blobs';
@@ -1174,30 +1175,40 @@ async function canonicalWeeklyAwards(origin){
 // Independent Sleeper matchup finalization, not the Inquirer publication
 // cursor or NFL's calendar week, authorizes new Player-of-the-Week badges.
 let verifiedAwardWeekCache=null,verifiedAwardWeekCacheAt=0;
-async function verifiedCompletedAwardWeek(origin,season){
+async function verifiedCompletedAwardWeek(origin,season,nflState){
  const base=String(origin||'').replace(/\/$/,'');
- if(!base)return 0;
  if(verifiedAwardWeekCache?.season===season&&Date.now()-verifiedAwardWeekCacheAt<30000)
   return verifiedAwardWeekCache.week;
- try{
+ // Team-protected Deploy Previews reject internal same-origin function fetches.
+ // Instead, verify identical Sleeper matchup completion + applied standings.
+ const protectedPreview=/^https:\/\/deploy-preview-\d+--/.test(base);
+ if(base&&!protectedPreview)try{
   const response=await fetch(`${base}/.netlify/functions/league-hub?league_latest=1`,
    {headers:{accept:'application/json','user-agent':'FFL-TradeFinder-ValueHistoryScoring/1.0'},cache:'no-store'});
-  if(!response.ok)return 0;
-  const data=await response.json();
-  const week=Number(data?.week);
-  if(data?.available!==true||Number(data?.season)!==Number(season)||
-    !Number.isInteger(week)||week<1||week>18||
-    !Array.isArray(data?.teams)||data.teams.length!==32||
-    new Set(data.teams.map(row=>String(row?.roster_id??''))).size!==32||
-    data.teams.some(row=>row?.roster_id==null||row?.points==null||
-      row?.opponent_points==null||!Number.isFinite(Number(row.points))||
-      !Number.isFinite(Number(row.opponent_points))))return 0;
-  verifiedAwardWeekCache={season,week};verifiedAwardWeekCacheAt=Date.now();
-  return week;
+  if(response.ok){
+   const data=await response.json(),week=Number(data?.week);
+   if(data?.available===true&&Number(data?.season)===Number(season)&&
+     Number.isInteger(week)&&week>=1&&week<=17&&
+     Array.isArray(data?.teams)&&data.teams.length===32&&
+     new Set(data.teams.map(row=>String(row?.roster_id??''))).size===32&&
+     data.teams.every(row=>row?.roster_id!=null&&row?.points!=null&&
+      row?.opponent_points!=null&&Number.isFinite(Number(row.points))&&
+      Number.isFinite(Number(row.opponent_points)))){
+    verifiedAwardWeekCache={season,week};verifiedAwardWeekCacheAt=Date.now();
+    return week;
+   }
+  }
  }catch(error){
-  console.warn('player-weekly-awards-verification-unavailable',String(error?.message||error));
-  return 0;
+  console.warn('player-weekly-awards-verified-hub-read-unavailable',String(error?.message||error));
  }
+ const week=await verifiedSleeperCompletedAwardWeek({
+  season,nflState,leagueId:LEAGUE,
+  read:path=>scoringJson(SCORING_API+path)
+ });
+ if(week>0){
+  verifiedAwardWeekCache={season,week};verifiedAwardWeekCacheAt=Date.now();
+ }
+ return week;
 }
 async function scoringMilestones(playerId){
   const origin=String(arguments[1]||''),cacheKey=String(playerId),cachedMilestone=playerMilestoneCache.get(cacheKey),now=Date.now();
@@ -1211,7 +1222,7 @@ async function scoringMilestones(playerId){
     ]),currentSeason=Number(league?.season),currentCompletedWeek=Number(nflState?.season)>Number(league?.season)?18:
       Math.max(0,Math.min(18,(Number(nflState?.week)||1)-1)),scoring=league?.scoring_settings||{};
     if(!currentSeason||!Object.keys(scoring).length)return null;
-    const verifiedCurrentWeek=await verifiedCompletedAwardWeek(origin,currentSeason);
+    const verifiedCurrentWeek=await verifiedCompletedAwardWeek(origin,currentSeason,nflState);
     const years=[currentSeason,currentSeason-1,currentSeason-2,currentSeason-3],weeklyByYear={},canonicalByKey=new Map((canonicalRecords||[]).filter(r=>r?.players_of_week).map(r=>[Number(r.season)+'|'+Number(r.week),r]));
     await Promise.all(years.map(async y=>weeklyByYear[y]=await scoringSeasonWeeks(y,currentSeason,currentCompletedWeek)));
     let highWeek=null,highSeason=null,highPpg=null;const weeklyAwards=[];

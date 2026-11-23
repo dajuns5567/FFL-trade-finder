@@ -90,7 +90,9 @@ function normalizeKtcPlayers(players){
   return{rows:ranked.map(r=>({rank:r.rank,player:r.player,position:r.position})),mode:"insufficient",excluded,valuedCount:valued.length};
 }
 // KTC has shipped the dynasty player universe as a JSON script, a literal
-// playersArray, and nested app bootstrap JSON. Read actual JSON rather than
+// oneQBPlayers array containing *both* oneQBValues and superflexValues,
+// a literal playersArray, and nested app bootstrap JSON.
+// Read only superflexValues below; do not substitute oneQBValues rankings. Read actual JSON rather than
 // evaluating page scripts. Only player-shaped arrays enter normalization.
 function playerShape(row){
  return row&&typeof row==="object"&&
@@ -133,7 +135,7 @@ function collectKtcPlayerArrays(text){
   if(body.length>10000000||!body||!/[\[{]/.test(body[0]))continue;
   try{searchJson(JSON.parse(body),"embedded-json:"+id)}catch{}
  }
- for(const name of ["playersArray","rankings","players"]){
+ for(const name of ["oneQBPlayers","sfPlayers","superflexPlayers","playersArray","rankings","players"]){
   const literal=extractAssignedArray(source,name);
   if(literal)add(literal,"inline-array:"+name);
  }

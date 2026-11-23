@@ -45,7 +45,8 @@ test('playoff awards require a fully resolved bracket, not just future NFL week'
  const read=feed({playoff_week_start:2},rosters(),{
   1:matchups(1),2:matchups(2)
  });
- assert.equal(await verify({stateWeek:3,read}),0);
+ assert.equal(await verify({stateWeek:3,read}),1,
+  'unresolved playoff week cannot mint its badge; last verified regular week remains usable');
  const resolved=async path=>path===base+'/winners_bracket'?
   [{r:1,w:'1',l:'2'}]:read(path);
  assert.equal(await verify({stateWeek:3,read:resolved}),2);

@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-11-23T00:49:44.287Z",
+  "generatedAt": "2026-11-23T08:59:47.367Z",
   "source": "Sleeper importer snapshot",
   "currentSeason": 2026,
   "completedWeek": 10,
@@ -362,8 +362,8 @@
         "LAC"
       ],
       "11": [
-        "DEN",
-        "LV",
+        "HOU",
+        "IND",
         "BUF",
         "MIA",
         "CHI",
@@ -380,8 +380,12 @@
         "BAL",
         "LAC",
         "NYJ",
-        "HOU",
-        "IND"
+        "DEN",
+        "LV",
+        "NYG",
+        "JAX",
+        "SF",
+        "MIN"
       ]
     },
     "weekFinalityByWeek": {
@@ -1687,26 +1691,26 @@
       },
       "11": {
         "scheduledGames": 13,
-        "finalGames": 10,
+        "finalGames": 12,
         "ignoredGames": 0,
-        "blockingGames": 3,
+        "blockingGames": 1,
         "complete": false,
         "nullSlots": [],
         "slots": [
           {
-            "id": "401873075",
-            "state": "final",
+            "id": "401873078",
+            "state": "blocking",
             "teams": [
-              "DEN",
-              "LV"
+              "WSH",
+              "CIN"
             ]
           },
           {
-            "id": "401873069",
-            "state": "blocking",
+            "id": "401873066",
+            "state": "final",
             "teams": [
-              "NYG",
-              "JAX"
+              "HOU",
+              "IND"
             ]
           },
           {
@@ -1774,36 +1778,36 @@
             ]
           },
           {
+            "id": "401873075",
+            "state": "final",
+            "teams": [
+              "DEN",
+              "LV"
+            ]
+          },
+          {
+            "id": "401873069",
+            "state": "final",
+            "teams": [
+              "NYG",
+              "JAX"
+            ]
+          },
+          {
             "id": "401873077",
-            "state": "blocking",
+            "state": "final",
             "teams": [
               "SF",
               "MIN"
-            ]
-          },
-          {
-            "id": "401873066",
-            "state": "final",
-            "teams": [
-              "HOU",
-              "IND"
-            ]
-          },
-          {
-            "id": "401873078",
-            "state": "blocking",
-            "teams": [
-              "WSH",
-              "CIN"
             ]
           }
         ]
       }
     },
     "diagnostics": {
-      "finalGames": 160,
-      "qualifiedPlayerGames": 10144,
-      "rejectedPlayerGames": 12645,
+      "finalGames": 162,
+      "qualifiedPlayerGames": 10188,
+      "rejectedPlayerGames": 12909,
       "ignoredGames": 0
     }
   },

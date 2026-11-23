@@ -8,7 +8,7 @@ export function playerWeeklyMilestoneAwards({
  payload,players={},scoring={},score,verifiedCompletedWeek=null
 }={}){
  const y=Number(season),w=Number(week),current=Number(currentSeason);
- if(!Number.isInteger(y)||!Number.isInteger(w)||w<1||w>18||
+ if(!Number.isInteger(y)||!Number.isInteger(w)||w<1||w>17||
     y>current||(y===current&&w>Number(currentCompletedWeek))||
     !playerId||typeof score!=='function')return[];
  const groups=['offense','defense'],winners={};

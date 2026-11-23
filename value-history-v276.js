@@ -1965,36 +1965,45 @@ function scoringMilestonesRows(scoring,loading=false){
 }
 async function loadPlayerScoring(id){
   const key=String(id);
-  const previous=playerScoringCache.get(key);
-  // Both requests are independent: a protected-preview server-side call to
-  // League Hub may fail while the browser's same-origin read succeeds.
-  const [scoringResult,awardResult]=await Promise.allSettled([
-   scoringFetch(key),canonicalPlayerAwardRecords()
-  ]);
-  const current=scoringResult.status==='fulfilled'?scoringResult.value?.scoring_milestones:null;
-  const records=awardResult.status==='fulfilled'?awardResult.value:null;
-  if(scoringResult.status==='rejected')
-   console.warn('Player scoring milestones unavailable',key,scoringResult.reason);
-  if(awardResult.status==='rejected')
-   console.warn('Canonical Player-of-the-Week readback unavailable',awardResult.reason);
-  const fallback=current&&typeof current==='object'?current:previous;
-  // Retain already verified records across temporary failures or cache lag.
-  const merged=mergeCanonicalPlayerAwardMilestones(fallback,records,key);
-  if(previous?.weeklyAwards?.length){
-   const old=mergeCanonicalPlayerAwardMilestones(merged,null,key);
-   const previousKeys=new Set((old.weeklyAwards||[]).map(a=>
-    Number(a.season)+'|'+Number(a.week)+'|'+String(a.type)));
-   for(const award of previous.weeklyAwards)
-    if(!previousKeys.has(Number(award.season)+'|'+Number(award.week)+'|'+String(award.type)))
-     old.weeklyAwards.push(award);
-   old.weeklyAwards.sort((a,b)=>Number(b.season)-Number(a.season)||
-    Number(b.week)-Number(a.week));
-   playerScoringCache.set(key,old);
-  }else playerScoringCache.set(key,merged);
-  playerScoringCacheAt.set(key,Date.now());
-  if(String(currentPlayerId)!==key)return;
-  const target=document.getElementById('vhScoringMilestones');
-  if(target)target.innerHTML=scoringMilestonesRows(playerScoringCache.get(key),false);
+  let canonicalRecords=null;
+  // Render either verified source as soon as it arrives. A slow, protected,
+  // or failed stats request must not hide independently verified League Hub
+  // weekly badges. Keep every prior award when a source returns stale data.
+  const applyUpdate=(scoring,records)=>{
+    const previous=playerScoringCache.get(key);
+    const next=mergeCanonicalPlayerAwardMilestones(
+      scoring&&typeof scoring==='object'?scoring:previous,records,key);
+    const keys=new Set((next.weeklyAwards||[]).map(a=>
+      Number(a.season)+'|'+Number(a.week)+'|'+String(a.type)));
+    for(const award of previous?.weeklyAwards||[]){
+      const awardKey=Number(award.season)+'|'+Number(award.week)+'|'+String(award.type);
+      if(!keys.has(awardKey)){next.weeklyAwards.push(award);keys.add(awardKey)}
+    }
+    // A second stats response may contain a stale cached score; the published
+    // canonical weekly winner always overrides that same season/week award.
+    if(canonicalRecords)next.weeklyAwards=
+      mergeCanonicalPlayerAwardMilestones(next,canonicalRecords,key).weeklyAwards;
+    next.weeklyAwards.sort((a,b)=>Number(b.season)-Number(a.season)||
+      Number(b.week)-Number(a.week)||String(a.type).localeCompare(String(b.type)));
+    playerScoringCache.set(key,next);
+    playerScoringCacheAt.set(key,Date.now());
+    if(String(currentPlayerId)!==key)return;
+    const target=document.getElementById('vhScoringMilestones');
+    if(target)target.innerHTML=scoringMilestonesRows(next,false);
+  };
+  const awardsTask=canonicalPlayerAwardRecords().then(records=>{
+    canonicalRecords=records;
+    applyUpdate(null,records);
+  }).catch(error=>console.warn('Canonical Player-of-the-Week readback unavailable',error));
+  const scoringTask=scoringFetch(key).then(data=>{
+    const value=data?.scoring_milestones;
+    if(value&&typeof value==='object')applyUpdate(value,canonicalRecords);
+    else if(!playerScoringCache.has(key))applyUpdate(null,canonicalRecords);
+  }).catch(error=>{
+    console.warn('Player scoring milestones unavailable',key,error);
+    if(!playerScoringCache.has(key))applyUpdate(null,canonicalRecords);
+  });
+  await Promise.allSettled([awardsTask,scoringTask]);
 }
 const PLAYER_WEEKLY_BADGE_REFRESH_MS=60000;
 function refreshVisiblePlayerWeeklyBadges(){

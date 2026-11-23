@@ -14,6 +14,7 @@ const history=[
  snap('2026-11-21T00:58:36.636Z',null,324,495),
  snap('2026-11-21T03:52:31.983Z',null,2090,2117,true),
  snap('2026-11-21T04:35:59.148Z',V101,2090,2116,true),
+ snap('2026-11-22T04:00:00.000Z',V101,2090,2100,true),
  snap('2026-11-22T23:52:19.966Z',V101,2065,2085,true)
 ];
 const mover=(rows,id)=>[...(rows?.valueRisers||[]),...(rows?.valueFallers||[])].find(x=>x.id===id);

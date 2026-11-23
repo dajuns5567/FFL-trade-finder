@@ -44,6 +44,8 @@ test('the award backend uses completed Sleeeper weeks independently of newspaper
  assert.match(implementation,/let s=null/);
  assert.match(implementation,/league-awards-newspaper-catalog-unavailable/);
  assert.match(implementation,/league-awards-cache-write-unavailable/);
+ assert.match(implementation,/for\(const rec of records\)\s+if\(isTrustedWeeklyAwardCache\(rec,rec\.season,rec\.week\)\)/);
+ assert.doesNotMatch(implementation,/rec\?\.award_source==='sleeper-finalized-matchups'&&\s+isTrustedWeeklyAwardCache/);
 
  const preview=src.slice(src.indexOf("if(isReadOnlyEditorialPreview("));
  assert.match(preview,/weeklyAwards\(\{persist:false\}\)/);

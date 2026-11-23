@@ -1136,9 +1136,6 @@ function nflWeekStartIso(season,week){
   const sep1=new Date(Date.UTC(y,8,1)),firstMonday=1+((8-sep1.getUTCDay())%7),kickoff=new Date(Date.UTC(y,8,firstMonday+3+(w-1)*7));
   return kickoff.toISOString();
 }
-// A protected Deploy Preview may reject server-to-server same-origin calls
-// even though both functions can read the identical, verified weekly Blob.
-// Use the League Hub's EXISTING read-only cache without writing any key.
 async function canonicalWeeklyAwards(origin){
   try{
     const shared=getStore('fleeced-league-hub',{consistency:'strong'});

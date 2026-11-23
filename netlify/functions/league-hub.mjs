@@ -1140,6 +1140,8 @@ async function awardHighs(req){
   fromBlob=Array.isArray(stored)?stored:[],durable=await githubDurableAwardHighs(),
   now=new Date().toISOString(),previous=mergeAwardHighs(fromBlob,durable,now);
  if(req.method==='GET')return json({records:previous,
+  available:previous.length>0,
+  archive_status:previous.length?'verified-historical-records':'awaiting-first-verified-capture',
   sources:{blob:fromBlob.length,durable:durable.length},cache_status:s?'available':'unavailable'});
  const body=await req.json().catch(()=>null),records=Array.isArray(body?.records)?body.records:[];
  if(!records.length||records.length>1000)return json({error:'missing or excessive all-time-high observations'},400);

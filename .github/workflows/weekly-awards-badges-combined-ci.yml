@@ -26,6 +26,9 @@ on:
       - 'scripts/approved-hub-tab-race-overlay.mjs'
       - 'scripts/approved-weekly-scoring-gap-overlay.mjs'
       - 'scripts/approved-hall-hindsight-refresh-overlay.mjs'
+      - 'scripts/approved-weekly-awards-producer-overlay.mjs'
+      - 'netlify/functions/lib/weekly-award-stats-merge.mjs'
+      - 'tests/weekly-awards-producer-partial-week.test.mjs'
       - 'tests/audit-combined-weekly-badge-provenance.test.mjs'
       - 'tests/player-weekly-milestone-awards.test.mjs'
       - 'tests/player-weekly-badge-completion-readback.test.mjs'
@@ -75,6 +78,8 @@ jobs:
           node --check scripts/approved-hub-tab-race-overlay.mjs
           node --check scripts/approved-weekly-scoring-gap-overlay.mjs
           node --check scripts/approved-hall-hindsight-refresh-overlay.mjs
+          node --check scripts/approved-weekly-awards-producer-overlay.mjs
+          node --check netlify/functions/lib/weekly-award-stats-merge.mjs
           node --test tests/audit-combined-weekly-badge-provenance.test.mjs
           node scripts/audit-combined-weekly-badge-provenance.mjs
       - name: Check combined runtime syntax and asset loader

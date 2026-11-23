@@ -54,6 +54,13 @@ test('a verified League Hub weekly winner overrides a competing reconstructed wi
  assert.equal(playerWeeklyMilestoneAwards(request('LB1',{canonical})).length,1);
 });
 
+test('even a cached award cannot be promoted after the fantasy league Week 17 final',()=>{
+ const canonical={players_of_week:{offense:{player_id:'QB2',points:45}}};
+ assert.deepEqual(playerWeeklyMilestoneAwards(request('QB2',{
+  season:2025,currentSeason:2026,week:18,verifiedCompletedWeek:18,canonical
+ })),[]);
+});
+
 test('a canonical named winner without verified points cannot become a zero-point badge',()=>{
  const canonical={players_of_week:{offense:{player_id:'QB1',points:null}}};
  assert.deepEqual(playerWeeklyMilestoneAwards(request('QB1',{

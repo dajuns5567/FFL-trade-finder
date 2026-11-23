@@ -47,7 +47,7 @@ test('McCaffrey keeps all three historical badges plus 2026 Weeks 6 and 10',asyn
  await ctx.load('4034');
  const badges=cache.get('4034').weeklyAwards;
  assert.equal(badges.length,5,'there must be no three-award display limit');
- assert.deepEqual(badges.map(x=>x.season+'|'+x.week),
+ assert.deepEqual(Array.from(badges,x=>x.season+'|'+x.week),
   ['2026|10','2026|6','2025|7','2023|15','2023|4']);
  assert.equal(badges[0].points,46.3);
  assert.equal(badges[1].points,30.7);

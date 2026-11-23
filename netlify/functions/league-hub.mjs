@@ -922,7 +922,11 @@ export async function weeklyAwards({additionalLockedEditions=[],persist=true,onl
  const next=(onlyAdditional?[...records,...[...byKey.values()].filter(rec=>
   !records.some(old=>Number(old.season)===Number(rec.season)&&Number(old.week)===Number(rec.week)))]:
   [...byKey.values()]).sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));
- if(persist&&s&&(missing.length||records.length!==next.length))
+ // Idempotent scheduled capture: store only when a verified award changes.
+ // An unchanged missing/unfinalized week must not produce pointless writes;
+ // an updated record with the same count must not be silently ignored.
+ const weeklyAwardsChanged=JSON.stringify(records)!==JSON.stringify(next);
+ if(persist&&s&&weeklyAwardsChanged)
   await s.setJSON('awards/weekly.json',{schema_version:1,records:next}).catch(error=>
    console.warn('league-awards-cache-write-unavailable',String(error?.message||error)));
  return{schema_version:1,records:next};

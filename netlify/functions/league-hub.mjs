@@ -24,7 +24,7 @@ const API='https://api.sleeper.app/v1';
 const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
 const fetchJson=async url=>{const r=await fetch(url,{headers:{accept:'application/json','user-agent':'Fleeced-League-Hub/2.0'},cache:'no-store'});if(!r.ok)throw new Error(`Sleeper ${r.status}`);return r.json()};
 const store=()=>getStore('fleeced-league-hub',{consistency:'strong'});
-const MANAGER_CACHE_VERSION=13;
+const MANAGER_CACHE_VERSION=14;
 const VERIFIED_HISTORICAL_MANAGER_ASSIGNMENTS={
   2025:{
     '8':{user_id:'1114044533941133312',sleeper_id:'ryanpuccino',source:'sleeper-data audit: 2024 roster continuity + 2025 roster-8 activity'},
@@ -1049,6 +1049,18 @@ function managerScoringSummary(scoringGames,career,currentSeason,currentWeek){
  const currentRows=rows.filter(g=>Number(g.season)===Number(currentSeason));
  return{since_season:2024,through_season:Number(currentSeason)||null,through_week:Math.max(0,Math.min(17,(Number(currentWeek)||1)-1)),games:rows.map(decorate),season_extremes,record_history,all_time:{highest:highest||null,lowest:lowest||null},leaderboards:{all_time_highest:ranked(rows,true).slice(0,50),all_time_lowest:ranked(rows,false).slice(0,50),year_highest:ranked(currentRows,true).slice(0,50),year_lowest:ranked(currentRows,false).slice(0,50)}};
 }
+// Managers always derive finalized regular-season W/L from verified matchup
+// pairs, not roster settings that can lag Sleeper's completed scoring.
+function verifiedManagerMatchupWeek(rows){
+ if(!Array.isArray(rows)||rows.length!==32)return false;
+ const rosterIds=new Set(),pairs=new Map();
+ for(const m of rows){
+  const rid=String(m?.roster_id??''),match=String(m?.matchup_id??'');
+  if(!rid||!match||m?.points==null||!Number.isFinite(Number(m.points))||rosterIds.has(rid))return false;
+  rosterIds.add(rid);pairs.set(match,(pairs.get(match)||0)+1);
+ }
+ return rosterIds.size===32&&pairs.size===16&&[...pairs.values()].every(n=>n===2);
+}
 async function managerHistory({persist=true,snapshotSeason=null,snapshotWeek=null}={}){
  const s=persist?store():null,nfl=await fetchJson(`${API}/state/nfl`).catch(()=>({})),currentSeason=Number(snapshotSeason)||Number(nfl?.season)||new Date().getFullYear(),currentWeek=snapshotWeek==null?(Number(nfl?.week)||1):Number(snapshotWeek)+1;
  let league=await fetchJson(`${API}/league/${LEAGUE}`),chain=[];for(let guard=0;league&&guard<12;guard++){chain.push(league);if(!league.previous_league_id)break;league=await fetchJson(`${API}/league/${league.previous_league_id}`).catch(()=>null)}chain.sort((a,b)=>Number(a.season)-Number(b.season));
@@ -1064,7 +1076,10 @@ async function managerHistory({persist=true,snapshotSeason=null,snapshotWeek=nul
    fetchJson(`${API}/league/${lid}/winners_bracket`).catch(()=>[]),
    Promise.all(weekNums.map(w=>fetchJson(`${API}/league/${lid}/matchups/${w}`).catch(()=>[])))
   ]);
-  if(!persist&&(rosters.length!==32||!users.length||weekRows.some(rows=>rows.length!==32)))throw Error("Manager history source incomplete; private preview held.");
+  // A partial Sleeper response must never overwrite complete production records,
+  // or be presented as verified history in read-only previews.
+  if(rosters.length!==32||!users.length||weekRows.some(rows=>!verifiedManagerMatchupWeek(rows)))
+   throw Error("Manager history source incomplete; retain previous verified records.");
   const ub=new Map(users.map(u=>[String(u.user_id),u])),rb=new Map(rosters.map(r=>[String(r.roster_id),r])),ownerByRoster={};
   for(const r of rosters){
    const rid=String(r.roster_id),primaryUid=String(r.owner_id||''),verified=!primaryUid?verifiedHistoricalAssignment(season,rid):null,uid=primaryUid||String(verified?.user_id||'');
@@ -1073,7 +1088,7 @@ async function managerHistory({persist=true,snapshotSeason=null,snapshotWeek=nul
    if(primaryUid&&String(lg.league_id)===String(LEAGUE))current.push({roster_id:rid,user_id:primaryUid,sleeper_id:career[primaryUid].sleeper_id})
   }
   const seasonWins={},seasonPoints={};
-  for(const r of rosters){const uid=ownerByRoster[String(r.roster_id)];if(!uid)continue;let rw=Number(r?.settings?.wins)||0,rl=Number(r?.settings?.losses)||0;if(!persist){rw=0;rl=0;for(const rows of weekRows){const m=rows.find(x=>String(x.roster_id)===String(r.roster_id)),o=m&&rows.find(x=>x.matchup_id===m.matchup_id&&String(x.roster_id)!==String(r.roster_id));if(!m||!o)throw Error('Manager history matchup incomplete');if(Number(m.points)>Number(o.points))rw++;else if(Number(m.points)<Number(o.points))rl++}}career[uid].wins+=rw;career[uid].losses+=rl;seasonWins[uid]=rw}
+  for(const r of rosters){const uid=ownerByRoster[String(r.roster_id)];if(!uid)continue;let rw=0,rl=0;for(const rows of weekRows){const m=rows.find(x=>String(x.roster_id)===String(r.roster_id)),o=m&&rows.find(x=>x.matchup_id===m.matchup_id&&String(x.roster_id)!==String(r.roster_id));if(!m||!o)throw Error('Manager history matchup incomplete');if(Number(m.points)>Number(o.points))rw++;else if(Number(m.points)<Number(o.points))rl++}career[uid].wins+=rw;career[uid].losses+=rl;seasonWins[uid]=rw}
   for(let wi=0;wi<weekRows.length;wi++){const w=weekNums[wi],ms=weekRows[wi]||[],groups={};for(const m of ms){const k=String(m.matchup_id??'');if(k)(groups[k]||(groups[k]=[])).push(m)}for(const pair of Object.values(groups)){if(pair.length!==2)continue;const [a,b]=pair;for(const [m,o] of [[a,b],[b,a]]){const uid=ownerByRoster[String(m.roster_id)];if(!uid)continue;const pts=Number(m.points)||0,opt=Number(o.points)||0,won=pts>opt;seasonPoints[uid]=(seasonPoints[uid]||0)+pts;const rd=rb.get(String(m.roster_id))?.settings?.division,od=rb.get(String(o.roster_id))?.settings?.division;if(won&&rd!=null&&od!=null&&String(rd)===String(od))career[uid].division_wins++;const division=rb.get(String(m.roster_id))?.settings?.division,conference=sleeperConference(lg,division),game={season,week:w,user_id:uid,roster_id:String(m.roster_id),opponent_roster_id:String(o.roster_id),points:pts,opponent_points:opt,won,playoff:false,conference,round_label:''};games.push(game);if(season>=2024)scoringGames.push(game)}}}
   if(regularMax>=regularEnd){let top=null;const divTop={};for(const r of rosters){const uid=ownerByRoster[String(r.roster_id)];if(!uid)continue;const score=(seasonWins[uid]||0)*1e9+(seasonPoints[uid]||0),d=r.settings?.division;if(!top||score>top.score)top={uid,score};if(d!=null&&(!divTop[d]||score>divTop[d].score))divTop[d]={uid,score}}if(top)career[top.uid].regular_season_titles++;for(const x of Object.values(divTop))career[x.uid].division_championships++}
   if(season<currentSeason){const playoffEnd=Math.max(playoffStart-1,Math.min(17,Number(lg?.settings?.last_scored_leg)||17)),playoffNums=Array.from({length:Math.max(0,playoffEnd-playoffStart+1)},(_,i)=>playoffStart+i),playoffWeeks=await Promise.all(playoffNums.map(w=>fetchJson(`${API}/league/${lid}/matchups/${w}`).catch(()=>[]))),bracketRosters=playoffBracketRosters(bracket),appearanceRosters=new Set(bracketRosters);for(let i=0;i<playoffWeeks.length;i++){const w=playoffNums[i],roundRosters=playoffRoundRosters(bracket,w,playoffStart),roundPairs=playoffRoundPairs(bracket,w,playoffStart),groups={};for(const m of playoffWeeks[i]){const k=String(m.matchup_id??'');if(k)(groups[k]||(groups[k]=[])).push(m)}for(const pair of Object.values(groups)){if(pair.length!==2||!matchupComplete(pair))continue;const [a,b]=pair,pairKey=playoffPairKey(a.roster_id,b.roster_id);if(!roundPairs.has(pairKey))continue;const ap=Number(a.points),bp=Number(b.points);if(!Number.isFinite(ap)||!Number.isFinite(bp))continue;if(season>=2024)for(const [m,o] of [[a,b],[b,a]]){const rid=String(m.roster_id);if(!roundRosters.has(rid))continue;const uid=ownerByRoster[rid];if(!uid)continue;const division=rb.get(rid)?.settings?.division,conference=sleeperConference(lg,division),round_label=managerPlayoffRoundLabel(w,conference);scoringGames.push({season,week:w,user_id:uid,roster_id:rid,opponent_roster_id:String(o.roster_id),points:Number(m.points),opponent_points:Number(o.points),won:Number(m.points)>Number(o.points),playoff:true,conference,round_label})}if(ap===bp)continue;const win=ap>bp?a:b,lose=ap>bp?b:a;for(const [m,o,won] of [[win,lose,true],[lose,win,false]]){const rid=String(m.roster_id);if(!roundRosters.has(rid))continue;const uid=ownerByRoster[rid];if(!uid)continue;const division=rb.get(rid)?.settings?.division,conference=sleeperConference(lg,division),round_label=managerPlayoffRoundLabel(w,conference);if(won)career[uid].playoff_wins++;games.push({season,week:w,user_id:uid,roster_id:rid,opponent_roster_id:String(o.roster_id),points:Number(m.points)||0,opponent_points:Number(o.points)||0,won,playoff:true,conference,round_label})}}}for(const rid of appearanceRosters){const uid=ownerByRoster[rid];if(uid)career[uid].playoff_appearances++}
@@ -1144,7 +1159,29 @@ export default async req=>{try{const u=new URL(req.url);
   }
   if(u.searchParams.get('managers')==='1'){
    const cached=await store().get('managers/history-cache.json',{type:'json'}).catch(()=>null);
-   return cached?json({...cached,cache_hit:true,preview_read_only:true}):json({error:'No manager history cache in preview; production backfill disabled.',preview_read_only:true},503);
+   // A complete but outdated Blob cache is still stale after a finalized week.
+   // Verify the same completed-week season/cutoff used by the production reader.
+   const nfl=await fetchJson(`${API}/state/nfl`).catch(()=>null);
+   const season=Number(nfl?.season)||0;
+   const through=Math.max(0,Math.min(17,(Number(nfl?.week)||1)-1));
+   const verifiedCurrent=season>0&&cached?.cache_version===MANAGER_CACHE_VERSION&&
+    Number(cached?.scoring_history?.through_season)===season&&
+    Number(cached?.scoring_history?.through_week)>=through;
+   if(cached?.career?.length&&cached?.current?.length===32&&verifiedCurrent)
+    return json({...cached,cache_hit:true,stale:false,preview_read_only:true});
+   // A preview must never write the production Blob cache. The existing
+   // strict 32-team/weekly-completeness reader supports read-only reconstruction.
+   // Reconstruct only when the cache is missing or incomplete; never invent rows.
+   try{
+    if(!season)throw Error('Sleeper week unavailable for verified preview freshness');
+    const fresh=await managerHistory({persist:false});
+    if(fresh?.current?.length!==32||!fresh?.career?.length)
+     throw Error('incomplete read-only manager reconstruction');
+    return json({...fresh,cache_hit:false,preview_read_only:true});
+   }catch(error){
+    console.warn('manager-preview-readonly-unavailable',String(error?.message||error));
+    return json({error:'Verified manager history unavailable in preview; production backfill disabled.',preview_read_only:true},503);
+   }
   }
  }
 if(u.searchParams.get('league_latest')==='1')return json(await latestCompletedLeagueWeek());if(u.searchParams.get('weekly')==='1'){

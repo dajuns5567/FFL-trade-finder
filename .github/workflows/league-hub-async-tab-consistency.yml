@@ -1,0 +1,22 @@
+name: League Hub asynchronous tab consistency
+on:
+  pull_request:
+    paths:
+      - 'league-hub-v451.js'
+      - 'netlify/functions/site-v29.mjs'
+      - 'tests/league-hub-async-tab-race.test.mjs'
+      - '.github/workflows/league-hub-async-tab-consistency.yml'
+permissions:
+  contents: read
+jobs:
+  selected-view:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check league-hub-v451.js
+      - run: node --test tests/league-hub-async-tab-race.test.mjs
+      - run: node --test tests/league-hub-shared-freshness.test.mjs tests/managers-client-refresh-runtime.test.mjs

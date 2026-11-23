@@ -25,6 +25,10 @@ const expected={
 };
 // Finder-only V106 release candidate: these six module hashes must transition
 // together. The entire frozen V311 suite remains the other valid state.
+// The reviewed future-year pick discount changes only pick normalization; keep
+// the frozen V311 hash valid while explicitly accepting the tested draft-pick
+// successor. All other Finder module hashes still require their exact guard.
+const reviewedFuturePickDiscountHash='b294f4330106a5c9cdc4cb9d1cf002b90135f250';
 const finderCandidateHashes={
   'trade-finder-v256-compiled.js':'f46f80bb17b88d6e93f147dfc2f2a276e140d734',
   'trade-specific-max-tier-add-v300.js':'c72cb456c1bcd58bd2d4654431bb38b2d6952d62',
@@ -42,7 +46,10 @@ for(const [path,sha] of Object.entries(expected)){
   let actual='';
   try{actual=cp.execFileSync('git',['hash-object',path],{encoding:'utf8'}).trim()}catch(e){bad.push(path+': missing');continue}
   const required=finderCandidate&&finderCandidateHashes[path]?finderCandidateHashes[path]:sha;
-  if(actual!==required)bad.push(path+': '+actual+' != expected '+required);
+  const reviewedPickChange=path==='trade-value-normalization-v139.js'&&
+    actual===reviewedFuturePickDiscountHash;
+  if(actual!==required&&!reviewedPickChange)
+    bad.push(path+': '+actual+' != expected '+required);
 }
 if(bad.length){
   console.error('V311 PIPELINE IDENTITY FAILURE');

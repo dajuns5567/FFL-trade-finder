@@ -40,3 +40,7 @@ test('season-long server scoring acceptance has an explicit timeout independent 
  assert.match(audit,/setTimeout\(\(\)=>ctl\.abort\(\),timeoutMs\)/);
  assert.match(audit,/player_scoring=1&player_id=4034'\,\{timeoutMs:45000\}\)/);
 });
+
+test('weekly audit reads the canonical defensive winner rather than mistaking it for missing IDP data',()=>{
+ assert.match(audit,/idp:r\.players_of_week\?\.defense\|\|r\.players_of_week\?\.idp\|\|null/);
+});

@@ -57,6 +57,9 @@ test('only actual changes to verified awards are persisted, including same-lengt
  assert.match(hub,/const weeklyAwardsChanged=JSON\.stringify\(records\)!==JSON\.stringify\(next\)/);
  assert.match(hub,/if\(persist&&s&&weeklyAwardsChanged\)/);
  assert.match(hub,/if\(persist&&strictPersist&&!s\)/);
+ assert.match(hub,/if\(persist&&strictPersist&&next\.length<records\.length\)/);
+ assert.match(hub,/Scheduled weekly badge readback disagrees with verified awards/);
+ assert.match(hub,/await s\.get\('awards\/weekly\.json',\{type:'json'\}\)/);
  assert.doesNotMatch(hub,/if\(persist&&s&&\(missing\.length\|\|records\.length!==next\.length\)\)/);
  assert.match(hub,/isTrustedWeeklyAwardCache\(rec,rec\.season,rec\.week\)/);
  assert.match(hub,/award_source:'sleeper-finalized-matchups'/);

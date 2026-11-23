@@ -13,7 +13,7 @@ export const features=[
  {id:'milestone-visible-weekly-poll',pr:579,file:'value-history-v276.js',markers:['refreshVisiblePlayerWeeklyBadges','setInterval(refreshVisiblePlayerWeeklyBadges,PLAYER_WEEKLY_BADGE_REFRESH_MS)']},
  {id:'milestone-no-invented-zero-points',pr:579,file:'netlify/functions/lib/player-weekly-milestone-awards.mjs',markers:['awarded?.points!=null&&Number.isFinite(Number(awarded.points))','w<1||w>17||']},
  {id:'weekly-awards-finite-scored-winners',pr:580,file:'netlify/functions/league-hub.mjs',markers:['winner.points==null||!Number.isFinite(Number(winner.points))']},
- {id:'weekly-awards-autonomous-capture',pr:580,file:'netlify/functions/weekly-awards-refresh.mjs',markers:["schedule:'15 */2 * * *'","weeklyAwards({persist:true})","context!=='production'"]},
+ {id:'weekly-awards-autonomous-capture',pr:580,file:'netlify/functions/weekly-awards-refresh.mjs',markers:["schedule:'15 */2 * * *'","weeklyAwards({persist:true,strictPersist:true})","context!=='production'"]},
  {id:'weekly-awards-idempotent-write',pr:580,file:'netlify/functions/league-hub.mjs',markers:['const weeklyAwardsChanged=JSON.stringify(records)!==JSON.stringify(persisted)','const verifiedByWeek=new Map(next.map(','if(persist&&s&&weeklyAwardsChanged)','Scheduled weekly badge readback disagrees with verified awards','records:persisted']},
  {id:'league-awards-independent',pr:580,file:'netlify/functions/league-hub.mjs',markers:["award_source:'sleeper-finalized-matchups'","weeklyAwards({persist:false})"]},
  {id:'inquirer-published-readback',pr:581,file:'.github/workflows/inquirer-github-native-publisher.yml',markers:['verify-inquirer-published-readback.mjs']},
@@ -35,6 +35,27 @@ export function featureCoverage(read){
   const content=read(f.file)||'',missing=f.markers.filter(x=>!content.includes(x));
   return{id:f.id,pr:f.pr,file:f.file,present:missing.length===0,missing};
  });
+}
+// Inspect real pending feature heads, not only synthetic marker fixtures.
+// A missing or outdated PR ref is a verification failure, never evidence of
+// a completed website release. This intentionally does not merge PR code.
+export function verifyPendingFeaturePrSources(readPrFile){
+ const inspected=[];
+ const failures=[];
+ for(const f of features){
+  let source='';
+  try{source=readPrFile(f.pr,f.file)}
+  catch(error){failures.push({feature:f.id,pr:f.pr,file:f.file,reason:'unreadable PR source: '+error.message});continue}
+  const missing=f.markers.filter(marker=>!source.includes(marker));
+  if(missing.length)failures.push({feature:f.id,pr:f.pr,file:f.file,reason:'missing source contract',missing});
+  inspected.push({feature:f.id,pr:f.pr,file:f.file,valid:missing.length===0});
+ }
+ return{ok:failures.length===0,inspected,failures,source:'actual pending PR refs',
+  release_status:'unmerged; no live preview certification'};
+}
+export function loadPendingFeaturePrSources(){
+ return verifyPendingFeaturePrSources((pr,file)=>execFileSync('git',
+  ['show','refs/remotes/pr-audit/'+pr+':'+file],{encoding:'utf8'}));
 }
 export function verifyNoFeatureRollback(base,candidate){
  const old=featureCoverage(base),now=featureCoverage(candidate),broken=[];

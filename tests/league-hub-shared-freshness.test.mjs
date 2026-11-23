@@ -102,5 +102,5 @@ test('visible refresh is registered and script cache key advanced',()=>{
  assert.match(source,/window\.addEventListener\('focus',refreshLeagueHubSharedDataIfVisible\)/);
  assert.match(source,/installLeagueHubSharedRefresh\(\)/);
  assert.match(source,/trades_fresh=1/);
- assert.match(loader,/league-hub-v451\.js\?v=555/);
+ assert.match(loader,/league-hub-v451\.js\?v=556/);
 });

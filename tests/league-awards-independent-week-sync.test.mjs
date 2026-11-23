@@ -60,7 +60,7 @@ test('the visible Fleeced Daily dashboard invalidates old badges when a complete
  assert.match(refresh,/weeklyAwardsCache=null/);
  assert.match(refresh,/await render\('daily'\)/);
  const loader=readFileSync(new URL('../netlify/functions/site-v29.mjs',import.meta.url),'utf8');
- assert.match(loader,/league-hub-v451\.js\?v=553/);
+ assert.match(loader,/league-hub-v451\.js\?v=554/);
 });
 
 test('a missing or incomplete week cannot become independently eligible',()=>{

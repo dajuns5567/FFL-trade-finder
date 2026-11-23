@@ -157,7 +157,7 @@ test('history UI release does not change the Trade History pick projection or sn
  // now part of the cumulative preview. Prove they exist, while dedicated V114
  // tests independently enforce trade-time 50/50 slots and no future leakage.
  assert.match(file,/function historicalPickProjectionEvidence\(/);
- assert.match(file,/function isCurrentRankedPlayerForHindsight\(/);
+ assert.doesNotMatch(file,/function isCurrentRankedPlayerForHindsight\(/,'Hindsight keeps its existing current-canonical valuation path');
  assert.match(file,/function originalPickProjectionText\(/);
  assert.match(file,/standings_week/);
  assert.match(file,/Historical projected slot unavailable/);

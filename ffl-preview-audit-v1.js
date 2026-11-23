@@ -1,5 +1,6 @@
 /* FFL Preview QA v1 • safe read-only • run from Ctrl+Alt+J on a Deploy Preview */
 (async()=>{
+ if(!/^deploy-preview-\d+--/.test(location.hostname)){console.error('FFL audit only runs on a Netlify PR Deploy Preview. Never run this against production.');return}
  if(window.__FFL_QA_RUNNING){console.warn('FFL audit already running');return}
  window.__FFL_QA_RUNNING=true;
  const started=new Date().toISOString(),checks=[],pages={},api={},errors=[],screens={};
@@ -107,7 +108,7 @@
   }
   // Read-only endpoints: no UPDATE button, POST, mutations, form submissions, or schedule triggers.
   const [awards,latest,highs,managers,market]=await Promise.all([
-   fetchJson('weekly awards','/.netlify/functions/league-hub?awards=1'),
+   fetchJson('weekly awards','/.netlify/functions/league-hub?weekly_awards=1'),
    fetchJson('completed week','/.netlify/functions/league-hub?league_latest=1'),
    fetchJson('All-Time Highs','/.netlify/functions/league-hub?award_highs=1'),
    fetchJson('Managers','/.netlify/functions/league-hub?managers=1'),

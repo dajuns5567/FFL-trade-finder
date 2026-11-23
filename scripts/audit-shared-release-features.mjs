@@ -11,6 +11,8 @@ export const features=[
  {id:'milestone-browser-cache',pr:579,file:'value-history-v276.js',markers:['playerScoringCacheAt=new Map()']},
  {id:'milestone-finalized-week-gate',pr:579,file:'netlify/functions/value-history.mjs',markers:['verifiedCompletedAwardWeek(origin,currentSeason)','verifiedCompletedWeek:year<currentSeason?17:Math.min(17,currentCompletedWeek,verifiedCurrentWeek)']},
  {id:'milestone-visible-weekly-poll',pr:579,file:'value-history-v276.js',markers:['refreshVisiblePlayerWeeklyBadges','setInterval(refreshVisiblePlayerWeeklyBadges,PLAYER_WEEKLY_BADGE_REFRESH_MS)']},
+ {id:'milestone-no-invented-zero-points',pr:579,file:'netlify/functions/lib/player-weekly-milestone-awards.mjs',markers:['awarded?.points!=null&&Number.isFinite(Number(awarded.points))']},
+ {id:'weekly-awards-finite-scored-winners',pr:580,file:'netlify/functions/league-hub.mjs',markers:['winner.points==null||!Number.isFinite(Number(winner.points))']},
  {id:'weekly-awards-autonomous-capture',pr:580,file:'netlify/functions/weekly-awards-refresh.mjs',markers:["schedule:'15 */2 * * *'","weeklyAwards({persist:true})","context!=='production'"]},
  {id:'weekly-awards-idempotent-write',pr:580,file:'netlify/functions/league-hub.mjs',markers:['const weeklyAwardsChanged=JSON.stringify(records)!==JSON.stringify(next)','if(persist&&s&&weeklyAwardsChanged)','Scheduled weekly badge readback disagrees with verified awards','if(persist&&strictPersist&&next.length<records.length)']},
  {id:'league-awards-independent',pr:580,file:'netlify/functions/league-hub.mjs',markers:["award_source:'sleeper-finalized-matchups'","weeklyAwards({persist:false})"]},

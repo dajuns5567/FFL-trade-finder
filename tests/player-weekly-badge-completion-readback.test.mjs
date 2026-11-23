@@ -96,3 +96,51 @@ test('new-year and current year badge cutoff avoid dropping old verified season'
  assert.match(ui,/const scoringTask=scoringFetch\(key\)\.then/,'scoring response paints independently');
  assert.match(ui,/mergeCanonicalPlayerAwardMilestones\(next,canonicalRecords,key\)/,'late scoring cannot overwrite canonical awards');
 });
+
+test('server scoring reads verified weekly winners directly when protected preview blocks self-fetch',async()=>{
+ const start=backend.indexOf('async function canonicalWeeklyAwards(origin){');
+ const end=backend.indexOf('// Independent Sleeper matchup finalization',start);
+ assert.ok(start>0&&end>start,'use real canonical server reader');
+ const code=backend.slice(start,end);
+ const winner=(week,extra={})=>({
+  season:2026,week,award_source:'sleeper-finalized-matchups',
+  verified_roster_count:32,manager_awards:[{type:'highest-scorer'},{type:'lowest-scorer'}],
+  players_of_week:{
+   offense:{player_id:'4034',points:week===10?46.3:30.7},
+   defense:{player_id:'123',points:22}
+  },...extra
+ });
+ let stored=0,serverFetch=0;
+ const ctx={getStore:(name,options)=>{
+  assert.equal(name,'fleeced-league-hub');assert.equal(options.consistency,'strong');
+  return{get:async(key,opt)=>{
+   assert.equal(key,'awards/weekly.json');assert.equal(opt.type,'json');
+   stored++;return{records:[
+    winner(6),winner(10),
+    winner(11,{verified_roster_count:31}),
+    winner(12,{award_source:'unverified'})
+   ]};
+  }};
+ },fetch:async()=>{serverFetch++;throw Error('Netlify Team Access Protection')},
+ console,Number,String,Array,Date,Math};
+ vm.createContext(ctx);
+ const read=vm.runInContext(code+';canonicalWeeklyAwards',ctx);
+ const result=await read('https://protected.example');
+ assert.deepEqual(Array.from(result,x=>[x.week,x.players_of_week.offense.points]),
+  [[6,30.7],[10,46.3]]);
+ assert.equal(stored,1);assert.equal(serverFetch,0,'no protected HTTP self-call needed');
+});
+test('server weekly award readback fails closed and retains legacy fallback',async()=>{
+ const start=backend.indexOf('async function canonicalWeeklyAwards(origin){');
+ const end=backend.indexOf('// Independent Sleeper matchup finalization',start);
+ const ctx={getStore:()=>{throw Error('Blob unavailable')},
+ fetch:async url=>{
+  assert.match(url,/league-hub\\?weekly_awards=1/);
+  return{ok:true,json:async()=>({records:[{season:2026,week:10,players_of_week:{offense:{player_id:'4034',points:46.3}}}]})};
+ },console,Number,String,Array,Date,Math};
+ vm.createContext(ctx);
+ const read=vm.runInContext(backend.slice(start,end)+';canonicalWeeklyAwards',ctx);
+ assert.equal((await read('https://example.netlify.app'))[0].week,10);
+ ctx.fetch=async()=>({ok:false});
+ assert.equal((await read('https://example.netlify.app')).length,0);
+});

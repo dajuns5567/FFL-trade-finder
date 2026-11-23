@@ -813,7 +813,7 @@ export function isTrustedWeeklyAwardCache(rec,season,week){
   return Number(rec?.newsroom_editorial_revision)>=39&&rec?.newsroom_engine==='v31-forward';
  return true;
 }
-export async function weeklyAwards({additionalLockedEditions=[],persist=true,onlyAdditional=false}={}){
+export async function weeklyAwards({additionalLockedEditions=[],persist=true,strictPersist=false,onlyAdditional=false}={}){
  // Awards remain readable from verified Sleeper history even when a
  // migrated Netlify Blob account is temporarily unavailable. Blob storage
  // is a cache, never a prerequisite for current-week award visibility.
@@ -926,9 +926,15 @@ export async function weeklyAwards({additionalLockedEditions=[],persist=true,onl
  // An unchanged missing/unfinalized week must not produce pointless writes;
  // an updated record with the same count must not be silently ignored.
  const weeklyAwardsChanged=JSON.stringify(records)!==JSON.stringify(next);
- if(persist&&s&&weeklyAwardsChanged)
-  await s.setJSON('awards/weekly.json',{schema_version:1,records:next}).catch(error=>
-   console.warn('league-awards-cache-write-unavailable',String(error?.message||error)));
+ if(persist&&strictPersist&&!s)
+  throw Error('Weekly award persistence unavailable; scheduled capture not confirmed');
+ if(persist&&s&&weeklyAwardsChanged){
+  try{await s.setJSON('awards/weekly.json',{schema_version:1,records:next})}
+  catch(error){
+   console.warn('league-awards-cache-write-unavailable',String(error?.message||error));
+   if(strictPersist)throw error;
+  }
+ }
  return{schema_version:1,records:next};
 }
 

@@ -225,18 +225,30 @@
   const badges=history?.scoring_milestones?.weeklyAwards;
   api.cmcMilestoneBadgeSummary=Array.isArray(badges)?badges.map(b=>({season:b.season,week:b.week,points:b.points,type:b.type})):null;
   const matched=Array.isArray(badges)&&badges.some(b=>Number(b.season)===2026&&Number(b.week)===10);
+  const serverHasBoth=Array.isArray(badges)&&[6,10].every(week=>
+    badges.some(b=>Number(b.season)===2026&&Number(b.week)===week&&
+      Number(b.points)===(week===10?46.3:30.7)));
   add('Badges','Server milestones independently include Week 10',
-   !history?'INFO':matched?'PASS':'WARN',
-   !history?'Server request timed out or failed; not evidence of missing award':JSON.stringify({total:badges?.length,recent:api.cmcMilestoneBadgeSummary?.slice(0,8)}));
-  add('Badges','Server milestone count',
-   !Array.isArray(badges)?'INFO':badges.length>3?'PASS':'WARN',
+   !history?'WARN':matched?'PASS':'FAIL',
+   !history?'Server request unavailable; rerun authenticated audit':JSON.stringify({total:badges?.length,recent:api.cmcMilestoneBadgeSummary?.slice(0,8)}));
+  add('Badges','Server milestone parity with five visible wins',
+   !history?'WARN':serverHasBoth&&badges.length>=5?'PASS':'FAIL',
    Array.isArray(badges)?'Server returned '+badges.length+' badges':'Not measured');
+  const visual=String(api.cmcRenderedMilestones||'');
+  add('Badges','2026 weekly badge date provenance',
+   /2026 Week (6|10) • date unavailable/i.test(visual)?'WARN':'PASS',
+   /date unavailable/i.test(visual)?'Verify saved week-start dates from server readback':'2026 weekly badges show recorded or derived week dates');
   api.completedWeek={season:latest?.season,week:latest?.week,available:latest?.available,teams:latest?.teams?.length};
   add('Weekly','completed Sleeper matchup coverage',latest?.available&&latest?.teams?.length===32?'PASS':'WARN',JSON.stringify(api.completedWeek));
   api.highsSummary={keys:Object.keys(highs||{}),recordCount:highs?.records?.length};
   add('All-Time Highs','archived high records present',
    !highs?'WARN':(highs.records?.length||0)>0?'PASS':'WARN',
    JSON.stringify({recordCount:highs?.records?.length,source:highs?.sources,cache:highs?.cache_status}).slice(0,550));
+  add('All-Time Highs','independent GitHub historical archive populated',
+   !highs?'WARN':Number(highs.sources?.durable)>0?'PASS':'WARN',
+   'Blob records: '+String(highs?.sources?.blob??'n/a')+
+   ' | durable GitHub records: '+String(highs?.sources?.durable??'n/a')+
+   '. Existing Blob scores are not proof of independent GitHub persistence.');
   api.managerSummary={keys:Object.keys(managers||{}),currentManagers:managers?.current?.length};
   add('Managers','all 32 league managers mapped',managers?.current?.length===32?'PASS':'WARN',
    'Managers found: '+String(managers?.current?.length??'unavailable'));

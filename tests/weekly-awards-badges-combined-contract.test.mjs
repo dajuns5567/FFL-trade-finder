@@ -17,7 +17,7 @@ const verifiedRecord={
   offense:{player_id:'OFF-WINNER',points:36.75},
   defense:{player_id:'IDP-WINNER',points:29.5}
  },
- manager_awards:[{type:'highest-scorer',roster_id:'1'}]
+ manager_awards:[{type:'highest-scorer',roster_id:'1'},{type:'lowest-scorer',roster_id:'32'}]
 };
 const bridge=playerId=>playerWeeklyMilestoneAwards({
  playerId,season:2026,week:11,currentSeason:2026,currentCompletedWeek:11,

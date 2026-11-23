@@ -121,16 +121,16 @@ function collectKtcPlayerArrays(text){
    }
   }
  };
- const scripts=/<script\\b([^>]*)>([\\s\\S]*?)<\\/script\\s*>/gi;
+ const scripts=/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi;
  let match;
  while((match=scripts.exec(source))){
   const attrs=match[1],body=match[2].trim();
   // KTC's own ktc-players data script and normal JSON/Next.js bootstraps.
-  const id=(attrs.match(/\\bid\\s*=\\s*["']([^"']+)["']/i)||[])[1]||"";
-  const type=(attrs.match(/\\btype\\s*=\\s*["']([^"']+)["']/i)||[])[1]||"";
+  const id=(attrs.match(/\bid\s*=\s*["']([^"']+)["']/i)||[])[1]||"";
+  const type=(attrs.match(/\btype\s*=\s*["']([^"']+)["']/i)||[])[1]||"";
   if(!/^(ktc-players|__NEXT_DATA__|__NUXT_DATA__)$/i.test(id)&&
-     !/application\\/(?:json|ld\\+json)/i.test(type))continue;
-  if(body.length>10000000||!body||!/[\\[{]/.test(body[0]))continue;
+     !/application\/(?:json|ld\+json)/i.test(type))continue;
+  if(body.length>10000000||!body||!/[\[{]/.test(body[0]))continue;
   try{searchJson(JSON.parse(body),"embedded-json:"+id)}catch{}
  }
  for(const name of ["playersArray","rankings","players"]){

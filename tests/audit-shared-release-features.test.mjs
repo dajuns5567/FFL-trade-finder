@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {featureCoverage,verifyNoFeatureRollback,features} from '../scripts/audit-shared-release-features.mjs';
+import {featureCoverage,verifyNoFeatureRollback,features,verifyPendingFeaturePrSources,loadPendingFeaturePrSources} from '../scripts/audit-shared-release-features.mjs';
 
 const all=new Map(features.map(f=>[f.file,'']));
 for(const f of features)all.set(f.file,(all.get(f.file)||'')+f.markers.join('\n')+'\n');
@@ -43,4 +43,25 @@ test('restored targeted Finder filtering and complementary assets cannot disappe
  assert.throws(()=>verifyNoFeatureRollback(read(all),read(candidate)),/finder-targeted-bounded-filter-routing/);
  const report=featureCoverage(read(candidate));
  assert.equal(report.filter(x=>x.pr===585&&!x.present).length,2);
+});
+
+
+test('real pending PR heads retain each authored feature source contract',()=>{
+ const report=loadPendingFeaturePrSources();
+ assert.equal(report.ok,true,JSON.stringify(report.failures));
+ assert.equal(report.inspected.length,features.length);
+ assert.match(report.release_status,/unmerged/);
+});
+test('pending feature check rejects missing refs and outdated weekly awards persistence',()=>{
+ const original=(pr,file)=>features.filter(f=>f.pr===pr&&f.file===file).flatMap(f=>f.markers).join('\n');
+ const broken=verifyPendingFeaturePrSources((pr,file)=>{
+  if(pr===579)throw new Error('missing pending PR branch');
+  const source=original(pr,file);
+  return pr===580&&file==='netlify/functions/weekly-awards-refresh.mjs'
+   ?source.replace('weeklyAwards({persist:true,strictPersist:true})','weeklyAwards({persist:true})')
+   :source;
+ });
+ assert.equal(broken.ok,false);
+ assert(broken.failures.some(x=>x.pr===579&&/unreadable/.test(x.reason)));
+ assert(broken.failures.some(x=>x.feature==='weekly-awards-autonomous-capture'&&x.missing?.some(m=>m.includes('strictPersist'))));
 });

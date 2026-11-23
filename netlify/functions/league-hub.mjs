@@ -930,11 +930,15 @@ export async function weeklyAwards({additionalLockedEditions=[],persist=true,str
  // An unchanged missing/unfinalized week must not produce pointless writes;
  // an updated record with the same count must not be silently ignored.
  const weeklyAwardsChanged=JSON.stringify(records)!==JSON.stringify(next);
+ const nextWeekKeys=new Set(next.map(rec=>Number(rec.season)+'|'+Number(rec.week)));
+ const wouldLoseStoredAward=records.some(rec=>!nextWeekKeys.has(Number(rec.season)+'|'+Number(rec.week)));
  if(persist&&strictPersist&&!s)
   throw Error('Weekly award persistence unavailable; scheduled capture not confirmed');
- if(persist&&strictPersist&&next.length<records.length)
+ if(persist&&strictPersist&&wouldLoseStoredAward)
   throw Error('Scheduled awards would erase prior history; retain existing verified records');
- if(persist&&s&&weeklyAwardsChanged){
+ // A public read may hide an untrusted archive row but must not destroy its
+ // source record. Preservation applies even when strict scheduler mode is off.
+ if(persist&&s&&weeklyAwardsChanged&&!wouldLoseStoredAward){
   try{await s.setJSON('awards/weekly.json',{schema_version:1,records:next})}
   catch(error){
    console.warn('league-awards-cache-write-unavailable',String(error?.message||error));

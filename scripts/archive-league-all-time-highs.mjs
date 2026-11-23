@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {mergeAwardHighs,validAwardHigh} from '../netlify/functions/lib/league-all-time-highs.mjs';
+import {mergeAwardHighs,validAwardHigh,verifiedDurableAwardHighRecords} from '../netlify/functions/lib/league-all-time-highs.mjs';
 
 export const DATA_BRANCH='value-history-data';
 export const RECORD_PATH='value-history/league-awards/all-time-highs.json';
@@ -33,6 +33,8 @@ export function validateScheduledHighs(observation){
 }
 export function nextDurableHighs(previous,observation){
  const input=validateScheduledHighs(observation);
+ if(previous&&verifiedDurableAwardHighRecords(previous,'1316867686394769408').length!==previous?.records?.length)
+  throw Error('AWARD_ARCHIVE_UNTRUSTED_PREVIOUS_ARCHIVE');
  if(previous?.model_used==='idp-v101-verified-role-growth-v100-source-free-lineage'&&
     input.model_used==='idp-v96-single-source-continuous-v95-evidence')
   throw Error('AWARD_ARCHIVE_MODEL_ROLLBACK');

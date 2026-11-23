@@ -1,0 +1,52 @@
+name: Combined weekly badges preview acceptance
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/league-hub.mjs'
+      - 'netlify/functions/value-history.mjs'
+      - 'netlify/functions/lib/player-weekly-milestone-awards.mjs'
+      - 'netlify/functions/weekly-awards-refresh.mjs'
+      - 'value-history-v276.js'
+      - 'league-hub-v451.js'
+      - 'netlify/functions/site-v29.mjs'
+      - 'tests/weekly-awards-badges-combined-contract.test.mjs'
+      - 'tests/player-weekly-milestone-awards.test.mjs'
+      - 'tests/player-weekly-badge-completion-readback.test.mjs'
+      - 'tests/weekly-awards-scheduled-capture.test.mjs'
+      - 'tests/league-awards-independent-week-sync.test.mjs'
+      - '.github/workflows/weekly-awards-badges-combined-ci.yml'
+  push:
+    branches:
+      - integration/weekly-awards-badges-preview-20261122
+permissions:
+  contents: read
+jobs:
+  verified-badges-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install existing source dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+      - name: Check combined runtime syntax and asset loader
+        run: |
+          node --check netlify/functions/league-hub.mjs
+          node --check netlify/functions/value-history.mjs
+          node --check netlify/functions/weekly-awards-refresh.mjs
+          node --check netlify/functions/site-v29.mjs
+          node --check value-history-v276.js
+          node --check league-hub-v451.js
+      - name: Verify weekly-awards publication and Player Value History badges together
+        run: |
+          node --test tests/league-awards-independent-week-sync.test.mjs tests/weekly-awards-scheduled-capture.test.mjs tests/league-week-independent-news.test.mjs
+          node --test tests/player-weekly-milestone-awards.test.mjs tests/player-weekly-badge-completion-readback.test.mjs
+          node --test tests/weekly-awards-badges-combined-contract.test.mjs
+      - name: Preserve Value History, trade readback, and loader regression tests
+        run: |
+          node --test tests/presentation-copy-cleanup-v539.test.mjs
+          node --test tests/team-net-choice-v540.test.mjs
+          node --test tests/trade-history-live-sleeper.test.mjs
+          node --test tests/inquirer-week9-unattended-publish-regression.test.mjs

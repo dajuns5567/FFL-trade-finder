@@ -1,0 +1,21 @@
+name: Draft pick canonical presentation order
+on:
+  pull_request:
+    paths:
+      - 'ui-player-values-v139.js'
+      - 'netlify/functions/site-v29.mjs'
+      - 'tests/player-values-pick-canonical-sort.test.mjs'
+      - '.github/workflows/player-values-pick-sort-ci.yml'
+permissions:
+  contents: read
+jobs:
+  canonical-sort:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check ui-player-values-v139.js
+      - run: node --test tests/player-values-pick-canonical-sort.test.mjs tests/future-pick-dynasty-year-discount.test.mjs

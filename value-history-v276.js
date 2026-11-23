@@ -1964,20 +1964,37 @@ function scoringMilestonesRows(scoring,loading=false){
   return rows+awards;
 }
 async function loadPlayerScoring(id){
-  const key=String(id);if(playerScoringCache.has(key)&&Date.now()-(playerScoringCacheAt.get(key)||0)<60000)return;
-  try{
-    const data=await scoringFetch(key);
-    const value=data?.scoring_milestones;
-    playerScoringCache.set(key,value&&typeof value==='object'?value:null);playerScoringCacheAt.set(key,Date.now());
-  }catch(error){
-    console.warn('Player scoring milestones unavailable',key,error);
-    // A transient Sleeper or badge endpoint failure cannot erase previously
-    // verified Player-of-the-Week awards on an open profile.
-    if(!playerScoringCache.has(key))playerScoringCache.set(key,null);
-    playerScoringCacheAt.set(key,Date.now());
-  }
+  const key=String(id);
+  const previous=playerScoringCache.get(key);
+  // Both requests are independent: a protected-preview server-side call to
+  // League Hub may fail while the browser's same-origin read succeeds.
+  const [scoringResult,awardResult]=await Promise.allSettled([
+   scoringFetch(key),canonicalPlayerAwardRecords()
+  ]);
+  const current=scoringResult.status==='fulfilled'?scoringResult.value?.scoring_milestones:null;
+  const records=awardResult.status==='fulfilled'?awardResult.value:null;
+  if(scoringResult.status==='rejected')
+   console.warn('Player scoring milestones unavailable',key,scoringResult.reason);
+  if(awardResult.status==='rejected')
+   console.warn('Canonical Player-of-the-Week readback unavailable',awardResult.reason);
+  const fallback=current&&typeof current==='object'?current:previous;
+  // Retain already verified records across temporary failures or cache lag.
+  const merged=mergeCanonicalPlayerAwardMilestones(fallback,records,key);
+  if(previous?.weeklyAwards?.length){
+   const old=mergeCanonicalPlayerAwardMilestones(merged,null,key);
+   const previousKeys=new Set((old.weeklyAwards||[]).map(a=>
+    Number(a.season)+'|'+Number(a.week)+'|'+String(a.type)));
+   for(const award of previous.weeklyAwards)
+    if(!previousKeys.has(Number(award.season)+'|'+Number(award.week)+'|'+String(award.type)))
+     old.weeklyAwards.push(award);
+   old.weeklyAwards.sort((a,b)=>Number(b.season)-Number(a.season)||
+    Number(b.week)-Number(a.week));
+   playerScoringCache.set(key,old);
+  }else playerScoringCache.set(key,merged);
+  playerScoringCacheAt.set(key,Date.now());
   if(String(currentPlayerId)!==key)return;
-  const target=document.getElementById('vhScoringMilestones');if(target)target.innerHTML=scoringMilestonesRows(playerScoringCache.get(key),false);
+  const target=document.getElementById('vhScoringMilestones');
+  if(target)target.innerHTML=scoringMilestonesRows(playerScoringCache.get(key),false);
 }
 const PLAYER_WEEKLY_BADGE_REFRESH_MS=60000;
 function refreshVisiblePlayerWeeklyBadges(){

@@ -37,7 +37,7 @@ test('Netlify permits explicitly reviewed PR previews, never unsanctioned produc
  const toml=readFileSync(new URL('../netlify.toml',import.meta.url),'utf8');
  assert.match(toml,/e\.CONTEXT==='deploy-preview'/);
  assert.match(toml,/a516be3b-6c65-4f54-a9fb-23c5361bf3d2/);
- const allow=toml.match(/e\.CONTEXT==='deploy-preview'&&\[([^\]]+)\]\.includes\(String\(e\.REVIEW_ID\)\)/);
+ const allow=toml.match(/const currentPreview=[^;\n]*?e\.CONTEXT==='deploy-preview'&&\[([^\]]+)\]\.includes\(String\(e\.REVIEW_ID\)\)/);
  assert.ok(allow,'Deploy Previews require a finite explicit review-ID allowlist');
  const ids=[...allow[1].matchAll(/'(\d+)'/g)].map(m=>m[1]);
  assert.ok(ids.length>0&&ids.every(id=>/^\d+$/.test(id)),'all Netlify preview IDs must be explicit numeric review IDs');

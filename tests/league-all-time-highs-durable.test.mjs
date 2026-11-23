@@ -138,7 +138,10 @@ test('first scheduled capture automatically promotes the original verified Blob 
   schema_version:1,league_id:current.league_id,
   source:'github-verified-netlify-blob-bootstrap',
   latest_observation_at:new Date(Date.parse(src.captured_at)-1000).toISOString(),
-  import_provenance:{source:'ffl-verified-netlify-blob-all-time-highs-readback'},
+  import_provenance:{source:'ffl-verified-netlify-blob-all-time-highs-readback',
+   preview_origin:'https://deploy-preview-614--animated-dasik-3de74a.netlify.app',
+   exported_at:new Date(Date.parse(src.captured_at)-1000).toISOString(),
+   blob_record_count:640},
   records:current.records.map(r=>({...r,captured_at:'2026-11-20T00:00:00Z'}))
  };
  const next=nextDurableHighs(bootstrap,src);
@@ -158,4 +161,13 @@ test('new scheduled observation updates verified archive freshness even without 
  assert.deepEqual(next.records,baseline.records);
  assert.equal(requiresDurableHighsWrite(baseline,next),true);
  assert.equal(next.latest_observation_at,future.captured_at);
+});
+
+test('scheduled archive refuses a forged first-observed history even when canonical scoring is valid',()=>{
+ const src=fixture(),previous=nextDurableHighs(null,src);
+ const tampered={...previous,records:previous.records.map(x=>({...x}))};
+ tampered.records[0].captured_at='2999-01-01T00:00:00Z';
+ assert.throws(()=>nextDurableHighs(tampered,fixture()),/UNTRUSTED_PREVIOUS_ARCHIVE/);
+ const forged={...previous,source:'github-verified-netlify-blob-bootstrap'};
+ assert.throws(()=>nextDurableHighs(forged,fixture()),/UNTRUSTED_PREVIOUS_ARCHIVE/);
 });

@@ -9,6 +9,9 @@ on:
       - 'scripts/approved-all-time-highs-status-overlay.mjs'
       - 'scripts/verify-durable-all-time-highs-readback.mjs'
       - 'tests/league-all-time-highs-independent-capture.test.mjs'
+      - 'scripts/award-highs-verified-export.js'
+      - 'scripts/validate-all-time-highs-blob-export.mjs'
+      - 'tests/verified-all-time-highs-blob-export.test.mjs'
   workflow_dispatch:
 permissions:
   contents: read
@@ -29,3 +32,4 @@ jobs:
         run: |
           node --test tests/league-all-time-highs-independent-capture.test.mjs
           node --test tests/league-all-time-highs-durable.test.mjs
+          node --test tests/verified-all-time-highs-blob-export.test.mjs

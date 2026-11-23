@@ -25,6 +25,7 @@ on:
       - 'scripts/approved-original-pick-history-overlay.mjs'
       - 'scripts/approved-hub-tab-race-overlay.mjs'
       - 'scripts/approved-weekly-scoring-gap-overlay.mjs'
+      - 'scripts/approved-hall-hindsight-refresh-overlay.mjs'
       - 'tests/audit-combined-weekly-badge-provenance.test.mjs'
       - 'tests/player-weekly-milestone-awards.test.mjs'
       - 'tests/player-weekly-badge-completion-readback.test.mjs'
@@ -73,6 +74,7 @@ jobs:
           node --check scripts/approved-original-pick-history-overlay.mjs
           node --check scripts/approved-hub-tab-race-overlay.mjs
           node --check scripts/approved-weekly-scoring-gap-overlay.mjs
+          node --check scripts/approved-hall-hindsight-refresh-overlay.mjs
           node --test tests/audit-combined-weekly-badge-provenance.test.mjs
           node scripts/audit-combined-weekly-badge-provenance.mjs
       - name: Check combined runtime syntax and asset loader

@@ -82,8 +82,10 @@ test('historical archives remain unmodified and index commit is LAST',()=>{
  assert.ok(awards>=0&&index>awards&&status>index);
  assert.match(worker,/onlyIfMatch:awardsMeta\.etag/);
  assert.match(worker,/onlyIfMatch:metadata\.etag/);
- assert.match(hub,/weeklyAwards\(\{additionalLockedEditions=\[\],persist=true,onlyAdditional=false\}=\{\}\)/);
- assert.match(hub,/if\(persist&&(?:s&&)?\(missing\.length/);
+ assert.match(hub,/weeklyAwards\(\{additionalLockedEditions=\[\],persist=true,strictPersist=false,onlyAdditional=false\}=\{\}\)/);
+ assert.match(hub,/if\(persist&&s&&weeklyAwardsChanged\)/);
+ assert.match(hub,/const verifiedByWeek=new Map\(next\.map/);
+ assert.match(hub,/records:persisted/);
  assert.match(hub,/ensureLockedEditionIndexed\(s,edition,key,\{commitIndex=true\}=\{\}\)/);
  assert.match(hub,/if\(!committed&&commitIndex\)/);
 });

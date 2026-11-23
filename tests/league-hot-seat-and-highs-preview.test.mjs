@@ -48,8 +48,8 @@ test('read-only weekly award response fills one missing Hot Seat without rewriti
 test('League Hub backend and spotlight only award verified projected upsets',()=>{
  assert.match(backend,/hot=selectHotSeat\(teams\)/);
  assert.match(backend,/item\('hot-seat','🔥 Hot Seat',hot,hot\?\.hot_seat_detail/);
- assert.match(ui,/projectedLosses=losses\.filter\(g=>g\.projected!=null&&g\.opponent_projected!=null/);
- assert.match(ui,/hot=projectedLosses\.slice\(\)\.sort/);
+ assert.match(ui,/hot=losses\.filter\(g=>g\?\.projected!=null&&g\?\.opponent_projected!=null&&g\?\.projection_coverage===1/);
+ assert.match(ui,/Number\(g\.projected\)>Number\(g\.opponent_projected\)&&Number\(g\.points\)<Number\(g\.opponent_points\)/);
  assert.doesNotMatch(ui,/largest-finalized-defeat|Largest completed-week defeat/);
 });
 test('missing weekly Hot Seat card is filled by the finalized feed, marked provisional',()=>{
@@ -67,7 +67,7 @@ test('missing weekly Hot Seat card is filled by the finalized feed, marked provi
 });
 test('a newly finalized week refreshes Hot Seat and awards even when Managers or Awards view is open',()=>{
  const start=ui.indexOf('async function refreshLiveLeagueWeekIfAdvanced()');
- const stop=ui.indexOf('async function weeklyAwards()',start);
+ const stop=ui.indexOf('async function weeklyAwards(',start);
  assert(start>=0&&stop>start);
  const refresh=ui.slice(start,stop);
  assert.match(refresh,/\['daily','managers','awards'\]\.includes\(currentView\)/);

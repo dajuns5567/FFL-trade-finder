@@ -54,6 +54,16 @@ test('a verified League Hub weekly winner overrides a competing reconstructed wi
  assert.equal(playerWeeklyMilestoneAwards(request('LB1',{canonical})).length,1);
 });
 
+test('a canonical named winner without verified points cannot become a zero-point badge',()=>{
+ const canonical={players_of_week:{offense:{player_id:'QB1',points:null}}};
+ assert.deepEqual(playerWeeklyMilestoneAwards(request('QB1',{
+  canonical,verifiedCompletedWeek:0,payload:{}
+ })),[]);
+ assert.equal(playerWeeklyMilestoneAwards(request('QB2',{
+  canonical,verifiedCompletedWeek:10
+ })).length,1,'verified completed-week scoring may restore missing canonical points');
+});
+
 test('in-progress, future, missing-data and missing-scoring weeks never generate awards',()=>{
  for(const options of [
   {currentCompletedWeek:9},{week:11},{payload:{}},{scoring:{}},{season:2027}

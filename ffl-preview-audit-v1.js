@@ -57,6 +57,14 @@
   add('Environment','League Hub key', [...document.scripts].some(s=>/league-hub-v451\.js\?v=557/.test(s.src))?'PASS':'FAIL','Hall and tab fixes ?v=557');
   add('Environment','Value History key', [...document.scripts].some(s=>/value-history-v276\.js\?v=549/.test(s.src))?'PASS':'FAIL','history ?v=549');
   snap('Initial page');
+  if(document.querySelector('#vhScoringMilestones')&&/Christian McCaffrey/i.test(document.body.innerText)){
+    await sleep(1600);
+    const milestone=norm(text(document.querySelector('#vhScoringMilestones')));
+    api.cmcRenderedMilestones=cap(milestone,1100);
+    add('Badges','McCaffrey 2026 Week 10 visually rendered',
+      /2026\s*Week\s*10/i.test(milestone)?'PASS':'WARN',
+      cap(milestone,500));
+  }
   const menu=['HOME','TRADE FINDER','TRADE EVALUATOR','TRADE HISTORY','PLAYER VALUES','VALUE HISTORY','LEAGUE HUB'];
   for(const name of menu){
    const nav=pick([name],document.querySelector('header')||document);

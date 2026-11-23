@@ -27,7 +27,7 @@ function handler(context='production',branch='main',result={records:[
 
 test('scheduled award job runs every two hours without awaiting a site visitor or Inquirer publication',()=>{
  assert.match(scheduled,/schedule:'15 \*\/2 \* \* \*'/);
- assert.match(scheduled,/weeklyAwards\(\{persist:true\}\)/);
+ assert.match(scheduled,/weeklyAwards\(\{persist:true,strictPersist:true\}\)/);
  assert.doesNotMatch(scheduled,/broadcastArchive\(|weeklyReport\(/);
 });
 

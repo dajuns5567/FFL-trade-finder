@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {featureCoverage,verifyNoFeatureRollback,features,verifyPendingFeaturePrSources,loadPendingFeaturePrSources} from '../scripts/audit-shared-release-features.mjs';
+import {featureCoverage,verifyNoFeatureRollback,features,verifyPendingFeaturePrSources,loadPendingFeaturePrSources,removedMarketCopy} from '../scripts/audit-shared-release-features.mjs';
 
 const all=new Map(features.map(f=>[f.file,'']));
 for(const f of features)all.set(f.file,(all.get(f.file)||'')+f.markers.join('\n')+'\n');
@@ -64,4 +64,20 @@ test('pending feature check rejects missing refs and outdated weekly awards pers
  assert.equal(broken.ok,false);
  assert(broken.failures.some(x=>x.pr===579&&/unreadable/.test(x.reason)));
  assert(broken.failures.some(x=>x.feature==='weekly-awards-autonomous-capture'&&x.missing?.some(m=>m.includes('strictPersist'))));
+});
+
+
+test('removed Market Dashboard helper paragraphs cannot return after approved cleanup',()=>{
+ const clean=new Map(all);
+ clean.set('value-history-v276.js','canonical market calculations; no meta explanatory copy');
+ const reverted=new Map(clean);
+ reverted.set('value-history-v276.js',removedMarketCopy.join('\n'));
+ assert.throws(()=>verifyNoFeatureRollback(read(clean),read(reverted)),/Removed Market Dashboard explanations reappeared/);
+});
+test('cleaning previously installed Market Dashboard copy is permitted independently',()=>{
+ const old=new Map(all);
+ old.set('value-history-v276.js',removedMarketCopy.join('\n'));
+ const cleaned=new Map(old);
+ cleaned.set('value-history-v276.js','render Market Movers with no helper paragraphs');
+ assert.doesNotThrow(()=>verifyNoFeatureRollback(read(old),read(cleaned)));
 });

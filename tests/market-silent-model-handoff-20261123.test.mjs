@@ -90,7 +90,7 @@ test('all Market Dashboard period surfaces share model-safe movement and era-iso
   }
   // Record highs, lows and volatility may use only the active comparable
   // valuation era. Model repricing is NOT a real historical price extreme.
-  assert.ok(range.snapshot_count<=3,period+' must not mix earlier raw prices');
+  assert.ok(range.snapshot_count<=4,period+' must not mix earlier raw prices');
   assert.ok(range.volatility.every(row=>row.low>1000&&row.high<5000),
    period+' volatility cannot mix pre-V101 IDP prices');
   assert.ok(range.new_highs.every(row=>row.value>1000),

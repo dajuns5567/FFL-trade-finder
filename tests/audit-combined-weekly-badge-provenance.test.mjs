@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {VERIFIED_SOURCES,verifyCombinedBadgeProvenance}
+import {VERIFIED_SOURCES,verifyCombinedBadgeProvenance,verifyLocalBadgeIntegration}
  from '../scripts/audit-combined-weekly-badge-provenance.mjs';
 
 const key=(pr,file)=>pr+':'+file;
@@ -33,4 +33,11 @@ test('a whole-file overwrite of any previously tested source fails integration a
 test('provenance checks never claim live published weekly badge correctness',()=>{
  const report=verifyCombinedBadgeProvenance(current,baseline);
  assert.match(report.note,/live Sleeper data/);
+});
+
+
+test('badge integration preserves exact verified Market overlay and all six producer/consumer sources',()=>{
+ const result=verifyLocalBadgeIntegration();
+ assert.equal(result.ok,true,JSON.stringify(result.mismatch));
+ assert.equal(result.checked,6);
 });

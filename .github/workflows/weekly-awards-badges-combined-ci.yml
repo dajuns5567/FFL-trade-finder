@@ -11,6 +11,7 @@ on:
       - 'netlify/functions/site-v29.mjs'
       - 'tests/weekly-awards-badges-combined-contract.test.mjs'
       - 'scripts/audit-combined-weekly-badge-provenance.mjs'
+      - 'scripts/approved-market-intelligence-overlay.mjs'
       - 'tests/audit-combined-weekly-badge-provenance.test.mjs'
       - 'tests/player-weekly-milestone-awards.test.mjs'
       - 'tests/player-weekly-badge-completion-readback.test.mjs'
@@ -45,6 +46,7 @@ jobs:
       - name: Verify combined sources match previously validated badge and awards implementations
         run: |
           node --check scripts/audit-combined-weekly-badge-provenance.mjs
+          node --check scripts/approved-market-intelligence-overlay.mjs
           node --test tests/audit-combined-weekly-badge-provenance.test.mjs
           node scripts/audit-combined-weekly-badge-provenance.mjs
       - name: Check combined runtime syntax and asset loader

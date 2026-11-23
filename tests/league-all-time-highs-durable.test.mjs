@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {mergeAwardHighs,highObservationsFromStandings} from '../netlify/functions/lib/league-all-time-highs.mjs';
-import {validateScheduledHighs,nextDurableHighs,RECORD_PATH,DATA_BRANCH} from '../scripts/archive-league-all-time-highs.mjs';
+import {validateScheduledHighs,nextDurableHighs,requiresDurableHighsWrite,RECORD_PATH,DATA_BRANCH} from '../scripts/archive-league-all-time-highs.mjs';
 
 const now='2026-11-22T20:00:00.000Z';
 const categories=['fleecer','fleeced','day-trader','pick-hoarder','deal-maker','efficiency',
@@ -130,4 +130,32 @@ test('saved highs remain readable when a write fails in the browser',async()=>{
  await app.run([{key:'powerhouse',standings:[{roster_id:'2',score:1000,detail:'top five'}]}],{verifiedInputs:true});
  assert.equal(posts,1);
  assert.equal(app.records()[0].score,900);
+});
+
+test('first scheduled capture automatically promotes the original verified Blob bootstrap',()=>{
+ const src=fixture(),current=nextDurableHighs(null,src);
+ const bootstrap={
+  schema_version:1,league_id:current.league_id,
+  source:'github-verified-netlify-blob-bootstrap',
+  latest_observation_at:new Date(Date.parse(src.captured_at)-1000).toISOString(),
+  import_provenance:{source:'ffl-verified-netlify-blob-all-time-highs-readback'},
+  records:current.records.map(r=>({...r,captured_at:'2026-11-20T00:00:00Z'}))
+ };
+ const next=nextDurableHighs(bootstrap,src);
+ assert.equal(next.records.length,640);
+ assert.equal(requiresDurableHighsWrite(bootstrap,next),true);
+ assert.equal(next.source,'github-canonical-headless-all-time-highs');
+ assert.equal(next.source_commit,'a'.repeat(40));
+ assert.equal(next.records.every(r=>r.captured_at==='2026-11-20T00:00:00Z'),true,
+  'a same-score canonical capture must preserve the verified historical first-observed date');
+ assert.equal(requiresDurableHighsWrite(next,next),false);
+});
+test('new scheduled observation updates verified archive freshness even without any new high',()=>{
+ const src=fixture(),baseline=nextDurableHighs(null,src);
+ const future=fixture();
+ future.captured_at=new Date(Date.parse(src.captured_at)+2000).toISOString();
+ const next=nextDurableHighs(baseline,future);
+ assert.deepEqual(next.records,baseline.records);
+ assert.equal(requiresDurableHighsWrite(baseline,next),true);
+ assert.equal(next.latest_observation_at,future.captured_at);
 });

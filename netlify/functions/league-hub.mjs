@@ -800,7 +800,11 @@ function weeklyPlayersOfWeek(stats,players,scoring){
 // view. New/missing awards are always built from a validated source edition.
 export function isTrustedWeeklyAwardCache(rec,season,week){
  if(Number(rec?.season)!==Number(season)||Number(rec?.week)!==Number(week))return false;
- if(!rec?.players_of_week?.offense?.player_id||!rec?.players_of_week?.defense?.player_id)return false;
+ for(const group of ['offense','defense']){
+  const winner=rec?.players_of_week?.[group];
+  if(!winner?.player_id||winner.points==null||!Number.isFinite(Number(winner.points)))
+   return false;
+ }
  const badges=rec?.manager_awards;
  if(!Array.isArray(badges)||!['highest-scorer','lowest-scorer'].every(kind=>badges.some(b=>b.type===kind)))
   return false;

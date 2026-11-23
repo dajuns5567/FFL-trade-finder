@@ -15,6 +15,8 @@ import {applyApprovedInquirerBrowser} from './approved-inquirer-browser-overlay.
 import {applyApprovedInquirerServer} from './approved-inquirer-server-overlay.mjs';
 import {applyApprovedTeamTradeLinkage} from './approved-team-trade-linkage-overlay.mjs';
 import {applyApprovedOriginalPicks} from './approved-original-pick-history-overlay.mjs';
+import {applyApprovedHubTabRace} from './approved-hub-tab-race-overlay.mjs';
+import {applyApprovedWeeklyScoringGap} from './approved-weekly-scoring-gap-overlay.mjs';
 import {readFileSync} from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -27,7 +29,7 @@ export const VERIFIED_SOURCES=[
  {pr:579,file:'value-history-v276.js'},
  {pr:579,file:'netlify/functions/lib/player-weekly-milestone-awards.mjs'}
 ];
-export function verifyCombinedBadgeProvenance(readCurrent,readRef,{approvedMarketOverlay=false,approvedAwardsOverlay=false,approvedManagersOverlay=false,approvedHubRefresh=false,approvedInquirerOverlay=false,approvedTeamTradeLinkage=false,approvedOriginalPicks=false}={}){
+export function verifyCombinedBadgeProvenance(readCurrent,readRef,{approvedMarketOverlay=false,approvedAwardsOverlay=false,approvedManagersOverlay=false,approvedHubRefresh=false,approvedInquirerOverlay=false,approvedTeamTradeLinkage=false,approvedOriginalPicks=false,approvedHubTabRace=false,approvedWeeklyScoringGap=false}={}){
  const mismatch=[];
  for(const x of VERIFIED_SOURCES){
   const current=readCurrent(x.file),source=readRef(x.pr,x.file);
@@ -51,6 +53,8 @@ export function verifyCombinedBadgeProvenance(readCurrent,readRef,{approvedMarke
   }
   if(approvedTeamTradeLinkage&&x.file==='value-history-v276.js')expected=applyApprovedTeamTradeLinkage(expected);
   if(approvedOriginalPicks&&x.file==='value-history-v276.js')expected=applyApprovedOriginalPicks(expected);
+  if(approvedHubTabRace&&x.file==='league-hub-v451.js')expected=applyApprovedHubTabRace(expected);
+  if(approvedWeeklyScoringGap&&x.file==='netlify/functions/value-history.mjs')expected=applyApprovedWeeklyScoringGap(expected);
   if(current!==expected)mismatch.push({pr:x.pr,file:x.file,
    reason:'integration source differs from independently tested PR head'});
  }
@@ -62,7 +66,7 @@ export function verifyLocalBadgeIntegration(){
  return verifyCombinedBadgeProvenance(
   file=>readFileSync(path.join(process.cwd(),file),'utf8'),
   (pr,file)=>git('show','refs/remotes/pr-badge-source/'+pr+':'+file),
-  {approvedMarketOverlay:true,approvedAwardsOverlay:true,approvedManagersOverlay:true,approvedHubRefresh:true,approvedInquirerOverlay:true,approvedTeamTradeLinkage:true,approvedOriginalPicks:true}
+  {approvedMarketOverlay:true,approvedAwardsOverlay:true,approvedManagersOverlay:true,approvedHubRefresh:true,approvedInquirerOverlay:true,approvedTeamTradeLinkage:true,approvedOriginalPicks:true,approvedHubTabRace:true,approvedWeeklyScoringGap:true}
  );
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){

@@ -51,7 +51,6 @@ jobs:
       - name: Run full-site rollback, continuity and cache key regression tests
         run: |
           node --test tests/site-release-regression-contract.test.mjs
-          node --test tests/audit-shared-release-features.test.mjs
           node --test tests/audit-section-readiness.test.mjs
           node --test tests/audit-site-live-freshness.test.mjs
           node --test tests/audit-pending-subsystem-overlaps.test.mjs
@@ -61,6 +60,10 @@ jobs:
           for pr in 555 559 561 578 579 580 581 583 584 585 586 587 588; do
             git fetch --no-tags origin "+refs/pull/$pr/head:refs/remotes/pr-audit/$pr"
           done
+      - name: Verify actual pending feature PR sources at fetched revisions
+        run: |
+          node --test tests/audit-shared-release-features.test.mjs
+          node --input-type=module -e "import {loadPendingFeaturePrSources} from './scripts/audit-shared-release-features.mjs'; const report=loadPendingFeaturePrSources(); console.log('PENDING_FEATURE_SOURCE_CONTRACT',JSON.stringify(report)); if(!report.ok)process.exit(1)"
       - name: Report shared runtime collisions across unmerged feature PRs
         run: node scripts/audit-pending-subsystem-overlaps.mjs
       - name: Check scheduled badge producer and milestone consumer across PRs

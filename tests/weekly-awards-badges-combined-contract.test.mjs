@@ -48,7 +48,7 @@ test('backend validation and badge consumption reject missing scorer points rath
 
 test('combined runtime contains one preserved League Hub revision and a fresh Value History revision',()=>{
  assert.match(loader,/league-hub-v451\.js\?v=544/);
- assert.match(loader,/value-history-v276\.js\?v=545/);
+ assert.match(loader,/value-history-v276\.js\?v=546/);
  assert.match(browser,/setInterval\(refreshVisiblePlayerWeeklyBadges,PLAYER_WEEKLY_BADGE_REFRESH_MS\)/);
  assert.match(history,/verifiedCompletedAwardWeek\(origin,currentSeason\)/);
  assert.match(history,/\.netlify\/functions\/league-hub\?weekly_awards=1/);

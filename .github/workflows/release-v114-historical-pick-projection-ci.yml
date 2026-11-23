@@ -1,0 +1,37 @@
+name: V114 Original Trade Analysis historical pick slots (read-only)
+on:
+  pull_request:
+    paths:
+      - 'value-history-v276.js'
+      - 'tests/trade-history-original-pick-projection-v114.test.mjs'
+      - 'tests/draft-pick-order-5050.test.mjs'
+      - '.github/workflows/release-v114-historical-pick-projection-ci.yml'
+permissions:
+  contents: read
+jobs:
+  original-pick:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate historical pick slot and original evaluator consistency
+        run: |
+          node --check value-history-v276.js
+          node --check tests/trade-history-original-pick-projection-v114.test.mjs
+          node --test tests/trade-history-original-pick-projection-v114.test.mjs tests/draft-pick-order-5050.test.mjs tests/trade-history-hindsight-live-sync.test.mjs tests/trade-history-live-sleeper.test.mjs
+      - name: Keep original pick history fix isolated
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {execFileSync} from 'node:child_process';
+          const paths=execFileSync('git',['diff','--name-only','origin/main...HEAD'],{encoding:'utf8'}).trim().split('\n').filter(Boolean);
+          const allowed=new Set(['value-history-v276.js','tests/draft-pick-order-5050.test.mjs','tests/trade-history-original-pick-projection-v114.test.mjs','.github/workflows/release-v114-historical-pick-projection-ci.yml']);
+          assert(paths.length===allowed.size,'Unreviewed historical pick release file inventory');
+          for(const path of paths)assert(allowed.has(path),'Unrelated subsystem changed: '+path);
+          JS
+      # Read-only tests only. No archive write or production deployment.

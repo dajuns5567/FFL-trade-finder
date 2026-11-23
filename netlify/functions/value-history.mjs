@@ -1068,9 +1068,20 @@ async function scoringSeasonWeeks(year,currentSeason,currentCompletedWeek=18){
   let weekly={};
   if(isCurrent){
     weekly=await liveSeasonWeeks(year,limit);
-    if(!weeklyHasData(weekly)){
-      const raw=await scoringJson(`${SCORING_RAW}/${year}/weekly-stats.json?ts=${Date.now()}`).catch(()=>({}));
-      weekly=Object.fromEntries(Object.entries(raw||{}).filter(([week])=>Number(week)<=limit));
+    // Sleeper's current-season endpoint may return several successful weeks
+    // while the most recently finalized week's response is missing/partial.
+    // A single successful older week must not suppress the verified archive
+    // fallback for Week 10 (or any future completed week).
+    const archived=await scoringJson(`${SCORING_RAW}/${year}/weekly-stats.json?ts=${Date.now()}`).catch(()=>({}));
+    for(let week=1;week<=limit;week++){
+      const historical=archived?.[week]||archived?.[String(week)];
+      if(!historical)continue;
+      const rows=new Map();
+      for(const row of scoringPayloadRows(historical))
+        if(row.id&&row.stats&&Object.keys(row.stats).length)rows.set(row.id,row.stats);
+      for(const row of scoringPayloadRows(weekly[week]))
+        if(row.id&&row.stats&&Object.keys(row.stats).length)rows.set(row.id,row.stats);
+      if(rows.size)weekly[week]=Object.fromEntries(rows);
     }
   }else{
     weekly=await scoringJson(`${SCORING_RAW}/${year}/weekly-stats.json?ts=${Date.now()}`).catch(()=>({}));

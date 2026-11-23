@@ -36,6 +36,8 @@ Legend: **Open source defect** = reproduced by directly tracing current code; **
 | Market Dashboard | Removed white explanations | PR #583 removes returned helper paragraphs; main still includes them | Pending isolated PR #583 |
 | Position Indexes | Chart history / rendering | Derived from same market cache and canonical ranking; shares market cache freshness risk | Open inherited risk |
 | Player Value History | Player chart and current dot | Reader exists; hover/line continuity and latest snapshot require browser testing | Not certified |
+| Player Value History | Verified completed-week Player of Week badges | PR #579 derives offense/IDP leaders only through independently verified 32-roster completed weeks, preserves locked League Hub award precedence, refreshes visible profiles each minute and on focus, and stops historical fantasy badges after Week 17. Current main lacks this bridge. | Pending isolated PR #579 |
+| Weekly Awards | Automatic background badge capture | PR #580 adds a scheduled production-only `weekly-awards-refresh.mjs` job, strict verified-award readback, idempotent updates and protection against deleting earned badges. This scheduler cannot run on the existing production deployment until an authorized release installs it; CI is not live capture evidence. | Pending isolated PR #580 |
 | Player Value History | Player-of-Week/all-time milestones | Browser `playerScoringCache` has no TTL on main; PR #579 introduces timed cache and badge sync | Pending isolated PR #579 |
 | Track My Team | Team history / player deltas | Current `teamNetCache` only keyed by selected IDs/team and never expires; new snapshots may leave stale history | Open source defect |
 | Track My Team | Trade-linked team value | PR #555 separately restores verified trade linkage and history refresh | Pending isolated PR #555 |
@@ -61,7 +63,7 @@ Legend: **Open source defect** = reproduced by directly tracing current code; **
 2. Reconcile **Market PR #583** and **historical windows PR #561** without reverting Finder.
 3. Accept **Managers PR #586**, **Awards PRs #580/#584**, **Milestones PR #579** after preview + live readback.
 4. Accept the isolated Home refresh PR #587 after preview checks; fix League Hub trade/weekly-awards/draft cache lifetimes in a separate subsystem release.
-5. Audit live publisher / schedule / site-opening with actual provider results. Require branch protection for PR #582 checks.
+5. Audit live publisher / schedule / site-opening with actual provider results. Require branch protection for PR #582 checks. The weekly-awards scheduler is coded in GitHub PR #580 but cannot execute from an unmerged PR or while production deployment remains intentionally blocked.
 
 ## Machine-readable risk report
 `node scripts/audit-site-live-freshness.mjs` reports source-derived unresolved freshness risks and explicitly labels them **risk**, even if code-presence and release-version tests are green. No automated CI test should claim all sections functional merely because one HTTP response or script exists. Source audit warnings do not merge other isolated subsystem PRs.

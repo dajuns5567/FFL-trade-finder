@@ -22,6 +22,7 @@ on:
       - 'scripts/approved-inquirer-browser-overlay.mjs'
       - 'scripts/approved-inquirer-server-overlay.mjs'
       - 'scripts/approved-team-trade-linkage-overlay.mjs'
+      - 'scripts/approved-original-pick-history-overlay.mjs'
       - 'tests/audit-combined-weekly-badge-provenance.test.mjs'
       - 'tests/player-weekly-milestone-awards.test.mjs'
       - 'tests/player-weekly-badge-completion-readback.test.mjs'
@@ -67,6 +68,7 @@ jobs:
           node --check scripts/approved-inquirer-browser-overlay.mjs
           node --check scripts/approved-inquirer-server-overlay.mjs
           node --check scripts/approved-team-trade-linkage-overlay.mjs
+          node --check scripts/approved-original-pick-history-overlay.mjs
           node --test tests/audit-combined-weekly-badge-provenance.test.mjs
           node scripts/audit-combined-weekly-badge-provenance.mjs
       - name: Check combined runtime syntax and asset loader

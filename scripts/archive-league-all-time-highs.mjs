@@ -51,6 +51,19 @@ export function nextDurableHighs(previous,observation){
   latest_observation_at:input.captured_at,model_used:input.model_used,source_commit:input.source_commit,
   canonical_fingerprint:input.canonical_fingerprint,records};
 }
+// A verified Blob bootstrap has real score history but intentionally lacks
+// scheduled source/model provenance. Promote it on the FIRST canonical
+// scheduled capture, even when no individual record exceeds its old high.
+// Subsequent identical replays are idempotent; fresh completed captures
+// update the independently auditable latest_observation_at metadata.
+export function requiresDurableHighsWrite(previous,next){
+ if(!previous)return true;
+ return ['schema_version','source','league_id','latest_observation_at',
+  'model_used','source_commit','canonical_fingerprint']
+  .some(key=>previous[key]!==next[key])||
+  JSON.stringify(previous.records||[])!==JSON.stringify(next.records||[]);
+}
+
 async function run(){
  const token=String(process.env.GITHUB_TOKEN||'').trim();
  if(!token)throw Error('GITHUB_TOKEN required for durable award write');
@@ -72,8 +85,9 @@ async function run(){
  };
  const before=await get();
  const next=nextDurableHighs(before,input);
- const unchanged=JSON.stringify(before?.records||[])===JSON.stringify(next.records);
- if(unchanged){console.log('Award highs already current; no records replaced');return}
+ if(!requiresDurableHighsWrite(before,next)){
+  console.log('Award highs and canonical capture provenance already current; no write needed');return
+ }
  const bytes=JSON.stringify(next,null,2)+'\n';
  const payload={message:'Record verified canonical league All-Time Highs '+input.captured_at,
   branch:DATA_BRANCH,content:Buffer.from(bytes).toString('base64')};

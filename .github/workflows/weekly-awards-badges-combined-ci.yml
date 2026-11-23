@@ -30,6 +30,7 @@ on:
       - 'scripts/approved-player-badge-readback-overlay.mjs'
       - 'scripts/approved-all-time-highs-status-overlay.mjs'
       - 'scripts/approved-market-model-bridge-overlay.mjs'
+      - 'scripts/approved-server-badge-parity-overlay.mjs'
       - 'netlify/functions/lib/weekly-award-stats-merge.mjs'
       - 'tests/weekly-awards-producer-partial-week.test.mjs'
       - 'tests/audit-combined-weekly-badge-provenance.test.mjs'
@@ -85,6 +86,7 @@ jobs:
           node --check scripts/approved-player-badge-readback-overlay.mjs
           node --check scripts/approved-all-time-highs-status-overlay.mjs
           node --check scripts/approved-market-model-bridge-overlay.mjs
+          node --check scripts/approved-server-badge-parity-overlay.mjs
           node --check netlify/functions/lib/weekly-award-stats-merge.mjs
           node --test tests/audit-combined-weekly-badge-provenance.test.mjs
           node scripts/audit-combined-weekly-badge-provenance.mjs

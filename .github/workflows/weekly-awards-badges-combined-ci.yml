@@ -16,6 +16,8 @@ on:
       - 'tests/player-weekly-badge-completion-readback.test.mjs'
       - 'tests/weekly-awards-scheduled-capture.test.mjs'
       - 'tests/league-awards-independent-week-sync.test.mjs'
+      - 'tests/inquirer-approved-cutover.test.mjs'
+      - 'tests/inquirer-weekly-publication-consistency.test.mjs'
       - '.github/workflows/weekly-awards-badges-combined-ci.yml'
   push:
     branches:
@@ -64,3 +66,4 @@ jobs:
           node --test tests/team-net-choice-v540.test.mjs
           node --test tests/trade-history-live-sleeper.test.mjs
           node --test tests/inquirer-week9-unattended-publish-regression.test.mjs
+          node --test tests/inquirer-approved-cutover.test.mjs tests/inquirer-weekly-publication-consistency.test.mjs

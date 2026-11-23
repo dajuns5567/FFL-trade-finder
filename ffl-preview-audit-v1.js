@@ -20,7 +20,7 @@
   const root=appRoot(),head=elements('h1,h2,h3',root).slice(0,24).map(e=>cap(norm(text(e)),90));
   const nav=elements('[data-lh-view],[role="tab"],.tabs button',root).slice(0,30)
     .map(e=>({label:cap(norm(text(e)),60),active:e.classList.contains('active')||e.getAttribute('aria-selected')==='true'}));
-  const over=elements('body *').filter(e=>{if(e.children.length>7)return false;const r=e.getBoundingClientRect();return r.right>innerWidth+12&&r.width<innerWidth*2&&r.left<innerWidth}).slice(0,12)
+  const over=elements('body *').filter(e=>{if(e.children.length>7)return false;const r=e.getBoundingClientRect();if(!(r.right>innerWidth+12&&r.width<innerWidth*2&&r.left<innerWidth))return false;for(let p=e.parentElement;p;p=p.parentElement){const st=getComputedStyle(p);if(/auto|scroll/.test(st.overflowX)&&p.scrollWidth>p.clientWidth+10)return false}return true}).slice(0,12)
     .map(e=>({tag:e.tagName,cls:cap(e.className,70),right:Math.round(e.getBoundingClientRect().right)}));
   const stuck=elements('main *').filter(e=>/loading|please wait|fetching/i.test(norm(text(e)))&&text(e).length<90).slice(0,9).map(e=>cap(text(e),85));
   const screenshot={url:location.href,headings:head,subtabs:nav,overflow:over,stuck,bodyExcerpt:cap(norm(text(root)),1100)};

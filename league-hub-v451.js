@@ -148,7 +148,7 @@ const HUB_SHARED_REFRESH_MS=5*60*1000;
 const hubSharedCacheAt={trades:0,drafts:0,awards:0},hubSharedPending={trades:null,drafts:null,awards:null};
 let hubSharedVisibleRefreshPending=false;
 function hubSharedSignature(value,which){
- if(which==='trades')return JSON.stringify((value?.trades||[]).map(t=>[String(t?.id||t?.transaction_id||''),t?.created||t?.created_at||'',t?.completed_at||'',t?.status||'']));
+ if(which==='trades')return JSON.stringify((value?.trades||[]).map(t=>[String(t?.id||t?.transaction_id||''),t?.created||t?.created_at||'',t?.completed_at||'',t?.status||'',t?.roster_ids||[],t?.sides||[]]));
  if(which==='drafts')return JSON.stringify((value?.draft_picks||[]).map(p=>[p.draft_id,p.player_id,p.pick_no,p.roster_id,p.season]));
  return JSON.stringify((value?.records||[]).map(r=>[r.season,r.week,r.captured_at,r.generated_at,JSON.stringify(r.manager_awards||[]),JSON.stringify(r.players_of_week||{})]));
 }
@@ -317,7 +317,17 @@ async function reporterArchive(id){const k=String(id||'');if(!k)return null;if(r
 
 function managerNameForRoster(id){const rid=String(id);const cur=(managerCache?.current||[]).find(x=>String(x.roster_id)===rid);if(cur?.sleeper_id)return String(cur.sleeper_id);const assignment=(managerCache?.assignments||[]).filter(x=>String(x.roster_id)===rid).sort((a,b)=>(Number(b.season)||0)-(Number(a.season)||0))[0];if(assignment?.sleeper_id)return String(assignment.sleeper_id);const team=(globalThis.state?.teams||[]).find(x=>String(x.id)===rid);return String(team?.manager||team?.owner_name||team?.name||teamName(rid))}
 function tradeKey(t){return String(t?.id||t?.transaction_id||((t?.created||'unknown')+':'+(t?.roster_ids||[]).join('-')))}
-function hindsightDelta(trade){try{const fn=globalThis.tradeHistoryAdjustedHindsightV477;if(typeof fn!=='function')return null;const h=fn(trade);if(!h||!Number.isFinite(Number(h.a))||!Number.isFinite(Number(h.b))||!Number.isFinite(Number(h.edge)))return null;return h}catch{return null}}
+function hindsightDelta(trade){try{
+ const sides=trade?.sides||[],rosters=sides.map(s=>String(s?.roster_id||''));
+ if(sides.length!==2||new Set(rosters).size!==2||rosters.some(x=>!x||x==='0'))return null;
+ const fn=globalThis.tradeHistoryAdjustedHindsightV477;
+ if(typeof fn!=='function')return null;
+ const h=fn(trade);
+ if(!h||![h.a,h.b,h.edge].every(v=>Number.isFinite(Number(v)))||
+    ![0,1].includes(Number(h.winner))||Number(h.edge)<0||
+    Math.abs(Math.abs(Number(h.a)-Number(h.b))-Number(h.edge))>0.001)return null;
+ return h;
+}catch{return null}}
 function originalTradeDelta(trade){try{const fn=globalThis.tradeHistoryAdjustedOriginalV505;if(typeof fn!=='function')return null;const h=fn(trade);if(!h||!Number.isFinite(Number(h.aRaw))||!Number.isFinite(Number(h.bRaw))||!Number.isFinite(Number(h.edge))||!String(h.label||'').trim())return null;return h}catch{return null}}
 function inquirerTradeClassificationQuip(label,rid,context={}){
  const key=/^fleeced!?$/i.test(label)?'fleeced':/^fair$/i.test(label)?'fair':/^excellent fit$/i.test(label)?'excellent':/^negotiable$/i.test(label)?'negotiable':'other',

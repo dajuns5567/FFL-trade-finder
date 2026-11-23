@@ -863,11 +863,11 @@ export async function weeklyAwards({additionalLockedEditions=[],persist=true,str
  const old=await s?.get('awards/weekly.json',{type:'json'}).catch(error=>{console.warn('league-awards-cache-unavailable',String(error?.message||error));return null});
  const records=Array.isArray(old?.records)?old.records.slice():Array.isArray(old)?old.slice():[];
  const eligible=new Set(pairs.map(p=>p.season+'|'+p.week));
- // Preserve already verified independent awards when Sleeper is temporarily
- // unavailable. An unrelated Inquirer delay cannot delete earned badges.
+ // Preserve ALL previously verified earned awards when Sleeper or the
+ // GitHub newspaper archive is temporarily unreachable. Requiring today's
+ // publication index would silently delete older locked weekly badges.
  for(const rec of records)
-  if(rec?.award_source==='sleeper-finalized-matchups'&&
-     isTrustedWeeklyAwardCache(rec,rec.season,rec.week))
+  if(isTrustedWeeklyAwardCache(rec,rec.season,rec.week))
    eligible.add(Number(rec.season)+'|'+Number(rec.week));
  const byKey=new Map(records.filter(rec=>{
   const season=Number(rec?.season),week=Number(rec?.week);

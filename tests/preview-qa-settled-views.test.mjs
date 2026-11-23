@@ -6,6 +6,8 @@ test('Market Dashboard is checked while selected only AFTER the fetch settles',(
  assert.match(audit,/const settle=async \(selector,loading,maxMs=14000\)/);
  assert.match(audit,/await settle\('#vhContent',\/\^Loading market dashboard…\$\/,18000\)/);
  const market=audit.slice(audit.indexOf("if(name==='VALUE HISTORY')"),audit.indexOf("if(name==='LEAGUE HUB')"));
+ assert.ok(market.includes("await settle('#vhContent'"),'settled Market read is present');
+ assert.ok(market.includes("add('Market','mover panels'"),'mover verdict is present');
  assert.ok(market.indexOf("await settle('#vhContent'")<market.indexOf("add('Market','mover panels'"));
  assert.doesNotMatch(market,/const rows=norm\(text\(appRoot\(\)\)\)/);
 });

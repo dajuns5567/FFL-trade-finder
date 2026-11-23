@@ -15,7 +15,7 @@ export function playerWeeklyMilestoneAwards({
  for(const group of groups){
   const awarded=canonical?.players_of_week?.[group];
   // A published named winner must never be replaced by a re-calculation.
-  if(awarded?.player_id){
+  if(awarded?.player_id&&awarded?.points!=null&&Number.isFinite(Number(awarded.points))){
    winners[group]={player_id:String(awarded.player_id),points:Number(awarded.points)};
   }
  }

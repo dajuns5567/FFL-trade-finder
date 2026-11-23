@@ -135,7 +135,7 @@ test('server weekly award readback fails closed and retains legacy fallback',asy
  const end=backend.indexOf('// Independent Sleeper matchup finalization',start);
  const ctx={getStore:()=>{throw Error('Blob unavailable')},
  fetch:async url=>{
-  assert.match(url,/league-hub\\?weekly_awards=1/);
+  assert.match(url,/league-hub\?weekly_awards=1/);
   return{ok:true,json:async()=>({records:[{season:2026,week:10,players_of_week:{offense:{player_id:'4034',points:46.3}}}]})};
  },console,Number,String,Array,Date,Math};
  vm.createContext(ctx);

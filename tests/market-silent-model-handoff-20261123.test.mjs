@@ -67,3 +67,62 @@ test('November 16–23 archived Boye Mafe evidence changes -29 after excluding s
  assert.notEqual(mover(result.periods['7D'],'8343')?.delta,1737);
  assert.equal(result.model_change_at,'2026-11-21T03:52:31.983Z');
 });
+
+
+test('all Market Dashboard period surfaces share model-safe movement and era-isolated records',()=>{
+ const summary=marketFromSnapshots(history),intelligence=marketInsightsFromSnapshots(history);
+ const windows=['1D','7D','30D','90D','1Y','ALL'];
+ for(const period of windows){
+  const movers=summary.periods[period],range=intelligence.ranges[period];
+  assert.equal(movers.movement_basis,'same-model-segment-sum',period+' mover provenance');
+  assert.equal(range.movement_basis,'sum-of-recorded-same-model-movements',period+' intelligence provenance');
+  const byId=new Map(range.player_changes.map(row=>[row.id,row]));
+  for(const id of ['8343','12605']){
+   const m=mover(movers,id),item=byId.get(id);
+   assert.equal(item?.delta??null,m?.delta??null,period+'/'+id+' heat and category leaders');
+   assert.equal(item?.overall_delta??null,m?.overallDelta??null,period+'/'+id+' rank');
+   assert.equal(item?.pos_rank_delta??null,m?.posRankDelta??null,period+'/'+id+' position rank');
+   assert.equal(item?.measurement,m?'sum-of-recorded-same-model-movements':undefined);
+  }
+  for(const position of range.position_indexes){
+   assert.equal(position.measurement,'equal-weight-verifiable-same-model-percent-movement');
+   assert.ok(position.index===null||Number.isFinite(position.index));
+  }
+  // Record highs, lows and volatility may use only the active comparable
+  // valuation era. Model repricing is NOT a real historical price extreme.
+  assert.ok(range.snapshot_count<=3,period+' must not mix earlier raw prices');
+  assert.ok(range.volatility.every(row=>row.low>1000&&row.high<5000),
+   period+' volatility cannot mix pre-V101 IDP prices');
+  assert.ok(range.new_highs.every(row=>row.value>1000),
+   period+' highs cannot be fabricated from old-model comparisons');
+  assert.ok(range.new_lows.every(row=>row.value>1000),
+   period+' lows cannot be fabricated from old-model comparisons');
+ }
+ assert.equal(mover(summary.periods['7D'],'8343').delta,-31);
+});
+
+test('every Dashboard surface uses selected-window intelligence rather than a fixed seven-day value',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const source=readFileSync(new URL('../value-history-v276.js',import.meta.url),'utf8');
+ const byFunction=(name,next)=>source.slice(source.indexOf('function '+name+'('),source.indexOf('function '+next+'(',source.indexOf('function '+name+'(')+1));
+ const dashboard=byFunction('marketIntelligenceMarkup','renderMarketIntelligence');
+ for(const [section,call] of [
+  ['vhPositionIndexes','positionIndexesMarkup()'],
+  ['vhMarketHeat','marketHeatMapMarkup()'],
+  ['vhCategoryLeaders','categoryLeadersMarkup()'],
+  ['vhMarketHighLow','newHighLowMarkup()'],
+  ['vhMomentumLeaders','momentumMarkup()'],
+  ['vhOpportunityWatch','opportunityMarkup()'],
+  ['vhMarketReversals','reversalsMarkup()'],
+  ['vhMarketVolatility','volatilityMarkup()']
+ ]){assert.ok(dashboard.includes(section),section+' exists');assert.ok(dashboard.includes(call),section+' rendered');}
+ assert.match(source,/function intelRange\(period=marketIntelPeriod\)/);
+ assert.match(source,/const rows=currentRows\(\),signals=marketSignalCache\?\.signals\|\|\[\],range=intelRange\(\)/);
+ assert.match(source,/const top=rows\.slice\(\).*verifiedChanges=\(range\?\.player_changes\|\|\[\]\)/);
+ assert.match(source,/const range=intelRange\(\)/);
+ assert.match(source,/function verifiedValueMove\(/);
+ assert.match(source,/marketPeriods=\{valueRisers:'7D',valueFallers:'7D',rankRisers:'7D',rankFallers:'7D'\}/);
+ assert.match(source,/for\(const key of Object\.keys\(marketPeriods\)\)marketPeriods\[key\]=period/);
+ assert.match(source,/if\(setMarketDashboardPeriodV116\(intelPeriod\.dataset\.vhIntelPeriod\)\)renderMarketDashboard\(\)/);
+ assert.match(source,/if\(setMarketDashboardPeriodV116\(mp\.dataset\.vhMarketPeriod\)\)renderMarketDashboard\(\)/);
+});

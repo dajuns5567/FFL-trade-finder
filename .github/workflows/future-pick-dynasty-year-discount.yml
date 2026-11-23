@@ -1,0 +1,22 @@
+name: Dynasty future draft pick year-discount regression
+on:
+  pull_request:
+    paths:
+      - 'trade-value-normalization-v139.js'
+      - 'netlify/functions/site-v29.mjs'
+      - 'tests/future-pick-dynasty-year-discount.test.mjs'
+      - '.github/workflows/future-pick-dynasty-year-discount.yml'
+permissions:
+  contents: read
+jobs:
+  future-pick-valuation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check trade-value-normalization-v139.js
+      - run: node --test tests/future-pick-dynasty-year-discount.test.mjs
+      - run: node --test tests/draft-pick-order-5050.test.mjs

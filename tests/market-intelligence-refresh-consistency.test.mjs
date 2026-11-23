@@ -26,7 +26,7 @@ test('a fresh market view refetches insights and signals when its canonical snap
  assert.match(source,/loadMarketIntelligence\(force\)/);
  assert.match(source,/marketInsightsFetch\(force\)/);
  assert.match(source,/marketSignalsFetch\(force\)/);
- assert.match(loader,/value-history-v276\.js\?v=549/);
+ assert.match(loader,/value-history-v276\.js\?v=550/);
 });
 
 test('Market Dashboard does not reinstate removed white explanations',()=>{

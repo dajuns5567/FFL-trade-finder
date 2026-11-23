@@ -198,7 +198,18 @@
   add('Managers','all 32 league managers mapped',managers?.current?.length===32?'PASS':'WARN',
    'Managers found: '+String(managers?.current?.length??'unavailable'));
   api.marketSummary={keys:Object.keys(market||{}),snapshotCount:market?.snapshot_count??market?.snapshotCount};
-  // Only inspect; real historical accuracy needs archive-versus-displayed-value reconciliation.
+  const currentMarket=market?.market||market;
+  const moving=currentMarket?.periods?.['7D'];
+  const candidate=[...(moving?.valueRisers||[]),...(moving?.valueFallers||[])].find(row=>String(row?.id)==='8343');
+  api.boyeMafe7DModelAudit={value:currentMarket?.marketRows?.find(row=>String(row.id)==='8343')?.value,
+   delta:candidate?.delta??null,model:currentMarket?.valuation_model,
+   modelChangeAt:currentMarket?.model_change_at,baseline:candidate?.baseline_t};
+  if(candidate&&currentMarket?.valuation_model==='idp-v101-verified-role-growth-v100-source-free-lineage'){
+   add('Market','Boye Mafe 7D excludes silent V101 adoption',
+    Math.abs(Number(candidate.delta))<500?'PASS':'WARN',
+    JSON.stringify(api.boyeMafe7DModelAudit));
+  }else add('Market','Boye Mafe 7D model audit','INFO',JSON.stringify(api.boyeMafe7DModelAudit));
+  // Only inspect; actual live Market values must still be compared against the immutable archive.
   add('Data provenance','Market history coverage','INFO',JSON.stringify(api.marketSummary));
  }catch(e){add('Script','runner','FAIL',e.stack||e.message)}
  finally{

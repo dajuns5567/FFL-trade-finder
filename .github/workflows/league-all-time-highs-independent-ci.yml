@@ -5,6 +5,8 @@ on:
       - '.github/workflows/league-all-time-highs-independent-capture.yml'
       - '.github/workflows/league-all-time-highs-independent-ci.yml'
       - 'scripts/archive-league-all-time-highs.mjs'
+      - 'netlify/functions/league-hub.mjs'
+      - 'scripts/approved-all-time-highs-status-overlay.mjs'
       - 'scripts/verify-durable-all-time-highs-readback.mjs'
       - 'tests/league-all-time-highs-independent-capture.test.mjs'
   workflow_dispatch:

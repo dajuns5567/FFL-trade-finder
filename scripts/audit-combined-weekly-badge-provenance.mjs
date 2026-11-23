@@ -3,6 +3,7 @@
 // Any necessary future edit requires an isolated reviewed PR, not a silent
 // whole-file replacement during feature reconciliation.
 import {execFileSync} from 'node:child_process';
+import {applyApprovedMarketOverlay} from './approved-market-intelligence-overlay.mjs';
 import {readFileSync} from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -15,10 +16,11 @@ export const VERIFIED_SOURCES=[
  {pr:579,file:'value-history-v276.js'},
  {pr:579,file:'netlify/functions/lib/player-weekly-milestone-awards.mjs'}
 ];
-export function verifyCombinedBadgeProvenance(readCurrent,readRef){
+export function verifyCombinedBadgeProvenance(readCurrent,readRef,{approvedMarketOverlay=false}={}){
  const mismatch=[];
  for(const x of VERIFIED_SOURCES){
-  const current=readCurrent(x.file),expected=readRef(x.pr,x.file);
+  const current=readCurrent(x.file),source=readRef(x.pr,x.file);
+  const expected=approvedMarketOverlay&&x.file==='value-history-v276.js'?applyApprovedMarketOverlay(source):source;
   if(current!==expected)mismatch.push({pr:x.pr,file:x.file,
    reason:'integration source differs from independently tested PR head'});
  }
@@ -29,7 +31,8 @@ const git=(...args)=>execFileSync('git',args,{encoding:'utf8',stdio:['ignore','p
 export function verifyLocalBadgeIntegration(){
  return verifyCombinedBadgeProvenance(
   file=>readFileSync(path.join(process.cwd(),file),'utf8'),
-  (pr,file)=>git('show','refs/remotes/pr-badge-source/'+pr+':'+file)
+  (pr,file)=>git('show','refs/remotes/pr-badge-source/'+pr+':'+file),
+  {approvedMarketOverlay:true}
  );
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){

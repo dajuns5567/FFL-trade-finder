@@ -87,7 +87,7 @@ test('visible Player Value History refreshes every minute on focus or week rollo
 
 test('new-year and current year badge cutoff avoid dropping old verified season',()=>{
  assert.match(backend,/Number\(nflState\?\.season\)>Number\(league\?\.season\)\?18/);
- assert.match(backend,/verifiedCompletedWeek:year<currentSeason\?18:Math\.min\(currentCompletedWeek,verifiedCurrentWeek\)/);
+ assert.match(backend,/verifiedCompletedWeek:year<currentSeason\?17:Math\.min\(17,currentCompletedWeek,verifiedCurrentWeek\)/);
  assert.match(backend,/playerMilestoneCache\.get\(cacheKey\)/);
  assert.match(backend,/now-cachedMilestone\.t<60000/);
  assert.match(ui,/if\(!playerScoringCache\.has\(key\)\)playerScoringCache\.set\(key,null\)/);

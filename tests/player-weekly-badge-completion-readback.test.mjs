@@ -90,5 +90,7 @@ test('new-year and current year badge cutoff avoid dropping old verified season'
  assert.match(backend,/verifiedCompletedWeek:year<currentSeason\?17:Math\.min\(17,currentCompletedWeek,verifiedCurrentWeek\)/);
  assert.match(backend,/playerMilestoneCache\.get\(cacheKey\)/);
  assert.match(backend,/now-cachedMilestone\.t<60000/);
- assert.match(ui,/if\(!playerScoringCache\.has\(key\)\)playerScoringCache\.set\(key,null\)/);
+ assert.match(ui,/const previous=playerScoringCache\.get\(key\)/,'retain previously verified badge history');
+ assert.match(ui,/Promise\.allSettled\(/,'canonical award feed and milestone scorer are independent');
+ assert.match(ui,/mergeCanonicalPlayerAwardMilestones\(fallback,records,key\)/,'merge all canonical winners');
 });

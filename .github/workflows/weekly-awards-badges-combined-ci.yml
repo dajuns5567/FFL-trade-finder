@@ -18,6 +18,7 @@ on:
       - 'scripts/approved-awards-server-overlay.mjs'
       - 'scripts/approved-managers-browser-overlay.mjs'
       - 'scripts/approved-managers-server-overlay.mjs'
+      - 'scripts/approved-hub-refresh-overlay.mjs'
       - 'tests/audit-combined-weekly-badge-provenance.test.mjs'
       - 'tests/player-weekly-milestone-awards.test.mjs'
       - 'tests/player-weekly-badge-completion-readback.test.mjs'
@@ -59,6 +60,7 @@ jobs:
           node --check scripts/approved-awards-server-overlay.mjs
           node --check scripts/approved-managers-browser-overlay.mjs
           node --check scripts/approved-managers-server-overlay.mjs
+          node --check scripts/approved-hub-refresh-overlay.mjs
           node --test tests/audit-combined-weekly-badge-provenance.test.mjs
           node scripts/audit-combined-weekly-badge-provenance.mjs
       - name: Check combined runtime syntax and asset loader

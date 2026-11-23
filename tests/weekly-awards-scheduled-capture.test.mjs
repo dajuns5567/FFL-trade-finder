@@ -55,9 +55,10 @@ test('temporary incomplete source failure is explicit rather than claiming badge
 
 test('only actual changes to verified awards are persisted, including same-length record corrections',()=>{
  assert.match(hub,/const weeklyAwardsChanged=JSON\.stringify\(records\)!==JSON\.stringify\(next\)/);
- assert.match(hub,/if\(persist&&s&&weeklyAwardsChanged\)/);
+ assert.match(hub,/if\(persist&&s&&weeklyAwardsChanged&&!wouldLoseStoredAward\)/);
  assert.match(hub,/if\(persist&&strictPersist&&!s\)/);
- assert.match(hub,/if\(persist&&strictPersist&&next\.length<records\.length\)/);
+ assert.match(hub,/if\(persist&&strictPersist&&wouldLoseStoredAward\)/);
+ assert.match(hub,/const wouldLoseStoredAward=records\.some\(/);
  assert.match(hub,/Scheduled weekly badge readback disagrees with verified awards/);
  assert.match(hub,/await s\.get\('awards\/weekly\.json',\{type:'json'\}\)/);
  assert.doesNotMatch(hub,/if\(persist&&s&&\(missing\.length\|\|records\.length!==next\.length\)\)/);

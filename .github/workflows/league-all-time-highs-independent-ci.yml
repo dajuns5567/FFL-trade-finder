@@ -12,6 +12,9 @@ on:
       - 'scripts/award-highs-verified-export.js'
       - 'scripts/validate-all-time-highs-blob-export.mjs'
       - 'tests/verified-all-time-highs-blob-export.test.mjs'
+      - 'netlify/functions/lib/league-all-time-highs.mjs'
+      - 'scripts/approved-highs-bootstrap-reader-overlay.mjs'
+      - 'tests/league-all-time-highs-bootstrap-reader.test.mjs'
   workflow_dispatch:
 permissions:
   contents: read
@@ -33,3 +36,4 @@ jobs:
           node --test tests/league-all-time-highs-independent-capture.test.mjs
           node --test tests/league-all-time-highs-durable.test.mjs
           node --test tests/verified-all-time-highs-blob-export.test.mjs
+          node --test tests/league-all-time-highs-bootstrap-reader.test.mjs

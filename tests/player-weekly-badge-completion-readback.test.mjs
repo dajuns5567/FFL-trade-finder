@@ -21,7 +21,7 @@ function completedWeekFixture(){
   assert.match(url,/league-hub\?league_latest=1/);
   requests++;
   return{ok:true,json:async()=>({available,season,week,teams})};
- },console,Date:{now:()=>now}};
+ },console,Date:{now:()=>now},verifiedSleeperCompletedAwardWeek:async()=>0};
  vm.createContext(ctx);
  const read=vm.runInContext(gateCode+';verifiedCompletedAwardWeek',ctx);
  return{read,requests:()=>requests,

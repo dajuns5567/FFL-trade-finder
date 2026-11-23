@@ -9,7 +9,7 @@ export const features=[
  {id:'inquirer-single-picker',pr:578,file:'league-hub-v451.js',markers:["const topArchive='';","const archive="]},
  {id:'milestone-current-week-badges',pr:579,file:'netlify/functions/value-history.mjs',markers:['playerWeeklyMilestoneAwards({','currentCompletedWeek,']},
  {id:'milestone-browser-cache',pr:579,file:'value-history-v276.js',markers:['playerScoringCacheAt=new Map()']},
- {id:'milestone-finalized-week-gate',pr:579,file:'netlify/functions/value-history.mjs',markers:['verifiedCompletedAwardWeek(origin,currentSeason)','verifiedCompletedWeek:year<currentSeason?18:Math.min(currentCompletedWeek,verifiedCurrentWeek)']},
+ {id:'milestone-finalized-week-gate',pr:579,file:'netlify/functions/value-history.mjs',markers:['verifiedCompletedAwardWeek(origin,currentSeason)','verifiedCompletedWeek:year<currentSeason?17:Math.min(17,currentCompletedWeek,verifiedCurrentWeek)']},
  {id:'milestone-visible-weekly-poll',pr:579,file:'value-history-v276.js',markers:['refreshVisiblePlayerWeeklyBadges','setInterval(refreshVisiblePlayerWeeklyBadges,PLAYER_WEEKLY_BADGE_REFRESH_MS)']},
  {id:'weekly-awards-autonomous-capture',pr:580,file:'netlify/functions/weekly-awards-refresh.mjs',markers:["schedule:'15 */2 * * *'","weeklyAwards({persist:true})","context!=='production'"]},
  {id:'weekly-awards-idempotent-write',pr:580,file:'netlify/functions/league-hub.mjs',markers:['const weeklyAwardsChanged=JSON.stringify(records)!==JSON.stringify(next)','if(persist&&s&&weeklyAwardsChanged)']},

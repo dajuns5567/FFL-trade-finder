@@ -14,7 +14,7 @@ export const features=[
  {id:'milestone-no-invented-zero-points',pr:579,file:'netlify/functions/lib/player-weekly-milestone-awards.mjs',markers:['awarded?.points!=null&&Number.isFinite(Number(awarded.points))','w<1||w>17||']},
  {id:'weekly-awards-finite-scored-winners',pr:580,file:'netlify/functions/league-hub.mjs',markers:['winner.points==null||!Number.isFinite(Number(winner.points))']},
  {id:'weekly-awards-autonomous-capture',pr:580,file:'netlify/functions/weekly-awards-refresh.mjs',markers:["schedule:'15 */2 * * *'","weeklyAwards({persist:true})","context!=='production'"]},
- {id:'weekly-awards-idempotent-write',pr:580,file:'netlify/functions/league-hub.mjs',markers:['const weeklyAwardsChanged=JSON.stringify(records)!==JSON.stringify(next)','if(persist&&s&&weeklyAwardsChanged&&!wouldLoseStoredAward)','Scheduled weekly badge readback disagrees with verified awards','if(persist&&strictPersist&&wouldLoseStoredAward)']},
+ {id:'weekly-awards-idempotent-write',pr:580,file:'netlify/functions/league-hub.mjs',markers:['const weeklyAwardsChanged=JSON.stringify(records)!==JSON.stringify(persisted)','const verifiedByWeek=new Map(next.map(','if(persist&&s&&weeklyAwardsChanged)','Scheduled weekly badge readback disagrees with verified awards','records:persisted']},
  {id:'league-awards-independent',pr:580,file:'netlify/functions/league-hub.mjs',markers:["award_source:'sleeper-finalized-matchups'","weeklyAwards({persist:false})"]},
  {id:'inquirer-published-readback',pr:581,file:'.github/workflows/inquirer-github-native-publisher.yml',markers:['verify-inquirer-published-readback.mjs']},
  {id:'market-canonical-invalidation',pr:583,file:'value-history-v276.js',markers:['marketIntelligenceGeneration','marketInsightsCache=null;marketSignalCache=null;']},

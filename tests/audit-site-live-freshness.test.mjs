@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {LIVE_FRESHNESS_RULES,inspectLiveFreshness} from '../scripts/audit-site-live-freshness.mjs';
 
-const read=file=>readFileSync(new URL('../'+file,import.meta.url),'utf8');
+const read=file=>{try{return readFileSync(new URL('../'+file,import.meta.url),'utf8')}catch(error){if(error?.code==='ENOENT')return'';throw error}};
 
 test('audit covers navigation, market, values, history, Finder, League Hub, Managers, Awards, Inquirer',()=>{
  const report=inspectLiveFreshness(read);

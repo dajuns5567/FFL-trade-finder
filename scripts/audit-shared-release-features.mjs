@@ -12,7 +12,7 @@ export const features=[
  {id:'milestone-finalized-week-gate',pr:579,file:'netlify/functions/value-history.mjs',markers:['verifiedCompletedAwardWeek(origin,currentSeason)','verifiedCompletedWeek:year<currentSeason?17:Math.min(17,currentCompletedWeek,verifiedCurrentWeek)']},
  {id:'milestone-visible-weekly-poll',pr:579,file:'value-history-v276.js',markers:['refreshVisiblePlayerWeeklyBadges','setInterval(refreshVisiblePlayerWeeklyBadges,PLAYER_WEEKLY_BADGE_REFRESH_MS)']},
  {id:'weekly-awards-autonomous-capture',pr:580,file:'netlify/functions/weekly-awards-refresh.mjs',markers:["schedule:'15 */2 * * *'","weeklyAwards({persist:true})","context!=='production'"]},
- {id:'weekly-awards-idempotent-write',pr:580,file:'netlify/functions/league-hub.mjs',markers:['const weeklyAwardsChanged=JSON.stringify(records)!==JSON.stringify(next)','if(persist&&s&&weeklyAwardsChanged)']},
+ {id:'weekly-awards-idempotent-write',pr:580,file:'netlify/functions/league-hub.mjs',markers:['const weeklyAwardsChanged=JSON.stringify(records)!==JSON.stringify(next)','if(persist&&s&&weeklyAwardsChanged)','Scheduled weekly badge readback disagrees with verified awards','if(persist&&strictPersist&&next.length<records.length)']},
  {id:'league-awards-independent',pr:580,file:'netlify/functions/league-hub.mjs',markers:["award_source:'sleeper-finalized-matchups'","weeklyAwards({persist:false})"]},
  {id:'inquirer-published-readback',pr:581,file:'.github/workflows/inquirer-github-native-publisher.yml',markers:['verify-inquirer-published-readback.mjs']},
  {id:'market-canonical-invalidation',pr:583,file:'value-history-v276.js',markers:['marketIntelligenceGeneration','marketInsightsCache=null;marketSignalCache=null;']},

@@ -213,7 +213,7 @@
   const records=awards?.records||awards?.weekly_awards?.records||[];
   api.weeklyRecordSummary=Array.isArray(records)?records.slice(-8).map(r=>({
    season:r.season,week:r.week,offense:r.players_of_week?.offense||r.players_of_week?.offensive||null,
-   idp:r.players_of_week?.idp||null,source:r.award_source
+   idp:r.players_of_week?.defense||r.players_of_week?.idp||null,source:r.award_source
   })):null;
   const ten=Array.isArray(records)?records.find(r=>Number(r.season)===2026&&Number(r.week)===10):null;
   const cmcWinner=ten?.players_of_week?.offense||ten?.players_of_week?.offensive;

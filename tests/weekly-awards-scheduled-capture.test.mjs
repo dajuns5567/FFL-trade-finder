@@ -54,15 +54,35 @@ test('temporary incomplete source failure is explicit rather than claiming badge
 });
 
 test('only actual changes to verified awards are persisted, including same-length record corrections',()=>{
- assert.match(hub,/const weeklyAwardsChanged=JSON\.stringify\(records\)!==JSON\.stringify\(next\)/);
- assert.match(hub,/if\(persist&&s&&weeklyAwardsChanged&&!wouldLoseStoredAward\)/);
+ assert.match(hub,/const weeklyAwardsChanged=JSON\.stringify\(records\)!==JSON\.stringify\(persisted\)/);
+ assert.match(hub,/if\(persist&&s&&weeklyAwardsChanged\)/);
  assert.match(hub,/if\(persist&&strictPersist&&!s\)/);
- assert.match(hub,/if\(persist&&strictPersist&&wouldLoseStoredAward\)/);
- assert.match(hub,/const wouldLoseStoredAward=records\.some\(/);
+ assert.match(hub,/const verifiedByWeek=new Map\(next\.map\(/);
+ assert.match(hub,/records:persisted/);
  assert.match(hub,/Scheduled weekly badge readback disagrees with verified awards/);
  assert.match(hub,/await s\.get\('awards\/weekly\.json',\{type:'json'\}\)/);
  assert.doesNotMatch(hub,/if\(persist&&s&&\(missing\.length\|\|records\.length!==next\.length\)\)/);
  assert.match(hub,/isTrustedWeeklyAwardCache\(rec,rec\.season,rec\.week\)/);
  assert.match(hub,/award_source:'sleeper-finalized-matchups'/);
  assert.match(hub,/verified_roster_count:broadcast\.teams\.length/);
+});
+
+test('weekly capture preserves old unverified records, corrects verified weeks and appends new awards without a publisher',()=>{
+ const start=hub.indexOf('const verifiedByWeek=new Map(');
+ const end=hub.indexOf('const weeklyAwardsChanged=',start);
+ assert.ok(start>=0&&end>start);
+ const records=[
+  {season:2026,week:9,source:'legacy-unverified'},
+  {season:2026,week:10,source:'verified',points:11}
+ ];
+ const next=[
+  {season:2026,week:10,source:'verified',points:12},
+  {season:2026,week:11,source:'independent',points:14}
+ ];
+ const persisted=vm.runInNewContext(hub.slice(start,end)+';persisted',{records,next,Map,Set,Number});
+ const saved=JSON.parse(JSON.stringify(persisted));
+ assert.deepEqual(saved.map(x=>x.week),[9,10,11]);
+ assert.equal(saved[0].source,'legacy-unverified');
+ assert.equal(saved[1].points,12);
+ assert.equal(saved[2].source,'independent');
 });

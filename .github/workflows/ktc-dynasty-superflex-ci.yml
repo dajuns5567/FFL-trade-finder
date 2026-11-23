@@ -1,0 +1,23 @@
+name: KTC Dynasty Superflex ingestion regression
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/ktc-adapter.mjs'
+      - 'tests/ktc-dynasty-superflex-recovery.test.mjs'
+      - '.github/workflows/ktc-dynasty-superflex-ci.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ktc-dynasty-coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate KTC parser module syntax
+        run: node --check netlify/functions/ktc-adapter.mjs
+      - name: Reject incomplete or fabricated KTC consensus and test verified formats
+        run: node --test tests/ktc-dynasty-superflex-recovery.test.mjs

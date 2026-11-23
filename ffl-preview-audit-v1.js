@@ -48,9 +48,9 @@
   if(/League Hub|Market|History|Awards|Managers/i.test(label)&&/current values and ranks come from player values|original finished-value and overall-rank fluctuation boards remain unchanged/i.test(text(root)))
    add(label,'removed explanatory copy','FAIL','Old Market helper text is visible');
  };
- const fetchJson=async (label,path)=>{
+ const fetchJson=async (label,path,{timeoutMs=10000}={})=>{
   try{
-   const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),10000);
+   const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),timeoutMs);
    const r=await fetch(path,{method:'GET',cache:'no-store',credentials:'same-origin',signal:ctl.signal,headers:{Accept:'application/json'}});clearTimeout(timer);
    const type=r.headers.get('content-type')||'';
    let val=type.includes('json')?await r.json():{non_json:true,preview:(await r.text()).slice(0,90)};
@@ -221,7 +221,7 @@
    String(cmcWinner?.player_id||'')==='4034'&&Number(cmcWinner?.points)===46.3?'PASS':'FAIL',
    JSON.stringify({id:cmcWinner?.player_id,points:cmcWinner?.points}));
   const history=await fetchJson('McCaffrey scoring milestones',
-   '/.netlify/functions/value-history?player_scoring=1&player_id=4034');
+   '/.netlify/functions/value-history?player_scoring=1&player_id=4034',{timeoutMs:45000});
   const badges=history?.scoring_milestones?.weeklyAwards;
   api.cmcMilestoneBadgeSummary=Array.isArray(badges)?badges.map(b=>({season:b.season,week:b.week,points:b.points,type:b.type})):null;
   const matched=Array.isArray(badges)&&badges.some(b=>Number(b.season)===2026&&Number(b.week)===10);

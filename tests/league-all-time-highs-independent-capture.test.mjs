@@ -25,10 +25,15 @@ test('first verified capture creates a complete 20-category/32-roster archive',(
  assert.equal(saved.league_id,'1316867686394769408');
  assert.equal(assertDurableHighsReadback(saved,o).categories,20);
 });
-test('unchanged peaks preserve original historical observation times without failing readback',()=>{
+test('unchanged peaks preserve first-earned dates but require newest refresh to be persisted and read back',()=>{
  const first=observation(),archive=nextDurableHighs(null,first);
- const later={...observation(),captured_at:new Date(Date.now()+1000).toISOString()};
- assert.equal(assertDurableHighsReadback(archive,later).records,640);
+ const later={...observation(),captured_at:new Date(Date.parse(first.captured_at)+1000).toISOString()};
+ assert.throws(()=>assertDurableHighsReadback(archive,later),/REFRESH_MISMATCH/,
+  'a stale archive is not proof that Awards updated with Player Values');
+ const current=nextDurableHighs(archive,later);
+ assert.equal(assertDurableHighsReadback(current,later).records,640);
+ assert.deepEqual(current.verified_records,archive.verified_records,
+  'unchanged per-team peaks retain their earned timestamps');
 });
 test('missing or lower scores, malformed archive and duplicate roster rows fail closed',()=>{
  const o=observation(),archive=nextDurableHighs(null,o);

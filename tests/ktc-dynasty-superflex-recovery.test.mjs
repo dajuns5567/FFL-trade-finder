@@ -170,3 +170,19 @@ test('KTC versioned fetch sends the live player-pool version header, not a stati
  assert.equal(result.format,'dynasty-superflex');
  assert.equal(result.reducedWeight,true);
 });
+
+test('HTTP 403 player-pool responses fail closed with classified non-sensitive diagnostics',async()=>{
+ const html='<script>var oneQBPlayers = '+JSON.stringify(fixture(3))+
+  ';var playersVersion="test-v-123";var playersArray=[];var ktcPoolReady=ktcFetchPlayerPool("dynasty",playersVersion);</script>';
+ const result=await refreshKtc({fetchImpl:async url=>url.includes('/player-pool')
+  ? {ok:false,status:403,headers:{get:key=>({
+       "content-type":"text/html; charset=utf-8",
+       "cf-mitigated":"challenge",
+       "server":"cloudflare"}[key]||null)}}
+  : {ok:true,text:async()=>html}});
+ assert.equal(result.valid,false);
+ assert.equal(result.rankings.length,0);
+ assert.match(result.error,/HTTP_RESPONSE/);
+ assert.match(result.error,/cf_mitigated/);
+ assert.match(result.error,/previous verified consensus must be retained/i);
+});

@@ -50,8 +50,9 @@ export default async (req)=>{
   const players=Array.isArray(body.players)?body.players:[];
   if(!players.length)return json({ok:false,error:"No player list supplied"},400);
   const refresh=await refreshAllSources();
-  const candidate=buildConsensusPayload(refresh,players);
   const previous=await readLastGood();
+  // Only current, validated fetches can satisfy the consensus promotion gate.
+  const candidate=buildConsensusPayload(refresh,players);
 
   if(!candidate.withheld){
     for(const [name,snapshot] of Object.entries(candidate.sources)){

@@ -472,8 +472,12 @@ function renderConsensusDiagnostics(summary){
   const sm=document.getElementById("consensusSummary");
   if(!box||!list||!sm)return;
   const total=Number(summary?.total||7), ok=Number(summary?.successful||0);
-  sm.textContent=`${ok}/${total} sources fetched successfully; publisher freshness is separate`;
   const rows=Array.isArray(summary?.results)?summary.results:[];
+  const ktc=rows.find(x=>String(x.source||"").toUpperCase()==="KTC");
+  const ktcStale=Boolean(ktc)&&!ktc.ok;
+  sm.textContent=ktcStale
+    ? `KTC NOT UPDATING — live ingestion failed. Last verified snapshot: ${String(ktc.snapshot_timestamp||"unknown").slice(0,10)}. Last attempted: ${String(ktc.timestamp||"unknown").slice(0,10)}. ${ok}/${total} sources validated; full consensus replacement withheld.`
+    : `${ok}/${total} sources fetched successfully; publisher freshness is separate`;
   const date=x=>x?String(x).slice(0,10):"unknown";
   list.innerHTML=rows.map(x=>{
     const status=String(x.status||"").toLowerCase();
@@ -481,7 +485,9 @@ function renderConsensusDiagnostics(summary){
     const retained=status==="last-known-good"||status==="retained";
     const unpromoted=status==="fresh-not-promoted";
     const icon=fetched?"✓":retained?"↻":unpromoted?"!":"✗";
-    const label=fetched?"Fetched and validated":retained?"Last validated snapshot retained":unpromoted?"Fetched, but not promoted":"Unavailable / failed";
+    const label=String(x.source||"").toUpperCase()==="KTC"&&!x.ok
+      ?"NOT UPDATING — latest KTC fetch failed; previous verified rankings retained; no current KTC fetch"
+      :fetched?"Fetched and validated":retained?"Last validated snapshot retained":unpromoted?"Fetched, but not promoted":"Unavailable / failed";
     const f=x.source_freshness||{};
     const obs=x.market_observation||f.observation||null;
     const provenance=x.source_provenance||null;
@@ -520,6 +526,7 @@ async function refreshConsensus(){
       if(!payload?.summary){lastError=Error(payload?.error||"Consensus endpoint returned no diagnostics");continue}
 
       renderConsensusDiagnostics(payload.summary);
+      state.ktcNotUpdating=Boolean(payload.summary.results?.some(x=>String(x.source||"").toUpperCase()==="KTC"&&!x.ok));
 
       // Only replace source snapshots when that source actually succeeded.
       const prior=state.rankings||{};
@@ -574,11 +581,18 @@ async function updateData(){
   try{
     await loadCore();
     let consensusCount=0;
-    try{consensusCount=await refreshConsensus(true)}catch(e){}
+    state.ktcNotUpdating=true;
+    try{consensusCount=await refreshConsensus(true)}catch(e){
+      console.warn("Consensus refresh failed",e);
+    }
     buildTeams();renderAll();
     state.lastUpdate=new Date().toISOString();
     cacheSet("fll_sleeper_snapshot",{league:state.league,users:state.users,rosters:state.rosters,players:state.players,stats:state.stats,trending:state.trending,rankings:state.rankings,tradedPicks:state.tradedPicks,draftPicks:state.draftPicks,lastUpdate:state.lastUpdate});
-    status(`Updated <b>${new Date().toLocaleString()}</b>. Sleeper core data loaded; consensus sources: <b>${consensusCount}/7</b> refreshed.`,"success");
+    if(state.ktcNotUpdating){
+      status(`Sleeper updated <b>${new Date().toLocaleString()}</b>, but <b>KTC IS NOT UPDATING</b>. Live KTC ingestion failed; verified rankings remain from an earlier snapshot. Current consensus sources validated: <b>${consensusCount}/7</b>. Check Consensus Refresh Diagnostics for the last successful date and failure.`,"error");
+    }else{
+      status(`Updated <b>${new Date().toLocaleString()}</b>. Sleeper core data loaded; consensus sources: <b>${consensusCount}/7</b> refreshed.`,"success");
+    }
   }catch(e){
     console.error(e);
     const cached=cacheGet("fll_sleeper_snapshot");

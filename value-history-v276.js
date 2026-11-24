@@ -2009,7 +2009,7 @@ function scoringMilestonesRows(scoring,loading=false){
     (a.week_started_at?' • '+esc(dateShort(a.week_started_at)):'')+
     '</span></span><span class="vh-milestone-award">🏅 '+
     (a.points!=null&&Number.isFinite(Number(a.points))?Number(a.points).toFixed(2):'—')+' pts</span></div>').join('');
-  return rows+awards;
+  return rows+awards+(loading?'<div class="vh-feed-row" role="status">Loading completed-week scoring in the background…</div>':'');
 }
 async function loadPlayerScoring(id){
   const key=String(id);
@@ -2037,7 +2037,7 @@ async function loadPlayerScoring(id){
     playerScoringCacheAt.set(key,Date.now());
     if(String(currentPlayerId)!==key)return;
     const target=document.getElementById('vhScoringMilestones');
-    if(target)target.innerHTML=scoringMilestonesRows(next,false);
+    if(target)target.innerHTML=scoringMilestonesRows(next,!playerScoringCompleteAt.has(key));
   };
   const awardsTask=canonicalPlayerAwardRecords().then(records=>{
     canonicalRecords=records;
@@ -2072,6 +2072,8 @@ function installPlayerWeeklyBadgeRefresh(){
 }
 async function loadPlayer(id){
   const key=String(id),sequence=++playerProfileLoadSequence;
+  // Start the independent full scoring read at navigation time, not after the history network request.
+  const scoringRead=loadPlayerScoring(key);
   const box=document.getElementById('vhContent');if(!box)return;
   // Never leave another player's profile visible while changing selection.
   // A valid navigation cache resolves this placeholder in the next microtask.
@@ -2080,9 +2082,10 @@ async function loadPlayer(id){
     const data=await historyFetch(key),pts=Array.isArray(data.points)?data.points:[];
     // An older fetch cannot repaint a newer player selection or another tab.
     if(sequence!==playerProfileLoadSequence||currentView!=='player'||String(currentPlayerId)!==key)return;
-    if(data.scoring_milestones&&!playerScoringCompleteAt.has(key))playerScoringCache.set(key,data.scoring_milestones);
+    // Partial history responses must not overwrite awards already painted by either source.
+    if(data.scoring_milestones&&!playerScoringCache.has(key))playerScoringCache.set(key,data.scoring_milestones);
     renderPlayerProfile(key,pts,'ALL');
-    loadPlayerScoring(key);
+    await scoringRead;
   }catch{
     if(sequence===playerProfileLoadSequence&&currentView==='player'&&String(currentPlayerId)===key)
       box.innerHTML='<div class="notice">Historical data is temporarily unavailable. Current values and all trade tools are unaffected.</div>';
@@ -2528,7 +2531,7 @@ function recentChanges(pts){
 function renderPlayerProfile(id,allPts,period='ALL'){
   const box=document.getElementById('vhContent');if(!box)return;
   if(!allPts.length){const live=livePlayerMeta(id);box.innerHTML=`<div class="vh-profile-back"><button class="secondary small" data-vh-dashboard>← Market dashboard</button></div><div class="vh-card"><h2>${esc(playerName(id))}</h2><div class="vh-current"><small>Current Player Values price</small><div class="vh-big">${live.value>0?fmt(live.value):'—'}</div><span>${live.overall?'Overall #'+live.overall:'Unranked'} • ${esc(live.pos)} #${live.posRank||'—'}</span></div><div class="vh-empty">No historical observations recorded yet. The current value is live and has not been added to the archive; historical movement remains unavailable until a verified snapshot exists.</div></div>`;return}
-  const meta=livePlayerMeta(id),pts=periodPoints(allPts,period),first=pts[0],last=pts[pts.length-1],delta=Number(last.value)-Number(first.value),pct=Number(first.value)?delta/Number(first.value)*100:0,vals=pts.map(p=>Number(p.value)),pmin=Math.min(...vals),pmax=Math.max(...vals),allVals=allPts.map(p=>Number(p.value)),allMin=Math.min(...allVals),allMax=Math.max(...allVals),bestOverall=Math.min(...allPts.map(p=>Number(p.overall))),bestPos=Math.min(...allPts.map(p=>Number(p.posRank))),lowestPos=Math.max(...allPts.map(p=>Number(p.posRank))),highPoint=allPts.find(p=>Number(p.value)===allMax),lowPoint=allPts.find(p=>Number(p.value)===allMin),bestOverallPoint=allPts.find(p=>Number(p.overall)===bestOverall),scoring=playerScoringCache.get(String(id))||null,scoringLoading=!playerScoringCache.has(String(id));
+  const meta=livePlayerMeta(id),pts=periodPoints(allPts,period),first=pts[0],last=pts[pts.length-1],delta=Number(last.value)-Number(first.value),pct=Number(first.value)?delta/Number(first.value)*100:0,vals=pts.map(p=>Number(p.value)),pmin=Math.min(...vals),pmax=Math.max(...vals),allVals=allPts.map(p=>Number(p.value)),allMin=Math.min(...allVals),allMax=Math.max(...allVals),bestOverall=Math.min(...allPts.map(p=>Number(p.overall))),bestPos=Math.min(...allPts.map(p=>Number(p.posRank))),lowestPos=Math.max(...allPts.map(p=>Number(p.posRank))),highPoint=allPts.find(p=>Number(p.value)===allMax),lowPoint=allPts.find(p=>Number(p.value)===allMin),bestOverallPoint=allPts.find(p=>Number(p.overall)===bestOverall),scoring=playerScoringCache.get(String(id))||null,scoringLoading=!playerScoringCompleteAt.has(String(id));
   const periodModelBoundary=pts.some((p,i)=>i>0&&chartEraChange(pts[i-1],p));
   // Keep the all-time archive intact. If ALL or a selected window crosses
   // model versions, show a truthful comparison from the latest contiguous

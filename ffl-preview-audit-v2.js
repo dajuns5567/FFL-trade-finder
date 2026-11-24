@@ -69,8 +69,10 @@
   add('Environment','host',/deploy-preview-\d+--/.test(location.hostname)?'PASS':'WARN',location.hostname);
   add('Environment','viewport','INFO',innerWidth+'×'+innerHeight+' DPR '+devicePixelRatio);
   add('Environment','expected JS assets', [...document.scripts].some(s=>/trade-value-normalization-v139\.js\?v=142/.test(s.src))?'PASS':'FAIL','pick normalizer ?v=142');
-  add('Environment','League Hub key', [...document.scripts].some(s=>/league-hub-v451\.js\?v=557/.test(s.src))?'PASS':'FAIL','Hall and tab fixes ?v=557');
-  add('Environment','Value History key', [...document.scripts].some(s=>/value-history-v276\.js\?v=550/.test(s.src))?'PASS':'FAIL','history ?v=550');
+  for(const [label,file,min] of [['League Hub key','league-hub-v451.js',563],['Value History key','value-history-v276.js',553]]){
+   const versions=[...document.scripts].map(s=>new URL(s.src||location.href)).filter(u=>u.pathname.endsWith('/'+file)).map(u=>Number(u.searchParams.get('v')));
+   add('Environment',label,versions.length===1&&versions[0]>=min?'PASS':'FAIL',JSON.stringify({file,versions,minimum:min}));
+  }
   snap('Initial page');
   if(document.querySelector('#vhScoringMilestones')&&/Christian McCaffrey/i.test(document.body.innerText)){
     await sleep(1600);
@@ -149,7 +151,7 @@
      if(history){
       await click(history,950);
       let rendered='',loaded=false;
-      for(let t=0;t<35;t++){
+      for(let t=0;t<100;t++){
        const node=document.querySelector('#vhScoringMilestones');
        rendered=norm(text(node));
        const complete=/2026\s*Week\s*10/i.test(rendered)&&
@@ -164,7 +166,7 @@
       add('Badges','McCaffrey Week 10 visibly rendered',
        hasWeek10?'PASS':pending?'WARN':'FAIL',cap(rendered,600));
       add('Badges','McCaffrey historical wins displayed',
-       count>=5?'PASS':pending?'WARN':'FAIL','Visible offensive scoring milestones: '+count+
+       count>=5?'PASS':'FAIL','Visible offensive scoring milestones: '+count+
        (loaded?' (verified settled)':''));
      }else add('Badges','McCaffrey profile link','WARN','Search did not render Sleeper player 4034');
      const navBack=pick(['PLAYER VALUES'],document.querySelector('header')||document);
@@ -275,7 +277,7 @@
   add('Badges','Server milestones independently include Week 10',
    !history?'WARN':matched?'PASS':'FAIL',
    !history?'Server request unavailable; rerun authenticated audit':JSON.stringify({total:badges?.length,recent:api.cmcMilestoneBadgeSummary?.slice(0,8)}));
-  add('Badges','Server milestone parity with five visible wins',
+  add('Badges','Server milestone completeness (separate from browser rendering)',
    !history?'WARN':serverHasBoth&&badges.length>=5?'PASS':'FAIL',
    Array.isArray(badges)?'Server returned '+badges.length+' badges':'Not measured');
   const visual=String(api.cmcRenderedMilestones||'');

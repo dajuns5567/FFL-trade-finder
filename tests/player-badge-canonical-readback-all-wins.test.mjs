@@ -123,3 +123,10 @@ test('independent award loading persists in approved browser source overlay',asy
  assert.match(applied,/const scoringTask=scoringFetch\(key\)\.then/);
  assert.match(applied,/await Promise\.allSettled\(\[awardsTask,scoringTask\]\)/);
 });
+
+ test('profile starts full scoring read before waiting on history, and preserves completed or partial award cache',()=>{
+  const profile=source.slice(source.indexOf('async function loadPlayer(id){'),source.indexOf('function leagueTeamIds(){'));
+  assert.ok(profile.indexOf('loadPlayerScoring(key)')<profile.indexOf('await historyFetch(key)'));
+  assert.match(profile,/data\.scoring_milestones&&!playerScoringCache\.has\(key\)/);
+  assert.match(source,/scoringMilestonesRows\(next,!playerScoringCompleteAt\.has\(key\)\)/);
+ });

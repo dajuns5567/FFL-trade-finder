@@ -8,6 +8,7 @@ import {
 import {
  nextDurableHighs,validateScheduledHighs,requiresDurableHighsWrite
 } from '../scripts/archive-league-all-time-highs.mjs';
+import {assertDurableHighsReadback} from '../scripts/verify-durable-all-time-highs-readback.mjs';
 
 const league='1316867686394769408';
 const source=(f)=>readFileSync(new URL('../'+f,import.meta.url),'utf8');
@@ -117,4 +118,29 @@ test('Giants unproven +29,515 does not appear as certified record in any award v
  assert.match(html,/-1,701 cumulative trade edge/);
  assert.doesNotMatch(html,/\+29,515 cumulative trade edge/);
  assert.doesNotMatch(html,/Recorded 11\/22\/2026/);
+});
+
+test('a new valuation model starts a separate certified baseline; old model peaks are retained without cross-model scoring',()=>{
+ const firstInput=canonicalInput(),before=nextDurableHighs(baseline(),firstInput);
+ const later=canonicalInput(new Date(Date.parse(firstInput.captured_at)+2000).toISOString());
+ later.model_used='idp-v101-verified-role-growth-v100-source-free-lineage';
+ later.observations=later.observations.map(x=>({...x,score:x.score-300}));
+ const after=nextDurableHighs(before,later);
+ assert.equal(after.model_used,later.model_used);
+ assert.deepEqual(after.verified_history_by_model[firstInput.model_used],before.verified_records);
+ assert.equal(after.verified_records.length,639);
+ assert.equal(after.verified_records.find(x=>x.award_key==='fleecer:trade-adjusted-v1'&&x.roster_id==='18').score,-2001);
+ assert.equal(verifiedCanonicalHighRecords(after,league).length,639);
+ assert.throws(()=>nextDurableHighs(after,canonicalInput(
+   new Date(Date.parse(later.captured_at)+2000).toISOString())),/MODEL_ROLLBACK/);
+});
+test('durable independent readback proves certified max per roster/category, not just legacy baseline',()=>{
+ const capture=canonicalInput(),archive=nextDurableHighs(baseline(),capture);
+ const report=assertDurableHighsReadback(archive,capture);
+ assert.equal(report.records,639);
+ assert.equal(report.verified_records,639);
+ const missing={...archive,verified_records:[]};
+ assert.throws(()=>assertDurableHighsReadback(missing,capture),/INDEPENDENT_CANONICAL_PROOF/);
+ const fake={...archive,verified_records:archive.verified_records.map((r,i)=>i===0?{...r,score:r.score-10}:r)};
+ assert.throws(()=>assertDurableHighsReadback(fake,capture),/MISSING_OR_LOWER_SCORE/);
 });

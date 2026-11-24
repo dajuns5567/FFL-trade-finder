@@ -103,7 +103,7 @@ test('browser refreshes cached awards after league weekly update and loads the n
  assert.match(ui,/loadPlayerScoring\(key\);/);
  assert.match(ui,/setInterval\(refreshVisiblePlayerWeeklyBadges,PLAYER_WEEKLY_BADGE_REFRESH_MS\)/);
  assert.match(ui,/window\.addEventListener\('focus',refreshVisiblePlayerWeeklyBadges\)/);
- assert.match(site,/value-history-v276\.js\?v=550/);
+ assert.ok(Number(site.match(/value-history-v276\.js\?v=(\d+)/)?.[1])>=550,'value-history-v276 must retain at least the verified cache revision 550');
 });
 
 test('the latest League Hub weekly Player of the Week badge is visible even if stat archive sync lags',()=>{
@@ -132,5 +132,5 @@ test('current season award sync is required on both backend and browser',()=>{
  assert.match(backend,/currentCompletedWeek,/);
  assert.doesNotMatch(backend,/else if\(Number\(year\)<currentSeason\)/);
  assert.match(browser,/playerScoringCacheAt/);
- assert.match(loader,/value-history-v276\.js\?v=550/);
+ assert.ok(Number(loader.match(/value-history-v276\.js\?v=(\d+)/)?.[1])>=550,'value-history-v276 must retain at least the verified cache revision 550');
 });

@@ -93,7 +93,7 @@ test('new-year and current year badge cutoff avoid dropping old verified season'
  assert.match(ui,/const previous=playerScoringCache\.get\(key\)/,'retain previously verified badge history');
  assert.match(ui,/Promise\.allSettled\(/,'canonical award feed and milestone scorer are independent');
  assert.match(ui,/const awardsTask=canonicalPlayerAwardRecords\(\)\.then/,'canonical awards paint independently');
- assert.match(ui,/const scoringTask=scoringFetch\(key\)\.then/,'scoring response paints independently');
+ assert.match(ui,/const scoringTask=scoringFetch\(key,\{requireCompleteReadback:true\}\)\.then/,'scoring response paints independently');
  assert.match(ui,/mergeCanonicalPlayerAwardMilestones\(next,canonicalRecords,key\)/,'late scoring cannot overwrite canonical awards');
 });
 

@@ -32,7 +32,7 @@ function fixture({feed=records,scoring=existing,scoringFetchOverride=null}={}){
   assert.equal(url,'/.netlify/functions/league-hub?weekly_awards=1');
   return{ok:true,json:async()=>({records:feed})};
  },Date,Map,Promise,Number,String,Object,Array,Math,console,
- playerScoringCache:cache,playerScoringCacheAt:at,currentPlayerId:'4034',
+ playerScoringCache:cache,playerScoringCacheAt:at,playerScoringCompleteAt:new Map(),currentPlayerId:'4034',
  scoringFetch:scoringFetchOverride||(async()=>({scoring_milestones:scoring})),
  document:{getElementById:id=>id==='vhScoringMilestones'?node:null},
  scoringMilestonesRows:v=>JSON.stringify(v.weeklyAwards)

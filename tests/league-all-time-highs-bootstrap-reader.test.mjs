@@ -1,14 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {verifiedDurableAwardHighRecords} from '../netlify/functions/lib/league-all-time-highs.mjs';
+import {verifiedDurableAwardHighRecords,CANONICAL_AWARD_KEYS} from '../netlify/functions/lib/league-all-time-highs.mjs';
 import {requiresDurableHighsWrite,nextDurableHighs} from '../scripts/archive-league-all-time-highs.mjs';
 const league='1316867686394769408',exported='2026-11-23T04:54:08.381Z';
 function sample(){
  const records=[];
  for(let c=0;c<20;c++)for(let n=1;n<=32;n++){
-  if(c===19&&n===32)continue;
-  records.push({award_key:'test-'+c,roster_id:String(n),score:c+n,
+  if(CANONICAL_AWARD_KEYS[c]==='trade-average:trade-adjusted-v1'&&n===32)continue;
+  records.push({award_key:CANONICAL_AWARD_KEYS[c],roster_id:String(n),score:c+n,
    detail:'original validated record',captured_at:'2026-11-23T04:36:36.469Z'});
  }
  return{schema_version:1,league_id:league,source:'github-verified-netlify-blob-bootstrap',
@@ -32,7 +32,7 @@ test('bootstrap reader fails closed on forged provenance and incomplete score hi
   x=>x.records[1]={...x.records[0]},
   x=>x.records[0].score=NaN,
   x=>x.records[0].captured_at='2999-01-01T00:00:00Z',
-  x=>x.records=x.records.filter(r=>r.award_key!=='test-19'),
+  x=>x.records=x.records.filter(r=>r.award_key!==CANONICAL_AWARD_KEYS[19]),
   x=>x.records=x.records.filter(r=>r.roster_id!=='32')
  ];
  for(const modify of mutations){const x=sample();modify(x);

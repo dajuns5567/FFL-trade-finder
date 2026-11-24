@@ -70,7 +70,7 @@ test('browser Managers refreshes on revisits, visibility and focus without repla
  assert.match(ui,/return managerCache\|\|\{current:\[\],graveyard:\[\],career:\[\],unavailable:true\}/);
  assert.match(ui,/if\(generation===managerRequestGeneration\)/);
  assert.match(ui,/clearManagerHistoryCache\(\); \/\/ verified completed week invalidates stale manager history/);
- assert.match(loader,/league-hub-v451\.js\?v=557/);
+ assert.ok(Number(loader.match(/league-hub-v451\.js\?v=(\d+)/)?.[1])>=557,'league-hub-v451 must retain at least the verified cache revision 557');
 });
 
 test('Manager records derive from scored weekly matchups rather than lagging roster standings',()=>{

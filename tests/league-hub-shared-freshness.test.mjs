@@ -102,5 +102,5 @@ test('visible refresh is registered and script cache key advanced',()=>{
  assert.match(source,/window\.addEventListener\('focus',refreshLeagueHubSharedDataIfVisible\)/);
  assert.match(source,/installLeagueHubSharedRefresh\(\)/);
  assert.match(source,/trades_fresh=1/);
- assert.match(loader,/league-hub-v451\.js\?v=557/);
+ assert.ok(Number(loader.match(/league-hub-v451\.js\?v=(\d+)/)?.[1])>=557,'league-hub-v451 must retain at least the verified cache revision 557');
 });

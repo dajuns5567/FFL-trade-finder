@@ -220,12 +220,25 @@ function poolVersion(html){
 // Fingerprints only: never log raw source HTML, user headers, or payload rows.
 function describeKtcHtml(html){
  const t=String(html||"");
- const marker=/\boneQBPlayers\s*=\s*/.exec(t);
+ // Diagnose whether independently rendered ranking rows exist in the returned
+ // HTML (not just the inline featured-player bootstrap). No raw HTML logged.
+ const visibleMarkup=t.replace(/<script\\b[^>]*>[\\s\\S]*?<\\/script>/gi,"").replace(/<style\\b[^>]*>[\\s\\S]*?<\\/style>/gi,"");
+ const rowProbes={
+  jaxson_dart:visibleMarkup.includes("Jaxson Dart"),
+  jonah_coleman:visibleMarkup.includes("Jonah Coleman"),
+  saquon_barkley:visibleMarkup.includes("Saquon Barkley")
+ };
+ const visibleLinks=(visibleMarkup.match(/href=["'][^"']*(?:player|dynasty-rankings)[^"']*["']/gi)||[]).length;
+ const marker=/\\boneQBPlayers\\s*=\\s*/.exec(t);
  const start=marker?marker.index+marker[0].length:-1;
  const raw=start>=0?balancedJson(t,start,"[","]"):null;
  let oneqb=null,parseFailed=false;
  if(raw){try{oneqb=JSON.parse(raw)}catch{parseFailed=true}}
  return {
+  visible_markup_chars:visibleMarkup.length,
+  visible_named_players:rowProbes,
+  visible_player_links:visibleLinks,
+  visible_rank_markers:(visibleMarkup.match(/class=["'][^"']*(?:rank|player-name)[^"']*["']/gi)||[]).length,
   oneqb_marker_found:!!marker,
   oneqb_starts_array:start>=0&&t[start]==="[",
   oneqb_balanced_chars:raw?.length||0,

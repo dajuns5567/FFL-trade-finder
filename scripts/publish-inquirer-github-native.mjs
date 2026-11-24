@@ -584,6 +584,22 @@ export async function verifyForwardPublicationLedger(index,archiveRoot){
   throw Error('Forward publication index has missing or out-of-order weeks');
  return weeks.length;
 }
+// The immutable publication ledger, not a remembered last attempt, drives
+// each scheduled run. A retry must select the same missing week; a successful
+// publication must advance to the next week only when the clock says it is due.
+export function inquirerPublicationPlan({season,current,index}){
+ if(season!==2026||!Number.isInteger(current)||current<1||current>18)
+  throw Error('Unverified Inquirer season/week clock');
+ const finalWeek=Math.min(17,current-1);
+ if(finalWeek<10)return{state:'not-ready',season,week:null,finalized_through:finalWeek};
+ if(index?.schema_version!==1||!Array.isArray(index.reports))throw Error('Invalid publication index');
+ const weeks=index.reports.map(r=>Number(r.week)).sort((a,b)=>a-b);
+ if(weeks.some((w,i)=>w!==10+i||w>17)||index.reports.some(r=>Number(r.season)!==season))
+  throw Error('Nonsequential publication ledger');
+ const week=10+weeks.length;
+ if(week>finalWeek)return{state:'up-to-date',season,through_week:week-1,finalized_through:finalWeek};
+ return{state:'due',season,week,finalized_through:finalWeek,missing_weeks:finalWeek-week+1};
+}
 export async function runGithubInquirerPublisher({archiveRoot,fetcher=fetch,now=new Date()}={}){
  if(!archiveRoot)throw Error('Required GitHub archive worktree path missing');
  const read=async(file)=>JSON.parse(await fs.readFile(path.join(archiveRoot,file),'utf8'));
@@ -591,8 +607,9 @@ export async function runGithubInquirerPublisher({archiveRoot,fetcher=fetch,now=
  const season=Number(league.season),current=Number(state.week),finalWeek=Math.min(17,current-1);
  if(Number.isInteger(season)&&season!==2026)throw Error('Inquirer league season changed; archive namespace migration required before publishing '+season);
  if(Number(state.season)&&Number(state.season)!==season)throw Error('Sleeper NFL season and league season mismatch');
- if(!Number.isInteger(current)||!Number.isInteger(season)||season<2026||finalWeek<10)
-  return{state:'not-ready',season,week:null};
+ if(!Number.isInteger(current)||current<1||current>18||season!==2026)
+  throw Error('Unverified Inquirer season/week clock');
+ if(finalWeek<10)return{state:'not-ready',season,week:null,finalized_through:finalWeek};
  const previousManifest=await read('manifest.json');
  if(previousManifest?.schema_version!==1||previousManifest?.season!==2026||previousManifest?.entries?.length!==7)
   throw Error('Immutable original GitHub archive is not the expected verified Weeks 3-9 catalog');
@@ -612,14 +629,13 @@ export async function runGithubInquirerPublisher({archiveRoot,fetcher=fetch,now=
  // forward issue before calculating the next week, or an orphaned index could
  // silently skip an issue forever.
  await verifyForwardPublicationLedger(index,archiveRoot);
- const recorded=new Set(index.reports.map(x=>Number(x.week)));
- let week=10;while(recorded.has(week))week++;
- if(week>finalWeek)return{state:'up-to-date',season,through_week:week-1,finalized_through:finalWeek};
- console.info('github-inquirer-backlog',JSON.stringify({season,first_unpublished_week:week,finalized_through:finalWeek,missing_weeks:finalWeek-week+1}));
- const previous=await read('2026/week-'+pad(week-1)+'.json').catch(async error=>{
-  if(week>10&&error.code==='ENOENT')return read('forward/2026/week-'+pad(week-1)+'.json');
-  throw error;
- });
+ const plan=inquirerPublicationPlan({season,current,index});
+ if(plan.state!=='due')return plan;
+ const week=plan.week;
+ console.info('github-inquirer-backlog',JSON.stringify({season,first_unpublished_week:week,finalized_through:plan.finalized_through,missing_weeks:plan.missing_weeks}));
+ // The forward index binds the exact previous issue. An old orphan file
+ // must never override the canonical predecessor for Week 11 onward.
+ const previous=await read((week===10?'2026/':'forward/2026/')+'week-'+pad(week-1)+'.json');
  if(previous.available!==true||previous.published_locked!==true||Number(previous.week)!==week-1)
   throw Error('Previous immutable GitHub edition not verified for Week '+week);
  const previousEditorial=Number(previous.week)===9?correctWeekNineReaderEdition(previous):previous;
@@ -666,7 +682,7 @@ export async function runGithubInquirerPublisher({archiveRoot,fetcher=fetch,now=
  const contents=JSON.stringify(edition),sha256=digest(contents);
  const rel='forward/2026/week-'+pad(week)+'.json';
  await fs.mkdir(path.dirname(path.join(archiveRoot,rel)),{recursive:true});
- await fs.writeFile(path.join(archiveRoot,rel),contents);
+ await fs.writeFile(path.join(archiveRoot,rel),contents,{flag:'wx'});
  index.reports.push({season,week,path:rel,sha256,generated_at:edition.generated_at,
   editorial_revision:FORWARD_EDITORIAL_REVISION,team_count:32});
  index.reports.sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));

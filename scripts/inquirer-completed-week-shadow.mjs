@@ -1,7 +1,7 @@
 // Disposable archive checkout only; no write credentials, git push, or deployment.
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import {runGithubInquirerPublisher,verifyForwardPublicationLedger} from './publish-inquirer-github-native.mjs';
+import {runGithubInquirerPublisher,verifyForwardPublicationLedger,inquirerPublicationPlan} from './publish-inquirer-github-native.mjs';
 import {githubPublishedInquirerIndex,githubPublishedInquirerEdition} from '../netlify/functions/lib/inquirer-github-published.mjs';
 const root=path.resolve(process.env.INQUIRER_GITHUB_ARCHIVE_ROOT||'../history/inquirer-archive');
 const indexFile=path.join(root,'forward/index.json');
@@ -28,6 +28,21 @@ try{
  const edition=await githubPublishedInquirerEdition(latest.season,latest.week,localFetch);
  if(!edition||edition.teams.length!==32||!edition.league_overview?.headline)throw Error('Reader rejected staged edition');
  if(result.state==='completed'&&latest.week!==result.week)throw Error('Reader did not advance to candidate week');
+ if(result.state==='completed'){
+  const nextClock=latest.week+1;
+  // This second invocation uses only a fixed, explicitly simulated clock.
+  // It must return before any matchup or valuation source is fetched.
+  const sameClock=async url=>{
+   if(url.endsWith('/state/nfl'))return new Response(JSON.stringify({season:latest.season,week:nextClock}));
+   if(/\/league\/1316867686394769408$/.test(url))return new Response(JSON.stringify({season:String(latest.season)}));
+   throw Error('Idempotent publication unexpectedly read '+url);
+  };
+  const replay=await runGithubInquirerPublisher({archiveRoot:root,fetcher:sameClock});
+  if(replay.state!=='up-to-date'||replay.through_week!==latest.week||JSON.stringify(await readIndex())!==JSON.stringify(after))throw Error('Same-week scheduled replay did not preserve archive');
+  const future=inquirerPublicationPlan({season:latest.season,current:Math.min(18,nextClock+1),index:after});
+  if(latest.week<17&&(future.state!=='due'||future.week!==latest.week+1))throw Error('Next-week scheduled progression failed');
+  result={...result,same_week_replay_verified:true,next_week_eligible_on_clock_advance:latest.week<17?future.week:null};
+ }
  result={...result,reader_verified:true,visible_week:latest.week,teams:edition.teams.length,editorial_revision:edition.editorial_revision,previous_issues_preserved:true};
  console.log('INQUIRER_SHADOW_ACCEPTED '+JSON.stringify(result));
 }catch(error){result={...result,reader_verified:false,error:String(error?.stack||error)};console.error(result.error);process.exitCode=1}

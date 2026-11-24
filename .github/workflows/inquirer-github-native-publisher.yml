@@ -175,7 +175,18 @@ jobs:
         working-directory: source
         env:
           INQUIRER_GITHUB_ARCHIVE_ROOT: ../history/inquirer-archive
-        run: node scripts/publish-inquirer-github-native.mjs
+        run: |
+          set -euo pipefail
+          mkdir -p .tmp
+          node scripts/publish-inquirer-github-native.mjs 2>&1 | tee .tmp/inquirer-publisher.log
+      - name: Retain publication attempt diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: inquirer-scheduled-attempt
+          path: source/.tmp/inquirer-publisher.log
+          if-no-files-found: warn
+          retention-days: 14
       - name: Verify staged production issue through public GitHub reader before commit
         working-directory: source
         run: |

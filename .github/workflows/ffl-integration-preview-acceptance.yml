@@ -80,6 +80,7 @@ jobs:
       - run: npm install --ignore-scripts --no-audit --no-fund
       - name: Verify non-destructive weekly badge awards, Hot Seat, Highs, and Managers
         run: |
+          node --test tests/fleeced-daily-week-filter.test.mjs
           node --test tests/league-awards-independent-week-sync.test.mjs tests/weekly-awards-scheduled-capture.test.mjs
           node --test tests/league-all-time-highs-durable.test.mjs tests/league-hot-seat-and-highs-preview.test.mjs
           node --test tests/managers-preview-readonly-fallback.test.mjs tests/managers-client-refresh-runtime.test.mjs tests/managers-spotlight-verified-week.test.mjs

@@ -997,7 +997,7 @@ export async function weeklyAwards({additionalLockedEditions=[],persist=true,str
 
 // League Hub week visibility is independent of the GitHub newspaper archive.
 // Only finalized Sleeper matchups and roster records can advance this feed.
-async function latestCompletedLeagueWeek(){
+async function latestCompletedLeagueWeek(requestedWeek=null){
  const [league,nfl]=await Promise.all([
   fetchJson(`${API}/league/${LEAGUE}`),fetchJson(`${API}/state/nfl`)
  ]);
@@ -1009,7 +1009,10 @@ async function latestCompletedLeagueWeek(){
   fetchJson(`${API}/league/${LEAGUE}/users`)
  ]);
  const newest=Math.min(INQUIRER_FINAL_WEEK,weekNow-1);
- for(let week=newest;week>=Math.max(1,newest-2);week--){
+ const explicit=requestedWeek!==null;
+ if(explicit&&(!Number.isInteger(requestedWeek)||requestedWeek<1||requestedWeek>newest))return{available:false,season,week:requestedWeek,reason:'Requested week is not finalized'};
+ const start=explicit?requestedWeek:newest,end=explicit?requestedWeek:Math.max(1,newest-2);
+ for(let week=start;week>=end;week--){
   const finalized=await completedPublicationWeek(week);
   if(!finalized.complete)continue;
   const scoredProjections=await projections(season,week,league?.scoring_settings||{});
@@ -1017,7 +1020,7 @@ async function latestCompletedLeagueWeek(){
    playerProjections:scoredProjections});
   if(view)return view;
  }
- return{available:false,season,week:null,reason:'Sleeper has not finalized league matchup results'};
+ return{available:false,season,week:requestedWeek,reason:'Sleeper has not finalized league matchup results'};
 }
 async function draftAwards(){
  const league=await fetchJson(`${API}/league/${LEAGUE}`),current=Number(league?.season)||new Date().getFullYear(),years=[current,current-1,current-2,current-3],out=[];
@@ -1218,7 +1221,7 @@ export default async req=>{try{const u=new URL(req.url);
    }
   }
  }
-if(u.searchParams.get('league_latest')==='1')return json(await latestCompletedLeagueWeek());if(u.searchParams.get('weekly')==='1'){
+if(u.searchParams.get('league_week')!==null)return json(await latestCompletedLeagueWeek(Number(u.searchParams.get('league_week'))));if(u.searchParams.get('league_latest')==='1')return json(await latestCompletedLeagueWeek());if(u.searchParams.get('weekly')==='1'){
  // Public newspaper reads must NEVER invoke the old stateful generator.
  // Draft previews still use the existing explicit read-only preview gate.
  if(req.method==='GET'&&u.searchParams.get('preview_editorial')==='1')

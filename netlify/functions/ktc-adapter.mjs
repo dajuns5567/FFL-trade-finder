@@ -248,9 +248,12 @@ export async function refreshKtc(opts={}){
     const poolUrl=new URL(KTC_POOL_URL);
     poolUrl.searchParams.set("v",version);
     poolUrl.searchParams.set("sr","2");
+    // The browser's "versionHeader" option is used for response validation,
+    // not proof that the browser transmits that value as a request header.
+    // Keep the version in the observed URL; avoid injecting an unverified
+    // proprietary request header.
     const poolBody=await fetchText(poolUrl.toString(),opts.fetchImpl||fetch,opts.timeoutMs||TIMEOUT_MS,{
-      "accept":"application/json",
-      "X-KTC-Players-Version":version
+      "accept":"application/json"
     });
     extracted=extractPoolRankings(poolBody);
     responseShape.pool_response_chars=poolBody.length;

@@ -1,4 +1,4 @@
-import {parseKtcRenderedPage,validateKtcRenderedPages} from "./ktc-html-pages.mjs";
+import {parseKtcRenderedPage,deriveKtcSuperflexRanksFromPublishedValues} from "./ktc-html-pages.mjs";
 const KTC_URL="https://keeptradecut.com/dynasty-rankings?format=2";
 const KTC_FALLBACK_URL="https://keeptradecut.com/dynasty-rankings";
 const TIMEOUT_MS=7000;
@@ -301,23 +301,28 @@ export async function refreshKtc(opts={}){
     // Read that directly before asking for the separately blocked JSON pool.
     const firstPageRows=parseKtcRenderedPage(html);
     if(url===KTC_URL&&firstPageRows.length>=40){
-      const pageNumbers=[1,2,3,4,5,6];
-      const pages=await Promise.all(pageNumbers.map(async page=>{
+      // KTC publishes comparable Superflex numeric player values on filtered
+      // position pages. The displayed rank column is filter-relative, so we
+      // derive the combined offensive order from actual published values.
+      const pageRequests=["QB","RB","WR","TE"].flatMap(position=>
+        [1,2].map(page=>({position,page})));
+      const pages=await Promise.all(pageRequests.map(async({position,page})=>{
         const pageUrl=new URL("https://keeptradecut.com/dynasty-rankings");
         pageUrl.searchParams.set("page",String(page));
-        pageUrl.searchParams.set("filters","QB|WR|RB|TE");
+        pageUrl.searchParams.set("filters",position);
         pageUrl.searchParams.set("format","2");
         try{return await fetchText(pageUrl.toString(),opts.fetchImpl||fetch,opts.timeoutMs||TIMEOUT_MS)}
         catch{return ""}
       }));
-      const rendered=validateKtcRenderedPages(pages);
-      responseShape.rendered_html_pages=pageNumbers.length;
+      const rendered=deriveKtcSuperflexRanksFromPublishedValues(pages);
+      responseShape.rendered_html_pages=pages.length;
       responseShape.rendered_html_page_counts=pages.map(x=>parseKtcRenderedPage(x).length);
       responseShape.rendered_html_valid=!!rendered;
+      responseShape.rendered_html_mode="derived-from-published-superflex-values";
       if(rendered)extracted={rows:rendered,rawPlayers:rendered.length,
         excludedDraftPicks:0,excludedNonOffense:0,
-        parserMode:"rendered-html",mode:"explicit-rank",
-        extractionMethod:"server-rendered:dynasty-superflex-pages",
+        parserMode:"published-values",mode:"derived-from-superflex-value",
+        extractionMethod:"server-rendered:position-pages-superflex-values",
         embeddedPlayers:0};
     }
     if(!extracted){

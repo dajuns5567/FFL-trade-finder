@@ -56,7 +56,8 @@ test('actual player loader merges 3 historical wins with verified 2026 Week 6/10
     ]}};},
   document:{getElementById:()=>({set innerHTML(v){paintCount++}})},
   scoringMilestonesRows:()=>'<div/>',
-  console,Date,Map,Number,String,Array,Promise,Set,Math
+  console,Date,Map,Number,String,Array,Promise,Set,Math,
+  esc:x=>String(x),dateShort:x=>String(x)
  };
  vm.createContext(ctx);
  const load=vm.runInContext(milestones+';loadPlayerScoring',ctx);
@@ -64,7 +65,7 @@ test('actual player loader merges 3 historical wins with verified 2026 Week 6/10
  const got=ctx.playerScoringCache.get('4034').weeklyAwards;
  assert.equal(requestedComplete,true);
  assert.equal(got.length,5);
- assert.deepEqual(got.map(a=>a.season+'|'+a.week),[
+ assert.deepEqual(Array.from(got,a=>a.season+'|'+a.week),[
   '2026|10','2026|6','2025|7','2023|15','2023|4'
  ]);
  assert.ok(paintCount>=2);

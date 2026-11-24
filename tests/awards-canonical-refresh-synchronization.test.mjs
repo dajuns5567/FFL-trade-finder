@@ -76,3 +76,14 @@ test('daily independent Awards fallback remains configured but cannot write from
  assert.match(workflow,/node scripts\/verify-scheduled-all-time-highs\.mjs/);
  assert.match(workflow,/node scripts\/verify-durable-all-time-highs-readback\.mjs/);
 });
+
+test('visible Awards rerender when canonical player values refresh without promoting provisional highs',()=>{
+ const hub=read('league-hub-v451.js');
+ assert.match(hub,/let lastHubAwardValueToken=null/);
+ assert.match(hub,/valuesChanged=currentView==='awards'&&!!valueToken&&valueToken!==lastHubAwardValueToken/);
+ assert.match(hub,/if\(changed\|\|valuesChanged\)\{/);
+ assert.match(hub,/if\(valuesChanged\)lastHubAwardValueToken=valueToken/);
+ assert.match(hub,/observer\.observe\(status,\{childList:true,subtree:true,characterData:true\}\)/);
+ assert.match(hub,/new MutationObserver\(\(\)=>\{/);
+ assert.match(hub,/async function refreshAllTimeHighs\(rows,\{record=false,verifiedInputs=false\}=\{\}\)/);
+});

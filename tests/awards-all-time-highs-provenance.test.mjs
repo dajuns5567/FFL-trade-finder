@@ -148,3 +148,36 @@ test('durable independent readback proves certified max per roster/category, not
  const fake={...archive,verified_records:archive.verified_records.map((r,i)=>i===0?{...r,score:r.score-10}:r)};
  assert.throws(()=>assertDurableHighsReadback(fake,capture),/MISSING_OR_LOWER_SCORE/);
 });
+
+test('all twenty real category identities and complete eligible roster coverage are mandatory',()=>{
+ const capture=canonicalInput();
+ const rename={...capture,observations:capture.observations.map(x=>x.award_key==='powerhouse'?{...x,award_key:'unexpected-award'}:x)};
+ assert.throws(()=>validateScheduledHighs(rename),/CATEGORIES_OR_ROSTERS/);
+ const missing={...capture,observations:capture.observations.filter(x=>!(x.award_key==='powerhouse'&&x.roster_id==='32'))};
+ assert.throws(()=>validateScheduledHighs(missing),/CATEGORIES_OR_ROSTERS/);
+ const impostor={...capture,observations:capture.observations.map(x=>x.award_key==='powerhouse'&&x.roster_id==='32'?{...x,roster_id:'33'}:x)};
+ assert.throws(()=>validateScheduledHighs(impostor),/CATEGORIES_OR_ROSTERS/);
+ const saved=nextDurableHighs(baseline(),capture);
+ assert.deepEqual(verifiedCanonicalHighRecords({...saved,verified_records:saved.verified_records.filter(x=>!(x.award_key==='powerhouse'&&x.roster_id==='32'))},league),[]);
+});
+test('Loaded Roster exposes verified highs while preserving chart navigation',()=>{
+ const ui=source('league-hub-v451.js');
+ const a=ui.indexOf('function awardRecordsHTML('),b=ui.indexOf('function weeklyCopy(',a);
+ const mode={'roster-value':false};
+ const ctx={awardHighHistory:[],awardLegacyHighHistory:[],awardHighMode:mode,awardYearFilters:{},awardRecordKey:x=>x,esc:String,teamName:x=>'Team '+x,fmt:String};
+ vm.createContext(ctx);
+ const render=vm.runInContext(ui.slice(a,b)+';rankingsHTML',ctx);
+ const award={key:'roster-value',title:'Loaded Roster',standings:[{roster_id:'1',rank:1,score:1234,detail:'1234 current player value'}]};
+ const current=render([award],award.key);
+ assert.match(current,/data-lh-award-high="roster-value"/);
+ assert.match(current,/data-lh-loaded-roster/);
+ mode['roster-value']=true;
+ const provisional=render([award],award.key);
+ assert.match(provisional,/VERIFIED ALL-TIME HIGH NOT YET ESTABLISHED/);
+ assert.match(provisional,/data-lh-loaded-roster/);
+ ctx.awardHighHistory=[{award_key:'roster-value',roster_id:'1',score:2345,captured_at:at,detail:'2345 historical player value'}];
+ const recorded=render([award],award.key);
+ assert.match(recorded,/2345 historical player value/);
+ assert.match(recorded,/Recorded/);
+ assert.doesNotMatch(recorded,/data-lh-highs-pending/);
+});

@@ -236,7 +236,7 @@ export async function refreshKtc(opts={}){
     const poolUrl=new URL(KTC_POOL_URL);
     poolUrl.searchParams.set("v",version);
     poolUrl.searchParams.set("sr","2");
-    const poolBody=await fetchText(poolUrl,opts.fetchImpl||fetch,opts.timeoutMs||TIMEOUT_MS,{
+    const poolBody=await fetchText(poolUrl.toString(),opts.fetchImpl||fetch,opts.timeoutMs||TIMEOUT_MS,{
       "accept":"application/json",
       "X-KTC-Players-Version":version
     });

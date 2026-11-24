@@ -1,0 +1,19 @@
+name: Inquirer independent reader availability
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/league-hub.mjs'
+      - 'netlify/functions/lib/inquirer-github-published.mjs'
+      - 'tests/inquirer-reader-blob-independence.test.mjs'
+      - '.github/workflows/inquirer-reader-availability.yml'
+permissions:
+  contents: read
+jobs:
+  reader:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/inquirer-reader-blob-independence.test.mjs tests/inquirer-github-archive-reader.test.mjs

@@ -13,15 +13,19 @@ const publishedRoot=()=>ROOT+githubInquirerArchiveBranch()+'/inquirer-archive/';
 const hash=raw=>createHash('sha256').update(raw).digest('hex');
 let cache=null,expires=0,cachedRoot='';
 const get=async(file,fetcher)=>{
- const response=await fetcher(publishedRoot()+file,{cache:'no-store',headers:{accept:'application/json'}});
+ const response=await fetcher(publishedRoot()+file,{cache:'no-store',headers:{accept:'application/json'},signal:AbortSignal.timeout(15000)});
  if(!response.ok){if(response.status===404)return null;throw Error('GitHub Inquirer '+file+' HTTP '+response.status)}
  return Buffer.from(await response.arrayBuffer());
 };
 export async function githubPublishedInquirerIndex(fetcher=fetch,{refresh=false}={}){
  const root=publishedRoot();
  if(!refresh&&fetcher===fetch&&cache&&cachedRoot===root&&Date.now()<expires)return cache;
+ try{
  const bytes=await get('forward/index.json',fetcher);
- if(bytes===null)return{reports:[],editions:new Map()};
+ if(bytes===null){
+  if(cache?.reports?.length&&cachedRoot===root)throw Error('Previously verified forward index temporarily unavailable');
+  return{reports:[],editions:new Map()};
+ }
  const data=JSON.parse(bytes.toString('utf8'));
  if(data.schema_version!==1||!Array.isArray(data.reports))
   throw Error('Invalid GitHub forward newspaper publication index');
@@ -41,6 +45,12 @@ export async function githubPublishedInquirerIndex(fetcher=fetch,{refresh=false}
  const result={reports,editions};
  if(fetcher===fetch){cache=result;cachedRoot=root;expires=Date.now()+60000}
  return result;
+ }catch(error){
+  // The real browser reader can retain a previously verified catalog during
+  // a transient fetch outage. Explicit fresh/post-push probes never reuse it.
+  if(!refresh&&fetcher===fetch&&cache&&cachedRoot===root){console.warn('inquirer-public-index-stale',String(error?.message||error));return{...cache,stale:true}}
+  throw error;
+ }
 }
 export async function githubPublishedInquirerEdition(season,week,fetcher=fetch){
  if(Number(season)!==2026||!Number.isInteger(Number(week))||week<10||week>17)return null;

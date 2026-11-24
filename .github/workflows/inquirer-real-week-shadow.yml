@@ -1,0 +1,63 @@
+name: Inquirer real completed-week end-to-end shadow acceptance
+on:
+  pull_request:
+    paths:
+      - 'scripts/publish-inquirer-github-native.mjs'
+      - 'scripts/verify-inquirer-published-readback.mjs'
+      - 'scripts/verify-deployed-inquirer-compatibility.mjs'
+      - 'scripts/inquirer-completed-week-shadow.mjs'
+      - 'netlify/functions/inquirer-*.mjs'
+      - 'netlify/functions/lib/inquirer-*.mjs'
+      - 'tests/inquirer-github-native-publisher.test.mjs'
+      - '.github/workflows/inquirer-real-week-shadow.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: inquirer-shadow-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+jobs:
+  actual-completed-week:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: source
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: inquirer-archive
+          path: history
+          persist-credentials: false
+      - name: Checkout exact currently published Netlify reader (read-only)
+        uses: actions/checkout@v4
+        with:
+          ref: 5c8573d163557e0880ae1af9f0f7cbe9b6acf32c
+          path: deployed-reader
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install established newsroom dependencies
+        working-directory: source
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+      - name: Run deterministic publisher regression tests
+        working-directory: source
+        run: node --test tests/inquirer-github-native-publisher.test.mjs
+      - name: Generate actual missing completed edition and verify exact reader contract (local only)
+        working-directory: source
+        env:
+          INQUIRER_GITHUB_ARCHIVE_ROOT: ../history/inquirer-archive
+          INQUIRER_DEPLOYED_SOURCE_ROOT: ../deployed-reader
+        run: node scripts/inquirer-completed-week-shadow.mjs
+      - name: Retain candidate and diagnostics for editorial review (not a publication)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: inquirer-completed-week-shadow
+          path: |
+            source/.tmp/inquirer-shadow-result.json
+            history/inquirer-archive/forward/
+          if-no-files-found: warn
+          retention-days: 7

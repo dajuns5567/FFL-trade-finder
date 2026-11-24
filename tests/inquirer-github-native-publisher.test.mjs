@@ -246,10 +246,14 @@ test('forward recap retains the five locked newsroom sections and verified playo
  assert.deepEqual(inspectMajorRecapArchitecture(edition),[]);
  assert.equal(edition.league_overview.sections.length,5);
  const race=edition.league_overview.sections[1].paragraphs.join(' ');
- assert.match(race,/first place/);
+ assert.match(race,/first place/i);
  assert.match(race,/Fourth place/);
  assert.match(race,/Week 14 wildcard round/);
  assert.equal(restoreWeeklyPlayoffDesk(edition),false,'do not double-insert race desk');
+ const next={...edition,week:11,league_overview:{sections:edition.league_overview.sections.filter((_,i)=>i!==1)}};
+ assert.equal(restoreWeeklyPlayoffDesk(next),true);
+ assert.notEqual(next.league_overview.sections[1].paragraphs.join(' '),race);
+ assert.doesNotMatch(next.league_overview.sections[1].paragraphs.join(' '),/convenient collapse|borrow points/);
 });
 
 test('authorized initial production cutover is exact-site and exact-commit; regular weekly editions never deploy Netlify',()=>{
@@ -263,5 +267,58 @@ test('authorized initial production cutover is exact-site and exact-commit; regu
  const workflow=readFileSync(new URL('../.github/workflows/inquirer-github-native-publisher.yml',import.meta.url),'utf8');
  assert.match(workflow,/ref: inquirer-archive/);
  assert.match(workflow,/git push origin HEAD:inquirer-archive/);
- assert.match(workflow,/github\.ref == 'refs\/heads\/main' && github\.event_name != 'push'/);
+ assert.match(workflow,/github\.ref == 'refs\/heads\/main' && \(github\.event_name == 'schedule' \|\| github\.event_name == 'workflow_dispatch' \|\| github\.event_name == 'push'\)/);
 });
+
+ test('a recent valuation transition uses genuine shorter same-model observations, never the prior model',async()=>{
+ const {selectComparableMarketSnapshots}=await import('../scripts/publish-inquirer-github-native.mjs');
+ const league='1316867686394769408';
+ const make=(t,model,n)=>({league,t,fingerprint:'f'+n,valuation_model:model,valuation_contract:'contract-'+model,rows:Array.from({length:100},(_,i)=>({id:String(i+1),value:100+i})),teams:Array.from({length:32},(_,i)=>({id:String(i+1),value:1000+i}))});
+ const snaps=[make('2026-11-14T00:00:00Z','old',1),make('2026-11-21T03:52:00Z','old',2),make('2026-11-21T04:35:00Z','new',3),make('2026-11-23T20:36:00Z','new',4),make('2026-11-25T00:00:00Z','new',5)];
+ const items=snaps.map((s,i)=>({t:s.t,path:'value-history/snapshots/2026/11/'+i+'.json',fingerprint:s.fingerprint,valuation_model:s.valuation_model,valuation_contract:s.valuation_contract}));
+ const read=async row=>snaps.find(s=>s.t===row.t);
+ const result=await selectComparableMarketSnapshots({league_id:league,items},'2026-11-24T23:00:00Z',read);
+ assert.equal(result.latest.t,snaps[3].t);assert.equal(result.baseline.t,snaps[2].t);assert.equal(result.period,'ERA');assert.ok(result.elapsedHours<168);
+ const market=buildArchivedMarketContext(result);assert.equal(market.period,'ERA');assert.equal(market.teams.length,32);
+ await assert.rejects(()=>selectComparableMarketSnapshots({league_id:league,items:items.filter((_,i)=>i!==2)},'2026-11-24T23:00:00Z',read),/No second comparable/);
+ const old=await selectComparableMarketSnapshots({league_id:league,items},'2026-11-21T04:00:00Z',read);
+ assert.equal(old.period,'7D');assert.equal(old.baseline.t,snaps[0].t);
+ });
+
+ test('source retries recover rate limits and server errors but not permanent access restrictions',async()=>{
+ const {fetchInquirerJson}=await import('../scripts/publish-inquirer-github-native.mjs');
+ let calls=0;const statuses=[429,503,200];
+ const read=async()=>{const status=statuses[calls++];return{status,ok:status===200,json:async()=>({verified:true})}};
+ assert.deepEqual(await fetchInquirerJson('https://fixture.invalid/data',read,async()=>{}),{verified:true});assert.equal(calls,3);
+ calls=0;await assert.rejects(()=>fetchInquirerJson('https://fixture.invalid/data',async()=>{calls++;return{status:403,ok:false}},async()=>{}),/403/);assert.equal(calls,1);
+ });
+ test('a due but unavailable week is not a successful publication',()=>{
+ const source=readFileSync(new URL('../scripts/publish-inquirer-github-native.mjs',import.meta.url),'utf8');
+ assert.match(source,/result\.state==='not-ready'&&Number\.isInteger\(result\.week\)\)process\.exitCode=3/);
+ assert.match(source,/published:false,admitted:/);
+ });
+
+ test('unattended ledger advances Week 11 to Week 12 only after the clock advances; retry never skips a held issue',async()=>{
+ const {inquirerPublicationPlan}=await import('../scripts/publish-inquirer-github-native.mjs');
+ const index=weeks=>({schema_version:1,reports:weeks.map(week=>({season:2026,week}))});
+ const plan=(current,weeks)=>inquirerPublicationPlan({season:2026,current,index:index(weeks)});
+ assert.deepEqual(plan(12,[10]),{state:'due',season:2026,week:11,finalized_through:11,missing_weeks:1});
+ assert.equal(plan(12,[10,11]).state,'up-to-date');
+ assert.equal(plan(13,[10]).week,11,'a held Week 11 must be retried before Week 12');
+ assert.deepEqual(plan(13,[10,11]),{state:'due',season:2026,week:12,finalized_through:12,missing_weeks:1});
+ assert.equal(plan(13,[10,11,12]).state,'up-to-date');
+ assert.throws(()=>plan(13,[10,12]),/Nonsequential/);
+ assert.throws(()=>plan(13,[10,11,11]),/Nonsequential/);
+ assert.throws(()=>plan(0,[10]),/clock/);
+ assert.throws(()=>plan(NaN,[10]),/clock/);
+ });
+ test('scheduled publication reads the exact immutable predecessor and never overwrites a staged issue',()=>{
+ const source=readFileSync(new URL('../scripts/publish-inquirer-github-native.mjs',import.meta.url),'utf8');
+ assert.match(source,/read\(\(week===10\?'2026\/':'forward\/2026\/'\)\+'week-'/);
+ assert.match(source,/fs\.writeFile\(path\.join\(archiveRoot,rel\),contents,\{flag:'wx'\}\)/);
+ const workflow=readFileSync(new URL('../.github/workflows/inquirer-github-native-publisher.yml',import.meta.url),'utf8');
+ assert.match(workflow,/cron: '19,49 \* \* \* \*'/);
+ assert.match(workflow,/cancel-in-progress: \$\{\{ github\.event_name == 'pull_request' \|\| \(github\.event_name == 'push' && github\.ref != 'refs\/heads\/main'\) \}\}/);
+ assert.match(workflow,/INQUIRER_VERIFY_LIVE_SITE: '1'/);
+ assert.match(workflow,/node scripts\/verify-inquirer-published-readback\.mjs/);
+ });

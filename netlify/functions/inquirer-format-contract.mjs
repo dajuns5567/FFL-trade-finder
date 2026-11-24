@@ -11,6 +11,15 @@ export function inspectInquirerFormatContract(edition){
     for(const kind of INQUIRER_TEAM_DESKS){
       if(kinds.filter(k=>k===kind).length!==1)issues.push({id:'week4-team-section-contract',team:name,kind});
     }
+    // Prevent a shortened alternate template or an appended ninth desk from
+    // masquerading as the approved eight-desk Week 4 newspaper.
+    if(kinds.length!==INQUIRER_TEAM_DESKS.length)
+      issues.push({id:'week4-team-eight-desk-count',team:name,actual:kinds});
+    // The canonical flat article must contain precisely the section prose:
+    // otherwise the public reader can display a different format from CI.
+    if(JSON.stringify(t?.inquirer_article?.paragraphs||[])!==
+       JSON.stringify(sections.flatMap(s=>s.paragraphs||[])))
+      issues.push({id:'week4-team-flattened-mirror',team:name});
     if(kinds[0]!=='lede'||kinds.at(-1)!=='outlook'||kinds.indexOf('sentiment')>kinds.indexOf('outlook'))
       issues.push({id:'week4-team-section-order',team:name});
     if((sections.find(s=>s.kind==='outlook')?.paragraphs||[]).length>3)

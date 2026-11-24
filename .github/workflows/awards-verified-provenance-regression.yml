@@ -7,6 +7,10 @@ on:
       - 'league-hub-v451.js'
       - 'scripts/archive-league-all-time-highs.mjs'
       - 'scripts/verify-durable-all-time-highs-readback.mjs'
+      - 'scripts/awards-canonical-refresh-parity.mjs'
+      - 'scripts/verify-scheduled-all-time-highs.mjs'
+      - '.github/workflows/value-history-headless-refresh.yml'
+      - 'tests/awards-canonical-refresh-synchronization.test.mjs'
       - 'tests/awards-all-time-highs-provenance.test.mjs'
       - 'tests/league-all-time-highs-durable.test.mjs'
       - '.github/workflows/awards-verified-provenance-regression.yml'
@@ -29,6 +33,10 @@ jobs:
           node --check league-hub-v451.js
           node --check scripts/archive-league-all-time-highs.mjs
           node --check scripts/verify-durable-all-time-highs-readback.mjs
+          node --check scripts/awards-canonical-refresh-parity.mjs
+          node --check scripts/verify-scheduled-all-time-highs.mjs
+      - name: Verify Awards update exactly with canonical valuation refreshes
+        run: node --test tests/awards-canonical-refresh-synchronization.test.mjs
       - name: Reject the single-snapshot legacy highs and verify new canonical records
         run: node --test tests/awards-all-time-highs-provenance.test.mjs
       - name: Preserve approved scheduled archive and historical writer contracts

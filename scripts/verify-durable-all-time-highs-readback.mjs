@@ -12,14 +12,15 @@ export function assertDurableHighsReadback(archive,observation){
     String(archive?.league_id)!=='1316867686394769408'||
     !Array.isArray(archive?.records)||archive.records.length<500)
   throw Error('AWARD_HIGHS_READBACK_INCOMPLETE');
- // No new record means the writer deliberately leaves the earlier verified
- // capture timestamp and source SHA untouched. Validate scores below rather
- // than claiming unchanged highs were freshly set.
- if(!Number.isFinite(Date.parse(archive.latest_observation_at))||
-    Date.parse(archive.latest_observation_at)>Date.parse(o.captured_at)||
-    !/^[a-f0-9]{40}$/.test(String(archive.source_commit||''))||
-    typeof archive.canonical_fingerprint!=='string')
-  throw Error('AWARD_HIGHS_READBACK_INVALID_PROVENANCE');
+ // High-score timestamps remain the original first-earned dates, but
+ // the ledger's last validated capture must match THIS exact value refresh.
+ // An earlier archive with coincidentally higher scores is not proof that
+ // the current update ran or that Awards and Player Values agree.
+ if(archive.latest_observation_at!==o.captured_at||
+    archive.source_commit!==o.source_commit||
+    archive.canonical_fingerprint!==o.canonical_fingerprint||
+    archive.model_used!==o.model_used)
+  throw Error('AWARD_HIGHS_READBACK_REFRESH_MISMATCH');
  if(archive.model_used==='idp-v96-single-source-continuous-v95-evidence'&&
     o.model_used==='idp-v101-verified-role-growth-v100-source-free-lineage')
   throw Error('AWARD_HIGHS_READBACK_MODEL_ROLLBACK');

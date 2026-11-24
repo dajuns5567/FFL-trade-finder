@@ -613,9 +613,38 @@ function careerRankingsHTML(key,md){const labels={wins:'Most Wins',championships
 function latestWeeklyAwardRecord(data=weeklyAwardsCache){
  const rows=Array.isArray(data?.records)?data.records:[];return rows.slice().sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week))[0]||null;
 }
+function pendingHotSeatFromCompletedWeek(w){
+ const favorites=(w?.available&&Array.isArray(w.teams)?w.teams:[]).filter(g=>
+  g?.won===false&&g.points!=null&&g.opponent_points!=null&&
+  Number.isFinite(Number(g.points))&&Number.isFinite(Number(g.opponent_points))&&
+  Number(g.points)<Number(g.opponent_points)&&
+  g.projected!=null&&g.opponent_projected!=null&&
+  Number.isFinite(Number(g.projected))&&Number.isFinite(Number(g.opponent_projected))&&
+  Number(g.projected)>Number(g.opponent_projected));
+ if(!favorites.length)return null;
+ const g=favorites.slice().sort((a,b)=>
+  (Number(b.projected)-Number(b.opponent_projected))-
+  (Number(a.projected)-Number(a.opponent_projected))||
+  String(a.roster_id).localeCompare(String(b.roster_id)))[0];
+ return{type:'hot-seat',title:'🔥 Hot Seat',roster_id:g.roster_id,
+  manager_name:g.manager_name,team_name:g.team_name,
+  detail:'Projected to win by '+(Number(g.projected)-Number(g.opponent_projected)).toFixed(1)+
+   ' • lost by '+(Number(g.opponent_points)-Number(g.points)).toFixed(1),
+  provisional:true};
+}
 function weeklyAwardCardsHTML(data=weeklyAwardsCache){
- const rec=latestWeeklyAwardRecord(data),rows=rec?.manager_awards||[];if(!rec||!rows.length)return'';
- return '<div class="lh-card lh-wide"><h3>🏅 Weekly Manager Awards — '+esc(rec.season+' Week '+rec.week)+'</h3><div class="lh-sub">These badges are locked to the completed week and remain on the winning manager’s profile.</div><div class="lh-grid">'+rows.map(a=>'<div class="lh-card"><h3>'+esc(a.title)+'</h3><div class="lh-story"><b>'+esc(a.manager_name||teamName(a.roster_id))+'</b><small>'+esc(a.team_name||teamName(a.roster_id))+' • '+esc(a.detail||'')+'</small></div></div>').join('')+'</div></div>';
+ const rec=latestWeeklyAwardRecord(data);
+ if(!rec)return'';
+ const live=spotlightWeeklyCache?.available?spotlightWeeklyCache:liveLeagueWeekCache;
+ const currentWeek=live?.available&&Number(live.season)===Number(rec.season)&&
+  Number(live.week)===Number(rec.week);
+ const rows=Array.isArray(rec.manager_awards)?rec.manager_awards.slice():[];
+ if(currentWeek&&!rows.some(x=>x.type==='hot-seat')){
+  const derived=pendingHotSeatFromCompletedWeek(live);
+  if(derived)rows.unshift(derived);
+ }
+ if(!rows.length)return'';
+ return '<div class="lh-card lh-wide"><h3>🏅 Weekly Manager Awards — '+esc(rec.season+' Week '+rec.week)+'</h3><div class="lh-sub">Archived badges are locked to their completed week; provisional finalized-score Hot Seat results are labeled until the weekly award archive catches up.</div><div class="lh-grid">'+rows.map(a=>'<div class="lh-card"><h3>'+esc(a.title)+'</h3><div class="lh-story"><b>'+esc(a.manager_name||teamName(a.roster_id))+'</b><small>'+esc(a.team_name||teamName(a.roster_id))+' • '+esc(a.detail||'')+(a.provisional?' • Current verified result, pending archival':'')+'</small></div></div>').join('')+'</div></div>';
 }
 function managerWeeklyBadgesHTML(id,mgr,data=weeklyAwardsCache){
  const uid=String(mgr?.user_id||''),rid=String(id),badges=(data?.records||[]).flatMap(rec=>(rec.manager_awards||[]).filter(a=>(uid&&a.manager_user_id&&String(a.manager_user_id)===uid)||String(a.roster_id||'')===rid).map(a=>({...a,season:rec.season,week:rec.week,captured_at:rec.captured_at||''}))).sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week));

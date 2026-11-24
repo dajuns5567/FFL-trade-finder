@@ -1,0 +1,27 @@
+name: League Hub Hot Seat preview regression
+on:
+  pull_request:
+    paths:
+      - 'league-hub-v451.js'
+      - 'netlify/functions/league-hub.mjs'
+      - 'netlify/functions/lib/league-hot-seat.mjs'
+      - 'netlify/functions/lib/league-completed-week.mjs'
+      - 'tests/preview617-hot-seat-restoration.test.mjs'
+      - '.github/workflows/preview617-hot-seat-restoration.yml'
+  workflow_dispatch:
+jobs:
+  verify-hot-seat:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Source syntax
+        run: |
+          node --check league-hub-v451.js
+          node --check netlify/functions/league-hub.mjs
+          node --check netlify/functions/lib/league-hot-seat.mjs
+          node --check netlify/functions/lib/league-completed-week.mjs
+      - name: Verify Week 10 Hot Seat and strict projection provenance
+        run: node --test tests/preview617-hot-seat-restoration.test.mjs

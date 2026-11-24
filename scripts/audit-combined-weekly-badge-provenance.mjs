@@ -77,8 +77,30 @@ export function verifyCombinedBadgeProvenance(readCurrent,readRef,{approvedMarke
  return{ok:mismatch.length===0,checked:VERIFIED_SOURCES.length,mismatch,
   note:'Verified GitHub source provenance; live Sleeper data and badge rendering still need external readback'};
 }
+// Pinned integration baseline: frozen #620 plus the isolated Awards #624
+// runtime patch. No mutable branch or current-worktree-derived expected hash.
+// Retain the original transformation verifier for legacy badge-only releases.
+export const INTEGRATED_RUNTIME_BLOBS=Object.freeze({
+ 'netlify/functions/league-hub.mjs':'f25151515b4a93267d783a06a585a4abc8dca88c',
+ 'league-hub-v451.js':'bf512d960d276fcf97e13b68aded335d80575351',
+ 'netlify/functions/weekly-awards-refresh.mjs':'c3f0c3527e7fb9ef2bb8920f92cfd5e66dcf1596',
+ 'netlify/functions/value-history.mjs':'93993faf45620a84c3d81122669b9f57360f8ce1',
+ 'value-history-v276.js':'8ae6fded37628ed28ae1b6bcb64137347c312600',
+ 'netlify/functions/lib/player-weekly-milestone-awards.mjs':'74baf9df3761e4b2aedc76e58aa3819cc5b821a6'
+});
+export function verifyPinnedIntegration(readBlob){
+ const mismatch=[];
+ for(const [file,expected] of Object.entries(INTEGRATED_RUNTIME_BLOBS)){
+  const actual=readBlob(file);
+  if(actual!==expected)mismatch.push({file,expected,actual,reason:'runtime differs from pinned frozen baseline or isolated Awards patch'});
+ }
+ return{ok:mismatch.length===0,checked:6,mismatch,note:'Exact GitHub blob provenance; live Sleeper data and badge rendering still need external readback'};
+}
 const git=(...args)=>execFileSync('git',args,{encoding:'utf8',stdio:['ignore','pipe','pipe']});
 export function verifyLocalBadgeIntegration(){
+ // Explicitly detect the integrated Awards generation, otherwise preserve the original gate.
+ const integrated=readFileSync(path.join(process.cwd(),'league-hub-v451.js'),'utf8').includes('function loadedRosterRankingsHTML(a){const high=!!awardHighMode[a.key]');
+ if(integrated)return verifyPinnedIntegration(file=>git('hash-object',file).trim());
  return verifyCombinedBadgeProvenance(
   file=>readFileSync(path.join(process.cwd(),file),'utf8'),
   (pr,file)=>git('show','refs/remotes/pr-badge-source/'+pr+':'+file),

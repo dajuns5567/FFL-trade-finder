@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {VERIFIED_SOURCES,verifyCombinedBadgeProvenance,verifyLocalBadgeIntegration}
+import {VERIFIED_SOURCES,verifyCombinedBadgeProvenance,verifyLocalBadgeIntegration,verifyPinnedIntegration,INTEGRATED_RUNTIME_BLOBS}
  from '../scripts/audit-combined-weekly-badge-provenance.mjs';
 
 const key=(pr,file)=>pr+':'+file;
@@ -40,4 +40,13 @@ test('badge integration preserves exact verified Market overlay and all six prod
  const result=verifyLocalBadgeIntegration();
  assert.equal(result.ok,true,JSON.stringify(result.mismatch));
  assert.equal(result.checked,6);
+});
+
+test('pinned integration rejects a changed or missing runtime blob in every critical source',()=>{
+ assert.equal(Object.keys(INTEGRATED_RUNTIME_BLOBS).length,6);
+ assert.equal(verifyPinnedIntegration(file=>INTEGRATED_RUNTIME_BLOBS[file]).ok,true);
+ for(const file of Object.keys(INTEGRATED_RUNTIME_BLOBS)){
+  const result=verifyPinnedIntegration(name=>name===file?'wrong-blob':INTEGRATED_RUNTIME_BLOBS[name]);
+  assert.equal(result.ok,false);assert.equal(result.mismatch.length,1);assert.equal(result.mismatch[0].file,file);
+ }
 });

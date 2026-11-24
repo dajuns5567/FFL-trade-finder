@@ -148,7 +148,7 @@ test('KTC fetches full asynchronous dynasty player-pool JSON when HTML has three
  assert.equal(result.rankings[0].player,'Fixture Player 1');
 });
 
-test('KTC versioned fetch sends the live player-pool version header, not a static token',async()=>{
+test('KTC fetch uses versioned URL without an unverified custom request header',async()=>{
  const version='2611240010-a-realistic-build-token';
  const html='<script>var oneQBPlayers = '+JSON.stringify(fixture(3))+
   ';var playersVersion = "'+version+'";var playersArray=[];'+
@@ -161,7 +161,7 @@ test('KTC versioned fetch sends the live player-pool version header, not a stati
  assert.equal(result.valid,true);
  const pool=requests.find(x=>x.url.includes('/player-pool'));
  assert.ok(pool);
- assert.equal(pool.headers['X-KTC-Players-Version'],version);
+ assert.equal(pool.headers['X-KTC-Players-Version'],undefined);
  const parsedUrl=new URL(pool.url);
  assert.equal(parsedUrl.pathname,'/dynasty-rankings/player-pool');
  assert.equal(parsedUrl.searchParams.get('v'),version);

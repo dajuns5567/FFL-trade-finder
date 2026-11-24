@@ -246,3 +246,46 @@ test('a rejected versioned player-pool request records the attempted feed withou
  assert.ok(poolRequests.every(x=>new URL(x.url).searchParams.get('v')===version));
  assert.ok(poolRequests.every(x=>new URL(x.url).searchParams.get('sr')==='2'));
 });
+
+import {parseKtcRenderedPage,validateKtcRenderedPages} from '../netlify/functions/ktc-html-pages.mjs';
+function ktcHtmlPage(start,count=50){
+ const rows=Array.from({length:count},(_,i)=>{
+  const rank=start+i,position=['QB','RB','WR','TE'][i%4];
+  return '<div class="onePlayer"><div class="single-ranking-wrapper"><div class="single-ranking">'+
+   '<div class="rank-number"><p>'+rank+'</p></div>'+
+   '<div class="player-name"><p><a href="/player/'+rank+'">Fixture Player '+rank+'</a><span class="player-team">NYG</span></p></div>'+
+   '<div class="position-team"><p class="position">'+position+rank+'</p></div>'+
+   '<div class="value"><p>'+(9999-rank)+'</p></div></div></div></div>';
+ });
+ return '<html><div class="" id="rankings-page-rankings">'+rows.join('')+'</div></html>';
+}
+test('parse 50 actual-shape KTC ranking HTML rows, not sidebar or 1QB arrays',()=>{
+ const html=ktcHtmlPage(1);
+ const rows=parseKtcRenderedPage(html);
+ assert.equal(rows.length,50);
+ assert.deepEqual(rows[0],{rank:1,player:'Fixture Player 1',position:'QB',value:9998});
+ assert.equal(rows[49].rank,50);
+ assert.equal(parseKtcRenderedPage('<div class="topFiveName">Fixture Player 1</div>').length,0);
+});
+test('validated page HTML rejects duplicated or missing ranking pages',()=>{
+ const pages=Array.from({length:6},(_,i)=>ktcHtmlPage(i*50+1));
+ assert.equal(validateKtcRenderedPages(pages)?.length,300);
+ assert.equal(validateKtcRenderedPages([pages[0],pages[0],...pages.slice(2)]),null);
+ assert.equal(validateKtcRenderedPages(pages.slice(0,5)),null);
+});
+test('ingests 300 current server-rendered KTC Superflex ranks without calling denied JSON feed',async()=>{
+ const first=ktcHtmlPage(1);
+ const requested=[];
+ const result=await refreshKtc({fetchImpl:async url=>{
+  requested.push(url);
+  const page=Number(new URL(url).searchParams.get('page')||1);
+  return {ok:true,text:async()=>page>=1&&page<=6?ktcHtmlPage((page-1)*50+1):first};
+ }});
+ assert.equal(result.valid,true);
+ assert.equal(result.players_extracted,300);
+ assert.equal(result.diagnostics.extraction_method,'server-rendered:dynasty-superflex-pages');
+ assert.equal(result.format,'dynasty-superflex');
+ assert.equal(result.reducedWeight,true);
+ assert.ok(requested.every(url=>!url.includes('/player-pool')));
+ assert.ok(requested.filter(url=>new URL(url).searchParams.has('page')).every(url=>new URL(url).searchParams.get('format')==='2'));
+});

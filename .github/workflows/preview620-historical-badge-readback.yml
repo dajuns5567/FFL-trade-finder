@@ -1,0 +1,20 @@
+name: Complete Player of Week historical badges
+on:
+  pull_request:
+    paths:
+      - 'value-history-v276.js'
+      - 'tests/preview620-historical-player-badge-readback.test.mjs'
+      - '.github/workflows/preview620-historical-badge-readback.yml'
+  workflow_dispatch:
+jobs:
+  complete-badge-readback:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Check Javascript source syntax
+        run: node --check value-history-v276.js
+      - name: Verify all 5 McCaffrey awards survive independently verified 2026 paint
+        run: node --test tests/preview620-historical-player-badge-readback.test.mjs

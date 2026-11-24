@@ -1,0 +1,27 @@
+name: Managers read-only preview fallback
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/league-hub.mjs'
+      - 'tests/managers-preview-readonly-fallback.test.mjs'
+      - 'tests/managers-client-refresh-runtime.test.mjs'
+      - 'tests/managers-spotlight-verified-week.test.mjs'
+      - '.github/workflows/managers-readonly-preview-ci.yml'
+  push:
+    branches:
+      - fix/managers-readonly-preview-fallback-20261122
+permissions:
+  contents: read
+jobs:
+  managers-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate Managers source and read-only fallback
+        run: |
+          node --check netlify/functions/league-hub.mjs
+          node --test tests/managers-preview-readonly-fallback.test.mjs tests/managers-client-refresh-runtime.test.mjs tests/managers-spotlight-verified-week.test.mjs

@@ -88,7 +88,8 @@ test('the authentic UI and API, not fabricated watchlists, are used by the Marke
  assert.match(ui,/data-vh-intel-view-all/);
  assert.match(ui,/data-vh-volatility-pool/);
  assert.match(backend,/market_insights/);
- assert.match(backend,/marketInsightsFromSnapshots\(snaps\)/);
+ assert.match(backend,/marketInsightsFromSnapshots\(source\.snaps\)/);
+ assert.match(backend,/getMarketSourceSnapshots\(s\)/);
  assert.match(site,/value-history-v276\.js\?v=/,'real site must load Value History UI; cache token may differ by release');
  assert.doesNotMatch(site,/market-dashboard-analytics-v528/);
 });

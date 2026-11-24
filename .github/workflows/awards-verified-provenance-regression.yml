@@ -1,0 +1,48 @@
+name: Awards independently verified historical highs
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/lib/league-all-time-highs.mjs'
+      - 'netlify/functions/league-hub.mjs'
+      - 'league-hub-v451.js'
+      - 'scripts/archive-league-all-time-highs.mjs'
+      - 'scripts/verify-durable-all-time-highs-readback.mjs'
+      - 'scripts/awards-canonical-refresh-parity.mjs'
+      - 'scripts/verify-scheduled-all-time-highs.mjs'
+      - '.github/workflows/value-history-headless-refresh.yml'
+      - 'tests/awards-canonical-refresh-synchronization.test.mjs'
+      - 'tests/awards-trade-edge-reconciliation.test.mjs'
+      - 'tests/awards-all-time-highs-provenance.test.mjs'
+      - 'tests/league-all-time-highs-durable.test.mjs'
+      - '.github/workflows/awards-verified-provenance-regression.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-highs:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check all edited Awards sources compile
+        run: |
+          node --check netlify/functions/lib/league-all-time-highs.mjs
+          node --check netlify/functions/league-hub.mjs
+          node --check league-hub-v451.js
+          node --check scripts/archive-league-all-time-highs.mjs
+          node --check scripts/verify-durable-all-time-highs-readback.mjs
+          node --check scripts/awards-canonical-refresh-parity.mjs
+          node --check scripts/verify-scheduled-all-time-highs.mjs
+      - name: Verify Awards update exactly with canonical valuation refreshes
+        run: node --test tests/awards-canonical-refresh-synchronization.test.mjs
+      - name: Reject the single-snapshot legacy highs and verify new canonical records
+        run: node --test tests/awards-all-time-highs-provenance.test.mjs
+      - name: Reconcile cumulative trade edge and unique transactions
+        run: node --test tests/awards-trade-edge-reconciliation.test.mjs
+      - name: Preserve approved scheduled archive and historical writer contracts
+        run: node --test tests/league-all-time-highs-durable.test.mjs
+      - name: Preserve prior League Hub and award-week independence
+        run: node --test tests/league-hot-seat-and-highs-preview.test.mjs tests/league-week-independent-news.test.mjs

@@ -1,0 +1,83 @@
+name: FFL multi-subsystem integration preview verification
+on:
+  pull_request:
+    paths:
+      - 'league-hub-v451.js'
+      - 'value-history-v276.js'
+      - 'netlify/functions/league-hub.mjs'
+      - 'netlify/functions/value-history.mjs'
+      - 'netlify/functions/site-v29.mjs'
+      - 'trade-specific-*.js'
+      - 'trade-finder-v256-compiled.js'
+      - 'scripts/approved-*-overlay.mjs'
+      - 'tests/managers-*.test.mjs'
+      - '.github/workflows/ffl-integration-preview-acceptance.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  full-source-provenance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fetch approved badge and awards heads read-only
+        run: |
+          for pr in 579 580; do
+            git fetch --no-tags origin "+refs/pull/$pr/head:refs/remotes/pr-badge-source/$pr"
+          done
+      - name: Assert exact integrated source transformations, not marker-only presence
+        run: |
+          node --check scripts/audit-combined-weekly-badge-provenance.mjs
+          node --test tests/audit-combined-weekly-badge-provenance.test.mjs
+          node scripts/audit-combined-weekly-badge-provenance.mjs
+          node --check netlify/functions/site-v29.mjs
+          node --check netlify/functions/league-hub.mjs
+          node --check netlify/functions/value-history.mjs
+          node --check league-hub-v451.js
+          node --check value-history-v276.js
+  market-parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Verify full 1D–ALL archive, intelligence invalidation and no helper regression
+        run: |
+          node --test tests/market-period-canonical-parity-v116.test.mjs tests/market-intelligence-original-recovery.test.mjs tests/value-history-model-era-v90.test.mjs
+          node --test tests/market-intelligence-refresh-consistency.test.mjs
+  finder:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify restored Finder, performance and assembled loader
+        run: |
+          node --test tests/finder-natural-filter-matrix.test.mjs tests/finder-add-assets-complements.test.mjs tests/targeted-max-value-search-stall.test.mjs
+          node --test tests/finder-assembled-site-loader.test.mjs
+  awards-managers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Verify non-destructive weekly badge awards, Hot Seat, Highs, and Managers
+        run: |
+          node --test tests/league-awards-independent-week-sync.test.mjs tests/weekly-awards-scheduled-capture.test.mjs
+          node --test tests/league-all-time-highs-durable.test.mjs tests/league-hot-seat-and-highs-preview.test.mjs
+          node --test tests/managers-preview-readonly-fallback.test.mjs tests/managers-client-refresh-runtime.test.mjs tests/managers-spotlight-verified-week.test.mjs
+          node --test tests/player-weekly-milestone-awards.test.mjs tests/player-weekly-badge-completion-readback.test.mjs tests/weekly-awards-badges-combined-contract.test.mjs

@@ -1,4 +1,6 @@
 import {snapshotsThroughEdition} from './lib/inquirer-market-window.mjs';
+import {playerWeeklyMilestoneAwards} from './lib/player-weekly-milestone-awards.mjs';
+import {verifiedSleeperCompletedAwardWeek} from './lib/league-award-completion-fallback.mjs';
 import {liveTradeWeekLimit,mergeCompletedTradeAuditWeeks} from './lib/trade-history-live-source.mjs';
 import {getPickOrder5050,postCutoverTrade} from './lib/pick-order-5050.mjs';
 import { getStore } from '@netlify/blobs';
@@ -212,21 +214,52 @@ function valuationModelId(snapshot){
  // explicitly supplied, well-formed valuation_model can establish an era.
  return /^[a-z0-9][a-z0-9._:-]{2,95}$/i.test(raw)?raw:null;
 }
+// Market-only provenance reconciliation for a verified silent handoff:
+// the final untagged archive observation may already contain the next
+// explicitly tagged model's values. Assign the preceding observation to
+// that model ONLY when the full player population is near-identical.
+// Do not modify immutable historical snapshots or infer from a single player.
+function marketSilentModelBridge(before,tagged){
+ if(valuationModelId(before)!==null||valuationModelId(tagged)===null)return false;
+ const old=rowMap(before),next=rowMap(tagged),min=Math.min(old.size,next.size);
+ if(min<100)return false;
+ let shared=0,near=0,totalDiff=0;
+ for(const [id,row] of old){
+  const other=next.get(id);
+  if(!other||String(other.pos)!==String(row.pos))continue;
+  const a=Number(row.value),b=Number(other.value);
+  if(!Number.isFinite(a)||!Number.isFinite(b))continue;
+  shared++;
+  const delta=Math.abs(a-b);
+  if(delta<=10)near++;
+  totalDiff+=delta;
+ }
+ return shared>=Math.ceil(min*.9)&&near>=Math.ceil(shared*.96)&&
+  totalDiff/shared<=6;
+}
+function effectiveMarketModels(ordered){
+ const ids=ordered.map(valuationModelId);
+ for(let i=1;i<ordered.length;i++){
+  const current=ids[i],previous=ids[i-1];
+  if(current&&previous===null&&marketSilentModelBridge(ordered[i-1],ordered[i]))
+   ids[i-1]=current;
+ }
+ return ids;
+}
 function comparableMarketEra(snaps){
  const ordered=(snaps||[]).filter(x=>x?.t&&Array.isArray(x?.rows))
   .slice().sort((a,b)=>String(a.t).localeCompare(String(b.t)));
  if(!ordered.length)return{snaps:[],model:null,changedAt:null,priorModel:null};
- const model=valuationModelId(ordered.at(-1));
- // An entirely unversioned archive keeps its historical behavior. But an
- // unversioned snapshot after a tagged one is NOT evidence that it shares
- // that model: isolate that suffix to avoid fabricated market movement.
- if(!model&&!ordered.some(s=>valuationModelId(s)!==null))
+ const modelIds=effectiveMarketModels(ordered),model=modelIds.at(-1);
+ // Unversioned history remains unversioned unless population-level evidence
+ // identifies a silent transition immediately before a tagged snapshot.
+ if(!model&&!modelIds.some(Boolean))
   return{snaps:ordered,model:null,changedAt:null,priorModel:null};
  let first=ordered.length-1;
- while(first>0&&valuationModelId(ordered[first-1])===model)first--;
+ while(first>0&&modelIds[first-1]===model)first--;
  return{snaps:ordered.slice(first),model,
   changedAt:first>0?ordered[first].t:null,
-  priorModel:first>0?valuationModelId(ordered[first-1]):null};
+  priorModel:first>0?modelIds[first-1]:null};
 }
 function pointsFromSnapshots(snaps,playerId){
   const points=[];
@@ -650,9 +683,9 @@ function contiguousMarketMovement(snaps,days){
   const anchor=before&&start-Date.parse(before.t)<=tolerance?before:null;
   const windowed=anchor?[anchor,...inside]:inside;
   const base=windowed[0]||null;
-  const groups=[];
-  for(const snap of windowed){
-    const model=valuationModelId(snap),last=groups.at(-1);
+  const groups=[],modelIds=effectiveMarketModels(windowed);
+  for(let i=0;i<windowed.length;i++){
+    const snap=windowed[i],model=modelIds[i],last=groups.at(-1);
     if(last&&last.model===model)last.snaps.push(snap);
     else groups.push({model,snaps:[snap]});
   }
@@ -767,73 +800,43 @@ function itemAtOrBefore(items,targetMs){
   }
   return best;
 }
+// Market Dashboard, heat map, position indexes, volatility, highs/lows and
+// Full Market History MUST read the identical verified snapshot population.
+// The prior Movers endpoint sampled only a subset, while Intelligence
+// read every indexed observation: identical windows therefore drifted.
+// Monthly archive bundles accelerate reads; index backfill remains authoritative.
+let marketSnapshotSourceCache=null,marketSnapshotSourceAt=0,marketSnapshotSourcePending=null;
+const MARKET_SOURCE_TTL_MS=30000;
+async function getMarketSourceSnapshots(s){
+ const now=Date.now();
+ if(marketSnapshotSourceCache&&now-marketSnapshotSourceAt<MARKET_SOURCE_TTL_MS)
+  return marketSnapshotSourceCache;
+ if(marketSnapshotSourcePending)return marketSnapshotSourcePending;
+ marketSnapshotSourcePending=(async()=>{
+  const archived=await archiveAllSnapshots();
+  const indexed=s?await allItems(s):{items:[]};
+  const live=s?await readSnapshotsBounded(s,indexed.items||[],25):[];
+  // Immutable indexed archive wins if a transient local Blob has the same
+  // timestamp; unique newer local observations still extend the timeline.
+  const snaps=mergeSnapshots(live,archived);
+  if(!snaps.length&&(archived.length||indexed.items?.length))
+   throw Error('market snapshots indexed but unreadable');
+  return{snaps,archive_snapshot_count:archived.length,
+    local_snapshot_count:indexed.items?.length||0};
+ })();
+ try{
+  const result=await marketSnapshotSourcePending;
+  marketSnapshotSourceCache=result;marketSnapshotSourceAt=Date.now();
+  return result;
+ }finally{marketSnapshotSourcePending=null}
+}
 async function getMarketSummary(s){
-  let local={items:[],source:s?'empty':'unavailable'};
-  if(s){try{local=await allItems(s)}catch(e){local={items:[],source:'unavailable',error:String(e?.message||e)}}}
-  const arch=await archiveIndex();
-  const timed=[],seenT=new Set();
-  for(const item of arch.items||[]){const t=String(item?.t||'');if(!t||seenT.has(t))continue;seenT.add(t);timed.push({...item,source:'archive'})}
-  for(const item of local.items||[]){const t=String(item?.t||'');if(!t)continue;if(seenT.has(t)){const i=timed.findIndex(x=>x.t===t);if(i>=0)timed[i]={...item,source:'local'};continue}seenT.add(t);timed.push({...item,source:'local'})}
-  timed.sort((a,b)=>String(a.t).localeCompare(String(b.t)));
-  if(!timed.length){
-    if(local.items?.length){
-      const snaps=await readSnapshotsBounded(s,local.items,25),market=marketFromSnapshots(snaps);market.snapshot_count=snaps.length;return market;
-    }
-    return marketFromSnapshots([]);
-  }
-  const latestItem=timed[timed.length-1],latestMs=new Date(latestItem.t).getTime(),wanted=[timed[0],archiveItemAtOrBefore(timed,latestMs-1*86400000),archiveItemAtOrBefore(timed,latestMs-7*86400000),archiveItemAtOrBefore(timed,latestMs-30*86400000),archiveItemAtOrBefore(timed,latestMs-90*86400000),archiveItemAtOrBefore(timed,latestMs-365*86400000),latestItem].filter(Boolean);
-  // Keep the latest contiguous observations in the market sample. The sparse
-  // day/week archive index can otherwise select only the last V94 model-era
-  // snapshot, hiding real same-model movers even though many archived
-  // snapshots exist. This retains exact historical values (no interpolation).
-  wanted.push(...timed.slice(-12));
-  // Sample a real sequence of the last seven days in four-hour buckets,
-  // including both sides of any model revision. The old sparse first-of-week
-  // samples cannot recover legitimate pre-revision 7D market moves.
-  // One snapshot near the beginning and one near the end of each bucket
-  // bounds network reads; only authentic archived rows can contribute.
-  const windowStart=latestMs-7*86400000,marketBuckets=new Map();
-  for(const item of timed){
-    const ms=Date.parse(item.t);
-    if(!Number.isFinite(ms)||ms<windowStart||ms>latestMs)continue;
-    const key=Math.floor((ms-windowStart)/(4*3600000));
-    const bucket=marketBuckets.get(key);
-    if(bucket)bucket.last=item;else marketBuckets.set(key,{first:item,last:item});
-  }
-  for(const bucket of marketBuckets.values())wanted.push(bucket.first,bucket.last);
-  // Sparse authentic samples discover the first tracked defensive cohort and
-  // later entrants without downloading the entire multi-month archive.
-  const historyStart=Date.parse(timed[0].t),sampledBuckets=new Set();
-  for(const item of timed){
-    const ms=Date.parse(item.t),age=(ms-historyStart)/86400000;
-    if(!Number.isFinite(age)||age<0||age>90)continue;
-    const bucket=age<10?'day-'+Math.floor(age):'week-'+Math.floor((age-10)/7);
-    if(sampledBuckets.has(bucket))continue;
-    sampledBuckets.add(bucket);wanted.push(item);
-  }
-  const unique=[],seen=new Set();for(const item of wanted){const k=`${item.source}:${item.key||item.path||item.t}`;if(!seen.has(k)){seen.add(k);unique.push(item)}}
-  const snaps=[];
-  // Batch the extra archive reads; no speculative values or archive writes.
-  for(let i=0;i<unique.length;i+=5){
-    const group=await Promise.all(unique.slice(i,i+5).map(async item=>{
-      let snap=null;
-      if(item.source==='archive')snap=await archiveSnapshot(item);
-      else if(s){try{snap=await s.get(item.key,{type:'json'})}catch{}}
-      if((!snap?.t||!Array.isArray(snap.rows))&&item.source==='local'){
-        const archived=(arch.items||[]).find(x=>String(x?.t||'')===String(item.t||''));
-        if(archived)snap=await archiveSnapshot(archived);
-      }
-      return snap?.t&&Array.isArray(snap.rows)?snap:null;
-    }));
-    snaps.push(...group.filter(Boolean));
-  }
-  snaps.sort((a,b)=>String(a.t).localeCompare(String(b.t)));
-  const market=marketFromSnapshots(snaps);
-  market.snapshot_count=timed.length;
-  market.tracking_since=timed[0].t; // Exact oldest indexed observation, not the sampled/model-era start.
-  market.archive_snapshot_count=(arch.items||[]).length;
-  market.local_snapshot_count=(local.items||[]).length;
-  return market;
+ const source=await getMarketSourceSnapshots(s);
+ const market=marketFromSnapshots(source.snaps);
+ market.archive_snapshot_count=source.archive_snapshot_count;
+ market.local_snapshot_count=source.local_snapshot_count;
+ market.analytics_source='canonical-complete-archive-and-recent-local';
+ return market;
 }
 // EXACT archived Market Intelligence pipeline from player-signal-layer-r1.
 // Read-only analytics of existing archived Value History snapshots.
@@ -858,9 +861,17 @@ function marketVolatilitySummary(ordered,pos=null,limit=24){
 }
 function marketInsightWindow(ordered,label,days=null){
   if(!ordered.length)return[];
-  if(label==='ALL'||!Number.isFinite(Number(days)))return ordered.slice();
-  const latest=ordered.at(-1),latestMs=new Date(latest.t).getTime(),base=baselineFor(ordered,latestMs,Number(days))||ordered[0],baseMs=new Date(base.t).getTime();
-  return ordered.filter(s=>new Date(s.t).getTime()>=baseMs);
+  if(label==='ALL'||days===null||days===undefined)return ordered.slice();
+  const windowDays=Number(days);
+  if(!Number.isFinite(windowDays)||windowDays<=0)return[];
+  const latestMs=Date.parse(ordered.at(-1).t),start=latestMs-windowDays*86400000;
+  // Range and volatility observations must be INSIDE the selected
+  // window. A prior archive point may anchor a different comparison
+  // but must not contaminate the window's high/low range.
+  return ordered.filter(s=>{
+   const at=Date.parse(s.t);
+   return Number.isFinite(at)&&at>=start&&at<=latestMs;
+  });
 }
 function marketInsightRange(snaps,label,historySnaps=snaps){
   const ordered=(snaps||[]).filter(s=>s?.t&&Array.isArray(s?.rows)).slice().sort((a,b)=>String(a.t).localeCompare(String(b.t)));
@@ -1023,11 +1034,15 @@ function marketInsightsFromSnapshots(snaps){
    movement_basis:'sum-of-recorded-same-model-movements'};
 }
 async function getMarketInsights(s){
-  const now=Date.now();if(marketInsightsCache&&now-marketInsightsCacheAt<300000)return marketInsightsCache;
-  const archived=await archiveAllSnapshots().catch(()=>[]),indexed=s?await allItems(s).catch(()=>({items:[]})):{items:[]},
-    live=s?await readSnapshotsBounded(s,indexed.items||[],25).catch(()=>[]):[],snaps=mergeSnapshots(archived,live),
-    result=marketInsightsFromSnapshots(snaps);
-  marketInsightsCache=result;marketInsightsCacheAt=now;return result;
+  const source=await getMarketSourceSnapshots(s);
+  const latest=source.snaps.at(-1)?.t||null;
+  if(marketInsightsCache&&marketInsightsCache.through===latest&&
+      Date.now()-marketInsightsCacheAt<MARKET_SOURCE_TTL_MS)
+    return marketInsightsCache;
+  const result=marketInsightsFromSnapshots(source.snaps);
+  result.analytics_source='canonical-complete-archive-and-recent-local';
+  marketInsightsCache=result;marketInsightsCacheAt=Date.now();
+  return result;
 }
 
 async function appendIndex(s,key,t){
@@ -1085,9 +1100,20 @@ async function scoringSeasonWeeks(year,currentSeason,currentCompletedWeek=18){
   let weekly={};
   if(isCurrent){
     weekly=await liveSeasonWeeks(year,limit);
-    if(!weeklyHasData(weekly)){
-      const raw=await scoringJson(`${SCORING_RAW}/${year}/weekly-stats.json?ts=${Date.now()}`).catch(()=>({}));
-      weekly=Object.fromEntries(Object.entries(raw||{}).filter(([week])=>Number(week)<=limit));
+    // Sleeper's current-season endpoint may return several successful weeks
+    // while the most recently finalized week's response is missing/partial.
+    // A single successful older week must not suppress the verified archive
+    // fallback for Week 10 (or any future completed week).
+    const archived=await scoringJson(`${SCORING_RAW}/${year}/weekly-stats.json?ts=${Date.now()}`).catch(()=>({}));
+    for(let week=1;week<=limit;week++){
+      const historical=archived?.[week]||archived?.[String(week)];
+      if(!historical)continue;
+      const rows=new Map();
+      for(const row of scoringPayloadRows(historical))
+        if(row.id&&row.stats&&Object.keys(row.stats).length)rows.set(row.id,row.stats);
+      for(const row of scoringPayloadRows(weekly[week]))
+        if(row.id&&row.stats&&Object.keys(row.stats).length)rows.set(row.id,row.stats);
+      if(rows.size)weekly[week]=Object.fromEntries(rows);
     }
   }else{
     weekly=await scoringJson(`${SCORING_RAW}/${year}/weekly-stats.json?ts=${Date.now()}`).catch(()=>({}));
@@ -1113,24 +1139,90 @@ function nflWeekStartIso(season,week){
 }
 async function canonicalWeeklyAwards(origin){
   try{
+    const shared=getStore('fleeced-league-hub',{consistency:'strong'});
+    const saved=await shared.get('awards/weekly.json',{type:'json'});
+    const records=Array.isArray(saved?.records)?saved.records:Array.isArray(saved)?saved:[];
+    const trusted=records.filter(record=>{
+      const season=Number(record?.season),week=Number(record?.week);
+      if(!Number.isInteger(season)||!Number.isInteger(week)||week<1||week>17)return false;
+      const verified=record?.award_source==='sleeper-finalized-matchups'&&
+        Number(record?.verified_roster_count)===32;
+      const newsroom=Number(record?.newsroom_editorial_revision)>=39&&
+        record?.newsroom_engine==='v31-forward';
+      if(!verified&&!newsroom)return false;
+      return ['offense','defense'].every(group=>{
+        const winner=record?.players_of_week?.[group];
+        return winner?.player_id&&winner.points!=null&&Number.isFinite(Number(winner.points));
+      })&&Array.isArray(record?.manager_awards)&&
+        ['highest-scorer','lowest-scorer'].every(type=>
+          record.manager_awards.some(a=>a?.type===type));
+    });
+    if(trusted.length)return trusted;
+  }catch(error){
+    console.warn('player-weekly-awards-shared-read-unavailable',String(error?.message||error));
+  }
+  // Keep the previous browser/public endpoint fallback where the Blob cache
+  // is unavailable. No unverified score may mint an award in either path.
+  try{
     const base=String(origin||'').replace(/\/$/,'');if(!base)return[];
-    const r=await fetch(`${base}/.netlify/functions/league-hub?weekly_awards=1`,{headers:{accept:'application/json','user-agent':'FFL-TradeFinder-ValueHistoryScoring/1.0'},cache:'no-store'});
+    const r=await fetch(`${base}/.netlify/functions/league-hub?weekly_awards=1`,
+      {headers:{accept:'application/json','user-agent':'FFL-TradeFinder-ValueHistoryScoring/1.0'},cache:'no-store'});
     if(!r.ok)return[];
     const payload=await r.json();
     return Array.isArray(payload?.records)?payload.records:[];
   }catch{return[]}
 }
+// Independent Sleeper matchup finalization, not the Inquirer publication
+// cursor or NFL's calendar week, authorizes new Player-of-the-Week badges.
+let verifiedAwardWeekCache=null,verifiedAwardWeekCacheAt=0;
+async function verifiedCompletedAwardWeek(origin,season,nflState){
+ const base=String(origin||'').replace(/\/$/,'');
+ if(verifiedAwardWeekCache?.season===season&&Date.now()-verifiedAwardWeekCacheAt<30000)
+  return verifiedAwardWeekCache.week;
+ // Team-protected Deploy Previews reject internal same-origin function fetches.
+ // Instead, verify identical Sleeper matchup completion + applied standings.
+ const protectedPreview=/^https:\/\/deploy-preview-\d+--/.test(base);
+ if(base&&!protectedPreview)try{
+  const response=await fetch(`${base}/.netlify/functions/league-hub?league_latest=1`,
+   {headers:{accept:'application/json','user-agent':'FFL-TradeFinder-ValueHistoryScoring/1.0'},cache:'no-store'});
+  if(response.ok){
+   const data=await response.json(),week=Number(data?.week);
+   if(data?.available===true&&Number(data?.season)===Number(season)&&
+     Number.isInteger(week)&&week>=1&&week<=17&&
+     Array.isArray(data?.teams)&&data.teams.length===32&&
+     new Set(data.teams.map(row=>String(row?.roster_id??''))).size===32&&
+     data.teams.every(row=>row?.roster_id!=null&&row?.points!=null&&
+      row?.opponent_points!=null&&Number.isFinite(Number(row.points))&&
+      Number.isFinite(Number(row.opponent_points)))){
+    verifiedAwardWeekCache={season,week};verifiedAwardWeekCacheAt=Date.now();
+    return week;
+   }
+  }
+ }catch(error){
+  console.warn('player-weekly-awards-verified-hub-read-unavailable',String(error?.message||error));
+ }
+ const week=await verifiedSleeperCompletedAwardWeek({
+  season,nflState,leagueId:LEAGUE,
+  read:path=>scoringJson(SCORING_API+path)
+ });
+ if(week>0){
+  verifiedAwardWeekCache={season,week};verifiedAwardWeekCacheAt=Date.now();
+ }
+ return week;
+}
 async function scoringMilestones(playerId){
   const origin=String(arguments[1]||''),cacheKey=String(playerId),cachedMilestone=playerMilestoneCache.get(cacheKey),now=Date.now();
-  if(cachedMilestone&&now-cachedMilestone.t<300000)return cachedMilestone.value;
+  if(cachedMilestone&&now-cachedMilestone.t<60000)return cachedMilestone.value;
   try{
     const [league,players,canonicalRecords,nflState]=await Promise.all([
       scoringJson(`${SCORING_API}/league/${LEAGUE}`),
       scoringJson(`${SCORING_API}/players/nfl`).catch(()=>({})),
       canonicalWeeklyAwards(origin),
       scoringJson(`${SCORING_API}/state/nfl`).catch(()=>({}))
-    ]),currentSeason=Number(league?.season),currentCompletedWeek=Math.max(0,Math.min(18,(Number(nflState?.week)||1)-1)),scoring=league?.scoring_settings||{};
+    ]),currentSeason=Number(league?.season),currentCompletedWeek=Number(nflState?.season)>Number(league?.season)?18:
+      Math.max(0,Math.min(18,(Number(nflState?.week)||1)-1)),scoring=league?.scoring_settings||{};
     if(!currentSeason||!Object.keys(scoring).length)return null;
+    const verifiedCurrentWeek=await verifiedCompletedAwardWeek(origin,currentSeason,nflState);
     const years=[currentSeason,currentSeason-1,currentSeason-2,currentSeason-3],weeklyByYear={},canonicalByKey=new Map((canonicalRecords||[]).filter(r=>r?.players_of_week).map(r=>[Number(r.season)+'|'+Number(r.week),r]));
     await Promise.all(years.map(async y=>weeklyByYear[y]=await scoringSeasonWeeks(y,currentSeason,currentCompletedWeek)));
     let highWeek=null,highSeason=null,highPpg=null;const weeklyAwards=[];
@@ -1140,22 +1232,18 @@ async function scoringMilestones(playerId){
         const payload=weeklyByYear[year]?.[week],row=weeklyPlayerRow(payload,playerId);
         if(row){const points=leagueScore(row,scoring);if(points!=null){games++;total+=points;if(!highWeek||points>highWeek.points)highWeek={points,season:year,week}}}
         const canonical=canonicalByKey.get(Number(year)+'|'+Number(week));
-        if(canonical){
-          for(const group of ['offense','defense']){
-            const leader=canonical?.players_of_week?.[group];
-            if(leader&&String(leader.player_id)===String(playerId))weeklyAwards.push({type:group==='offense'?'offensive-player-of-week':'defensive-player-of-week',title:group==='offense'?'Top Offensive Scorer':'Top Defensive Scorer',points:Number(Number(leader.points||0).toFixed(2)),season:year,week,week_started_at:nflWeekStartIso(year,week)});
-          }
-        }else if(Number(year)<currentSeason){
-          const leaders={offense:null,defense:null};
-          for(const item of scoringPayloadRows(payload)){
-            const group=weeklyAwardGroup(players?.[item.id]?.position),points=leagueScore(item.stats,scoring);
-            if(!group||points==null)continue;
-            if(!leaders[group]||points>leaders[group].points||(points===leaders[group].points&&String(item.id)<String(leaders[group].player_id)))leaders[group]={player_id:String(item.id),points};
-          }
-          for(const group of ['offense','defense']){
-            const leader=leaders[group];if(leader&&String(leader.player_id)===String(playerId))weeklyAwards.push({type:group==='offense'?'offensive-player-of-week':'defensive-player-of-week',title:group==='offense'?'Top Offensive Scorer':'Top Defensive Scorer',points:Number(leader.points.toFixed(2)),season:year,week,week_started_at:nflWeekStartIso(year,week)});
-          }
-        }
+        // Canonical League Hub awards are authoritative. During a weekly
+        // cache lag, fall back to the identical completed-week Sleeper scoring
+        // calculation for BOTH the current season and historical seasons.
+        // Never infer an award from an in-progress or missing stat feed.
+        const awards=playerWeeklyMilestoneAwards({
+          playerId,season:year,week,currentSeason,currentCompletedWeek,
+          canonical,payload,players,scoring,score:leagueScore,
+          verifiedCompletedWeek:year<currentSeason?17:Math.min(17,currentCompletedWeek,verifiedCurrentWeek)
+        });
+        for(const award of awards)weeklyAwards.push({
+          ...award,week_started_at:nflWeekStartIso(year,week)
+        });
       }
       total=Number(total.toFixed(2));
       if(games>=8){

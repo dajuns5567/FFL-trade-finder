@@ -94,3 +94,18 @@ test('duplicate names and duplicate source ranks cannot pass 300-player validati
  assert.equal(result.valid,false);
  assert.equal(result.rankings.length,0);
 });
+
+test('KTC November inline oneQBPlayers bootstrap extracts real Superflex ranks while playersArray is empty',async()=>{
+ const players=[...fixture(),{playerName:'2027 1.01',position:'RDP',superflexValues:{rank:1,value:9999}}];
+ const html='<script>var oneQBPlayers = '+JSON.stringify(players)+'; var playersArray = []; var ktcPoolReady = ktcFetchPlayerPool("dynasty","version");</script>';
+ const parsed=extract(html);
+ assert.equal(parsed.rows.length,360);
+ assert.equal(parsed.extractionMethod,'inline-array:oneQBPlayers');
+ assert.equal(parsed.rows[0].player,'Fixture Player 1');
+ assert.equal(parsed.rows[0].rank,1);
+ assert.equal(parsed.rows.at(-1).rank,360);
+ assert.equal(parsed.excludedDraftPicks,1);
+ const result=await refreshKtc({fetchImpl:mock(()=>html)});
+ assert.equal(result.valid,true);
+ assert.equal(result.diagnostics.extraction_method,'inline-array:oneQBPlayers');
+});

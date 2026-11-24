@@ -1,0 +1,21 @@
+name: Market Dashboard approved presentation
+on:
+  pull_request:
+    paths:
+      - 'value-history-v276.js'
+      - 'netlify/functions/site-v29.mjs'
+      - 'tests/preview618-market-cleanup-regression.test.mjs'
+      - '.github/workflows/preview618-market-cleanup.yml'
+  workflow_dispatch:
+jobs:
+  market-presentation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Confirm Javascript syntax
+        run: node --check value-history-v276.js
+      - name: Block old dashboard helper text
+        run: node --test tests/preview618-market-cleanup-regression.test.mjs

@@ -186,3 +186,15 @@ test('HTTP 403 player-pool responses fail closed with classified non-sensitive d
  assert.match(result.error,/cf_mitigated/);
  assert.match(result.error,/previous verified consensus must be retained/i);
 });
+
+test('HTTP 403 policy diagnosis classifies only known response codes without leaking body',async()=>{
+ const html='<script>var oneQBPlayers = '+JSON.stringify(fixture(3))+
+  ';var playersVersion="fixture-1234";var playersArray=[];'+
+  'ktcFetchPlayerPool("dynasty",playersVersion);</script>';
+ const result=await refreshKtc({fetchImpl:async url=>url.includes('/player-pool')
+  ? {ok:false,status:403,headers:{get:()=> 'text/plain'},text:async()=> 'ROBOTS_DENIED do not expose raw provider response'}
+  : {ok:true,text:async()=>html}});
+ assert.equal(result.valid,false);
+ assert.match(result.error,/robots-denied/);
+ assert.doesNotMatch(result.error,/do not expose raw provider response/);
+});

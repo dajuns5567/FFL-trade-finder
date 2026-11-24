@@ -1380,8 +1380,11 @@ function teamTradeImpactCard(teamId){
   return`<div class="vh-card"><div class="vh-card-head"><div><h3>Recent Trade Impact</h3><div class="vh-sub">Latest completed trade involving ${esc(teamName(id))}: ${esc(dateShort(t.created))}</div></div></div><div class="vh-attribution-summary"><div class="vh-attribution-stat"><small>Value at trade</small><b>${m?.atTradeTotal==null?'—':fmt(m.atTradeTotal)}</b></div><div class="vh-attribution-stat"><small>Current outcome</small><b>${m?.currentTotal==null?'—':fmt(m.currentTotal)}</b></div><div class="vh-attribution-stat"><small>Change</small><b class="${delta==null?'vh-neutral':deltaClass(delta)}">${delta==null?'—':signed(delta)}</b></div></div><button type="button" class="secondary small" data-vh-open-trade-history data-vh-trade-team="${esc(id)}">View full Trade History</button></div>`
 }
 async function historyFetch(id){let last;for(let attempt=0;attempt<2;attempt++){try{const r=await fetch(`${API}?player_id=${encodeURIComponent(id)}`,{cache:'no-store'});if(!r.ok)throw Error('history unavailable');return await r.json()}catch(e){last=e;if(attempt===0)await new Promise(r=>setTimeout(r,220))}}throw last||Error('history unavailable')}
-async function scoringFetch(id){
-  const key=String(id);if(playerScoringCache.has(key)&&Date.now()-(playerScoringCacheAt.get(key)||0)<60000)return{player_id:key,scoring_milestones:playerScoringCache.get(key)};
+async function scoringFetch(id,{requireCompleteReadback=false}={}){
+  // Canonical finalized-week awards can paint before the slower historical
+  // scoring endpoint responds. That partial display is not a full scoring
+  // readback: never let its fresh cache timestamp suppress historical wins.
+  const key=String(id);if(!requireCompleteReadback&&playerScoringCache.has(key)&&Date.now()-(playerScoringCacheAt.get(key)||0)<60000)return{player_id:key,scoring_milestones:playerScoringCache.get(key)};
   if(playerScoringPending.has(key))return playerScoringPending.get(key);
   const pending=(async()=>{let last;for(let attempt=0;attempt<2;attempt++){try{const r=await fetch(`${API}?player_scoring=1&player_id=${encodeURIComponent(key)}`,{cache:'no-store'});if(!r.ok)throw Error('scoring milestones unavailable');return await r.json()}catch(e){last=e;if(attempt===0)await new Promise(r=>setTimeout(r,220))}}throw last||Error('scoring milestones unavailable')})();
   playerScoringPending.set(key,pending);try{return await pending}finally{playerScoringPending.delete(key)}
@@ -1958,7 +1961,7 @@ function scoringMilestonesRows(scoring,loading=false){
   const awards=(Array.isArray(scoring.weeklyAwards)?scoring.weeklyAwards:[]).map(a=>
     '<div class="vh-feed-row"><span class="vh-milestone-label">'+esc(a.title||'Player of the Week')+
     '<span class="vh-milestone-time">'+esc(String(a.season))+' Week '+esc(String(a.week))+
-    ' • '+(a.week_started_at?esc(dateShort(a.week_started_at)):'date unavailable')+
+    (a.week_started_at?' • '+esc(dateShort(a.week_started_at)):'')+
     '</span></span><span class="vh-milestone-award">🏅 '+
     (a.points!=null&&Number.isFinite(Number(a.points))?Number(a.points).toFixed(2):'—')+' pts</span></div>').join('');
   return rows+awards;
@@ -1995,7 +1998,7 @@ async function loadPlayerScoring(id){
     canonicalRecords=records;
     applyUpdate(null,records);
   }).catch(error=>console.warn('Canonical Player-of-the-Week readback unavailable',error));
-  const scoringTask=scoringFetch(key).then(data=>{
+  const scoringTask=scoringFetch(key,{requireCompleteReadback:true}).then(data=>{
     const value=data?.scoring_milestones;
     if(value&&typeof value==='object')applyUpdate(value,canonicalRecords);
     else if(!playerScoringCache.has(key))applyUpdate(null,canonicalRecords);

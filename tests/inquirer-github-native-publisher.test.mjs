@@ -267,7 +267,7 @@ test('authorized initial production cutover is exact-site and exact-commit; regu
  const workflow=readFileSync(new URL('../.github/workflows/inquirer-github-native-publisher.yml',import.meta.url),'utf8');
  assert.match(workflow,/ref: inquirer-archive/);
  assert.match(workflow,/git push origin HEAD:inquirer-archive/);
- assert.match(workflow,/github\.ref == 'refs\/heads\/main' && \(github\.event_name == 'schedule' \|\| github\.event_name == 'workflow_dispatch'\)/);
+ assert.match(workflow,/github\.ref == 'refs\/heads\/main' && \(github\.event_name == 'schedule' \|\| github\.event_name == 'workflow_dispatch' \|\| github\.event_name == 'push'\)/);
 });
 
  test('a recent valuation transition uses genuine shorter same-model observations, never the prior model',async()=>{
@@ -318,6 +318,7 @@ test('authorized initial production cutover is exact-site and exact-commit; regu
  assert.match(source,/fs\.writeFile\(path\.join\(archiveRoot,rel\),contents,\{flag:'wx'\}\)/);
  const workflow=readFileSync(new URL('../.github/workflows/inquirer-github-native-publisher.yml',import.meta.url),'utf8');
  assert.match(workflow,/cron: '19,49 \* \* \* \*'/);
- assert.match(workflow,/cancel-in-progress: \$\{\{ github\.event_name == 'push' \|\| github\.event_name == 'pull_request' \}\}/);
+ assert.match(workflow,/cancel-in-progress: \$\{\{ github\.event_name == 'pull_request' \|\| \(github\.event_name == 'push' && github\.ref != 'refs\/heads\/main'\) \}\}/);
+ assert.match(workflow,/INQUIRER_VERIFY_LIVE_SITE: '1'/);
  assert.match(workflow,/node scripts\/verify-inquirer-published-readback\.mjs/);
  });

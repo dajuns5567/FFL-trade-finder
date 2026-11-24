@@ -3,7 +3,15 @@ name: GitHub-native Fleeced Inquirer publisher
 on:
   push:
     branches:
+      - main
       - fix/inquirer-github-native-publication-20261121
+    paths:
+      - '.github/workflows/inquirer-github-native-publisher.yml'
+      - 'scripts/publish-inquirer-github-native.mjs'
+      - 'scripts/verify-inquirer-published-readback.mjs'
+      - 'netlify/functions/inquirer-*.mjs'
+      - 'netlify/functions/lib/inquirer-*.mjs'
+      - 'tests/inquirer-github-*.test.mjs'
   pull_request:
     paths:
       - '.github/workflows/inquirer-github-native-publisher.yml'
@@ -23,8 +31,8 @@ permissions:
 concurrency:
   # A superseding code revision cancels only stale preview verification.
   # Live scheduled/archive publication is never cancelled halfway through.
-  group: ${{ github.event_name == 'pull_request' && format('inquirer-verify-pr-{0}', github.event.pull_request.number) || github.event_name == 'push' && 'inquirer-github-native-validation' || 'inquirer-github-native-publication' }}
-  cancel-in-progress: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
+  group: ${{ github.event_name == 'pull_request' && format('inquirer-verify-pr-{0}', github.event.pull_request.number) || github.event_name == 'push' && github.ref != 'refs/heads/main' && 'inquirer-github-native-validation' || 'inquirer-github-native-publication' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref != 'refs/heads/main') }}
 
 jobs:
   verify:
@@ -47,16 +55,16 @@ jobs:
       - name: Run GitHub-native publisher and existing editorial integrity regression tests
         run: |
           node --test tests/inquirer-github-native-publisher.test.mjs
-          node --test tests/inquirer-github-public-readback.test.mjs
+          node --test tests/inquirer-github-public-readback.test.mjs tests/inquirer-reader-blob-independence.test.mjs
           node --test tests/inquirer-github-archive-reader.test.mjs tests/inquirer-week9-unattended-publish-regression.test.mjs
       - name: Checkout immutable approved editions for editorial regression
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/fix/inquirer-github-native-publication-20261121'
         uses: actions/checkout@v4
         with:
           ref: inquirer-archive
           path: editorial-history
       - name: Check Week 9 correction against its SHA-256-locked original
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/fix/inquirer-github-native-publication-20261121'
         run: |
           node --input-type=module <<'NODE'
           import assert from 'node:assert/strict';
@@ -89,7 +97,7 @@ jobs:
           console.log('inquirer-week09-locked-style',JSON.stringify({week:9,teams:corrected.teams.length,beats:INQUIRER_RECAP_BEATS.length}));
           NODE
       - name: Regenerate Week 10 from clean history to catch editorial drift
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/fix/inquirer-github-native-publication-20261121'
         env:
           INQUIRER_GITHUB_ARCHIVE_ROOT: editorial-history/inquirer-archive
         run: node scripts/publish-inquirer-github-native.mjs
@@ -148,9 +156,34 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -m 'Preview-only: verified weekly Inquirer publication'
           git push origin HEAD:inquirer-preview-574-r3
+  live-reader-preflight:
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: source
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: inquirer-archive
+          path: history
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Confirm current production site consumes public GitHub archive without a deployment
+        working-directory: source
+        env:
+          INQUIRER_GITHUB_ARCHIVE_ROOT: ../history/inquirer-archive
+          INQUIRER_VERIFY_LIVE_SITE: '1'
+        run: node scripts/verify-inquirer-published-readback.mjs
   publish:
     needs: verify
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push')
     permissions:
       contents: write
     runs-on: ubuntu-24.04
@@ -229,8 +262,9 @@ jobs:
           git push origin HEAD:inquirer-archive
       # A successful git push is not sufficient: the public GitHub reader must
       # see the new index and the exact digest-bound 32-team issue afterward.
-      - name: Verify newly committed edition is publicly readable after push
+      - name: Verify newly committed edition is publicly readable and visible on the actual site
         working-directory: source
         env:
           INQUIRER_GITHUB_ARCHIVE_ROOT: ../history/inquirer-archive
+          INQUIRER_VERIFY_LIVE_SITE: '1'
         run: node scripts/verify-inquirer-published-readback.mjs

@@ -64,3 +64,20 @@ test('a valid but empty forward ledger does not fabricate an issue',async()=>{
   assert.equal((await verifyGithubInquirerReadback({archiveRoot:dir,attempts:1})).state,'no-forward-editions');
  }finally{await fs.rm(dir,{recursive:true,force:true})}
 });
+
+ test('real-site verification reads the archive and exact edition used by the browser, and rejects stale or mismatched issues',async()=>{
+ const {verifyLiveInquirerSite}=await import('../scripts/verify-inquirer-published-readback.mjs');
+ const f=await fixture();
+ try{
+  await fs.mkdir(path.join(f.dir,'forward/2026'),{recursive:true});
+  await fs.writeFile(path.join(f.dir,'forward/2026/week-10.json'),f.bytes);
+  const edition=JSON.parse(f.bytes.toString('utf8'));
+  const calls=[];
+  const read=(week=10,body=edition)=>async url=>{calls.push(url);return new Response(JSON.stringify(url.includes('broadcast_archive=1')?{reports:[{season:2026,week}]}:body))};
+  const result=await verifyLiveInquirerSite({archiveRoot:f.dir,fetcher:read(),attempts:1});
+  assert.equal(result.state,'site-visible');assert.equal(result.week,10);assert.equal(calls.length,2);
+  assert(calls.every(u=>u.startsWith('https://animated-dasik-3de74a.netlify.app/.netlify/functions/league-hub?')));
+  await assert.rejects(()=>verifyLiveInquirerSite({archiveRoot:f.dir,fetcher:read(9),attempts:1}),/latest week differs/);
+  await assert.rejects(()=>verifyLiveInquirerSite({archiveRoot:f.dir,fetcher:read(10,{...edition,league_overview:{headline:'Different'}}),attempts:1}),/exact verified edition/);
+ }finally{await fs.rm(f.dir,{recursive:true,force:true})}
+ });

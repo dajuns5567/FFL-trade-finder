@@ -42,9 +42,56 @@ export async function verifyGithubInquirerReadback({
   String(failure?.message||failure));
 }
 
+// Independently read the actual public site, not a mocked Netlify function.
+ // The browser obtains these two exact endpoints, in this order.
+export async function verifyLiveInquirerSite({archiveRoot,site='https://animated-dasik-3de74a.netlify.app',
+ fetcher=fetch,attempts=5,pause=ms=>new Promise(resolve=>setTimeout(resolve,ms))}={}){
+ if(!archiveRoot)throw Error('Local verified publication ledger required');
+ const ledger=JSON.parse(await fs.readFile(path.join(archiveRoot,'forward/index.json'),'utf8'));
+ const row=ledger.reports?.at(-1);
+ if(!row)return{state:'no-forward-editions',verified:true};
+ const raw=await fs.readFile(path.join(archiveRoot,row.path));
+ const {createHash}=await import('node:crypto');
+ if(createHash('sha256').update(raw).digest('hex')!==row.sha256)throw Error('Local edition digest mismatch');
+ const expected=JSON.parse(raw.toString('utf8'));
+ const signature=edition=>JSON.stringify({season:Number(edition?.season),week:Number(edition?.week),
+  revision:Number(edition?.editorial_revision),generated:edition?.generated_at,
+  recap:edition?.league_overview?.headline,
+  teams:(edition?.teams||[]).map(t=>[String(t.roster_id),t.inquirer_article?.headline]).sort((a,b)=>a[0].localeCompare(b[0]))});
+ let last;
+ for(let attempt=1;attempt<=attempts;attempt++){
+  try{
+   const get=async query=>{
+    const url=new URL('/.netlify/functions/league-hub',site);
+    url.search=query+'&readback='+attempt+'-'+Date.now();
+    const response=await fetcher(url.href,{cache:'no-store',headers:{accept:'application/json'},signal:AbortSignal.timeout(30000)});
+    if(!response.ok)throw Error('Live site '+query+' HTTP '+response.status);
+    return response.json();
+   };
+   const archive=await get('broadcast_archive=1');
+   const rows=archive?.reports;
+   if(!Array.isArray(rows))throw Error('Site archive unavailable');
+   const latest=rows.slice().sort((a,b)=>Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week))[0];
+   if(Number(latest?.season)!==Number(row.season)||Number(latest?.week)!==Number(row.week))
+    throw Error('Live site archive latest week differs from verified publication: expected '+row.week);
+   const edition=await get('broadcast_season='+row.season+'&broadcast_week='+row.week);
+   if(edition?.available!==true||edition?.published_locked!==true||edition?.teams?.length!==32||
+     new Set(edition.teams.map(t=>String(t.roster_id))).size!==32||
+     edition.teams.some(t=>!t.inquirer_article?.headline)||!edition.league_overview?.headline||
+     signature(edition)!==signature(expected))throw Error('Live site does not display the exact verified edition identity');
+   return{state:'site-visible',verified:true,site,season:Number(row.season),week:Number(row.week),teams:32,attempt};
+  }catch(error){last=error;if(attempt<attempts)await pause(15000)}
+ }
+ throw Error('GitHub publication not verified on actual site: '+String(last?.message||last));
+}
+
 if(process.argv[1]&&fileURLToPath(import.meta.url)===path.resolve(process.argv[1])){
  const root=process.env.INQUIRER_GITHUB_ARCHIVE_ROOT||process.argv[2];
- verifyGithubInquirerReadback({archiveRoot:root}).then(result=>
-  console.info('github-inquirer-post-push-readback',JSON.stringify(result))
- ).catch(error=>{console.error(error);process.exitCode=1});
+ verifyGithubInquirerReadback({archiveRoot:root}).then(async result=>{
+  console.info('github-inquirer-post-push-readback',JSON.stringify(result));
+  if(process.env.INQUIRER_VERIFY_LIVE_SITE==='1'){
+   const live=await verifyLiveInquirerSite({archiveRoot:root});
+   console.info('github-inquirer-live-site-readback',JSON.stringify(live));
+  }
+ }).catch(error=>{console.error(error);process.exitCode=1});
 }

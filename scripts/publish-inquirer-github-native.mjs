@@ -461,15 +461,23 @@ export function restoreWeeklyPlayoffDesk(edition){
  };
  const first=teams[0],challenger=teams[1],cut=teams[3],outside=teams[4];
  const remaining=Math.max(0,13-Number(edition.week));
- const standings=[
-  'The league table puts '+first.team_name+' ('+rec(first)+') in first place, with '+
-  challenger.team_name+' ('+rec(challenger)+') chasing in second. '+remaining+
-  ' regular-season game'+(remaining===1?'':'s')+
-  ' remain before the Week 14 wildcard round; there is little time for anyone counting on a convenient collapse at the top.',
-  'Fourth place belongs to '+cut.team_name+' ('+rec(cut)+'), with fifth-place '+
-  outside.team_name+' ('+rec(outside)+') waiting for an opening. The crowded part of this race needs the next set of results more than another prediction. Neither club can borrow points from a good Sunday three weeks ago.'
-
+ const rank=t=>Number(t.league_context.standings_rank);
+ const w=Number(edition.week);
+ const leadWins=Number(first.league_context.record.wins),secondWins=Number(challenger.league_context.record.wins);
+ const gap=leadWins-secondWins;
+ // Compare recorded standings; never describe fourth/fifth as a playoff
+ // cutoff without a verified league playoff qualification rule.
+ const variants=[
+  ['First place after Week '+w+': '+first.team_name+' ('+rec(first)+'). '+challenger.team_name+' hold second at '+rec(challenger)+', with '+Math.abs(gap)+' wins separating the two records. '+remaining+' regular-season games remain before the Week 14 wildcard round.',
+   'Fourth place: '+cut.team_name+' at '+rec(cut)+'. '+outside.team_name+' occupy fifth with a '+rec(outside)+' record. Their rankings are based on the completed standings, not an estimate of qualification.'],
+  [first.team_name+' lead the completed standings at '+rec(first)+'. In second, '+challenger.team_name+' have recorded '+rec(challenger)+'; the difference in wins is '+Math.abs(gap)+'. The regular-season calendar has '+remaining+' games left.',
+   outside.team_name+' enter the next round of fixtures ranked '+rank(outside)+' with '+rec(outside)+'. One position ahead, '+cut.team_name+' stand at '+rec(cut)+'. These are the recorded positions after Week '+w+'.'],
+  ['With '+remaining+' regular-season games left, '+challenger.team_name+' occupy second on '+rec(challenger)+'. The leaders, '+first.team_name+', have '+leadWins+' wins and a '+rec(first)+' record. The wildcard round is scheduled for Week 14.',
+   'At No. '+rank(cut)+', '+cut.team_name+' have '+rec(cut)+'; the next ranked roster is '+outside.team_name+' ('+rec(outside)+'). Their records supply a concrete comparison heading into the remaining fixtures.'],
+  ['The completed Week '+w+' table lists '+first.team_name+' and '+challenger.team_name+' at Nos. 1 and 2 respectively. Their records are '+rec(first)+' and '+rec(challenger)+'. There are '+remaining+' scheduled regular-season games left.',
+   'Between the fourth-ranked '+cut.team_name+' ('+rec(cut)+') and fifth-ranked '+outside.team_name+' ('+rec(outside)+'), the recorded win totals are '+cut.league_context.record.wins+' and '+outside.league_context.record.wins+'. Neither rank alone establishes a playoff berth.']
  ];
+ const standings=variants[((w-10)%variants.length+variants.length)%variants.length];
  const section={reporter:sections[1]?.reporter||sections[0]?.reporter||null,
   heading:'The Playoff Race Is No Longer Background Noise',paragraphs:standings};
  sections.splice(1,0,section);
@@ -525,7 +533,7 @@ export function selectEditorialEdition({rawInquirer,rawOverview,season,week,prev
   }
   if(!best||score<best.score)best={edition,verdict,score};
   if(verdict.ok){
-   passing={edition,verdict,score};
+   if(!passing||score<passing.score)passing={edition,verdict,score};
    if(!verdict.quality.metrics?.minor_repetition_warning)break;
   }
  }

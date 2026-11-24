@@ -130,3 +130,20 @@ test('realistic 3-player server seed requires async pool and cannot replace veri
  assert.equal(result.diagnostics.attempts[0].oneqb_parsed_rows,3);
  assert.equal(result.diagnostics.attempts[0].asynchronous_player_pool,true);
 });
+
+test('KTC fetches full asynchronous dynasty player-pool JSON when HTML has three seed players',async()=>{
+ const version='2611232340-testversion';
+ const html='<script>var oneQBPlayers = '+JSON.stringify(fixture(3))+
+   '; var playersVersion = "'+version+'"; var playersArray = []; '+
+   'var ktcPoolReady = ktcFetchPlayerPool("dynasty", playersVersion);</script>';
+ const urls=[];
+ const result=await refreshKtc({fetchImpl:async url=>{
+  urls.push(url);
+  return {ok:true,text:async()=>url.includes('/player-pool')?JSON.stringify(fixture()):html};
+ }});
+ assert.equal(result.valid,true);
+ assert.equal(result.ranking_rows,360);
+ assert.equal(result.diagnostics.extraction_method,'same-origin:dynasty-player-pool');
+ assert.ok(urls.some(url=>url.includes('/dynasty-rankings/player-pool')));
+ assert.equal(result.rankings[0].player,'Fixture Player 1');
+});

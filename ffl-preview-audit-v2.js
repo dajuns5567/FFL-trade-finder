@@ -214,10 +214,11 @@
       // actual rendered weekly award card heading.
       const hotSeatCards=elements('#leagueHubContent .lh-card h3').filter(h=>
        /^\s*(?:🔥\s*)?HOT SEAT\s*$/i.test(norm(text(h))));
-      const week10=/WEEKLY MANAGER AWARDS\s*[—-]\s*2026 WEEK 10/i.test(visibleAwards);
-      add('League Hub','Week 10 Hot Seat card visibly rendered',
-        week10?(hotSeatCards.length?'PASS':'FAIL'):'WARN',
-        JSON.stringify({week10,renderedHotSeatCards:hotSeatCards.length,
+      const displayedWeek=visibleAwards.match(/WEEKLY MANAGER AWARDS\s*[—-]\s*(\d{4}) WEEK (\d+)/i);
+      api.displayedManagerAwards={season:Number(displayedWeek?.[1])||null,week:Number(displayedWeek?.[2])||null,hotSeatCards:hotSeatCards.length,provisional:/Current verified result, pending archival/i.test(visibleAwards)};
+      add('League Hub','Current weekly awards heading rendered',
+        displayedWeek?'PASS':'FAIL',
+        JSON.stringify({displayedWeek:api.displayedManagerAwards,renderedHotSeatCards:hotSeatCards.length,
           headingSamples:elements('#leagueHubContent .lh-card h3').slice(0,7).map(x=>cap(text(x),55))}));
       const body=norm(text(document.querySelector('#leagueHubContent')));
       const selected=elements('[data-lh-view].active',root)
@@ -248,15 +249,25 @@
    fetchJson('Market snapshots','/.netlify/functions/value-history?market=1')
   ]);
   const records=awards?.records||awards?.weekly_awards?.records||[];
-  const latestAward=Array.isArray(records)?records.find(r=>Number(r.season)===2026&&Number(r.week)===10):null;
-  const sourceTeams=latest?.available&&Number(latest.season)===2026&&Number(latest.week)===10?latest.teams||[]:[];
+  const latestAward=Array.isArray(records)?records.find(r=>Number(r.season)===Number(latest?.season)&&Number(r.week)===Number(latest?.week)):null;
+  const sourceTeams=latest?.available?latest.teams||[]:[];
   const projectedUpset=sourceTeams.some(t=>t?.won===false&&t?.projected!=null&&t?.opponent_projected!=null&&
     Number(t.projected)>Number(t.opponent_projected)&&Number(t.points)<Number(t.opponent_points));
   const hotRecorded=Boolean(latestAward?.manager_awards?.some(a=>a.type==='hot-seat'));
-  add('Weekly','2026 Week 10 Hot Seat verified from projections',
-    projectedUpset?hotRecorded?'PASS':'FAIL':hotRecorded?'PASS':'WARN',
-    JSON.stringify({projectedUpset,hotRecorded,awardCount:latestAward?.manager_awards?.length||0,
+  const visible=api.displayedManagerAwards,correctWeek=visible?.season===Number(latest?.season)&&visible?.week===Number(latest?.week);
+  const shown=correctWeek&&visible.hotSeatCards>0;
+  add('Weekly','Latest completed-week Hot Seat projection and display parity',
+    !correctWeek?'FAIL':projectedUpset?(shown?(hotRecorded?'PASS':'WARN'):'FAIL'):hotRecorded?'WARN':sourceTeams.every(t=>t.projected!=null)?'PASS':'WARN',
+    JSON.stringify({season:latest?.season,week:latest?.week,projectedUpset,hotRecorded,shown,provisional:visible?.provisional,
       projectionCoverage:sourceTeams.filter(t=>t.projected!=null).length,teams:sourceTeams.length}));
+  if(Number(latest?.season)===2026&&Number(latest?.week)>10){
+   const historic=await fetchJson('Historical Week 10 matchups','/.netlify/functions/league-hub?league_week=10');
+   const historicalTeams=historic?.available&&Number(historic.week)===10?historic.teams||[]:[];
+   const historicalRecord=records.find(r=>Number(r.season)===2026&&Number(r.week)===10);
+   const favoriteLost=historicalTeams.some(t=>t?.won===false&&t.projected!=null&&t.opponent_projected!=null&&Number(t.projected)>Number(t.opponent_projected)&&Number(t.points)<Number(t.opponent_points));
+   const recorded=Boolean(historicalRecord?.manager_awards?.some(a=>a.type==='hot-seat'));
+   add('Weekly','Historical Week 10 Hot Seat evidence',favoriteLost?(recorded?'PASS':'WARN'):recorded?'WARN':historicalTeams.length===32&&historicalTeams.every(t=>t.projected!=null)?'PASS':'WARN',JSON.stringify({teams:historicalTeams.length,projectionCoverage:historicalTeams.filter(t=>t.projected!=null).length,favoriteLost,recorded}));
+  }
   api.weeklyRecordSummary=Array.isArray(records)?records.slice(-8).map(r=>({
    season:r.season,week:r.week,offense:r.players_of_week?.offense||r.players_of_week?.offensive||null,
    idp:r.players_of_week?.defense||r.players_of_week?.idp||null,source:r.award_source
@@ -284,6 +295,10 @@
   add('Badges','2026 weekly badge date provenance',
    /2026 Week (6|10) • date unavailable/i.test(visual)?'WARN':'PASS',
    /date unavailable/i.test(visual)?'Verify saved week-start dates from server readback':'2026 weekly badges show recorded or derived week dates');
+  const historyExcerpt=pages['VALUE HISTORY']?.excerpt||'';
+  const scheduledText=historyExcerpt.match(/Last scheduled refresh:\s*(\d{1,2}\/\d{1,2}\/\d{4},\s*\d{1,2}:\d{2}:\d{2}\s*(?:AM|PM))/i)?.[1];
+  const ageMinutes=scheduledText?(Date.now()-Date.parse(scheduledText))/60000:null;
+  add('History','Scheduled observation freshness',Number.isFinite(ageMinutes)&&ageMinutes>=0&&ageMinutes<=240?'PASS':'WARN',JSON.stringify({scheduledText,ageMinutes,maximumMinutes:240}));
   api.completedWeek={season:latest?.season,week:latest?.week,available:latest?.available,teams:latest?.teams?.length};
   add('Weekly','completed Sleeper matchup coverage',latest?.available&&latest?.teams?.length===32?'PASS':'WARN',JSON.stringify(api.completedWeek));
   api.highsSummary={keys:Object.keys(highs||{}),recordCount:highs?.records?.length};

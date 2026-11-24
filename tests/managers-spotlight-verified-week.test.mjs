@@ -69,7 +69,7 @@ test('incomplete or absent week leaves weekly awards unassigned rather than recy
 });
 
 test('independent backend week feed uses real Sleeper projections, not final-score substitutions',()=>{
- const begin=backend.indexOf('async function latestCompletedLeagueWeek(){');
+ const begin=backend.indexOf('async function latestCompletedLeagueWeek(requestedWeek=null){');
  const end=backend.indexOf('async function draftAwards(){',begin);
  assert.ok(begin>=0&&end>begin);
  const body=backend.slice(begin,end);

@@ -62,14 +62,15 @@ test('completed weeks never infer numeric results from absent scores',()=>{
 test('the independent feed is not gated on news archive, awards or status',()=>{
  const backend=readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
  const frontend=readFileSync(new URL('../league-hub-v451.js',import.meta.url),'utf8');
- const handler=backend.slice(backend.indexOf('async function latestCompletedLeagueWeek()'),backend.indexOf('async function draftAwards()'));
+ const handler=backend.slice(backend.indexOf('async function latestCompletedLeagueWeek(requestedWeek=null)'),backend.indexOf('async function draftAwards()'));
  assert.match(handler,/completedPublicationWeek\(week\)/);
  assert.match(handler,/completedLeagueWeekView/);
  assert.doesNotMatch(handler,/broadcastArchive|weeklyReport|inquirer\/publication-status|editorialApproval|weeklyAwards/);
  assert.match(backend,/searchParams\.get\('league_latest'\)==='1'/);
  assert.match(frontend,/liveLeagueWeek\(\)\.catch/);
- assert.match(frontend,/dailyHTML\(all,stats,w,md,spotlightW\|\|w,leagueWeek\)/);
+ assert.match(frontend,/dailyHTML\(all,stats,selectedEdition,md,selectedEdition,selectedWeek\)/);
  assert.match(frontend,/liveScoreboard\+report/);
+ assert.match(frontend,/selectedWeek=await resolveDailyWeek\(leagueWeek,selection\)/);
 });
 
 test('League Hub release is an exact one-time production cutover, not a recurring Netlify publisher',()=>{

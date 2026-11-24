@@ -474,7 +474,7 @@ function renderConsensusDiagnostics(summary){
   const total=Number(summary?.total||7), ok=Number(summary?.successful||0);
   const rows=Array.isArray(summary?.results)?summary.results:[];
   const ktc=rows.find(x=>String(x.source||"").toUpperCase()==="KTC");
-  const ktcStale=Boolean(ktc)&&!(ktc.status==="refreshed"&&ktc.ok===true);
+  const ktcStale=Boolean(ktc)&&!ktc.ok;
   sm.textContent=ktcStale
     ? `KTC NOT UPDATING — live ingestion failed. Last verified snapshot: ${String(ktc.snapshot_timestamp||"unknown").slice(0,10)}. Last attempted: ${String(ktc.timestamp||"unknown").slice(0,10)}. ${ok}/${total} sources validated; full consensus replacement withheld.`
     : `${ok}/${total} sources fetched successfully; publisher freshness is separate`;
@@ -485,7 +485,7 @@ function renderConsensusDiagnostics(summary){
     const retained=status==="last-known-good"||status==="retained";
     const unpromoted=status==="fresh-not-promoted";
     const icon=fetched?"✓":retained?"↻":unpromoted?"!":"✗";
-    const label=String(x.source||"").toUpperCase()==="KTC"&&!fetched
+    const label=String(x.source||"").toUpperCase()==="KTC"&&!x.ok
       ?"NOT UPDATING — latest KTC fetch failed; previous verified rankings retained; no current KTC fetch"
       :fetched?"Fetched and validated":retained?"Last validated snapshot retained":unpromoted?"Fetched, but not promoted":"Unavailable / failed";
     const f=x.source_freshness||{};
@@ -526,7 +526,7 @@ async function refreshConsensus(){
       if(!payload?.summary){lastError=Error(payload?.error||"Consensus endpoint returned no diagnostics");continue}
 
       renderConsensusDiagnostics(payload.summary);
-      state.ktcNotUpdating=Boolean(payload.summary.results?.some(x=>String(x.source||"").toUpperCase()==="KTC"&&!(x.status==="refreshed"&&x.ok===true)));
+      state.ktcNotUpdating=Boolean(payload.summary.results?.some(x=>String(x.source||"").toUpperCase()==="KTC"&&!x.ok));
 
       // Only replace source snapshots when that source actually succeeded.
       const prior=state.rankings||{};

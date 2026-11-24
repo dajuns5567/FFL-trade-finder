@@ -1,3 +1,4 @@
+import {parseKtcRenderedPage,validateKtcRenderedPages} from "./ktc-html-pages.mjs";
 const KTC_URL="https://keeptradecut.com/dynasty-rankings?format=2";
 const KTC_FALLBACK_URL="https://keeptradecut.com/dynasty-rankings";
 const TIMEOUT_MS=7000;
@@ -296,6 +297,30 @@ export async function refreshKtc(opts={}){
    let extracted;
    try{extracted=extractKtcSuperflexRankings(html)}
    catch(initialError){
+    // The ranking HTML itself contains public, server-rendered Superflex rows.
+    // Read that directly before asking for the separately blocked JSON pool.
+    const firstPageRows=parseKtcRenderedPage(html);
+    if(url===KTC_URL&&firstPageRows.length>=40){
+      const pageNumbers=[1,2,3,4,5,6];
+      const pages=await Promise.all(pageNumbers.map(async page=>{
+        const pageUrl=new URL("https://keeptradecut.com/dynasty-rankings");
+        pageUrl.searchParams.set("page",String(page));
+        pageUrl.searchParams.set("filters","QB|WR|RB|TE");
+        pageUrl.searchParams.set("format","2");
+        try{return await fetchText(pageUrl.toString(),opts.fetchImpl||fetch,opts.timeoutMs||TIMEOUT_MS)}
+        catch{return ""}
+      }));
+      const rendered=validateKtcRenderedPages(pages);
+      responseShape.rendered_html_pages=pageNumbers.length;
+      responseShape.rendered_html_page_counts=pages.map(x=>parseKtcRenderedPage(x).length);
+      responseShape.rendered_html_valid=!!rendered;
+      if(rendered)extracted={rows:rendered,rawPlayers:rendered.length,
+        excludedDraftPicks:0,excludedNonOffense:0,
+        parserMode:"rendered-html",mode:"explicit-rank",
+        extractionMethod:"server-rendered:dynasty-superflex-pages",
+        embeddedPlayers:0};
+    }
+    if(!extracted){
     const version=poolVersion(html);
     if(!responseShape.asynchronous_player_pool||!version)throw initialError;
     // Exact same-origin path confirmed by the KTC browser's ktcFetchPlayerPool.
@@ -333,7 +358,8 @@ export async function refreshKtc(opts={}){
       "accept":"application/json"
     });
     extracted=extractPoolRankings(poolBody);
-    responseShape.pool_response_chars=poolBody.length;
+    }
+    responseShape.pool_response_chars=responseShape.pool_requested?responseShape.pool_response_chars||null:null;
     responseShape.pool_version_present=true;
    }
    const rows=extracted.rows;

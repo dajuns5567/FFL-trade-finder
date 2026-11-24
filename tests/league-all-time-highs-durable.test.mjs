@@ -90,7 +90,8 @@ test('the scheduled canonical headless collector writes an independent durable G
  assert.match(frontend,/window\.fleecedAwardHighsScheduledObservation=async function/);
  assert.match(frontend,/captureAllTimeHighsOnSiteOpen/);
  assert.match(backend,/githubDurableAwardHighs/);
- assert.match(backend,/mergeAwardHighs\(fromBlob,durable,now\)/);
+ assert.match(backend,/mergeAwardHighs\(fromBlob,durable\.records,now\)/);
+ assert.match(backend,/verified_records:verifiedCanonicalHighRecords\(result,LEAGUE\)/);
 });
 test('scheduled award capture executes only AFTER canonical browser parity and never in the HTTP snapshot handler',()=>{
  const source=read('scripts/value-history-headless-refresh.mjs');
@@ -109,15 +110,16 @@ test('saved legacy snapshots remain readable even if explicitly requested legacy
  const source=read('league-hub-v451.js');
  const fragment=source.slice(source.indexOf('async function refreshAllTimeHighs('),
   source.indexOf('let allTimeHighCaptureAt=',source.indexOf('async function refreshAllTimeHighs(')));
- assert(fragment.includes("awardHighHistory=data.records;"));
+ assert(fragment.includes("awardLegacyHighHistory=data.records;"));
+ assert(fragment.includes("awardHighHistory=Array.isArray(data.verified_records)?data.verified_records:[];"));
  assert(fragment.includes("league-award-highs-write-unavailable"));
- assert(fragment.indexOf('awardHighHistory=data.records')<fragment.indexOf("method:'POST'"));
+ assert(fragment.indexOf('awardLegacyHighHistory=data.records')<fragment.indexOf("method:'POST'"));
  const setup=new Function('fetch','console','globalThis',`
   const awardRecordKey=key=>key;
-  let awardHighHistory=[],onNetlifyDeployPreview=false,inquirerPreviewMode=false,
+  let awardHighHistory=[],awardLegacyHighHistory=[],onNetlifyDeployPreview=false,inquirerPreviewMode=false,
   currentView='daily',rankingAwardKey=null,awardHighMode={},tradeCache=null,draftCache=null;
   ${fragment}
-  return{run:refreshAllTimeHighs,records:()=>awardHighHistory};`);
+  return{run:refreshAllTimeHighs,records:()=>awardHighHistory,legacy:()=>awardLegacyHighHistory};`);
  let posts=0;
  const fetcher=async(_url,init)=>{
   if(init?.method==='POST'){posts++;throw Error('protected preview write unavailable')}
@@ -129,7 +131,8 @@ test('saved legacy snapshots remain readable even if explicitly requested legacy
  const app=setup(fetcher,{warn:()=>{}},state);
  await app.run([{key:'powerhouse',standings:[{roster_id:'2',score:1000,detail:'top five'}]}],{record:true,verifiedInputs:true});
  assert.equal(posts,1);
- assert.equal(app.records()[0].score,900);
+ assert.equal(app.legacy()[0].score,900);
+ assert.equal(app.records().length,0,'uncorroborated baseline is never certified');
 });
 
 test('first scheduled capture automatically promotes the original verified Blob bootstrap',()=>{

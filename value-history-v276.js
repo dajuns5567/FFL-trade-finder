@@ -1958,7 +1958,7 @@ function mergeCanonicalPlayerAwardMilestones(scoring,records,playerId){
  }
  for(const record of Array.isArray(records)?records:[]){
   const year=Number(record?.season),week=Number(record?.week);
-  if(!Number.isInteger(year)||!Number.isInteger(week)||week<1||week>17)continue;
+  if(!Number.isInteger(year)||!Number.isInteger(week)||week<1||week>18)continue;
   const sleeperVerified=record?.award_source==='sleeper-finalized-matchups'&&
    Number(record?.verified_roster_count)===32;
   const newsroomVerified=Number(record?.newsroom_editorial_revision)>=39&&

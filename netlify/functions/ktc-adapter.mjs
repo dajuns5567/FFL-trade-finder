@@ -228,12 +228,15 @@ export async function refreshKtc(opts={}){
   }
  }
  console.warn("KTC live source rejected",JSON.stringify(attempts));
+ const hydrationOnly=attempts.length>0&&attempts.every(a=>
+   a.asynchronous_player_pool&&a.oneqb_parsed_rows>0&&a.oneqb_parsed_rows<300
+ );
  return{
   source:"KTC",id:"ktc",status:"failed",valid:false,
   format:"dynasty-superflex",reducedWeight:true,
   players_extracted:0,ranking_rows:0,rankings:[],
   timestamp:now,stage:"extract",
-  error:"KTC dynasty Superflex source unavailable: "+attempts.map(a=>
+  error:"KTC dynasty Superflex source unavailable: "+(hydrationOnly?"Initial HTML contains only a small seed player array; full rankings are loaded asynchronously by KTC and require a verified player-pool feed. ":"")+attempts.map(a=>
     (a.url===KTC_URL?"Superflex":"base")+" "+
     (a.error||("only "+(a.ranking_rows||0)+" ranking rows"))).join("; ")+
     ". Previous verified consensus must be retained.",

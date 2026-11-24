@@ -169,7 +169,18 @@ export function extractKtcSuperflexRankings(text){
 // Fingerprints only: never log raw source HTML, user headers, or payload rows.
 function describeKtcHtml(html){
  const t=String(html||"");
+ const marker=/\boneQBPlayers\s*=\s*/.exec(t);
+ const start=marker?marker.index+marker[0].length:-1;
+ const raw=start>=0?balancedJson(t,start,"[","]"):null;
+ let oneqb=null,parseFailed=false;
+ if(raw){try{oneqb=JSON.parse(raw)}catch{parseFailed=true}}
  return {
+  oneqb_marker_found:!!marker,
+  oneqb_starts_array:start>=0&&t[start]==="[",
+  oneqb_balanced_chars:raw?.length||0,
+  oneqb_json_parse_failed:parseFailed,
+  oneqb_parsed_rows:Array.isArray(oneqb)?oneqb.length:0,
+  oneqb_sample_offense:Array.isArray(oneqb)?oneqb.slice(0,30).filter(playerShape).length:0,
   response_chars:t.length,
   inline_oneqb_assignment:/\boneQBPlayers\s*=\s*\[/.test(t),
   embedded_ktc_players:/<script[^>]*\bid=["']ktc-players["']/i.test(t),

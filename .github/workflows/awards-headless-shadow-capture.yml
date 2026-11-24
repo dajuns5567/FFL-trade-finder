@@ -1,0 +1,51 @@
+name: Awards headless canonical shadow capture (read-only)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/awards-headless-shadow-capture.yml'
+      - 'scripts/value-history-headless-refresh.mjs'
+      - 'scripts/verify-scheduled-all-time-highs.mjs'
+      - 'scripts/archive-league-all-time-highs.mjs'
+      - 'netlify/functions/lib/league-all-time-highs.mjs'
+      - 'league-hub-v451.js'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  shadow-capture:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      VALUE_HISTORY_SNAPSHOT_FILE: .tmp/awards-shadow-value-history.json
+      ALL_TIME_HIGHS_SCHEDULED_FILE: .tmp/awards-shadow-all-time-highs.json
+      VALUE_HISTORY_SCHEDULED_MODEL: idp-v96-single-source-continuous-v95-evidence
+      VALUE_HISTORY_V101_APPROVED: '0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install audited browser dependencies
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Capture actual source-grounded 32-team Awards locally (NO publication)
+        run: node scripts/value-history-headless-refresh.mjs
+      - name: Validate shadow capture model, source, recency and all 20 categories
+        run: node scripts/verify-scheduled-all-time-highs.mjs
+      - name: Show only safe capture diagnostics (no player values or credentials)
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const p=process.env.ALL_TIME_HIGHS_SCHEDULED_FILE;
+          const data=JSON.parse(fs.readFileSync(p,'utf8'));
+          console.log(JSON.stringify({
+            outcome:'read-only-verified-awards-shadow',
+            category_count:data.categories,team_count:data.team_count,
+            observation_count:data.observations.length,
+            captured_at:data.captured_at,
+            model_used:data.model_used,
+            source_commit:data.source_commit
+          },null,2));
+          NODE

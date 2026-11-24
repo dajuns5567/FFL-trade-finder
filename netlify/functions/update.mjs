@@ -75,7 +75,12 @@ export default async (req)=>{
   if(!candidate.withheld){
     for(const [name,snapshot] of Object.entries(candidate.sources)){
       const old=previous?.sources?.[name]||null;
-      snapshot.freshness=buildFreshnessSnapshot(snapshot,old,candidate.updatedAt);
+      // Reused KTC rankings have NOT been fetched again. Preserve original
+      // freshness evidence and snapshot timestamp rather than fabricating a
+      // successful fresh fetch on each unrelated source update.
+      snapshot.freshness=recovered&&name==="KTC"
+        ? (old?.freshness||null)
+        : buildFreshnessSnapshot(snapshot,old,candidate.updatedAt);
     }
     const promoted={sources:candidate.sources,composite:candidate.composite,updatedAt:candidate.updatedAt,sourceManifest:candidate.summary.results.map(x=>({source:x.source,status:x.source==="KTC"&&recovered?"last-known-good":"fresh",snapshot_timestamp:x.timestamp||candidate.updatedAt,attempt_timestamp:x.attempt_timestamp||x.timestamp||candidate.updatedAt,players_extracted:x.players_extracted,ranking_rows:x.ranking_rows,publisher_updated_at:null,source_freshness:(x.source==="The IDP Show Combined"?candidate.sources["The IDP Show Combined Offense"]?.freshness:candidate.sources[x.source]?.freshness)||null,market_observation:x.market_observation||null,source_provenance:x.source_provenance||null}))};
     await writeLastGood(promoted);

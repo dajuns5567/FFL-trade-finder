@@ -4,6 +4,8 @@ on:
     paths:
       - 'scripts/publish-inquirer-github-native.mjs'
       - 'scripts/verify-inquirer-published-readback.mjs'
+      - 'scripts/verify-deployed-inquirer-compatibility.mjs'
+      - 'scripts/inquirer-completed-week-shadow.mjs'
       - 'netlify/functions/inquirer-*.mjs'
       - 'netlify/functions/lib/inquirer-*.mjs'
       - 'tests/inquirer-github-native-publisher.test.mjs'
@@ -28,6 +30,12 @@ jobs:
           ref: inquirer-archive
           path: history
           persist-credentials: false
+      - name: Checkout exact currently published Netlify reader (read-only)
+        uses: actions/checkout@v4
+        with:
+          ref: 5c8573d163557e0880ae1af9f0f7cbe9b6acf32c
+          path: deployed-reader
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -41,6 +49,7 @@ jobs:
         working-directory: source
         env:
           INQUIRER_GITHUB_ARCHIVE_ROOT: ../history/inquirer-archive
+          INQUIRER_DEPLOYED_SOURCE_ROOT: ../deployed-reader
         run: node scripts/inquirer-completed-week-shadow.mjs
       - name: Retain candidate and diagnostics for editorial review (not a publication)
         if: always()

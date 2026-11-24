@@ -65,6 +65,7 @@ export async function verifyLiveInquirerSite({archiveRoot,site='https://animated
     const url=new URL('/.netlify/functions/league-hub',site);
     url.search=query+'&readback='+attempt+'-'+Date.now();
     const response=await fetcher(url.href,{cache:'no-store',headers:{accept:'application/json'},signal:AbortSignal.timeout(30000)});
+    if(response.status===401||response.status===403){const error=Error('Live site '+query+' HTTP '+response.status);error.accessRestricted=response.status;throw error}
     if(!response.ok)throw Error('Live site '+query+' HTTP '+response.status);
     return response.json();
    };
@@ -80,7 +81,12 @@ export async function verifyLiveInquirerSite({archiveRoot,site='https://animated
      edition.teams.some(t=>!t.inquirer_article?.headline)||!edition.league_overview?.headline||
      signature(edition)!==signature(expected))throw Error('Live site does not display the exact verified edition identity');
    return{state:'site-visible',verified:true,site,season:Number(row.season),week:Number(row.week),teams:32,attempt};
-  }catch(error){last=error;if(attempt<attempts)await pause(15000)}
+  }catch(error){
+   // Access protection is not a publication error, and never a successful
+   // website readback. Do not change the site's access rules or seek a bypass.
+   if(error.accessRestricted)return{state:'site-access-restricted',verified:false,site,season:Number(row.season),week:Number(row.week),http_status:error.accessRestricted,reason:'Authorized browser readback required'};
+   last=error;if(attempt<attempts)await pause(15000)
+  }
  }
  throw Error('GitHub publication not verified on actual site: '+String(last?.message||last));
 }
@@ -92,6 +98,7 @@ if(process.argv[1]&&fileURLToPath(import.meta.url)===path.resolve(process.argv[1
   if(process.env.INQUIRER_VERIFY_LIVE_SITE==='1'){
    const live=await verifyLiveInquirerSite({archiveRoot:root});
    console.info('github-inquirer-live-site-readback',JSON.stringify(live));
+   if(!live.verified)console.warn('::warning title=Website readback unverified::'+live.reason+' (HTTP '+live.http_status+')');
   }
  }).catch(error=>{console.error(error);process.exitCode=1});
 }

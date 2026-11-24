@@ -81,3 +81,15 @@ test('a valid but empty forward ledger does not fabricate an issue',async()=>{
   await assert.rejects(()=>verifyLiveInquirerSite({archiveRoot:f.dir,fetcher:read(10,{...edition,league_overview:{headline:'Different'}}),attempts:1}),/exact verified edition/);
  }finally{await fs.rm(f.dir,{recursive:true,force:true})}
  });
+
+ test('protected website is explicitly unverified, never mistaken for success or a content failure',async()=>{
+ const {verifyLiveInquirerSite}=await import('../scripts/verify-inquirer-published-readback.mjs');
+ const f=await fixture();
+ try{
+  await fs.mkdir(path.join(f.dir,'forward/2026'),{recursive:true});
+  await fs.writeFile(path.join(f.dir,'forward/2026/week-10.json'),f.bytes);
+  const restricted=await verifyLiveInquirerSite({archiveRoot:f.dir,fetcher:async()=>new Response('',{status:401}),attempts:1});
+  assert.equal(restricted.state,'site-access-restricted');assert.equal(restricted.verified,false);assert.equal(restricted.http_status,401);
+  await assert.rejects(()=>verifyLiveInquirerSite({archiveRoot:f.dir,fetcher:async()=>new Response('',{status:503}),attempts:1}),/not verified on actual site/);
+ }finally{await fs.rm(f.dir,{recursive:true,force:true})}
+ });

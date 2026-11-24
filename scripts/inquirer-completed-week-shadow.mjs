@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {runGithubInquirerPublisher,verifyForwardPublicationLedger,inquirerPublicationPlan} from './publish-inquirer-github-native.mjs';
 import {githubPublishedInquirerIndex,githubPublishedInquirerEdition} from '../netlify/functions/lib/inquirer-github-published.mjs';
+import {verifyDeployedInquirerCompatibility} from './verify-deployed-inquirer-compatibility.mjs';
 const root=path.resolve(process.env.INQUIRER_GITHUB_ARCHIVE_ROOT||'../history/inquirer-archive');
 const indexFile=path.join(root,'forward/index.json');
 const readIndex=()=>fs.readFile(indexFile,'utf8').then(JSON.parse).catch(e=>{if(e.code==='ENOENT')return{schema_version:1,reports:[]};throw e});
@@ -42,6 +43,10 @@ try{
   const future=inquirerPublicationPlan({season:latest.season,current:Math.min(18,nextClock+1),index:after});
   if(latest.week<17&&(future.state!=='due'||future.week!==latest.week+1))throw Error('Next-week scheduled progression failed');
   result={...result,same_week_replay_verified:true,next_week_eligible_on_clock_advance:latest.week<17?future.week:null};
+ }
+ if(process.env.INQUIRER_DEPLOYED_SOURCE_ROOT){
+  const compatibility=await verifyDeployedInquirerCompatibility({deployedRoot:process.env.INQUIRER_DEPLOYED_SOURCE_ROOT,localFetch,expectedWeek:latest.week,expectedSeason:latest.season});
+  result={...result,...compatibility};
  }
  result={...result,reader_verified:true,visible_week:latest.week,teams:edition.teams.length,editorial_revision:edition.editorial_revision,previous_issues_preserved:true};
  console.log('INQUIRER_SHADOW_ACCEPTED '+JSON.stringify(result));

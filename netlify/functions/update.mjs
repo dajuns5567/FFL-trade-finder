@@ -2,6 +2,7 @@ import { refreshAllSources } from "./consensus-source-overrides.mjs";
 import { buildConsensusComposite } from "./consensus-composite-v3.mjs";
 import { buildFreshnessSnapshot,ageFreshness } from "./consensus-source-freshness.mjs";
 import { getStore } from "@netlify/blobs";
+import { reuseVerifiedKtc } from "./consensus-ktc-lkg.mjs";
 
 const SNAPSHOT_STORE="fleeced-consensus-lkg";
 const SNAPSHOT_KEY="validated-sources-v1";
@@ -50,22 +51,40 @@ export default async (req)=>{
   const players=Array.isArray(body.players)?body.players:[];
   if(!players.length)return json({ok:false,error:"No player list supplied"},400);
   const refresh=await refreshAllSources();
-  const candidate=buildConsensusPayload(refresh,players);
   const previous=await readLastGood();
+  const recovered=reuseVerifiedKtc(refresh,previous);
+  const candidate=buildConsensusPayload(recovered?.refresh||refresh,players);
+  if(recovered){
+    // A verified cached source may complete the consensus input, but it is NOT
+    // a live KTC refresh. Keep explicit provenance in both diagnostics and manifest.
+    candidate.integrity={...candidate.integrity,
+      all_sources_fresh:false,recovered_sources:["KTC"],
+      reason:"KTC live retrieval failed; verified recent KTC snapshot reused (reduced weight); other six sources freshly validated"};
+    candidate.summary={
+      ...candidate.summary,
+      successful:refresh.results.filter(x=>x.valid).length,
+      failed:refresh.results.filter(x=>!x.valid).length,
+      results:candidate.summary.results.map(x=>x.source==="KTC"
+        ? {...x,ok:false,status:"last-known-good",error:recovered.failedAttempt.error,
+          timestamp:recovered.snapshotTimestamp,snapshot_timestamp:recovered.snapshotTimestamp,
+          attempt_timestamp:recovered.failedAttempt.timestamp}
+        : x)
+    };
+  }
 
   if(!candidate.withheld){
     for(const [name,snapshot] of Object.entries(candidate.sources)){
       const old=previous?.sources?.[name]||null;
       snapshot.freshness=buildFreshnessSnapshot(snapshot,old,candidate.updatedAt);
     }
-    const promoted={sources:candidate.sources,composite:candidate.composite,updatedAt:candidate.updatedAt,sourceManifest:candidate.summary.results.map(x=>({source:x.source,status:"fresh",snapshot_timestamp:x.timestamp||candidate.updatedAt,attempt_timestamp:x.timestamp||candidate.updatedAt,players_extracted:x.players_extracted,ranking_rows:x.ranking_rows,publisher_updated_at:null,source_freshness:(x.source==="The IDP Show Combined"?candidate.sources["The IDP Show Combined Offense"]?.freshness:candidate.sources[x.source]?.freshness)||null,market_observation:x.market_observation||null,source_provenance:x.source_provenance||null}))};
+    const promoted={sources:candidate.sources,composite:candidate.composite,updatedAt:candidate.updatedAt,sourceManifest:candidate.summary.results.map(x=>({source:x.source,status:x.source==="KTC"&&recovered?"last-known-good":"fresh",snapshot_timestamp:x.timestamp||candidate.updatedAt,attempt_timestamp:x.attempt_timestamp||x.timestamp||candidate.updatedAt,players_extracted:x.players_extracted,ranking_rows:x.ranking_rows,publisher_updated_at:null,source_freshness:(x.source==="The IDP Show Combined"?candidate.sources["The IDP Show Combined Offense"]?.freshness:candidate.sources[x.source]?.freshness)||null,market_observation:x.market_observation||null,source_provenance:x.source_provenance||null}))};
     await writeLastGood(promoted);
     const summary={...candidate.summary,results:candidate.summary.results.map(x=>({...x,
       source_freshness:(x.source==="The IDP Show Combined"?candidate.sources["The IDP Show Combined Offense"]?.freshness:candidate.sources[x.source]?.freshness)||null,
       market_observation:x.market_observation||null,
       source_provenance:x.source_provenance||null
     }))};
-    return json({...candidate,summary,promotion:{promoted:true,using_last_known_good:false},sourceManifest:promoted.sourceManifest});
+    return json({...candidate,summary,promotion:{promoted:true,using_last_known_good:!!recovered,reused_ktc_snapshot:!!recovered},sourceManifest:promoted.sourceManifest});
   }
 
   const priorSources=previous?.sources&&Object.keys(previous.sources).length?previous.sources:null;

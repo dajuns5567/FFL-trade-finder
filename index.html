@@ -486,7 +486,7 @@ function renderConsensusDiagnostics(summary){
     const unpromoted=status==="fresh-not-promoted";
     const icon=fetched?"✓":retained?"↻":unpromoted?"!":"✗";
     const label=String(x.source||"").toUpperCase()==="KTC"&&!fetched
-      ?"NOT UPDATING — latest KTC fetch failed; previous verified rankings retained, NOT freshly refreshed"
+      ?"NOT UPDATING — latest KTC fetch failed; previous verified rankings retained; no current KTC fetch"
       :fetched?"Fetched and validated":retained?"Last validated snapshot retained":unpromoted?"Fetched, but not promoted":"Unavailable / failed";
     const f=x.source_freshness||{};
     const obs=x.market_observation||f.observation||null;

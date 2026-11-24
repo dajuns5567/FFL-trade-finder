@@ -93,17 +93,19 @@ test('out-of-order player navigation paints only the selected player',async()=>{
  const older=load('111');
  currentPlayerId='222';
  const newer=load('222');
+ assert.deepEqual(scored,['111','222'],'both selected profiles may start scoring before history arrives');
  resolve('222',{points:[{value:22}]});
  await newer;
  resolve('111',{points:[{value:11}]});
  await older;
  assert.deepEqual(rendered.map(x=>x.id),['222']);
- assert.deepEqual(scored,['222']);
+ assert.deepEqual(scored,['111','222'],'late history completion must not start another scoring request');
  currentView='market';
  const navigatedAway=load('333');
  resolve('333',{points:[{value:33}]});
  await navigatedAway;
  assert.deepEqual(rendered.map(x=>x.id),['222'],'hidden player tab must not paint');
+ assert.deepEqual(scored,['111','222'],'inactive view must not start a player scoring request');
 });
 test('valuation and manual refresh explicitly invalidate navigation cache',()=>{
  assert.match(source,/function updateLiveConsumersV102\(\)\{\s*invalidatePlayerHistoryNavCache\(\)/);

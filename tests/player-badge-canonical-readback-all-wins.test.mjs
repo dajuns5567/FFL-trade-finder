@@ -32,7 +32,7 @@ function fixture({feed=records,scoring=existing,scoringFetchOverride=null}={}){
   assert.equal(url,'/.netlify/functions/league-hub?weekly_awards=1');
   return{ok:true,json:async()=>({records:feed})};
  },Date,Map,Promise,Number,String,Object,Array,Math,console,
- playerScoringCache:cache,playerScoringCacheAt:at,playerScoringCompleteAt:new Map(),currentPlayerId:'4034',
+ playerScoringCache:cache,playerScoringCacheAt:at,playerScoringCompleteAt:new Map(),currentPlayerId:'4034',currentView:'player',
  scoringFetch:scoringFetchOverride||(async()=>({scoring_milestones:scoring})),
  document:{getElementById:id=>id==='vhScoringMilestones'?node:null},
  scoringMilestonesRows:v=>JSON.stringify(v.weeklyAwards)
@@ -129,4 +129,19 @@ test('independent award loading persists in approved browser source overlay',asy
   assert.ok(profile.indexOf('loadPlayerScoring(key)')<profile.indexOf('await historyFetch(key)'));
   assert.match(profile,/data\.scoring_milestones&&!playerScoringCache\.has\(key\)/);
   assert.match(source,/scoringMilestonesRows\(next,!playerScoringCompleteAt\.has\(key\)\)/);
+ });
+
+ test('late scoring response caches the correct player without painting a different or inactive profile',async()=>{
+ for(const navigation of ['other-player','market']){
+  let resolveScoring;
+  const slow=new Promise(resolve=>{resolveScoring=resolve});
+  const {ctx,cache,node}=fixture({scoringFetchOverride:()=>slow});
+  const pending=ctx.load('4034');
+  for(let i=0;i<12&&!cache.get('4034')?.weeklyAwards?.length;i++)await Promise.resolve();
+  if(navigation==='market')ctx.currentView='market';else ctx.currentPlayerId='other';
+  node.innerHTML='selected-profile-unchanged';
+  resolveScoring({scoring_milestones:existing});await pending;
+  assert.equal(node.innerHTML,'selected-profile-unchanged');
+  assert.equal(cache.get('4034').weeklyAwards.length,5);
+ }
  });

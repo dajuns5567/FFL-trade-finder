@@ -2035,7 +2035,7 @@ async function loadPlayerScoring(id){
       Number(b.week)-Number(a.week)||String(a.type).localeCompare(String(b.type)));
     playerScoringCache.set(key,next);
     playerScoringCacheAt.set(key,Date.now());
-    if(String(currentPlayerId)!==key)return;
+    if(currentView!=='player'||String(currentPlayerId)!==key)return;
     const target=document.getElementById('vhScoringMilestones');
     if(target)target.innerHTML=scoringMilestonesRows(next,!playerScoringCompleteAt.has(key));
   };
@@ -2072,9 +2072,9 @@ function installPlayerWeeklyBadgeRefresh(){
 }
 async function loadPlayer(id){
   const key=String(id),sequence=++playerProfileLoadSequence;
-  // Start the independent full scoring read at navigation time, not after the history network request.
-  const scoringRead=loadPlayerScoring(key);
   const box=document.getElementById('vhContent');if(!box)return;
+  // Start the independent full scoring read at navigation time, not after the history network request.
+  const scoringRead=currentView==='player'&&String(currentPlayerId)===key?loadPlayerScoring(key):Promise.resolve();
   // Never leave another player's profile visible while changing selection.
   // A valid navigation cache resolves this placeholder in the next microtask.
   box.innerHTML='<div class="vh-empty">Loading player history…</div>';

@@ -48,7 +48,7 @@ test('actual player loader merges 3 historical wins with verified 2026 Week 6/10
    verified_roster_count:32,players_of_week:{offense:{player_id:'4034',points:w===10?46.3:30.7}}}));
  const ctx={
   playerScoringCache:new Map([['4034',partial]]),
-  playerScoringCacheAt:new Map(),playerScoringCompleteAt:new Map(),currentPlayerId:'4034',
+  playerScoringCacheAt:new Map(),playerScoringCompleteAt:new Map(),currentPlayerId:'4034',currentView:'player',
   canonicalPlayerAwardRecords:async()=>records,
   scoringFetch:async (_id,opts)=>{requestedComplete=opts?.requireCompleteReadback===true;
     return{scoring_milestones:{weeklyAwards:[

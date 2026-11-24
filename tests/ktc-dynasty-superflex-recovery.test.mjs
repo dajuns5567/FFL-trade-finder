@@ -219,3 +219,30 @@ test('KTC refresh failures are unmistakable on the homepage and diagnostics scre
  assert.match(ui,/last successful date and failure/i);
  assert.match(ui,/state.ktcNotUpdating/);
 });
+
+test('a rejected versioned player-pool request records the attempted feed without exposing sensitive payloads',async()=>{
+ const version='2611240010-public-version';
+ const html='<script>var oneQBPlayers = '+JSON.stringify(fixture(3))+
+  ';var playersVersion="'+version+'";var playersArray=[];ktcFetchPlayerPool("dynasty",playersVersion);</script>';
+ const requests=[];
+ const result=await refreshKtc({fetchImpl:async (url,options)=>{
+  requests.push({url,options});
+  return String(url).includes('/player-pool')
+   ? {ok:false,status:403,headers:{get:name=>name==='content-type'?'text/plain':null},text:async()=> 'Forbidden'}
+   : {ok:true,text:async()=>html};
+ }});
+ assert.equal(result.valid,false);
+ assert.equal(result.rankings.length,0);
+ assert.equal(result.diagnostics.attempts.length,2);
+ for(const item of result.diagnostics.attempts){
+  assert.equal(item.pool_requested,true);
+  assert.equal(item.pool_endpoint,'/dynasty-rankings/player-pool');
+  assert.deepEqual(item.pool_query_keys,['v','sr']);
+  assert.equal(item.pool_version_present,true);
+  assert.match(item.error,/403/);
+ }
+ const poolRequests=requests.filter(x=>String(x.url).includes('/player-pool'));
+ assert.equal(poolRequests.length,2);
+ assert.ok(poolRequests.every(x=>new URL(x.url).searchParams.get('v')===version));
+ assert.ok(poolRequests.every(x=>new URL(x.url).searchParams.get('sr')==='2'));
+});

@@ -29,7 +29,19 @@ async function fetchText(url,fetchImpl=fetch,timeoutMs=TIMEOUT_MS,extraHeaders={
       // No response bodies, cookies, tokens, or raw headers in diagnostics.
       const h=res.headers;
       const get=name=>typeof h?.get==="function"?h.get(name):null;
+      // A short, allowlisted error classification distinguishes upstream
+      // policy blocks from publisher refusals without exposing body content.
+      let rejectionText="";
+      if(res.status===403){
+        try{rejectionText=(await res.text()).slice(0,1024)}catch{}
+      }
+      const denialCode=/ROBOTS_DENIED/i.test(rejectionText)?"robots-denied":
+        /access denied/i.test(rejectionText)?"access-denied":
+        /forbidden/i.test(rejectionText)?"forbidden":
+        /rate.limit|too many requests/i.test(rejectionText)?"rate-limited":
+        /blocked/i.test(rejectionText)?"blocked":"unclassified";
       const classification={
+        denial_code:denialCode,
         status:res.status,
         content_type:get("content-type")?.split(";")[0]||null,
         cf_mitigated:get("cf-mitigated")==="challenge",

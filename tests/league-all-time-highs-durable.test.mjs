@@ -105,7 +105,7 @@ test('scheduled award capture executes only AFTER canonical browser parity and n
   'only an accepted canonical browser observation can earn a historical high');
 });
 
-test('saved highs remain readable when a write fails in the browser',async()=>{
+test('saved legacy snapshots remain readable even if explicitly requested legacy write fails',async()=>{
  const source=read('league-hub-v451.js');
  const fragment=source.slice(source.indexOf('async function refreshAllTimeHighs('),
   source.indexOf('let allTimeHighCaptureAt=',source.indexOf('async function refreshAllTimeHighs(')));
@@ -127,7 +127,7 @@ test('saved highs remain readable when a write fails in the browser',async()=>{
  const state={state:{teams:Array.from({length:32},(_,i)=>({id:String(i+1)}))},
   modeledPlayerValuesV319:{ready:true},tradeValueNormalizationV130:{canonicalValue:()=>900}};
  const app=setup(fetcher,{warn:()=>{}},state);
- await app.run([{key:'powerhouse',standings:[{roster_id:'2',score:1000,detail:'top five'}]}],{verifiedInputs:true});
+ await app.run([{key:'powerhouse',standings:[{roster_id:'2',score:1000,detail:'top five'}]}],{record:true,verifiedInputs:true});
  assert.equal(posts,1);
  assert.equal(app.records()[0].score,900);
 });

@@ -1,0 +1,39 @@
+name: Scheduled history production-path diagnosis (read-only)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/scheduled-history-health-diagnostic.yml'
+  workflow_dispatch:
+permissions:
+  actions: read
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Inspect active scheduled workflow runs and failed steps (no writes)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          MODEL: ${{ vars.FFL_HISTORY_SCHEDULED_MODEL || 'idp-v96-single-source-continuous-v95-evidence' }}
+          APPROVED: ${{ vars.FFL_HISTORY_V101_APPROVED || '0' }}
+        run: |
+          echo "Active model selection: $MODEL / approval=$APPROVED"
+          gh api "repos/$GH_REPO/actions/workflows/value-history-headless-refresh.yml/runs?branch=main&per_page=25" --jq '.workflow_runs[] | [.id,.event,.created_at,.status,.conclusion,.head_sha] | @tsv' > /tmp/history-runs.tsv
+          cat /tmp/history-runs.tsv
+          awk -F '\t' '$5=="failure" {print $1}' /tmp/history-runs.tsv | head -n 3 | while read -r run; do
+            echo "FAILED RUN $run"
+            gh api "repos/$GH_REPO/actions/runs/$run/jobs" --jq '.jobs[] | {id,name,conclusion,steps:[.steps[] | select(.conclusion=="failure") | .name]}'
+            gh api "repos/$GH_REPO/actions/runs/$run/jobs" --jq '.jobs[] | select(.conclusion=="failure") | .id' | while read -r job; do
+              gh api "repos/$GH_REPO/actions/jobs/$job/logs" | grep -Ei 'VALUE_HISTORY_(PROMOTION|MODEL)_GUARD|Scheduled capture lacks|Scheduled browser|not ready|source readiness|consensus.*(failed|incomplete)|durable.*(failed|reject)|Error:|Process completed with exit code|timed out|timeout' | cut -c1-600 | tail -n 20 || true
+            done
+          done
+      - name: Confirm durable archive due status
+        run: node scripts/value-history-scheduled-due.mjs

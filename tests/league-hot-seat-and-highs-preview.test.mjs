@@ -80,19 +80,20 @@ test('a newly finalized week refreshes Hot Seat and awards even when Managers or
 test('All-Time Highs shows all current standings until first timestamped record, never calls them recorded peaks',()=>{
  const a=ui.indexOf('function awardRecordsHTML('),b=ui.indexOf('function rankingsHTML(rows,key){',a);
  assert(a>=0&&b>a);
- const fn=new Function('awardHighHistory','awardRecordKey','esc','teamName','fmt',
-  ui.slice(a,b)+'return awardRecordsHTML')([],x=>x,x=>String(x??''),x=>'Team '+x,x=>String(x));
+ const fn=new Function('awardHighHistory','awardLegacyHighHistory','awardRecordKey','esc','teamName','fmt', 
+  ui.slice(a,b)+'return awardRecordsHTML')([],[],x=>x,x=>String(x??''),x=>'Team '+x,x=>String(x));
  const standings=Array.from({length:32},(_,i)=>({roster_id:String(i+1),score:100+i,detail:'Current value '+i}));
  const markup=fn({key:'deal-maker',standings});
  assert.equal((markup.match(/data-lh-current-benchmark/g)||[]).length,32);
- assert.match(markup,/not timestamped All-Time Highs/);
+ assert.match(markup,/not timestamped historical records/);
+ assert.match(markup,/VERIFIED ALL-TIME HIGH NOT YET ESTABLISHED/);
  assert.doesNotMatch(markup,/Recorded \d/);
 });
 test('timestamped records replace the provisional list when the durable archive becomes readable',()=>{
  const a=ui.indexOf('function awardRecordsHTML('),b=ui.indexOf('function rankingsHTML(rows,key){',a);
- const fn=new Function('awardHighHistory','awardRecordKey','esc','teamName','fmt',
+ const fn=new Function('awardHighHistory','awardLegacyHighHistory','awardRecordKey','esc','teamName','fmt', 
   ui.slice(a,b)+'return awardRecordsHTML')(
-   [{award_key:'deal-maker',roster_id:'2',score:10,captured_at:'2026-11-22T13:00:00Z'}],
+   [{award_key:'deal-maker',roster_id:'2',score:10,captured_at:'2026-11-22T13:00:00Z'}],[],
    x=>x,x=>String(x??''),x=>'Team '+x,x=>String(x));
  const markup=fn({key:'deal-maker',standings:base});
  assert.match(markup,/Recorded/);

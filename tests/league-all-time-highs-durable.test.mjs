@@ -1,14 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {mergeAwardHighs,highObservationsFromStandings} from '../netlify/functions/lib/league-all-time-highs.mjs';
+import {mergeAwardHighs,highObservationsFromStandings,CANONICAL_AWARD_KEYS} from '../netlify/functions/lib/league-all-time-highs.mjs';
 import {validateScheduledHighs,nextDurableHighs,requiresDurableHighsWrite,RECORD_PATH,DATA_BRANCH} from '../scripts/archive-league-all-time-highs.mjs';
 
 const now='2026-11-22T20:00:00.000Z';
-const categories=['fleecer','fleeced','day-trader','pick-hoarder','deal-maker','efficiency',
- 'big-swing','powerhouse','quiet','best-draft-pick','best-draft','roster-value',
- 'young-core','veterans','trade-average','volume-wins','big-regret','balanced',
- 'crown-jewel','pick-stacker'];
+const categories=CANONICAL_AWARD_KEYS;
 const fixture=()=>({
  schema_version:1,source:'canonical-live-32-team-awards',
  captured_at:new Date().toISOString(),team_count:32,trade_count:72,draft_count:120,categories:20,
@@ -90,7 +87,8 @@ test('the scheduled canonical headless collector writes an independent durable G
  assert.match(frontend,/window\.fleecedAwardHighsScheduledObservation=async function/);
  assert.match(frontend,/captureAllTimeHighsOnSiteOpen/);
  assert.match(backend,/githubDurableAwardHighs/);
- assert.match(backend,/mergeAwardHighs\(fromBlob,durable,now\)/);
+ assert.match(backend,/mergeAwardHighs\(fromBlob,durable\.records,now\)/);
+ assert.match(backend,/verified_records:verifiedCanonicalHighRecords\(result,LEAGUE\)/);
 });
 test('scheduled award capture executes only AFTER canonical browser parity and never in the HTTP snapshot handler',()=>{
  const source=read('scripts/value-history-headless-refresh.mjs');
@@ -105,19 +103,20 @@ test('scheduled award capture executes only AFTER canonical browser parity and n
   'only an accepted canonical browser observation can earn a historical high');
 });
 
-test('saved highs remain readable when a write fails in the browser',async()=>{
+test('saved legacy snapshots remain readable even if explicitly requested legacy write fails',async()=>{
  const source=read('league-hub-v451.js');
  const fragment=source.slice(source.indexOf('async function refreshAllTimeHighs('),
   source.indexOf('let allTimeHighCaptureAt=',source.indexOf('async function refreshAllTimeHighs(')));
- assert(fragment.includes("awardHighHistory=data.records;"));
+ assert(fragment.includes("awardLegacyHighHistory=data.records;"));
+ assert(fragment.includes("awardHighHistory=Array.isArray(data.verified_records)?data.verified_records:[];"));
  assert(fragment.includes("league-award-highs-write-unavailable"));
- assert(fragment.indexOf('awardHighHistory=data.records')<fragment.indexOf("method:'POST'"));
+ assert(fragment.indexOf('awardLegacyHighHistory=data.records')<fragment.indexOf("method:'POST'"));
  const setup=new Function('fetch','console','globalThis',`
   const awardRecordKey=key=>key;
-  let awardHighHistory=[],onNetlifyDeployPreview=false,inquirerPreviewMode=false,
+  let awardHighHistory=[],awardLegacyHighHistory=[],onNetlifyDeployPreview=false,inquirerPreviewMode=false,
   currentView='daily',rankingAwardKey=null,awardHighMode={},tradeCache=null,draftCache=null;
   ${fragment}
-  return{run:refreshAllTimeHighs,records:()=>awardHighHistory};`);
+  return{run:refreshAllTimeHighs,records:()=>awardHighHistory,legacy:()=>awardLegacyHighHistory};`);
  let posts=0;
  const fetcher=async(_url,init)=>{
   if(init?.method==='POST'){posts++;throw Error('protected preview write unavailable')}
@@ -127,9 +126,10 @@ test('saved highs remain readable when a write fails in the browser',async()=>{
  const state={state:{teams:Array.from({length:32},(_,i)=>({id:String(i+1)}))},
   modeledPlayerValuesV319:{ready:true},tradeValueNormalizationV130:{canonicalValue:()=>900}};
  const app=setup(fetcher,{warn:()=>{}},state);
- await app.run([{key:'powerhouse',standings:[{roster_id:'2',score:1000,detail:'top five'}]}],{verifiedInputs:true});
+ await app.run([{key:'powerhouse',standings:[{roster_id:'2',score:1000,detail:'top five'}]}],{record:true,verifiedInputs:true});
  assert.equal(posts,1);
- assert.equal(app.records()[0].score,900);
+ assert.equal(app.legacy()[0].score,900);
+ assert.equal(app.records().length,0,'uncorroborated baseline is never certified');
 });
 
 test('first scheduled capture automatically promotes the original verified Blob bootstrap',()=>{

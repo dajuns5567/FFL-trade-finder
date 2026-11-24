@@ -1,6 +1,22 @@
 // Durable, monotonic per-award, per-roster historical records.
 // Never replace an actual first-observed timestamp with the timestamp of a
 // later read or a losing score. Invalid/incomplete candidates cannot erase data.
+// Exact identities of the 20 live Awards; two categories legitimately omit
+// ineligible teams (no drafted player or no completed trades).
+export const CANONICAL_AWARD_KEYS=Object.freeze(["balanced:trade-adjusted-v1","best-draft","best-draft-pick","big-regret:trade-adjusted-v1","big-swing:trade-adjusted-v1","crown-jewel","day-trader","deal-maker:trade-adjusted-v1","efficiency:trade-adjusted-v1","fleeced:trade-adjusted-v1","fleecer:trade-adjusted-v1","pick-hoarder","pick-stacker","powerhouse","quiet","roster-value","trade-average:trade-adjusted-v1","veterans","volume-wins:trade-adjusted-v1","young-core"]);
+const optionalRosterCoverage=new Set(['best-draft-pick','trade-average:trade-adjusted-v1']);
+export function hasCanonicalAwardCoverage(rows){
+ if(!Array.isArray(rows))return false;
+ const groups=new Map(CANONICAL_AWARD_KEYS.map(k=>[k,new Set()]));
+ const rosterIds=new Set();
+ for(const row of rows){
+  const group=groups.get(String(row?.award_key||'')),id=String(row?.roster_id||'');
+  if(!group||!validAwardHigh(row)||group.has(id))return false;
+  group.add(id);rosterIds.add(id);
+ }
+ if(rosterIds.size!==32)return false;
+ return [...groups].every(([key,ids])=>optionalRosterCoverage.has(key)?ids.size>0:ids.size===32);
+}
 export function validAwardHigh(row){
  const key=String(row?.award_key||''),roster=String(row?.roster_id||'');
  const score=row?.score==null?NaN:Number(row.score);
@@ -80,4 +96,39 @@ export function verifiedDurableAwardHighRecords(data,leagueId){
  }
  if(categories.size!==20||rosters.size!==32)return[];
  return data.records;
+}
+
+
+/**
+ * Canonical independently captured highs, NOT historical one-off snapshots.
+ *
+ * A 639-row legacy Blob export can preserve real values and timestamps yet
+ * still represent just ONE uncorroborated observation. Never silently promote
+ * those old peaks to certified records merely by changing the archive source
+ * label. Only this distinct verified_records ledger is eligible for the
+ * user-facing historical leaderboard.
+ */
+export function verifiedCanonicalHighRecords(data,leagueId){
+ if(data?.schema_version!==1||
+    String(data?.league_id)!==String(leagueId)||
+    data.source!=='github-canonical-headless-all-time-highs'||
+    !/^[a-f0-9]{40}$/i.test(String(data.source_commit||''))||
+    String(data.canonical_fingerprint||'').length<5||
+    !Number.isFinite(Date.parse(data.latest_observation_at))||
+    !Array.isArray(data.verified_records)||data.verified_records.length<500||
+    !['idp-v96-single-source-continuous-v95-evidence',
+      'idp-v101-verified-role-growth-v100-source-free-lineage'].includes(String(data.model_used||'')))
+   return [];
+ const eligible=verifiedDurableAwardHighRecords(data,leagueId);
+ if(eligible.length!==data.records.length)return [];
+ const archive=new Map(eligible.map(row=>[row.award_key+'|'+row.roster_id,row]));
+ const keys=new Set(),categories=new Set(),rosters=new Set();
+ for(const row of data.verified_records){
+  if(!validAwardHigh(row)||!Number.isFinite(Date.parse(row.captured_at))||
+     Date.parse(row.captured_at)>Date.parse(data.latest_observation_at)+60000)return [];
+  const key=row.award_key+'|'+row.roster_id,raw=archive.get(key);
+  if(keys.has(key)||!raw||Number(raw.score)+0.000001<Number(row.score))return [];
+  keys.add(key);categories.add(row.award_key);rosters.add(String(row.roster_id));
+ }
+ return categories.size===20&&rosters.size===32&&hasCanonicalAwardCoverage(data.verified_records)?data.verified_records:[];
 }

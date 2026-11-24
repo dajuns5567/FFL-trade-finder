@@ -52,7 +52,7 @@ test('combined runtime contains one preserved League Hub revision and a fresh Va
  const histories=[...loader.matchAll(/value-history-v276\.js\?v=(\d+)/g)];
  assert.equal(histories.length,1);assert.ok(Number(histories[0][1])>=550);
  assert.match(browser,/setInterval\(refreshVisiblePlayerWeeklyBadges,PLAYER_WEEKLY_BADGE_REFRESH_MS\)/);
- assert.match(history,/verifiedCompletedAwardWeek\(origin,currentSeason\)/);
+ assert.match(history,/verifiedCompletedAwardWeek\(origin,currentSeason,nflState\)/);
  assert.match(history,/\.netlify\/functions\/league-hub\?weekly_awards=1/);
  assert.match(hub,/if\(u\.searchParams\.get\('weekly_awards'\)==='1'\)/);
  assert.match(hub,/weeklyAwards\(\{persist:false\}\)/);

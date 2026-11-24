@@ -1,7 +1,7 @@
 import {inquirerMarketCutoff,editionAvailability} from './lib/inquirer-market-window.mjs';
 import {completedLeagueWeekView} from './lib/league-completed-week.mjs';
 import {selectHotSeat,supplementCompletedHotSeat} from './lib/league-hot-seat.mjs';
-import {mergeAwardHighs,verifiedDurableAwardHighRecords} from './lib/league-all-time-highs.mjs';
+import {mergeAwardHighs,verifiedDurableAwardHighRecords,verifiedCanonicalHighRecords} from './lib/league-all-time-highs.mjs';
 import {mergeCompletedWeeklyAwardStats} from './lib/weekly-award-stats-merge.mjs';
 import valueHistoryHandler from './value-history.mjs';
 // Forward drafts must be reviewed as written; synthetic scoreboard sentence repair is retired.
@@ -1121,11 +1121,15 @@ async function githubDurableAwardHighs(){
  try{
   const response=await fetch(url+'?fresh='+Date.now(),{cache:'no-store',
    headers:{accept:'application/json'}});
-  if(!response.ok)return[];
+  if(!response.ok)return{records:[],verified_records:[]};
   const result=await response.json();
-  return verifiedDurableAwardHighRecords(result,LEAGUE);
+  return{
+   records:verifiedDurableAwardHighRecords(result,LEAGUE),
+   verified_records:verifiedCanonicalHighRecords(result,LEAGUE)
+  };
  }catch(error){
-  console.warn('league-awards-durable-read-unavailable',String(error?.message||error));return[];
+  console.warn('league-awards-durable-read-unavailable',String(error?.message||error));
+  return{records:[],verified_records:[]};
  }
 }
 async function awardHighs(req){
@@ -1136,11 +1140,18 @@ async function awardHighs(req){
  }
  const key='awards/highs.json',stored=s?await s.get(key,{type:'json'}).catch(()=>null):null,
   fromBlob=Array.isArray(stored)?stored:[],durable=await githubDurableAwardHighs(),
-  now=new Date().toISOString(),previous=mergeAwardHighs(fromBlob,durable,now);
- if(req.method==='GET')return json({records:previous,
-  available:previous.length>0,
-  archive_status:previous.length?'verified-historical-records':'awaiting-first-verified-capture',
-  sources:{blob:fromBlob.length,durable:durable.length},cache_status:s?'available':'unavailable'});
+  now=new Date().toISOString(),previous=mergeAwardHighs(fromBlob,durable.records,now);
+ // A historical baseline is NOT a certified peak without independent
+ // canonical capture evidence. Preserve its records unmodified in 'records'
+ // but expose separately certified rankings only via verified_records.
+ const verified_records=durable.verified_records;
+ if(req.method==='GET')return json({records:previous,verified_records,
+  available:verified_records.length>0,
+  archive_status:verified_records.length?'verified-canonical-records':
+   previous.length?'legacy-baseline-not-independently-verified':'awaiting-first-verified-capture',
+  sources:{blob:fromBlob.length,durable:durable.records.length,
+   independently_verified:verified_records.length},
+  cache_status:s?'available':'unavailable'});
  const body=await req.json().catch(()=>null),records=Array.isArray(body?.records)?body.records:[];
  if(!records.length||records.length>1000)return json({error:'missing or excessive all-time-high observations'},400);
  const highs=mergeAwardHighs(previous,records,now);
@@ -1149,8 +1160,8 @@ async function awardHighs(req){
  if(changed&&s)await s.setJSON(key,highs);
  // User-facing reads remain available from GitHub even if Netlify Blob
  // migration makes this optional cache unreachable.
- return json({records:highs,recorded_at:now,changed,
-  source:'league-awards-canonical',cache_written:!!(changed&&s)});
+ return json({records:highs,verified_records,recorded_at:now,changed,
+  source:'league-awards-uncorroborated-browser-snapshot',cache_written:!!(changed&&s)});
 }
 async function awards(req){
  const s=store();

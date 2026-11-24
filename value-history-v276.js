@@ -1790,8 +1790,6 @@ function renderMarketDashboard(){
   const vr=marketPeriods.valueRisers,vf=marketPeriods.valueFallers,rr=marketPeriods.rankRisers,rf=marketPeriods.rankFallers;
   const vpR=m.periods?.[vr]||{},vpF=m.periods?.[vf]||{},rpR=m.periods?.[rr]||{},rpF=m.periods?.[rf]||{};
   box.innerHTML=`
-  ${modelEraNote(m)}
-  <div class="vh-sub">Current values and ranks come from Player Values; market movement, historical records, and time-window changes are archived observations and may end before the latest live refresh.</div>
   <div class="vh-market-jump">
     <button type="button" data-vh-market-jump="vhMarketMovers">Movers</button>
     <button type="button" data-vh-market-jump="vhPositionIndexes">Position Indexes</button>
@@ -1803,7 +1801,7 @@ function renderMarketDashboard(){
     <button type="button" data-vh-market-jump="vhMarketReversals">Reversals</button>
     <button type="button" data-vh-market-jump="vhMarketVolatility">Volatility</button>
   </div>
-  <section class="vh-market-section" id="vhMarketMovers"><div class="vh-market-section-title"><h3>Market Movers</h3><p>The original finished-value and overall-rank fluctuation boards remain unchanged.</p></div>
+  <section class="vh-market-section" id="vhMarketMovers"><div class="vh-market-section-title"><h3>Market Movers</h3></div>
     <div class="vh-grid-2">
       <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>${moverTitle('Biggest Value Risers',vr,m)}</h3><div class="vh-sub">Largest increases in finished player value</div></div>${moverCardActions('market','valueRisers',vr)}</div>${moverRows(applyMoverPool(vpR.valueRisers,'market','valueRisers'))}</div>
       <div class="vh-card vh-mover-card"><div class="vh-card-head"><div><h3>${moverTitle('Biggest Value Fallers',vf,m)}</h3><div class="vh-sub">Largest decreases in finished player value</div></div>${moverCardActions('market','valueFallers',vf)}</div>${moverRows(applyMoverPool(vpF.valueFallers,'market','valueFallers'))}</div>
@@ -1857,12 +1855,14 @@ function scoringMilestonesRows(scoring,loading=false){
     '<div class="vh-feed-row"><span class="vh-milestone-label">'+esc(title)+
     '<span class="vh-milestone-time">'+esc(when)+'</span></span><b>'+
     (record&&Number.isFinite(Number(record.points))?Number(record.points).toFixed(2):'—')+'</b></div>').join('');
-  const awards=(Array.isArray(scoring.weeklyAwards)?scoring.weeklyAwards:[]).map(a=>
-    '<div class="vh-feed-row"><span class="vh-milestone-label">'+esc(a.title||'Player of the Week')+
-    '<span class="vh-milestone-time">'+esc(String(a.season))+' Week '+esc(String(a.week))+
-    ' • '+(a.week_started_at?esc(dateShort(a.week_started_at)):'date unavailable')+
-    '</span></span><span class="vh-milestone-award">🏅 '+
-    (Number.isFinite(Number(a.points))?Number(a.points).toFixed(2):'—')+' pts</span></div>').join('');
+  const awards=(Array.isArray(scoring.weeklyAwards)?scoring.weeklyAwards:[]).map(a=>{
+    const label=a.type==='offensive-player-of-week'?'Top Offensive Scorer':a.type==='defensive-player-of-week'?'Top Defensive Scorer':String(a.title||'Player of the Week');
+    const when=String(a.season)+' Week '+String(a.week)+(a.week_started_at?' • '+dateShort(a.week_started_at):'');
+    return '<div class="vh-feed-row"><span class="vh-milestone-label">Weekly scoring honor'+
+      '<span class="vh-milestone-time">'+esc(when)+'</span></span>'+
+      '<span class="vh-milestone-award">🏅 '+esc(label)+' · '+
+      (Number.isFinite(Number(a.points))?Number(a.points).toFixed(2):'—')+' pts</span></div>';
+  }).join('');
   return rows+awards;
 }
 async function loadPlayerScoring(id){

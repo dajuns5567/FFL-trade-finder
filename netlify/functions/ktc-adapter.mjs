@@ -166,6 +166,32 @@ export function extractKtcSuperflexRankings(text){
   }
   return {rows:best?.rows||[],rawPlayers:best?.rawPlayers||0,excludedDraftPicks:best?.excluded?.draft||0,excludedNonOffense:best?.excluded?.nonOffense||0,parserMode:best?.mode||"none",extractionMethod:best?.extractionMethod||null,valuedCount:best?.valuedCount||0,embeddedPlayers:arrays.find(x=>x.parser==="embedded-json:ktc-players")?.players.length||0};
 }
+// KTC now hydrates its full dynasty pool from this same-origin public endpoint.
+// The initial HTML typically includes only three seed players.
+const KTC_POOL_URL="https://keeptradecut.com/dynasty-rankings/player-pool";
+function extractPoolRankings(body){
+ let root;
+ try{root=JSON.parse(String(body||""))}catch{throw new Error("KTC player pool was not valid JSON")}
+ const arrays=[],stack=[root],seen=new Set();
+ while(stack.length&&seen.size<500){
+  const node=stack.pop();
+  if(!node||typeof node!=="object"||seen.has(node))continue;
+  seen.add(node);
+  if(Array.isArray(node)){
+   if(node.length>=300&&node.slice(0,30).filter(playerShape).length>=5)arrays.push(node);
+   if(node.length>100)continue;
+   stack.push(...node.filter(x=>x&&typeof x==="object"));
+  }else stack.push(...Object.values(node).filter(x=>x&&typeof x==="object"));
+ }
+ if(!arrays.length)throw new Error("KTC player pool JSON contained no complete player array");
+ const players=arrays.sort((a,b)=>b.length-a.length)[0];
+ const parsed=normalizeKtcPlayers(players);
+ return {...parsed,rawPlayers:players.length,extractionMethod:"same-origin:dynasty-player-pool",embeddedPlayers:0};
+}
+function poolVersion(html){
+ const match=/\bplayersVersion\s*=\s*["']([^"'<>\s]{4,120})["']/.exec(html);
+ return match?.[1]||null;
+}
 // Fingerprints only: never log raw source HTML, user headers, or payload rows.
 function describeKtcHtml(html){
  const t=String(html||"");
@@ -197,7 +223,20 @@ export async function refreshKtc(opts={}){
   try{
    const html=await fetchText(url,opts.fetchImpl||fetch,opts.timeoutMs||TIMEOUT_MS);
    responseShape=describeKtcHtml(html);
-   const extracted=extractKtcSuperflexRankings(html),rows=extracted.rows;
+   let extracted;
+   try{extracted=extractKtcSuperflexRankings(html)}
+   catch(initialError){
+    const version=poolVersion(html);
+    if(!responseShape.asynchronous_player_pool||!version)throw initialError;
+    // Exact same-origin path confirmed by the KTC browser's ktcFetchPlayerPool.
+    // Do not use the three seed players as rankings.
+    const poolUrl=KTC_POOL_URL;
+    const poolBody=await fetchText(poolUrl,opts.fetchImpl||fetch,opts.timeoutMs||TIMEOUT_MS);
+    extracted=extractPoolRankings(poolBody);
+    responseShape.pool_response_chars=poolBody.length;
+    responseShape.pool_version_present=true;
+   }
+   const rows=extracted.rows;
    const uniqueRanks=new Set(rows.map(row=>row.rank));
    const uniquePlayers=new Set(rows.map(row=>normalizePlayerName(row.player)));
    const valid=rows.length>=300&&uniqueRanks.size===rows.length&&

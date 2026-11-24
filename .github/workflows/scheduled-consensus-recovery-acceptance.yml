@@ -1,0 +1,71 @@
+name: Scheduled consensus recovery and actual canonical capture (read-only)
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/ktc-adapter.mjs'
+      - 'netlify/functions/ktc-html-pages.mjs'
+      - 'scripts/value-history-headless-refresh.mjs'
+      - 'scripts/scheduled-consensus-retry.mjs'
+      - 'tests/scheduled-consensus-retry.test.mjs'
+      - 'tests/ktc-dynasty-superflex-recovery.test.mjs'
+      - '.github/workflows/scheduled-consensus-recovery-acceptance.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: scheduled-consensus-recovery-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate parser recovery and strict no-fallback retry contract
+        run: |
+          node --test tests/ktc-dynasty-superflex-recovery.test.mjs tests/scheduled-consensus-retry.test.mjs
+          node --check scripts/value-history-headless-refresh.mjs
+      - name: Read old main KTC adapter and compare candidate retrieval without writing
+        run: |
+          mkdir -p .tmp
+          git show 6e62634b7026afd093c0143c8bb1b5cbcc49fdf3:netlify/functions/ktc-adapter.mjs > .tmp/old-ktc-adapter.mjs
+          node --input-type=module <<'NODE'
+          import {refreshKtc as old} from './.tmp/old-ktc-adapter.mjs';
+          import {refreshKtc as candidate} from './netlify/functions/ktc-adapter.mjs';
+          for(const [label,read] of [['old-main',old],['candidate',candidate]]){
+            const r=await read({timeoutMs:15000});
+            console.log('SCHEDULED_KTC_COMPARISON '+JSON.stringify({label,valid:r.valid,players:r.players_extracted,rows:r.ranking_rows,parser:r.diagnostics?.parser,error:r.valid?null:String(r.error||'').slice(0,180)}));
+            if(label==='candidate'&&(!r.valid||Number(r.players_extracted)<300))throw Error('Candidate KTC source not verified');
+          }
+          NODE
+      - name: Install exact scheduled Chromium runtime
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Collect real seven-source V101 observation without a durable write
+        env:
+          VALUE_HISTORY_SCHEDULED_MODEL: idp-v96-single-source-continuous-v95-evidence
+          VALUE_HISTORY_V101_APPROVED: '0'
+          VALUE_HISTORY_CANDIDATE_MODEL: idp-v101-verified-role-growth-v100-source-free-lineage
+          VALUE_HISTORY_READ_ONLY_CANDIDATE: '1'
+          VALUE_HISTORY_SNAPSHOT_FILE: .tmp/scheduled-consensus-recovery.json
+        run: |
+          node scripts/value-history-headless-refresh.mjs
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const s=JSON.parse(readFileSync('.tmp/scheduled-consensus-recovery.json','utf8'));
+          assert.equal(s.provenance.candidate_read_only,true);
+          assert.equal(s.provenance.canonical_parity,'exact');
+          assert.equal(s.valuation_model,'idp-v101-verified-role-growth-v100-source-free-lineage');
+          assert.ok(s.provenance.consensus_sources>=7);
+          assert.equal(s.teams.length,32);
+          assert.ok(s.rows.length>=100);
+          console.log('SCHEDULED_CONSENSUS_RECOVERY_ACCEPTED '+JSON.stringify({sources:s.provenance.consensus_sources,players:s.rows.length,teams:s.teams.length,model:s.valuation_model,read_only:true}));
+          NODE

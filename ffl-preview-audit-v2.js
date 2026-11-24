@@ -69,7 +69,7 @@
   add('Environment','host',/deploy-preview-\d+--/.test(location.hostname)?'PASS':'WARN',location.hostname);
   add('Environment','viewport','INFO',innerWidth+'×'+innerHeight+' DPR '+devicePixelRatio);
   add('Environment','expected JS assets', [...document.scripts].some(s=>/trade-value-normalization-v139\.js\?v=142/.test(s.src))?'PASS':'FAIL','pick normalizer ?v=142');
-  for(const [label,file,min] of [['League Hub key','league-hub-v451.js',563],['Value History key','value-history-v276.js',553]]){
+  for(const [label,file,min] of [['League Hub key','league-hub-v451.js',566],['Value History key','value-history-v276.js',553]]){
    const versions=[...document.scripts].map(s=>new URL(s.src||location.href)).filter(u=>u.pathname.endsWith('/'+file)).map(u=>Number(u.searchParams.get('v')));
    add('Environment',label,versions.length===1&&versions[0]>=min?'PASS':'FAIL',JSON.stringify({file,versions,minimum:min}));
   }
@@ -200,6 +200,22 @@
      add('League Hub',tabName+' settles after navigation',
        settled.failed?'FAIL':settled.settled?'PASS':'WARN',cap(settled.text,280));
      snap('Hub: '+tabName);
+     if(tabName==='Fleeced Daily'){
+      const picker=()=>document.querySelector('#leagueHubContent [data-lh-daily-week]');
+      const scoreboard=()=>{const h=elements('#leagueHubContent h3').find(n=>/Completed Week Results/i.test(text(n)));return norm(text(h?.closest('.lh-card')))};
+      const options=[...(picker()?.options||[])],historical=options[2];
+      add('League Hub','Daily week filter offers completed weeks',picker()&&historical?'PASS':'FAIL',JSON.stringify(options.map(o=>({value:o.value,label:text(o)}))));
+      if(historical){
+       const original=scoreboard(),select=picker(),label=text(historical);
+       select.value=historical.value;select.dispatchEvent(new Event('change',{bubbles:true}));
+       await settle('#leagueHubContent',/^Loading league intelligence…$/,25000);
+       const chosen=scoreboard();
+       add('League Hub','Daily historical week selects exact results',picker()?.value===historical.value&&chosen.includes(label)?'PASS':'FAIL',cap(chosen,240));
+       const reset=picker();
+       if(reset){reset.value='latest';reset.dispatchEvent(new Event('change',{bubbles:true}));await settle('#leagueHubContent',/^Loading league intelligence…$/,25000);}
+       add('League Hub','Daily latest-week restore',picker()?.value==='latest'&&scoreboard()===original?'PASS':'FAIL',cap(scoreboard(),240));
+      }
+     }
      if(tabName==='Managers'){
       const body=norm(text(document.querySelector('#leagueHubContent')));
       add('Managers','Manager Spotlight present',

@@ -119,3 +119,14 @@ test('balanced inline KTC JSON handles escaped quotes, backslashes and brackets 
  assert.equal(parsed.rows[2].rank,3);
  assert.equal(parsed.extractionMethod,'inline-array:oneQBPlayers');
 });
+
+test('realistic 3-player server seed requires async pool and cannot replace verified consensus',async()=>{
+ const html='<script>var oneQBPlayers = '+JSON.stringify(fixture(3))+
+   ';var playersArray=[];var ktcPoolReady=ktcFetchPlayerPool("dynasty","v");</script>';
+ const result=await refreshKtc({fetchImpl:mock(()=>html)});
+ assert.equal(result.valid,false);
+ assert.equal(result.rankings.length,0);
+ assert.match(result.error,/full rankings are loaded asynchronously/i);
+ assert.equal(result.diagnostics.attempts[0].oneqb_parsed_rows,3);
+ assert.equal(result.diagnostics.attempts[0].asynchronous_player_pool,true);
+});

@@ -222,14 +222,14 @@ function describeKtcHtml(html){
  const t=String(html||"");
  // Diagnose whether independently rendered ranking rows exist in the returned
  // HTML (not just the inline featured-player bootstrap). No raw HTML logged.
- const visibleMarkup=t.replace(/<script\\b[^>]*>[\\s\\S]*?<\\/script>/gi,"").replace(/<style\\b[^>]*>[\\s\\S]*?<\\/style>/gi,"");
+ const visibleMarkup=t.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,"").replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi,"");
  const rowProbes={
   jaxson_dart:visibleMarkup.includes("Jaxson Dart"),
   jonah_coleman:visibleMarkup.includes("Jonah Coleman"),
   saquon_barkley:visibleMarkup.includes("Saquon Barkley")
  };
  const visibleLinks=(visibleMarkup.match(/href=["'][^"']*(?:player|dynasty-rankings)[^"']*["']/gi)||[]).length;
- const marker=/\\boneQBPlayers\\s*=\\s*/.exec(t);
+ const marker=/\boneQBPlayers\s*=\s*/.exec(t);
  const start=marker?marker.index+marker[0].length:-1;
  const raw=start>=0?balancedJson(t,start,"[","]"):null;
  let oneqb=null,parseFailed=false;

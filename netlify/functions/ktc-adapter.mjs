@@ -317,6 +317,7 @@ export async function refreshKtc(opts={}){
       const rendered=deriveKtcSuperflexRanksFromPublishedValues(pages);
       responseShape.rendered_html_pages=pages.length;
       responseShape.rendered_html_page_counts=pages.map(x=>parseKtcRenderedPage(x).length);
+      responseShape.rendered_html_page_samples=pages.map(x=>parseKtcRenderedPage(x).slice(0,2).map(({rank,player,position})=>({rank,player,position})));
       responseShape.rendered_html_valid=!!rendered;
       responseShape.rendered_html_mode="derived-from-published-superflex-values";
       if(rendered)extracted={rows:rendered,rawPlayers:rendered.length,

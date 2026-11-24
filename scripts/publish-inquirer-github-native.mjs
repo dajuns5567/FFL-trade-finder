@@ -16,11 +16,26 @@ export const LEAGUE_ID='1316867686394769408';
 const API='https://api.sleeper.app/v1';
 const digest=raw=>createHash('sha256').update(raw).digest('hex');
 const pad=w=>String(w).padStart(2,'0');
-const req=async(url,fetcher=fetch)=>{
- const res=await fetcher(url,{headers:{accept:'application/json','user-agent':'Fleeced-GitHub-Newspaper/1.0'},cache:'no-store',signal:AbortSignal.timeout(25000)});
- if(!res.ok)throw Error('Sleeper HTTP '+res.status+' at '+new URL(url).pathname);
- return res.json();
-};
+export async function fetchInquirerJson(url,fetcher=fetch,pause=ms=>new Promise(resolve=>setTimeout(resolve,ms))){
+ let last;
+ for(let attempt=0;attempt<3;attempt++){
+  try{
+   const res=await fetcher(url,{headers:{accept:'application/json','user-agent':'Fleeced-GitHub-Newspaper/1.0'},cache:'no-store',signal:AbortSignal.timeout(25000)});
+   if(!res.ok){
+    const error=Error('Inquirer source HTTP '+res.status+' at '+new URL(url).pathname);
+    error.permanent=res.status>=400&&res.status<500&&![408,429].includes(res.status);
+    throw error;
+   }
+   return await res.json();
+  }catch(error){
+   last=error;
+   if(error?.permanent||attempt===2)throw error;
+   await pause(250*(attempt+1));
+  }
+ }
+ throw last;
+}
+const req=fetchInquirerJson;
 export function completeMatchups(rows){
  if(!Array.isArray(rows)||rows.length!==32)return false;
  const groups=new Map(),rosters=new Set();
@@ -57,11 +72,7 @@ const score=(stats,scoring)=>{
 // to describe a past edition.
 const VALUE_ROOT='https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/value-history-data/';
 async function readGithubJson(relative,fetcher=fetch){
- const res=await fetcher(VALUE_ROOT+relative,{
-  headers:{accept:'application/json','user-agent':'Fleeced-GitHub-Newspaper/1.0'},
-  cache:'no-store',signal:AbortSignal.timeout(25000)});
- if(!res.ok)throw Error('Verified GitHub value history HTTP '+res.status+' '+relative);
- return res.json();
+ return fetchInquirerJson(VALUE_ROOT+relative,fetcher);
 }
 export function selectValueHistoryWindow(index,asOf){
  const cutoff=Date.parse(asOf);
@@ -296,7 +307,7 @@ export function buildSourceTeams({league,week,matchups,history=[],nextMatchups=[
    opponentId=opp.get(id),opponent=byId.get(opponentId),nextId=next.get(id),
    starters=(m.starters||[]).filter(x=>x&&x!=='0').map(String),
    rosterPlayers=(m.players?.length?m.players:r.players||[]).filter(x=>x&&x!=='0').map(String);
-  if(!opponent||!nextId&&week<17)throw Error('Missing verified opponent for roster '+id);
+  if(!opponent||!nextId&&week<13)throw Error('Missing verified opponent for roster '+id);
   const details=starters.map((pid,i)=>({id:pid,name:pname(pid),position:ppos(pid),nfl_team:String(players[pid]?.team||'FA'),
    lineup_slot:slots[i]||ppos(pid),points:Number(m.players_points[pid]??0),projected:null}));
   const bench=rosterPlayers.filter(pid=>!starters.includes(pid)).map(pid=>({id:pid,name:pname(pid),position:ppos(pid),nfl_team:String(players[pid]?.team||'FA'),points:Number(m.players_points[pid]??0),projected:null}));
@@ -525,7 +536,7 @@ function statusFor(edition,verdict){
   ...(verdict?.canonical?.issues||[]).map(message=>({id:'canonical-reader-contract',message})),
   ...(verdict?.voiceIssues||[]),...(verdict?.standingsIssues||[]),...(verdict?.recapArchitectureIssues||[])];
  return{season:Number(edition?.season),week:Number(edition?.week),editorial_revision:FORWARD_EDITORIAL_REVISION,
-  state:verdict?.ok?'completed':'editorial-hold',published:!!verdict?.ok,
+  state:verdict?.ok?'completed':'editorial-hold',published:false,admitted:!!verdict?.ok,
   issue_count:issues.length,
   issue_counts:Object.fromEntries([...new Set(issues.map(x=>String(x?.id||x?.code||'unknown')))]
    .map(code=>[code,issues.filter(x=>String(x?.id||x?.code||'unknown')===code).length])),
@@ -610,7 +621,7 @@ export async function runGithubInquirerPublisher({archiveRoot,fetcher=fetch,now=
   req(API+'/league/'+LEAGUE_ID+'/transactions/'+week,fetcher).catch(()=>[])
  ]);
  if(!completeMatchups(matchups))return{state:'not-ready',season,week,reason:'Sleeper scoring incomplete',stage:'completed-matchups'};
- if(week<17&&opponentMap(nextMatchups).size!==32)return{state:'not-ready',season,week,reason:'Next-week Sleeper matchup schedule incomplete',stage:'next-matchups'};
+ if(week<13&&opponentMap(nextMatchups).size!==32)return{state:'not-ready',season,week,reason:'Next-week Sleeper matchup schedule incomplete',stage:'next-matchups'};
  const history=await Promise.all(Array.from({length:week},(_,i)=>i+1).map(async w=>
   [w,w===week?matchups:await req(API+'/league/'+LEAGUE_ID+'/matchups/'+w,fetcher)]));
  if(history.some(([,rows])=>!completeMatchups(rows)))return{state:'not-ready',season,week,reason:'Prior completed matchup history incomplete',stage:'historical-matchups'};
@@ -660,5 +671,8 @@ if(isCli){
   const result=await runGithubInquirerPublisher({archiveRoot:root});
   console.log('github-inquirer-publication '+JSON.stringify(result));
   if(result.state==='editorial-hold')process.exitCode=2;
+  // A due week must not be reported as successfully published when a source
+  // is still incomplete. The next half-hour schedule retries automatically.
+  if(result.state==='not-ready'&&Number.isInteger(result.week))process.exitCode=3;
  }catch(error){console.error('github-inquirer-publisher failed:',String(error?.stack||error));process.exitCode=1}
 }

@@ -263,7 +263,7 @@ test('authorized initial production cutover is exact-site and exact-commit; regu
  const workflow=readFileSync(new URL('../.github/workflows/inquirer-github-native-publisher.yml',import.meta.url),'utf8');
  assert.match(workflow,/ref: inquirer-archive/);
  assert.match(workflow,/git push origin HEAD:inquirer-archive/);
- assert.match(workflow,/github\.ref == 'refs\/heads\/main' && github\.event_name != 'push'/);
+ assert.match(workflow,/github\.ref == 'refs\/heads\/main' && \(github\.event_name == 'schedule' \|\| github\.event_name == 'workflow_dispatch'\)/);
 });
 
  test('a recent valuation transition uses genuine shorter same-model observations, never the prior model',async()=>{
@@ -279,4 +279,17 @@ test('authorized initial production cutover is exact-site and exact-commit; regu
  await assert.rejects(()=>selectComparableMarketSnapshots({league_id:league,items:items.filter((_,i)=>i!==2)},'2026-11-24T23:00:00Z',read),/No second comparable/);
  const old=await selectComparableMarketSnapshots({league_id:league,items},'2026-11-21T04:00:00Z',read);
  assert.equal(old.period,'7D');assert.equal(old.baseline.t,snaps[0].t);
+ });
+
+ test('source retries recover rate limits and server errors but not permanent access restrictions',async()=>{
+ const {fetchInquirerJson}=await import('../scripts/publish-inquirer-github-native.mjs');
+ let calls=0;const statuses=[429,503,200];
+ const read=async()=>{const status=statuses[calls++];return{status,ok:status===200,json:async()=>({verified:true})}};
+ assert.deepEqual(await fetchInquirerJson('https://fixture.invalid/data',read,async()=>{}),{verified:true});assert.equal(calls,3);
+ calls=0;await assert.rejects(()=>fetchInquirerJson('https://fixture.invalid/data',async()=>{calls++;return{status:403,ok:false}},async()=>{}),/403/);assert.equal(calls,1);
+ });
+ test('a due but unavailable week is not a successful publication',()=>{
+ const source=readFileSync(new URL('../scripts/publish-inquirer-github-native.mjs',import.meta.url),'utf8');
+ assert.match(source,/result\.state==='not-ready'&&Number\.isInteger\(result\.week\)\)process\.exitCode=3/);
+ assert.match(source,/published:false,admitted:/);
  });

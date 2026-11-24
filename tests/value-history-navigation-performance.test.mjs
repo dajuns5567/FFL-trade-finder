@@ -135,3 +135,41 @@ test('badge merge is player-agnostic, supports older/newer years and defensive a
  assert.ok(defense.weeklyAwards.every(a=>a.type==='defensive-player-of-week'));
  assert.equal(merge({},awards,'444').weeklyAwards.length,0);
 });
+
+test('the full scoring endpoint is cached only after a completed readback',async()=>{
+ const scoreCode=between('async function scoringFetch(id,','function signalTone(');
+ let now=1_000_000,requests=0;
+ const cache=new Map([['222',{weeklyAwards:[{season:2027,week:12}]}]]);
+ const complete=new Map(),cacheAt=new Map([['222',now]]);
+ const ctx={
+   String,Promise,Map,Error,encodeURIComponent,Date:{now:()=>now},
+   playerScoringCache:cache,playerScoringCompleteAt:complete,
+   playerScoringCacheAt:cacheAt,playerScoringPending:new Map(),
+   API:'/.netlify/functions/value-history',
+   setTimeout:resolve=>resolve(),
+   fetch:async()=>{requests++;return {ok:true,json:async()=>({
+     player_id:'222',scoring_milestones:{weeklyAwards:[
+      {season:2027,week:12},{season:2024,week:5}
+     ]}
+   })}}
+ };
+ vm.createContext(ctx);
+ const fetchScore=vm.runInContext(scoreCode+';scoringFetch',ctx);
+ const partial=await fetchScore('222');
+ assert.equal(partial.scoring_milestones.weeklyAwards.length,1);
+ assert.equal(requests,0);
+ const full=await fetchScore('222',{requireCompleteReadback:true});
+ assert.equal(requests,1,'partial fast paint must not count as complete');
+ assert.equal(full.scoring_milestones.weeklyAwards.length,2);
+ // A successful loadPlayerScoring is the only source authorized to set this.
+ complete.set('222',now);
+ cache.set('222',full.scoring_milestones);cacheAt.set('222',now);
+ const same=await fetchScore('222',{requireCompleteReadback:true});
+ assert.equal(same.scoring_milestones.weeklyAwards.length,2);
+ assert.equal(requests,1,'recent verified full scorer is safe to reuse');
+ now+=30001;
+ await fetchScore('222',{requireCompleteReadback:true});
+ assert.equal(requests,2,'full scorer is re-fetched after 30 seconds');
+ assert.match(source,/playerScoringCompleteAt\.clear\(\)/);
+ assert.match(source,/playerScoringCompleteAt\.set\(key,Date\.now\(\)\)/);
+});

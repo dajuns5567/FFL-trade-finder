@@ -20,6 +20,9 @@ jobs:
       ALL_TIME_HIGHS_SCHEDULED_FILE: .tmp/awards-shadow-all-time-highs.json
       VALUE_HISTORY_SCHEDULED_MODEL: idp-v96-single-source-continuous-v95-evidence
       VALUE_HISTORY_V101_APPROVED: '0'
+      # Test the audited preview runtime without enabling scheduled promotion.
+      VALUE_HISTORY_CANDIDATE_MODEL: idp-v101-verified-role-growth-v100-source-free-lineage
+      VALUE_HISTORY_READ_ONLY_CANDIDATE: '1'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

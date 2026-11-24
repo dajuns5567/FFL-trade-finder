@@ -64,7 +64,7 @@ test('when Value History is due, it publishes the SAME completed award capture w
  assert.match(awardSteps,/VALUE_HISTORY_SNAPSHOT_FILE: \.tmp\/value-history-scheduled\.json/);
  assert.match(awardSteps,/ALL_TIME_HIGHS_SCHEDULED_FILE: \.tmp\/all-time-highs-scheduled\.json/);
  assert.equal((awardSteps.match(/if: steps\.due\.outputs\.due == 'true'/g)||[]).length,3);
- assert.doesNotMatch(flow,/netlify deploy|deploy-prod/i);
+ assert.doesNotMatch(flow.split('\n').filter(line=>!/^\s*#/.test(line)).join('\n'),/netlify\s+deploy|netlify-cli|deploy-prod/i);
 });
 
 test('daily independent Awards fallback remains configured but cannot write from preview',()=>{

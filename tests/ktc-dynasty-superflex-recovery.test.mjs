@@ -162,6 +162,10 @@ test('KTC versioned fetch sends the live player-pool version header, not a stati
  const pool=requests.find(x=>x.url.includes('/player-pool'));
  assert.ok(pool);
  assert.equal(pool.headers['X-KTC-Players-Version'],version);
+ const parsedUrl=new URL(pool.url);
+ assert.equal(parsedUrl.pathname,'/dynasty-rankings/player-pool');
+ assert.equal(parsedUrl.searchParams.get('v'),version);
+ assert.equal(parsedUrl.searchParams.get('sr'),'2');
  assert.equal(pool.headers.accept,'application/json');
  assert.equal(result.format,'dynasty-superflex');
  assert.equal(result.reducedWeight,true);

@@ -231,7 +231,11 @@ export async function refreshKtc(opts={}){
     if(!responseShape.asynchronous_player_pool||!version)throw initialError;
     // Exact same-origin path confirmed by the KTC browser's ktcFetchPlayerPool.
     // Do not use the three seed players as rankings.
-    const poolUrl=KTC_POOL_URL;
+    // KTC browser ktcDataCacheUrl(baseUrl, version) includes both v and sr=2.
+    // Use the version read from this response rather than a stale hardcoded token.
+    const poolUrl=new URL(KTC_POOL_URL);
+    poolUrl.searchParams.set("v",version);
+    poolUrl.searchParams.set("sr","2");
     const poolBody=await fetchText(poolUrl,opts.fetchImpl||fetch,opts.timeoutMs||TIMEOUT_MS,{
       "accept":"application/json",
       "X-KTC-Players-Version":version

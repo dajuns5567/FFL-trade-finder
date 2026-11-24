@@ -81,3 +81,38 @@ export function verifiedDurableAwardHighRecords(data,leagueId){
  if(categories.size!==20||rosters.size!==32)return[];
  return data.records;
 }
+
+
+/**
+ * Canonical independently captured highs, NOT historical one-off snapshots.
+ *
+ * A 639-row legacy Blob export can preserve real values and timestamps yet
+ * still represent just ONE uncorroborated observation. Never silently promote
+ * those old peaks to certified records merely by changing the archive source
+ * label. Only this distinct verified_records ledger is eligible for the
+ * user-facing historical leaderboard.
+ */
+export function verifiedCanonicalHighRecords(data,leagueId){
+ if(data?.schema_version!==1||
+    String(data?.league_id)!==String(leagueId)||
+    data.source!=='github-canonical-headless-all-time-highs'||
+    !/^[a-f0-9]{40}$/i.test(String(data.source_commit||''))||
+    String(data.canonical_fingerprint||'').length<5||
+    !Number.isFinite(Date.parse(data.latest_observation_at))||
+    !Array.isArray(data.verified_records)||data.verified_records.length<500||
+    !['idp-v96-single-source-continuous-v95-evidence',
+      'idp-v101-verified-role-growth-v100-source-free-lineage'].includes(String(data.model_used||'')))
+   return [];
+ const eligible=verifiedDurableAwardHighRecords(data,leagueId);
+ if(eligible.length!==data.records.length)return [];
+ const archive=new Map(eligible.map(row=>[row.award_key+'|'+row.roster_id,row]));
+ const keys=new Set(),categories=new Set(),rosters=new Set();
+ for(const row of data.verified_records){
+  if(!validAwardHigh(row)||!Number.isFinite(Date.parse(row.captured_at))||
+     Date.parse(row.captured_at)>Date.parse(data.latest_observation_at)+60000)return [];
+  const key=row.award_key+'|'+row.roster_id,raw=archive.get(key);
+  if(keys.has(key)||!raw||Number(raw.score)+0.000001<Number(row.score))return [];
+  keys.add(key);categories.add(row.award_key);rosters.add(String(row.roster_id));
+ }
+ return categories.size===20&&rosters.size===32?data.verified_records:[];
+}

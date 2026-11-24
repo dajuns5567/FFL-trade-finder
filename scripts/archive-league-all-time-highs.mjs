@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {mergeAwardHighs,validAwardHigh,verifiedDurableAwardHighRecords,verifiedCanonicalHighRecords} from '../netlify/functions/lib/league-all-time-highs.mjs';
+import {mergeAwardHighs,validAwardHigh,verifiedDurableAwardHighRecords,verifiedCanonicalHighRecords,hasCanonicalAwardCoverage} from '../netlify/functions/lib/league-all-time-highs.mjs';
 import {assertAwardsMatchCanonicalRefresh} from './awards-canonical-refresh-parity.mjs';
 
 export const DATA_BRANCH='value-history-data';
@@ -29,7 +29,7 @@ export function validateScheduledHighs(observation){
   keys.add(key);
  }
  const groups=new Set(o.observations.map(x=>String(x.award_key)));
- if(groups.size!==20)throw Error('AWARD_ARCHIVE_INCOMPLETE_CATEGORIES: '+groups.size);
+ if(groups.size!==20||!hasCanonicalAwardCoverage(o.observations))throw Error('AWARD_ARCHIVE_INCOMPLETE_CATEGORIES_OR_ROSTERS: '+groups.size);
  return o;
 }
 export function nextDurableHighs(previous,observation){

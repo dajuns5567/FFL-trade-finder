@@ -3,10 +3,11 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {nextDurableHighs,DATA_BRANCH,RECORD_PATH} from '../scripts/archive-league-all-time-highs.mjs';
 import {assertDurableHighsReadback} from '../scripts/verify-durable-all-time-highs-readback.mjs';
+import {CANONICAL_AWARD_KEYS} from '../netlify/functions/lib/league-all-time-highs.mjs';
 const yaml=readFileSync(new URL('../.github/workflows/league-all-time-highs-independent-capture.yml',import.meta.url),'utf8');
 const observedAt='2026-11-22T23:00:00.000Z',base=Date.now();
-const captures=Array.from({length:20},(_,i)=>Array.from({length:32},(_,j)=>({
- award_key:'award-'+(i+1),roster_id:String(j+1),
+const captures=CANONICAL_AWARD_KEYS.map((award_key,i)=>Array.from({length:32},(_,j)=>({
+ award_key,roster_id:String(j+1),
  score:1000+i*100+j,detail:'Verified league score'
 }))).flat();
 function observation(){

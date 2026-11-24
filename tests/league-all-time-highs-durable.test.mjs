@@ -1,14 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {mergeAwardHighs,highObservationsFromStandings} from '../netlify/functions/lib/league-all-time-highs.mjs';
+import {mergeAwardHighs,highObservationsFromStandings,CANONICAL_AWARD_KEYS} from '../netlify/functions/lib/league-all-time-highs.mjs';
 import {validateScheduledHighs,nextDurableHighs,requiresDurableHighsWrite,RECORD_PATH,DATA_BRANCH} from '../scripts/archive-league-all-time-highs.mjs';
 
 const now='2026-11-22T20:00:00.000Z';
-const categories=['fleecer','fleeced','day-trader','pick-hoarder','deal-maker','efficiency',
- 'big-swing','powerhouse','quiet','best-draft-pick','best-draft','roster-value',
- 'young-core','veterans','trade-average','volume-wins','big-regret','balanced',
- 'crown-jewel','pick-stacker'];
+const categories=CANONICAL_AWARD_KEYS;
 const fixture=()=>({
  schema_version:1,source:'canonical-live-32-team-awards',
  captured_at:new Date().toISOString(),team_count:32,trade_count:72,draft_count:120,categories:20,

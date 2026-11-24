@@ -7,6 +7,10 @@ on:
   pull_request:
     paths:
       - '.github/workflows/inquirer-github-native-publisher.yml'
+      - 'scripts/publish-inquirer-github-native.mjs'
+      - 'netlify/functions/inquirer-editorial-v31.mjs'
+      - 'netlify/functions/inquirer-reporters.mjs'
+      - 'tests/inquirer-github-native-publisher.test.mjs'
       - 'scripts/verify-inquirer-published-readback.mjs'
       - 'tests/inquirer-github-public-readback.test.mjs'
   schedule:
@@ -14,17 +18,19 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   # A superseding code revision cancels only stale preview verification.
   # Live scheduled/archive publication is never cancelled halfway through.
-  group: ${{ github.event_name == 'push' && 'inquirer-github-native-validation' || 'inquirer-github-native-publication' }}
-  cancel-in-progress: ${{ github.event_name == 'push' }}
+  group: ${{ github.event_name == 'pull_request' && format('inquirer-verify-pr-{0}', github.event.pull_request.number) || github.event_name == 'push' && 'inquirer-github-native-validation' || 'inquirer-github-native-publication' }}
+  cancel-in-progress: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
 
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    permissions:
+      contents: write # legacy isolated preview push; every write step is branch/event guarded
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -144,8 +150,10 @@ jobs:
           git push origin HEAD:inquirer-preview-574-r3
   publish:
     needs: verify
-    if: github.ref == 'refs/heads/main' && github.event_name != 'push'
-    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4

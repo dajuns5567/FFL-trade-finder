@@ -246,10 +246,14 @@ test('forward recap retains the five locked newsroom sections and verified playo
  assert.deepEqual(inspectMajorRecapArchitecture(edition),[]);
  assert.equal(edition.league_overview.sections.length,5);
  const race=edition.league_overview.sections[1].paragraphs.join(' ');
- assert.match(race,/first place/);
+ assert.match(race,/first place/i);
  assert.match(race,/Fourth place/);
  assert.match(race,/Week 14 wildcard round/);
  assert.equal(restoreWeeklyPlayoffDesk(edition),false,'do not double-insert race desk');
+ const next={...edition,week:11,league_overview:{sections:edition.league_overview.sections.filter((_,i)=>i!==1)}};
+ assert.equal(restoreWeeklyPlayoffDesk(next),true);
+ assert.notEqual(next.league_overview.sections[1].paragraphs.join(' '),race);
+ assert.doesNotMatch(next.league_overview.sections[1].paragraphs.join(' '),/convenient collapse|borrow points/);
 });
 
 test('authorized initial production cutover is exact-site and exact-commit; regular weekly editions never deploy Netlify',()=>{

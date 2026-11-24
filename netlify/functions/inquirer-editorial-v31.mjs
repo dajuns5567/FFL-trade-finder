@@ -4283,7 +4283,7 @@ function assertWeek2Originality(result,previousEdition){
         const observed=validDelta?[
           team+' recorded a Week '+week+' roster-value change of '+signed+' points.',
           'Value change: '+signed+' points ('+team+', Week '+week+').',
-          'For '+team+', the verified Week '+week+' valuation change was '+signed+' points.',
+          team+' moved '+signed+' valuation points between the recorded snapshots.',
           team+' closed the Week '+week+' valuation window '+(delta>0?'higher by ':delta<0?'lower by ':'unchanged at ')+magnitude+' points.',
           'The Week '+week+' value sheet records '+signed+' points for '+team+'.',
           'Measured roster value moved '+signed+' points for '+team+' in Week '+week+'.',
@@ -6107,6 +6107,7 @@ function assertWeek2Originality(result,previousEdition){
     overview=rotateForwardRecapOpening(overview,teams,week,variationSalt,[previousEdition,...previousEditions],season);
   }
   if(week>=9)overview=attributeSourceBackedRecapOpenings(overview,teams,week);
+  if(week>=10)retireRepeatedOutlookEndings(teams);
   return{inquirer:{...rawInquirer,teams},leagueOverview:overview,variationSalt};
 }
 
@@ -6303,7 +6304,7 @@ export function polishForwardAcrossWeeks(teams,previousEdition,week){
        gap=forwardOne(margin),lowName=low.name,topName=top.name;
      const details=[
       club+' '+result+' against '+foe+' by '+gap+' points; '+lowName+' managed '+quiet+'. Rivals will remember which starting spot gave them a target.',
-      topName+' contributed '+lead+' to '+possessive+' '+score+' against '+foe+'. The opponent can argue with the interpretation, not the points already on the board.',
+      topName+' contributed '+lead+' to '+possessive+' '+score+' against '+foe+'; '+lowName+' supplied '+quiet+'.',
       foe+' finished with '+opScore+' while '+club+' posted '+score+'. The gap is a real problem for the next lineup discussion; the scoreboard will not let anyone talk it away.',
       lowName+' finished on '+quiet+' for '+club+', alongside '+lead+' from '+topName+'. The difference made rival managers pay attention to how this roster was arranged.',
       club+' finished Week '+week+' on '+score+' against '+foe+'; '+topName+' contributed '+lead+'. The club can celebrate or complain, but it cannot edit those numbers.',
@@ -6338,6 +6339,29 @@ export function polishForwardAcrossWeeks(teams,previousEdition,week){
  return teams;
 }
 
+// Retire only an actual duplicate outlook kicker. The independent audit
+// still enforces the unchanged desk/article minimums and originality rules.
+export function retireRepeatedOutlookEndings(teams){
+ const entities=forwardEntities({teams}),seen=new Set();
+ const key=p=>forwardNormSentence(p,entities).replace(/\[(?:entity|#)\]/gi,'#')
+  .replace(/[^a-z#]+/g,' ').trim().split(/\s+/).slice(-11).join(' ');
+ for(const team of teams||[]){
+  const article=team.inquirer_article,desk=article?.sections?.find(s=>s.kind==='outlook');
+  if(!desk?.paragraphs?.length)continue;
+  const last=desk.paragraphs.at(-1),k=key(last);
+  if(k.split(' ').length<9||!seen.has(k)){seen.add(k);continue}
+  const parts=forwardSentenceParts(last),trimmed=parts.slice(0,-1).join(' ');
+  const candidate=[...desk.paragraphs.slice(0,-1),trimmed].filter(Boolean);
+  if(candidate.length&&forwardWordCount(candidate.join(' '))>=35&&
+     forwardWordCount(article.sections.flatMap(s=>s===desk?candidate:s.paragraphs||[]).join(' '))>=345&&
+     !seen.has(key(candidate.at(-1)))){
+   desk.paragraphs=candidate;
+   article.paragraphs=article.sections.flatMap(s=>s.paragraphs||[]);
+   seen.add(key(candidate.at(-1)));
+  }
+ }
+ return teams;
+}
 function forwardSentenceParts(s){return String(s||'').replace(/\b(?:[A-Z]\.){2,}/g,m=>m.replaceAll('.','§')).replace(/\b(?:St|Jr|Sr|Dr|Mr|Mrs|Ms|No)\.(?=\s+[A-Za-z0-9])/g,m=>m.replace('.','§')).split(/(?<=[.!?])\s+/).map(x=>x.replaceAll('§','.').trim()).filter(Boolean)}
 function forwardWordCount(s){return String(s||'').trim().split(/\s+/).filter(Boolean).length}
 function forwardEscRe(s){return [...String(s||'')].map(ch=>'.*+?^$(){}|[]'.includes(ch)||ch.charCodeAt(0)===92?'\\'+ch:ch).join('')}
@@ -6413,7 +6437,7 @@ export function replaceForwardInheritedWeek7Slogans(teams,week){
   ][id%3]:null;
   const divisionEvidence=validScore&&club&&opponent&&division&&
    Number.isInteger(rank)&&rank>0?[
-    club+' are '+String(rank)+' in the standings after scoring '+forwardOne(score)+' against '+opponent+'. The '+division+' race has a measurable result to weigh, not a free postseason promise.',
+    'After a '+forwardOne(score)+'-point outing against '+opponent+', '+club+' occupy league position '+rank+'. Division: '+division+'.',
     'The '+division+' standings list '+club+' at No. '+rank+'. Their '+forwardOne(score)+'-point performance against '+opponent+' is evidence for the next race discussion, not a guaranteed berth.',
     club+' sit '+String(rank)+' in the current table. Against '+opponent+', '+forwardOne(score)+' fantasy points supplied a recorded argument in the '+division+' chase.'
    ][id%3]:null;

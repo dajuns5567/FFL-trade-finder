@@ -82,7 +82,7 @@ export function verifyCombinedBadgeProvenance(readCurrent,readRef,{approvedMarke
 // Retain the original transformation verifier for legacy badge-only releases.
 export const INTEGRATED_RUNTIME_BLOBS=Object.freeze({
  'netlify/functions/league-hub.mjs':'f25151515b4a93267d783a06a585a4abc8dca88c',
- 'league-hub-v451.js':'bf512d960d276fcf97e13b68aded335d80575351',
+ 'league-hub-v451.js':'9dea6f774e5f1726fad4035bd750583a1a7716fb',
  'netlify/functions/weekly-awards-refresh.mjs':'c3f0c3527e7fb9ef2bb8920f92cfd5e66dcf1596',
  'netlify/functions/value-history.mjs':'93993faf45620a84c3d81122669b9f57360f8ce1',
  'value-history-v276.js':'8ae6fded37628ed28ae1b6bcb64137347c312600',

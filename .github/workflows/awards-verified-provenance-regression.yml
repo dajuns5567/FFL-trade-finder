@@ -11,6 +11,7 @@ on:
       - 'scripts/verify-scheduled-all-time-highs.mjs'
       - '.github/workflows/value-history-headless-refresh.yml'
       - 'tests/awards-canonical-refresh-synchronization.test.mjs'
+      - 'tests/awards-trade-edge-reconciliation.test.mjs'
       - 'tests/awards-all-time-highs-provenance.test.mjs'
       - 'tests/league-all-time-highs-durable.test.mjs'
       - '.github/workflows/awards-verified-provenance-regression.yml'
@@ -39,6 +40,8 @@ jobs:
         run: node --test tests/awards-canonical-refresh-synchronization.test.mjs
       - name: Reject the single-snapshot legacy highs and verify new canonical records
         run: node --test tests/awards-all-time-highs-provenance.test.mjs
+      - name: Reconcile cumulative trade edge and unique transactions
+        run: node --test tests/awards-trade-edge-reconciliation.test.mjs
       - name: Preserve approved scheduled archive and historical writer contracts
         run: node --test tests/league-all-time-highs-durable.test.mjs
       - name: Preserve prior League Hub and award-week independence

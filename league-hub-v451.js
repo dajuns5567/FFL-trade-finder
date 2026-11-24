@@ -504,7 +504,57 @@ function managementSectionMentionsTrade(section){
  const text=(section?.paragraphs||[]).join(' ');
  return /\btrade(?:d|s)?\b|\bdeal\b|\bswapp?ed\b|\bchanged hands\b|\bsending\b[^.]{0,100}\bother way\b/i.test(text);
 }
-function teamTradeStats(all){const m=new Map((globalThis.state?.teams||[]).map(t=>[String(t.id),{id:String(t.id),trades:0,wins:0,losses:0,net:0,biggestWin:0,biggestLoss:0,biggestWinTrade:'',biggestLossTrade:''}]));for(const t of all){const h=hindsightDelta(t);if(!h)continue;(t.sides||[]).forEach((s,i)=>{const x=m.get(String(s.roster_id));if(!x)return;x.trades++;const diff=i===0?h.a-h.b:h.b-h.a;x.net+=diff;if(diff>0){x.wins++;if(diff>x.biggestWin){x.biggestWin=diff;x.biggestWinTrade=tradeKey(t)}}else if(diff<0){x.losses++;if(diff<x.biggestLoss){x.biggestLoss=diff;x.biggestLossTrade=tradeKey(t)}}})}return[...m.values()]}
+// Reconcile unique completed transactions before using their adjusted edges.
+function awardTradeLedger(all,{strict=false}={}){
+ const teams=(globalThis.state?.teams||[]).map(t=>String(t.id)),known=new Set(teams);
+ const seen=new Map(),entries=[],issues=[],counts={input:all.length,duplicates:0,multiTeam:0,unavailable:0};
+ for(const t of all){
+  const id=String(t?.id||t?.transaction_id||'').trim(),season=Number(t?.season)||0;
+  const sides=Array.isArray(t?.sides)?t.sides:[],rosters=sides.map(s=>String(s?.roster_id||''));
+  if(!id){issues.push('missing transaction ID');continue}
+  const key=season+'|'+id;
+  const signature=JSON.stringify(sides.map(s=>[String(s.roster_id),[...(s.player_ids||[])].map(String).sort(),(s.picks||[]).map(p=>[p.season,p.round,p.original_roster_id,p.drafted_player_id||''].join(':')).sort()]).sort((a,b)=>a[0].localeCompare(b[0])));
+  if(seen.has(key)){
+   counts.duplicates++;
+   if(seen.get(key)!==signature)issues.push('conflicting duplicate '+key);
+   continue;
+  }
+  seen.set(key,signature);
+  if(sides.length>2){counts.multiTeam++;continue}
+  if(sides.length!==2||new Set(rosters).size!==2||rosters.some(r=>!known.has(r))){issues.push('invalid participants '+key);continue}
+  const declared=(t.roster_ids||[]).map(String);
+  if(declared.length!==2||new Set(declared).size!==2||rosters.some(r=>!declared.includes(r))){issues.push('participant mismatch '+key);continue}
+  const h=hindsightDelta(t);
+  if(!h){counts.unavailable++;continue}
+  const edge=Number(h.a)-Number(h.b);
+  if(!Number.isFinite(edge)||Math.abs(Math.abs(edge)-Number(h.edge))>0.001||Number(h.winner)!==(edge>=0?0:1)){issues.push('invalid edge '+key);continue}
+  entries.push({id,season,rosters,edge});
+ }
+ if(strict&&(issues.length||!entries.length))throw Error('Award trade reconciliation refused: '+issues.slice(0,8).join('; '));
+ return{teams,entries,issues,counts};
+}
+function teamTradeStats(all,{strict=false}={}){
+ const ledger=awardTradeLedger(all,{strict}),m=new Map(ledger.teams.map(id=>[id,{id,trades:0,wins:0,losses:0,net:0,biggestWin:0,biggestLoss:0,biggestWinTrade:'',biggestLossTrade:''}]));
+ for(const t of ledger.entries){
+  for(const [i,id] of t.rosters.entries()){
+   const x=m.get(id),diff=i===0?t.edge:-t.edge;
+   x.trades++;x.net+=diff;
+   if(diff>0){x.wins++;if(diff>x.biggestWin){x.biggestWin=diff;x.biggestWinTrade=t.id}}
+   else if(diff<0){x.losses++;if(diff<x.biggestLoss){x.biggestLoss=diff;x.biggestLossTrade=t.id}}
+  }
+ }
+ const rows=[...m.values()];
+ if(strict){
+  // Independent per-team reduction of the signed transaction ledger.
+  for(const row of rows){
+   const mine=ledger.entries.filter(t=>t.rosters.includes(row.id)).map(t=>t.rosters[0]===row.id?t.edge:-t.edge);
+   const expected={trades:mine.length,wins:mine.filter(v=>v>0).length,losses:mine.filter(v=>v<0).length,net:mine.reduce((a,b)=>a+b,0),biggestWin:Math.max(0,...mine),biggestLoss:Math.min(0,...mine)};
+   for(const [key,value] of Object.entries(expected))if(Math.abs(row[key]-value)>0.001)throw Error('Award trade parity mismatch '+row.id+' '+key);
+  }
+  if(Math.abs(rows.reduce((n,r)=>n+r.net,0))>0.001||rows.reduce((n,r)=>n+r.trades,0)!==2*ledger.entries.length)throw Error('Award trade ledger fails league conservation');
+ }
+ return rows;
+}
 function openTradeHistory(team=''){activate('tradeHistory');const b=document.querySelector('.tabs button[data-tab="tradeHistory"]');b?.click();if(team){let n=0;const timer=setInterval(()=>{n++;if(typeof globalThis.openTradeHistoryTeamV455==='function'){globalThis.openTradeHistoryTeamV455(String(team));clearInterval(timer)}else if(n>20)clearInterval(timer)},50)}}
 function openValueHistoryTeam(id,comparison=false){activate('valueHistory');document.querySelector('.tabs button[data-tab="valueHistory"]')?.click();let n=0;const timer=setInterval(()=>{n++;if(typeof globalThis.openValueHistoryTeamV458==='function'){globalThis.openValueHistoryTeamV458(String(id),!!comparison);clearInterval(timer)}else if(n>20)clearInterval(timer)},50)}
 function openValueHistoryPlayer(id){const pid=String(id||'');if(!pid)return;activate('valueHistory');document.querySelector('.tabs button[data-tab="valueHistory"]')?.click();let n=0;const timer=setInterval(()=>{n++;const api=globalThis.valueHistoryV331;if(typeof api?.openPlayer==='function'){clearInterval(timer);api.openPlayer(pid)}else if(n>30)clearInterval(timer)},50)}
@@ -676,7 +726,7 @@ window.fleecedAwardHighsScheduledObservation=async function(){
  if(!Array.isArray(tradeData?.trades)||tradeData.trades.length===0||
     !Array.isArray(draftData?.draft_picks)||!draftData.draft_picks.length)
   throw Error('Award collector refused incomplete trade or draft source');
- const awards=currentAwards(teamTradeStats(tradeData.trades),draftData);
+ const awards=currentAwards(teamTradeStats(tradeData.trades,{strict:true}),draftData);
  if(awards.length!==20||awards.some(x=>!x.key||!Array.isArray(x.standings)))
   throw Error('Award collector refused missing category');
  const observations=awards.flatMap(a=>(a.standings||[]).map(x=>({

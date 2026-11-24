@@ -147,3 +147,22 @@ test('KTC fetches full asynchronous dynasty player-pool JSON when HTML has three
  assert.ok(urls.some(url=>url.includes('/dynasty-rankings/player-pool')));
  assert.equal(result.rankings[0].player,'Fixture Player 1');
 });
+
+test('KTC versioned fetch sends the live player-pool version header, not a static token',async()=>{
+ const version='2611240010-a-realistic-build-token';
+ const html='<script>var oneQBPlayers = '+JSON.stringify(fixture(3))+
+  ';var playersVersion = "'+version+'";var playersArray=[];'+
+  'var ktcPoolReady=ktcFetchPlayerPool("dynasty", playersVersion);</script>';
+ const requests=[];
+ const result=await refreshKtc({fetchImpl:async (url,options)=>{
+  requests.push({url,headers:options?.headers});
+  return {ok:true,text:async()=>url.includes('/player-pool')?JSON.stringify(fixture()):html};
+ }});
+ assert.equal(result.valid,true);
+ const pool=requests.find(x=>x.url.includes('/player-pool'));
+ assert.ok(pool);
+ assert.equal(pool.headers['X-KTC-Players-Version'],version);
+ assert.equal(pool.headers.accept,'application/json');
+ assert.equal(result.format,'dynasty-superflex');
+ assert.equal(result.reducedWeight,true);
+});

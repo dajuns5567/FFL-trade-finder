@@ -16,6 +16,7 @@ on:
       - 'netlify.toml'
       - 'scripts/verify-weekly-automation-contract.mjs'
       - 'tests/weekly-automation-regression-guard.test.mjs'
+      - 'WEEKLY_AUTOMATION_RELEASE_READINESS.md'
   workflow_dispatch:
   # A watchdog only; no player, award or publication writes. GitHub executes
   # repository schedules from main after a separately approved integration.

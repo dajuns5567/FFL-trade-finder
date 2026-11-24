@@ -120,12 +120,16 @@ test('badge merge is player-agnostic, supports older/newer years and defensive a
     players_of_week:{offense:{player_id:'222',points:33.2},defense:{player_id:'333',points:44.1}}},
   {season:2027,week:12,award_source:'sleeper-finalized-matchups',verified_roster_count:32,
     players_of_week:{offense:{player_id:'222',points:31.6},defense:{player_id:'333',points:46.4}}},
+  {season:2027,week:18,award_source:'sleeper-finalized-matchups',verified_roster_count:32,
+    players_of_week:{offense:{player_id:'222',points:42.5}}},
+  {season:2027,week:19,award_source:'sleeper-finalized-matchups',verified_roster_count:32,
+    players_of_week:{offense:{player_id:'222',points:999}}},
   {season:2027,week:13,award_source:'unverified',verified_roster_count:32,
     players_of_week:{offense:{player_id:'222',points:99}}}
  ];
  const offense=merge({weeklyAwards:[{season:2022,week:7,type:'offensive-player-of-week',points:20}]},awards,'222');
  const defense=merge({},awards,'333');
- assert.deepEqual(Array.from(offense.weeklyAwards,x=>x.season+'|'+x.week),['2027|12','2024|5','2022|7']);
+ assert.deepEqual(Array.from(offense.weeklyAwards,x=>x.season+'|'+x.week),['2027|18','2027|12','2024|5','2022|7']);
  assert.deepEqual(Array.from(defense.weeklyAwards,x=>x.season+'|'+x.week),['2027|12','2024|5']);
  assert.ok(offense.weeklyAwards.every(a=>a.type==='offensive-player-of-week'));
  assert.ok(defense.weeklyAwards.every(a=>a.type==='defensive-player-of-week'));

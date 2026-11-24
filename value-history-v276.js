@@ -2068,9 +2068,9 @@ function installPlayerWeeklyBadgeRefresh(){
 async function loadPlayer(id){
   const key=String(id),sequence=++playerProfileLoadSequence;
   const box=document.getElementById('vhContent');if(!box)return;
-  // Keep previously rendered content when refreshing the same player's data.
-  if(!playerHistoryNavCache.has(key))
-    box.innerHTML='<div class="vh-empty">Loading player history…</div>';
+  // Never leave another player's profile visible while changing selection.
+  // A valid navigation cache resolves this placeholder in the next microtask.
+  box.innerHTML='<div class="vh-empty">Loading player history…</div>';
   try{
     const data=await historyFetch(key),pts=Array.isArray(data.points)?data.points:[];
     // An older fetch cannot repaint a newer player selection or another tab.

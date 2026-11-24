@@ -246,6 +246,8 @@ test('consensus update pipeline wires verified KTC fallback without relaxing all
  assert.match(source,/buildConsensusPayload\(recovered\?\.refresh\|\|refresh,players\)/);
  assert.match(source,/integrityReady=results\.length>=7&&failedSources\.length===0/);
  assert.match(source,/reused_ktc_snapshot:!!recovered/);
+ assert.match(source,/snapshot\.freshness=recovered&&name==="KTC"/);
+ assert.match(source,/old\?\.freshness\|\|null/);
  assert.match(source,/last-known-good/);
  const check=spawnSync(process.execPath,['--check','netlify/functions/update.mjs'],{encoding:'utf8'});
  assert.equal(check.status,0,check.stderr);

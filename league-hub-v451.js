@@ -147,6 +147,10 @@ function addStyles(){if(document.getElementById('leagueHubStyles'))return;const 
 const HUB_SHARED_REFRESH_MS=5*60*1000;
 const hubSharedCacheAt={trades:0,drafts:0,awards:0},hubSharedPending={trades:null,drafts:null,awards:null};
 let hubSharedVisibleRefreshPending=false;
+// The canonical UPDATE flow sets state.lastUpdate after rebuilding prices.
+// Awards should redraw from that same state when it changes, not continue to
+// show prices calculated from the prior player-value refresh.
+let lastHubAwardValueToken=null;
 function hubSharedSignature(value,which){
  if(which==='trades')return JSON.stringify((value?.trades||[]).map(t=>[String(t?.id||t?.transaction_id||''),t?.created||t?.created_at||'',t?.completed_at||'',t?.status||'',t?.roster_ids||[],t?.sides||[]]));
  if(which==='drafts')return JSON.stringify((value?.draft_picks||[]).map(p=>[p.draft_id,p.player_id,p.pick_no,p.roster_id,p.season]));
@@ -997,6 +1001,8 @@ async function refreshLeagueHubSharedDataIfVisible(){
  const panel=document.getElementById('leagueHub');
  if(!panel||panel.hidden||!['hall','awards','daily'].includes(currentView)||currentView==='daily'&&openBroadcastTeam)return;
  hubSharedVisibleRefreshPending=true;
+ const valueToken=String(globalThis.state?.lastUpdate||'');
+ const valuesChanged=currentView==='awards'&&!!valueToken&&valueToken!==lastHubAwardValueToken;
  try{
   const parts=currentView==='hall'?['trades']:currentView==='awards'?['trades','drafts','awards']:['trades','awards'];
   let changed=false;
@@ -1006,7 +1012,10 @@ async function refreshLeagueHubSharedDataIfVisible(){
    const next=await hubSharedRead(part,{force:true}).catch(()=>null);
    if(next&&hubSharedSignature(next,part)!==previous)changed=true;
   }
-  if(changed)await render(currentView);
+  if(changed||valuesChanged){
+   await render(currentView);
+   if(valuesChanged)lastHubAwardValueToken=valueToken;
+  }
  }catch(error){console.warn('league-hub-visible-refresh-unavailable',String(error?.message||error))}
  finally{hubSharedVisibleRefreshPending=false}
 }
@@ -1014,6 +1023,18 @@ function installLeagueHubSharedRefresh(){
  setInterval(refreshLeagueHubSharedDataIfVisible,HUB_SHARED_REFRESH_MS);
  window.addEventListener('focus',refreshLeagueHubSharedDataIfVisible);
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshLeagueHubSharedDataIfVisible()});
+ // Existing UPDATE writes state.lastUpdate and then the status text.
+ // Observing only that status avoids polling or adding new writes to the
+ // canonical value calculation; no scheduled high is certified in-browser.
+ const status=document.getElementById('updateStatus');
+ if(status&&typeof MutationObserver==='function'){
+  const observer=new MutationObserver(()=>{
+   const token=String(globalThis.state?.lastUpdate||'');
+   if(currentView==='awards'&&token&&token!==lastHubAwardValueToken)
+    refreshLeagueHubSharedDataIfVisible();
+  });
+  observer.observe(status,{childList:true,subtree:true,characterData:true});
+ }
 }
 function install(){addStyles();const tabs=document.querySelector('.tabs'),main=document.querySelector('main');if(!tabs||!main){setTimeout(install,100);return}let s=document.getElementById('leagueHub');if(!s){s=document.createElement('section');s.id='leagueHub';s.className='tab';s.hidden=true;main.appendChild(s)}if(!s.querySelector('#leagueHubContent'))s.innerHTML='<div class="card"><div class="lh-head"><h2>Fleeced! League Hub</h2></div><div class="lh-nav"><button type="button" class="active" data-lh-view="daily">Fleeced Daily</button><button type="button" data-lh-view="awards">Awards</button><button type="button" data-lh-view="hall">Hall of Fleeced</button><button type="button" data-lh-view="managers">Managers</button></div><div id="leagueHubContent"><div class="empty">Open League Hub to load league intelligence.</div></div></div>';wireSection(s);let b=document.querySelector('.tabs button[data-tab="leagueHub"]');if(!b){b=document.createElement('button');b.type='button';b.dataset.tab='leagueHub';b.textContent='League Hub';tabs.appendChild(b)}if(b.dataset.lhWired!=='1'){b.dataset.lhWired='1';b.addEventListener('click',()=>{activate('leagueHub');render(currentView)})}installed=true;installInquirerArchiveRefresh();installManagerRefresh();installLeagueHubSharedRefresh();if(inquirerPreviewMode&&!window.__inquirerPreviewOpened){window.__inquirerPreviewOpened=true;openBroadcastTeam='__league__';b.click()}else if(b.classList.contains('active')&&!s.hidden)render(currentView)}
 // Manager and Hall rankings depend on Hindsight's live evaluator value.

@@ -23,6 +23,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: Checkout exact old main source for comparison
+        uses: actions/checkout@v4
+        with:
+          ref: 6e62634b7026afd093c0143c8bb1b5cbcc49fdf3
+          path: old-main
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -32,10 +38,8 @@ jobs:
           node --check scripts/value-history-headless-refresh.mjs
       - name: Read old main KTC adapter and compare candidate retrieval without writing
         run: |
-          mkdir -p .tmp
-          git show 6e62634b7026afd093c0143c8bb1b5cbcc49fdf3:netlify/functions/ktc-adapter.mjs > .tmp/old-ktc-adapter.mjs
           node --input-type=module <<'NODE'
-          import {refreshKtc as old} from './.tmp/old-ktc-adapter.mjs';
+          import {refreshKtc as old} from './old-main/netlify/functions/ktc-adapter.mjs';
           import {refreshKtc as candidate} from './netlify/functions/ktc-adapter.mjs';
           for(const [label,read] of [['old-main',old],['candidate',candidate]]){
             const r=await read({timeoutMs:15000});

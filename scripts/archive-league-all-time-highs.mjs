@@ -47,8 +47,17 @@ export function nextDurableHighs(previous,observation){
  if(previous?.verified_records?.length&&
     verifiedCanonicalHighRecords(previous,'1316867686394769408').length!==previous.verified_records.length)
    throw Error('AWARD_ARCHIVE_UNTRUSTED_CANONICAL_LEDGER');
- const priorVerified=Array.isArray(previous?.verified_records)?previous.verified_records:[];
+ // Year-to-year model upgrades can shift trade and roster value scales.
+ // Historical peaks from an older valuation model remain independently
+ // accessible, but must never compete with the new model's award records.
+ const changedModel=Boolean(previous?.model_used&&previous.model_used!==input.model_used);
+ const previousModels={...(previous?.verified_history_by_model||{})};
+ if(changedModel&&previous?.verified_records?.length)
+   previousModels[String(previous.model_used)]=previous.verified_records;
+ const priorVerified=changedModel?[]:
+   Array.isArray(previous?.verified_records)?previous.verified_records:[];
  const verified_records=mergeAwardHighs(priorVerified,input.observations,input.captured_at);
+ const verified_history_by_model=previousModels;
  const records=mergeAwardHighs(existing,input.observations,input.captured_at);
  if(records.length<existing.length)throw Error('AWARD_ARCHIVE_SHRINK_BLOCKED');
  for(const prior of existing){
@@ -59,7 +68,7 @@ export function nextDurableHighs(previous,observation){
  return{schema_version:1,league_id:'1316867686394769408',
   source:'github-canonical-headless-all-time-highs',
   latest_observation_at:input.captured_at,model_used:input.model_used,source_commit:input.source_commit,
-  canonical_fingerprint:input.canonical_fingerprint,records,verified_records};
+  canonical_fingerprint:input.canonical_fingerprint,records,verified_records,verified_history_by_model};
 }
 // A verified Blob bootstrap has real score history but intentionally lacks
 // scheduled source/model provenance. Promote it on the FIRST canonical
@@ -72,7 +81,8 @@ export function requiresDurableHighsWrite(previous,next){
   'model_used','source_commit','canonical_fingerprint']
   .some(key=>previous[key]!==next[key])||
   JSON.stringify(previous.records||[])!==JSON.stringify(next.records||[])||
-  JSON.stringify(previous.verified_records||[])!==JSON.stringify(next.verified_records||[]);
+  JSON.stringify(previous.verified_records||[])!==JSON.stringify(next.verified_records||[])||
+  JSON.stringify(previous.verified_history_by_model||{})!==JSON.stringify(next.verified_history_by_model||{});
 }
 
 async function run(){

@@ -8,6 +8,10 @@ on:
       - '.github/workflows/league-hub-async-tab-consistency.yml'
 permissions:
   contents: read
+# Cancel only superseded read-only PR runs; never cancel scheduled writers.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   selected-view:
     runs-on: ubuntu-latest

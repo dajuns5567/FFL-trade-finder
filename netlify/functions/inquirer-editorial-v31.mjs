@@ -4283,7 +4283,12 @@ function assertWeek2Originality(result,previousEdition){
         const observed=validDelta?[
           team+' recorded a Week '+week+' roster-value change of '+signed+' points.',
           'Value change: '+signed+' points ('+team+', Week '+week+').',
-          team+' moved '+signed+' valuation points between the recorded snapshots.',
+          [
+            team+' moved '+signed+' valuation points between the recorded snapshots.',
+            'The recorded change in roster valuation for '+team+' totals '+signed+' points.',
+            'A net movement of '+signed+' points appears in the dated market readings for '+team+'.',
+            'Between the two market observations, '+team+' recorded a '+signed+'-point difference in roster value.'
+          ][Math.floor(rosterOffset/8)],
           team+' closed the Week '+week+' valuation window '+(delta>0?'higher by ':delta<0?'lower by ':'unchanged at ')+magnitude+' points.',
           'The Week '+week+' value sheet records '+signed+' points for '+team+'.',
           'Measured roster value moved '+signed+' points for '+team+' in Week '+week+'.',

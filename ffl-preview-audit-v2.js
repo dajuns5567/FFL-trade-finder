@@ -208,10 +208,15 @@
      }
      if(tabName==='Awards'){
       const visibleAwards=norm(text(document.querySelector('#leagueHubContent')));
-      add('League Hub','Week 10 Hot Seat visible',
-        /WEEKLY MANAGER AWARDS\s*[—-]\s*2026 WEEK 10/i.test(visibleAwards)
-          ? /HOT SEAT/i.test(visibleAwards)?'PASS':'FAIL' : 'WARN',
-        /HOT SEAT/i.test(visibleAwards)?'Hot Seat card is present':'No Hot Seat card in the visible completed-week Awards');
+      // Do not count introductory helper text mentioning Hot Seat: require an
+      // actual rendered weekly award card heading.
+      const hotSeatCards=elements('#leagueHubContent .lh-card h3').filter(h=>
+       /^\\s*(?:🔥\\s*)?HOT SEAT\\s*$/i.test(norm(text(h))));
+      const week10=/WEEKLY MANAGER AWARDS\\s*[—-]\\s*2026 WEEK 10/i.test(visibleAwards);
+      add('League Hub','Week 10 Hot Seat card visibly rendered',
+        week10?(hotSeatCards.length?'PASS':'FAIL'):'WARN',
+        JSON.stringify({week10,renderedHotSeatCards:hotSeatCards.length,
+          headingSamples:elements('#leagueHubContent .lh-card h3').slice(0,7).map(x=>cap(text(x),55))}));
       const body=norm(text(document.querySelector('#leagueHubContent')));
       const selected=elements('[data-lh-view].active',root)
        .some(node=>node.getAttribute('data-lh-view')==='awards');

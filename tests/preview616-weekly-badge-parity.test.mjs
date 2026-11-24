@@ -65,3 +65,25 @@ test('visible player milestones render independent verified weekly wins before s
  assert.match(ui,/const previous=playerScoringCache\.get\(key\)/);
  assert.doesNotMatch(ui,/playerScoringCache\.set\(key,null\)/);
 });
+
+test('McCaffrey retains three historical awards plus both verified 2026 wins',()=>{
+ const ui=readFileSync(new URL('../value-history-v276.js',import.meta.url),'utf8');
+ const start=ui.indexOf('function mergeCanonicalPlayerAwardMilestones(');
+ const end=ui.indexOf('function scoringMilestonesRows(',start);
+ assert.ok(start>=0&&end>start,'Use actual browser merge function');
+ const ctx={Number,String,Array,Map,Date,Math};
+ vm.createContext(ctx);
+ const merge=vm.runInContext(ui.slice(start,end)+';mergeCanonicalPlayerAwardMilestones',ctx);
+ const old={weeklyAwards:[
+   {season:2025,week:7,type:'offensive-player-of-week',points:39.1},
+   {season:2023,week:15,type:'offensive-player-of-week',points:41.7},
+   {season:2023,week:4,type:'offensive-player-of-week',points:48.7}
+ ]};
+ const now=[verified(6,'4034',30.7),verified(10,'4034',46.3),
+    {...verified(11,'4034',100),verified_roster_count:31}];
+ const out=merge(old,now,'4034');
+ assert.equal(out.weeklyAwards.length,5);
+ assert.deepEqual(Array.from(out.weeklyAwards.slice(0,2),a=>[a.season,a.week,a.points]),
+  [[2026,10,46.3],[2026,6,30.7]]);
+ assert.ok(out.weeklyAwards.some(a=>a.season===2023&&a.week===4));
+});

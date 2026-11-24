@@ -1,0 +1,22 @@
+name: Value History navigation and badge parity
+on:
+  pull_request:
+    paths:
+      - 'value-history-v276.js'
+      - 'tests/value-history-navigation-performance.test.mjs'
+      - '.github/workflows/value-history-navigation-performance.yml'
+  workflow_dispatch:
+jobs:
+  verify-navigation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Check Value History browser Javascript
+        run: node --check value-history-v276.js
+      - name: Test freshness, navigation races, and multi-year badge parity
+        run: node --test tests/value-history-navigation-performance.test.mjs
+      - name: Preserve earlier five-badge regression
+        run: node --test tests/preview620-historical-player-badge-readback.test.mjs

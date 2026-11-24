@@ -228,6 +228,14 @@ function describeKtcHtml(html){
   jonah_coleman:visibleMarkup.includes("Jonah Coleman"),
   saquon_barkley:visibleMarkup.includes("Saquon Barkley")
  };
+ // Limited public ranking markup probe for understanding server HTML;
+ // never record full HTML, scripts, headers or cookies.
+ const probeIndex=visibleMarkup.indexOf("Jonah Coleman");
+ const domProbe=probeIndex>=0 ? visibleMarkup.slice(Math.max(0,probeIndex-600),probeIndex+530)
+   .replace(/\s+/g," ")
+   .replace(/href=["\x27][^"\x27]*["\x27]/gi,'href="[link]"')
+   .replace(/src=["\x27][^"\x27]*["\x27]/gi,'src="[asset]"')
+   : null;
  const visibleLinks=(visibleMarkup.match(/href=["'][^"']*(?:player|dynasty-rankings)[^"']*["']/gi)||[]).length;
  const marker=/\boneQBPlayers\s*=\s*/.exec(t);
  const start=marker?marker.index+marker[0].length:-1;
@@ -237,6 +245,7 @@ function describeKtcHtml(html){
  return {
   visible_markup_chars:visibleMarkup.length,
   visible_named_players:rowProbes,
+  dom_player_probe:domProbe,
   visible_player_links:visibleLinks,
   visible_rank_markers:(visibleMarkup.match(/class=["'][^"']*(?:rank|player-name)[^"']*["']/gi)||[]).length,
   oneqb_marker_found:!!marker,

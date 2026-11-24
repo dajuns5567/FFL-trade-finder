@@ -247,7 +247,7 @@ test('a rejected versioned player-pool request records the attempted feed withou
  assert.ok(poolRequests.every(x=>new URL(x.url).searchParams.get('sr')==='2'));
 });
 
-import {parseKtcRenderedPage,validateKtcRenderedPages} from '../netlify/functions/ktc-html-pages.mjs';
+import {parseKtcRenderedPage,validateKtcRenderedPages,deriveKtcSuperflexRanksFromPublishedValues} from '../netlify/functions/ktc-html-pages.mjs';
 function ktcHtmlPage(start,count=50){
  const rows=Array.from({length:count},(_,i)=>{
   const rank=start+i,position=['QB','RB','WR','TE'][i%4];
@@ -273,19 +273,45 @@ test('validated page HTML rejects duplicated or missing ranking pages',()=>{
  assert.equal(validateKtcRenderedPages([pages[0],pages[0],...pages.slice(2)]),null);
  assert.equal(validateKtcRenderedPages(pages.slice(0,5)),null);
 });
-test('ingests 300 current server-rendered KTC Superflex ranks without calling denied JSON feed',async()=>{
+
+function ktcPositionPage(position,page){
+ const offset=page===1?1:91;
+ const positions=['QB','RB','WR','TE'];
+ const idx=positions.indexOf(position);
+ const rows=Array.from({length:50},(_,i)=>{
+  const num=offset+i,value=9950-(idx*100+page*50+i);
+  return '<div class="onePlayer"><div class="single-ranking-wrapper"><div class="single-ranking">'+
+    '<div class="rank-number"><p>'+num+'</p></div>'+
+    '<div class="player-name"><p><a href="/player/'+position+num+'">'+position+' Fixture '+num+'</a></p></div>'+
+    '<div class="position-team"><p class="position">'+position+num+'</p></div>'+
+    '<div class="value"><p>'+value+'</p></div></div></div></div>';
+ });
+ return '<html><div class="" id="rankings-page-rankings">'+rows.join('')+'</div></html>';
+}
+test('derive combined Superflex ranks from 400 sourced, position-filtered KTC values',()=>{
+ const html=['QB','RB','WR','TE'].flatMap(pos=>[1,2].map(page=>ktcPositionPage(pos,page)));
+ const rows=deriveKtcSuperflexRanksFromPublishedValues(html);
+ assert.equal(rows.length,400);
+ assert.equal(rows[0].rank,1);
+ assert.ok(rows.every(row=>['QB','RB','WR','TE'].includes(row.position)));
+ assert.equal(deriveKtcSuperflexRanksFromPublishedValues(html.slice(0,5)),null);
+});
+test('ingests 400 public KTC offensive Superflex values without the denied JSON feed',async()=>{
  const first=ktcHtmlPage(1);
  const requested=[];
  const result=await refreshKtc({fetchImpl:async url=>{
   requested.push(url);
-  const page=Number(new URL(url).searchParams.get('page')||1);
-  return {ok:true,text:async()=>page>=1&&page<=6?ktcHtmlPage((page-1)*50+1):first};
+  const u=new URL(url),position=u.searchParams.get('filters');
+  const page=Number(u.searchParams.get('page')||1);
+  return {ok:true,text:async()=>position&&['QB','RB','WR','TE'].includes(position)
+    ?ktcPositionPage(position,page):first};
  }});
  assert.equal(result.valid,true);
- assert.equal(result.players_extracted,300);
- assert.equal(result.diagnostics.extraction_method,'server-rendered:dynasty-superflex-pages');
+ assert.equal(result.players_extracted,400);
+ assert.equal(result.diagnostics.extraction_method,'server-rendered:position-pages-superflex-values');
  assert.equal(result.format,'dynasty-superflex');
  assert.equal(result.reducedWeight,true);
  assert.ok(requested.every(url=>!url.includes('/player-pool')));
+ assert.equal(requested.filter(url=>new URL(url).searchParams.has('page')).length,8);
  assert.ok(requested.filter(url=>new URL(url).searchParams.has('page')).every(url=>new URL(url).searchParams.get('format')==='2'));
 });

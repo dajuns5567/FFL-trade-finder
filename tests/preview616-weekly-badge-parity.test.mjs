@@ -52,3 +52,16 @@ test('missing Blob data preserves existing public endpoint fallback',async()=>{
  assert.equal(out.length,1);
  assert.equal(out[0].week,10);
 });
+
+test('visible player milestones render independent verified weekly wins before slow scorer completes',()=>{
+ const ui=readFileSync(new URL('../value-history-v276.js',import.meta.url),'utf8');
+ assert.match(ui,/async function canonicalPlayerAwardRecords\(/);
+ assert.match(ui,/mergeCanonicalPlayerAwardMilestones\(/);
+ assert.match(ui,/const awardsTask=canonicalPlayerAwardRecords\(\)\.then/);
+ assert.match(ui,/const scoringTask=scoringFetch\(key\)\.then/);
+ assert.match(ui,/await Promise\.allSettled\(\[awardsTask,scoringTask\]\)/);
+ assert.match(ui,/loadPlayerScoring\(key\);/);
+ assert.match(ui,/installPlayerWeeklyBadgeRefresh\(\)/);
+ assert.match(ui,/const previous=playerScoringCache\.get\(key\)/);
+ assert.doesNotMatch(ui,/playerScoringCache\.set\(key,null\)/);
+});

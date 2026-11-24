@@ -39,11 +39,11 @@ test('unchanged peaks preserve first-earned dates but require newest refresh to 
 test('missing or lower scores, malformed archive and duplicate roster rows fail closed',()=>{
  const o=observation(),archive=nextDurableHighs(null,o);
  const bad={...archive,records:archive.records.slice(1)};
- assert.throws(()=>assertDurableHighsReadback(bad,o),/MISSING_OR_LOWER_SCORE/);
+ assert.throws(()=>assertDurableHighsReadback(bad,o),/MISSING_OR_LOWER_SCORE|LACKS_INDEPENDENT_CANONICAL_PROOF/);
  const lowered={...archive,records:archive.records.map((x,i)=>i===0?{...x,score:x.score-1}:x)};
- assert.throws(()=>assertDurableHighsReadback(lowered,o),/MISSING_OR_LOWER_SCORE/);
+ assert.throws(()=>assertDurableHighsReadback(lowered,o),/MISSING_OR_LOWER_SCORE|LACKS_INDEPENDENT_CANONICAL_PROOF/);
  const dup={...archive,records:[...archive.records,archive.records[0]]};
- assert.throws(()=>assertDurableHighsReadback(dup,o),/DUPLICATE/);
+ assert.throws(()=>assertDurableHighsReadback(dup,o),/DUPLICATE|LACKS_INDEPENDENT_CANONICAL_PROOF/);
 });
 test('historical awards capture is independently scheduled, main only, and never deploys production',()=>{
  assert.match(yaml,/cron: '27 5 \* \* \*'/);

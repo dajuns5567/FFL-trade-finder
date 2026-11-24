@@ -109,3 +109,13 @@ test('KTC November inline oneQBPlayers bootstrap extracts real Superflex ranks w
  assert.equal(result.valid,true);
  assert.equal(result.diagnostics.extraction_method,'inline-array:oneQBPlayers');
 });
+
+test('balanced inline KTC JSON handles escaped quotes, backslashes and brackets in strings',()=>{
+ const players=fixture();
+ players[2].playerName='Fixture "[\\\\] Quoted" Player';
+ const html='<script>var oneQBPlayers = '+JSON.stringify(players)+'; var playersArray=[];</script>';
+ const parsed=extract(html);
+ assert.equal(parsed.rows.length,360);
+ assert.equal(parsed.rows[2].rank,3);
+ assert.equal(parsed.extractionMethod,'inline-array:oneQBPlayers');
+});

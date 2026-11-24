@@ -62,5 +62,5 @@ test('same-score scheduled writes promote bootstrap provenance and retain dates'
 test('League Hub invokes strict source reader instead of requiring canonical label only',()=>{
  const site=fs.readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
  assert.match(site,/records:verifiedDurableAwardHighRecords\(result,LEAGUE\)/);
- assert.match(site,/mergeAwardHighs\(fromBlob,durable,now\)/);
+ assert.match(site,/mergeAwardHighs\(fromBlob,durable\.records,now\)/);
 });

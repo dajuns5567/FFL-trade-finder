@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {mergeAwardHighs,validAwardHigh,verifiedDurableAwardHighRecords,verifiedCanonicalHighRecords} from '../netlify/functions/lib/league-all-time-highs.mjs';
+import {assertAwardsMatchCanonicalRefresh} from './awards-canonical-refresh-parity.mjs';
 
 export const DATA_BRANCH='value-history-data';
 export const RECORD_PATH='value-history/league-awards/all-time-highs.json';
@@ -92,6 +93,11 @@ async function run(){
     !['schedule','workflow_dispatch','workflow_run'].includes(process.env.GITHUB_EVENT_NAME||''))
   throw Error('AWARD_ARCHIVE_WRITE_BLOCKED: only scheduled main-branch collection can write');
  const input=validateScheduledHighs(JSON.parse(fs.readFileSync(FILE,'utf8')));
+ // The Awards writer must enforce the same source parity independently;
+ // a passing preceding step alone is not sufficient to authorize a write.
+ const pairedFile=process.env.VALUE_HISTORY_SNAPSHOT_FILE;
+ if(!pairedFile)throw Error('AWARD_CANONICAL_REFRESH_PAIR_REQUIRED');
+ assertAwardsMatchCanonicalRefresh(input,JSON.parse(fs.readFileSync(pairedFile,'utf8')));
  const headers={authorization:'Bearer '+token,accept:'application/vnd.github+json',
   'content-type':'application/json','x-github-api-version':'2022-11-28',
   'user-agent':'Fleeced-Automated-Award-Highs/1.0'};

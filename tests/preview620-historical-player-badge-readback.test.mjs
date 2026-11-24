@@ -19,6 +19,7 @@ test('canonical partial 2026 award cache cannot suppress full historical scorer 
  const context={
   playerScoringCache:new Map([['4034',existing]]),
   playerScoringCacheAt:new Map([['4034',1000]]),
+  playerScoringCompleteAt:new Map(),
   playerScoringPending:new Map(),
   Date:{now:()=>1001},String,Promise,Map,Error,encodeURIComponent,
   API:'/.netlify/functions/value-history',
@@ -47,7 +48,7 @@ test('actual player loader merges 3 historical wins with verified 2026 Week 6/10
    verified_roster_count:32,players_of_week:{offense:{player_id:'4034',points:w===10?46.3:30.7}}}));
  const ctx={
   playerScoringCache:new Map([['4034',partial]]),
-  playerScoringCacheAt:new Map(),currentPlayerId:'4034',
+  playerScoringCacheAt:new Map(),playerScoringCompleteAt:new Map(),currentPlayerId:'4034',
   canonicalPlayerAwardRecords:async()=>records,
   scoringFetch:async (_id,opts)=>{requestedComplete=opts?.requireCompleteReadback===true;
     return{scoring_milestones:{weeklyAwards:[

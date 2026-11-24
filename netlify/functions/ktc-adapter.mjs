@@ -237,6 +237,16 @@ function describeKtcHtml(html){
    .replace(/src=["\x27][^"\x27]*["\x27]/gi,'src="[asset]"')
    : null;
  const visibleLinks=(visibleMarkup.match(/href=["'][^"']*(?:player|dynasty-rankings)[^"']*["']/gi)||[]).length;
+ const publicClassCounts={};
+ for(const match of visibleMarkup.matchAll(/class="([^"]+)"/g)){
+  const list=match[1].split(" ");
+  for(const name of list){
+   if(/^(?:rank|player|value|tier|ppr|sf)/i.test(name))
+    publicClassCounts[name]=(publicClassCounts[name]||0)+1;
+  }
+ }
+ const publicClasses=Object.entries(publicClassCounts)
+  .sort((a,b)=>b[1]-a[1]).slice(0,24);
  const marker=/\boneQBPlayers\s*=\s*/.exec(t);
  const start=marker?marker.index+marker[0].length:-1;
  const raw=start>=0?balancedJson(t,start,"[","]"):null;
@@ -248,6 +258,7 @@ function describeKtcHtml(html){
   dom_player_probe:domProbe,
   visible_player_links:visibleLinks,
   visible_rank_markers:(visibleMarkup.match(/class=["'][^"']*(?:rank|player-name)[^"']*["']/gi)||[]).length,
+  public_rank_class_counts:publicClasses,
   oneqb_marker_found:!!marker,
   oneqb_starts_array:start>=0&&t[start]==="[",
   oneqb_balanced_chars:raw?.length||0,

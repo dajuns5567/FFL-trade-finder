@@ -67,7 +67,7 @@ test('Fleeced Daily preview reader no longer shows the redundant archive warning
  assert.doesNotMatch(hub,/Deploy Preview: published archive view/);
  assert.doesNotMatch(hub,/This view shows only editions stored on this Netlify project/);
  assert.match(hub,/host\.innerHTML=dailyHTML\(all,stats,w,md,spotlightW\|\|w,leagueWeek\)/);
- assert.match(loader,/league-hub-v451\.js\?v=557/);
+ assert.match(loader,/league-hub-v451\.js\?v=559/);
  assert.match(hub,/inquirerPreviewMode/,'private manuscript preview entry remains available through normal controls');
 });
 

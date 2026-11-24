@@ -10,6 +10,8 @@ on:
       - 'ffl-preview-audit-v2.js'
       - '.github/workflows/ktc-approved-site-integration.yml'
   workflow_dispatch:
+permissions:
+  contents: read
 jobs:
   verify-ktc:
     runs-on: ubuntu-latest
@@ -43,6 +45,7 @@ jobs:
           if(!r.valid||Number(r.players_extracted)<300)process.exit(17);
           NODE
       - name: Verify newest site retains key recent features and scripts
+        if: always()
         run: |
           node --input-type=module <<'NODE'
           import {readFileSync} from 'node:fs';
@@ -51,6 +54,10 @@ jobs:
             page=src('league-hub-v451.js'),
             market=src('value-history-v276.js'),
             shell=src('netlify/functions/site-v29.mjs');
+          const assetAtLeast=(name,min)=>{
+            const matches=[...shell.matchAll(/<script\b[^>]*\bsrc="\/([^"?]+)\?v=(\d+)"/g)].filter(m=>m[1]===name);
+            return matches.length===1&&Number(matches[0][2])>=min;
+          };
           const checks=[
             ['Hot Seat selection',hub.includes('selectHotSeat(teams)')],
             ['Hot Seat projected points',hub.includes('playerProjections:scoredProjections')],
@@ -59,9 +66,9 @@ jobs:
             ['All-time highs supported',hub.includes('verifiedDurableAwardHighRecords')],
             ['Verified player badges',market.includes('mergeCanonicalPlayerAwardMilestones')],
             ['Market old explanatory copy removed',!market.includes('Historical tracking is preserved (')],
-            ['Market Dashboard asset v550',shell.includes('value-history-v276.js?v=550')],
-            ['League Hub asset v557',shell.includes('league-hub-v451.js?v=557')],
-            ['Trade Finder newest runtime asset',shell.includes('trade-finder-v256-compiled.js?v=449')]
+            ['Market Dashboard asset v554 or newer, loaded once',assetAtLeast('value-history-v276.js',554)],
+            ['League Hub asset v564 or newer, loaded once',assetAtLeast('league-hub-v451.js',564)],
+            ['Trade Finder asset v449 or newer, loaded once',assetAtLeast('trade-finder-v256-compiled.js',449)]
           ];
           checks.forEach(([label,pass])=>console.log((pass?'PASS ':'FAIL ')+label));
           if(checks.some(([,pass])=>!pass))process.exit(19);

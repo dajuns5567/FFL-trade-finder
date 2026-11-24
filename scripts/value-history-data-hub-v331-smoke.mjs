@@ -120,7 +120,6 @@ for(const needle of [
   "data.kind==='rank'?",
   'esc(data.label)',
   'esc(p.rank)',
-  "marketCache=null;teamNetCache.clear();scheduleSnapshot(1000,'manual-update')",
   'Tracked since',
   "'1D','7D','30D','90D','1Y','ALL'",
   "period==='1D'",
@@ -245,6 +244,16 @@ for(const needle of [
   'data-vh-trade-team',
   'Trade-linked team net-value points'
 ])assert(ui.includes(needle),'missing Value History UI feature: '+needle);
+
+// Verify the actual manual Update callback, not adjacency of two cache
+// assignments. Newer refresh consumers must also invalidate in-flight data.
+const manualUpdate=ui.match(/document\.getElementById\('updateBtn'\)\?\.addEventListener\('click',\(\)=>\{([^\n]+?)\},\{passive:true\}\)/)?.[1];
+assert(manualUpdate,'manual Update listener missing');
+for(const operation of ['invalidatePlayerHistoryNavCache()','playerScoringCompleteAt.clear()','invalidateLiveMarketV97()','marketCache=null','marketIntelligenceGeneration++','marketInsightsCache=null','marketSignalCache=null','marketInsightsPending=null','marketSignalsPending=null','teamNetCache.clear()', "scheduleSnapshot(1000,'manual-update')"])
+  assert(manualUpdate.includes(operation),'manual Update missing '+operation);
+const scheduledAt=manualUpdate.indexOf("scheduleSnapshot(1000,'manual-update')");
+assert(manualUpdate.indexOf('marketCache=null')<scheduledAt&&manualUpdate.indexOf('teamNetCache.clear()')<scheduledAt,'market and team caches must be cleared before scheduling a new observation');
+
 
 // Rank tooltips now derive their label and historical rank from the same
 // accessible, keyboard-navigable chart-series payload. Never require the
@@ -522,7 +531,8 @@ assert(indexHtml.includes('Review real trades, analysis at the time of trade, an
 assert(indexHtml.includes('Historical value hub, risers, fallers, team value analysis, and more'),'Home Value History description must match');
 assert(indexHtml.includes('id="homeTopPlayers"')&&indexHtml.includes('id="homeValueRisers"'),'Home must expose current top players and 7D riser summary slots');
 assert(/\/trade-select-all-v165\.js\?v=[^"'<>\s]+/.test(siteV29),'production shell must load Select All with an explicit cache-bust key');
-assert(siteV29.includes('/ui-player-values-v139.js?v=540'),'production shell must cache-bust the current V398 Player Values UI');
+const playerUiAssets=[...siteV29.matchAll(/\/ui-player-values-v139\.js\?v=(\d+)/g)];
+assert(playerUiAssets.length===1&&Number(playerUiAssets[0][1])>=541,'production shell must load exactly one Player Values UI revision 541 or newer');
 assert(/\/nonblocking-consensus-v277\.js\?v=[^"'<>\s]+/.test(siteV29),'production shell must load consensus completion runtime with an explicit cache-bust key');
 const archiveWriter=fs.readFileSync('scripts/archive-value-history.mjs','utf8');
 assert(archiveWriter.includes("dataBranch='value-history-data'"),'archive writer must target the durable data branch');

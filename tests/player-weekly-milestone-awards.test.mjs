@@ -100,7 +100,7 @@ test('browser refreshes cached awards after league weekly update and loads the n
  const site=readFileSync(new URL('../netlify/functions/site-v29.mjs',import.meta.url),'utf8');
  assert.match(ui,/playerScoringCacheAt=new Map\(\)/);
  assert.match(ui,/Date\.now\(\)-\(playerScoringCacheAt\.get\(key\)\|\|0\)<60000/);
- assert.match(ui,/loadPlayerScoring\(key\);/);
+ assert.match(ui,/const scoringRead=currentView==='player'&&String\(currentPlayerId\)===key\?loadPlayerScoring\(key\):Promise\.resolve\(\)/);
  assert.match(ui,/setInterval\(refreshVisiblePlayerWeeklyBadges,PLAYER_WEEKLY_BADGE_REFRESH_MS\)/);
  assert.match(ui,/window\.addEventListener\('focus',refreshVisiblePlayerWeeklyBadges\)/);
  assert.ok(Number(site.match(/value-history-v276\.js\?v=(\d+)/)?.[1])>=550,'value-history-v276 must retain at least the verified cache revision 550');

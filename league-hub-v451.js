@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-let installed=false,tradeCache=null,weeklyCache=null,liveLeagueWeekCache=null,spotlightWeeklyCache=null,weeklyAwardsCache=null,draftCache=null,managerCache=null,reporterDirectoryCache=null,reporterArchiveCache={},openReporterArchive='',awardHistory=[],awardHighHistory=[],broadcastArchive=[],openBroadcastTeam='',currentView='daily',rankingAwardKey='',awardYearFilters={},awardHighMode={},hallExpanded=false,selectedManagerId='',inquirerPlayerLinkCache=null;
+let installed=false,tradeCache=null,weeklyCache=null,liveLeagueWeekCache=null,spotlightWeeklyCache=null,weeklyAwardsCache=null,draftCache=null,managerCache=null,reporterDirectoryCache=null,reporterArchiveCache={},openReporterArchive='',awardHistory=[],awardHighHistory=[],awardLegacyHighHistory=[],broadcastArchive=[],openBroadcastTeam='',currentView='daily',rankingAwardKey='',awardYearFilters={},awardHighMode={},hallExpanded=false,selectedManagerId='',inquirerPlayerLinkCache=null;
 // Unpublished editions are reviewable only on Netlify PR previews, and only
 // through the same League Hub rendering path as the published archive.
 const onNetlifyDeployPreview=/^deploy-preview-\d+--[^.]+\.netlify\.app$/i.test(location.hostname);
@@ -569,14 +569,15 @@ function awardPeriod(){const d=new Date(),anchor=new Date('2026-09-14T00:00:00')
 // Always load saved highs even if this client cannot write (protected
 // preview, transient network error, or a stale browser tab). The old code
 // discarded a successful GET whenever its next POST failed.
-async function refreshAllTimeHighs(rows,{record=true,verifiedInputs=false}={}){
+async function refreshAllTimeHighs(rows,{record=false,verifiedInputs=false}={}){
  const endpoint='/.netlify/functions/league-hub?award_highs=1';
  try{
   const response=await fetch(endpoint,{cache:'no-store'});
   if(!response.ok)throw Error('All-Time Highs read returned '+response.status);
   const data=await response.json();
   if(!Array.isArray(data?.records))throw Error('Invalid All-Time Highs archive');
-  awardHighHistory=data.records;
+  awardLegacyHighHistory=data.records;
+  awardHighHistory=Array.isArray(data.verified_records)?data.verified_records:[];
  }catch(error){
   console.warn('league-award-highs-read-unavailable',String(error?.message||error));
  }
@@ -601,7 +602,8 @@ async function refreshAllTimeHighs(rows,{record=true,verifiedInputs=false}={}){
      body:JSON.stringify({records:observations})});
     if(!response.ok)throw Error('All-Time Highs write returned '+response.status);
     const data=await response.json();
-    if(Array.isArray(data?.records))awardHighHistory=data.records;
+    if(Array.isArray(data?.records))awardLegacyHighHistory=data.records;
+    if(Array.isArray(data?.verified_records))awardHighHistory=data.verified_records;
    }catch(error){
     console.warn('league-award-highs-write-unavailable',String(error?.message||error));
    }
@@ -711,16 +713,18 @@ async function syncAwards(rows){
 }
 function awardCard(a){const yf=a.yearFilter?`<label class="lh-year-filter"><b>YEAR</b><select data-lh-award-year="${esc(a.key)}"><option value="all">All</option>${(a.years||[]).map(y=>`<option value="${y}" ${String(awardYearFilters[a.key]||'all')===String(y)?'selected':''}>${y}</option>`).join('')}</select></label>`:'';const win=a.standings?.[0],link=a.leagueNetModal?`<button class="secondary small" data-lh-loaded-roster>Open Value History chart</button>`:a.teamTradeLink&&win?`<button class="secondary small" data-lh-manager-trades="${esc(win.roster_id)}">Winner Trade History</button>`:a.specificTradeLink&&win?.trade_id?`<button class="secondary small" data-lh-trade="${esc(win.trade_id)}">View Winning Trade</button>`:'';return`<div class="lh-card"><h3>${esc(a.title)}</h3><div class="lh-sub">${esc(a.desc||'')}</div>${yf}<div class="lh-story"><b>${a.roster_id?esc(teamName(a.roster_id)):'—'}</b><small>${esc(a.detail)}</small></div><div class="lh-action"><button class="secondary small" data-lh-rankings="${esc(a.key)}">View all rankings</button> ${link}</div></div>`}
 function awardRecordsHTML(a){
- const hist=awardHighHistory.filter(x=>x.award_key===awardRecordKey(a.key)),
+ const key=awardRecordKey(a.key),
+  hist=awardHighHistory.filter(x=>x.award_key===key),
+  legacy=awardLegacyHighHistory.filter(x=>x.award_key===key),
   rows=hist.slice().sort((x,y)=>Number(y.score)-Number(x.score));
  const stored=rows.map((x,i)=>`<div class="lh-stat"><span><b>#${i+1}</b> ${esc(teamName(x.roster_id))}</span><span><small>${esc(x.detail||fmt(x.score))}</small><small style="display:block;color:var(--muted);margin-top:3px">Recorded ${esc(x.captured_at?new Date(x.captured_at).toLocaleString():'Timestamp unavailable')}</small></span></div>`).join('');
  // Deploy Previews cannot write to the archive. Always show the actual live
  // award rankings if no historical observation has been persisted yet, but
  // NEVER mislabel the current value as a timestamped historical peak.
  const provisional=!rows.length&&Array.isArray(a?.standings)?
-  `<div class="lh-sub" data-lh-highs-pending>Historical records are not archived yet. These are the CURRENT verified award standings, not timestamped All-Time Highs. A successful scheduled capture will preserve the true highs and observation dates automatically.</div>`+
+  `<div class="lh-sub" data-lh-highs-pending>VERIFIED ALL-TIME HIGH NOT YET ESTABLISHED. ${legacy.length?'Archived baseline observations ('+legacy.length+' teams) are preserved for audit, but were captured without independent source proof and are excluded from certified highs. ':''}These are CURRENT standings, not timestamped historical records. Only a successful canonical headless capture with verified source and archival readback can establish certified highs.</div>`+
   a.standings.map((x,i)=>`<div class="lh-stat" data-lh-current-benchmark><span><b>#${i+1}</b> ${esc(teamName(x.roster_id))}</span><span><small>${esc(x.detail||fmt(x.score))}</small><small>Current result • not yet recorded as a historical high</small></span></div>`).join(''):'';
- return`<div class="lh-records"><h3>📈 All-Time Highs</h3><div class="lh-sub">Each team's highest captured performance for this award, with the timestamp of its first verified observation.</div>${stored||provisional||'<div class="lh-sub">No verified observations or current standings are available yet.</div>'}</div>`;
+ return`<div class="lh-records"><h3>📈 All-Time Highs</h3><div class="lh-sub">Verified canonical historical peaks only. Legacy single-snapshot baselines are retained separately and are never promoted to all-time records without independent evidence.</div>${stored||provisional||'<div class="lh-sub">No independently verified observations or current standings are available yet.</div>'}</div>`;
 }
 function rankingsHTML(rows,key){const a=rows.find(x=>x.key===key)||rows[0];if(!a)return'<div class="lh-awards-page"><div class="lh-card">No rankings available.</div></div>';if(a.key==='roster-value')return loadedRosterRankingsHTML(a);const high=!!awardHighMode[a.key],yf=`<div class="lh-action"><button type="button" class="secondary small ${high?'active':''}" data-lh-award-high="${esc(a.key)}">${high?'Turn off All-Time Highs':'📈 All-Time Highs'}</button>${a.yearFilter?` <label class="lh-year-filter"><b>YEAR</b><select data-lh-award-year="${esc(a.key)}"><option value="all">All</option>${(a.years||[]).map(y=>`<option value="${y}" ${String(awardYearFilters[a.key]||'all')===String(y)?'selected':''}>${y}</option>`).join('')}</select></label>`:''}</div>`;return`<div class="lh-awards-page"><div class="lh-card"><div class="lh-action"><button class="secondary small" data-lh-rankings-back>← All Awards</button></div><h3 style="margin-top:12px">${esc(a.title)} — All 32 Teams</h3><div class="lh-sub">${esc(a.desc||'Current standings')}</div>${yf}${high?awardRecordsHTML(a):a.standings.map(x=>`<div class="lh-stat"><span><b>#${x.rank}</b> ${esc(teamName(x.roster_id))}</span><span><small>${esc(x.detail)}</small>${a.teamTradeLink?` <button class="secondary small" data-lh-manager-trades="${esc(x.roster_id)}">Trade History</button>`:''}${a.specificTradeLink&&x.trade_id?` <button class="secondary small" data-lh-trade="${esc(x.trade_id)}">View Trade</button>`:''}</span></div>`).join('')}</div></div>`}
 function loadedRosterRankingsHTML(a){return`<div class="lh-awards-page"><div class="lh-card"><div class="lh-action"><button class="secondary small" data-lh-rankings-back>← All Awards</button></div><h3 style="margin-top:12px">${esc(a.title)} — All 32 Teams</h3><div class="lh-sub">Current loaded-roster net value ranking. Use View chart to open the same league comparison pop-out.</div>${a.standings.map(x=>`<div class="lh-stat"><span><b>#${x.rank}</b> ${esc(teamName(x.roster_id))}</span><span><small>${esc(x.detail)}</small> <button class="secondary small" data-lh-loaded-roster>View chart</button></span></div>`).join('')}</div></div>`}

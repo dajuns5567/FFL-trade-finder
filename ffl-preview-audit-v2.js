@@ -211,8 +211,8 @@
       // Do not count introductory helper text mentioning Hot Seat: require an
       // actual rendered weekly award card heading.
       const hotSeatCards=elements('#leagueHubContent .lh-card h3').filter(h=>
-       /^\\s*(?:🔥\\s*)?HOT SEAT\\s*$/i.test(norm(text(h))));
-      const week10=/WEEKLY MANAGER AWARDS\\s*[—-]\\s*2026 WEEK 10/i.test(visibleAwards);
+       /^\s*(?:🔥\s*)?HOT SEAT\s*$/i.test(norm(text(h))));
+      const week10=/WEEKLY MANAGER AWARDS\s*[—-]\s*2026 WEEK 10/i.test(visibleAwards);
       add('League Hub','Week 10 Hot Seat card visibly rendered',
         week10?(hotSeatCards.length?'PASS':'FAIL'):'WARN',
         JSON.stringify({week10,renderedHotSeatCards:hotSeatCards.length,

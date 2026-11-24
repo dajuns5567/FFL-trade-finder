@@ -693,7 +693,10 @@ export async function weeklyReport(req){
  return result;
 }
 async function broadcastArchive(){
- const s=store(),idx=await s.get('broadcasts/index.json',{type:'json'}),rows=Array.isArray(idx)?idx.slice():[];
+ let s=null;const rows=[];
+ try{s=store();const idx=await s.get('broadcasts/index.json',{type:'json'});
+  if(Array.isArray(idx))rows.push(...idx.filter(x=>!(Number(x.season)===2026&&Number(x.week)>=10)));
+ }catch(error){console.warn('inquirer-legacy-blob-index-unavailable',String(error?.message||error))}
  for(const p of PRELOADED_BROADCASTS.values()){
   if(!Array.isArray(p?.teams)||!p.teams.length)continue;
   const season=Number(p.season),week=Number(p.week),key=String(season)+'|'+String(week);
@@ -725,7 +728,7 @@ async function broadcastArchive(){
  for(const week of [3,4]){
   if(rows.some(x=>Number(x.season)===2026&&Number(x.week)===week))continue;
   const key='broadcasts/2026/week-'+String(week).padStart(2,'0')+'.json';
-  const archived=await s.get(key,{type:'json'}).catch(()=>null);
+  const archived=s?await s.get(key,{type:'json'}).catch(()=>null):null;
   if(archived&&isLockedInquirerEdition(archived,2026,week))
    rows.push({type:'week',season:2026,week,key,captured_at:String(archived.generated_at||''),recovered_index:true});
  }
@@ -742,8 +745,13 @@ async function broadcastStored(season,week){
     throw Error('GitHub published edition failed the canonical 32-team newsroom contract');
    return github;
   }
+  // A missing forward index entry is not permission to display a different
+  // manuscript saved in the former Netlify publication store.
+  return{available:false,season:Number(season),week:Number(week),reason:'No verified GitHub-published edition for this week.'};
  }
- const s=store(),v=await s.get(`broadcasts/${Number(season)}/week-${String(Number(week)).padStart(2,'0')}.json`,{type:'json'});
+ let v=null;
+ try{v=await store().get(`broadcasts/${Number(season)}/week-${String(Number(week)).padStart(2,'0')}.json`,{type:'json'})}
+ catch(error){console.warn('inquirer-legacy-blob-edition-unavailable',String(error?.message||error))}
  if(v!==null&&v!==undefined){
   // The existing Blob index is NOT admission evidence. The original site
   // contains a marked-locked but rejected 2026 Week 5 revision-14 draft.

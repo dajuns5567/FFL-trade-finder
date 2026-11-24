@@ -267,7 +267,7 @@ test('authorized initial production cutover is exact-site and exact-commit; regu
  const workflow=readFileSync(new URL('../.github/workflows/inquirer-github-native-publisher.yml',import.meta.url),'utf8');
  assert.match(workflow,/ref: inquirer-archive/);
  assert.match(workflow,/git push origin HEAD:inquirer-archive/);
- assert.match(workflow,/github\.ref == 'refs\/heads\/main' && \(github\.event_name == 'schedule' \|\| github\.event_name == 'workflow_dispatch'\)/);
+ assert.match(workflow,/github\.ref == 'refs\/heads\/main' && \(github\.event_name == 'schedule' \|\| github\.event_name == 'workflow_dispatch' \|\| github\.event_name == 'push'\)/);
 });
 
  test('a recent valuation transition uses genuine shorter same-model observations, never the prior model',async()=>{
@@ -296,4 +296,29 @@ test('authorized initial production cutover is exact-site and exact-commit; regu
  const source=readFileSync(new URL('../scripts/publish-inquirer-github-native.mjs',import.meta.url),'utf8');
  assert.match(source,/result\.state==='not-ready'&&Number\.isInteger\(result\.week\)\)process\.exitCode=3/);
  assert.match(source,/published:false,admitted:/);
+ });
+
+ test('unattended ledger advances Week 11 to Week 12 only after the clock advances; retry never skips a held issue',async()=>{
+ const {inquirerPublicationPlan}=await import('../scripts/publish-inquirer-github-native.mjs');
+ const index=weeks=>({schema_version:1,reports:weeks.map(week=>({season:2026,week}))});
+ const plan=(current,weeks)=>inquirerPublicationPlan({season:2026,current,index:index(weeks)});
+ assert.deepEqual(plan(12,[10]),{state:'due',season:2026,week:11,finalized_through:11,missing_weeks:1});
+ assert.equal(plan(12,[10,11]).state,'up-to-date');
+ assert.equal(plan(13,[10]).week,11,'a held Week 11 must be retried before Week 12');
+ assert.deepEqual(plan(13,[10,11]),{state:'due',season:2026,week:12,finalized_through:12,missing_weeks:1});
+ assert.equal(plan(13,[10,11,12]).state,'up-to-date');
+ assert.throws(()=>plan(13,[10,12]),/Nonsequential/);
+ assert.throws(()=>plan(13,[10,11,11]),/Nonsequential/);
+ assert.throws(()=>plan(0,[10]),/clock/);
+ assert.throws(()=>plan(NaN,[10]),/clock/);
+ });
+ test('scheduled publication reads the exact immutable predecessor and never overwrites a staged issue',()=>{
+ const source=readFileSync(new URL('../scripts/publish-inquirer-github-native.mjs',import.meta.url),'utf8');
+ assert.match(source,/read\(\(week===10\?'2026\/':'forward\/2026\/'\)\+'week-'/);
+ assert.match(source,/fs\.writeFile\(path\.join\(archiveRoot,rel\),contents,\{flag:'wx'\}\)/);
+ const workflow=readFileSync(new URL('../.github/workflows/inquirer-github-native-publisher.yml',import.meta.url),'utf8');
+ assert.match(workflow,/cron: '19,49 \* \* \* \*'/);
+ assert.match(workflow,/cancel-in-progress: \$\{\{ github\.event_name == 'pull_request' \|\| \(github\.event_name == 'push' && github\.ref != 'refs\/heads\/main'\) \}\}/);
+ assert.match(workflow,/INQUIRER_VERIFY_LIVE_SITE: '1'/);
+ assert.match(workflow,/node scripts\/verify-inquirer-published-readback\.mjs/);
  });

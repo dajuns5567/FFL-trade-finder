@@ -43,3 +43,22 @@ export function validateKtcRenderedPages(pages){
  }
  return rankings.length>=300?rankings:null;
 }
+
+export function deriveKtcSuperflexRanksFromPublishedValues(pages){
+ const rows=(pages||[]).flatMap(parseKtcRenderedPage);
+ const byName=new Map();
+ for(const row of rows){
+  const key=row.player.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");
+  if(!key)return null;
+  const earlier=byName.get(key);
+  if(earlier){
+   if(earlier.position!==row.position||earlier.value!==row.value)return null;
+   continue;
+  }
+  byName.set(key,row);
+ }
+ if(byName.size<300)return null;
+ const sorted=[...byName.values()].sort((a,b)=>b.value-a.value||a.player.localeCompare(b.player));
+ return sorted.slice(0,500).map((row,i)=>({...row,rank:i+1,
+  publishedPositionPageRank:row.rank}));
+}

@@ -65,7 +65,7 @@ if(document.readyState==='complete')void verifyLiveValuationModelV95();
 // Experimental deploy previews may read archival history but must never
 // persist their branch-specific ranks into the canonical shared timeline.
 const isValueHistoryDeployPreview=()=>/^(?:deploy-preview-\d+|[a-f0-9]{24})--[a-z0-9-]+\.netlify\.app$/i.test(location.hostname);
-let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,marketInsightsCache=null,marketSignalCache=null,marketInsightsPending=null,marketSignalsPending=null,marketIntelPeriod='7D',marketVolatilityPool='ALL',currentPlayerId=null,trackedTeamId=null,playerHistoryTeamId=null,currentView='market',marketSort={key:'value',dir:-1},teamNetSort={key:'value',dir:-1},teamAttributionPeriod='7D',tradeHistoryCache=null,tradeHistoryCacheAt=0,tradeTeamFilter='',tradeYearFilter='',tradeMonthFilter='',marketPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D'},teamPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D',posRankRisers:'30D',posRankFallers:'30D'},marketPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL'},teamPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL',posRankRisers:'ALL',posRankFallers:'ALL'},playerScoringCache=new Map(),playerScoringPending=new Map(),teamNetCache=new Map(),tradeDetailState=new Map();
+let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,marketInsightsCache=null,marketSignalCache=null,marketInsightsPending=null,marketSignalsPending=null,marketIntelPeriod='7D',marketVolatilityPool='ALL',currentPlayerId=null,trackedTeamId=null,playerHistoryTeamId=null,currentView='market',marketSort={key:'value',dir:-1},teamNetSort={key:'value',dir:-1},teamAttributionPeriod='7D',tradeHistoryCache=null,tradeHistoryCacheAt=0,tradeTeamFilter='',tradeYearFilter='',tradeMonthFilter='',marketPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D'},teamPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D',posRankRisers:'30D',posRankFallers:'30D'},marketPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL'},teamPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL',posRankRisers:'ALL',posRankFallers:'ALL'},playerScoringCache=new Map(),playerScoringCacheAt=new Map(),playerScoringPending=new Map(),teamNetCache=new Map(),tradeDetailState=new Map();
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 const tv=()=>window.tradeValueNormalizationV139||window.tradeValueNormalizationV130||{};
@@ -1840,6 +1840,63 @@ function renderMarketTable(){
   const rows=sortedMarketRows(liveFullMarketRowsV97(marketCache.marketRows||[]),document.getElementById('vhMarketSearch')?.value||'');
   host.innerHTML=marketTableRowsMarkup(rows);
 }
+// League Hub's independently verified completed-week awards are canonical.
+// Read them directly from the same-origin public endpoint: a server-side
+// value-history -> league-hub fetch can fail on a protected Deploy Preview even
+// when the browser can read both endpoints. Never impose a badge count limit.
+let canonicalPlayerAwardRecordsCache=null,canonicalPlayerAwardRecordsAt=0,canonicalPlayerAwardRecordsPending=null;
+async function canonicalPlayerAwardRecords(){
+ if(canonicalPlayerAwardRecordsCache&&Date.now()-canonicalPlayerAwardRecordsAt<30000)
+  return canonicalPlayerAwardRecordsCache;
+ if(canonicalPlayerAwardRecordsPending)return canonicalPlayerAwardRecordsPending;
+ canonicalPlayerAwardRecordsPending=(async()=>{
+  const response=await fetch('/.netlify/functions/league-hub?weekly_awards=1',
+   {cache:'no-store',headers:{accept:'application/json'}});
+  if(!response.ok)throw Error('Verified weekly award readback unavailable');
+  const payload=await response.json();
+  if(!Array.isArray(payload?.records))throw Error('Verified weekly award records missing');
+  canonicalPlayerAwardRecordsCache=payload.records;
+  canonicalPlayerAwardRecordsAt=Date.now();
+  return payload.records;
+ })();
+ try{return await canonicalPlayerAwardRecordsPending}
+ finally{canonicalPlayerAwardRecordsPending=null}
+}
+function mergeCanonicalPlayerAwardMilestones(scoring,records,playerId){
+ const existing=scoring&&typeof scoring==='object'?scoring:{};
+ const original=Array.isArray(existing.weeklyAwards)?existing.weeklyAwards:[];
+ const awards=new Map();
+ const awardKey=a=>Number(a?.season)+'|'+Number(a?.week)+'|'+
+  (String(a?.type||'').includes('defensive')?'defense':'offense');
+ for(const a of original){
+  if(Number.isInteger(Number(a?.season))&&Number.isInteger(Number(a?.week)))
+   awards.set(awardKey(a),a);
+ }
+ for(const record of Array.isArray(records)?records:[]){
+  const year=Number(record?.season),week=Number(record?.week);
+  if(!Number.isInteger(year)||!Number.isInteger(week)||week<1||week>17)continue;
+  const sleeperVerified=record?.award_source==='sleeper-finalized-matchups'&&
+   Number(record?.verified_roster_count)===32;
+  const newsroomVerified=Number(record?.newsroom_editorial_revision)>=39&&
+   record?.newsroom_engine==='v31-forward';
+  if(!sleeperVerified&&!newsroomVerified)continue;
+  for(const [group,type,title] of [
+   ['offense','offensive-player-of-week','Top Offensive Scorer'],
+   ['defense','defensive-player-of-week','Top Defensive Scorer']
+  ]){
+   const winner=record?.players_of_week?.[group];
+   if(String(winner?.player_id||'')!==String(playerId)||winner?.points==null||
+     !Number.isFinite(Number(winner.points)))continue;
+   const key=year+'|'+week+'|'+group,previous=awards.get(key);
+   awards.set(key,{...previous,type,title,season:year,week,
+     points:Number(Number(winner.points).toFixed(2)),
+     week_started_at:previous?.week_started_at||record?.week_started_at||null});
+  }
+ }
+ return {...existing,weeklyAwards:[...awards.values()].sort((a,b)=>
+  Number(b.season)-Number(a.season)||Number(b.week)-Number(a.week)||
+  String(a.type).localeCompare(String(b.type)))};
+}
 function scoringMilestonesRows(scoring,loading=false){
   if(!scoring){
     const msg=loading?'Loading completed-week scoring in the background…':'Scoring milestones unavailable; historical value and rank records remain available.';
@@ -1862,21 +1919,67 @@ function scoringMilestonesRows(scoring,loading=false){
     '<span class="vh-milestone-time">'+esc(String(a.season))+' Week '+esc(String(a.week))+
     ' • '+(a.week_started_at?esc(dateShort(a.week_started_at)):'date unavailable')+
     '</span></span><span class="vh-milestone-award">🏅 '+
-    (Number.isFinite(Number(a.points))?Number(a.points).toFixed(2):'—')+' pts</span></div>').join('');
+    (a.points!=null&&Number.isFinite(Number(a.points))?Number(a.points).toFixed(2):'—')+' pts</span></div>').join('');
   return rows+awards;
 }
 async function loadPlayerScoring(id){
-  const key=String(id);if(playerScoringCache.has(key))return;
-  try{
-    const data=await scoringFetch(key);
+  const key=String(id);
+  let canonicalRecords=null;
+  // Render either verified source as soon as it arrives. A slow, protected,
+  // or failed stats request must not hide independently verified League Hub
+  // weekly badges. Keep every prior award when a source returns stale data.
+  const applyUpdate=(scoring,records)=>{
+    const previous=playerScoringCache.get(key);
+    const next=mergeCanonicalPlayerAwardMilestones(
+      scoring&&typeof scoring==='object'?scoring:previous,records,key);
+    const keys=new Set((next.weeklyAwards||[]).map(a=>
+      Number(a.season)+'|'+Number(a.week)+'|'+String(a.type)));
+    for(const award of previous?.weeklyAwards||[]){
+      const awardKey=Number(award.season)+'|'+Number(award.week)+'|'+String(award.type);
+      if(!keys.has(awardKey)){next.weeklyAwards.push(award);keys.add(awardKey)}
+    }
+    // A second stats response may contain a stale cached score; the published
+    // canonical weekly winner always overrides that same season/week award.
+    if(canonicalRecords)next.weeklyAwards=
+      mergeCanonicalPlayerAwardMilestones(next,canonicalRecords,key).weeklyAwards;
+    next.weeklyAwards.sort((a,b)=>Number(b.season)-Number(a.season)||
+      Number(b.week)-Number(a.week)||String(a.type).localeCompare(String(b.type)));
+    playerScoringCache.set(key,next);
+    playerScoringCacheAt.set(key,Date.now());
+    if(String(currentPlayerId)!==key)return;
+    const target=document.getElementById('vhScoringMilestones');
+    if(target)target.innerHTML=scoringMilestonesRows(next,false);
+  };
+  const awardsTask=canonicalPlayerAwardRecords().then(records=>{
+    canonicalRecords=records;
+    applyUpdate(null,records);
+  }).catch(error=>console.warn('Canonical Player-of-the-Week readback unavailable',error));
+  const scoringTask=scoringFetch(key).then(data=>{
     const value=data?.scoring_milestones;
-    playerScoringCache.set(key,value&&typeof value==='object'?value:null);
-  }catch(error){
+    if(value&&typeof value==='object')applyUpdate(value,canonicalRecords);
+    else if(!playerScoringCache.has(key))applyUpdate(null,canonicalRecords);
+  }).catch(error=>{
     console.warn('Player scoring milestones unavailable',key,error);
-    playerScoringCache.set(key,null);
-  }
-  if(String(currentPlayerId)!==key)return;
-  const target=document.getElementById('vhScoringMilestones');if(target)target.innerHTML=scoringMilestonesRows(playerScoringCache.get(key),false);
+    if(!playerScoringCache.has(key))applyUpdate(null,canonicalRecords);
+  });
+  await Promise.allSettled([awardsTask,scoringTask]);
+}
+const PLAYER_WEEKLY_BADGE_REFRESH_MS=60000;
+function refreshVisiblePlayerWeeklyBadges(){
+ const panel=document.getElementById('valueHistory');
+ if(currentView!=='player'||!currentPlayerId||document.hidden||!panel||panel.hidden)return;
+ if(Date.now()-(playerScoringCacheAt.get(String(currentPlayerId))||0)<PLAYER_WEEKLY_BADGE_REFRESH_MS)return;
+ loadPlayerScoring(String(currentPlayerId)).catch(error=>
+  console.warn('player-weekly-badges-visible-refresh-unavailable',String(error?.message||error)));
+}
+function installPlayerWeeklyBadgeRefresh(){
+ setInterval(refreshVisiblePlayerWeeklyBadges,PLAYER_WEEKLY_BADGE_REFRESH_MS);
+ window.addEventListener('focus',refreshVisiblePlayerWeeklyBadges);
+ document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden)refreshVisiblePlayerWeeklyBadges();
+ });
+ window.addEventListener('fll:canonical-values-ready',refreshVisiblePlayerWeeklyBadges);
+ window.addEventListener('fll:valuation-refreshed',refreshVisiblePlayerWeeklyBadges);
 }
 async function loadPlayer(id){
   const box=document.getElementById('vhContent');if(!box)return;box.innerHTML='<div class="vh-empty">Loading player history…</div>';
@@ -1884,7 +1987,7 @@ async function loadPlayer(id){
     const data=await historyFetch(id),pts=Array.isArray(data.points)?data.points:[],key=String(id);
     if(data.scoring_milestones)playerScoringCache.set(key,data.scoring_milestones);
     renderPlayerProfile(id,pts,'ALL');
-    if(!playerScoringCache.has(key))loadPlayerScoring(key);
+    loadPlayerScoring(key);
   }catch{box.innerHTML='<div class="notice">Historical data is temporarily unavailable. Current values and all trade tools are unaffected.</div>'}
 }
 
@@ -2372,7 +2475,7 @@ function updateLiveConsumersV102(){
  else if(currentView==='playerHub'&&playerHistoryTeamId&&marketCache)renderPlayerHistoryTeamRoster();
  else if(currentView==='player'&&currentPlayerId)loadPlayer(currentPlayerId).catch(()=>{});
 }
-function boot(){addShell();searchTradesOnSiteOpen();window.addEventListener('fll:valuation-refreshed',()=>{
+function boot(){addShell();installPlayerWeeklyBadgeRefresh();searchTradesOnSiteOpen();window.addEventListener('fll:valuation-refreshed',()=>{
  updateLiveConsumersV102()
 });
  window.addEventListener('fll:canonical-values-ready',()=>{

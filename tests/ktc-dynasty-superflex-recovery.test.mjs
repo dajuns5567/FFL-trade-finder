@@ -237,3 +237,16 @@ test('KTC stale, unverified, malformed or reordered old snapshots cannot be reco
  assert.equal(reuseVerifiedKtc(f.refresh,changed({data:sameRank}),f.now),null);
  assert.equal(reuseVerifiedKtc(f.refresh,{...f.previous,sourceManifest:[]},f.now),null);
 });
+
+test('consensus update pipeline wires verified KTC fallback without relaxing all-source gate',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const {spawnSync}=await import('node:child_process');
+ const source=readFileSync(new URL('../netlify/functions/update.mjs',import.meta.url),'utf8');
+ assert.match(source,/reuseVerifiedKtc\(refresh,previous\)/);
+ assert.match(source,/buildConsensusPayload\(recovered\?\.refresh\|\|refresh,players\)/);
+ assert.match(source,/integrityReady=results\.length>=7&&failedSources\.length===0/);
+ assert.match(source,/reused_ktc_snapshot:!!recovered/);
+ assert.match(source,/last-known-good/);
+ const check=spawnSync(process.execPath,['--check','netlify/functions/update.mjs'],{encoding:'utf8'});
+ assert.equal(check.status,0,check.stderr);
+});

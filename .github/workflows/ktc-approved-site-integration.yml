@@ -7,6 +7,7 @@ on:
       - 'tests/ktc-dynasty-superflex-recovery.test.mjs'
       - 'netlify/functions/site-v29.mjs'
       - 'index.html'
+      - 'ffl-preview-audit-v2.js'
       - '.github/workflows/ktc-approved-site-integration.yml'
   workflow_dispatch:
 jobs:
@@ -21,6 +22,7 @@ jobs:
         run: |
           node --check netlify/functions/ktc-adapter.mjs
           node --check netlify/functions/ktc-html-pages.mjs
+          node --check ffl-preview-audit-v2.js
           node --test tests/ktc-dynasty-superflex-recovery.test.mjs
       - name: Read KTC live Dynasty Superflex page data from public HTML
         run: |

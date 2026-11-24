@@ -25,7 +25,19 @@ async function fetchText(url,fetchImpl=fetch,timeoutMs=TIMEOUT_MS,extraHeaders={
       "accept":"text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
       ...extraHeaders
     },redirect:"follow",signal:controller.signal});
-    if(!res.ok)throw new Error(`HTTP ${res.status}`);
+    if(!res.ok){
+      // No response bodies, cookies, tokens, or raw headers in diagnostics.
+      const h=res.headers;
+      const get=name=>typeof h?.get==="function"?h.get(name):null;
+      const classification={
+        status:res.status,
+        content_type:get("content-type")?.split(";")[0]||null,
+        cf_mitigated:get("cf-mitigated")==="challenge",
+        authentication_requested:!!get("www-authenticate"),
+        server_tag:get("server")==="cloudflare"?"cloudflare":"other-or-unknown"
+      };
+      throw new Error("HTTP_RESPONSE "+JSON.stringify(classification));
+    }
     return await res.text();
   }finally{clearTimeout(timer)}
 }

@@ -198,3 +198,42 @@ test('HTTP 403 policy diagnosis classifies only known response codes without lea
  assert.match(result.error,/robots-denied/);
  assert.doesNotMatch(result.error,/do not expose raw provider response/);
 });
+
+import {reuseVerifiedKtc} from '../netlify/functions/consensus-ktc-lkg.mjs';
+function recentKtcFixture(overrides={}){
+ const now='2026-11-24T00:00:00.000Z';
+ const failedKtc={id:'ktc',source:'KTC',valid:false,rankings:[],status:'failed',error:'HTTP 403',timestamp:now};
+ const fresh=Array.from({length:6},(_,i)=>({id:'source'+i,source:'Source '+i,valid:true,rankings:[]}));
+ const previous={sources:{KTC:{kind:'offense',reducedWeight:true,
+  updated:'2026-11-23T00:00:00.000Z',
+  data:Object.fromEntries(fixture().map(p=>[p.playerName.toLowerCase(),p.superflexValues.rank]))}},
+  sourceManifest:[{source:'KTC',status:'fresh',snapshot_timestamp:'2026-11-23T00:00:00.000Z'}]};
+ return {refresh:{results:[...fresh,failedKtc]},previous,now,...overrides};
+}
+test('recent verified KTC cache can complete six-source refresh without claiming live KTC success',()=>{
+ const f=recentKtcFixture(),result=reuseVerifiedKtc(f.refresh,f.previous,f.now);
+ assert.ok(result);
+ assert.equal(result.refresh.results.length,7);
+ assert.equal(result.refresh.results[6].valid,true);
+ assert.equal(result.refresh.results[6].status,'last-known-good');
+ assert.equal(result.refresh.results[6].reducedWeight,true);
+ assert.equal(result.refresh.results[6].rankings.length,360);
+ assert.equal(result.failedAttempt.error,'HTTP 403');
+ assert.equal(result.snapshotTimestamp,'2026-11-23T00:00:00.000Z');
+});
+test('KTC cache never replaces a fresh KTC result or other failed consensus',()=>{
+ const f=recentKtcFixture();
+ assert.equal(reuseVerifiedKtc({...f.refresh,results:f.refresh.results.map(x=>({...x,valid:true}))},f.previous,f.now),null);
+ const broken={results:f.refresh.results.map((x,i)=>i===0?{...x,valid:false}:x)};
+ assert.equal(reuseVerifiedKtc(broken,f.previous,f.now),null);
+});
+test('KTC stale, unverified, malformed or reordered old snapshots cannot be recovered',()=>{
+ const f=recentKtcFixture();
+ const changed=(props)=>({...f.previous,sources:{KTC:{...f.previous.sources.KTC,...props}}});
+ assert.equal(reuseVerifiedKtc(f.refresh,changed({updated:'2026-11-01T00:00:00.000Z'}),f.now),null);
+ assert.equal(reuseVerifiedKtc(f.refresh,changed({reducedWeight:false}),f.now),null);
+ assert.equal(reuseVerifiedKtc(f.refresh,changed({data:{'single player':1}}),f.now),null);
+ const names=Object.keys(f.previous.sources.KTC.data),sameRank={...f.previous.sources.KTC.data,[names[0]]:2};
+ assert.equal(reuseVerifiedKtc(f.refresh,changed({data:sameRank}),f.now),null);
+ assert.equal(reuseVerifiedKtc(f.refresh,{...f.previous,sourceManifest:[]},f.now),null);
+});

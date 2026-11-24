@@ -21,6 +21,7 @@ test('canonical partial 2026 award cache cannot suppress full historical scorer 
   playerScoringCacheAt:new Map([['4034',1000]]),
   playerScoringPending:new Map(),
   Date:{now:()=>1001},String,Promise,Map,Error,encodeURIComponent,
+  API:'/.netlify/functions/value-history',
   fetch:async url=>{hit.push(url);return{ok:true,json:async()=>({
     player_id:'4034',scoring_milestones:{weeklyAwards:[
       {season:2025,week:7,type:'offensive-player-of-week'},

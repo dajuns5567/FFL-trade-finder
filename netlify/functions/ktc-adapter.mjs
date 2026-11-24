@@ -260,6 +260,13 @@ export async function refreshKtc(opts={}){
     const poolUrl=new URL(KTC_POOL_URL);
     poolUrl.searchParams.set("v",version);
     poolUrl.searchParams.set("sr","2");
+    // Preserve sanitized request provenance even when the next call fails.
+    // Query keys and the current public page version are not credentials;
+    // never log cookies, headers, or the JSON response.
+    responseShape.pool_requested=true;
+    responseShape.pool_endpoint=poolUrl.pathname;
+    responseShape.pool_query_keys=[...poolUrl.searchParams.keys()];
+    responseShape.pool_version_present=true;
     // The browser's "versionHeader" option is used for response validation,
     // not proof that the browser transmits that value as a request header.
     // Keep the version in the observed URL; avoid injecting an unverified

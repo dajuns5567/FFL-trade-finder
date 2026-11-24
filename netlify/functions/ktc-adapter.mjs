@@ -237,6 +237,10 @@ function describeKtcHtml(html){
    .replace(/src=["\x27][^"\x27]*["\x27]/gi,'src="[asset]"')
    : null;
  const visibleLinks=(visibleMarkup.match(/href=["'][^"']*(?:player|dynasty-rankings)[^"']*["']/gi)||[]).length;
+ const rankingEntryIndex=visibleMarkup.indexOf('class="onePlayer"');
+ const rankingEntryProbe=rankingEntryIndex>=0 ? visibleMarkup.slice(rankingEntryIndex,rankingEntryIndex+2900)
+   .replace(/\s+/g," ").replace(/href=["\x27][^"\x27]*["\x27]/gi,'href="[link]"')
+   .replace(/src=["\x27][^"\x27]*["\x27]/gi,'src="[asset]"') : null;
  const rankProbeIndex=visibleMarkup.indexOf('class="rank-number"');
  const firstRankMarkup=rankProbeIndex>=0
   ? visibleMarkup.slice(Math.max(0,rankProbeIndex-300),rankProbeIndex+1700)
@@ -266,6 +270,7 @@ function describeKtcHtml(html){
   visible_rank_markers:(visibleMarkup.match(/class=["'][^"']*(?:rank|player-name)[^"']*["']/gi)||[]).length,
   public_rank_class_counts:publicClasses,
   first_public_rank_markup:firstRankMarkup,
+  first_ranking_entry:rankingEntryProbe,
   oneqb_marker_found:!!marker,
   oneqb_starts_array:start>=0&&t[start]==="[",
   oneqb_balanced_chars:raw?.length||0,
@@ -297,6 +302,19 @@ export async function refreshKtc(opts={}){
     // Do not use the three seed players as rankings.
     // KTC browser ktcDataCacheUrl(baseUrl, version) includes both v and sr=2.
     // Use the version read from this response rather than a stale hardcoded token.
+    if(url===KTC_URL && responseShape.public_rank_class_counts?.some(([name,count])=>name==="rank-number"&&count>=50)){
+      try{
+        const page2Url="https://keeptradecut.com/dynasty-rankings?page=2&filters=QB%7CWR%7CRB%7CTE%7CRDP&format=2";
+        const page2=await fetchText(page2Url,opts.fetchImpl||fetch,opts.timeoutMs||TIMEOUT_MS);
+        const probe=describeKtcHtml(page2);
+        responseShape.page2_html_accessible=true;
+        responseShape.page2_rank_class_counts=probe.public_rank_class_counts?.filter(([n])=>["rank-number","player-name","player-team"].includes(n));
+        responseShape.page2_first_ranking_entry=probe.first_ranking_entry;
+      }catch(e){
+        responseShape.page2_html_accessible=false;
+        responseShape.page2_error=String(e?.message||e).slice(0,180);
+      }
+    }
     const poolUrl=new URL(KTC_POOL_URL);
     poolUrl.searchParams.set("v",version);
     poolUrl.searchParams.set("sr","2");

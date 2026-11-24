@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {mergeAwardHighs,validAwardHigh,verifiedDurableAwardHighRecords} from '../netlify/functions/lib/league-all-time-highs.mjs';
+import {mergeAwardHighs,validAwardHigh,verifiedDurableAwardHighRecords,verifiedCanonicalHighRecords} from '../netlify/functions/lib/league-all-time-highs.mjs';
 
 export const DATA_BRANCH='value-history-data';
 export const RECORD_PATH='value-history/league-awards/all-time-highs.json';
@@ -41,6 +41,14 @@ export function nextDurableHighs(previous,observation){
  if(previous?.latest_observation_at&&Date.parse(input.captured_at)<Date.parse(previous.latest_observation_at))
   throw Error('AWARD_ARCHIVE_STALE_OBSERVATION: previously recorded a later canonical refresh');
  const existing=Array.isArray(previous?.records)?previous.records:[];
+ // Legacy records remain byte-for-byte intact and are not reclassified as
+ // validated canonical highs merely because a later capture occurred.
+ // Only live, source-checked snapshots enter the independent verified ledger.
+ if(previous?.verified_records?.length&&
+    verifiedCanonicalHighRecords(previous,'1316867686394769408').length!==previous.verified_records.length)
+   throw Error('AWARD_ARCHIVE_UNTRUSTED_CANONICAL_LEDGER');
+ const priorVerified=Array.isArray(previous?.verified_records)?previous.verified_records:[];
+ const verified_records=mergeAwardHighs(priorVerified,input.observations,input.captured_at);
  const records=mergeAwardHighs(existing,input.observations,input.captured_at);
  if(records.length<existing.length)throw Error('AWARD_ARCHIVE_SHRINK_BLOCKED');
  for(const prior of existing){
@@ -51,7 +59,7 @@ export function nextDurableHighs(previous,observation){
  return{schema_version:1,league_id:'1316867686394769408',
   source:'github-canonical-headless-all-time-highs',
   latest_observation_at:input.captured_at,model_used:input.model_used,source_commit:input.source_commit,
-  canonical_fingerprint:input.canonical_fingerprint,records};
+  canonical_fingerprint:input.canonical_fingerprint,records,verified_records};
 }
 // A verified Blob bootstrap has real score history but intentionally lacks
 // scheduled source/model provenance. Promote it on the FIRST canonical
@@ -63,7 +71,8 @@ export function requiresDurableHighsWrite(previous,next){
  return ['schema_version','source','league_id','latest_observation_at',
   'model_used','source_commit','canonical_fingerprint']
   .some(key=>previous[key]!==next[key])||
-  JSON.stringify(previous.records||[])!==JSON.stringify(next.records||[]);
+  JSON.stringify(previous.records||[])!==JSON.stringify(next.records||[])||
+  JSON.stringify(previous.verified_records||[])!==JSON.stringify(next.verified_records||[]);
 }
 
 async function run(){
@@ -97,7 +106,8 @@ async function run(){
  const response=await fetch(url,{method:'PUT',headers,body:JSON.stringify(payload)});
  if(!response.ok)throw Error('award archive PUT failed '+response.status+' '+(await response.text()).slice(0,800));
  const saved=await get();
- if(JSON.stringify(saved?.records)!==JSON.stringify(next.records))
+ if(JSON.stringify(saved?.records)!==JSON.stringify(next.records)||
+    JSON.stringify(saved?.verified_records)!==JSON.stringify(next.verified_records))
   throw Error('AWARD_ARCHIVE_READBACK_MISMATCH');
  console.log('ALL_TIME_HIGHS_DURABLE',JSON.stringify({
   records:saved.records.length,latest:input.captured_at,branch:DATA_BRANCH

@@ -16,11 +16,26 @@ export const LEAGUE_ID='1316867686394769408';
 const API='https://api.sleeper.app/v1';
 const digest=raw=>createHash('sha256').update(raw).digest('hex');
 const pad=w=>String(w).padStart(2,'0');
-const req=async(url,fetcher=fetch)=>{
- const res=await fetcher(url,{headers:{accept:'application/json','user-agent':'Fleeced-GitHub-Newspaper/1.0'},cache:'no-store',signal:AbortSignal.timeout(25000)});
- if(!res.ok)throw Error('Sleeper HTTP '+res.status+' at '+new URL(url).pathname);
- return res.json();
-};
+export async function fetchInquirerJson(url,fetcher=fetch,pause=ms=>new Promise(resolve=>setTimeout(resolve,ms))){
+ let last;
+ for(let attempt=0;attempt<3;attempt++){
+  try{
+   const res=await fetcher(url,{headers:{accept:'application/json','user-agent':'Fleeced-GitHub-Newspaper/1.0'},cache:'no-store',signal:AbortSignal.timeout(25000)});
+   if(!res.ok){
+    const error=Error('Inquirer source HTTP '+res.status+' at '+new URL(url).pathname);
+    error.permanent=res.status>=400&&res.status<500&&![408,429].includes(res.status);
+    throw error;
+   }
+   return await res.json();
+  }catch(error){
+   last=error;
+   if(error?.permanent||attempt===2)throw error;
+   await pause(250*(attempt+1));
+  }
+ }
+ throw last;
+}
+const req=fetchInquirerJson;
 export function completeMatchups(rows){
  if(!Array.isArray(rows)||rows.length!==32)return false;
  const groups=new Map(),rosters=new Set();
@@ -57,11 +72,7 @@ const score=(stats,scoring)=>{
 // to describe a past edition.
 const VALUE_ROOT='https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/value-history-data/';
 async function readGithubJson(relative,fetcher=fetch){
- const res=await fetcher(VALUE_ROOT+relative,{
-  headers:{accept:'application/json','user-agent':'Fleeced-GitHub-Newspaper/1.0'},
-  cache:'no-store',signal:AbortSignal.timeout(25000)});
- if(!res.ok)throw Error('Verified GitHub value history HTTP '+res.status+' '+relative);
- return res.json();
+ return fetchInquirerJson(VALUE_ROOT+relative,fetcher);
 }
 export function selectValueHistoryWindow(index,asOf){
  const cutoff=Date.parse(asOf);
@@ -126,6 +137,41 @@ export function buildArchivedMarketContext({latest,baseline,players={},period='7
  return{teams,player_deltas,playerValues:currentValues,baseline:baseline.t,
   latest:latest.t,period,source:'github-canonical-value-history',valuation_model:latest.valuation_model};
 }
+// Compare only snapshots with the same actual valuation model and contract.
+ // At a model transition, a genuine shorter observation window is valid
+ // evidence; never compare different scales or label it a seven-day change.
+export async function selectComparableMarketSnapshots(index,asOf,readSnapshot){
+ const cutoff=Date.parse(asOf);
+ if(!Number.isFinite(cutoff)||index?.league_id!==LEAGUE_ID||!Array.isArray(index.items))
+  throw Error('Invalid GitHub value archive timeline');
+ const rows=index.items.filter(r=>Number.isFinite(Date.parse(r.t))&&Date.parse(r.t)<=cutoff&&
+   /^value-history\/snapshots\/\d{4}\/\d{2}\/[^/]+\.json$/.test(String(r.path||'')))
+   .sort((a,b)=>Date.parse(a.t)-Date.parse(b.t));
+ if(!rows.length)throw Error('No authentic GitHub valuation snapshot before edition cutoff');
+ const latestEntry=rows.at(-1),latest=verifiedValueSnapshot(await readSnapshot(latestEntry),latestEntry);
+ const end=Date.parse(latest.t),target=end-7*86400000;
+ const earlier=rows.filter(r=>Date.parse(r.t)<end&&
+   (!r.valuation_model||r.valuation_model===latest.valuation_model)&&
+   (!r.valuation_contract||r.valuation_contract===latest.valuation_contract));
+ const comparable=row=>row.valuation_contract===latest.valuation_contract&&row.valuation_model===latest.valuation_model;
+ const full=earlier.filter(r=>Date.parse(r.t)<=target).reverse();
+ const shorter=earlier.filter(r=>Date.parse(r.t)>target);
+ // Explicitly indexed matches first; legacy entries are independently
+ // verified from the immutable snapshot, not assumed to be comparable.
+ const explicit=r=>r.valuation_model===latest.valuation_model&&r.valuation_contract===latest.valuation_contract;
+ const ordered=[...full.filter(explicit),...shorter.filter(explicit),...full.filter(r=>!explicit(r)),...shorter.filter(r=>!explicit(r))];
+ for(const entry of ordered){
+  const baseline=verifiedValueSnapshot(await readSnapshot(entry),entry);
+  if(!comparable(baseline))continue;
+  const elapsedHours=(end-Date.parse(baseline.t))/3600000;
+  if(!(elapsedHours>0))continue;
+  // Label by actual interval. Older-than-seven-day sparse windows also
+  // use the recorded dates rather than claiming an exact seven-day change.
+  const period=elapsedHours>=168&&elapsedHours<=180?'7D':'ERA';
+  return{latest,baseline,period,elapsedHours};
+ }
+ throw Error('No second comparable archived valuation snapshot before edition cutoff; publication held rather than invent movement');
+}
 async function archivedMarketForWeek(season,week,fetcher=fetch){
  const url='https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates='+season+
   '&seasontype=2&week='+week;
@@ -134,24 +180,11 @@ async function archivedMarketForWeek(season,week,fetcher=fetch){
  if(!dates.length)throw Error('Historical NFL schedule dates not verified for Week '+week);
  const asOf=inquirerMarketCutoff({game_starts:dates});
  const index=await readGithubJson('value-history/index.json',fetcher);
- const window=selectValueHistoryWindow(index,asOf);
- if(!window)throw Error('No authentic seven-day GitHub valuation history before Week '+week+' cutoff');
- // A valuation model change may split the seven-day window. Walk backward
- // by reference rather than comparing different consensus scales.
- const latest=verifiedValueSnapshot(
-  await readGithubJson(window.latest.path,fetcher),window.latest);
- const matching=index.items.filter(row=>Date.parse(row.t)<=Date.parse(window.latest.t)-7*86400000&&
-  Date.parse(row.t)<=Date.parse(asOf)).sort((a,b)=>Date.parse(b.t)-Date.parse(a.t));
- let baseline=null;
- for(const row of matching.slice(0,20)){
-  const candidate=verifiedValueSnapshot(await readGithubJson(row.path,fetcher),row);
-  if(candidate.valuation_contract===latest.valuation_contract&&
-     candidate.valuation_model===latest.valuation_model){baseline=candidate;break}
- }
- if(!baseline)throw Error('No comparable dynasty-model historical baseline; cannot invent a seven-day market movement');
- const market=buildArchivedMarketContext({latest,baseline});
- console.info('github-inquirer-dynasty-market',JSON.stringify({week,cutoff:asOf,
-  baseline:baseline.t,latest:latest.t,players:latest.rows.length,teams:latest.teams.length,
+ const {latest,baseline,period,elapsedHours}=await selectComparableMarketSnapshots(index,asOf,
+  row=>readGithubJson(row.path,fetcher));
+ const market=buildArchivedMarketContext({latest,baseline,period});
+ console.info('github-inquirer-dynasty-market',JSON.stringify({season,week,cutoff:asOf,
+  baseline:baseline.t,latest:latest.t,period,elapsedHours,players:latest.rows.length,teams:latest.teams.length,
   valuation_model:latest.valuation_model}));
  return market;
 }
@@ -274,7 +307,7 @@ export function buildSourceTeams({league,week,matchups,history=[],nextMatchups=[
    opponentId=opp.get(id),opponent=byId.get(opponentId),nextId=next.get(id),
    starters=(m.starters||[]).filter(x=>x&&x!=='0').map(String),
    rosterPlayers=(m.players?.length?m.players:r.players||[]).filter(x=>x&&x!=='0').map(String);
-  if(!opponent||!nextId&&week<17)throw Error('Missing verified opponent for roster '+id);
+  if(!opponent||!nextId&&week<13)throw Error('Missing verified opponent for roster '+id);
   const details=starters.map((pid,i)=>({id:pid,name:pname(pid),position:ppos(pid),nfl_team:String(players[pid]?.team||'FA'),
    lineup_slot:slots[i]||ppos(pid),points:Number(m.players_points[pid]??0),projected:null}));
   const bench=rosterPlayers.filter(pid=>!starters.includes(pid)).map(pid=>({id:pid,name:pname(pid),position:ppos(pid),nfl_team:String(players[pid]?.team||'FA'),points:Number(m.players_points[pid]??0),projected:null}));
@@ -503,7 +536,7 @@ function statusFor(edition,verdict){
   ...(verdict?.canonical?.issues||[]).map(message=>({id:'canonical-reader-contract',message})),
   ...(verdict?.voiceIssues||[]),...(verdict?.standingsIssues||[]),...(verdict?.recapArchitectureIssues||[])];
  return{season:Number(edition?.season),week:Number(edition?.week),editorial_revision:FORWARD_EDITORIAL_REVISION,
-  state:verdict?.ok?'completed':'editorial-hold',published:!!verdict?.ok,
+  state:verdict?.ok?'completed':'editorial-hold',published:false,admitted:!!verdict?.ok,
   issue_count:issues.length,
   issue_counts:Object.fromEntries([...new Set(issues.map(x=>String(x?.id||x?.code||'unknown')))]
    .map(code=>[code,issues.filter(x=>String(x?.id||x?.code||'unknown')===code).length])),
@@ -546,6 +579,8 @@ export async function runGithubInquirerPublisher({archiveRoot,fetcher=fetch,now=
  const read=async(file)=>JSON.parse(await fs.readFile(path.join(archiveRoot,file),'utf8'));
  const state=await req(API+'/state/nfl',fetcher),league=await req(API+'/league/'+LEAGUE_ID,fetcher);
  const season=Number(league.season),current=Number(state.week),finalWeek=Math.min(17,current-1);
+ if(Number.isInteger(season)&&season!==2026)throw Error('Inquirer league season changed; archive namespace migration required before publishing '+season);
+ if(Number(state.season)&&Number(state.season)!==season)throw Error('Sleeper NFL season and league season mismatch');
  if(!Number.isInteger(current)||!Number.isInteger(season)||season<2026||finalWeek<10)
   return{state:'not-ready',season,week:null};
  const previousManifest=await read('manifest.json');
@@ -569,7 +604,8 @@ export async function runGithubInquirerPublisher({archiveRoot,fetcher=fetch,now=
  await verifyForwardPublicationLedger(index,archiveRoot);
  const recorded=new Set(index.reports.map(x=>Number(x.week)));
  let week=10;while(recorded.has(week))week++;
- if(week>finalWeek)return{state:'up-to-date',season,through_week:week-1};
+ if(week>finalWeek)return{state:'up-to-date',season,through_week:week-1,finalized_through:finalWeek};
+ console.info('github-inquirer-backlog',JSON.stringify({season,first_unpublished_week:week,finalized_through:finalWeek,missing_weeks:finalWeek-week+1}));
  const previous=await read('2026/week-'+pad(week-1)+'.json').catch(async error=>{
   if(week>10&&error.code==='ENOENT')return read('forward/2026/week-'+pad(week-1)+'.json');
   throw error;
@@ -584,9 +620,11 @@ export async function runGithubInquirerPublisher({archiveRoot,fetcher=fetch,now=
   req(API+'/league/'+LEAGUE_ID+'/matchups/'+(week+1),fetcher).catch(()=>[]),
   req(API+'/league/'+LEAGUE_ID+'/transactions/'+week,fetcher).catch(()=>[])
  ]);
- if(!completeMatchups(matchups))return{state:'not-ready',season,week,reason:'Sleeper scoring incomplete'};
+ if(!completeMatchups(matchups))return{state:'not-ready',season,week,reason:'Sleeper scoring incomplete',stage:'completed-matchups'};
+ if(week<13&&opponentMap(nextMatchups).size!==32)return{state:'not-ready',season,week,reason:'Next-week Sleeper matchup schedule incomplete',stage:'next-matchups'};
  const history=await Promise.all(Array.from({length:week},(_,i)=>i+1).map(async w=>
   [w,w===week?matchups:await req(API+'/league/'+LEAGUE_ID+'/matchups/'+w,fetcher)]));
+ if(history.some(([,rows])=>!completeMatchups(rows)))return{state:'not-ready',season,week,reason:'Prior completed matchup history incomplete',stage:'historical-matchups'};
  const seen={};for(const [w,rows] of history)if(completeMatchups(rows))for(const m of rows){
   const id=String(m.roster_id);if(!seen[id])seen[id]={wins:0,losses:0};
   const oid=opponentMap(rows).get(id),o=rows.find(x=>String(x.roster_id)===oid);
@@ -594,7 +632,7 @@ export async function runGithubInquirerPublisher({archiveRoot,fetcher=fetch,now=
  }
  if(matchups.some(m=>{const r=rosters.find(x=>String(x.roster_id)===String(m.roster_id)),rec=seen[String(m.roster_id)];return !r||!rec||
   Number(r.settings?.wins||0)<rec.wins||Number(r.settings?.losses||0)<rec.losses;}))
-  return{state:'not-ready',season,week,reason:'Sleeper roster standings not finalized'};
+  return{state:'not-ready',season,week,reason:'Sleeper roster standings not finalized',stage:'standings'};
  const statHistory=Object.fromEntries(await Promise.all(Array.from({length:week},(_,i)=>i+1).map(async w=>
   [w,await req(API+'/stats/nfl/regular/'+season+'/'+w,fetcher).catch(()=>({}))])));
  const historical=[];
@@ -612,7 +650,7 @@ export async function runGithubInquirerPublisher({archiveRoot,fetcher=fetch,now=
   valueHistoryMeta:{source:market.source,baseline:market.baseline,latest:market.latest,period:market.period}});
  const chosen=selectEditorialEdition({rawInquirer,rawOverview,season,week,previous:previousEditorial,historical});
  const {edition,verdict}=chosen;const resultStatus=statusFor(edition,verdict);
- if(!verdict.ok)return{...resultStatus,reason:'Editorial admission held; no published file or index changed'};
+ if(!verdict.ok)return{...resultStatus,stage:'editorial-admission',reason:'Editorial admission held; no published file or index changed'};
  edition.generated_at=now.toISOString();
  edition.editorial_generation.publication_mode='audited-deterministic-v31';
  const contents=JSON.stringify(edition),sha256=digest(contents);
@@ -624,7 +662,7 @@ export async function runGithubInquirerPublisher({archiveRoot,fetcher=fetch,now=
  index.reports.sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));
  await fs.mkdir(path.dirname(path.join(archiveRoot,indexPath)),{recursive:true});
  await fs.writeFile(path.join(archiveRoot,indexPath),JSON.stringify(index,null,2)+'\n');
- return{...resultStatus,sha256,path:rel,generated_at:edition.generated_at};
+ return{...resultStatus,stage:'staged',sha256,path:rel,generated_at:edition.generated_at};
 }
 const isCli=process.argv[1]&&fileURLToPath(import.meta.url)===path.resolve(process.argv[1]);
 if(isCli){
@@ -633,5 +671,8 @@ if(isCli){
   const result=await runGithubInquirerPublisher({archiveRoot:root});
   console.log('github-inquirer-publication '+JSON.stringify(result));
   if(result.state==='editorial-hold')process.exitCode=2;
+  // A due week must not be reported as successfully published when a source
+  // is still incomplete. The next half-hour schedule retries automatically.
+  if(result.state==='not-ready'&&Number.isInteger(result.week))process.exitCode=3;
  }catch(error){console.error('github-inquirer-publisher failed:',String(error?.stack||error));process.exitCode=1}
 }

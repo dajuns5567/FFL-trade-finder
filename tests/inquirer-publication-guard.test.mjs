@@ -67,6 +67,26 @@ test('Week 5 cannot regress from the locked Week 4 newspaper format',()=>{
   assert(found.has(id),'missing independent format gate: '+id);
 });
 
+test('future automated issues cannot silently switch article structure or flattened reader copy',()=>{
+ const extraDesk=makeEdition();
+ extraDesk.teams[0].inquirer_article.sections.splice(7,0,{
+  kind:'alternate-summary',heading:'Alternate short summary',paragraphs:['A replacement format.']
+ });
+ const extraIssues=new Set(inspectEditionBeforePublication(extraDesk).issues.map(x=>x.id));
+ assert(extraIssues.has('week4-team-eight-desk-count'));
+
+ const mismatched=makeEdition();
+ mismatched.teams[0].inquirer_article.paragraphs=['A generic alternate newspaper template.'];
+ const mirrorIssues=new Set(inspectEditionBeforePublication(mismatched).issues.map(x=>x.id));
+ assert(mirrorIssues.has('week4-team-flattened-mirror'));
+
+ const missing=makeEdition();
+ missing.teams[0].inquirer_article.sections.splice(2,1);
+ const missingIssues=new Set(inspectEditionBeforePublication(missing).issues.map(x=>x.id));
+ assert(missingIssues.has('week4-team-section-contract'));
+ assert(missingIssues.has('week4-team-eight-desk-count'));
+});
+
 test('the exact real Week 5 regression patterns block publication',()=>{
  const e=makeEdition(),article=e.teams[0].inquirer_article;
  article.sections[0].paragraphs.push('The first result on Team 1 were 80.9 to 51.6 against Team 2.');

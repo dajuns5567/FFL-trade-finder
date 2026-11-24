@@ -123,12 +123,30 @@ jobs:
           VALUE_HISTORY_SNAPSHOT_FILE: .tmp/value-history-scheduled.json
         run: node scripts/archive-value-history.mjs
 
-      # Separate award writer: the existing valuation archive commits first.
-      # An absent/incomplete awards observation fails this workflow explicitly,
-      # never fabricates high records or rolls back Value History.
-      - name: Persist validated league All-Time Highs to GitHub
+      # Awards use the SAME completed canonical valuation capture and the
+      # SAME git commit/model/fingerprint as the saved Value History snapshot.
+      # Never recompute award values separately or pretend missing capture is
+      # current; the independent daily Awards workflow is a fallback.
+      - name: Verify 20-category Awards from this exact valuation refresh
+        if: steps.due.outputs.due == 'true'
+        env:
+          VALUE_HISTORY_SNAPSHOT_FILE: .tmp/value-history-scheduled.json
+          ALL_TIME_HIGHS_SCHEDULED_FILE: .tmp/all-time-highs-scheduled.json
+        run: node scripts/verify-scheduled-all-time-highs.mjs
+
+      # Value History has ALREADY been committed; an Awards failure cannot
+      # erase it or invent records. Shared concurrency serializes writers.
+      - name: Persist matched verified All-Time Highs
+        if: steps.due.outputs.due == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALUE_HISTORY_SNAPSHOT_FILE: .tmp/value-history-scheduled.json
+          ALL_TIME_HIGHS_SCHEDULED_FILE: .tmp/all-time-highs-scheduled.json
+        run: node scripts/archive-league-all-time-highs.mjs
+
+      - name: Independently confirm Awards were published to GitHub
         if: steps.due.outputs.due == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ALL_TIME_HIGHS_SCHEDULED_FILE: .tmp/all-time-highs-scheduled.json
-        run: node scripts/archive-league-all-time-highs.mjs
+        run: node scripts/verify-durable-all-time-highs-readback.mjs

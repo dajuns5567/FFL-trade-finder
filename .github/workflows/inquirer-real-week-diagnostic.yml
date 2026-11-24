@@ -1,0 +1,42 @@
+name: Inquirer first-candidate live diagnostic (read-only)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/inquirer-real-week-diagnostic.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: inquirer-diagnostic-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+jobs:
+  diagnostic:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: source
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: inquirer-archive
+          path: history
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - working-directory: source
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+      - name: Isolate first real candidate's editorial findings (not publication)
+        working-directory: source
+        env:
+          FLEECED_INQUIRER_DIAGNOSE_SALT: '5'
+          INQUIRER_GITHUB_ARCHIVE_ROOT: ../history/inquirer-archive
+        run: node scripts/inquirer-completed-week-shadow.mjs
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: first-candidate-diagnostics
+          path: source/.tmp/inquirer-shadow-result.json
+          if-no-files-found: warn

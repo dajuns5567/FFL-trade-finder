@@ -512,7 +512,7 @@ export function selectEditorialEdition({rawInquirer,rawOverview,season,week,prev
    deep_issues:verdict.quality.issues?.length||0,basic_issues:verdict.audit.issues?.length||0,
    independent_issues:verdict.independent.issue_count||0,completed_market_desks:completedMarketDesks
   }));
-  if(process.env.FLEECED_INQUIRER_DIAGNOSE_SALT){
+  if(!verdict.ok||process.env.FLEECED_INQUIRER_DIAGNOSE_SALT){
    console.info('github-inquirer-copy-issue-details',JSON.stringify({
     season,week,salt,
     deep:(verdict.quality.issues||[]).slice(0,14).map(x=>({
@@ -520,7 +520,9 @@ export function selectEditorialEdition({rawInquirer,rawOverview,season,week,prev
      sentence:String(x.sentence||'').slice(0,180),
      examples:x.examples?.slice?.(0,5),teams:x.teams,
      count:x.count,excerpt:String(x.excerpt||'').slice(0,180)})),
-    basic:(verdict.audit.issues||[]).slice(0,5)
+    basic:(verdict.audit.issues||[]).slice(0,5),
+    independent:(verdict.independent.issues||[]).slice(0,5),
+    canonical:verdict.canonical?.issues||[],voice:verdict.voiceIssues||[],standings:verdict.standingsIssues||[],recap:verdict.recapArchitectureIssues||[]
    }));
   }
   if(!best||score<best.score)best={edition,verdict,score};

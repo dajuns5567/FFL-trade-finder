@@ -65,7 +65,7 @@ if(document.readyState==='complete')void verifyLiveValuationModelV95();
 // Experimental deploy previews may read archival history but must never
 // persist their branch-specific ranks into the canonical shared timeline.
 const isValueHistoryDeployPreview=()=>/^(?:deploy-preview-\d+|[a-f0-9]{24})--[a-z0-9-]+\.netlify\.app$/i.test(location.hostname);
-let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,marketIntelligenceGeneration=0,marketInsightsCache=null,marketSignalCache=null,marketInsightsPending=null,marketSignalsPending=null,marketIntelPeriod='7D',marketVolatilityPool='ALL',currentPlayerId=null,trackedTeamId=null,playerHistoryTeamId=null,currentView='market',marketSort={key:'value',dir:-1},teamNetSort={key:'value',dir:-1},teamAttributionPeriod='7D',tradeHistoryCache=null,tradeHistoryCacheAt=0,tradeTeamFilter='',tradeYearFilter='',tradeMonthFilter='',marketPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'7D',rankFallers:'7D'},teamPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D',posRankRisers:'30D',posRankFallers:'30D'},marketPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL'},teamPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL',posRankRisers:'ALL',posRankFallers:'ALL'},playerScoringCache=new Map(),playerScoringCacheAt=new Map(),playerScoringPending=new Map(),teamNetCache=new Map(),tradeDetailState=new Map();
+let installed=false,uiReady=false,snapshotTimer=null,marketCache=null,marketIntelligenceGeneration=0,marketInsightsCache=null,marketSignalCache=null,marketInsightsPending=null,marketSignalsPending=null,marketIntelPeriod='7D',marketVolatilityPool='ALL',currentPlayerId=null,trackedTeamId=null,playerHistoryTeamId=null,currentView='market',marketSort={key:'value',dir:-1},teamNetSort={key:'value',dir:-1},teamAttributionPeriod='7D',tradeHistoryCache=null,tradeHistoryCacheAt=0,tradeTeamFilter='',tradeYearFilter='',tradeMonthFilter='',marketPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'7D',rankFallers:'7D'},teamPeriods={valueRisers:'7D',valueFallers:'7D',rankRisers:'30D',rankFallers:'30D',posRankRisers:'30D',posRankFallers:'30D'},marketPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL'},teamPools={valueRisers:'ALL',valueFallers:'ALL',rankRisers:'ALL',rankFallers:'ALL',posRankRisers:'ALL',posRankFallers:'ALL'},playerScoringCache=new Map(),playerScoringCompleteAt=new Map(),playerScoringCacheAt=new Map(),playerScoringPending=new Map(),teamNetCache=new Map(),tradeDetailState=new Map();
 // Market Intelligence and all Market Movers cards represent one selected
 // historical period. Track My Team deliberately keeps independent selectors.
 function setMarketDashboardPeriodV116(period){
@@ -1424,7 +1424,12 @@ async function scoringFetch(id,{requireCompleteReadback=false}={}){
   // Canonical finalized-week awards can paint before the slower historical
   // scoring endpoint responds. That partial display is not a full scoring
   // readback: never let its fresh cache timestamp suppress historical wins.
-  const key=String(id);if(!requireCompleteReadback&&playerScoringCache.has(key)&&Date.now()-(playerScoringCacheAt.get(key)||0)<60000)return{player_id:key,scoring_milestones:playerScoringCache.get(key)};
+  const key=String(id),completeAt=playerScoringCompleteAt.get(key)||0;
+  // Only a successful complete scorer readback (never a fast weekly badge
+  // paint) can satisfy another full scoring request. Cap reuse at 30 seconds.
+  if(playerScoringCache.has(key)&&Date.now()-(playerScoringCacheAt.get(key)||0)<60000&&
+    (!requireCompleteReadback||(completeAt>0&&Date.now()-completeAt<30000)))
+    return{player_id:key,scoring_milestones:playerScoringCache.get(key)};
   if(playerScoringPending.has(key))return playerScoringPending.get(key);
   const pending=(async()=>{let last;for(let attempt=0;attempt<2;attempt++){try{const r=await fetch(`${API}?player_scoring=1&player_id=${encodeURIComponent(key)}`,{cache:'no-store'});if(!r.ok)throw Error('scoring milestones unavailable');return await r.json()}catch(e){last=e;if(attempt===0)await new Promise(r=>setTimeout(r,220))}}throw last||Error('scoring milestones unavailable')})();
   playerScoringPending.set(key,pending);try{return await pending}finally{playerScoringPending.delete(key)}
@@ -2040,7 +2045,7 @@ async function loadPlayerScoring(id){
   }).catch(error=>console.warn('Canonical Player-of-the-Week readback unavailable',error));
   const scoringTask=scoringFetch(key,{requireCompleteReadback:true}).then(data=>{
     const value=data?.scoring_milestones;
-    if(value&&typeof value==='object')applyUpdate(value,canonicalRecords);
+    if(value&&typeof value==='object'){playerScoringCompleteAt.set(key,Date.now());applyUpdate(value,canonicalRecords)}
     else if(!playerScoringCache.has(key))applyUpdate(null,canonicalRecords);
   }).catch(error=>{
     console.warn('Player scoring milestones unavailable',key,error);
@@ -2075,7 +2080,7 @@ async function loadPlayer(id){
     const data=await historyFetch(key),pts=Array.isArray(data.points)?data.points:[];
     // An older fetch cannot repaint a newer player selection or another tab.
     if(sequence!==playerProfileLoadSequence||currentView!=='player'||String(currentPlayerId)!==key)return;
-    if(data.scoring_milestones)playerScoringCache.set(key,data.scoring_milestones);
+    if(data.scoring_milestones&&!playerScoringCompleteAt.has(key))playerScoringCache.set(key,data.scoring_milestones);
     renderPlayerProfile(key,pts,'ALL');
     loadPlayerScoring(key);
   }catch{
@@ -2602,7 +2607,7 @@ function refreshVisibleMarketHistoryV112(){
 // Both valuation events use this same live-only refresh path. The original
 // startup trade search remains outside these handlers and always runs.
 function updateLiveConsumersV102(){
- invalidatePlayerHistoryNavCache();
+ invalidatePlayerHistoryNavCache();playerScoringCompleteAt.clear();
  invalidateLiveMarketV97();
  if(currentView==='market'&&marketCache)renderMarketDashboard();
  else if(currentView==='fullMarket'&&marketCache)renderMarketTable();
@@ -2616,7 +2621,7 @@ function boot(){addShell();searchTradesOnSiteOpen();installPlayerWeeklyBadgeRefr
  window.addEventListener('fll:canonical-values-ready',()=>{
    updateLiveConsumersV102();
  });
- setInterval(refreshVisibleTradeHistory,TRADE_HISTORY_REFRESH_MS);setInterval(refreshVisibleMarketHistoryV112,TRADE_HISTORY_REFRESH_MS);window.addEventListener('focus',refreshVisibleTradeHistory);window.addEventListener('focus',refreshVisibleMarketHistoryV112);document.addEventListener('visibilitychange',()=>{if(!document.hidden){refreshVisibleTradeHistory();refreshVisibleMarketHistoryV112()}});scheduleSnapshot(0,snapshotSourceFromUrl());document.getElementById('updateBtn')?.addEventListener('click',()=>{invalidatePlayerHistoryNavCache();invalidateLiveMarketV97();marketCache=null;marketIntelligenceGeneration++;marketInsightsCache=null;marketSignalCache=null;marketInsightsPending=null;marketSignalsPending=null;teamNetCache.clear();scheduleSnapshot(1000,'manual-update');if(currentPlayerId)setTimeout(()=>loadPlayer(currentPlayerId),1800)},{passive:true})}
+ setInterval(refreshVisibleTradeHistory,TRADE_HISTORY_REFRESH_MS);setInterval(refreshVisibleMarketHistoryV112,TRADE_HISTORY_REFRESH_MS);window.addEventListener('focus',refreshVisibleTradeHistory);window.addEventListener('focus',refreshVisibleMarketHistoryV112);document.addEventListener('visibilitychange',()=>{if(!document.hidden){refreshVisibleTradeHistory();refreshVisibleMarketHistoryV112()}});scheduleSnapshot(0,snapshotSourceFromUrl());document.getElementById('updateBtn')?.addEventListener('click',()=>{invalidatePlayerHistoryNavCache();playerScoringCompleteAt.clear();invalidateLiveMarketV97();marketCache=null;marketIntelligenceGeneration++;marketInsightsCache=null;marketSignalCache=null;marketInsightsPending=null;marketSignalsPending=null;teamNetCache.clear();scheduleSnapshot(1000,'manual-update');if(currentPlayerId)setTimeout(()=>loadPlayer(currentPlayerId),1800)},{passive:true})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 window.valueHistoryV331={liveMarketRowV97,liveMarketRowsV97,liveFullMarketRowsV97,invalidateLiveMarketV97,currentRows,currentPickRows,currentTeamRows,currentEvaluatorValue,hindsightValue,recordSnapshot,historyFetch,marketFetch,marketData:(force=false)=>ensureMarketCache(!!force),livePlayerMeta,periodPoints,openPlayer:(id)=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>selectPlayer(String(id)),0)},openPlayerHistory:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(renderPlayerHistoryHub,0)},openFullMarket:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>loadFullMarketHistory(),0)}};
 })();

@@ -1,0 +1,59 @@
+name: Weekly automation regression and frozen preview integrity
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/weekly-automation-regression-guard.yml'
+      - '.github/workflows/value-history-headless-refresh.yml'
+      - '.github/workflows/inquirer-github-native-publisher.yml'
+      - '.github/workflows/league-all-time-highs-independent-capture.yml'
+      - 'netlify/functions/weekly-awards-refresh.mjs'
+      - 'netlify/functions/league-hub.mjs'
+      - 'netlify/functions/value-history.mjs'
+      - 'netlify/functions/lib/league-completed-week.mjs'
+      - 'netlify/functions/ktc-adapter.mjs'
+      - 'netlify/functions/ktc-html-pages.mjs'
+      - 'value-history-v276.js'
+      - 'netlify.toml'
+      - 'scripts/verify-weekly-automation-contract.mjs'
+      - 'tests/weekly-automation-regression-guard.test.mjs'
+  workflow_dispatch:
+  # A watchdog only; no player, award or publication writes. GitHub executes
+  # repository schedules from main after a separately approved integration.
+  schedule:
+    - cron: '43 8 * * *'
+permissions:
+  contents: read
+concurrency:
+  group: weekly-automation-readonly-guard
+  cancel-in-progress: false
+jobs:
+  readonly-automation-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact frozen approved preview branch is still preserved
+        env:
+          EXPECTED: b45ec3790c92c690ee74d2632deb47a2fa92cc8c
+        run: |
+          set -euo pipefail
+          actual="$(git ls-remote origin refs/heads/archive/preview-620-frozen-20261124-b45ec379 | cut -f1)"
+          test "$actual" = "$EXPECTED" || {
+            echo "::error::Frozen Preview #620 branch missing or rewritten: $actual" >&2
+            exit 1
+          }
+      - name: Validate actual source scheduling and preview/production isolation
+        run: node scripts/verify-weekly-automation-contract.mjs
+      - name: Check implementation of independent weekly badges, archives and yearly scoring
+        run: |
+          node --test tests/weekly-automation-regression-guard.test.mjs
+          node --test tests/weekly-awards-scheduled-capture.test.mjs
+          node --test tests/value-history-navigation-performance.test.mjs
+          node --test tests/preview620-historical-player-badge-readback.test.mjs
+      - name: Verify scheduled archive and Inquirer editorial contracts
+        run: |
+          node --test tests/league-all-time-highs-durable.test.mjs
+          node --test tests/inquirer-schedule-decision.test.mjs

@@ -166,11 +166,26 @@ export function extractKtcSuperflexRankings(text){
   }
   return {rows:best?.rows||[],rawPlayers:best?.rawPlayers||0,excludedDraftPicks:best?.excluded?.draft||0,excludedNonOffense:best?.excluded?.nonOffense||0,parserMode:best?.mode||"none",extractionMethod:best?.extractionMethod||null,valuedCount:best?.valuedCount||0,embeddedPlayers:arrays.find(x=>x.parser==="embedded-json:ktc-players")?.players.length||0};
 }
+// Fingerprints only: never log raw source HTML, user headers, or payload rows.
+function describeKtcHtml(html){
+ const t=String(html||"");
+ return {
+  response_chars:t.length,
+  inline_oneqb_assignment:/\boneQBPlayers\s*=\s*\[/.test(t),
+  embedded_ktc_players:/<script[^>]*\bid=["']ktc-players["']/i.test(t),
+  next_bootstrap:/__NEXT_DATA__|__NUXT_DATA__/.test(t),
+  asynchronous_player_pool:/ktcFetchPlayerPool\s*\(/.test(t),
+  possible_access_challenge:/captcha|access denied|cloudflare|verify you are human/i.test(t),
+  script_count:(t.match(/<script\b/gi)||[]).length
+ };
+}
 export async function refreshKtc(opts={}){
  const now=new Date().toISOString(),attempts=[];
  for(const url of [KTC_URL,KTC_FALLBACK_URL]){
+  let responseShape=null;
   try{
    const html=await fetchText(url,opts.fetchImpl||fetch,opts.timeoutMs||TIMEOUT_MS);
+   responseShape=describeKtcHtml(html);
    const extracted=extractKtcSuperflexRankings(html),rows=extracted.rows;
    const uniqueRanks=new Set(rows.map(row=>row.rank));
    const uniquePlayers=new Set(rows.map(row=>normalizePlayerName(row.player)));
@@ -178,7 +193,7 @@ export async function refreshKtc(opts={}){
      uniquePlayers.size===rows.length&&
      rows.every(row=>Number.isInteger(row.rank)&&row.rank>=1&&row.rank<=MAX_SOURCE_RANK);
    attempts.push({url,valid,ranking_rows:rows.length,parser:extracted.extractionMethod,
-     response_chars:html.length});
+     ...responseShape});
    if(!valid)continue;
    return{
     source:"KTC",id:"ktc",status:"refreshed",valid:true,
@@ -198,9 +213,10 @@ export async function refreshKtc(opts={}){
     }
    };
   }catch(error){
-   attempts.push({url,valid:false,error:String(error?.message||error)});
+   attempts.push({url,valid:false,error:String(error?.message||error),...(responseShape||{})});
   }
  }
+ console.warn("KTC live source rejected",JSON.stringify(attempts));
  return{
   source:"KTC",id:"ktc",status:"failed",valid:false,
   format:"dynasty-superflex",reducedWeight:true,

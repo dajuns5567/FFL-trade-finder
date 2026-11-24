@@ -1113,8 +1113,34 @@ function nflWeekStartIso(season,week){
 }
 async function canonicalWeeklyAwards(origin){
   try{
+    const shared=getStore('fleeced-league-hub',{consistency:'strong'});
+    const saved=await shared.get('awards/weekly.json',{type:'json'});
+    const records=Array.isArray(saved?.records)?saved.records:Array.isArray(saved)?saved:[];
+    const trusted=records.filter(record=>{
+      const season=Number(record?.season),week=Number(record?.week);
+      if(!Number.isInteger(season)||!Number.isInteger(week)||week<1||week>17)return false;
+      const verified=record?.award_source==='sleeper-finalized-matchups'&&
+        Number(record?.verified_roster_count)===32;
+      const newsroom=Number(record?.newsroom_editorial_revision)>=39&&
+        record?.newsroom_engine==='v31-forward';
+      if(!verified&&!newsroom)return false;
+      return ['offense','defense'].every(group=>{
+        const winner=record?.players_of_week?.[group];
+        return winner?.player_id&&winner.points!=null&&Number.isFinite(Number(winner.points));
+      })&&Array.isArray(record?.manager_awards)&&
+        ['highest-scorer','lowest-scorer'].every(type=>
+          record.manager_awards.some(a=>a?.type===type));
+    });
+    if(trusted.length)return trusted;
+  }catch(error){
+    console.warn('player-weekly-awards-shared-read-unavailable',String(error?.message||error));
+  }
+  // Keep the previous browser/public endpoint fallback where the Blob cache
+  // is unavailable. No unverified score may mint an award in either path.
+  try{
     const base=String(origin||'').replace(/\/$/,'');if(!base)return[];
-    const r=await fetch(`${base}/.netlify/functions/league-hub?weekly_awards=1`,{headers:{accept:'application/json','user-agent':'FFL-TradeFinder-ValueHistoryScoring/1.0'},cache:'no-store'});
+    const r=await fetch(`${base}/.netlify/functions/league-hub?weekly_awards=1`,
+      {headers:{accept:'application/json','user-agent':'FFL-TradeFinder-ValueHistoryScoring/1.0'},cache:'no-store'});
     if(!r.ok)return[];
     const payload=await r.json();
     return Array.isArray(payload?.records)?payload.records:[];

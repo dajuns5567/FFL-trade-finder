@@ -32,7 +32,7 @@ test('Manager Spotlight uses the latest completed Sleeper week rather than an In
  assert.match(html,/Highest Scorer of the Year/);
  assert.match(html,/All-Time Lowest Scorer/);
  const managers=ui.slice(ui.indexOf("if(view==='managers'||view==='career')"),ui.indexOf("if(view==='hall')"));
- assert.match(managers,/liveLeagueWeek\(\)\.catch\(\(\)=>null\)/);
+ assert.match(managers,/liveLeagueWeek\(\)\.catch\(\(\)=>liveLeagueWeekCache\)/);
  assert.match(managers,/managersHTML\(stats,md,leagueWeek\)/);
  assert.doesNotMatch(managers,/spotlightWeek\(wk\)/);
  assert.match(ui,/spotlightBlock\(md,leagueWeek\)/);
@@ -78,3 +78,15 @@ test('independent backend week feed uses real Sleeper projections, not final-sco
  assert.doesNotMatch(body,/playerProjections:finalized\.rows/);
  assert.match(body,/if\(!finalized\.complete\)continue/);
 });
+
+ test('actual Managers listing passes verified Sleeper week to Spotlight, never newspaper cache',()=>{
+ const begin=ui.indexOf('function managersHTML('),end=ui.indexOf('\nfunction ',begin+1);
+ assert.ok(begin>=0&&end>begin);
+ const source=ui.slice(begin,end);
+ const ctx={esc:String,teamName:String,graveyardScoringHTML:()=>'',spotlightBlock:(md,w)=>'SPOTLIGHT-'+w?.season+'-'+w?.week,liveLeagueWeekCache:{season:2026,week:11},spotlightWeeklyCache:{season:2026,week:10},weeklyCache:{season:2026,week:9}};
+ const render=vm.runInNewContext(source+';managersHTML',ctx);
+ assert.match(render([], {current:[],graveyard:[]},{season:2026,week:12}),/SPOTLIGHT-2026-12/);
+ assert.match(render([], {current:[],graveyard:[]},null),/SPOTLIGHT-2026-11/);
+ ctx.liveLeagueWeekCache=null;
+ assert.match(render([], {current:[],graveyard:[]},null),/SPOTLIGHT-undefined-undefined/);
+ });

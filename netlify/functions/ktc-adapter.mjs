@@ -16,13 +16,14 @@ function normalizePlayerName(name){
     .trim();
 }
 
-async function fetchText(url,fetchImpl=fetch,timeoutMs=TIMEOUT_MS){
+async function fetchText(url,fetchImpl=fetch,timeoutMs=TIMEOUT_MS,extraHeaders={}){
   const controller=new AbortController();
   const timer=setTimeout(()=>controller.abort(),timeoutMs);
   try{
     const res=await fetchImpl(url,{headers:{
       "user-agent":"Mozilla/5.0 (compatible; FLL-TradeFinder/16.0; +https://netlify.com)",
-      "accept":"text/html,application/xhtml+xml;q=0.9,*/*;q=0.8"
+      "accept":"text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+      ...extraHeaders
     },redirect:"follow",signal:controller.signal});
     if(!res.ok)throw new Error(`HTTP ${res.status}`);
     return await res.text();
@@ -231,7 +232,10 @@ export async function refreshKtc(opts={}){
     // Exact same-origin path confirmed by the KTC browser's ktcFetchPlayerPool.
     // Do not use the three seed players as rankings.
     const poolUrl=KTC_POOL_URL;
-    const poolBody=await fetchText(poolUrl,opts.fetchImpl||fetch,opts.timeoutMs||TIMEOUT_MS);
+    const poolBody=await fetchText(poolUrl,opts.fetchImpl||fetch,opts.timeoutMs||TIMEOUT_MS,{
+      "accept":"application/json",
+      "X-KTC-Players-Version":version
+    });
     extracted=extractPoolRankings(poolBody);
     responseShape.pool_response_chars=poolBody.length;
     responseShape.pool_version_present=true;

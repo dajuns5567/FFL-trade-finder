@@ -116,6 +116,10 @@ test('Giants unproven +29,515 does not appear as certified record in any award v
  assert.match(html,/VERIFIED ALL-TIME HIGH NOT YET ESTABLISHED/);
  assert.match(html,/Archived baseline observations/);
  assert.match(html,/-1,701 cumulative trade edge/);
+ assert.match(html,/class="lh-highs-value" style="display:block;text-align:right"/);
+ assert.match(html,/class="lh-highs-status" style="display:block/);
+ assert.match(html,/Current standing · awaiting verified historical capture/);
+ assert.doesNotMatch(html,/edgeCurrent/);
  assert.doesNotMatch(html,/\+29,515 cumulative trade edge/);
  assert.doesNotMatch(html,/Recorded 11\/22\/2026/);
 });

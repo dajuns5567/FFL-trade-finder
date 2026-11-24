@@ -62,3 +62,21 @@ export function deriveKtcSuperflexRanksFromPublishedValues(pages){
  return sorted.slice(0,500).map((row,i)=>({...row,rank:i+1,
   publishedPositionPageRank:row.rank}));
 }
+
+export function mergeKtcPublishedOverallRanks(pages){
+ const rows=(pages||[]).flatMap(parseKtcRenderedPage);
+ const byRank=new Map(),byName=new Map();
+ for(const row of rows){
+  const name=row.player.normalize("NFKD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/gi,"").toLowerCase();
+  if(!name)return null;
+  const existingRank=byRank.get(row.rank),existingName=byName.get(name);
+  // Overlapping HTML pages are expected. Accept only identical sourced rows.
+  if(existingRank&&(existingRank.player!==row.player||existingRank.position!==row.position||
+      existingRank.value!==row.value))return null;
+  if(existingName&&(existingName.rank!==row.rank||existingName.position!==row.position||
+      existingName.value!==row.value))return null;
+  byRank.set(row.rank,row);byName.set(name,row);
+ }
+ if(byRank.size<300)return null;
+ return [...byRank.values()].sort((a,b)=>a.rank-b.rank);
+}

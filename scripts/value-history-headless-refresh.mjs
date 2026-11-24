@@ -5,6 +5,7 @@ import { extname, join, normalize } from 'node:path';
 import { createHash } from 'node:crypto';
 import siteV29 from '../netlify/functions/site-v29.mjs';
 import updateHandler from '../netlify/functions/update.mjs';
+import {retryScheduledConsensus} from './scheduled-consensus-retry.mjs';
 import picksHandler from '../netlify/functions/picks.mjs';
 
 const snapshotFile=process.env.VALUE_HISTORY_SNAPSHOT_FILE||'.tmp/value-history-scheduled.json';
@@ -105,7 +106,8 @@ async function valueHistory(req){
 async function pinnedConsensusUpdate(req){
  const file=process.env.V100_CONSENSUS_FIXTURE_FILE,
   mode=process.env.V100_CONSENSUS_FIXTURE_MODE;
- if(!file||!mode||req.method!=='POST')return updateHandler(req);
+ if(req.method!=='POST')return updateHandler(req);
+ if(!file||!mode)return retryScheduledConsensus(req,updateHandler);
  if(mode==='replay'){
   let bytes;try{bytes=readFileSync(file)}catch{throw Error('Missing V100 pinned publisher payload')}
   const parsed=JSON.parse(bytes.toString('utf8'));

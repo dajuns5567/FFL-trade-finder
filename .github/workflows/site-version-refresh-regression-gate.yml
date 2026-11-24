@@ -1,0 +1,100 @@
+name: Site version and refresh anti-regression gate
+on:
+  pull_request:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - ci/site-version-refresh-regression-gate-20261122
+    paths:
+      - 'scripts/audit-site-release-contract.mjs'
+      - 'scripts/audit-shared-release-features.mjs'
+      - 'scripts/audit-section-readiness.mjs'
+      - 'scripts/audit-site-live-freshness.mjs'
+      - 'scripts/audit-pending-subsystem-overlaps.mjs'
+      - 'scripts/audit-weekly-badge-pr-contract.mjs'
+      - 'scripts/audit-combined-badge-preview-source.mjs'
+      - 'tests/audit-shared-release-features.test.mjs'
+      - 'tests/audit-section-readiness.test.mjs'
+      - 'tests/audit-site-live-freshness.test.mjs'
+      - 'tests/audit-pending-subsystem-overlaps.test.mjs'
+      - 'tests/audit-weekly-badge-pr-contract.test.mjs'
+      - 'tests/audit-combined-badge-preview-source.test.mjs'
+      - 'tests/site-release-regression-contract.test.mjs'
+      - '.github/workflows/site-version-refresh-regression-gate.yml'
+      - 'docs/release-regression-policy.md'
+permissions:
+  contents: read
+jobs:
+  site-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate release guard syntax
+        run: |
+          node --check scripts/audit-site-release-contract.mjs
+          node --check scripts/audit-shared-release-features.mjs
+          node --check scripts/audit-section-readiness.mjs
+          node --check scripts/audit-site-live-freshness.mjs
+          node --check scripts/audit-pending-subsystem-overlaps.mjs
+          node --check scripts/audit-weekly-badge-pr-contract.mjs
+          node --check scripts/audit-combined-badge-preview-source.mjs
+          node --check tests/site-release-regression-contract.test.mjs
+          node --check tests/audit-shared-release-features.test.mjs
+          node --check tests/audit-section-readiness.test.mjs
+          node --check tests/audit-site-live-freshness.test.mjs
+          node --check tests/audit-pending-subsystem-overlaps.test.mjs
+          node --check tests/audit-weekly-badge-pr-contract.test.mjs
+          node --check tests/audit-combined-badge-preview-source.test.mjs
+      - name: Run full-site rollback, continuity and cache key regression tests
+        run: |
+          node --test tests/site-release-regression-contract.test.mjs
+          node --test tests/audit-section-readiness.test.mjs
+          node --test tests/audit-site-live-freshness.test.mjs
+          node --test tests/audit-pending-subsystem-overlaps.test.mjs
+      - name: Fetch pending subsystem PR refs for collision reporting (read-only)
+        run: |
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          for pr in 555 559 561 578 579 580 581 583 584 585 586 587 588 589; do
+            git fetch --no-tags origin "+refs/pull/$pr/head:refs/remotes/pr-audit/$pr"
+          done
+      - name: Verify actual pending feature PR sources at fetched revisions
+        run: |
+          node --test tests/audit-shared-release-features.test.mjs
+          node --input-type=module -e "import {loadPendingFeaturePrSources} from './scripts/audit-shared-release-features.mjs'; const report=loadPendingFeaturePrSources(); console.log('PENDING_FEATURE_SOURCE_CONTRACT',JSON.stringify(report)); if(!report.ok)process.exit(1)"
+      - name: Report shared runtime collisions across unmerged feature PRs
+        run: node scripts/audit-pending-subsystem-overlaps.mjs
+      - name: Check scheduled badge producer and milestone consumer across PRs
+        run: |
+          node --test tests/audit-weekly-badge-pr-contract.test.mjs
+          node scripts/audit-weekly-badge-pr-contract.mjs
+      - name: Confirm combined badge preview matches independently approved runtimes
+        run: |
+          node --test tests/audit-combined-badge-preview-source.test.mjs
+          node scripts/audit-combined-badge-preview-source.mjs
+      - name: Audit all site subsections, managers, awards, and source reader links
+        run: node scripts/audit-section-readiness.mjs
+      - name: Explicitly report uncorrected subsection freshness risks
+        run: node scripts/audit-site-live-freshness.mjs
+      - name: Compare rendered site runtime against current main
+        if: github.event_name == 'pull_request'
+        env:
+          SITE_VERSION_BASE_REF: ${{ github.event.pull_request.base.sha }}
+        run: node scripts/audit-site-release-contract.mjs
+      - name: Detect old features reappearing and report pending PR coverage
+        if: github.event_name == 'pull_request'
+        env:
+          SITE_VERSION_BASE_REF: ${{ github.event.pull_request.base.sha }}
+        run: node scripts/audit-shared-release-features.mjs
+      - name: Verify feature coverage against current main (read-only)
+        if: github.event_name != 'pull_request'
+        run: node scripts/audit-shared-release-features.mjs
+      - name: Validate default branch source without mutating production
+        if: github.event_name != 'pull_request'
+        run: node scripts/audit-site-release-contract.mjs

@@ -1,4 +1,4 @@
-import {parseKtcRenderedPage,deriveKtcSuperflexRanksFromPublishedValues} from "./ktc-html-pages.mjs";
+import {parseKtcRenderedPage,mergeKtcPublishedOverallRanks} from "./ktc-html-pages.mjs";
 const KTC_URL="https://keeptradecut.com/dynasty-rankings?format=2";
 const KTC_FALLBACK_URL="https://keeptradecut.com/dynasty-rankings";
 const TIMEOUT_MS=7000;
@@ -301,29 +301,32 @@ export async function refreshKtc(opts={}){
     // Read that directly before asking for the separately blocked JSON pool.
     const firstPageRows=parseKtcRenderedPage(html);
     if(url===KTC_URL&&firstPageRows.length>=40){
-      // KTC publishes comparable Superflex numeric player values on filtered
-      // position pages. The displayed rank column is filter-relative, so we
-      // derive the combined offensive order from actual published values.
-      const pageRequests=["QB","RB","WR","TE"].flatMap(position=>
-        [1,2].map(page=>({position,page})));
-      const pages=await Promise.all(pageRequests.map(async({position,page})=>{
+      // The KTC server-rendered ranking pages contain overlapping slices:
+      // without page: rank 1; page=1: around rank 48; page=2: around rank 91.
+      // Walk sequential pages and merge only IDENTICAL actual publisher rows.
+      // Never synthesize rankings from missing pages or positional filters.
+      const pageNumbers=Array.from({length:10},(_,i)=>i+1);
+      const pages=[html,...await Promise.all(pageNumbers.map(async page=>{
         const pageUrl=new URL("https://keeptradecut.com/dynasty-rankings");
         pageUrl.searchParams.set("page",String(page));
-        pageUrl.searchParams.set("filters",position);
         pageUrl.searchParams.set("format","2");
         try{return await fetchText(pageUrl.toString(),opts.fetchImpl||fetch,opts.timeoutMs||TIMEOUT_MS)}
         catch{return ""}
-      }));
-      const rendered=deriveKtcSuperflexRanksFromPublishedValues(pages);
+      }))];
+      const rendered=mergeKtcPublishedOverallRanks(pages);
       responseShape.rendered_html_pages=pages.length;
       responseShape.rendered_html_page_counts=pages.map(x=>parseKtcRenderedPage(x).length);
-      responseShape.rendered_html_page_samples=pages.map(x=>parseKtcRenderedPage(x).slice(0,2).map(({rank,player,position})=>({rank,player,position})));
+      responseShape.rendered_html_rank_ranges=pages.map(x=>{
+        const rows=parseKtcRenderedPage(x);
+        return rows.length?[rows[0].rank,rows.at(-1).rank]:null;
+      });
+      responseShape.rendered_html_unique_ranks=new Set(pages.flatMap(x=>parseKtcRenderedPage(x).map(r=>r.rank))).size;
       responseShape.rendered_html_valid=!!rendered;
-      responseShape.rendered_html_mode="derived-from-published-superflex-values";
+      responseShape.rendered_html_mode="published-superflex-overall-ranks";
       if(rendered)extracted={rows:rendered,rawPlayers:rendered.length,
         excludedDraftPicks:0,excludedNonOffense:0,
-        parserMode:"published-values",mode:"derived-from-superflex-value",
-        extractionMethod:"server-rendered:position-pages-superflex-values",
+        parserMode:"rendered-overall",mode:"explicit-rank",
+        extractionMethod:"server-rendered:paginated-superflex-overall",
         embeddedPlayers:0};
     }
     if(!extracted){

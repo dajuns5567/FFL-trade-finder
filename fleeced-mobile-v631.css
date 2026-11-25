@@ -9,12 +9,12 @@
 #fleeced-view-switch:focus-visible{outline:2px solid #ffd967;outline-offset:3px}
 #fleeced-view-footer{display:flex;justify-content:center;padding:12px 16px 20px}
 @media(max-width:1024px){
- html[data-fleeced-view="mobile"] main{width:100%;max-width:100%;min-width:0;padding-inline:max(10px,env(safe-area-inset-left)) max(10px,env(safe-area-inset-right))!important}
+ html[data-fleeced-view="mobile"] main{padding-bottom:max(16px,env(safe-area-inset-bottom))!important;width:100%;max-width:100%;min-width:0;padding-inline:max(10px,env(safe-area-inset-left)) max(10px,env(safe-area-inset-right))!important}
  html[data-fleeced-view="mobile"] main>.tab,
  html[data-fleeced-view="mobile"] main .card,
  html[data-fleeced-view="mobile"] main .grid,
  html[data-fleeced-view="mobile"] main .grid3{min-width:0;max-width:100%}
- html[data-fleeced-view="mobile"] header.fleeced-site-header{padding-inline:max(10px,env(safe-area-inset-left)) max(10px,env(safe-area-inset-right))!important}
+ html[data-fleeced-view="mobile"] header.fleeced-site-header{padding-top:max(10px,env(safe-area-inset-top))!important;padding-inline:max(10px,env(safe-area-inset-left)) max(10px,env(safe-area-inset-right))!important}
  html[data-fleeced-view="mobile"] header .fleeced-site-header-row{gap:8px!important;flex-wrap:wrap}
  html[data-fleeced-view="mobile"] header .fleeced-site-header-row>*{min-width:0}
  html[data-fleeced-view="mobile"] header .fleeced-site-header-actions{flex-wrap:wrap;gap:6px!important}

@@ -65,6 +65,19 @@ jobs:
             console.log('Exact reviewed release gate and unchanged application verified');
             process.exit(0);
           }
+          // Isolated mobile presentation preview; no production authorization.
+          if(process.env.HEAD_REF==='feature/mobile-presentation-v631'){
+            const git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();
+            const base='a1f3d19fe3524f97da9c51c2827607d74de4b38c';
+            assert.equal(git('rev-parse','origin/main'),base,'Desktop base changed; re-audit first');
+            const expected=new Set(['fleeced-view-mode-v631.js','fleeced-mobile-v631.css','netlify/functions/site-v29.mjs','scripts/mobile-presentation-browser-v631.mjs','.github/workflows/mobile-presentation-v631.yml','netlify.toml','.github/workflows/netlify-v101-one-time-release-gate-ci.yml']);
+            const paths=git('diff','--name-only',base,'HEAD').split(String.fromCharCode(10)).filter(Boolean);
+            assert.equal(paths.length,expected.size);
+            paths.forEach(p=>assert(expected.has(p),'Unapproved path '+p));
+            assert.equal(git('show','HEAD:netlify.toml'),git('show',base+':netlify.toml').replace("'574','630'].includes","'574','630','637'].includes"),'Only preview 637 permitted, production gate identical');
+            console.log('Mobile preview-only gate verified; desktop release unchanged');
+            process.exit(0);
+          }
           const paths=execFileSync('git',['diff','--name-only','origin/'+process.env.BASE_REF+'...HEAD'],{encoding:'utf8'}).trim().split('\n').filter(Boolean);
           // Preserve the original V101 exact six-file gate for every other PR.
           // The separately owner-authorized V110 cutover must match its own

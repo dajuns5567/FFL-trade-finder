@@ -19,8 +19,8 @@ jobs:
           node-version: '22'
       - name: Verify exact already accepted mobile application baseline
         run: |
-          git fetch --no-tags origin refs/heads/archive/mobile-637-12-device-verified-20261125
-          git diff --exit-code 60556343ec4103813e02920112b0a7c975a02a3d HEAD -- . ':!scripts/mobile-populated-views-v631.mjs' ':!scripts/mobile-populated-runner-v631.mjs' ':!.github/workflows/mobile-populated-views-v631.yml'
+          git fetch --no-tags origin refs/heads/feature/mobile-presentation-v631
+          git diff --exit-code ebeab21250a4c2121b8abad32807f3aaa1d4a377 HEAD -- . ':!scripts/mobile-populated-views-v631.mjs' ':!scripts/mobile-populated-runner-v631.mjs' ':!.github/workflows/mobile-populated-views-v631.yml'
       - name: Install existing headless collector dependencies
         run: |
           npm install --ignore-scripts --no-audit --no-fund --package-lock=false

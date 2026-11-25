@@ -1,6 +1,7 @@
 // Read-only, data-populated acceptance of the actual shared mobile runtime.
 import assert from 'node:assert/strict';
 export async function auditPopulatedMobile(page,browser){
+ page.setDefaultTimeout(18000);
  const checks=[],geometry=[],errors=[];
  const add=(name,status,detail)=>{checks.push({name,status,detail});console.log('MOBILE_POPULATED_CHECK '+JSON.stringify(checks.at(-1)))};
  const safe=async(name,fn)=>{try{await fn()}catch(e){add(name,'FAIL',String(e.message||e).slice(0,450))}};
@@ -74,11 +75,22 @@ export async function auditPopulatedMobile(page,browser){
  await safe('Track My Team',async()=>{
   await page.locator('#valueHistory [data-vh-track-team]').first().click();
   if(!await settle('#vhContent',/Overall Net Value|Team Value|Track My Team/)){add('Track My Team','BLOCKED','Team data did not settle');return}
+  const team=page.locator('#valueHistory [data-vh-team-select]').first();
+  await team.waitFor({state:'visible'});
+  const first=await team.locator('option').evaluateAll(xs=>xs.find(x=>x.value)?.value);
+  assert(first,'Missing actual league team options');await team.selectOption(first);
+  if(!await settle('#vhTrackedTeam',/Overall Net Value|Full Market Value|Value Risers/,60000)){add('Track My Team','BLOCKED','Selected team history did not settle');return}
   await inspect('Track My Team','#valueHistory');
  });
  await safe('Full Market Value History',async()=>{
   await page.locator('#valueHistory [data-vh-full-market]').first().click();
-  if(!await settle('#vhContent',/Value History|Market History/)){add('Full Market Value History','BLOCKED','Market data did not settle');return}
+  const table=page.locator('#valueHistory .vh-market-table .vh-table');await table.waitFor({state:'visible',timeout:60000});
+  await page.waitForFunction(()=>document.querySelectorAll('#valueHistory .vh-market-table .vh-table tbody tr').length>100,null,{timeout:60000});
+  const cols=await table.locator('thead th').count();assert.equal(cols,14,'Full market columns must not be removed');
+  assert.equal(await page.locator('#vhContent .notice').filter({hasText:'Current value and rank columns match Player Values'}).count(),0,'Internal process note still visible');
+  const scroll=await table.evaluate(t=>{const p=t.closest('.vh-table-wrap');const prev=p.scrollLeft;p.scrollLeft=p.scrollWidth;const end=p.scrollLeft;p.scrollLeft=prev;return{width:p.clientWidth,scrollWidth:p.scrollWidth,end}});
+  assert(scroll.scrollWidth>scroll.width&&scroll.end>0,'Wide market table must scroll within its own container');
+  add('Full market all 14 columns and local scrolling','PASS',scroll);
   await inspect('Full Market Value History','#valueHistory');
  });
  await safe('Player Value History',async()=>{

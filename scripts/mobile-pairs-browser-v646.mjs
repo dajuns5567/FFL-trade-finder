@@ -5,7 +5,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import {chromium,webkit,devices} from 'playwright';
 import render from '../netlify/functions/site-v29.mjs';
-const root=process.cwd(),html=(await(await render()).text()).replace("<link rel=\"stylesheet\" href=\"/fleeced-mobile-compact-v647.css?v=647\">",'').replace("<link rel=\"stylesheet\" href=\"/fleeced-mobile-clean-v648.css?v=648\">",''),css='/fleeced-mobile-pairs-v646.css';
+const root=process.cwd(),html=((await(await render()).text()).replace("<link rel=\"stylesheet\" href=\"/fleeced-mobile-align-v649.css?v=649\"><script defer src=\"/fleeced-mobile-align-v649.js?v=649\"></script>",'')).replace("<link rel=\"stylesheet\" href=\"/fleeced-mobile-compact-v647.css?v=647\">",'').replace("<link rel=\"stylesheet\" href=\"/fleeced-mobile-clean-v648.css?v=648\">",''),css='/fleeced-mobile-pairs-v646.css';
 const valueSource=await readFile('value-history-v276.js','utf8'),leagueSource=await readFile('league-hub-v451.js','utf8');
 const cut=(src,first,last)=>{const i=src.indexOf('function '+first+'('),j=src.indexOf('function '+last+'(',i+1);assert(i>=0&&j>i,first);return src.slice(i,j)};
 const teams={1:'New York Jets',2:'Las Vegas Raiders',3:'New England Patriots',4:'San Francisco 49ers',5:'Kansas City Chiefs',6:'Los Angeles Chargers'};

@@ -311,10 +311,15 @@
   add('Badges','2026 weekly badge date provenance',
    /2026 Week (6|10) • date unavailable/i.test(visual)?'WARN':'PASS',
    /date unavailable/i.test(visual)?'Verify saved week-start dates from server readback':'2026 weekly badges show recorded or derived week dates');
-  const historyExcerpt=pages['VALUE HISTORY']?.excerpt||'';
-  const scheduledText=historyExcerpt.match(/Last scheduled refresh:\s*(\d{1,2}\/\d{1,2}\/\d{4},\s*\d{1,2}:\d{2}:\d{2}\s*(?:AM|PM))/i)?.[1];
-  const ageMinutes=scheduledText?(Date.now()-Date.parse(scheduledText))/60000:null;
-  add('History','Scheduled observation freshness',Number.isFinite(ageMinutes)&&ageMinutes>=0&&ageMinutes<=240?'PASS':'WARN',JSON.stringify({scheduledText,ageMinutes,maximumMinutes:240}));
+  // Read the scheduler-specific timestamp, not a truncated player page or
+  // the latest snapshot (which could be a manual or page-load observation).
+  const observation=await fetchJson('Scheduled Value History observability','/.netlify/functions/value-history-observability');
+  const scheduledText=observation?.last_scheduled||null;
+  const scheduledMs=Date.parse(scheduledText||'');
+  const ageMinutes=Number.isFinite(scheduledMs)?(Date.now()-scheduledMs)/60000:null;
+  const fresh=observation?.ok===true&&Number.isFinite(ageMinutes)&&ageMinutes>=0&&ageMinutes<=240;
+  api.scheduledHistory={scheduledText,ageMinutes,archiveSnapshotCount:observation?.archive_snapshot_count??null};
+  add('History','Scheduled observation freshness',fresh?'PASS':'WARN',JSON.stringify({...api.scheduledHistory,maximumMinutes:240}));
   api.completedWeek={season:latest?.season,week:latest?.week,available:latest?.available,teams:latest?.teams?.length};
   add('Weekly','completed Sleeper matchup coverage',latest?.available&&latest?.teams?.length===32?'PASS':'WARN',JSON.stringify(api.completedWeek));
   api.highsSummary={keys:Object.keys(highs||{}),recordCount:highs?.records?.length};

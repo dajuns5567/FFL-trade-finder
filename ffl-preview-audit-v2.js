@@ -60,6 +60,27 @@
    return val;
   }catch(e){add('API',label,'WARN',e.message);return null}
  };
+ // Independently sum first-to-last changes in each recorded model segment.
+ // The server-reported silent handoff timestamp is an input, not independently
+ // inferred from a single player's prices. Missing boundary evidence is WARN.
+ function auditRecordedMovement(points,{baseline,through,model,modelChangeAt}){
+  const start=Date.parse(baseline||''),end=Date.parse(through||''),boundary=Date.parse(modelChangeAt||'');
+  if(!Number.isFinite(start)||!Number.isFinite(end)||start>=end)return null;
+  const rows=(Array.isArray(points)?points:[]).filter(p=>Date.parse(p.t)>=start&&Date.parse(p.t)<=end&&p.value!=null&&Number.isFinite(Number(p.value))).sort((a,b)=>Date.parse(a.t)-Date.parse(b.t));
+  if(rows.length<2||Date.parse(rows[0].t)!==start||Date.parse(rows.at(-1).t)!==end)return null;
+  if(Number.isFinite(boundary)&&boundary>start&&boundary<=end&&!rows.some(p=>Date.parse(p.t)===boundary))return null;
+  const groups=[];
+  for(const row of rows){
+   const raw=row.valuation_model||null;
+   const effective=Number.isFinite(boundary)&&Date.parse(row.t)>=boundary?model:raw;
+   if(Number.isFinite(boundary)&&Date.parse(row.t)>=boundary&&raw&&raw!==model)return null;
+   const last=groups.at(-1);
+   if(last&&last.model===effective)last.rows.push(row);else groups.push({model:effective,rows:[row]});
+  }
+  const segments=groups.filter(g=>g.rows.length>=2).map(g=>({model:g.model,from:g.rows[0].t,to:g.rows.at(-1).t,fromValue:Number(g.rows[0].value),toValue:Number(g.rows.at(-1).value),delta:Number(g.rows.at(-1).value)-Number(g.rows[0].value)}));
+  if(!segments.length)return null;
+  return {delta:segments.reduce((n,g)=>n+g.delta,0),segments};
+ }
  const consoleError=(type,...args)=>{errors.push({type,message:cap(args.map(x=>typeof x==='string'?x:x?.message||String(x)).join(' '),350)})};
  const prevError=console.error,prevWarn=console.warn,onError=e=>consoleError('window',e.message),onRejection=e=>consoleError('rejection',e.reason?.message||e.reason);
  console.error=function(...args){consoleError('console',...args);prevError.apply(this,args)};
@@ -338,14 +359,15 @@
   const currentMarket=market?.market||market;
   const moving=currentMarket?.periods?.['7D'];
   const candidate=[...(moving?.valueRisers||[]),...(moving?.valueFallers||[])].find(row=>String(row?.id)==='8343');
-  api.boyeMafe7DModelAudit={value:currentMarket?.marketRows?.find(row=>String(row.id)==='8343')?.value,
-   delta:candidate?.delta??null,model:currentMarket?.valuation_model,
-   modelChangeAt:currentMarket?.model_change_at,baseline:candidate?.baseline_t};
-  if(candidate&&currentMarket?.valuation_model==='idp-v101-verified-role-growth-v100-source-free-lineage'){
-   add('Market','Boye Mafe 7D excludes silent V101 adoption',
-    Math.abs(Number(candidate.delta))<500?'PASS':'WARN',
-    JSON.stringify(api.boyeMafe7DModelAudit));
-  }else add('Market','Boye Mafe 7D model audit','INFO',JSON.stringify(api.boyeMafe7DModelAudit));
+  const mafeRow=currentMarket?.marketRows?.find(row=>String(row.id)==='8343');
+  const mafeHistory=await fetchJson('Boye Mafe recorded history','/.netlify/functions/value-history?player_id=8343',{timeoutMs:45000});
+  const evidence=auditRecordedMovement(mafeHistory?.points,{baseline:candidate?.baseline_t,through:currentMarket?.latest,model:currentMarket?.valuation_model,modelChangeAt:currentMarket?.model_change_at});
+  api.boyeMafe7DModelAudit={value:mafeRow?.value,delta:candidate?.delta??null,model:currentMarket?.valuation_model,
+   modelChangeAt:currentMarket?.model_change_at,baseline:candidate?.baseline_t,through:currentMarket?.latest,evidence};
+  const comparable=!!candidate&&!!evidence;
+  const matched=comparable&&Number(candidate.delta)===evidence.delta&&Number(mafeRow?.delta7)===evidence.delta;
+  add('Market','Boye Mafe 7D recorded segment arithmetic',
+   !comparable?'WARN':matched?'PASS':'FAIL',JSON.stringify(api.boyeMafe7DModelAudit));
   // Only inspect; actual live Market values must still be compared against the immutable archive.
   add('Data provenance','Market history coverage','INFO',JSON.stringify(api.marketSummary));
  }catch(e){add('Script','runner','FAIL',e.stack||e.message)}

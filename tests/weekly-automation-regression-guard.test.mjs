@@ -49,7 +49,10 @@ test('weekly source does not use hardcoded season, week, or McCaffrey as an auto
  const weekView=file('netlify/functions/lib/league-completed-week.mjs');
  const badge=file('value-history-v276.js');
  assert.doesNotMatch(scheduler,/week\s*[:=]\s*10|season\s*[:=]\s*2026|McCaffrey/i);
- assert.match(weekView,/\{season,week,matchups,rosters,users,playerProjections=null\}/);
+ assert.match(weekView,/\{season,week,matchups,rosters,users,playerProjections=null,noPublishedScoring=\[\]\}/);
+ const projectionReader=file('netlify/functions/lib/league-week-projections.mjs');
+ assert.doesNotMatch(projectionReader,/week\s*[:=]\s*10|season\s*[:=]\s*2026|McCaffrey/i);
+ assert.match(projectionReader,/isNoPublishedScoringRow/);
  assert.match(badge,/week>18/);
  assert.match(badge,/String\(id\)/);
 });

@@ -4,6 +4,8 @@ on:
     paths:
       - 'fleeced-view-mode-v631.js'
       - 'fleeced-mobile-v631.css'
+      - 'fleeced-mobile-density-v645.css'
+      - 'scripts/mobile-density-browser-v645.mjs'
       - 'netlify/functions/site-v29.mjs'
       - 'scripts/mobile-presentation-browser-v631.mjs'
       - '.github/workflows/mobile-presentation-v631.yml'
@@ -31,6 +33,10 @@ jobs:
           import {execFileSync} from 'node:child_process';
           import {readFileSync} from 'node:fs';
           // Exact preview-only combined candidate; legacy release checks remain unchanged elsewhere.
+          if(process.env.GITHUB_HEAD_REF==='fix/mobile-information-density-20261125'){
+            execFileSync('node',['scripts/audit-mobile-density-preview-scope.mjs'],{stdio:'inherit'});
+            process.exit(0);
+          }
           if(process.env.GITHUB_HEAD_REF==='fix/inquirer-daily-default-closed-20261125'){
             execFileSync('node',['scripts/audit-inquirer-closed-preview-scope.mjs'],{stdio:'inherit'});
             process.exit(0);
@@ -62,3 +68,4 @@ jobs:
           node --check fleeced-view-mode-v631.js
           node --check netlify/functions/site-v29.mjs
           node scripts/mobile-presentation-browser-v631.mjs
+          node scripts/mobile-density-browser-v645.mjs

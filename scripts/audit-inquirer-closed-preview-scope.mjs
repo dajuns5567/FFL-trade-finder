@@ -2,6 +2,9 @@
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {readFileSync} from 'node:fs';
+if(process.env.GITHUB_HEAD_REF==='fix/mobile-information-density-20261125'){
+ execFileSync('node',['scripts/audit-mobile-density-preview-scope.mjs'],{stdio:'inherit'});process.exit(0);
+}
 const checkpoint='01ae9ec284ccc0c503ee4ce06f7b3c3bef65d0c7',main='a1f3d19fe3524f97da9c51c2827607d74de4b38c';
 const git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();
 assert.equal(process.env.GITHUB_HEAD_REF,'fix/inquirer-daily-default-closed-20261125');

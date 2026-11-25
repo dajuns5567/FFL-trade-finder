@@ -6,12 +6,15 @@ import {chromium,webkit,devices} from 'playwright';
 import render from '../netlify/functions/site-v29.mjs';
 const html=await(await render()).text();
 const root=process.cwd();
+// Reconstruct the exact original renderer output only by removing the two
+// explicitly verified presentation insertions; no substitute application.
+const baseline=html.replace('<script src="/fleeced-view-mode-v631.js?v=631"></script>','').replace('<link rel="stylesheet" href="/fleeced-mobile-v631.css?v=631">','');
 const assets=new Set(),broken=new Set();
 const server=createServer(async(req,res)=>{
  try{
   const u=new URL(req.url,'http://127.0.0.1');
   if(req.method!=='GET'||u.pathname.startsWith('/api/')||u.pathname.startsWith('/.netlify/')){res.writeHead(403);return res.end('OFFLINE READ ONLY')}
-  if(u.pathname==='/'){res.writeHead(200,{'content-type':'text/html'});return res.end(html)}
+  if(u.pathname==='/'||u.pathname==='/desktop-baseline'){res.writeHead(200,{'content-type':'text/html'});return res.end(u.pathname==='/'?html:baseline)}
   const target=path.resolve(root,'.'+decodeURIComponent(u.pathname));
   assert(target.startsWith(root+path.sep));assert((await stat(target)).isFile());
   const type=target.endsWith('.js')?'text/javascript':target.endsWith('.css')?'text/css':target.endsWith('.json')?'application/json':'application/octet-stream';
@@ -91,6 +94,44 @@ try{
   assert.equal((await snapshot()).viewport,before.viewport);
   if(mobile)await page.waitForFunction(()=>document.documentElement.clientWidth<=1024,null,{timeout:10000});
   assert.deepEqual(viewErrors,[]);
+  // Real trusted taps/clicks on the original header and all its menu items.
+  const activate=locator=>mobile?locator.tap():locator.click();
+  const menu=page.locator('#fleecedHeaderDropdown');
+  const expectedMenus={tradeHistory:2,rankings:9,valueHistory:4,leagueHub:5};
+  for(const [tab,count] of Object.entries(expectedMenus)){
+   const tabButton=page.locator('.tabs button[data-tab="'+tab+'"]');
+   await activate(tabButton);
+   await menu.waitFor({state:'visible'});
+   await page.waitForFunction(()=>document.querySelector('#fleecedHeaderDropdown')?.style.top);
+   assert.equal(await menu.getByRole('menuitem').count(),count,name+' '+tab+' menu completeness');
+   const bounds=await menu.evaluate(el=>({left:el.getBoundingClientRect().left,right:el.getBoundingClientRect().right,bottom:el.getBoundingClientRect().bottom,top:el.getBoundingClientRect().top,width:window.innerWidth,height:window.innerHeight,headerBottom:document.querySelector('header').getBoundingClientRect().bottom}));
+   assert(bounds.left>=-1&&bounds.right<=bounds.width+1,name+' '+tab+' menu horizontal reach');
+   assert(bounds.top>=bounds.headerBottom-1,name+' '+tab+' menu covers navigation');
+   assert(bounds.bottom<=bounds.height+2,name+' '+tab+' menu vertical reach');
+   const last=menu.getByRole('menuitem').last();
+   await last.scrollIntoViewIfNeeded();
+   assert(await last.isVisible(),name+' '+tab+' final menu item reachable');
+   await activate(tabButton);
+   await menu.waitFor({state:'hidden'});
+  }
+  // Real touch navigation without simulating league results or writes.
+  for(const id of ['finder','evaluator','league','settings','home']){
+   const tabButton=page.locator('.tabs button[data-tab="'+id+'"]');
+   await activate(tabButton);
+   await page.waitForFunction(id=>{const section=document.getElementById(id);return section&&!section.hidden&&document.querySelector('.tabs button[data-tab="'+id+'"]')?.classList.contains('active')},id);
+  }
+  if(!mobile){
+   // Compare original desktop geometry, not just source bytes.
+   const original=await context.newPage();
+   await original.goto(origin+'/desktop-baseline',{waitUntil:'domcontentloaded'});
+   await original.locator('#tradeSelectedPositionsOnly262').waitFor({state:'attached'});
+   await original.waitForFunction(()=>document.querySelector('header.fleeced-site-header')&&document.querySelectorAll('.tabs button[data-tab]').length===9);
+   const geometry=p=>p.evaluate(()=>['header','.fleeced-header-tabs','main','#home','#homeNavigation'].map(sel=>{const el=document.querySelector(sel),r=el.getBoundingClientRect(),style=getComputedStyle(el);return{sel,x:Math.round(r.x),y:Math.round(r.y+window.scrollY),w:Math.round(r.width),grid:style.gridTemplateColumns,font:style.fontSize}}));
+   await page.evaluate(()=>window.scrollTo(0,0));await original.evaluate(()=>window.scrollTo(0,0));
+   assert.deepEqual(await geometry(page),await geometry(original),name+' original desktop geometry');
+   await original.close();
+  }
+  console.log('MOBILE_NAVIGATION_PASS',name,JSON.stringify({menus:Object.keys(expectedMenus),items:Object.values(expectedMenus).reduce((a,b)=>a+b,0),directTabs:5,desktopGeometry:!mobile}));
   console.log('MOBILE_PRESENTATION_PASS',name,JSON.stringify({default:before.mode,controls:before.controls.length,nav:before.nav.length,width:before.width,switchedWidth:switched.width}));
   await context.close();await browser.close();browser=null;
  }

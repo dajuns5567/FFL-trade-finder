@@ -350965,7 +350965,6 @@
       "pass_air_yd": 79,
       "pos_rank_std": 14,
       "gp": 1,
-      "tm_def_snp": 53,
       "gms_active": 1,
       "pass_sack_yds": 45,
       "q1_pass_yd": 18,
@@ -350974,7 +350973,6 @@
       "pass_lng": 33,
       "pass_rush_yd": 256,
       "pts_std": 15.98,
-      "tm_st_snp": 30,
       "pass_rtg": 88,
       "bonus_pass_cmp_25": 1,
       "rush_fd": 3,
@@ -350984,10 +350982,8 @@
       "rush_ypa": 5.8,
       "q1_rush_yd": 12,
       "gs": 1,
-      "tm_off_snp": 71,
       "pos_rank_ppr": 14,
       "pass_sack": 5,
-      "off_snp": 71,
       "pass_cmp": 30,
       "cmp_pct": 68.18,
       "rush_yac": 3,
@@ -357164,7 +357160,10 @@
       "gms_active": 1,
       "pos_rank_half_ppr": 999,
       "pos_rank_ppr": 999,
-      "pos_rank_std": 999
+      "pos_rank_std": 999,
+      "tm_def_snp": 67,
+      "tm_off_snp": 54,
+      "tm_st_snp": 24
     },
     "6806": {
       "gms_active": 1,
@@ -358196,7 +358195,6 @@
     },
     "7083": {
       "gms_active": 1,
-      "gp": 1,
       "pos_rank_half_ppr": 999,
       "pos_rank_ppr": 999,
       "pos_rank_std": 999
@@ -377225,11 +377223,16 @@
       "pos_rank_std": 999
     },
     "13566": {
+      "def_snp": 3,
       "gms_active": 1,
       "gp": 1,
       "pos_rank_half_ppr": 999,
       "pos_rank_ppr": 999,
-      "pos_rank_std": 999
+      "pos_rank_std": 999,
+      "st_snp": 1,
+      "tm_def_snp": 78,
+      "tm_off_snp": 57,
+      "tm_st_snp": 26
     },
     "13567": {
       "gms_active": 1,

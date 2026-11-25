@@ -12,25 +12,35 @@
 #fleeced-view-footer #fleeced-view-switch{pointer-events:auto;background:var(--card,#111827)!important}
 /* Netlify's collaboration drawer occupies the bottom edge of previews. */
 html[data-fleeced-preview="1"] #fleeced-view-footer{bottom:calc(64px + env(safe-area-inset-bottom))}
-#fleeced-mobile-menu-strip{display:none!important}
+#fleeced-view-footer:empty{display:none}
 @media(max-width:1024px){
- html[data-fleeced-view="mobile"] main{padding-bottom:calc(76px + env(safe-area-inset-bottom))!important;width:100%;max-width:100%;min-width:0;padding-inline:max(10px,env(safe-area-inset-left)) max(10px,env(safe-area-inset-right))!important}
+ html[data-fleeced-view="mobile"] main{padding-bottom:max(16px,env(safe-area-inset-bottom))!important;width:100%;max-width:100%;min-width:0;padding-inline:max(10px,env(safe-area-inset-left)) max(10px,env(safe-area-inset-right))!important}
  html[data-fleeced-view="mobile"] main>.tab,
  html[data-fleeced-view="mobile"] main .card,
  html[data-fleeced-view="mobile"] main .grid,
  html[data-fleeced-view="mobile"] main .grid3{min-width:0;max-width:100%}
  html[data-fleeced-view="mobile"] header.fleeced-site-header{padding-top:max(10px,env(safe-area-inset-top))!important;padding-inline:max(10px,env(safe-area-inset-left)) max(10px,env(safe-area-inset-right))!important}
- html[data-fleeced-view="mobile"] header .fleeced-site-header-row{gap:8px!important;flex-wrap:nowrap;align-items:center!important}
+ html[data-fleeced-view="mobile"] header .fleeced-site-header-row{gap:6px!important;flex-wrap:nowrap;align-items:center!important}
  html[data-fleeced-view="mobile"] header .fleeced-site-header-row>div:first-child{flex:1 1 0;min-width:0}
  html[data-fleeced-view="mobile"] header .fleeced-site-header-row p{display:none!important}
- html[data-fleeced-view="mobile"] header #siteBackBtn,
- html[data-fleeced-view="mobile"] header #updateBtn{min-height:44px!important;padding:8px 10px!important;font-size:12px!important}
- html[data-fleeced-view="mobile"] #fleeced-mobile-menu-strip{display:flex!important;align-items:center;gap:10px;justify-content:space-between;margin-top:8px}
- html[data-fleeced-view="mobile"] #fleeced-mobile-menu-toggle{min-height:44px!important;width:auto!important;flex:0 0 auto;padding:9px 14px!important;border:1px solid #e4b53f!important;background:transparent!important;color:#e4b53f!important;font-size:14px!important}
- html[data-fleeced-view="mobile"] #fleeced-mobile-current-section{font-size:14px;font-weight:800;color:var(--ink);text-align:right;overflow-wrap:anywhere}
- html[data-fleeced-view="mobile"]:not([data-fleeced-menu-open="1"]) header .fleeced-header-tabs{display:none!important}
- html[data-fleeced-view="mobile"][data-fleeced-menu-open="1"] header .fleeced-header-tabs{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));width:100%!important;gap:6px!important;overflow:visible!important;margin:8px 0 0!important}
- html[data-fleeced-view="mobile"] header .fleeced-header-tabs button{white-space:normal!important;overflow-wrap:anywhere;min-width:0!important;width:100%!important;padding:7px 5px!important;font-size:12px!important;line-height:1.15!important}
+ html[data-fleeced-view="mobile"] header .fleeced-site-header-row>div:first-child :is(img,svg){max-width:100%!important;height:auto!important}
+ html[data-fleeced-view="mobile"] header .fleeced-site-header-actions{flex:0 0 auto;flex-wrap:nowrap!important;gap:4px!important}
+ html[data-fleeced-view="mobile"] header :is(#siteBackBtn,#updateBtn,#fleeced-view-switch){min-height:44px!important;padding:5px 7px!important;font-size:10px!important;letter-spacing:0!important;line-height:1.1!important}
+ html[data-fleeced-view="mobile"] header #fleeced-view-switch{white-space:normal!important;max-width:65px;text-align:center}
+ html[data-fleeced-view="mobile"] header .fleeced-header-tabs{display:flex!important;width:100%!important;margin:6px 0 0!important;padding:4px 0 6px!important;gap:6px!important;overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:thin}
+ html[data-fleeced-view="mobile"] header .fleeced-header-tabs button{flex:0 0 auto!important;white-space:nowrap!important;min-width:0!important;width:auto!important;padding:8px 10px!important;font-size:12px!important;line-height:1.15!important}
+ /* Fit content to the actual device width; smaller gaps and cards, not
+    zooming a desktop page until its text becomes illegible. */
+ html[data-fleeced-view="mobile"] main{padding-top:8px!important}
+ html[data-fleeced-view="mobile"] main .card{padding:10px!important;margin-bottom:10px}
+ html[data-fleeced-view="mobile"] main .tab{scroll-margin-top:calc(var(--fleeced-mobile-header-height,105px) + 8px)}
+ html[data-fleeced-view="mobile"] #valueHistory :is(.vh-shell,#vhContent){gap:10px!important}
+ html[data-fleeced-view="mobile"] #valueHistory .vh-card{padding:10px!important}
+ html[data-fleeced-view="mobile"] #valueHistory .vh-market-section{scroll-margin-top:calc(var(--fleeced-mobile-header-height,105px) + 12px)!important}
+ html[data-fleeced-view="mobile"] #valueHistory .vh-market-jump{display:flex!important;padding:6px!important;gap:6px!important;scrollbar-width:thin;position:static!important}
+ html[data-fleeced-view="mobile"] #valueHistory .vh-market-jump button{border:1px solid #ac8732!important;background:color-mix(in srgb,#e4b53f 9%,var(--card))!important;color:#e4b53f!important;font-size:11px!important;min-height:44px!important;padding:8px 11px!important;cursor:pointer;white-space:nowrap}
+ html[data-fleeced-view="mobile"] #valueHistory .vh-market-jump button:active{background:#e4b53f!important;color:#111827!important}
+ html[data-fleeced-view="mobile"] #valueHistory .vh-market-jump button:focus-visible{outline:2px solid #ffd967!important;outline-offset:-3px}
  html[data-fleeced-view="mobile"] #valueHistory,
  html[data-fleeced-view="mobile"] #valueHistory>div,
  html[data-fleeced-view="mobile"] #valueHistory #vhContent,
@@ -54,12 +64,16 @@ html[data-fleeced-preview="1"] #fleeced-view-footer{bottom:calc(64px + env(safe-
  html[data-fleeced-view="mobile"] #valueHistory .vh-table{min-width:max-content!important;width:max-content!important;font-size:13px!important}
  html[data-fleeced-view="mobile"] #valueHistory .vh-table :is(th,td){padding:10px 8px!important}
  html[data-fleeced-view="mobile"] #valueHistory .vh-table :is(th,td):first-child{max-width:150px;white-space:normal!important;overflow-wrap:anywhere}
- html[data-fleeced-view="mobile"] #valueHistory .vh-table .vh-player-link{white-space:normal!important;text-align:left;overflow-wrap:anywhere}
+ html[data-fleeced-view="mobile"] #valueHistory .vh-table .vh-player-link{display:block!important;width:100%!important;max-width:145px!important;white-space:normal!important;text-align:left;overflow-wrap:anywhere}
+ html[data-fleeced-view="mobile"] #valueHistory .vh-table .vh-player-link :is(b,small,.vh-player-name-line,.vh-history-cue){white-space:normal!important;overflow-wrap:anywhere;max-width:100%!important}
+ html[data-fleeced-view="mobile"] #valueHistory .vh-table .vh-history-cue{display:block!important}
+ html[data-fleeced-view="mobile"] #valueHistory .vh-table :is(th,td):first-child{min-width:128px;width:145px;max-width:145px}
+ html[data-fleeced-view="mobile"] #valueHistory .vh-table td:first-child{z-index:1}
+
  html[data-fleeced-view="mobile"] #valueHistory .vh-market-table summary{font-size:14px!important;gap:8px}
  html[data-fleeced-view="mobile"] #valueHistory .vh-status{white-space:normal!important;overflow-wrap:anywhere}
 
  html[data-fleeced-view="mobile"] header .fleeced-site-header-row>*{min-width:0}
- html[data-fleeced-view="mobile"] header .fleeced-site-header-actions{flex-wrap:wrap;gap:6px!important}
  html[data-fleeced-view="mobile"] header .fleeced-header-tabs{justify-content:flex-start!important;max-width:100%;overscroll-behavior-x:contain;touch-action:pan-x}
  /* The existing menu's actions and handlers stay intact. On a narrow
     viewport, use a full-width safe-area sheet below the same header. This
@@ -100,8 +114,3 @@ html[data-fleeced-preview="1"] #fleeced-view-footer{bottom:calc(64px + env(safe-
  html[data-fleeced-view="mobile"] #leagueHub :is(.lh-reporter-desks,.lh-spot-grid,.lh-manager-grid){grid-template-columns:minmax(0,1fr)!important}
 }
 
-/* Short landscape screens: keep the existing menu list compact. */
-@media(max-width:1024px) and (max-height:520px){
- html[data-fleeced-view="mobile"][data-fleeced-menu-open="1"] header .fleeced-header-tabs{grid-template-columns:repeat(5,minmax(0,1fr))}
- html[data-fleeced-view="mobile"] header #fleecedHeaderDropdown{max-height:calc(100dvh - 195px)!important}
-}

@@ -71,6 +71,15 @@ export async function auditPopulatedMobile(page,browser){
   await tab('valueHistory');await page.locator('#valueHistory [data-vh-dashboard]').first().click();
   if(!await settle('#vhContent',/Market Intelligence|Value Risers|Market Heat Map/)){add('Market Dashboard','BLOCKED','Market archive unavailable or still loading');return}
   await inspect('Market Dashboard','#valueHistory');
+  const jumps=page.locator('#valueHistory [data-vh-market-jump]');
+  const count=await jumps.count();assert(count>=8,'Market shortcuts missing');
+  const visual=await jumps.first().evaluate(b=>{const st=getComputedStyle(b);return{border:st.borderTopStyle,width:parseFloat(st.borderTopWidth),height:b.getBoundingClientRect().height,cursor:st.cursor}});
+  assert(visual.border==='solid'&&visual.width>0&&visual.height>=44&&visual.cursor==='pointer','Market shortcut lacks interactive styling');
+  const heat=page.locator('[data-vh-market-jump="vhMarketHeat"]');await heat.click();
+  await page.waitForTimeout(800);
+  const jump=await page.evaluate(()=>({target:document.querySelector('#vhMarketHeat').getBoundingClientRect().top,header:document.querySelector('header').getBoundingClientRect().bottom}));
+  assert(jump.target>=jump.header-3,'Market jump target hidden under fixed header');
+  add('Market shortcut affordance and jump','PASS',{count,visual,jump});
  });
  await safe('Track My Team',async()=>{
   await page.locator('#valueHistory [data-vh-track-team]').first().click();

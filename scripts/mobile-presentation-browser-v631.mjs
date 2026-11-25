@@ -74,6 +74,7 @@ try{
    if(i===11)throw Error(name+' controls did not settle');
   }
   const before=stable;
+  assert.equal(await page.locator('#offenseSourceAuditDownload,#offenseSourceAuditStatus').count(),0,name+' requested diagnostic UI removed');
   if(mobile){
    assert.equal(await page.locator('#fleeced-mobile-menu-toggle,#fleeced-mobile-current-section').count(),0,name+' no replacement menu or repeated section label');
    const nav=page.locator('header .fleeced-header-tabs');
@@ -83,6 +84,8 @@ try{
    const headerFit=await page.evaluate(()=>{const actions=document.querySelector('header .fleeced-site-header-actions'),r=actions.getBoundingClientRect();return{left:r.left,right:r.right,width:document.documentElement.clientWidth,buttons:[...actions.querySelectorAll('button')].map(x=>x.id)}});
    assert(headerFit.buttons.includes('fleeced-view-switch')&&headerFit.buttons.includes('siteBackBtn')&&headerFit.buttons.includes('updateBtn'),name+' three original header controls');
    assert(headerFit.left>=0&&headerFit.right<=headerFit.width+1,name+' header controls fit '+JSON.stringify(headerFit));
+   const styleParity=await page.evaluate(()=>['siteBackBtn','updateBtn','fleeced-view-switch'].map(id=>{const s=getComputedStyle(document.getElementById(id));return [s.color,s.borderTopColor,s.borderTopLeftRadius,s.backgroundColor,s.textTransform]}));
+   assert.deepEqual(styleParity[2],styleParity[0],name+' Desktop View matches Back');assert.deepEqual(styleParity[2],styleParity[1],name+' Desktop View matches Update');
   }
   assert.equal(before.mode,mobile?'mobile':'desktop',name+' default');
   assert.equal(before.viewport,'width=device-width,initial-scale=1,viewport-fit=cover');

@@ -103,11 +103,12 @@ try{
    await activate(tabButton);
    await menu.waitFor({state:'visible'});
    await page.waitForFunction(()=>document.querySelector('#fleecedHeaderDropdown')?.style.top);
+   await page.waitForTimeout(260); // allow the existing menu transition and scroll positioning to settle
    assert.equal(await menu.getByRole('menuitem').count(),count,name+' '+tab+' menu completeness');
    const bounds=await menu.evaluate(el=>({left:el.getBoundingClientRect().left,right:el.getBoundingClientRect().right,bottom:el.getBoundingClientRect().bottom,top:el.getBoundingClientRect().top,width:window.innerWidth,height:window.innerHeight,headerBottom:document.querySelector('header').getBoundingClientRect().bottom}));
-   assert(bounds.left>=-1&&bounds.right<=bounds.width+1,name+' '+tab+' menu horizontal reach');
+   assert(bounds.left>=-1&&bounds.right<=bounds.width+1,name+' '+tab+' menu horizontal reach '+JSON.stringify(bounds));
    assert(bounds.top>=bounds.headerBottom-1,name+' '+tab+' menu covers navigation');
-   assert(bounds.bottom<=bounds.height+2,name+' '+tab+' menu vertical reach');
+   assert(bounds.bottom<=bounds.height+2,name+' '+tab+' menu vertical reach '+JSON.stringify(bounds));
    const last=menu.getByRole('menuitem').last();
    await last.scrollIntoViewIfNeeded();
    assert(await last.isVisible(),name+' '+tab+' final menu item reachable');

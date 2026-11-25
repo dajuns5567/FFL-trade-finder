@@ -21,6 +21,18 @@
  html[data-fleeced-view="mobile"] header .fleeced-site-header-row>*{min-width:0}
  html[data-fleeced-view="mobile"] header .fleeced-site-header-actions{flex-wrap:wrap;gap:6px!important}
  html[data-fleeced-view="mobile"] header .fleeced-header-tabs{justify-content:flex-start!important;max-width:100%;overscroll-behavior-x:contain;touch-action:pan-x}
+ /* The existing menu's actions and handlers stay intact. On a narrow
+    viewport, use a full-width safe-area sheet below the same header. This
+    avoids stale horizontal measurements when the tab strip scrolls. */
+ html[data-fleeced-view="mobile"] header #fleecedHeaderDropdown{
+  left:max(8px,env(safe-area-inset-left))!important;
+  right:max(8px,env(safe-area-inset-right))!important;
+  width:auto!important;min-width:0!important;max-width:none!important;
+  box-sizing:border-box;overflow-x:hidden;overscroll-behavior:contain
+ }
+ html[data-fleeced-view="mobile"] header #fleecedHeaderDropdown button{
+  min-width:0;white-space:normal!important;overflow-wrap:anywhere;
+ }
  html[data-fleeced-view="mobile"] header .fleeced-header-tabs button{flex:0 0 auto!important;min-height:44px!important}
  html[data-fleeced-view="mobile"] main :is(select,input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]),textarea){font-size:16px!important;max-width:100%;min-width:0}
  html[data-fleeced-view="mobile"] main :is(select,input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]),textarea,button){min-height:44px}

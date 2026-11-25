@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 const audit=readFileSync(new URL('../ffl-preview-audit-v2.js',import.meta.url),'utf8');
-const start=audit.indexOf('function auditRecordedMovement('),end=audit.indexOf('const consoleError=',start);
+const start=audit.indexOf('function auditRecordedMovement('),end=audit.indexOf('function auditHotSeat(',start);
 assert.ok(start>=0&&end>start);
 const calc=vm.runInNewContext(audit.slice(start,end)+';auditRecordedMovement');
 const model='new-model';
@@ -27,4 +27,23 @@ test('missing baseline, endpoint or handoff is not treated as verified',()=>{
 });
 test('explicit conflicting model tags within the current era cannot pass',()=>{
  assert.equal(calc(points.map((p,i)=>i===3?{...p,valuation_model:'conflicting'}:p),options),null);
+});
+
+const hotStart=audit.indexOf('function auditHotSeat('),hotEnd=audit.indexOf('const consoleError=',hotStart);
+const hot=vm.runInNewContext(audit.slice(hotStart,hotEnd)+';auditHotSeat');
+const teams=Array.from({length:32},(_,i)=>({roster_id:String(i+1),team_name:'Team '+(i+1),projection_coverage:1,projected:100,opponent_projected:95,points:85,opponent_points:100,won:false}));
+teams[16]={...teams[16],projected:110};
+test('Hot Seat checks the exact projected favorite with largest expected winning margin, not mere badge presence',()=>{
+ const record=id=>({manager_awards:[{type:'hot-seat',roster_id:String(id),provisional:true}]});
+ assert.equal(hot(teams,record(17)).matches,true);
+ assert.equal(hot(teams,record(1)).matches,false);
+ assert.equal(hot(teams,record(17)).recorded.provisional,true);
+ assert.equal(hot(teams.slice(0,31),record(17)).complete,false);
+ assert.equal(hot(teams.map((r,i)=>i===3?{...r,projection_coverage:0}:r),record(17)).complete,false);
+});
+test('no eligible upset means no Hot Seat badge, and duplicates never pass',()=>{
+ const noUpset=teams.map(r=>({...r,projected:80}));
+ assert.equal(hot(noUpset,{manager_awards:[]}).matches,true);
+ assert.equal(hot(noUpset,{manager_awards:[{type:'hot-seat',roster_id:'17'}]}).matches,false);
+ assert.equal(hot(teams,{manager_awards:[{type:'hot-seat',roster_id:'17'},{type:'hot-seat',roster_id:'17'}]}).matches,false);
 });

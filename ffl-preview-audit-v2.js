@@ -81,6 +81,15 @@
   if(!segments.length)return null;
   return {delta:segments.reduce((n,g)=>n+g.delta,0),segments};
  }
+ function auditHotSeat(teams,record){
+  const rows=Array.isArray(teams)?teams:[];
+  const complete=rows.length===32&&new Set(rows.map(t=>String(t.roster_id))).size===32&&rows.every(t=>t.projection_coverage===1&&[t.projected,t.opponent_projected,t.points,t.opponent_points].every(v=>v!=null&&Number.isFinite(Number(v))));
+  const expected=complete?rows.filter(t=>t.won===false&&Number(t.points)<Number(t.opponent_points)&&Number(t.projected)>Number(t.opponent_projected)).sort((a,b)=>(Number(b.projected)-Number(b.opponent_projected))-(Number(a.projected)-Number(a.opponent_projected))||String(a.roster_id).localeCompare(String(b.roster_id)))[0]:null;
+  const badges=(record?.manager_awards||[]).filter(a=>a.type==='hot-seat');
+  const recorded=badges[0]||null;
+  const matches=complete&&!!record&&badges.length===(expected?1:0)&&(!expected||String(expected.roster_id)===String(recorded?.roster_id));
+  return {complete,matches,teamCount:rows.length,covered:rows.filter(t=>t.projection_coverage===1&&t.projected!=null&&t.opponent_projected!=null).length,expected:expected?{roster_id:expected.roster_id,team:expected.team_name,projected_margin:Number(expected.projected)-Number(expected.opponent_projected)}:null,recorded:recorded?{roster_id:recorded.roster_id,team:recorded.team_name,provisional:!!recorded.provisional}:null};
+ }
  const consoleError=(type,...args)=>{errors.push({type,message:cap(args.map(x=>typeof x==='string'?x:x?.message||String(x)).join(' '),350)})};
  const prevError=console.error,prevWarn=console.warn,onError=e=>consoleError('window',e.message),onRejection=e=>consoleError('rejection',e.reason?.message||e.reason);
  console.error=function(...args){consoleError('console',...args);prevError.apply(this,args)};
@@ -252,7 +261,7 @@
       const hotSeatCards=elements('#leagueHubContent .lh-card h3').filter(h=>
        /^\s*(?:🔥\s*)?HOT SEAT\s*$/i.test(norm(text(h))));
       const displayedWeek=visibleAwards.match(/WEEKLY MANAGER AWARDS\s*[—-]\s*(\d{4}) WEEK (\d+)/i);
-      api.displayedManagerAwards={season:Number(displayedWeek?.[1])||null,week:Number(displayedWeek?.[2])||null,hotSeatCards:hotSeatCards.length,provisional:/Current verified result, pending archival/i.test(visibleAwards)};
+      api.displayedManagerAwards={season:Number(displayedWeek?.[1])||null,week:Number(displayedWeek?.[2])||null,hotSeatCards:hotSeatCards.length,hotSeatText:hotSeatCards.map(h=>norm(text(h.closest('.lh-card')))),provisional:/Current verified result, pending archival/i.test(visibleAwards)};
       add('League Hub','Current weekly awards heading rendered',
         displayedWeek?'PASS':'FAIL',
         JSON.stringify({displayedWeek:api.displayedManagerAwards,renderedHotSeatCards:hotSeatCards.length,
@@ -288,22 +297,20 @@
   const records=awards?.records||awards?.weekly_awards?.records||[];
   const latestAward=Array.isArray(records)?records.find(r=>Number(r.season)===Number(latest?.season)&&Number(r.week)===Number(latest?.week)):null;
   const sourceTeams=latest?.available?latest.teams||[]:[];
-  const projectedUpset=sourceTeams.some(t=>t?.won===false&&t?.projected!=null&&t?.opponent_projected!=null&&
-    Number(t.projected)>Number(t.opponent_projected)&&Number(t.points)<Number(t.opponent_points));
-  const hotRecorded=Boolean(latestAward?.manager_awards?.some(a=>a.type==='hot-seat'));
+  const latestHot=auditHotSeat(sourceTeams,latestAward);
   const visible=api.displayedManagerAwards,correctWeek=visible?.season===Number(latest?.season)&&visible?.week===Number(latest?.week);
-  const shown=correctWeek&&visible.hotSeatCards>0;
-  add('Weekly','Latest completed-week Hot Seat projection and display parity',
-    !correctWeek?'FAIL':projectedUpset?(shown?(hotRecorded?'PASS':'WARN'):'FAIL'):hotRecorded?'WARN':sourceTeams.every(t=>t.projected!=null)?'PASS':'WARN',
-    JSON.stringify({season:latest?.season,week:latest?.week,projectedUpset,hotRecorded,shown,provisional:visible?.provisional,
-      projectionCoverage:sourceTeams.filter(t=>t.projected!=null).length,teams:sourceTeams.length}));
-  if(Number(latest?.season)===2026&&Number(latest?.week)>10){
-   const historic=await fetchJson('Historical Week 10 matchups','/.netlify/functions/league-hub?league_week=10');
-   const historicalTeams=historic?.available&&Number(historic.week)===10?historic.teams||[]:[];
-   const historicalRecord=records.find(r=>Number(r.season)===2026&&Number(r.week)===10);
-   const favoriteLost=historicalTeams.some(t=>t?.won===false&&t.projected!=null&&t.opponent_projected!=null&&Number(t.projected)>Number(t.opponent_projected)&&Number(t.points)<Number(t.opponent_points));
-   const recorded=Boolean(historicalRecord?.manager_awards?.some(a=>a.type==='hot-seat'));
-   add('Weekly','Historical Week 10 Hot Seat evidence',favoriteLost?(recorded?'PASS':'WARN'):recorded?'WARN':historicalTeams.length===32&&historicalTeams.every(t=>t.projected!=null)?'PASS':'WARN',JSON.stringify({teams:historicalTeams.length,projectionCoverage:historicalTeams.filter(t=>t.projected!=null).length,favoriteLost,recorded}));
+  const shown=correctWeek&&(latestHot.expected?visible.hotSeatCards===1&&visible.hotSeatText.some(v=>v.toLowerCase().includes(String(latestHot.expected.team||'').toLowerCase())):visible.hotSeatCards===0);
+  api.latestHotSeatComparison={...latestHot,correctWeek,shown};
+  add('Weekly','Latest completed-week Hot Seat exact winner and display parity',
+   !latestHot.complete?'WARN':latestHot.matches&&shown?'PASS':'FAIL',JSON.stringify(api.latestHotSeatComparison));
+  if(Number(latest?.week)>1){
+   const priorWeek=Number(latest.week)-1;
+   const historic=await fetchJson('Previous completed week matchups','/.netlify/functions/league-hub?league_week='+priorWeek);
+   const historicalTeams=historic?.available&&Number(historic.week)===priorWeek?historic.teams||[]:[];
+   const historicalRecord=records.find(r=>Number(r.season)===Number(latest.season)&&Number(r.week)===priorWeek);
+   const priorHot=auditHotSeat(historicalTeams,historicalRecord);
+   api.previousHotSeatComparison={...priorHot,season:latest.season,week:priorWeek};
+   add('Weekly','Historical Hot Seat exact winner and projection evidence',!priorHot.complete?'WARN':priorHot.matches?'PASS':'FAIL',JSON.stringify(api.previousHotSeatComparison));
   }
   api.weeklyRecordSummary=Array.isArray(records)?records.slice(-8).map(r=>({
    season:r.season,week:r.week,offense:r.players_of_week?.offense||r.players_of_week?.offensive||null,
@@ -348,10 +355,10 @@
    !highs?'WARN':(highs.records?.length||0)>0?'PASS':'WARN',
    JSON.stringify({recordCount:highs?.records?.length,source:highs?.sources,cache:highs?.cache_status}).slice(0,550));
   add('All-Time Highs','independent GitHub historical archive populated',
-   !highs?'WARN':Number(highs.sources?.durable)>0?'PASS':'WARN',
+   !highs?'WARN':Number(highs.sources?.durable)>0&&Number(highs.sources?.independently_verified)>0&&highs.verified_records?.length>0?'PASS':'WARN',
    'Blob records: '+String(highs?.sources?.blob??'n/a')+
    ' | durable GitHub records: '+String(highs?.sources?.durable??'n/a')+
-   '. Existing Blob scores are not proof of independent GitHub persistence.');
+   ' | independently verified: '+String(highs?.sources?.independently_verified??'n/a')+'. Legacy scores are not certified peaks.');
   api.managerSummary={keys:Object.keys(managers||{}),currentManagers:managers?.current?.length};
   add('Managers','all 32 league managers mapped',managers?.current?.length===32?'PASS':'WARN',
    'Managers found: '+String(managers?.current?.length??'unavailable'));
@@ -361,10 +368,10 @@
   const candidate=[...(moving?.valueRisers||[]),...(moving?.valueFallers||[])].find(row=>String(row?.id)==='8343');
   const mafeRow=currentMarket?.marketRows?.find(row=>String(row.id)==='8343');
   const mafeHistory=await fetchJson('Boye Mafe recorded history','/.netlify/functions/value-history?player_id=8343',{timeoutMs:45000});
-  const evidence=auditRecordedMovement(mafeHistory?.points,{baseline:candidate?.baseline_t,through:currentMarket?.latest,model:currentMarket?.valuation_model,modelChangeAt:currentMarket?.model_change_at});
+  const evidence=auditRecordedMovement(mafeHistory?.points,{baseline:candidate?.baseline_t,through:candidate?.through_t||currentMarket?.latest,model:currentMarket?.valuation_model,modelChangeAt:currentMarket?.model_change_at});
   api.boyeMafe7DModelAudit={value:mafeRow?.value,delta:candidate?.delta??null,model:currentMarket?.valuation_model,
-   modelChangeAt:currentMarket?.model_change_at,baseline:candidate?.baseline_t,through:currentMarket?.latest,evidence};
-  const comparable=!!candidate&&!!evidence;
+   modelChangeAt:currentMarket?.model_change_at,baseline:candidate?.baseline_t,through:candidate?.through_t||currentMarket?.latest,evidence};
+  const comparable=!!candidate&&!!evidence&&!mafeHistory?.partial;
   const movementMatched=comparable&&Number(candidate.delta)===evidence.delta&&Number(mafeRow?.delta7)===evidence.delta;
   add('Market','Boye Mafe 7D recorded segment arithmetic',
    !comparable?'WARN':movementMatched?'PASS':'FAIL',JSON.stringify(api.boyeMafe7DModelAudit));

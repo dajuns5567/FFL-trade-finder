@@ -127,7 +127,11 @@ try{
    await original.locator('#tradeSelectedPositionsOnly262').waitFor({state:'attached'});
    await original.waitForFunction(()=>document.querySelector('header.fleeced-site-header')&&document.querySelectorAll('.tabs button[data-tab]').length===9);
    const geometry=p=>p.evaluate(()=>['header','.fleeced-header-tabs','main','#home','#homeNavigation'].map(sel=>{const el=document.querySelector(sel),r=el.getBoundingClientRect(),style=getComputedStyle(el);return{sel,x:Math.round(r.x),y:Math.round(r.y+window.scrollY),w:Math.round(r.width),grid:style.gridTemplateColumns,font:style.fontSize}}));
+   // Compare identical fresh-load states, not a previously navigated page.
+   await page.reload({waitUntil:'domcontentloaded'});await button.waitFor();
+   await page.locator('#tradeSelectedPositionsOnly262').waitFor({state:'attached'});
    await page.evaluate(()=>window.scrollTo(0,0));await original.evaluate(()=>window.scrollTo(0,0));
+   await page.waitForTimeout(700);await original.waitForTimeout(700);
    assert.deepEqual(await geometry(page),await geometry(original),name+' original desktop geometry');
    await original.close();
   }

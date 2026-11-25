@@ -73,7 +73,8 @@ test('independent backend week feed uses real Sleeper projections, not final-sco
  const end=backend.indexOf('async function draftAwards(){',begin);
  assert.ok(begin>=0&&end>begin);
  const body=backend.slice(begin,end);
- assert.match(body,/const scoredProjections=await projections\(season,week,league\?\.scoring_settings\|\|\{\}\)/);
+ assert.match(body,/completedWeekProjections\(\{season,week,scoring:league\?\.scoring_settings\|\|\{\},matchups:finalized\.rows,fetchJson\}\)/);
+ assert.match(body,/const scoredProjections=projectionResult\.map/);
  assert.match(body,/playerProjections:scoredProjections/);
  assert.doesNotMatch(body,/playerProjections:finalized\.rows/);
  assert.match(body,/if\(!finalized\.complete\)continue/);

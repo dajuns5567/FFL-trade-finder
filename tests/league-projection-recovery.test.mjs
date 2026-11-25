@@ -37,3 +37,16 @@ test('new current-season records do not lock a partial newsroom-derived Hot Seat
  assert.match(src,/if\(!onlyAdditional&&Number\(p\.season\)===Number\(league\?\.season\)\)\s*rec\.manager_awards=rec\.manager_awards\.filter\(a=>a\.type!=='hot-seat'\)/);
  assert.match(src,/repairMissingHotSeats\(\{records:\[\.\.\.byKey\.values\(\)\],latest:independent/);
 });
+
+test('ADP-only source rows contribute no published scoring, distinct from absent rows and real numeric zero',async()=>{
+ const result=await completedWeekProjections({season:2026,week:10,scoring:{rec:1},matchups,fetchJson:async url=>matchups.slice(0,31).map((m,i)=>({player_id:m.starters[0],stats:i===0?{adp_dd_ppr:1000}:i===1&&url.includes('.app/')?{adp_dd_ppr:1000}:{rec:i}}))});
+ assert.deepEqual(result.noScoring,['1']);assert.equal(result.map['1'],0);
+ assert.equal(result.map['2'],1);assert.equal(result.diagnostics.numeric_coverage,30);
+ assert.deepEqual(result.diagnostics.missing,['32']);
+ const full={...result.map,'32':0};
+ const data=completedLeagueWeekView({season:2026,week:10,matchups,rosters,users:[],playerProjections:full,noPublishedScoring:result.noScoring});
+ assert.equal(data.teams[0].projection_no_published_scoring_count,1);
+ assert.equal(data.teams[1].opponent_projection_no_published_scoring_count,1);
+ assert.equal(completeHotSeatCoverage(data),true);
+ assert.equal(scoreProjection({stats:{adp_dd_ppr:1000}},{rec:1}),null);
+});

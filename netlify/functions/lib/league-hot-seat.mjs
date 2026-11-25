@@ -73,7 +73,7 @@ export async function repairMissingHotSeats({records,latest,readWeek,persist=fal
     if(persist)out[index]={...r,hot_seat_projection_verified:true};
     return;
    }
-   const awards=candidate.manager_awards.map(a=>a.type==='hot-seat'?{...a,provisional:!persist,projection_roster_count:32}:a);
+   const awards=candidate.manager_awards.map(a=>a.type==='hot-seat'?{...a,provisional:!persist,projection_roster_count:32,projection_basis:'sum-of-published-sleeper-scoring-components',projection_no_published_scoring_count:week.teams.reduce((n,t)=>n+(Number(t.projection_no_published_scoring_count)||0),0)}:a);
    out[index]={...candidate,manager_awards:awards,...(persist?{hot_seat_projection_verified:true}:{})};
   }));
  }

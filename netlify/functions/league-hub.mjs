@@ -1029,7 +1029,7 @@ export async function latestCompletedLeagueWeek(requestedWeek=null){
   const projectionResult=await completedWeekProjections({season,week,scoring:league?.scoring_settings||{},matchups:finalized.rows,fetchJson});
   const scoredProjections=projectionResult.map;
   const view=completedLeagueWeekView({season,week,matchups:finalized.rows,rosters,users,
-   playerProjections:scoredProjections});
+   playerProjections:scoredProjections,noPublishedScoring:projectionResult.noScoring});
   if(view)return {...view,projection_diagnostics:projectionResult.diagnostics};
  }
  return{available:false,season,week:requestedWeek,reason:'Sleeper has not finalized league matchup results'};

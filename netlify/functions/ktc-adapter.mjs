@@ -306,14 +306,30 @@ export async function refreshKtc(opts={}){
       // Walk sequential pages and merge only IDENTICAL actual publisher rows.
       // Never synthesize rankings from missing pages or positional filters.
       const pageNumbers=Array.from({length:10},(_,i)=>i+1);
-      const pages=[html,...await Promise.all(pageNumbers.map(async page=>{
-        const pageUrl=new URL("https://keeptradecut.com/dynasty-rankings");
-        pageUrl.searchParams.set("page",String(page));
-        pageUrl.searchParams.set("format","2");
+      const readPage=async page=>{
+        const pageUrl=new URL(KTC_URL);
+        if(page!==0)pageUrl.searchParams.set("page",String(page));
         try{return await fetchText(pageUrl.toString(),opts.fetchImpl||fetch,opts.timeoutMs||TIMEOUT_MS)}
         catch{return ""}
-      }))];
-      const rendered=mergeKtcPublishedOverallRanks(pages);
+      };
+      let pages=[html,...await Promise.all(pageNumbers.map(readPage))];
+      let rendered=mergeKtcPublishedOverallRanks(pages);
+      // A moving publisher leaderboard can straddle two cached versions.
+      // If there is a genuine row conflict, retry the public batch ONCE,
+      // replacing the entire batch; never select a preferred duplicate or
+      // combine rows from separate inconsistent batches. The same validation
+      // applies to the replacement. Do not retry inaccessible public pages.
+      if(!rendered){
+        const initial=describeKtcPublishedOverallConflicts(pages);
+        if(initial.conflict_count>0&&!initial.below_minimum){
+          responseShape.rendered_html_initial_rejection=initial;
+          await (opts.pause|| (ms=>new Promise(resolve=>setTimeout(resolve,ms))))(750);
+          const next=await Promise.all([0,...pageNumbers].map(readPage));
+          pages=next;
+          rendered=mergeKtcPublishedOverallRanks(pages);
+          responseShape.rendered_html_conflict_retry=true;
+        }
+      }
       responseShape.rendered_html_pages=pages.length;
       responseShape.rendered_html_page_counts=pages.map(x=>parseKtcRenderedPage(x).length);
       responseShape.rendered_html_rank_ranges=pages.map(x=>{

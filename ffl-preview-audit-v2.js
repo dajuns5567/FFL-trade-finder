@@ -365,9 +365,9 @@
   api.boyeMafe7DModelAudit={value:mafeRow?.value,delta:candidate?.delta??null,model:currentMarket?.valuation_model,
    modelChangeAt:currentMarket?.model_change_at,baseline:candidate?.baseline_t,through:currentMarket?.latest,evidence};
   const comparable=!!candidate&&!!evidence;
-  const matched=comparable&&Number(candidate.delta)===evidence.delta&&Number(mafeRow?.delta7)===evidence.delta;
+  const movementMatched=comparable&&Number(candidate.delta)===evidence.delta&&Number(mafeRow?.delta7)===evidence.delta;
   add('Market','Boye Mafe 7D recorded segment arithmetic',
-   !comparable?'WARN':matched?'PASS':'FAIL',JSON.stringify(api.boyeMafe7DModelAudit));
+   !comparable?'WARN':movementMatched?'PASS':'FAIL',JSON.stringify(api.boyeMafe7DModelAudit));
   // Only inspect; actual live Market values must still be compared against the immutable archive.
   add('Data provenance','Market history coverage','INFO',JSON.stringify(api.marketSummary));
  }catch(e){add('Script','runner','FAIL',e.stack||e.message)}

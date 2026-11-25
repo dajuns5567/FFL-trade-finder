@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-let installed=false,tradeCache=null,weeklyCache=null,liveLeagueWeekCache=null,spotlightWeeklyCache=null,weeklyAwardsCache=null,draftCache=null,managerCache=null,reporterDirectoryCache=null,reporterArchiveCache={},openReporterArchive='',awardHistory=[],awardHighHistory=[],broadcastArchive=[],openBroadcastTeam='',currentView='daily',rankingAwardKey='',awardYearFilters={},awardHighMode={},hallExpanded=false,selectedManagerId='',inquirerPlayerLinkCache=null;
+let installed=false,tradeCache=null,weeklyCache=null,liveLeagueWeekCache=null,spotlightWeeklyCache=null,weeklyAwardsCache=null,draftCache=null,managerCache=null,reporterDirectoryCache=null,reporterArchiveCache={},openReporterArchive='',awardHistory=[],awardHighHistory=[],awardLegacyHighHistory=[],broadcastArchive=[],openBroadcastTeam='',currentView='daily',rankingAwardKey='',awardYearFilters={},awardHighMode={},hallExpanded=false,selectedManagerId='',inquirerPlayerLinkCache=null;
 // Unpublished editions are reviewable only on Netlify PR previews, and only
 // through the same League Hub rendering path as the published archive.
 const onNetlifyDeployPreview=/^deploy-preview-\d+--[^.]+\.netlify\.app$/i.test(location.hostname);
@@ -190,7 +190,17 @@ async function reporterArchive(id){const k=String(id||'');if(!k)return null;if(r
 
 function managerNameForRoster(id){const rid=String(id);const cur=(managerCache?.current||[]).find(x=>String(x.roster_id)===rid);if(cur?.sleeper_id)return String(cur.sleeper_id);const assignment=(managerCache?.assignments||[]).filter(x=>String(x.roster_id)===rid).sort((a,b)=>(Number(b.season)||0)-(Number(a.season)||0))[0];if(assignment?.sleeper_id)return String(assignment.sleeper_id);const team=(globalThis.state?.teams||[]).find(x=>String(x.id)===rid);return String(team?.manager||team?.owner_name||team?.name||teamName(rid))}
 function tradeKey(t){return String(t?.id||t?.transaction_id||((t?.created||'unknown')+':'+(t?.roster_ids||[]).join('-')))}
-function hindsightDelta(trade){try{const fn=globalThis.tradeHistoryAdjustedHindsightV477;if(typeof fn!=='function')return null;const h=fn(trade);if(!h||!Number.isFinite(Number(h.a))||!Number.isFinite(Number(h.b))||!Number.isFinite(Number(h.edge)))return null;return h}catch{return null}}
+function hindsightDelta(trade){try{
+ const sides=trade?.sides||[],rosters=sides.map(s=>String(s?.roster_id||''));
+ if(sides.length!==2||new Set(rosters).size!==2||rosters.some(x=>!x||x==='0'))return null;
+ const fn=globalThis.tradeHistoryAdjustedHindsightV477;
+ if(typeof fn!=='function')return null;
+ const h=fn(trade);
+ if(!h||![h.a,h.b,h.edge].every(v=>Number.isFinite(Number(v)))||
+    ![0,1].includes(Number(h.winner))||Number(h.edge)<0||
+    Math.abs(Math.abs(Number(h.a)-Number(h.b))-Number(h.edge))>0.001)return null;
+ return h;
+}catch{return null}}
 function originalTradeDelta(trade){try{const fn=globalThis.tradeHistoryAdjustedOriginalV505;if(typeof fn!=='function')return null;const h=fn(trade);if(!h||!Number.isFinite(Number(h.aRaw))||!Number.isFinite(Number(h.bRaw))||!Number.isFinite(Number(h.edge))||!String(h.label||'').trim())return null;return h}catch{return null}}
 function inquirerTradeClassificationQuip(label,rid,context={}){
  const key=/^fleeced!?$/i.test(label)?'fleeced':/^fair$/i.test(label)?'fair':/^excellent fit$/i.test(label)?'excellent':/^negotiable$/i.test(label)?'negotiable':'other',
@@ -363,7 +373,57 @@ function managementSectionMentionsTrade(section){
  const text=(section?.paragraphs||[]).join(' ');
  return /\btrade(?:d|s)?\b|\bdeal\b|\bswapp?ed\b|\bchanged hands\b|\bsending\b[^.]{0,100}\bother way\b/i.test(text);
 }
-function teamTradeStats(all){const m=new Map((globalThis.state?.teams||[]).map(t=>[String(t.id),{id:String(t.id),trades:0,wins:0,losses:0,net:0,biggestWin:0,biggestLoss:0,biggestWinTrade:'',biggestLossTrade:''}]));for(const t of all){const h=hindsightDelta(t);if(!h)continue;(t.sides||[]).forEach((s,i)=>{const x=m.get(String(s.roster_id));if(!x)return;x.trades++;const diff=i===0?h.a-h.b:h.b-h.a;x.net+=diff;if(diff>0){x.wins++;if(diff>x.biggestWin){x.biggestWin=diff;x.biggestWinTrade=tradeKey(t)}}else if(diff<0){x.losses++;if(diff<x.biggestLoss){x.biggestLoss=diff;x.biggestLossTrade=tradeKey(t)}}})}return[...m.values()]}
+// Reconcile unique completed transactions before using their adjusted edges.
+function awardTradeLedger(all,{strict=false}={}){
+ const teams=(globalThis.state?.teams||[]).map(t=>String(t.id)),known=new Set(teams);
+ const seen=new Map(),entries=[],issues=[],counts={input:all.length,duplicates:0,multiTeam:0,unavailable:0};
+ for(const t of all){
+  const id=String(t?.id||t?.transaction_id||'').trim(),season=Number(t?.season)||0;
+  const sides=Array.isArray(t?.sides)?t.sides:[],rosters=sides.map(s=>String(s?.roster_id||''));
+  if(!id){issues.push('missing transaction ID');continue}
+  const key=season+'|'+id;
+  const signature=JSON.stringify(sides.map(s=>[String(s.roster_id),[...(s.player_ids||[])].map(String).sort(),(s.picks||[]).map(p=>[p.season,p.round,p.original_roster_id,p.drafted_player_id||''].join(':')).sort()]).sort((a,b)=>a[0].localeCompare(b[0])));
+  if(seen.has(key)){
+   counts.duplicates++;
+   if(seen.get(key)!==signature)issues.push('conflicting duplicate '+key);
+   continue;
+  }
+  seen.set(key,signature);
+  if(sides.length>2){counts.multiTeam++;continue}
+  if(sides.length!==2||new Set(rosters).size!==2||rosters.some(r=>!known.has(r))){issues.push('invalid participants '+key);continue}
+  const declared=(t.roster_ids||[]).map(String);
+  if(declared.length!==2||new Set(declared).size!==2||rosters.some(r=>!declared.includes(r))){issues.push('participant mismatch '+key);continue}
+  const h=hindsightDelta(t);
+  if(!h){counts.unavailable++;continue}
+  const edge=Number(h.a)-Number(h.b);
+  if(!Number.isFinite(edge)||Math.abs(Math.abs(edge)-Number(h.edge))>0.001||Number(h.winner)!==(edge>=0?0:1)){issues.push('invalid edge '+key);continue}
+  entries.push({id,season,rosters,edge});
+ }
+ if(strict&&(issues.length||!entries.length))throw Error('Award trade reconciliation refused: '+issues.slice(0,8).join('; '));
+ return{teams,entries,issues,counts};
+}
+function teamTradeStats(all,{strict=false}={}){
+ const ledger=awardTradeLedger(all,{strict}),m=new Map(ledger.teams.map(id=>[id,{id,trades:0,wins:0,losses:0,net:0,biggestWin:0,biggestLoss:0,biggestWinTrade:'',biggestLossTrade:''}]));
+ for(const t of ledger.entries){
+  for(const [i,id] of t.rosters.entries()){
+   const x=m.get(id),diff=i===0?t.edge:-t.edge;
+   x.trades++;x.net+=diff;
+   if(diff>0){x.wins++;if(diff>x.biggestWin){x.biggestWin=diff;x.biggestWinTrade=t.id}}
+   else if(diff<0){x.losses++;if(diff<x.biggestLoss){x.biggestLoss=diff;x.biggestLossTrade=t.id}}
+  }
+ }
+ const rows=[...m.values()];
+ if(strict){
+  // Independent per-team reduction of the signed transaction ledger.
+  for(const row of rows){
+   const mine=ledger.entries.filter(t=>t.rosters.includes(row.id)).map(t=>t.rosters[0]===row.id?t.edge:-t.edge);
+   const expected={trades:mine.length,wins:mine.filter(v=>v>0).length,losses:mine.filter(v=>v<0).length,net:mine.reduce((a,b)=>a+b,0),biggestWin:Math.max(0,...mine),biggestLoss:Math.min(0,...mine)};
+   for(const [key,value] of Object.entries(expected))if(Math.abs(row[key]-value)>0.001)throw Error('Award trade parity mismatch '+row.id+' '+key);
+  }
+  if(Math.abs(rows.reduce((n,r)=>n+r.net,0))>0.001||rows.reduce((n,r)=>n+r.trades,0)!==2*ledger.entries.length)throw Error('Award trade ledger fails league conservation');
+ }
+ return rows;
+}
 function openTradeHistory(team=''){activate('tradeHistory');const b=document.querySelector('.tabs button[data-tab="tradeHistory"]');b?.click();if(team){let n=0;const timer=setInterval(()=>{n++;if(typeof globalThis.openTradeHistoryTeamV455==='function'){globalThis.openTradeHistoryTeamV455(String(team));clearInterval(timer)}else if(n>20)clearInterval(timer)},50)}}
 function openValueHistoryTeam(id,comparison=false){activate('valueHistory');document.querySelector('.tabs button[data-tab="valueHistory"]')?.click();let n=0;const timer=setInterval(()=>{n++;if(typeof globalThis.openValueHistoryTeamV458==='function'){globalThis.openValueHistoryTeamV458(String(id),!!comparison);clearInterval(timer)}else if(n>20)clearInterval(timer)},50)}
 function openValueHistoryPlayer(id){const pid=String(id||'');if(!pid)return;activate('valueHistory');document.querySelector('.tabs button[data-tab="valueHistory"]')?.click();let n=0;const timer=setInterval(()=>{n++;const api=globalThis.valueHistoryV331;if(typeof api?.openPlayer==='function'){clearInterval(timer);api.openPlayer(pid)}else if(n>30)clearInterval(timer)},50)}
@@ -429,11 +489,168 @@ function currentAwards(stats,draftData){return awardStandings(stats,draftData).m
 const tradeAdjustedAwardKeys=new Set(['fleecer','fleeced','deal-maker','efficiency','big-swing','trade-average','volume-wins','big-regret','balanced']);
 function awardRecordKey(key){const k=String(key||'');return tradeAdjustedAwardKeys.has(k)?k+':trade-adjusted-v1':k}
 function awardPeriod(){const d=new Date(),anchor=new Date('2026-09-14T00:00:00');if(d<anchor)return'Sep 14 2026';const months=(d.getFullYear()-anchor.getFullYear())*12+d.getMonth()-anchor.getMonth(),step=Math.floor(months/6)*6,x=new Date(anchor);x.setMonth(x.getMonth()+step);return x.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
-async function syncAwards(rows){try{try{let h=await fetch('/.netlify/functions/league-hub?award_highs=1',{cache:'no-store'}).then(r=>r.json()),records=rows.flatMap(a=>(a.standings||[]).map(x=>({award_key:awardRecordKey(a.key),roster_id:x.roster_id,score:x.score,detail:x.detail})));h=await fetch('/.netlify/functions/league-hub?award_highs=1',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({records})}).then(r=>r.json());awardHighHistory=h.records||[]}catch{}const draftAward=rows.find(x=>x.key==='best-draft-pick');if(draftAward){const records=(draftCache?.draft_picks||[]).map(p=>{const v=Number(globalThis.tradeValueNormalizationV130?.canonicalValue?.({type:'player',id:String(p.player_id),owner:0}))||0;return v&&p.pick_no?{season:p.season,roster_id:p.roster_id,player_id:p.player_id,pick_no:p.pick_no,captured_value:v,delta:Math.round(v-retroPick(p.season,p.pick_no))}:null}).filter(Boolean);fetch('/.netlify/functions/league-hub?draft_records=1',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({records})}).catch(()=>{})}let r=await fetch('/.netlify/functions/league-hub?awards=1',{cache:'no-store'}),j=await r.json();awardHistory=j.history||[];const p=awardPeriod();if(!awardHistory.some(x=>x.period===p)){r=await fetch('/.netlify/functions/league-hub?awards=1',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({period:p,awards:rows})});j=await r.json();awardHistory=j.history||awardHistory}}catch{}}
+// Always load saved highs even if this client cannot write (protected
+// preview, transient network error, or a stale browser tab). The old code
+// discarded a successful GET whenever its next POST failed.
+async function refreshAllTimeHighs(rows,{record=false,verifiedInputs=false}={}){
+ const endpoint='/.netlify/functions/league-hub?award_highs=1';
+ try{
+  const response=await fetch(endpoint,{cache:'no-store'});
+  if(!response.ok)throw Error('All-Time Highs read returned '+response.status);
+  const data=await response.json();
+  if(!Array.isArray(data?.records))throw Error('Invalid All-Time Highs archive');
+  awardLegacyHighHistory=data.records;
+  awardHighHistory=Array.isArray(data.verified_records)?data.verified_records:[];
+ }catch(error){
+  console.warn('league-award-highs-read-unavailable',String(error?.message||error));
+ }
+ const teams=globalThis.state?.teams||[];
+ const completeContext=verifiedInputs||Array.isArray(rows)&&rows.length===20&&
+   Array.isArray(tradeCache?.trades)&&tradeCache.trades.length>0&&
+   Array.isArray(draftCache?.draft_picks)&&draftCache.draft_picks.length>0;
+ const ready=completeContext&&teams.length===32&&
+   new Set(teams.map(t=>String(t.id))).size===32&&
+   globalThis.modeledPlayerValuesV319?.ready===true&&
+   typeof globalThis.tradeValueNormalizationV130?.canonicalValue==='function';
+ if(record&&!onNetlifyDeployPreview&&!inquirerPreviewMode&&ready&&Array.isArray(rows)){
+  const observations=rows.flatMap(a=>(a.standings||[]).map(x=>({
+   award_key:awardRecordKey(a.key),roster_id:String(x.roster_id||''),
+   score:x.score,detail:x.detail
+  }))).filter(x=>x.roster_id&&Number.isFinite(Number(x.score))&&
+     Number(x.score)!==-999999&&Number(x.score)>-1e8);
+  if(observations.length){
+   try{
+    const response=await fetch(endpoint,{method:'POST',
+     headers:{'content-type':'application/json'},
+     body:JSON.stringify({records:observations})});
+    if(!response.ok)throw Error('All-Time Highs write returned '+response.status);
+    const data=await response.json();
+    if(Array.isArray(data?.records))awardLegacyHighHistory=data.records;
+    if(Array.isArray(data?.verified_records))awardHighHistory=data.verified_records;
+   }catch(error){
+    console.warn('league-award-highs-write-unavailable',String(error?.message||error));
+   }
+  }
+ }
+ if(currentView==='awards'&&rankingAwardKey&&awardHighMode[rankingAwardKey]&&
+     tradeCache&&draftCache){
+  const host=document.getElementById('leagueHubContent');
+  if(host)host.innerHTML=rankingsHTML(currentAwards(teamTradeStats(tradeCache.trades||[]),draftCache),rankingAwardKey);
+ }
+}
+async function freshAwardTradeHistory(){
+ const response=await fetch('/.netlify/functions/value-history?trades=1&trades_fresh=1',
+  {cache:'no-store'});
+ if(!response.ok)throw Error('Verified completed trade history unavailable for All-Time Highs');
+ const data=await response.json();
+ if(!Array.isArray(data?.trades)||!data.trades.length)
+  throw Error('No completed Sleeper trades verified for All-Time Highs');
+ return data;
+}
+let allTimeHighCaptureAt=0,allTimeHighCapturePending=null;
+async function captureAllTimeHighsOnSiteOpen({force=false}={}){
+ if(onNetlifyDeployPreview||inquirerPreviewMode||document.hidden)return false;
+ if(allTimeHighCapturePending)return allTimeHighCapturePending;
+ if(!force&&Date.now()-allTimeHighCaptureAt<15*60*1000)return true;
+ // A site-open or completed-week capture must use real current assets,
+ // canonical values and completed trade history. Never write empty placeholders.
+ const teams=globalThis.state?.teams||[],assets=globalThis.state?.allAssets||[];
+ if(teams.length!==32||assets.length<100||
+    globalThis.modeledPlayerValuesV319?.ready!==true||
+    typeof globalThis.tradeValueNormalizationV130?.canonicalValue!=='function')return false;
+ allTimeHighCapturePending=(async()=>{
+  const [tradeData,draftData]=await Promise.all([freshAwardTradeHistory(),drafts()]);
+  if(!Array.isArray(tradeData?.trades)||tradeData.trades.length===0||
+     !Array.isArray(draftData?.draft_picks))return false;
+  const rows=currentAwards(teamTradeStats(tradeData.trades),draftData);
+  if(rows.length!==20||rows.some(x=>!x.key||!Array.isArray(x.standings)))return false;
+  await refreshAllTimeHighs(rows,{verifiedInputs:true});
+  allTimeHighCaptureAt=Date.now();
+  return true;
+ })();
+ try{return await allTimeHighCapturePending}
+ catch(error){console.warn('league-award-highs-auto-capture-unavailable',String(error?.message||error));return false}
+ finally{allTimeHighCapturePending=null}
+}
+// Also capture when the site opens outside League Hub. Canonical data may
+// arrive after DOM ready, so listen for the explicit values-ready signal and
+// make one bounded startup attempt.
+window.addEventListener('fll:canonical-values-ready',()=>{
+ setTimeout(()=>captureAllTimeHighsOnSiteOpen().catch(()=>{}),1500);
+});
+setTimeout(()=>captureAllTimeHighsOnSiteOpen().catch(()=>{}),12000);
+setInterval(()=>captureAllTimeHighsOnSiteOpen().catch(()=>{}),180000);
+document.addEventListener('visibilitychange',()=>{
+ if(!document.hidden)captureAllTimeHighsOnSiteOpen().catch(()=>{});
+});
+// Read-only scheduled collector: reuse the ACTUAL Award standings algorithm
+// in the same canonical valuation runtime as the website. No browser writes.
+window.fleecedAwardHighsScheduledObservation=async function(){
+ const teams=globalThis.state?.teams||[],assets=globalThis.state?.allAssets||[];
+ if(teams.length!==32||new Set(teams.map(x=>String(x.id))).size!==32||
+    assets.length<100||globalThis.modeledPlayerValuesV319?.ready!==true||
+    typeof globalThis.tradeValueNormalizationV130?.canonicalValue!=='function')
+  throw Error('Award collector refused incomplete canonical league');
+ const [tradeData,draftData]=await Promise.all([freshAwardTradeHistory(),drafts()]);
+ if(!Array.isArray(tradeData?.trades)||tradeData.trades.length===0||
+    !Array.isArray(draftData?.draft_picks)||!draftData.draft_picks.length)
+  throw Error('Award collector refused incomplete trade or draft source');
+ const awards=currentAwards(teamTradeStats(tradeData.trades,{strict:true}),draftData);
+ if(awards.length!==20||awards.some(x=>!x.key||!Array.isArray(x.standings)))
+  throw Error('Award collector refused missing category');
+ const observations=awards.flatMap(a=>(a.standings||[]).map(x=>({
+  award_key:awardRecordKey(a.key),roster_id:String(x.roster_id||''),
+  score:x.score,detail:x.detail
+ }))).filter(x=>/^[1-9][0-9]*$/.test(x.roster_id)&&
+    x.score!=null&&Number.isFinite(Number(x.score))&&
+    Number(x.score)!==-999999&&!/not enough data|unavailable/i.test(String(x.detail)));
+ if(observations.length<500)throw Error('Award collector refused incomplete ranking coverage '+observations.length);
+ return{schema_version:1,season:Number(globalThis.state?.season||2026),
+  captured_at:new Date().toISOString(),source:'canonical-live-32-team-awards',
+  team_count:32,trade_count:tradeData.trades.length,draft_count:draftData.draft_picks.length,
+  categories:awards.length,observations};
+};
+async function syncAwards(rows){
+ await refreshAllTimeHighs(rows);
+ try{
+  const draftAward=rows.find(x=>x.key==='best-draft-pick');
+  if(draftAward&&!onNetlifyDeployPreview){
+   const records=(draftCache?.draft_picks||[]).map(p=>{
+    const v=Number(globalThis.tradeValueNormalizationV130?.canonicalValue?.({type:'player',id:String(p.player_id),owner:0}))||0;
+    return v&&p.pick_no?{season:p.season,roster_id:p.roster_id,player_id:p.player_id,
+     pick_no:p.pick_no,captured_value:v,delta:Math.round(v-retroPick(p.season,p.pick_no))}:null
+   }).filter(Boolean);
+   fetch('/.netlify/functions/league-hub?draft_records=1',{method:'POST',
+    headers:{'content-type':'application/json'},body:JSON.stringify({records})}).catch(()=>{});
+  }
+  const response=await fetch('/.netlify/functions/league-hub?awards=1',{cache:'no-store'});
+  if(!response.ok)throw Error('Awards history read unavailable');
+  const data=await response.json();awardHistory=data.history||[];
+  const p=awardPeriod();
+  if(!onNetlifyDeployPreview&&!awardHistory.some(x=>x.period===p)){
+   const next=await fetch('/.netlify/functions/league-hub?awards=1',{method:'POST',
+    headers:{'content-type':'application/json'},body:JSON.stringify({period:p,awards:rows})});
+   if(next.ok){const value=await next.json();awardHistory=value.history||awardHistory}
+  }
+ }catch(error){console.warn('league-awards-history-unavailable',String(error?.message||error))}
+}
 function awardCard(a){const yf=a.yearFilter?`<label class="lh-year-filter"><b>YEAR</b><select data-lh-award-year="${esc(a.key)}"><option value="all">All</option>${(a.years||[]).map(y=>`<option value="${y}" ${String(awardYearFilters[a.key]||'all')===String(y)?'selected':''}>${y}</option>`).join('')}</select></label>`:'';const win=a.standings?.[0],link=a.leagueNetModal?`<button class="secondary small" data-lh-loaded-roster>Open Value History chart</button>`:a.teamTradeLink&&win?`<button class="secondary small" data-lh-manager-trades="${esc(win.roster_id)}">Winner Trade History</button>`:a.specificTradeLink&&win?.trade_id?`<button class="secondary small" data-lh-trade="${esc(win.trade_id)}">View Winning Trade</button>`:'';return`<div class="lh-card"><h3>${esc(a.title)}</h3><div class="lh-sub">${esc(a.desc||'')}</div>${yf}<div class="lh-story"><b>${a.roster_id?esc(teamName(a.roster_id)):'—'}</b><small>${esc(a.detail)}</small></div><div class="lh-action"><button class="secondary small" data-lh-rankings="${esc(a.key)}">View all rankings</button> ${link}</div></div>`}
-function awardRecordsHTML(a){const hist=awardHighHistory.filter(x=>x.award_key===awardRecordKey(a.key)),rows=hist.slice().sort((x,y)=>Number(y.score)-Number(x.score));return`<div class="lh-records"><h3>📈 All-Time Highs</h3><div class="lh-sub">Each team's highest recorded performance for this award. The timestamp is when that exact high was first captured and remains attached until a new high replaces it.</div>${rows.map((x,i)=>`<div class="lh-stat"><span><b>#${i+1}</b> ${esc(teamName(x.roster_id))}</span><span><small>${esc(x.detail||fmt(x.score))}</small><small style="display:block;color:var(--muted);margin-top:3px">Recorded ${esc(x.captured_at?new Date(x.captured_at).toLocaleString():'Timestamp unavailable')}</small></span></div>`).join('')||'<div class="lh-sub">No timestamped high has been captured yet.</div>'}</div>`}
+function awardRecordsHTML(a){
+ const key=awardRecordKey(a.key),
+  hist=awardHighHistory.filter(x=>x.award_key===key),
+  legacy=awardLegacyHighHistory.filter(x=>x.award_key===key),
+  rows=hist.slice().sort((x,y)=>Number(y.score)-Number(x.score));
+ const stored=rows.map((x,i)=>`<div class="lh-stat"><span><b>#${i+1}</b> ${esc(teamName(x.roster_id))}</span><span><small>${esc(x.detail||fmt(x.score))}</small><small style="display:block;color:var(--muted);margin-top:3px">Recorded ${esc(x.captured_at?new Date(x.captured_at).toLocaleString():'Timestamp unavailable')}</small></span></div>`).join('');
+ // Deploy Previews cannot write to the archive. Always show the actual live
+ // award rankings if no historical observation has been persisted yet, but
+ // NEVER mislabel the current value as a timestamped historical peak.
+ const provisional=!rows.length&&Array.isArray(a?.standings)?
+  `<div class="lh-sub" data-lh-highs-pending>VERIFIED ALL-TIME HIGH NOT YET ESTABLISHED. ${legacy.length?'Archived baseline observations ('+legacy.length+' teams) are preserved for audit, but were captured without independent source proof and are excluded from certified highs. ':''}These are CURRENT standings, not timestamped historical records. Only a successful canonical headless capture with verified source and archival readback can establish certified highs.</div>`+
+  a.standings.map((x,i)=>`<div class="lh-stat" data-lh-current-benchmark><span><b>#${i+1}</b> ${esc(teamName(x.roster_id))}</span><span class="lh-highs-result"><small class="lh-highs-value" style="display:block;text-align:right">${esc(x.detail||fmt(x.score))}</small><small class="lh-highs-status" style="display:block;color:var(--muted);margin-top:4px;text-align:right">Current standing · awaiting verified historical capture</small></span></div>`).join(''):'';
+ return`<div class="lh-records"><h3>📈 All-Time Highs</h3><div class="lh-sub">Verified canonical historical peaks only. Legacy single-snapshot baselines are retained separately and are never promoted to all-time records without independent evidence.</div>${stored||provisional||'<div class="lh-sub">No independently verified observations or current standings are available yet.</div>'}</div>`;
+}
 function rankingsHTML(rows,key){const a=rows.find(x=>x.key===key)||rows[0];if(!a)return'<div class="lh-awards-page"><div class="lh-card">No rankings available.</div></div>';if(a.key==='roster-value')return loadedRosterRankingsHTML(a);const high=!!awardHighMode[a.key],yf=`<div class="lh-action"><button type="button" class="secondary small ${high?'active':''}" data-lh-award-high="${esc(a.key)}">${high?'Turn off All-Time Highs':'📈 All-Time Highs'}</button>${a.yearFilter?` <label class="lh-year-filter"><b>YEAR</b><select data-lh-award-year="${esc(a.key)}"><option value="all">All</option>${(a.years||[]).map(y=>`<option value="${y}" ${String(awardYearFilters[a.key]||'all')===String(y)?'selected':''}>${y}</option>`).join('')}</select></label>`:''}</div>`;return`<div class="lh-awards-page"><div class="lh-card"><div class="lh-action"><button class="secondary small" data-lh-rankings-back>← All Awards</button></div><h3 style="margin-top:12px">${esc(a.title)} — All 32 Teams</h3><div class="lh-sub">${esc(a.desc||'Current standings')}</div>${yf}${high?awardRecordsHTML(a):a.standings.map(x=>`<div class="lh-stat"><span><b>#${x.rank}</b> ${esc(teamName(x.roster_id))}</span><span><small>${esc(x.detail)}</small>${a.teamTradeLink?` <button class="secondary small" data-lh-manager-trades="${esc(x.roster_id)}">Trade History</button>`:''}${a.specificTradeLink&&x.trade_id?` <button class="secondary small" data-lh-trade="${esc(x.trade_id)}">View Trade</button>`:''}</span></div>`).join('')}</div></div>`}
-function loadedRosterRankingsHTML(a){return`<div class="lh-awards-page"><div class="lh-card"><div class="lh-action"><button class="secondary small" data-lh-rankings-back>← All Awards</button></div><h3 style="margin-top:12px">${esc(a.title)} — All 32 Teams</h3><div class="lh-sub">Current loaded-roster net value ranking. Use View chart to open the same league comparison pop-out.</div>${a.standings.map(x=>`<div class="lh-stat"><span><b>#${x.rank}</b> ${esc(teamName(x.roster_id))}</span><span><small>${esc(x.detail)}</small> <button class="secondary small" data-lh-loaded-roster>View chart</button></span></div>`).join('')}</div></div>`}
+function loadedRosterRankingsHTML(a){const high=!!awardHighMode[a.key];return`<div class="lh-awards-page"><div class="lh-card"><div class="lh-action"><button class="secondary small" data-lh-rankings-back>← All Awards</button></div><h3 style="margin-top:12px">${esc(a.title)} — All 32 Teams</h3><div class="lh-sub">Current loaded-roster net value ranking. Use View chart to open the same league comparison pop-out.</div><div class="lh-action"><button type="button" class="secondary small ${high?'active':''}" data-lh-award-high="${esc(a.key)}">${high?'Turn off All-Time Highs':'📈 All-Time Highs'}</button> <button class="secondary small" data-lh-loaded-roster>View chart</button></div>${high?awardRecordsHTML(a):a.standings.map(x=>`<div class="lh-stat"><span><b>#${x.rank}</b> ${esc(teamName(x.roster_id))}</span><span><small>${esc(x.detail)}</small> <button class="secondary small" data-lh-loaded-roster>View chart</button></span></div>`).join('')}</div></div>`}
 function weeklyCopy(t){const margin=Math.abs(t.points-t.opponent_points),projOk=t.projection_coverage>=Math.max(1,Math.ceil(t.starter_count*.65)),proj=t.projected||0;let opener=t.won?`${t.team_name} walked out with a ${t.points.toFixed(1)}–${t.opponent_points.toFixed(1)} win`:`${t.team_name} took a ${t.opponent_points.toFixed(1)}–${t.points.toFixed(1)} loss`;if(margin<8)opener+=', and this one was a fourth-quarter stomach ache.';else if(margin>35)opener+=t.won?', and it was never especially polite.':', and the scoreboard got ugly in a hurry.';else opener+='.';
  let expectation='';if(projOk){const delta=t.points-proj;if(t.won&&delta>10)expectation=` They beat their own projection by ${delta.toFixed(1)}, turning a normal Sunday into a statement.`;else if(t.won&&delta<-5)expectation=' They won without reaching their projected number — survival counts the same in the standings.';else if(!t.won&&delta>8)expectation=' The offense actually cleared projection and still lost. Sometimes the other roster simply has the flamethrower.';else if(!t.won&&delta<-10)expectation=` They finished ${Math.abs(delta).toFixed(1)} below projection, so this one felt more like a missed opportunity than bad luck.`;else expectation=' The final score landed reasonably close to the pregame expectation.'}
  let lineup='';const miss=t.best_lineup_miss;if(miss?.reserve&&miss?.starter&&Number(miss.gap)>8)lineup=` The Monday-morning quarterback department finally has an admissible complaint: ${playerName(miss.reserve.id)} was actually eligible for ${playerName(miss.starter.id)}’s ${esc(miss.slot||miss.starter.lineup_slot||'lineup')} seat and outscored him by ${Number(miss.gap).toFixed(1)}.`;else if(t.starter_details?.length)lineup=' I checked the bench before filing a complaint; no higher scorer had a clean, legal path into the starter seat in question.';

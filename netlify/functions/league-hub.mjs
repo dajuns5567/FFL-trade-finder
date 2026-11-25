@@ -1,5 +1,6 @@
 import {inquirerMarketCutoff,editionAvailability} from './lib/inquirer-market-window.mjs';
 import {completedLeagueWeekView} from './lib/league-completed-week.mjs';
+import {mergeAwardHighs,verifiedDurableAwardHighRecords,verifiedCanonicalHighRecords} from './lib/league-all-time-highs.mjs';
 import valueHistoryHandler from './value-history.mjs';
 // Forward drafts must be reviewed as written; synthetic scoreboard sentence repair is retired.
 import {inspectEditionBeforePublication,editorialApprovalMatches,editorialCopyDigest,deterministicInquirerAdmission,isReadOnlyEditorialPreview,inspectPreviousWeekEditorialReuse} from './inquirer-publication-guard.mjs';
@@ -991,10 +992,52 @@ async function managerHistory({persist=true,snapshotSeason=null,snapshotWeek=nul
  const currentUsers=new Set(current.map(x=>x.user_id)),scoring_history=managerScoringSummary(scoringGames,career,currentSeason,currentWeek),graveyard=Object.values(career).filter(x=>!currentUsers.has(x.user_id)).map(x=>{const as=assignments.filter(a=>a.user_id===x.user_id).sort((a,b)=>Number(a.season)-Number(b.season)),last=as[as.length-1],seasonRosterKeys=new Set(as.map(a=>Number(a.season)+'|'+String(a.roster_id))),scoring=(scoring_history.games||[]).filter(g=>seasonRosterKeys.has(Number(g.season)+'|'+String(g.roster_id))).sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));return{user_id:x.user_id,sleeper_id:x.sleeper_id,roster_id:last?.roster_id||'',retired_at:last?.season?String(last.season):'',seasons:[...new Set(as.map(a=>Number(a.season)).filter(Boolean))],played_2025:as.some(a=>Number(a.season)===2025),assignments:as,scoring_games:scoring,career:{wins:x.wins,losses:x.losses,playoff_wins:x.playoff_wins,playoff_appearances:x.playoff_appearances,championships:x.championships,division_wins:x.division_wins,division_championships:x.division_championships,regular_season_titles:x.regular_season_titles}}});
  const now=new Date().toISOString(),cache_version=MANAGER_CACHE_VERSION,registry={current:Object.fromEntries(current.map(x=>[x.roster_id,{user_id:x.user_id,sleeper_id:x.sleeper_id,since:now}])),graveyard},result={current,graveyard,career:Object.values(career),assignments,games,scoring_history,generated_at:now,cache_version};if(persist)await Promise.all([s.setJSON('managers/registry.json',registry),s.setJSON('managers/history-cache.json',{...result,cached_at:now})]);return persist?result:{...result,preview_read_only:true};
 }
+async function githubDurableAwardHighs(){
+ const url='https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/value-history-data/value-history/league-awards/all-time-highs.json';
+ try{
+  const response=await fetch(url+'?fresh='+Date.now(),{cache:'no-store',
+   headers:{accept:'application/json'}});
+  if(!response.ok)return{records:[],verified_records:[]};
+  const result=await response.json();
+  return{
+   records:verifiedDurableAwardHighRecords(result,LEAGUE),
+   verified_records:verifiedCanonicalHighRecords(result,LEAGUE)
+  };
+ }catch(error){
+  console.warn('league-awards-durable-read-unavailable',String(error?.message||error));
+  return{records:[],verified_records:[]};
+ }
+}
 async function awardHighs(req){
- const s=store(),key='awards/highs.json',old=await s.get(key,{type:'json'}).catch(()=>null),highs=Array.isArray(old)?old:[];
- if(req.method==='POST'){const body=await req.json().catch(()=>null),records=Array.isArray(body?.records)?body.records:[],now=new Date().toISOString();for(const x of records){const award_key=String(x.award_key||''),roster_id=String(x.roster_id||''),score=Number(x.score);if(!award_key||!roster_id||!Number.isFinite(score))continue;const prev=highs.filter(h=>h.award_key===award_key&&h.roster_id===roster_id).sort((a,b)=>Number(b.score)-Number(a.score))[0];if(!prev||score>Number(prev.score)){highs.push({award_key,roster_id,score,detail:String(x.detail||''),captured_at:now})}}await s.setJSON(key,highs.slice(-10000))}
- const best={};for(const h of highs){const k=h.award_key+'|'+h.roster_id;if(!best[k]||Number(h.score)>Number(best[k].score))best[k]=h}return json({records:Object.values(best)});
+ if(!['GET','POST'].includes(req.method))return json({error:'method not allowed'},405);
+ let s=null;
+ try{s=store()}catch(error){
+  console.warn('league-awards-blob-store-unavailable',String(error?.message||error))
+ }
+ const key='awards/highs.json',stored=s?await s.get(key,{type:'json'}).catch(()=>null):null,
+  fromBlob=Array.isArray(stored)?stored:[],durable=await githubDurableAwardHighs(),
+  now=new Date().toISOString(),previous=mergeAwardHighs(fromBlob,durable.records,now);
+ // A historical baseline is NOT a certified peak without independent
+ // canonical capture evidence. Preserve its records unmodified in 'records'
+ // but expose separately certified rankings only via verified_records.
+ const verified_records=durable.verified_records;
+ if(req.method==='GET')return json({records:previous,verified_records,
+  available:verified_records.length>0,
+  archive_status:verified_records.length?'verified-canonical-records':
+   previous.length?'legacy-baseline-not-independently-verified':'awaiting-first-verified-capture',
+  sources:{blob:fromBlob.length,durable:durable.records.length,
+   independently_verified:verified_records.length},
+  cache_status:s?'available':'unavailable'});
+ const body=await req.json().catch(()=>null),records=Array.isArray(body?.records)?body.records:[];
+ if(!records.length||records.length>1000)return json({error:'missing or excessive all-time-high observations'},400);
+ const highs=mergeAwardHighs(previous,records,now);
+ if(highs.length===0)return json({error:'no valid award scores'},422);
+ const changed=JSON.stringify(highs)!==JSON.stringify(previous);
+ if(changed&&s)await s.setJSON(key,highs);
+ // User-facing reads remain available from GitHub even if Netlify Blob
+ // migration makes this optional cache unreachable.
+ return json({records:highs,verified_records,recorded_at:now,changed,
+  source:'league-awards-uncorroborated-browser-snapshot',cache_written:!!(changed&&s)});
 }
 async function awards(req){
  const s=store();

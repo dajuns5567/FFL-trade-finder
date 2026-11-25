@@ -1,0 +1,48 @@
+name: Isolated All-Time Highs release (read-only)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/isolated-all-time-highs-release-ci.yml'
+      - 'scripts/archive-league-all-time-highs.mjs'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Guard isolated Awards scope
+        run: |
+          git diff --name-only "${{ github.event.pull_request.base.sha }}" HEAD > /tmp/awards-files
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const allowed=new Set(["league-hub-v451.js","netlify/functions/league-hub.mjs","netlify/functions/site-v29.mjs",".github/workflows/league-all-time-highs-independent-capture.yml",".github/workflows/value-history-headless-refresh.yml","scripts/value-history-headless-refresh.mjs","netlify/functions/lib/league-all-time-highs.mjs","scripts/archive-league-all-time-highs.mjs","scripts/verify-durable-all-time-highs-readback.mjs","scripts/verify-scheduled-all-time-highs.mjs","scripts/awards-canonical-refresh-parity.mjs","tests/league-all-time-highs-durable.test.mjs","tests/league-all-time-highs-independent-capture.test.mjs","tests/awards-all-time-highs-provenance.test.mjs",".github/workflows/isolated-all-time-highs-release-ci.yml",".github/workflows/release-v107-recorder-after-market-ui-isolated.yml","tests/presentation-copy-cleanup-v539.test.mjs"]);
+          const changed=fs.readFileSync('/tmp/awards-files','utf8').trim().split('\n');
+          if(changed.length!==allowed.size||changed.some(p=>!allowed.has(p)))throw Error('Unrelated release file: '+changed.filter(p=>!allowed.has(p)));
+          console.log('ISOLATED_HIGHS_SCOPE',changed);
+          NODE
+      - run: npm install --ignore-scripts --no-audit --no-fund
+      - run: |
+          node --check league-hub-v451.js
+          node --check netlify/functions/league-hub.mjs
+          node --check scripts/value-history-headless-refresh.mjs
+          node --test tests/league-all-time-highs-durable.test.mjs tests/league-all-time-highs-independent-capture.test.mjs tests/awards-all-time-highs-provenance.test.mjs tests/presentation-copy-cleanup-v539.test.mjs
+      - run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Actual canonical V101 Awards shadow, no archive write
+        env:
+          VALUE_HISTORY_CANDIDATE_MODEL: idp-v101-verified-role-growth-v100-source-free-lineage
+          VALUE_HISTORY_READ_ONLY_CANDIDATE: '1'
+          VALUE_HISTORY_SNAPSHOT_FILE: .tmp/value-history-awards-only.json
+          ALL_TIME_HIGHS_SCHEDULED_FILE: .tmp/all-time-highs-scheduled.json
+        run: |
+          node scripts/value-history-headless-refresh.mjs
+          node scripts/verify-scheduled-all-time-highs.mjs

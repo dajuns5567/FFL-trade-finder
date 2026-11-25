@@ -80,3 +80,29 @@ export function mergeKtcPublishedOverallRanks(pages){
  if(byRank.size<300)return null;
  return [...byRank.values()].sort((a,b)=>a.rank-b.rank);
 }
+
+// Explain a rejected public ranking batch without changing its acceptance policy.
+export function describeKtcPublishedOverallConflicts(pages){
+ const ranks=new Map(),names=new Map(),conflicts=[];
+ const normalize=row=>row.player.normalize("NFKD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/gi,"").toLowerCase();
+ let conflictCount=0,invalidNames=0;
+ const add=(kind,earlier,current)=>{
+  conflictCount++;
+  if(conflicts.length<12)conflicts.push({kind,earlier,current});
+ };
+ for(const [page,html] of (pages||[]).entries()){
+  for(const row of parseKtcRenderedPage(html)){
+   const name=normalize(row),current={page,rank:row.rank,player:row.player,position:row.position,value:row.value};
+   if(!name){invalidNames++;continue}
+   const sameRank=ranks.get(row.rank),sameName=names.get(name);
+   if(sameRank&&(sameRank.player!==row.player||sameRank.position!==row.position||sameRank.value!==row.value))
+    add("rank-conflict",sameRank,current);
+   if(sameName&&(sameName.rank!==row.rank||sameName.position!==row.position||sameName.value!==row.value))
+    add("player-conflict",sameName,current);
+   if(!sameRank)ranks.set(row.rank,current);
+   if(!sameName)names.set(name,current);
+  }
+ }
+ return {unique_ranks:ranks.size,unique_names:names.size,invalid_names:invalidNames,
+  conflict_count:conflictCount,conflicts,below_minimum:ranks.size<300};
+}

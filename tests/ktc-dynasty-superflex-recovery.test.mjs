@@ -247,7 +247,7 @@ test('a rejected versioned player-pool request records the attempted feed withou
  assert.ok(poolRequests.every(x=>new URL(x.url).searchParams.get('sr')==='2'));
 });
 
-import {parseKtcRenderedPage,validateKtcRenderedPages,deriveKtcSuperflexRanksFromPublishedValues,mergeKtcPublishedOverallRanks} from '../netlify/functions/ktc-html-pages.mjs';
+import {parseKtcRenderedPage,validateKtcRenderedPages,deriveKtcSuperflexRanksFromPublishedValues,mergeKtcPublishedOverallRanks,describeKtcPublishedOverallConflicts} from '../netlify/functions/ktc-html-pages.mjs';
 function ktcHtmlPage(start,count=50){
  const rows=Array.from({length:count},(_,i)=>{
   const rank=start+i,position=['QB','RB','WR','TE'][i%4];
@@ -337,4 +337,16 @@ test('live-format KTC pagination validates 300+ unique published Superflex ranks
  assert.ok(requested.every(url=>!url.includes('/player-pool')));
  assert.ok(requested.some(url=>new URL(url).searchParams.get('page')==='7'));
  assert.ok(requested.filter(url=>new URL(url).searchParams.has('page')).every(url=>new URL(url).searchParams.get('format')==='2'));
+});
+
+test('diagnoses conflicting publisher rank and player rows without relaxing validation',()=>{
+ const pages=[overlappingKtcHtml(1),...Array.from({length:7},(_,i)=>overlappingKtcHtml(48+i*43))];
+ assert.equal(describeKtcPublishedOverallConflicts(pages).conflict_count,0);
+ const conflicting=[...pages,overlappingKtcHtml(2).replace('9997','1234')];
+ const report=describeKtcPublishedOverallConflicts(conflicting);
+ assert.equal(mergeKtcPublishedOverallRanks(conflicting),null);
+ assert.ok(report.conflict_count>0);
+ assert.ok(report.conflicts.some(x=>x.kind==='rank-conflict'&&x.earlier.rank===2&&x.current.value===1234));
+ assert.ok(report.conflicts.length<=12);
+ assert.equal(describeKtcPublishedOverallConflicts(pages.slice(0,2)).below_minimum,true);
 });

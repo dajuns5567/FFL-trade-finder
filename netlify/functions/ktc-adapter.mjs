@@ -1,4 +1,4 @@
-import {parseKtcRenderedPage,mergeKtcPublishedOverallRanks} from "./ktc-html-pages.mjs";
+import {parseKtcRenderedPage,mergeKtcPublishedOverallRanks,describeKtcPublishedOverallConflicts} from "./ktc-html-pages.mjs";
 const KTC_URL="https://keeptradecut.com/dynasty-rankings?format=2";
 const KTC_FALLBACK_URL="https://keeptradecut.com/dynasty-rankings";
 const TIMEOUT_MS=7000;
@@ -322,6 +322,7 @@ export async function refreshKtc(opts={}){
       });
       responseShape.rendered_html_unique_ranks=new Set(pages.flatMap(x=>parseKtcRenderedPage(x).map(r=>r.rank))).size;
       responseShape.rendered_html_valid=!!rendered;
+      if(!rendered)responseShape.rendered_html_rejection=describeKtcPublishedOverallConflicts(pages);
       responseShape.rendered_html_mode="published-superflex-overall-ranks";
       if(rendered)extracted={rows:rendered,rawPlayers:rendered.length,
         excludedDraftPicks:0,excludedNonOffense:0,

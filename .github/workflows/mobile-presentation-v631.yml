@@ -1,0 +1,55 @@
+name: Mobile presentation and desktop isolation
+on:
+  pull_request:
+    paths:
+      - 'fleeced-view-mode-v631.js'
+      - 'fleeced-mobile-v631.css'
+      - 'netlify/functions/site-v29.mjs'
+      - 'scripts/mobile-presentation-browser-v631.mjs'
+      - '.github/workflows/mobile-presentation-v631.yml'
+permissions:
+  contents: read
+jobs:
+  presentation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preserve exact released desktop and application bytes
+        run: |
+          set -euo pipefail
+          base=a1f3d19fe3524f97da9c51c2827607d74de4b38c
+          test "$(git ls-remote origin refs/heads/archive/desktop-release-630-20261125 | cut -f1)" = "$base"
+          git diff --name-only "$base" HEAD
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {execFileSync} from 'node:child_process';
+          import {readFileSync} from 'node:fs';
+          const base='a1f3d19fe3524f97da9c51c2827607d74de4b38c';
+          const git=(...args)=>execFileSync('git',args,{encoding:'utf8'});
+          const paths=git('diff','--name-only',base,'HEAD').trim().split('\n').filter(Boolean);
+          const allowed=new Set(['fleeced-view-mode-v631.js','fleeced-mobile-v631.css','netlify/functions/site-v29.mjs','scripts/mobile-presentation-browser-v631.mjs','.github/workflows/mobile-presentation-v631.yml']);
+          assert.equal(paths.length,allowed.size);
+          paths.forEach(p=>assert(allowed.has(p),'Unexpected application change '+p));
+          const original=git('show',base+':netlify/functions/site-v29.mjs');
+          const actual=readFileSync('netlify/functions/site-v29.mjs','utf8');
+          const strip=actual.replace(/  \/\/ Presentation only:[\s\S]*?(?=  const runtimeV21 = runtime;)/,'');
+          assert.equal(strip,original,'Existing renderer, script graph and release identity must be exact');
+          assert.equal(git('show',base+':netlify.toml'),readFileSync('netlify.toml','utf8'));
+          console.log('Desktop backup and all original application files intact');
+          JS
+      - name: Install browser runtime
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+          npm install --no-save --ignore-scripts --no-audit --no-fund --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Actual renderer and touch-device browser checks
+        run: |
+          node --check fleeced-view-mode-v631.js
+          node --check netlify/functions/site-v29.mjs
+          node scripts/mobile-presentation-browser-v631.mjs

@@ -1,0 +1,47 @@
+/* Isolated presentation layer. Desktop has no layout overrides.
+   Native tables, controls, charts and event handlers remain in place. */
+#fleeced-view-switch{
+ border:1px solid #e4b53f!important;background:transparent!important;
+ color:#e4b53f!important;border-radius:8px!important;font:700 12px/1.25 system-ui,sans-serif!important;
+ padding:8px 10px!important;min-height:44px!important;width:auto!important;
+ white-space:nowrap!important;cursor:pointer;touch-action:manipulation
+}
+#fleeced-view-switch:focus-visible{outline:2px solid #ffd967;outline-offset:3px}
+#fleeced-view-footer{display:flex;justify-content:center;padding:12px 16px 20px}
+@media(max-width:1024px){
+ html[data-fleeced-view="mobile"] main{width:100%;max-width:100%;min-width:0;padding-inline:max(10px,env(safe-area-inset-left)) max(10px,env(safe-area-inset-right))!important}
+ html[data-fleeced-view="mobile"] main>.tab,
+ html[data-fleeced-view="mobile"] main .card,
+ html[data-fleeced-view="mobile"] main .grid,
+ html[data-fleeced-view="mobile"] main .grid3{min-width:0;max-width:100%}
+ html[data-fleeced-view="mobile"] header.fleeced-site-header{padding-inline:max(10px,env(safe-area-inset-left)) max(10px,env(safe-area-inset-right))!important}
+ html[data-fleeced-view="mobile"] header .fleeced-site-header-row{gap:8px!important;flex-wrap:wrap}
+ html[data-fleeced-view="mobile"] header .fleeced-site-header-row>*{min-width:0}
+ html[data-fleeced-view="mobile"] header .fleeced-site-header-actions{flex-wrap:wrap;gap:6px!important}
+ html[data-fleeced-view="mobile"] header .fleeced-header-tabs{justify-content:flex-start!important;max-width:100%;overscroll-behavior-x:contain;touch-action:pan-x}
+ html[data-fleeced-view="mobile"] header .fleeced-header-tabs button{flex:0 0 auto!important;min-height:44px!important}
+ html[data-fleeced-view="mobile"] main :is(select,input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]),textarea){font-size:16px!important;max-width:100%;min-width:0}
+ html[data-fleeced-view="mobile"] main :is(select,input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]),textarea,button){min-height:44px}
+ html[data-fleeced-view="mobile"] main :is(button,select,label[for]){touch-action:manipulation}
+ html[data-fleeced-view="mobile"] main :is(.vh-table-wrap,.vh-heat-wrap){max-width:100%;overflow-x:auto;overscroll-behavior-x:contain}
+ /* Keep all columns and sorting; scroll the table, never hide columns. */
+ html[data-fleeced-view="mobile"] main table:not(.vh-table){display:block!important;max-width:100%;overflow-x:auto;overscroll-behavior-x:contain}
+ html[data-fleeced-view="mobile"] main table :is(th,td){overflow-wrap:normal}
+ html[data-fleeced-view="mobile"] main :is(.vh-chart-card,.vh-rank-chart,.vh-net-chart,.vh-value-chart){min-width:0;max-width:100%}
+ html[data-fleeced-view="mobile"] main :is(.vh-chart-card,.vh-rank-chart,.vh-net-chart,.vh-value-chart) svg{max-width:100%;touch-action:pan-y}
+ html[data-fleeced-view="mobile"] #leagueHub .lh-card,
+ html[data-fleeced-view="mobile"] #valueHistory .vh-chart-card{min-width:0;max-width:100%;overflow-wrap:anywhere}
+ html[data-fleeced-view="mobile"] #leagueHub .lh-scoreboard-modal{max-width:calc(100vw - 20px)!important;max-height:85dvh;overflow:auto}
+}
+@media(max-width:760px){
+ html[data-fleeced-view="mobile"] main .grid,
+ html[data-fleeced-view="mobile"] main .grid3{grid-template-columns:minmax(0,1fr)!important}
+ html[data-fleeced-view="mobile"] #home #homeNavigation{grid-template-columns:minmax(0,1fr)!important}
+ html[data-fleeced-view="mobile"] #leagueHub :is(.lh-grid,.lh-archive-filters){grid-template-columns:minmax(0,1fr)!important}
+ html[data-fleeced-view="mobile"] #leagueHub .lh-manager-profile-head>[data-lh-all-managers]{position:static!important;transform:none!important;margin-bottom:8px}
+ html[data-fleeced-view="mobile"] #valueHistory :is(.vh-grid,.vh-grid-2,.vh-trade-sides,.vh-breakdown-sides,.vh-eval-grid,.vh-volatility-layout){grid-template-columns:minmax(0,1fr)!important}
+ html[data-fleeced-view="mobile"] #valueHistory .vh-market-jump{position:static!important}
+}
+@media(max-width:400px){
+ html[data-fleeced-view="mobile"] #leagueHub :is(.lh-reporter-desks,.lh-spot-grid,.lh-manager-grid){grid-template-columns:minmax(0,1fr)!important}
+}

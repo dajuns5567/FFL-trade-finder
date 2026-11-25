@@ -51,7 +51,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node scripts/archive-league-all-time-highs.mjs
-      - name: Acceptance: independently read back durable GitHub records
+      - name: 'Acceptance: independently read back durable GitHub records'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node scripts/verify-durable-all-time-highs-readback.mjs

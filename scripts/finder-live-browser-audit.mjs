@@ -31,9 +31,12 @@ export async function auditFinder(page){
    const before=await diagnostics();
    console.log('FINDER_LIVE_START '+JSON.stringify({name,before}));
    assert(!before.disabled,'Run Finder disabled after valid team selection');
-   const prior=await host.innerText();
+   // Observe a fresh render, not changed text: blank and Select All are
+   // intentionally equivalent and may produce byte-identical results.
+   await host.evaluate(h=>{window.__finderAuditMutations=0;window.__finderAuditObserver?.disconnect();window.__finderAuditObserver=new MutationObserver(()=>window.__finderAuditMutations++);window.__finderAuditObserver.observe(h,{childList:true,subtree:true,characterData:true})});
    await run.click({timeout:5000});
-   await page.waitForFunction(prior=>{const h=document.querySelector('#finderResults');const t=h?.innerText?.trim()||'';return t&&t!==prior&&!/Searching (?:realistic|maximum.value|specific.player|trades)|Finding trades|search in progress/i.test(t)},prior,{timeout:90000});
+   await page.waitForFunction(()=>{const t=document.querySelector('#finderResults')?.innerText?.trim()||'';return window.__finderAuditMutations>0&&t&&!/Searching (?:realistic|maximum.value|specific.player|trades)|Finding trades|search in progress/i.test(t)},null,{timeout:90000});
+   await host.evaluate(()=>window.__finderAuditObserver.disconnect());
    const result=await diagnostics();
    assert(!/stopped unexpectedly|search failed|error|undefined is not/i.test(result.results),result.results);
    const status=/No (?:realistic trade|trade|fair|eligible|valid|matching|specific|candidate)/i.test(result.results)?'EMPTY':'PASS';
@@ -44,6 +47,7 @@ export async function auditFinder(page){
  await runCase('manual balanced one outgoing',async()=>{const boxes=await shop.all();let done=false;for(const x of boxes){if(await x.isVisible()&&await x.isEnabled()){await x.check();done=true;break}}assert(done,'No selectable owned asset')});
  await runCase('blank balanced all positions',async()=>{});
  await runCase('select all balanced',selectAll);
+ await runCase('Jonathan Taylor balanced select all',async()=>{await setTarget('Jonathan Taylor');await selectAll()});
  await runCase('Jonathan Taylor maximum value tier up select all',async()=>{await setTarget('Jonathan Taylor');await page.locator('#findMode').selectOption('value');await page.locator('#tradeTier94').selectOption('up');await selectAll()});
  console.log('FINDER_LIVE_SUMMARY '+JSON.stringify({checks,errors:errors.slice(0,15)}));
  assert(checks.some(x=>x.status==='PASS'),'No actual trade recommendations were rendered');

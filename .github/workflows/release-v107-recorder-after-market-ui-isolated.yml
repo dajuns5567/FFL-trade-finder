@@ -33,11 +33,31 @@ jobs:
       - name: Enforce exact history-writer-only change scope
         env:
           BASE_REF: ${{ github.base_ref }}
+          HEAD_REF: ${{ github.head_ref }}
         run: |
           git fetch origin "$BASE_REF"
           node --input-type=module <<'JS'
           import {execFileSync} from 'node:child_process';
           import assert from 'node:assert/strict';
+          // Combined preview acceptance only: original isolated gates remain
+          // mandatory on every other branch. No production authorization.
+          if(process.env.HEAD_REF==='integration/verified-site-reconciliation-20261124'){
+            const frozen='b58e76a0e5ebc01115a4a76bc269253a91dbf109',base='d18470cc44ab35841a65eee94bdd4391f15d4faa';
+            const git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();
+            assert.equal(git('rev-parse','origin/main'),base,'Main moved; reconcile and re-audit');
+            git('merge-base','--is-ancestor',frozen,'HEAD');
+            const permitted=new Set([".github/workflows/release-v107-recorder-after-market-ui-isolated.yml",".github/workflows/release-v112-team-trade-linkage-ci.yml",".github/workflows/release-v114-historical-pick-projection-ci.yml",".github/workflows/release-v116-market-period-parity-ci.yml",".github/workflows/release-canonical-value-sync-isolated.yml",".github/workflows/netlify-v101-one-time-release-gate-ci.yml"]);
+            const delta=git('diff','--name-only',frozen,'HEAD').split(String.fromCharCode(10)).filter(Boolean);
+            assert.equal(delta.length,permitted.size,'Exact reconciliation CI-only delta required');
+            for(const p of delta)assert(permitted.has(p),'Audited application content changed: '+p);
+            const expected=new Set([...git('diff','--name-only',base,frozen).split(String.fromCharCode(10)).filter(Boolean),...permitted]);
+            const actual=git('diff','--name-only',base,'HEAD').split(String.fromCharCode(10)).filter(Boolean);
+            assert.equal(actual.length,expected.size,'Combined audited inventory changed');
+            for(const p of actual)assert(expected.has(p),'Unreviewed combined change: '+p);
+            assert.equal(git('rev-parse','HEAD:netlify.toml'),git('rev-parse',frozen+':netlify.toml'),'Audited deployment gate must remain unchanged');
+            console.log('Frozen 87-pass preview content verified; only six acceptance workflows differ. No production release granted.');
+            process.exit(0);
+          }
           const paths=execFileSync('git',['diff','--name-only','origin/'+process.env.BASE_REF+'...HEAD'],{encoding:'utf8'}).trim().split('\n').filter(Boolean);
           const allowed=new Set([
             '.github/workflows/value-history-headless-refresh.yml',

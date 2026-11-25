@@ -306,11 +306,16 @@ export async function refreshKtc(opts={}){
       // Walk sequential pages and merge only IDENTICAL actual publisher rows.
       // Never synthesize rankings from missing pages or positional filters.
       const pageNumbers=Array.from({length:10},(_,i)=>i+1);
+      let publicAccessRestricted=false;
       const readPage=async page=>{
-        const pageUrl=new URL(KTC_URL);
+        const pageUrl=new URL("https://keeptradecut.com/dynasty-rankings");
         if(page!==0)pageUrl.searchParams.set("page",String(page));
+        pageUrl.searchParams.set("format","2");
         try{return await fetchText(pageUrl.toString(),opts.fetchImpl||fetch,opts.timeoutMs||TIMEOUT_MS)}
-        catch{return ""}
+        catch(error){
+          if(/"status":(?:401|403|429)\b|robots-denied/i.test(String(error?.message||error)))publicAccessRestricted=true;
+          return "";
+        }
       };
       let pages=[html,...await Promise.all(pageNumbers.map(readPage))];
       let rendered=mergeKtcPublishedOverallRanks(pages);
@@ -321,7 +326,7 @@ export async function refreshKtc(opts={}){
       // applies to the replacement. Do not retry inaccessible public pages.
       if(!rendered){
         const initial=describeKtcPublishedOverallConflicts(pages);
-        if(initial.conflict_count>0&&!initial.below_minimum){
+        if(initial.conflict_count>0&&!initial.below_minimum&&!publicAccessRestricted){
           responseShape.rendered_html_initial_rejection=initial;
           await (opts.pause|| (ms=>new Promise(resolve=>setTimeout(resolve,ms))))(750);
           const next=await Promise.all([0,...pageNumbers].map(readPage));

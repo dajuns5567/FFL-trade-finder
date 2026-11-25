@@ -88,7 +88,7 @@ export const INTEGRATED_RUNTIME_BLOBS=Object.freeze({
  'netlify/functions/weekly-awards-refresh.mjs':'c3f0c3527e7fb9ef2bb8920f92cfd5e66dcf1596',
  'netlify/functions/value-history.mjs':'93993faf45620a84c3d81122669b9f57360f8ce1',
  // PR 639: isolated player-outcome change with non-causal snapshot explanation.
- 'value-history-v276.js':'7fa1de4c8f0d6c73f2937ba10ea14a82ab59ae8d',
+ 'value-history-v276.js':'816cfd34a97ce7e3609f18b92fc72f61e763e6e5',
  'netlify/functions/lib/player-weekly-milestone-awards.mjs':'74baf9df3761e4b2aedc76e58aa3819cc5b821a6'
 });
 export function verifyPinnedIntegration(readBlob){

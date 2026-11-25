@@ -15,3 +15,29 @@ test('rejects wrong branch',()=>assert.throws(()=>pick(undefined,{[id]:[{...d,br
 test('rejects non-ready',()=>assert.throws(()=>pick(undefined,{[id]:[{...d,state:'building'}]}),/no ready/));
 test('rejects unencrypted site URL',()=>assert.throws(()=>pick([{...goodSite,ssl_url:'',url:'http://unsafe.netlify.app'}]),/HTTPS/));
 test('uses latest verified deploy, not arbitrary first',()=>{const s=pick(undefined,{[id]:[d,{...d,id:'deploy2',commit_ref:'newer',published_at:'2026-10-16T04:00:00Z'}]});assert.equal(s.deploy_id,'deploy2')});
+
+test('writer and read-only acceptance pin the same active Netlify project; previews cannot write',async()=>{
+ const {readFile}=await import('node:fs/promises');
+ const writer=await readFile(new URL('../.github/workflows/value-history-archive.yml',import.meta.url),'utf8');
+ const verify=await readFile(new URL('../.github/workflows/fleeced-archive-live-source-acceptance.yml',import.meta.url),'utf8');
+ const active='a516be3b-6c65-4f54-a9fb-23c5361bf3d2';
+ for(const source of [writer,verify]){
+  assert.ok(source.includes("VALUE_HISTORY_PRODUCTION_SITE_ID: '"+active+"'"));
+  assert.ok(source.includes('NETLIFY_SANDBOX_DEPLOY_TOKEN'));
+ }
+ assert.match(writer,/if: github\.ref == 'refs\/heads\/main'/);
+ assert.match(writer,/if: steps\.active_site\.outputs\.matched_target_sha == 'true'/);
+ assert.ok(verify.includes('https://animated-dasik-3de74a.netlify.app/'));
+});
+
+test('repository mismatch explains missing vs different metadata without exposing a private URL',()=>{
+ const sensitive='https://private-token@github.com/other/repo';
+ assert.throws(()=>pick([{...goodSite,build_settings:{repo_url:sensitive}}]),error=>{
+  assert.match(error.message,/repository linkage mismatch/);
+  assert.match(error.message,/"build_settings.repo_url":"different"/);
+  assert.match(error.message,/"build_settings.repo_path":"missing"/);
+  assert.doesNotMatch(error.message,/private-token|other\/repo/);
+  return true;
+ });
+ assert.throws(()=>pick([{id,ssl_url:goodSite.ssl_url}]),/"repo.repo_url":"missing"/);
+});

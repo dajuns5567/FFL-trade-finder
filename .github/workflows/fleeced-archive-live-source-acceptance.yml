@@ -23,18 +23,18 @@ jobs:
       - name: Validate live site identity, deployment, and commit drift without archival writes
         id: resolver
         env:
-          NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
+          NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_SANDBOX_DEPLOY_TOKEN }}
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_SHA: ${{ github.sha }}
           VALUE_HISTORY_DEPLOY_BRANCH: main
-          VALUE_HISTORY_PRODUCTION_SITE_ID: 'b1a7f3c4-7c1c-4a5b-8d5f-01fa768b9323'
+          VALUE_HISTORY_PRODUCTION_SITE_ID: 'a516be3b-6c65-4f54-a9fb-23c5361bf3d2'
         run: node scripts/resolve-active-netlify-site.mjs
       - name: Reject unverified production identity
         env:
           RESOLVED_SITE: ${{ steps.resolver.outputs.site_id }}
           RESOLVED_URL: ${{ steps.resolver.outputs.site_url }}
         run: |
-          test "$RESOLVED_SITE" = 'b1a7f3c4-7c1c-4a5b-8d5f-01fa768b9323'
-          test "$RESOLVED_URL" = 'https://extraordinary-toffee-98c3b7.netlify.app/'
+          test "$RESOLVED_SITE" = 'a516be3b-6c65-4f54-a9fb-23c5361bf3d2'
+          test "$RESOLVED_URL" = 'https://animated-dasik-3de74a.netlify.app/'
           echo 'LIVE PINNED PRODUCTION RESOLVER ACCEPTANCE PASS'

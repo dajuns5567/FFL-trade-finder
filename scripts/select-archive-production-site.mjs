@@ -6,7 +6,14 @@ export function selectArchiveProductionSite(sites, deploysBySite, {repository,br
  if(selected.length!==1)throw Error('ARCHIVE_SITE_GUARD: expected production site missing or ambiguous');
  const site=selected[0];
  const paths=[site?.build_settings?.repo_url,site?.build_settings?.repo_path,site?.repo?.repo_path,site?.repo?.repo_url];
- if(!paths.some(p=>norm(p)===norm(repository)))throw Error('ARCHIVE_SITE_GUARD: production repository linkage mismatch');
+ if(!paths.some(p=>norm(p)===norm(repository))){
+  // Report only whether metadata is present and whether it identifies the
+  // expected repository. Never log URLs: they may contain embedded credentials.
+  const fieldNames=['build_settings.repo_url','build_settings.repo_path','repo.repo_path','repo.repo_url'];
+  const linkage=Object.fromEntries(fieldNames.map((field,i)=>[field,
+   !String(paths[i]||'').trim()?'missing':norm(paths[i])===norm(repository)?'matches':'different']));
+  throw Error('ARCHIVE_SITE_GUARD: production repository linkage mismatch '+JSON.stringify({site_id:site.id,linkage}));
+ }
  const ready=(deploysBySite[expectedSiteId]||[]).filter(d=>d.state==='ready'&&d.context==='production'&&d.branch===branch&&d.commit_ref);
  if(!ready.length)throw Error('ARCHIVE_SITE_GUARD: no ready main production deploy');
  ready.sort((a,b)=>Date.parse(b.published_at||b.updated_at||0)-Date.parse(a.published_at||a.updated_at||0));

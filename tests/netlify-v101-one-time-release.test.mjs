@@ -15,8 +15,9 @@ const site='a516be3b-6c65-4f54-a9fb-23c5361bf3d2';
 const git=(dir,args)=>{
  const r=spawnSync('git',args,{cwd:dir,encoding:'utf8'});
  assert.equal(r.status,0,r.stderr);
+ return r.stdout.trim();
 };
-const run=(dir,options={})=>{
+const run=(dir,options={},gateCommand=command)=>{
  const env={
   ...process.env,SITE_ID:options.siteId??site,
   SITE_NAME:options.siteName??'animated-dasik-3de74a',
@@ -26,7 +27,7 @@ const run=(dir,options={})=>{
  };
  // Git ignores any user-supplied GIT_DIR / work-tree overrides for this test.
  for(const key of ['GIT_DIR','GIT_WORK_TREE','GIT_INDEX_FILE'])delete env[key];
- const r=spawnSync('sh',['-c',command],{cwd:dir,env,encoding:'utf8'});
+ const r=spawnSync('sh',['-c',gateCommand],{cwd:dir,env,encoding:'utf8'});
  assert.equal(r.error,undefined,r.stderr);
  return r.status;
 };
@@ -59,5 +60,28 @@ test('the old explicit preview allowlist remains isolated from production',()=>{
     context:'deploy-preview',reviewId:'451'}),0);
   assert.equal(run(dir,{siteId:'fa33dfe4-8293-441e-8da0-25cc66fc984c',
     context:'production',reviewId:'450'}),0);
+ }finally{rmSync(dir,{recursive:true,force:true})}
+});
+
+
+test('verified Preview 630 can activate only from its pinned single parent and exact title',()=>{
+ const dir=mkdtempSync(join(tmpdir(),'ffl-630-release-'));
+ const title='Release FFL verified Preview 630 once 2026-11-24';
+ const pinned='379101e110f58db88aa1a79bcb42df3c0a3439e1';
+ const commit=(message)=>git(dir,['-c','user.name=Release Test','-c','user.email=release@example.invalid','commit','--allow-empty','-q','-m',message]);
+ try{
+  git(dir,['init','-q']);commit('Fixture approved merged tree');
+  const parent=git(dir,['rev-parse','HEAD']);
+  assert.ok(command.includes(pinned),'real gate pins the audited main parent');
+  const fixtureGate=command.replace(pinned,parent);
+  assert.equal(run(dir,{},fixtureGate),0,'ordinary approved parent is not release');
+  commit(title);
+  assert.equal(run(dir),0,'real gate rejects a copied subject on an unapproved parent');
+  assert.equal(run(dir,{},fixtureGate),1,'exact title and parent allow one controlled build');
+  assert.equal(run(dir,{branch:'other'},fixtureGate),0);
+  assert.equal(run(dir,{context:'deploy-preview'},fixtureGate),0);
+  assert.equal(run(dir,{siteId:'wrong-site'},fixtureGate),0);
+  commit(title);
+  assert.equal(run(dir,{},fixtureGate),0,'same title on later parent cannot reopen production');
  }finally{rmSync(dir,{recursive:true,force:true})}
 });

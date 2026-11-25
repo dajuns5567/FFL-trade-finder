@@ -1,0 +1,31 @@
+name: Inquirer future-season rollover prerequisites (read-only)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'netlify/functions/lib/inquirer-season-rollover.mjs'
+      - 'tests/inquirer-season-rollover.test.mjs'
+      - '.github/workflows/inquirer-season-rollover-preflight.yml'
+permissions:
+  contents: read
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preserve current publisher and archive contracts
+        run: |
+          git diff --name-only "${{ github.event.pull_request.base.sha }}" HEAD > /tmp/rollover-files
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const files=fs.readFileSync('/tmp/rollover-files','utf8').trim().split('\n');
+          const expected=new Set(["netlify/functions/lib/inquirer-season-rollover.mjs","tests/inquirer-season-rollover.test.mjs",".github/workflows/inquirer-season-rollover-preflight.yml"]);
+          if(files.length!==expected.size||files.some(p=>!expected.has(p)))throw Error('Unrelated source change');
+          NODE
+      - run: node --test tests/inquirer-season-rollover.test.mjs tests/inquirer-github-native-publisher.test.mjs

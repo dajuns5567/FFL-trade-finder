@@ -1,0 +1,33 @@
+name: Populated mobile views acceptance (read-only)
+on:
+  pull_request:
+    branches:
+      - feature/mobile-presentation-v631
+    paths:
+      - 'scripts/mobile-populated-*.mjs'
+      - '.github/workflows/mobile-populated-views-v631.yml'
+permissions:
+  contents: read
+jobs:
+  mobile:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact already accepted mobile application baseline
+        run: |
+          git fetch --no-tags origin refs/heads/feature/mobile-presentation-v631
+          git diff --exit-code c77295c3245828dfb3acd25e84eb65406dfd2eaa HEAD -- . ':!scripts/mobile-populated-views-v631.mjs' ':!scripts/mobile-populated-runner-v631.mjs' ':!.github/workflows/mobile-populated-views-v631.yml'
+      - name: Install existing headless collector dependencies
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+          npm install --no-save --ignore-scripts --no-audit --no-fund --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Collect actual canonical data and audit mobile views
+        run: |
+          node --check scripts/mobile-populated-views-v631.mjs
+          node --check scripts/mobile-populated-runner-v631.mjs
+          node scripts/mobile-populated-runner-v631.mjs

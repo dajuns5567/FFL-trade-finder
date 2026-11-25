@@ -30,6 +30,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Parse independent writer workflow as YAML and verify trigger safety
+        run: |
+          ruby -ryaml -e 'w = YAML.safe_load_file(".github/workflows/league-all-time-highs-independent-capture.yml"); triggers = w["on"] || w[true]; abort "unexpected triggers" unless triggers.keys.sort == ["schedule", "workflow_dispatch"]; j = w.fetch("jobs").fetch("capture-verified-highs"); abort "writer guard missing" unless j.fetch("if").include?("refs/heads/main"); abort "readback step missing" unless j.fetch("steps").any? { |s| s["name"] == "Acceptance: independently read back durable GitHub records" }; puts "AWARDS WORKFLOW YAML PASS"'
       - name: Validate scheduled capture/readback files
         run: |
           node --check scripts/archive-league-all-time-highs.mjs

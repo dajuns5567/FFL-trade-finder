@@ -357,14 +357,14 @@ test('one inconsistent adjacent publisher batch is replaced by a complete freshl
   const u=new URL(url),page=Number(u.searchParams.get('page')||0);
   const n=(calls.get(page)||0)+1;calls.set(page,n);
   let html=page===0?overlappingKtcHtml(1):overlappingKtcHtml(48+(page-1)*43);
-  if(page===5&&n===1)html=html.replace('Published Fixture 270</a>','Published Fixture 269</a>');
+  if(page===6&&n===1)html=html.replace('Published Fixture 270</a>','Published Fixture 269</a>');
   return {ok:true,text:async()=>html};
  }});
  assert.equal(result.valid,true);
  assert.equal(result.diagnostics.attempts[0].rendered_html_conflict_retry,true);
  assert.ok(result.diagnostics.attempts[0].rendered_html_initial_rejection.conflict_count>0);
  assert.equal(calls.get(0),2);
- assert.equal(calls.get(5),2);
+ assert.equal(calls.get(6),2);
  assert.equal(result.rankings.find(r=>r.rank===270).player,'Published Fixture 270');
  assert.equal(new Set(result.rankings.map(r=>r.player)).size,result.ranking_rows);
 });
@@ -372,9 +372,9 @@ test('persistent adjacent page conflict still fails closed after one bounded bat
  let reads=0;
  const result=await refreshKtc({pause:async()=>{},fetchImpl:async url=>{
   const u=new URL(url),page=Number(u.searchParams.get('page')||0);
-  if(page===5)reads++;
+  if(page===6)reads++;
   let html=page===0?overlappingKtcHtml(1):overlappingKtcHtml(48+(page-1)*43);
-  if(page===5)html=html.replace('Published Fixture 270</a>','Published Fixture 269</a>');
+  if(page===6)html=html.replace('Published Fixture 270</a>','Published Fixture 269</a>');
   return {ok:true,text:async()=>html};
  }});
  assert.equal(result.valid,false);

@@ -29,3 +29,15 @@ test('writer and read-only acceptance pin the same active Netlify project; previ
  assert.match(writer,/if: steps\.active_site\.outputs\.matched_target_sha == 'true'/);
  assert.ok(verify.includes('https://animated-dasik-3de74a.netlify.app/'));
 });
+
+test('repository mismatch explains missing vs different metadata without exposing a private URL',()=>{
+ const sensitive='https://private-token@github.com/other/repo';
+ assert.throws(()=>pick([{...goodSite,build_settings:{repo_url:sensitive}}]),error=>{
+  assert.match(error.message,/repository linkage mismatch/);
+  assert.match(error.message,/"build_settings.repo_url":"different"/);
+  assert.match(error.message,/"build_settings.repo_path":"missing"/);
+  assert.doesNotMatch(error.message,/private-token|other\/repo/);
+  return true;
+ });
+ assert.throws(()=>pick([{id,ssl_url:goodSite.ssl_url}]),/"repo.repo_url":"missing"/);
+});

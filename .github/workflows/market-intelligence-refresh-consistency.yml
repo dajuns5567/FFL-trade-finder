@@ -1,0 +1,29 @@
+name: Canonical Market Intelligence Refresh
+on:
+  pull_request:
+    paths:
+      - 'value-history-v276.js'
+      - 'netlify/functions/site-v29.mjs'
+      - 'tests/market-intelligence-refresh-consistency.test.mjs'
+      - '.github/workflows/market-intelligence-refresh-consistency.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  market-refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check market runtime syntax
+        run: node --check value-history-v276.js
+      - name: Assert canonical market invalidation and no stale in-flight data
+        run: node --test tests/market-intelligence-refresh-consistency.test.mjs
+      - name: Preserve existing market controls and visible Trade History
+        run: |
+          node --test tests/presentation-copy-cleanup-v539.test.mjs
+          node --test tests/team-net-choice-v540.test.mjs
+          node --test tests/trade-history-live-sleeper.test.mjs

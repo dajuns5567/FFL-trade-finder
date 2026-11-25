@@ -1,0 +1,63 @@
+name: Consolidated preview supplemental runtime checks (read-only)
+# This is supplemental acceptance, NOT a release-scope waiver. The six
+# isolated release workflows keep their original gates and cannot authorize
+# this multi-subsystem draft. Run otherwise skipped read-only tests explicitly.
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/combined-preview-scope-blocked-checks.yml'
+      - 'scripts/value-history-headless-refresh.mjs'
+      - 'scripts/archive-value-history.mjs'
+      - 'value-history-v276.js'
+      - 'modeled-player-values-v319.js'
+      - 'ui-player-values-v139.js'
+      - 'nonblocking-consensus-v277.js'
+      - 'netlify/functions/value-history.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  history-recorder-contract:
+    if: github.ref != 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Recorder syntax, explicit model activation and immutable archive
+        run: |
+          node --check scripts/value-history-headless-refresh.mjs
+          node --check scripts/value-history-scheduled-due.mjs
+          node --check scripts/archive-value-history.mjs
+          node --check scripts/value-history-v107-shadow-acceptance.mjs
+          node --check value-history-v276.js
+          node --test tests/value-history-v107-scheduled-promotion.test.mjs tests/value-history-model-era-v90.test.mjs tests/value-history-candidate-headless-contract.test.mjs tests/assess-archive-continuity.test.mjs
+          node scripts/value-history-data-hub-v331-smoke.mjs
+  canonical-browser-rehearsal:
+    if: github.ref != 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Canonical price refresh, source and consumer invariants
+        run: |
+          node --check modeled-player-values-v319.js
+          node --check nonblocking-consensus-v277.js
+          node --check ui-player-values-v139.js
+          node --test tests/model-v319-metadata-boot-guard.test.mjs tests/canonical-live-values-refresh-isolated.test.mjs
+      - name: Original complete site and Finder rehearsal, all remote requests blocked
+        run: node scripts/rehearse-full-original-app-browser.mjs .

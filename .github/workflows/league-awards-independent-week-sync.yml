@@ -1,0 +1,56 @@
+name: Independent League Hub weekly award contract
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/league-hub.mjs'
+      - 'league-hub-v451.js'
+      - 'netlify/functions/site-v29.mjs'
+      - 'tests/league-awards-independent-week-sync.test.mjs'
+      - 'tests/weekly-awards-scheduled-capture.test.mjs'
+      - 'netlify/functions/weekly-awards-refresh.mjs'
+      - '.github/workflows/league-awards-independent-week-sync.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  weekly-awards:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install existing project dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+      - name: Syntax and weekly award/source independence checks
+        run: |
+          node --check netlify/functions/league-hub.mjs
+          node --check netlify/functions/weekly-awards-refresh.mjs
+          node --check league-hub-v451.js
+          node --check netlify/functions/site-v29.mjs
+          node --test tests/league-awards-independent-week-sync.test.mjs
+          node --test tests/weekly-awards-scheduled-capture.test.mjs
+          node --test tests/league-week-independent-news.test.mjs
+          node --test tests/league-projection-recovery.test.mjs
+      - name: Read actual completed-week projection coverage (no writes)
+        run: |
+          node --input-type=module <<'NODE'
+          import {latestCompletedLeagueWeek} from './netlify/functions/league-hub.mjs';
+          import {projectionEntries} from './netlify/functions/lib/league-week-projections.mjs';
+          const latest=await latestCompletedLeagueWeek();
+          for(const week of [latest.week-1,latest.week]){
+            const data=week===latest.week?latest:await latestCompletedLeagueWeek(week);
+            console.log('HOT_SEAT_PROJECTION_COVERAGE',JSON.stringify({season:data.season,week:data.week,teams:data.teams?.length,covered:data.teams?.filter(t=>t.projection_coverage===1).length,diagnostics:data.projection_diagnostics}));
+            const missing=new Set(data.projection_diagnostics?.missing||[]);
+            if(missing.size){
+              const read=async url=>{const r=await fetch(url);if(!r.ok)throw Error('HTTP '+r.status);return r.json()};
+              const raw=await read('https://api.sleeper.app/projections/nfl/'+data.season+'/'+week+'?season_type=regular');
+              const matched=projectionEntries(raw).filter(([id])=>missing.has(id));
+              console.log('HOT_SEAT_MISSING_PROJECTION_ROWS',JSON.stringify({week,rows:matched.map(([id,row])=>({id,keys:Object.keys(row||{}),stats:row?.stats??row?.projection??null,points:row?.pts_ppr??row?.fantasy_points??null,player:row?.player?{position:row.player.position,status:row.player.status,injury_status:row.player.injury_status,team:row.player.team}:null})),absent:[...missing].filter(id=>!matched.some(([key])=>key===id))}));
+              const matches=await read('https://api.sleeper.app/v1/league/1316867686394769408/matchups/'+week);
+              console.log('HOT_SEAT_MATCHUP_SOURCE_FIELDS',JSON.stringify({week,keys:Object.keys(matches[0]||{}),projectionFields:matches.filter(m=>Object.keys(m).some(k=>/proj/i.test(k))).map(m=>({roster_id:m.roster_id,fields:Object.fromEntries(Object.entries(m).filter(([k])=>/proj/i.test(k)))}))}));
+              console.log('::warning::Projection coverage remains incomplete; no permanent Hot Seat should be inferred from this check.');
+            }
+          }
+          NODE

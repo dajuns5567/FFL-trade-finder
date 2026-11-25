@@ -69,7 +69,7 @@ test('unpublished manuscript and missing migrated archives are never conflated',
  assert.ok(readerSource.includes('const onNetlifyDeployPreview='));
  assert.ok(readerSource.includes("onNetlifyDeployPreview&&new URLSearchParams(location.search).get('inquirer_preview')==='1'"));
  assert.ok(!readerSource.includes('Deploy Preview: published archive view'),'removed notice must stay absent');
- assert.ok(readerSource.includes('host.innerHTML=dailyHTML(all,stats,w,md,spotlightW||w,leagueWeek)'),'independent completed Sleeper week is passed to the Daily renderer');
+ assert.ok(readerSource.includes('host.innerHTML=dailyHTML(all,stats,selectedEdition,md,selectedEdition,selectedWeek)'),'independent completed Sleeper week is passed to the Daily renderer');
  assert.ok(readerSource.includes('liveLeagueWeek().catch(()=>liveLeagueWeekCache)'),'League Hub live scoring stays independent of newspaper publication');
  assert.ok(readerSource.includes('const inquirerPreviewEntryUrl='));
  assert.ok(readerSource.includes('if(inquirerPreviewMode)'),'private reading still uses its distinct guarded route');

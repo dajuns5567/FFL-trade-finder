@@ -211,6 +211,14 @@ test('KTC outage does not pass the strict current seven-source consensus gate',(
  assert.equal(check.status,0,check.stderr);
 });
 
+test('KTC refresh failures are unmistakable on the homepage and diagnostics screen',()=>{
+ const ui=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+ assert.match(ui,/KTC NOT UPDATING/);
+ assert.match(ui,/KTC IS NOT UPDATING/);
+ assert.match(ui,/Last verified snapshot/);
+ assert.match(ui,/last successful date and failure/i);
+ assert.match(ui,/state.ktcNotUpdating/);
+});
 
 test('a rejected versioned player-pool request records the attempted feed without exposing sensitive payloads',async()=>{
  const version='2611240010-public-version';
@@ -239,7 +247,7 @@ test('a rejected versioned player-pool request records the attempted feed withou
  assert.ok(poolRequests.every(x=>new URL(x.url).searchParams.get('sr')==='2'));
 });
 
-import {parseKtcRenderedPage,validateKtcRenderedPages,deriveKtcSuperflexRanksFromPublishedValues,mergeKtcPublishedOverallRanks} from '../netlify/functions/ktc-html-pages.mjs';
+import {parseKtcRenderedPage,validateKtcRenderedPages,deriveKtcSuperflexRanksFromPublishedValues,mergeKtcPublishedOverallRanks,describeKtcPublishedOverallConflicts} from '../netlify/functions/ktc-html-pages.mjs';
 function ktcHtmlPage(start,count=50){
  const rows=Array.from({length:count},(_,i)=>{
   const rank=start+i,position=['QB','RB','WR','TE'][i%4];
@@ -329,4 +337,49 @@ test('live-format KTC pagination validates 300+ unique published Superflex ranks
  assert.ok(requested.every(url=>!url.includes('/player-pool')));
  assert.ok(requested.some(url=>new URL(url).searchParams.get('page')==='7'));
  assert.ok(requested.filter(url=>new URL(url).searchParams.has('page')).every(url=>new URL(url).searchParams.get('format')==='2'));
+});
+
+test('diagnoses conflicting publisher rank and player rows without relaxing validation',()=>{
+ const pages=[overlappingKtcHtml(1),...Array.from({length:7},(_,i)=>overlappingKtcHtml(48+i*43))];
+ assert.equal(describeKtcPublishedOverallConflicts(pages).conflict_count,0);
+ const conflicting=[...pages,overlappingKtcHtml(2).replace('9997','1234')];
+ const report=describeKtcPublishedOverallConflicts(conflicting);
+ assert.equal(mergeKtcPublishedOverallRanks(conflicting),null);
+ assert.ok(report.conflict_count>0);
+ assert.ok(report.conflicts.some(x=>x.kind==='rank-conflict'&&x.earlier.rank===2&&x.current.value===1234));
+ assert.ok(report.conflicts.length<=12);
+ assert.equal(describeKtcPublishedOverallConflicts(pages.slice(0,2)).below_minimum,true);
+});
+
+test('one inconsistent adjacent publisher batch is replaced by a complete freshly retrieved batch',async()=>{
+ const calls=new Map();
+ const result=await refreshKtc({pause:async()=>{},fetchImpl:async url=>{
+  const u=new URL(url),page=Number(u.searchParams.get('page')||0);
+  const n=(calls.get(page)||0)+1;calls.set(page,n);
+  let html=page===0?overlappingKtcHtml(1):overlappingKtcHtml(48+(page-1)*43);
+  if(page===6&&n===1)html=html.replace('Published Fixture 270</a>','Published Fixture 269</a>');
+  return {ok:true,text:async()=>html};
+ }});
+ assert.equal(result.valid,true);
+ assert.equal(result.diagnostics.attempts[0].rendered_html_conflict_retry,true);
+ assert.ok(result.diagnostics.attempts[0].rendered_html_initial_rejection.conflict_count>0);
+ assert.equal(calls.get(0),2);
+ assert.equal(calls.get(6),2);
+ assert.equal(result.rankings.find(r=>r.rank===270).player,'Published Fixture 270');
+ assert.equal(new Set(result.rankings.map(r=>r.player)).size,result.ranking_rows);
+});
+test('persistent adjacent page conflict still fails closed after one bounded batch replacement',async()=>{
+ let reads=0;
+ const result=await refreshKtc({pause:async()=>{},fetchImpl:async url=>{
+  const u=new URL(url),page=Number(u.searchParams.get('page')||0);
+  if(page===6)reads++;
+  let html=page===0?overlappingKtcHtml(1):overlappingKtcHtml(48+(page-1)*43);
+  if(page===6)html=html.replace('Published Fixture 270</a>','Published Fixture 269</a>');
+  return {ok:true,text:async()=>html};
+ }});
+ assert.equal(result.valid,false);
+ assert.equal(result.rankings.length,0);
+ assert.equal(reads,2);
+ assert.equal(result.diagnostics.attempts[0].rendered_html_conflict_retry,true);
+ assert.ok(result.diagnostics.attempts[0].rendered_html_rejection.conflict_count>0);
 });

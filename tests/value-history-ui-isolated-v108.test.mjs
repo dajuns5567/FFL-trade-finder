@@ -153,9 +153,14 @@ test('history UI release does not change the Trade History pick projection or sn
  assert.match(file,/ranking_at_trade/);
  assert.match(file,/function snapshotPreconditions\(\)/);
  assert.match(file,/function scheduleSnapshot\(/);
- assert.doesNotMatch(file,/function historicalPickProjectionEvidence\(/);
- assert.doesNotMatch(file,/function isCurrentRankedPlayerForHindsight\(/);
- assert.doesNotMatch(file,/function originalPickProjectionText\(/);
+ // Later reviewed V114 historical projection and V101 hindsight additions are
+ // now part of the cumulative preview. Prove they exist, while dedicated V114
+ // tests independently enforce trade-time 50/50 slots and no future leakage.
+ assert.match(file,/function historicalPickProjectionEvidence\(/);
+ assert.doesNotMatch(file,/function isCurrentRankedPlayerForHindsight\(/,'Hindsight keeps its existing current-canonical valuation path');
+ assert.match(file,/function originalPickProjectionText\(/);
+ assert.match(file,/standings_week/);
+ assert.match(file,/Historical projected slot unavailable/);
 });
 
 test('historical trade valuation matches current canonical Player Values even when asset pool omits ranked player',()=>{

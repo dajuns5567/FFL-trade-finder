@@ -3,6 +3,11 @@ on:
   push:
     branches:
       - fix/league-week-independent-of-inquirer-20261121
+  pull_request:
+    paths:
+      - 'netlify/functions/league-hub.mjs'
+      - 'tests/league-awards-independent-week-sync.test.mjs'
+      - '.github/workflows/league-week-independent-news.yml'
   workflow_dispatch:
 permissions:
   contents: read
@@ -26,3 +31,7 @@ jobs:
         run: |
           node --test tests/league-week-independent-news.test.mjs
           node --test tests/inquirer-github-archive-reader.test.mjs tests/inquirer-schedule-decision.test.mjs tests/inquirer-week9-unattended-publish-regression.test.mjs
+
+      - name: Verify independent weekly awards for the source-complete week
+        if: github.event_name == 'pull_request'
+        run: node --test tests/league-awards-independent-week-sync.test.mjs

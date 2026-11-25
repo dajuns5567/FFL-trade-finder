@@ -32,5 +32,7 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Simulate separately approved V101 scheduled collection without a write
         run: node scripts/value-history-v107-shadow-acceptance.mjs
+      - name: Require real canonical All-Time Highs browser observation
+        run: node scripts/verify-scheduled-all-time-highs.mjs
       # Do not supply a GITHUB_TOKEN, do not run any archive writer,
       # do not deploy Netlify, and do not save snapshots as artifacts.

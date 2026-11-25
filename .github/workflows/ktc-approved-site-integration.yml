@@ -1,0 +1,75 @@
+name: KTC approved-site integration and live verification
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/ktc-adapter.mjs'
+      - 'netlify/functions/ktc-html-pages.mjs'
+      - 'tests/ktc-dynasty-superflex-recovery.test.mjs'
+      - 'netlify/functions/site-v29.mjs'
+      - 'index.html'
+      - 'ffl-preview-audit-v2.js'
+      - '.github/workflows/ktc-approved-site-integration.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-ktc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Ensure KTC source syntax and consensus fail-closed safeguards
+        run: |
+          node --check netlify/functions/ktc-adapter.mjs
+          node --check netlify/functions/ktc-html-pages.mjs
+          node --check ffl-preview-audit-v2.js
+          node --test tests/ktc-dynasty-superflex-recovery.test.mjs
+      - name: Read KTC live Dynasty Superflex page data from public HTML
+        run: |
+          node --input-type=module <<'NODE'
+          import {refreshKtc} from './netlify/functions/ktc-adapter.mjs';
+          const r=await refreshKtc({timeoutMs:15000});
+          console.log(JSON.stringify({
+            valid:r.valid,players:r.players_extracted,
+            rows:r.ranking_rows,parser:r.diagnostics?.parser,
+            first:r.rankings?.slice(0,3),
+            error:r.valid?null:r.error,
+            attempts:r.valid?null:r.diagnostics?.attempts?.map(x=>({
+              url:x.url,rendered_html_unique_ranks:x.rendered_html_unique_ranks,
+              rendered_html_page_counts:x.rendered_html_page_counts,
+              rendered_html_valid:x.rendered_html_valid
+            }))
+          },null,2));
+          if(!r.valid||Number(r.players_extracted)<300)process.exit(17);
+          NODE
+      - name: Verify newest site retains key recent features and scripts
+        if: always()
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFileSync} from 'node:fs';
+          const src=p=>readFileSync(p,'utf8');
+          const hub=src('netlify/functions/league-hub.mjs'),
+            page=src('league-hub-v451.js'),
+            market=src('value-history-v276.js'),
+            shell=src('netlify/functions/site-v29.mjs');
+          const assetAtLeast=(name,min)=>{
+            const matches=[...shell.matchAll(/<script\b[^>]*\bsrc="\/([^"?]+)\?v=(\d+)"/g)].filter(m=>m[1]===name);
+            return matches.length===1&&Number(matches[0][2])>=min;
+          };
+          const checks=[
+            ['Hot Seat selection',hub.includes('selectHotSeat(teams)')],
+            ['Hot Seat projected points',hub.includes('playerProjections:scoredProjections')],
+            ['Hot Seat supplementary archive',hub.includes('supplementCompletedHotSeat(cache,verified)')],
+            ['Managers client refresh',page.includes('refreshManagersIfVisible')],
+            ['All-time highs supported',hub.includes('verifiedDurableAwardHighRecords')],
+            ['Verified player badges',market.includes('mergeCanonicalPlayerAwardMilestones')],
+            ['Market old explanatory copy removed',!market.includes('Historical tracking is preserved (')],
+            ['Market Dashboard asset v554 or newer, loaded once',assetAtLeast('value-history-v276.js',554)],
+            ['League Hub asset v564 or newer, loaded once',assetAtLeast('league-hub-v451.js',564)],
+            ['Trade Finder asset v449 or newer, loaded once',assetAtLeast('trade-finder-v256-compiled.js',449)]
+          ];
+          checks.forEach(([label,pass])=>console.log((pass?'PASS ':'FAIL ')+label));
+          if(checks.some(([,pass])=>!pass))process.exit(19);
+          NODE

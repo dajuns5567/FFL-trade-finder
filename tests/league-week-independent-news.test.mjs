@@ -20,6 +20,31 @@ test('Fleeced Daily can show finalized Week 10 with no published Inquirer Week 1
  assert.equal('newspaper' in view,false);
  assert.equal('editorial' in view,false);
 });
+test('finalized Sleeper feed reuses fully covered weekly projections under actual fantasy starters',()=>{
+ const m=matchups().map((row,i)=>({...row,starters:['player_'+(i+1)]}));
+ const projection=Object.fromEntries(m.map((_,i)=>['player_'+(i+1),100+i]));
+ const view=completedLeagueWeekView({season:2026,week:10,matchups:m,
+  rosters,users,playerProjections:projection});
+ assert.equal(view.teams[0].projected,100);
+ assert.equal(view.teams[0].opponent_projected,101);
+ assert.equal(view.teams[0].projection_source,'sleeper-weekly-player-projections');
+ assert.equal(view.teams[0].projection_coverage,1);
+ const incomplete={...projection};delete incomplete.player_2;
+ const missing=completedLeagueWeekView({season:2026,week:10,matchups:m,
+  rosters,users,playerProjections:incomplete});
+ assert.equal(missing.teams[0].projected,100);
+ assert.equal(missing.teams[0].opponent_projected,null);
+ assert.equal(missing.teams[1].projected,null);
+ assert.equal(missing.teams[1].projection_coverage,0);
+});
+test('a completed scoreboard never mistakes a missing starter projection for a projected zero',()=>{
+ const m=matchups().map((row,i)=>({...row,starters:['player_'+(i+1),'missing']})),
+  view=completedLeagueWeekView({season:2026,week:10,matchups:m,
+   rosters,users,playerProjections:{player_1:100}});
+ assert.equal(view.available,true);
+ assert.equal(view.teams[0].projected,null);
+ assert.equal(view.teams[0].opponent_projected,null);
+});
 test('incomplete player scoring cannot claim a finalized week',()=>{
  const rows=matchups();rows[0].players_points={};
  assert.equal(completedLeagueWeekView({season:2026,week:10,matchups:rows,rosters,users}),null);
@@ -37,14 +62,15 @@ test('completed weeks never infer numeric results from absent scores',()=>{
 test('the independent feed is not gated on news archive, awards or status',()=>{
  const backend=readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
  const frontend=readFileSync(new URL('../league-hub-v451.js',import.meta.url),'utf8');
- const handler=backend.slice(backend.indexOf('async function latestCompletedLeagueWeek()'),backend.indexOf('async function draftAwards()'));
+ const handler=backend.slice(backend.indexOf('async function latestCompletedLeagueWeek(requestedWeek=null)'),backend.indexOf('async function draftAwards()'));
  assert.match(handler,/completedPublicationWeek\(week\)/);
  assert.match(handler,/completedLeagueWeekView/);
  assert.doesNotMatch(handler,/broadcastArchive|weeklyReport|inquirer\/publication-status|editorialApproval|weeklyAwards/);
  assert.match(backend,/searchParams\.get\('league_latest'\)==='1'/);
  assert.match(frontend,/liveLeagueWeek\(\)\.catch/);
- assert.match(frontend,/dailyHTML\(all,stats,w,md,spotlightW\|\|w,leagueWeek\)/);
+ assert.match(frontend,/dailyHTML\(all,stats,selectedEdition,md,selectedEdition,selectedWeek\)/);
  assert.match(frontend,/liveScoreboard\+report/);
+ assert.match(frontend,/selectedWeek=await resolveDailyWeek\(leagueWeek,selection\)/);
 });
 
 test('League Hub release is an exact one-time production cutover, not a recurring Netlify publisher',()=>{

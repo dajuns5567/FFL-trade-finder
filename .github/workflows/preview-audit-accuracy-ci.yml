@@ -1,0 +1,23 @@
+name: Preview QA source accuracy
+on:
+  pull_request:
+    paths:
+      - 'ffl-preview-audit-v1.js'
+      - 'tests/preview-qa-settled-views.test.mjs'
+      - '.github/workflows/preview-audit-accuracy-ci.yml'
+permissions:
+  contents: read
+jobs:
+  read-only-auditor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Parse and verify targeted read-only behavior
+        run: |
+          node --check ffl-preview-audit-v1.js
+          node --test tests/preview-qa-settled-views.test.mjs
+          node --input-type=module -e "import{readFileSync}from'node:fs';const s=readFileSync('ffl-preview-audit-v1.js','utf8');for(const k of ['data-value-filter="DRAFT"','value-history-v276','canonical','cmcRenderedMilestones','archived high records present','weekly_awards=1'])if(!s.includes(k))throw Error('Missing audit contract '+k);if(/method:\s*['\"]POST['\"]/.test(s))throw Error('Read-only audit cannot POST')"

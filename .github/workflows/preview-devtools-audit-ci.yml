@@ -1,0 +1,26 @@
+name: Chrome DevTools preview audit source
+on:
+  pull_request:
+    paths:
+      - 'ffl-preview-audit-v1.js'
+      - 'ffl-preview-audit-v2.js'
+      - 'tests/preview-market-recorded-movement.test.mjs'
+      - '.github/workflows/preview-devtools-audit-ci.yml'
+permissions:
+  contents: read
+jobs:
+  audit-script:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Ensure console paste script parses and refuses production
+        run: |
+          node --check ffl-preview-audit-v1.js
+          node --check ffl-preview-audit-v2.js
+          node --test tests/preview-market-recorded-movement.test.mjs
+          node --input-type=module -e "import{readFileSync}from'node:fs';const s=readFileSync('ffl-preview-audit-v2.js','utf8');for(const marker of ['value-history-observability','last_scheduled','scheduledHistory','deploy-preview-'])if(!s.includes(marker))throw Error('Missing v2 audit contract '+marker);if(/method:'POST'/.test(s))throw Error('Audit must remain read-only');"
+          node --input-type=module -e "import{readFileSync}from'node:fs';const s=readFileSync('ffl-preview-audit-v1.js','utf8');for(const marker of ['deploy-preview-','ffl-preview-audit-','weekly_awards=1','__FFL_QA_REPORT','data-lh-view'])if(!s.includes(marker))throw Error('Missing audit contract '+marker);if(/method:'POST'/.test(s))throw Error('Audit must remain read-only');"

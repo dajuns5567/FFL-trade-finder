@@ -1,4 +1,4 @@
-import {parseKtcRenderedPage,mergeKtcPublishedOverallRanks} from "./ktc-html-pages.mjs";
+import {parseKtcRenderedPage,mergeKtcPublishedOverallRanks,describeKtcPublishedOverallConflicts} from "./ktc-html-pages.mjs";
 const KTC_URL="https://keeptradecut.com/dynasty-rankings?format=2";
 const KTC_FALLBACK_URL="https://keeptradecut.com/dynasty-rankings";
 const TIMEOUT_MS=7000;
@@ -306,14 +306,35 @@ export async function refreshKtc(opts={}){
       // Walk sequential pages and merge only IDENTICAL actual publisher rows.
       // Never synthesize rankings from missing pages or positional filters.
       const pageNumbers=Array.from({length:10},(_,i)=>i+1);
-      const pages=[html,...await Promise.all(pageNumbers.map(async page=>{
+      let publicAccessRestricted=false;
+      const readPage=async page=>{
         const pageUrl=new URL("https://keeptradecut.com/dynasty-rankings");
-        pageUrl.searchParams.set("page",String(page));
+        if(page!==0)pageUrl.searchParams.set("page",String(page));
         pageUrl.searchParams.set("format","2");
         try{return await fetchText(pageUrl.toString(),opts.fetchImpl||fetch,opts.timeoutMs||TIMEOUT_MS)}
-        catch{return ""}
-      }))];
-      const rendered=mergeKtcPublishedOverallRanks(pages);
+        catch(error){
+          if(/"status":(?:401|403|429)\b|robots-denied/i.test(String(error?.message||error)))publicAccessRestricted=true;
+          return "";
+        }
+      };
+      let pages=[html,...await Promise.all(pageNumbers.map(readPage))];
+      let rendered=mergeKtcPublishedOverallRanks(pages);
+      // A moving publisher leaderboard can straddle two cached versions.
+      // If there is a genuine row conflict, retry the public batch ONCE,
+      // replacing the entire batch; never select a preferred duplicate or
+      // combine rows from separate inconsistent batches. The same validation
+      // applies to the replacement. Do not retry inaccessible public pages.
+      if(!rendered){
+        const initial=describeKtcPublishedOverallConflicts(pages);
+        if(initial.conflict_count>0&&!initial.below_minimum&&!publicAccessRestricted){
+          responseShape.rendered_html_initial_rejection=initial;
+          await (opts.pause|| (ms=>new Promise(resolve=>setTimeout(resolve,ms))))(750);
+          const next=await Promise.all([0,...pageNumbers].map(readPage));
+          pages=next;
+          rendered=mergeKtcPublishedOverallRanks(pages);
+          responseShape.rendered_html_conflict_retry=true;
+        }
+      }
       responseShape.rendered_html_pages=pages.length;
       responseShape.rendered_html_page_counts=pages.map(x=>parseKtcRenderedPage(x).length);
       responseShape.rendered_html_rank_ranges=pages.map(x=>{
@@ -322,6 +343,7 @@ export async function refreshKtc(opts={}){
       });
       responseShape.rendered_html_unique_ranks=new Set(pages.flatMap(x=>parseKtcRenderedPage(x).map(r=>r.rank))).size;
       responseShape.rendered_html_valid=!!rendered;
+      if(!rendered)responseShape.rendered_html_rejection=describeKtcPublishedOverallConflicts(pages);
       responseShape.rendered_html_mode="published-superflex-overall-ranks";
       if(rendered)extracted={rows:rendered,rawPlayers:rendered.length,
         excludedDraftPicks:0,excludedNonOffense:0,

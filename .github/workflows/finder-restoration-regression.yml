@@ -1,0 +1,47 @@
+name: Finder targeted acquisition and filter restoration
+on:
+  pull_request:
+    paths:
+      - 'trade-add-assets-complement-v1.js'
+      - 'trade-finder-style-loader-v209.js'
+      - 'trade-finder-v256-compiled.js'
+      - 'trade-specific-add-assets-v282.js'
+      - 'trade-specific-max-tier-add-v300.js'
+      - 'trade-specific-max-value-v279.js'
+      - 'trade-specific-player-v232.js'
+      - 'trade-specific-tier-up-v282.js'
+      - 'netlify/functions/site-v29.mjs'
+      - 'tests/finder-natural-filter-matrix.test.mjs'
+      - 'tests/finder-add-assets-complements.test.mjs'
+      - 'tests/targeted-max-value-search-stall.test.mjs'
+      - 'tests/finder-assembled-site-loader.test.mjs'
+      - '.github/workflows/finder-restoration-regression.yml'
+  push:
+    branches:
+      - fix/finder-restored-verified-filter-matrix-20261122
+permissions:
+  contents: read
+jobs:
+  finder-restoration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate all restored Finder modules and page loader
+        run: |
+          for file in trade-add-assets-complement-v1.js trade-finder-style-loader-v209.js trade-finder-v256-compiled.js trade-specific-add-assets-v282.js trade-specific-max-tier-add-v300.js trade-specific-max-value-v279.js trade-specific-player-v232.js trade-specific-tier-up-v282.js netlify/functions/site-v29.mjs; do node --check "$file"; done
+      - name: Verify natural filter matrix, complementary outgoing assets and anti-freeze runtime
+        run: node --test tests/finder-natural-filter-matrix.test.mjs tests/finder-add-assets-complements.test.mjs tests/targeted-max-value-search-stall.test.mjs
+      - name: Verify actual assembled site scripts, cache keys and unrelated readers
+        run: node --test tests/finder-assembled-site-loader.test.mjs
+      - name: Lock canonical unrelated values and exact source-verified Finder hashes
+        run: node scripts/v311-pipeline-identity-v319-smoke.cjs
+      - name: Preserve existing specific player routing, Select All and package diversity
+        run: |
+          node scripts/specific-max-tier-routing-structure-v324-smoke.cjs
+          node scripts/specific-player-simple-package-v325-smoke.cjs
+          node scripts/specific-player-family-diversity-v327-smoke.cjs
+          node scripts/blank-specific-runtime-v326-smoke.cjs

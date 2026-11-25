@@ -1,0 +1,28 @@
+name: Actual league Finder browser execution
+on:
+  pull_request:
+    paths:
+      - 'scripts/finder-live-browser-audit.mjs'
+      - 'scripts/finder-live-browser-runner.mjs'
+      - '.github/workflows/finder-live-browser-audit.yml'
+permissions:
+  contents: read
+jobs:
+  finder:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install existing collector dependencies
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+          npm install --no-save --ignore-scripts --no-audit --no-fund --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Exercise real Finder button with current league rosters and values
+        run: |
+          node --check scripts/finder-live-browser-audit.mjs
+          node --check scripts/finder-live-browser-runner.mjs
+          node scripts/finder-live-browser-runner.mjs

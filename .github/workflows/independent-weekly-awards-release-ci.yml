@@ -1,0 +1,51 @@
+name: Isolated independent weekly awards release (read-only)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'netlify/functions/weekly-awards-refresh.mjs'
+      - '.github/workflows/independent-weekly-awards-release-ci.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify isolated scope and unchanged publisher
+        run: |
+          git diff --name-only "${{ github.event.pull_request.base.sha }}" HEAD > /tmp/weekly-awards-files
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const allowed=new Set(["netlify/functions/league-hub.mjs","tests/league-week-independent-news.test.mjs",".github/workflows/independent-weekly-awards-release-ci.yml","netlify/functions/lib/league-completed-week.mjs","netlify/functions/lib/league-hot-seat.mjs","netlify/functions/lib/league-week-projections.mjs","netlify/functions/lib/weekly-award-stats-merge.mjs","netlify/functions/weekly-awards-refresh.mjs","tests/league-projection-recovery.test.mjs","tests/weekly-awards-scheduled-capture.test.mjs"]);
+          const changed=fs.readFileSync('/tmp/weekly-awards-files','utf8').trim().split('\n');
+          if(changed.some(p=>!allowed.has(p)))throw Error('Unrelated release file: '+changed.filter(p=>!allowed.has(p)));
+          console.log('ISOLATED_WEEKLY_AWARDS_SCOPE',changed);
+          NODE
+      - run: npm install --ignore-scripts --no-audit --no-fund
+      - run: node --check netlify/functions/league-hub.mjs
+      - run: node --test tests/league-projection-recovery.test.mjs tests/weekly-awards-scheduled-capture.test.mjs tests/league-week-independent-news.test.mjs
+      - name: Verify actual completed weeks and candidate Hot Seat results without writes
+        run: |
+          node --input-type=module <<'NODE'
+          import {latestCompletedLeagueWeek,weeklyAwards} from './netlify/functions/league-hub.mjs';
+          import {completeHotSeatCoverage,selectHotSeat} from './netlify/functions/lib/league-hot-seat.mjs';
+          const latest=await latestCompletedLeagueWeek();
+          if(!latest.available)throw Error('Latest completed week unavailable');
+          for(const w of [latest.week-1,latest.week].filter(w=>w>=1)){
+            const data=w===latest.week?latest:await latestCompletedLeagueWeek(w);
+            const hot=selectHotSeat(data.teams);
+            console.log('WEEKLY_AWARDS_LIVE',JSON.stringify({season:data.season,week:w,coverage:data.teams?.filter(t=>t.projection_coverage===1).length,hot:hot?{roster_id:hot.roster_id,team:hot.team_name,detail:hot.hot_seat_detail}:null,diagnostics:data.projection_diagnostics}));
+            if(!completeHotSeatCoverage(data))throw Error('Incomplete projection coverage');
+          }
+          const result=await weeklyAwards({persist:false});
+          const current=result.records.find(r=>Number(r.season)===Number(latest.season)&&Number(r.week)===Number(latest.week));
+          if(!current)throw Error('Missing latest independently verified award record');
+          console.log('WEEKLY_AWARDS_SHADOW',JSON.stringify({count:result.records.length,latest:current.week,offense:current.players_of_week?.offense?.player_id,defense:current.players_of_week?.defense?.player_id,hot:current.manager_awards?.find(x=>x.type==='hot-seat')||null}));
+          NODE

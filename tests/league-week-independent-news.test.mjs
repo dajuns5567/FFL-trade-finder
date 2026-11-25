@@ -37,7 +37,7 @@ test('completed weeks never infer numeric results from absent scores',()=>{
 test('the independent feed is not gated on news archive, awards or status',()=>{
  const backend=readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
  const frontend=readFileSync(new URL('../league-hub-v451.js',import.meta.url),'utf8');
- const handler=backend.slice(backend.indexOf('async function latestCompletedLeagueWeek()'),backend.indexOf('async function draftAwards()'));
+ const handler=backend.slice(backend.indexOf('async function latestCompletedLeagueWeek(requestedWeek=null)'),backend.indexOf('async function draftAwards()'));
  assert.match(handler,/completedPublicationWeek\(week\)/);
  assert.match(handler,/completedLeagueWeekView/);
  assert.doesNotMatch(handler,/broadcastArchive|weeklyReport|inquirer\/publication-status|editorialApproval|weeklyAwards/);

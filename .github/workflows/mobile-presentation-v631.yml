@@ -31,6 +31,10 @@ jobs:
           import {execFileSync} from 'node:child_process';
           import {readFileSync} from 'node:fs';
           // Exact preview-only combined candidate; legacy release checks remain unchanged elsewhere.
+          if(process.env.GITHUB_HEAD_REF==='fix/inquirer-daily-default-closed-20261125'){
+            execFileSync('node',['scripts/audit-inquirer-closed-preview-scope.mjs'],{stdio:'inherit'});
+            process.exit(0);
+          }
           if(process.env.GITHUB_HEAD_REF==='integration/mobile-shared-regressions-20261125'){
             execFileSync('node',['scripts/audit-mobile-shared-preview-scope.mjs'],{stdio:'inherit'});
             process.exit(0);

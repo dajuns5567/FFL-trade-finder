@@ -180,29 +180,16 @@ function openLeagueView(view){
 function openFleecedDaily(){
  navigateTab('leagueHub',()=>{
  waitFor('#leagueHub [data-lh-view="daily"]',daily=>{
-  daily.click();
-  setTimeout(()=>{
-   const back=$('#leagueHub [data-lh-inquirer-back]');
-   if(visible(back)){back.click();setTimeout(()=>scrollToEl($('#leagueHub')),60)}
-   else scrollToEl($('#leagueHub'))
-  },120)
+  if(activeTab()!=='leagueHub')return;
+  daily.click();scrollToEl($('#leagueHub'))
  })
  })
 }
 function openInquirer(){
  navigateTab('leagueHub',()=>{
  waitFor('#leagueHub [data-lh-view="daily"]',daily=>{
-  daily.click();
-  const open=()=>{
-   const back=$('#leagueHub [data-lh-inquirer-back]');
-   if(visible(back)){const report=$('#leagueHub .lh-report');scrollToEl(report||$('#leagueHub'));return}
-   const toggle=$('#leagueHub [data-lh-broadcast-toggle]');
-   if(visible(toggle)){toggle.click();return}
-   const archive=[...document.querySelectorAll('#leagueHub [data-lh-archive-season]')].find(x=>/open full inquirer/i.test(x.textContent||''));
-   if(archive){archive.click();return}
-   setTimeout(open,100)
-  };
-  setTimeout(open,100)
+  if(activeTab()!=='leagueHub')return;
+  daily.dispatchEvent(new CustomEvent('fll:open-inquirer',{bubbles:true}))
  })
  })
 }

@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-11-24T17:39:50.175Z",
+  "generatedAt": "2026-11-25T02:24:22.344Z",
   "source": "Sleeper importer snapshot",
   "currentSeason": 2026,
   "completedWeek": 11,
@@ -1808,8 +1808,8 @@
     },
     "diagnostics": {
       "finalGames": 163,
-      "qualifiedPlayerGames": 10736,
-      "rejectedPlayerGames": 12452,
+      "qualifiedPlayerGames": 10739,
+      "rejectedPlayerGames": 12491,
       "ignoredGames": 0
     }
   },
@@ -5722,7 +5722,7 @@
       "tm_off_snp": 630,
       "pos_rank_ppr": 419,
       "off_snp": 230,
-      "rush_yac": 82,
+      "rush_yac": 103,
       "pts_half_ppr": 64.5,
       "rec_air_yd": 19,
       "rec_ypr": 69,
@@ -5753,6 +5753,7 @@
       "rush_tkl_loss": 4,
       "rush_tkl_loss_yd": -6,
       "q1_rec_yd": 41,
+      "rush_btkl": 1,
       "rec_40p": 1,
       "fum": 1
     },
@@ -6583,7 +6584,7 @@
       "tm_off_snp": 323,
       "pos_rank_ppr": 190,
       "off_snp": 119,
-      "rush_yac": 45,
+      "rush_yac": 57,
       "h1_rush_yd": 79,
       "pts_half_ppr": 27.1,
       "rec_ypr": 28,
@@ -12216,7 +12217,7 @@
       "rec_rz_tgt": 7,
       "st_snp": 3,
       "rec_40p": 2,
-      "rec_drop": 1,
+      "rec_drop": 2,
       "rec_30_39": 2,
       "first_td": 1
     },
@@ -12851,7 +12852,8 @@
       "anytime_tds": 1,
       "rec_tgt": 8,
       "pts_ppr": 16.8,
-      "rec_yd": 58
+      "rec_yd": 58,
+      "rec_drop": 1
     },
     "6855": {
       "gp": 1,
@@ -14768,7 +14770,7 @@
       "pts_ppr": 193.70000000000002,
       "pass_inc": 110,
       "pass_int": 7,
-      "rush_yac": 39,
+      "rush_yac": 41,
       "rush_rz_att": 3,
       "h1_pass_yd": 1121,
       "q1_pass_yd": 543,
@@ -17829,6 +17831,41 @@
       "idp_tkl_solo": 1,
       "st_snp": 13
     },
+    "7865": {
+      "gp": 5,
+      "_ppr_native_weeks": 2,
+      "_ppr_reconstructed_weeks": 0,
+      "off_snp": 154,
+      "pos_rank_half_ppr": 3131,
+      "pos_rank_ppr": 3129,
+      "pos_rank_std": 3131,
+      "st_snp": 37,
+      "tm_def_snp": 338,
+      "tm_off_snp": 323,
+      "tm_st_snp": 137,
+      "bonus_fd_wr": 2,
+      "bonus_rec_wr": 4,
+      "h1_rec_yd": 4,
+      "penalty": 1,
+      "penalty_yd": 9,
+      "pts_half_ppr": 5.9,
+      "pts_ppr": 7.9,
+      "pts_std": 3.9,
+      "rec": 4,
+      "rec_0_4": 1,
+      "rec_20_29": 1,
+      "rec_air_yd": 25,
+      "rec_fd": 2,
+      "rec_lng": 30,
+      "rec_tgt": 5,
+      "rec_yar": 14,
+      "rec_yd": 39,
+      "rec_ypr": 19.5,
+      "rec_ypt": 17,
+      "rush_rec_yd": 39,
+      "rec_10_19": 1,
+      "rec_5_9": 1
+    },
     "7872": {
       "gp": 9,
       "_ppr_native_weeks": 0,
@@ -18733,7 +18770,7 @@
       "pts_ppr": 161,
       "rec_yd": 610,
       "bonus_fd_te": 24,
-      "rec_drop": 4,
+      "rec_drop": 5,
       "h1_rec_yd": 184,
       "rec_30_39": 2,
       "q1_rec_yd": 117,
@@ -23438,7 +23475,7 @@
       "rec_rz_tgt": 6,
       "off_snp": 436,
       "rush_tkl_loss_yd": -24,
-      "rush_yac": 176,
+      "rush_yac": 178,
       "pts_half_ppr": 112.29999999999998,
       "rec_air_yd": -17,
       "rec_ypr": 49.9,
@@ -23464,7 +23501,7 @@
       "fum_lost": 2,
       "q1_rush_yd": 56,
       "fum": 2,
-      "rec_drop": 1,
+      "rec_drop": 3,
       "bonus_rush_rec_yd_100": 1,
       "rec_td": 2,
       "rec_td_lng": 4
@@ -24003,7 +24040,7 @@
       "rec_40p": 3,
       "rec_td_40p": 2,
       "rec_td_50p": 2,
-      "rec_drop": 4,
+      "rec_drop": 6,
       "rush_fd": 1,
       "rush_yac": 4,
       "rec_0_4": 2
@@ -25168,12 +25205,12 @@
       "pts_ppr": 57.4,
       "pts_std": 53.4,
       "rush_att": 57,
-      "rush_btkl": 4,
+      "rush_btkl": 5,
       "rush_fd": 13,
       "rush_lng": 117,
       "rush_rec_yd": 294,
       "rush_rz_att": 12,
-      "rush_yac": 123,
+      "rush_yac": 148,
       "rush_yd": 251,
       "rush_ypa": 37.19,
       "tm_def_snp": 502,
@@ -29504,7 +29541,7 @@
       "rush_tkl_loss_yd": -7,
       "pass_cmp": 84,
       "cmp_pct": 298.23,
-      "rush_yac": 20,
+      "rush_yac": 22,
       "h1_rush_yd": 64,
       "pts_half_ppr": 67.12,
       "pass_ypa": 39.94,
@@ -29561,7 +29598,7 @@
       "off_snp": 497,
       "pass_cmp": 161,
       "cmp_pct": 517.3,
-      "rush_yac": 39,
+      "rush_yac": 42,
       "pts_half_ppr": 155.02,
       "pass_ypa": 57.04999999999999,
       "pass_fd": 74,
@@ -31165,7 +31202,7 @@
       "q1_rec_yd": 163,
       "rec_td_lng": 50,
       "anytime_tds": 3,
-      "rec_drop": 3,
+      "rec_drop": 4,
       "idp_tkl": 2,
       "idp_tkl_solo": 2,
       "rec_40p": 2,
@@ -34957,7 +34994,7 @@
       "rush_td_lng": 32,
       "rush_tkl_loss": 12,
       "rush_tkl_loss_yd": -29,
-      "rush_yac": 238,
+      "rush_yac": 258,
       "rush_yd": 530,
       "rush_ypa": 32.31,
       "tm_def_snp": 510,
@@ -35277,7 +35314,7 @@
       "pos_rank_ppr": 169,
       "off_snp": 343,
       "rush_tkl_loss_yd": -35,
-      "rush_yac": 362,
+      "rush_yac": 376,
       "pts_half_ppr": 145.30000000000004,
       "rec_air_yd": -59,
       "rec_ypr": 104.5,
@@ -36824,7 +36861,7 @@
       "tm_off_snp": 637,
       "pos_rank_ppr": 9990,
       "off_snp": 54,
-      "rush_yac": 1,
+      "rush_yac": 2,
       "pts_half_ppr": 20.4,
       "rec_air_yd": 18,
       "rec_ypr": 41.75,
@@ -36928,7 +36965,7 @@
       "pos_rank_ppr": 175,
       "penalty_yd": 10,
       "off_snp": 178,
-      "rush_yac": 93,
+      "rush_yac": 114,
       "pts_half_ppr": 57.099999999999994,
       "rec_air_yd": -7,
       "rec_ypr": 34,
@@ -36956,6 +36993,7 @@
       "h1_rush_yd": 84,
       "first_td": 1,
       "rush_btkl": 1,
+      "rec_drop": 1,
       "rec_10_19": 1
     },
     "12534": {
@@ -40839,28 +40877,20 @@
       "tm_st_snp": 30
     },
     "12957": {
-      "gp": 2,
+      "gp": 1,
       "_ppr_native_weeks": 0,
       "_ppr_reconstructed_weeks": 0,
-      "def_snp": 107,
-      "gs": 1,
-      "idp_int": 1,
-      "idp_int_ret_yd": 9,
-      "idp_pass_def": 3,
-      "idp_pass_def_3p": 1,
-      "idp_tkl": 8,
-      "idp_tkl_ast": 2,
-      "idp_tkl_solo": 6,
-      "penalty": 3,
-      "penalty_yd": 40,
-      "pos_rank_half_ppr": 1998,
-      "pos_rank_ppr": 1998,
-      "pos_rank_std": 1998,
-      "pts_idp": 29,
-      "tm_def_snp": 138,
-      "tm_off_snp": 136,
-      "tm_st_snp": 49,
-      "st_snp": 4
+      "def_snp": 32,
+      "idp_tkl": 4,
+      "idp_tkl_solo": 4,
+      "pos_rank_half_ppr": 999,
+      "pos_rank_ppr": 999,
+      "pos_rank_std": 999,
+      "pts_idp": 8,
+      "st_snp": 4,
+      "tm_def_snp": 63,
+      "tm_off_snp": 70,
+      "tm_st_snp": 25
     },
     "12961": {
       "gp": 6,
@@ -41388,7 +41418,7 @@
       "tm_off_snp": 521,
       "tm_st_snp": 222,
       "h1_rec_yd": 189,
-      "rec_drop": 4,
+      "rec_drop": 3,
       "first_td": 1,
       "rec_5_9": 7,
       "gs": 4,
@@ -41475,21 +41505,21 @@
       "idp_tkl_ast": 3
     },
     "13181": {
-      "gp": 2,
+      "gp": 1,
       "_ppr_native_weeks": 0,
       "_ppr_reconstructed_weeks": 0,
-      "def_snp": 30,
+      "def_snp": 18,
       "idp_tkl": 3,
       "idp_tkl_ast": 2,
       "idp_tkl_solo": 1,
-      "pos_rank_half_ppr": 1998,
-      "pos_rank_ppr": 1998,
-      "pos_rank_std": 1998,
+      "pos_rank_half_ppr": 999,
+      "pos_rank_ppr": 999,
+      "pos_rank_std": 999,
       "pts_idp": 4,
-      "st_snp": 18,
-      "tm_def_snp": 126,
-      "tm_off_snp": 123,
-      "tm_st_snp": 50
+      "st_snp": 13,
+      "tm_def_snp": 66,
+      "tm_off_snp": 63,
+      "tm_st_snp": 29
     },
     "13196": {
       "gp": 3,
@@ -44318,7 +44348,8 @@
       "pr_yd": 6,
       "pr_ypa": 6,
       "q1_rec_yd": 28,
-      "fum": 1
+      "fum": 1,
+      "rec_drop": 1
     },
     "13395": {
       "gp": 10,
@@ -49141,14 +49172,14 @@
   "pprMethod": "Sleeper raw weekly stats aggregated with native pts_ppr when supplied; otherwise deterministic standard-PPR reconstruction from Sleeper raw stat fields.",
   "seasonDiagnostics": {
     "2023": {
-      "players": 885,
-      "withPpr": 732,
-      "withGames": 885
+      "players": 886,
+      "withPpr": 733,
+      "withGames": 886
     },
     "2024": {
-      "players": 958,
-      "withPpr": 792,
-      "withGames": 958
+      "players": 959,
+      "withPpr": 793,
+      "withGames": 959
     },
     "2025": {
       "players": 1054,
@@ -49156,11 +49187,11 @@
       "withGames": 1054
     },
     "2026": {
-      "players": 1605,
-      "withPpr": 561,
-      "withGames": 1605,
+      "players": 1606,
+      "withPpr": 562,
+      "withGames": 1606,
       "currentSeasonQualified": true,
-      "compactPlayers": 1605
+      "compactPlayers": 1606
     }
   },
   "stats": {
@@ -52772,6 +52803,19 @@
       "5047": {
         "gp": 14,
         "off_snp": 883
+      },
+      "5048": {
+        "pts_ppr": 4,
+        "gp": 9,
+        "def_snp": 489,
+        "idp_tkl": 28,
+        "idp_tkl_solo": 18,
+        "idp_int": 1,
+        "idp_pass_def_3p": 3,
+        "st_tkl_solo": 2,
+        "idp_pass_def": 13,
+        "idp_fum_rec": 1,
+        "idp_tkl_ast": 10
       },
       "5049": {
         "pts_ppr": 3,
@@ -61416,19 +61460,19 @@
         "rec_yd": 177
       },
       "10871": {
-        "pts_ppr": 24.099999999999998,
-        "gp": 15,
-        "off_snp": 343,
-        "rec_tgt": 13,
-        "bonus_rec_te": 6,
-        "rec_0_4": 1,
+        "pts_ppr": 25.499999999999996,
+        "gp": 16,
+        "off_snp": 356,
+        "rec_tgt": 14,
+        "bonus_rec_te": 7,
+        "rec_0_4": 2,
         "rec_td": 2,
-        "rec": 6,
+        "rec": 7,
         "rec_fd": 3,
-        "st_tkl_solo": 1,
+        "st_tkl_solo": 2,
         "rec_5_9": 1,
         "rec_10_19": 4,
-        "rec_yd": 61,
+        "rec_yd": 65,
         "bonus_fd_te": 3
       },
       "10874": {
@@ -67913,6 +67957,21 @@
         "gp": 17,
         "off_snp": 1100
       },
+      "5048": {
+        "pts_ppr": 6,
+        "gp": 11,
+        "def_snp": 444,
+        "idp_tkl": 40,
+        "idp_tkl_solo": 32,
+        "idp_int": 1,
+        "idp_int_ret_yd": 11,
+        "st_tkl_solo": 2,
+        "idp_pass_def": 6,
+        "idp_fum_rec": 1,
+        "idp_ff": 2,
+        "st_ff": 1,
+        "idp_tkl_ast": 8
+      },
       "5049": {
         "pts_ppr": 5,
         "gp": 17,
@@ -71256,8 +71315,8 @@
       },
       "7496": {
         "pts_ppr": 135.70000000000002,
-        "gp": 16,
-        "off_snp": 762,
+        "gp": 15,
+        "off_snp": 749,
         "rec_tgt": 60,
         "bonus_rec_yd_100": 1,
         "rec_0_4": 2,
@@ -105528,6 +105587,21 @@
         "idp_tkl_solo": 1,
         "idp_tkl_ast": 5
       },
+      "7865": {
+        "pts_ppr": 7.9,
+        "gp": 5,
+        "off_snp": 154,
+        "rec_tgt": 5,
+        "rec_0_4": 1,
+        "rec_20_29": 1,
+        "bonus_fd_wr": 2,
+        "rec": 4,
+        "rec_fd": 2,
+        "rec_5_9": 1,
+        "bonus_rec_wr": 4,
+        "rec_10_19": 1,
+        "rec_yd": 39
+      },
       "7872": {
         "gp": 9,
         "off_snp": 647,
@@ -115191,15 +115265,10 @@
         "idp_tkl_ast": 6
       },
       "12957": {
-        "gp": 2,
-        "def_snp": 107,
-        "idp_tkl": 8,
-        "idp_tkl_solo": 6,
-        "idp_int": 1,
-        "idp_int_ret_yd": 9,
-        "idp_pass_def_3p": 1,
-        "idp_pass_def": 3,
-        "idp_tkl_ast": 2
+        "gp": 1,
+        "def_snp": 32,
+        "idp_tkl": 4,
+        "idp_tkl_solo": 4
       },
       "12961": {
         "pts_ppr": 63,
@@ -115462,8 +115531,8 @@
         "idp_tkl_ast": 3
       },
       "13181": {
-        "gp": 2,
-        "def_snp": 30,
+        "gp": 1,
+        "def_snp": 18,
         "idp_tkl": 3,
         "idp_tkl_solo": 1,
         "idp_tkl_ast": 2

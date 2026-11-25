@@ -29,3 +29,19 @@ test('both comparable and model-boundary rows display outcome; chart safety unch
  assert.match(ui,/if\(chartEraChange\(prev,point\)\)continue/);
  assert.match(ui,/if\(chartEraChange\(prev,cur\)\)continue/);
 });
+
+// Reproduces archived Sleeper transaction 1428905855205531649 (2026-11-18T22:16:52.969Z).
+// Verified against sleeper-data and value-history-data on 2026-11-25:
+// latest recorded pre-trade snapshot 2026-11-16T09:39:50.644Z,
+// latest archived scheduled snapshot 2026-11-25T14:31:32.091Z.
+// Detroit received player 11705; the Jets received a 2029 R2 pick.
+// This is a player-only outcome, not a claim about full trade value.
+test('Detroit–Jets archived transaction retains opposing player-only gains despite model change',()=>{
+ const original={roster_ids:[4,22],sides:[{roster_id:4,player_ids:[],then_players:[],picks:[{season:2029,round:2,original_roster_id:18}]},{roster_id:22,player_ids:['11705'],then_players:[{id:'11705',value:2257}]}]};
+ const old=ctx.currentRows;
+ try{
+  ctx.currentRows=()=>[{id:'11705',value:2309}];
+  assert.deepEqual(JSON.parse(JSON.stringify(ctx.teamTradePlayerOutcome(original,22))),{atTrade:2257,today:2309,change:52});
+  assert.deepEqual(JSON.parse(JSON.stringify(ctx.teamTradePlayerOutcome(original,4))),{atTrade:-2257,today:-2309,change:-52});
+ }finally{ctx.currentRows=old;}
+});

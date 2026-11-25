@@ -14,6 +14,7 @@ concurrency:
 
 jobs:
   archive:
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,7 +32,7 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_SHA: ${{ github.sha }}
           VALUE_HISTORY_DEPLOY_BRANCH: main
-          VALUE_HISTORY_PRODUCTION_SITE_ID: '2e556797-6f35-4037-aa5a-1338724eb71d'
+          VALUE_HISTORY_PRODUCTION_SITE_ID: 'a516be3b-6c65-4f54-a9fb-23c5361bf3d2'
         run: node scripts/resolve-active-netlify-site.mjs
 
       - name: Report production commit drift and protect the archive

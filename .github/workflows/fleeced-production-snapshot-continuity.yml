@@ -3,7 +3,17 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '53 */4 * * *'
+  pull_request:
+    paths:
+      - '.github/workflows/value-history-archive.yml'
+      - 'scripts/select-archive-production-site.mjs'
+      - 'tests/select-archive-production-site.test.mjs'
+      - '.github/workflows/fleeced-production-snapshot-continuity.yml'
+      - 'scripts/diagnose-production-archive-continuity.mjs'
+      - 'scripts/assess-archive-continuity.mjs'
+      - 'tests/assess-archive-continuity.test.mjs'
   push:
+    branches: [main]
     paths:
       - '.github/workflows/fleeced-production-snapshot-continuity.yml'
       - 'scripts/diagnose-production-archive-continuity.mjs'
@@ -20,10 +30,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --test tests/assess-archive-continuity.test.mjs
+      - run: node --test tests/assess-archive-continuity.test.mjs tests/select-archive-production-site.test.mjs
       - run: npm install --ignore-scripts --no-audit --no-fund
       - name: Compare real upstream production Blobs and durable archive without writes
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         env:
+          VALUE_HISTORY_PRODUCTION_SITE_ID: 'a516be3b-6c65-4f54-a9fb-23c5361bf3d2'
           NETLIFY_BLOBS_TOKEN: ${{ secrets.NETLIFY_BLOBS_TOKEN }}
           GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/diagnose-production-archive-continuity.mjs

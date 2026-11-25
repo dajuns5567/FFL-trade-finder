@@ -36,3 +36,10 @@ test('backend exact week route uses the finalized week validator without latest 
  assert.match(ui,/playersOfWeekHTML\(leagueWeek\|\|w\)/);
  assert.match(ui,/selection!==dailyWeekSelection\)return/);
 });
+
+test('Daily week filter uses scoped Fleeced gold styling and a visible keyboard focus',()=>{
+ const a=fixture(async()=>{throw Error('unexpected')});
+ assert.match(a.dailyWeekFilterHTML(latest),/lh-daily-week-filter/);
+ assert.match(ui,/\.lh-daily-week-filter select\[data-lh-daily-week\]\{[^}]*color:#e4b53f!important[^}]*border:1px solid rgba\(228,181,63,\.64\)/);
+ assert.match(ui,/\.lh-daily-week-filter select\[data-lh-daily-week\]:focus-visible\{[^}]*outline:2px solid #ffd967/);
+});

@@ -32,3 +32,14 @@ jobs:
           node --test tests/league-awards-independent-week-sync.test.mjs
           node --test tests/weekly-awards-scheduled-capture.test.mjs
           node --test tests/league-week-independent-news.test.mjs
+          node --test tests/league-projection-recovery.test.mjs
+      - name: Read actual completed-week projection coverage (no writes)
+        run: |
+          node --input-type=module <<'NODE'
+          import {latestCompletedLeagueWeek} from './netlify/functions/league-hub.mjs';
+          const latest=await latestCompletedLeagueWeek();
+          for(const week of [latest.week-1,latest.week]){
+            const data=week===latest.week?latest:await latestCompletedLeagueWeek(week);
+            console.log('HOT_SEAT_PROJECTION_COVERAGE',JSON.stringify({season:data.season,week:data.week,teams:data.teams?.length,covered:data.teams?.filter(t=>t.projection_coverage===1).length,diagnostics:data.projection_diagnostics}));
+          }
+          NODE

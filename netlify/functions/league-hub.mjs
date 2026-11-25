@@ -1,6 +1,7 @@
 import {inquirerMarketCutoff,editionAvailability} from './lib/inquirer-market-window.mjs';
 import {completedLeagueWeekView} from './lib/league-completed-week.mjs';
-import {selectHotSeat,supplementCompletedHotSeat} from './lib/league-hot-seat.mjs';
+import {completedWeekProjections} from './lib/league-week-projections.mjs';
+import {selectHotSeat,supplementCompletedHotSeat,repairMissingHotSeats} from './lib/league-hot-seat.mjs';
 import {mergeAwardHighs,verifiedDurableAwardHighRecords,verifiedCanonicalHighRecords} from './lib/league-all-time-highs.mjs';
 import {mergeCompletedWeeklyAwardStats} from './lib/weekly-award-stats-merge.mjs';
 import valueHistoryHandler from './value-history.mjs';
@@ -963,6 +964,11 @@ export async function weeklyAwards({additionalLockedEditions=[],persist=true,str
     byKey.set(rec.season+'|'+rec.week,rec);
   }
  }
+ // Backfill missing Hot Seat independently of the Inquirer, never replacing existing locked awards.
+ if(independent?.available&&!onlyAdditional){
+  const repaired=await repairMissingHotSeats({records:[...byKey.values()],latest:independent,readWeek:latestCompletedLeagueWeek,persist});
+  for(const rec of repaired)byKey.set(Number(rec.season)+'|'+Number(rec.week),rec);
+ }
  const next=(onlyAdditional?[...records,...[...byKey.values()].filter(rec=>
   !records.some(old=>Number(old.season)===Number(rec.season)&&Number(old.week)===Number(rec.week)))]:
   [...byKey.values()]).sort((a,b)=>Number(a.season)-Number(b.season)||Number(a.week)-Number(b.week));
@@ -997,7 +1003,7 @@ export async function weeklyAwards({additionalLockedEditions=[],persist=true,str
 
 // League Hub week visibility is independent of the GitHub newspaper archive.
 // Only finalized Sleeper matchups and roster records can advance this feed.
-async function latestCompletedLeagueWeek(requestedWeek=null){
+export async function latestCompletedLeagueWeek(requestedWeek=null){
  const [league,nfl]=await Promise.all([
   fetchJson(`${API}/league/${LEAGUE}`),fetchJson(`${API}/state/nfl`)
  ]);
@@ -1015,10 +1021,11 @@ async function latestCompletedLeagueWeek(requestedWeek=null){
  for(let week=start;week>=end;week--){
   const finalized=await completedPublicationWeek(week);
   if(!finalized.complete)continue;
-  const scoredProjections=await projections(season,week,league?.scoring_settings||{});
+  const projectionResult=await completedWeekProjections({season,week,scoring:league?.scoring_settings||{},matchups:finalized.rows,fetchJson});
+  const scoredProjections=projectionResult.map;
   const view=completedLeagueWeekView({season,week,matchups:finalized.rows,rosters,users,
    playerProjections:scoredProjections});
-  if(view)return view;
+  if(view)return {...view,projection_diagnostics:projectionResult.diagnostics};
  }
  return{available:false,season,week:requestedWeek,reason:'Sleeper has not finalized league matchup results'};
 }

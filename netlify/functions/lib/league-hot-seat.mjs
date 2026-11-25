@@ -46,3 +46,36 @@ export function supplementCompletedHotSeat(cache,completed){
  });
  return{...cache,records:next};
 }
+
+// Only a complete 32-team comparison may become a permanent historical award.
+// Partial coverage remains a labeled live-only fallback, never a durable winner.
+export function completeHotSeatCoverage(week){
+ const teams=week?.teams;
+ return week?.available===true&&Array.isArray(teams)&&teams.length===32&&
+ new Set(teams.map(t=>String(t.roster_id))).size===32&&teams.every(t=>
+ t.projection_coverage===1&&t.projected!=null&&t.opponent_projected!=null&&
+ Number.isFinite(Number(t.projected))&&Number.isFinite(Number(t.opponent_projected)));
+}
+export async function repairMissingHotSeats({records,latest,readWeek,persist=false}){
+ const out=records.slice();
+ const pending=out.map((r,i)=>({r,i})).filter(({r})=>
+ Number(r.season)===Number(latest.season)&&Number(r.week)<=Number(latest.week)&&
+ !r.manager_awards?.some(a=>a.type==='hot-seat')&&!r.hot_seat_projection_verified);
+ // Bound concurrent historical fetches, preserve every other earned badge.
+ for(let i=0;i<pending.length;i+=3){
+  await Promise.all(pending.slice(i,i+3).map(async ({r,i:index})=>{
+   let week;
+   try{week=Number(r.week)===Number(latest.week)?latest:await readWeek(Number(r.week))}
+   catch(error){console.warn('hot-seat-history-read',r.week,String(error?.message||error));return}
+   if(Number(week?.season)!==Number(r.season)||Number(week?.week)!==Number(r.week)||!completeHotSeatCoverage(week))return;
+   const candidate=supplementCompletedHotSeat({records:[r]},week).records[0];
+   if(candidate===r){
+    if(persist)out[index]={...r,hot_seat_projection_verified:true};
+    return;
+   }
+   const awards=candidate.manager_awards.map(a=>a.type==='hot-seat'?{...a,provisional:!persist,projection_roster_count:32}:a);
+   out[index]={...candidate,manager_awards:awards,...(persist?{hot_seat_projection_verified:true}:{})};
+  }));
+ }
+ return out;
+}

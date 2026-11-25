@@ -27,12 +27,13 @@ export function completedLeagueWeekView({season,week,matchups,rosters,users,play
    const starters=Array.isArray(game?.starters)?
     game.starters.map(String).filter(id=>id&&id!=='0'):[],
     values=starters.map(id=>playerProjections?.[id]);
-   return starters.length&&values.every(v=>v!=null&&Number.isFinite(Number(v)))?
+   // An explicitly empty submitted lineup contributes zero; an absent lineup is unknown.
+   return Array.isArray(game?.starters)&&values.every(v=>v!=null&&Number.isFinite(Number(v)))?
     Number(values.reduce((sum,v)=>sum+Number(v),0).toFixed(2)):null;
   };
   const projected=projectedFor(m),opponentProjected=projectedFor(o);
   teams.push({roster_id:String(m.roster_id),opponent_roster_id:String(o.roster_id),
-   manager_name:String(u?.display_name||u?.username||'Roster '+m.roster_id),
+   manager_user_id:String(r.owner_id||''),manager_name:String(u?.display_name||u?.username||'Roster '+m.roster_id),
    team_name:name,points:Number(m.points),opponent_points:Number(o.points),
    won:Number(m.points)>Number(o.points),tied:Number(m.points)===Number(o.points),
    projected,opponent_projected:opponentProjected,

@@ -51,6 +51,20 @@ jobs:
             console.log('Frozen 87-pass preview content verified; only six acceptance workflows differ. No production release granted.');
             process.exit(0);
           }
+          // Owner-authorized one-time deployment, no application modifications.
+          if(process.env.HEAD_REF==='release/verified-630-one-time-production-20261124'){
+            const git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();
+            const base='379101e110f58db88aa1a79bcb42df3c0a3439e1';
+            assert.equal(git('rev-parse','origin/main'),base,'Audited parent changed');
+            const expected=new Set(["netlify.toml","tests/netlify-v101-one-time-release.test.mjs",".github/workflows/netlify-v101-one-time-release-gate-ci.yml"]);
+            const files=git('diff','--name-only',base,'HEAD').split(String.fromCharCode(10)).filter(Boolean);
+            assert.equal(files.length,expected.size,'Exact deployment-only inventory');
+            for(const p of files)assert(expected.has(p),'Application change not authorized: '+p);
+            assert.equal(git('rev-parse','HEAD:netlify.toml'),'6344a7fa8374c677026bbd1086968d5ae57f57b2');
+            assert.equal(git('rev-parse','HEAD:tests/netlify-v101-one-time-release.test.mjs'),'a1a6e461005806460587a938732d591c47a5f8a9');
+            console.log('Exact reviewed release gate and unchanged application verified');
+            process.exit(0);
+          }
           const paths=execFileSync('git',['diff','--name-only','origin/'+process.env.BASE_REF+'...HEAD'],{encoding:'utf8'}).trim().split('\n').filter(Boolean);
           // Preserve the original V101 exact six-file gate for every other PR.
           // The separately owner-authorized V110 cutover must match its own

@@ -13,11 +13,14 @@
  try{mode=localStorage.getItem(key)}catch{}
  let explicit=mode==='mobile'||mode==='desktop';
  if(!explicit)mode=defaultMode;
- let control,menuButton,sectionLabel;
- function syncMenu(){
-  if(!menuButton)return;
-  menuButton.setAttribute('aria-expanded',String(root.dataset.fleecedMenuOpen==='1'));
-  if(sectionLabel){const active=document.querySelector('.tabs button.active');sectionLabel.textContent=active?.textContent.trim()||'Home'}
+ let control,footer;
+ function placeControl(){
+  if(!control||!footer)return;
+  const actions=document.querySelector('header .fleeced-site-header-actions');
+  // Move only the new switch, never any original desktop controls.
+  const inMobileHeader=mode==='mobile'&&window.matchMedia('(max-width: 1024px)').matches&&actions;
+  const target=inMobileHeader?actions:footer;
+  if(control.parentElement!==target)target.appendChild(control);
  }
  function apply(next,persist=false){
   if(next!=='mobile'&&next!=='desktop')return;
@@ -28,8 +31,7 @@
   const content=mode==='desktop'&&touchDevice?'width=1280,viewport-fit=cover':original;
   if(viewport.content!==content)viewport.content=content;
   if(persist){explicit=true;try{localStorage.setItem(key,mode)}catch{}}
-  if(next==='desktop')root.removeAttribute('data-fleeced-menu-open');
-  syncMenu();
+  placeControl();
   if(control){
    const target=mode==='mobile'?'Desktop View':'Mobile View';
    control.textContent=target;
@@ -46,32 +48,32 @@
   control.id='fleeced-view-switch';
   control.addEventListener('click',()=>apply(mode==='mobile'?'desktop':'mobile',true));
   // Fixed bottom-left in both modes; no desktop layout reflow.
-  const footer=document.createElement('div');
+  footer=document.createElement('div');
   footer.id='fleeced-view-footer';
   footer.appendChild(control);
   document.body.appendChild(footer);
   if(/^(?:deploy-preview-\d+|[a-f0-9]{24})--/.test(location.hostname))root.dataset.fleecedPreview='1';
-  const tabs=document.querySelector('header .tabs'),header=tabs?.closest('header');
-  if(tabs&&header){
-   const strip=document.createElement('div');strip.id='fleeced-mobile-menu-strip';
-   menuButton=document.createElement('button');menuButton.type='button';menuButton.id='fleeced-mobile-menu-toggle';menuButton.textContent='☰ Sections';
-   if(!tabs.id)tabs.id='fleeced-mobile-original-tabs';
-   menuButton.setAttribute('aria-controls',tabs.id);
-   sectionLabel=document.createElement('span');sectionLabel.id='fleeced-mobile-current-section';sectionLabel.setAttribute('aria-live','polite');
-   strip.append(menuButton,sectionLabel);header.insertBefore(strip,tabs);
-   const close=()=>{root.removeAttribute('data-fleeced-menu-open');syncMenu()};
-   menuButton.addEventListener('click',()=>{
-    if(root.dataset.fleecedMenuOpen==='1'){close();document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))}
-    else{root.dataset.fleecedMenuOpen='1';syncMenu()}
-   });
-   header.addEventListener('click',e=>{
-    if(mode!=='mobile'||!e.isTrusted)return;
-    const item=e.target.closest('[data-fleeced-header-action]');
-    const button=e.target.closest('.tabs button[data-tab]');
-    if(item||(button&&!button.dataset.fleecedHasMenu))close();
-   });
-   new MutationObserver(syncMenu).observe(tabs,{subtree:true,attributes:true,attributeFilter:['class'],childList:true});
-   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&root.dataset.fleecedMenuOpen==='1'&&!document.querySelector('#fleecedHeaderDropdown.open'))close()});
+  // Reuse the actual swipeable tab strip and its existing submenu actions.
+  // No substitute menu, labels, or routing. Keep active tab in view.
+  const tabs=document.querySelector('header .tabs');
+  if(tabs){
+   const reveal=()=>{
+    if(mode!=='mobile'||!window.matchMedia('(max-width: 1024px)').matches)return;
+    const active=tabs.querySelector('button.active');
+    if(!active)return;
+    const r=active.getBoundingClientRect(),t=tabs.getBoundingClientRect();
+    if(r.left<t.left)tabs.scrollLeft+=r.left-t.left-5;
+    else if(r.right>t.right)tabs.scrollLeft+=r.right-t.right+5;
+   };
+   new MutationObserver(reveal).observe(tabs,{subtree:true,attributes:true,attributeFilter:['class']});
+  }
+  window.matchMedia('(max-width: 1024px)').addEventListener?.('change',placeControl);
+  // Offset existing scroll-to-section actions by the actual sticky header
+  // height, including orientation changes. No viewport scaling or zoom lock.
+  const header=document.querySelector('header');
+  if(header&&typeof ResizeObserver==='function'){
+   const measure=()=>{if(mode==='mobile')root.style.setProperty('--fleeced-mobile-header-height',Math.ceil(header.getBoundingClientRect().height)+'px')};
+   new ResizeObserver(measure).observe(header);measure();
   }
   apply(mode);
  }

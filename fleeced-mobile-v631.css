@@ -35,7 +35,18 @@ html[data-fleeced-preview="1"] #fleeced-view-footer{bottom:calc(64px + env(safe-
  html[data-fleeced-view="mobile"] #valueHistory>div,
  html[data-fleeced-view="mobile"] #valueHistory #vhContent,
  html[data-fleeced-view="mobile"] #valueHistory .vh-market-table{min-width:0!important;max-width:100%!important;width:100%;box-sizing:border-box}
- html[data-fleeced-view="mobile"] #valueHistory #vhContent{grid-template-columns:minmax(0,1fr)!important}
+ /* The populated audit measured the original grid shell at 761px on a
+    440px viewport. Prevent nested intrinsic sizing from expanding the page. */
+ html[data-fleeced-view="mobile"] #valueHistory :is(.vh-shell,#vhLazy,#vhContent,.vh-brand-head,.vh-hero,.vh-search-wrap,.vh-market-section,.vh-card){min-width:0!important;max-width:100%!important}
+ html[data-fleeced-view="mobile"] #valueHistory :is(.vh-shell,#vhContent,.vh-market-section){grid-template-columns:minmax(0,1fr)!important}
+ html[data-fleeced-view="mobile"] #valueHistory :is(.vh-shell,#vhContent,.vh-card,.vh-market-section,.vh-card-head,.vh-control-row,.vh-subnav)>*{min-width:0}
+ html[data-fleeced-view="mobile"] #valueHistory :is(.vh-team-toolbar label,.vh-search-wrap){min-width:0!important;max-width:100%!important}
+ html[data-fleeced-view="mobile"] #valueHistory :is(.vh-card-actions,.vh-intel-period-actions,.vh-periods){flex-wrap:wrap;max-width:100%;min-width:0}
+ html[data-fleeced-view="mobile"] #valueHistory :is(.vh-modal-body,.vh-market-jump){max-width:100%;min-width:0;overflow-x:auto}
+ html[data-fleeced-view="mobile"] #valueHistory :is(.vh-card-head,.vh-signal-summary,.vh-intel-grid){grid-template-columns:minmax(0,1fr)!important}
+ html[data-fleeced-view="mobile"] #valueHistory :is(.vh-index-grid,.vh-category-grid,.vh-metrics,.vh-profile-facts){grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ html[data-fleeced-view="mobile"] #valueHistory :is(.vh-index-card,.vh-card h3,.vh-card h4,.vh-sub,.vh-status){overflow-wrap:anywhere}
+
  html[data-fleeced-view="mobile"] #valueHistory .vh-control-row{display:flex!important;min-width:0;max-width:100%}
  html[data-fleeced-view="mobile"] #valueHistory .vh-subnav{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));width:100%!important;min-width:0;max-width:100%;gap:5px}
  html[data-fleeced-view="mobile"] #valueHistory .vh-subnav button{min-width:0!important;width:100%!important;white-space:normal!important;min-height:44px!important;padding:7px 5px!important;font-size:12px!important}

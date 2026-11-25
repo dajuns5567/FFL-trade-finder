@@ -2,6 +2,9 @@
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {readFileSync} from 'node:fs';
+if(process.env.GITHUB_HEAD_REF==='fix/mobile-paired-comparisons-20261125'){
+ execFileSync('node',['scripts/audit-mobile-pairs-preview-scope.mjs'],{stdio:'inherit'});process.exit(0);
+}
 if(process.env.GITHUB_HEAD_REF==='fix/mobile-information-density-20261125'){
  execFileSync('node',['scripts/audit-mobile-density-preview-scope.mjs'],{stdio:'inherit'});process.exit(0);
 }

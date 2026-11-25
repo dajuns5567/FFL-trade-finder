@@ -33,12 +33,28 @@ jobs:
       - name: Enforce exact history-writer-only change scope
         env:
           BASE_REF: ${{ github.base_ref }}
+          HEAD_REF: ${{ github.head_ref }}
         run: |
           git fetch origin "$BASE_REF"
           node --input-type=module <<'JS'
           import {execFileSync} from 'node:child_process';
           import assert from 'node:assert/strict';
           const paths=execFileSync('git',['diff','--name-only','origin/'+process.env.BASE_REF+'...HEAD'],{encoding:'utf8'}).trim().split('\n').filter(Boolean);
+          // The separately reviewed Awards capture extends the existing
+          // recorder, but is not a V107 replacement or production deploy.
+          // Its exact inventory and reviewed blob IDs are mandatory.
+          if(process.env.HEAD_REF==='fix/independent-all-time-highs-release-20261124'){
+            const pinned={".github/workflows/isolated-all-time-highs-release-ci.yml":"253c146cae22289877c17922e09b010eb00281ec",".github/workflows/league-all-time-highs-independent-capture.yml":"170675117574addfe5543533eee119c5b4a899ca",".github/workflows/value-history-headless-refresh.yml":"63d38e451fea4cf1979989700079d9c4d585bb88","league-hub-v451.js":"b9c2814657b166c327a7396a5f6d6b8ff1840a56","netlify/functions/league-hub.mjs":"b3f3f07048f5e99b6bdb58a9f65dd835f2ab6d01","netlify/functions/lib/league-all-time-highs.mjs":"012676e0677e192c8260adda4de91db72e7e44b6","netlify/functions/site-v29.mjs":"35b29ab9afbbe22815ab4e7bc53a5dab0b8e5de1","scripts/archive-league-all-time-highs.mjs":"f97d2c1d87a3eb6a656d6db94352b870b1ff14d1","scripts/awards-canonical-refresh-parity.mjs":"f5aeb98f78de6c6290480096de3fcf19171bda70","scripts/value-history-headless-refresh.mjs":"e7a55b4101227ee468557e49df9e3d97af7537a0","scripts/verify-durable-all-time-highs-readback.mjs":"0cce2ee8e775e7c6f37abe66e0908cfe3c0ce501","scripts/verify-scheduled-all-time-highs.mjs":"a6f291b41f39e3ac540c88005a321e6a1b0318bf","tests/awards-all-time-highs-provenance.test.mjs":"4302b6081d611aa4415e048cdf9226c355687061","tests/league-all-time-highs-durable.test.mjs":"34cf6175b1500d73198ccc6b3d1e794776d52b46","tests/league-all-time-highs-independent-capture.test.mjs":"6a5d54f85cc0dfd57de4e85683c60dd08d074a86"};
+            const expected=new Set([...Object.keys(pinned),'.github/workflows/release-v107-recorder-after-market-ui-isolated.yml']);
+            assert.equal(paths.length,expected.size,'All-Time Highs exact inventory');
+            for(const p of paths)assert(expected.has(p),'Out-of-scope All-Time Highs file: '+p);
+            for(const [p,sha] of Object.entries(pinned)){
+              assert.equal(execFileSync('git',['rev-parse','HEAD:'+p],{encoding:'utf8'}).trim(),sha,'Unreviewed All-Time Highs bytes: '+p);
+            }
+            assert.equal(execFileSync('git',['rev-parse','HEAD:netlify.toml'],{encoding:'utf8'}).trim(),'7031517e17fb4905fe3599d9e3e12b05c217cf08','Production deploy guard must remain unchanged');
+            console.log('Exact no-deploy All-Time Highs scope verified');
+            process.exit(0);
+          }
           const allowed=new Set([
             '.github/workflows/value-history-headless-refresh.yml',
             '.github/workflows/release-v107-recorder-after-market-ui-isolated.yml',

@@ -30,3 +30,10 @@ test('historical missing Hot Seat backfill is non-destructive and requires all 3
  assert.equal(saved[0].manager_awards[1].type,'highest-scorer');assert.equal(records[0].manager_awards.length,1);
  assert.deepEqual(await repairMissingHotSeats({records:saved,latest,readWeek:async()=>{throw Error('should not fetch')},persist:true}),saved);
 });
+
+test('new current-season records do not lock a partial newsroom-derived Hot Seat before independent verification',async()=>{
+ const {readFile}=await import('node:fs/promises');
+ const src=await readFile(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
+ assert.match(src,/if\(!onlyAdditional&&Number\(p\.season\)===Number\(league\?\.season\)\)\s*rec\.manager_awards=rec\.manager_awards\.filter\(a=>a\.type!=='hot-seat'\)/);
+ assert.match(src,/repairMissingHotSeats\(\{records:\[\.\.\.byKey\.values\(\)\],latest:independent/);
+});

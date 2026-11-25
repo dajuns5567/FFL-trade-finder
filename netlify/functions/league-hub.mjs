@@ -958,6 +958,11 @@ export async function weeklyAwards({additionalLockedEditions=[],persist=true,str
       verified_roster_count:broadcast.teams.length}:{}),
      manager_awards:weeklyManagerAwards(broadcast),
      players_of_week:weeklyPlayersOfWeek(stats,players,scoring)};
+    // Newly built current-season awards must use the independent full-roster
+    // projection repair below, not incomplete historical newsroom projections.
+    // Already locked historical records and isolated editorial cutovers are untouched.
+    if(!onlyAdditional&&Number(p.season)===Number(league?.season))
+     rec.manager_awards=rec.manager_awards.filter(a=>a.type!=='hot-seat');
     return rec;
    }));
    for(const rec of built)if(isTrustedWeeklyAwardCache(rec,rec.season,rec.week))

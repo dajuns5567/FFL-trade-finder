@@ -81,7 +81,7 @@ export function verifyCombinedBadgeProvenance(readCurrent,readRef,{approvedMarke
 // runtime patch. No mutable branch or current-worktree-derived expected hash.
 // Retain the original transformation verifier for legacy badge-only releases.
 export const INTEGRATED_RUNTIME_BLOBS=Object.freeze({
- 'netlify/functions/league-hub.mjs':'cd73abe1ed743fb73ef48589703e1f4655741789',
+ 'netlify/functions/league-hub.mjs':'3be77211b33bafc7373e2cf0b1c7602c680e117d',
  // Exact user-requested gold filter styling, browser accepted in revision 567
  // (commit 71b6a496); all other pinned runtime blobs remain unchanged.
  'league-hub-v451.js':'75a31c17a60592d60c31df7bfe4abb7b83f3547e',

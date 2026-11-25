@@ -84,11 +84,11 @@ export const INTEGRATED_RUNTIME_BLOBS=Object.freeze({
  'netlify/functions/league-hub.mjs':'96321141d206e0ea6a28b97d05d68d1958a6b437',
  // Exact user-requested gold filter styling, browser accepted in revision 567
  // (commit 71b6a496); all other pinned runtime blobs remain unchanged.
- 'league-hub-v451.js':'6010c0811eeabe05c5d72e79e625a966ac2efd67',
+ 'league-hub-v451.js':'8d5c5adb3a8315233fd943afe2685418304b32f3',
  'netlify/functions/weekly-awards-refresh.mjs':'c3f0c3527e7fb9ef2bb8920f92cfd5e66dcf1596',
  'netlify/functions/value-history.mjs':'93993faf45620a84c3d81122669b9f57360f8ce1',
  // PR 639: isolated player-outcome change with non-causal snapshot explanation.
- 'value-history-v276.js':'816cfd34a97ce7e3609f18b92fc72f61e763e6e5',
+ 'value-history-v276.js':'732c991c1ba1d43b104d4d3e76c2760468c15b52',
  'netlify/functions/lib/player-weekly-milestone-awards.mjs':'74baf9df3761e4b2aedc76e58aa3819cc5b821a6'
 });
 export function verifyPinnedIntegration(readBlob){

@@ -4,7 +4,7 @@ import {readFile,stat} from 'node:fs/promises';
 import path from 'node:path';
 import {chromium,webkit,devices} from 'playwright';
 import render from '../netlify/functions/site-v29.mjs';
-const html=(await(await render()).text()).replace("<link rel=\"stylesheet\" href=\"/fleeced-mobile-compact-v647.css?v=647\">",''),root=process.cwd();
+const html=(await(await render()).text()).replace("<link rel=\"stylesheet\" href=\"/fleeced-mobile-compact-v647.css?v=647\">",'').replace("<link rel=\"stylesheet\" href=\"/fleeced-mobile-clean-v648.css?v=648\">",''),root=process.cwd();
 const css='/fleeced-mobile-density-v645.css';
 const server=createServer(async(req,res)=>{try{
  const u=new URL(req.url,'http://127.0.0.1');

@@ -2,6 +2,9 @@
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {readFileSync} from 'node:fs';
+if(process.env.GITHUB_HEAD_REF==='fix/mobile-clean-presentation-20261125'){
+ execFileSync('node',['scripts/audit-mobile-clean-preview-scope.mjs'],{stdio:'inherit'});process.exit(0);
+}
 if(process.env.GITHUB_HEAD_REF==='fix/mobile-compact-all-views-20261125'){
  execFileSync('node',['scripts/audit-mobile-compact-preview-scope.mjs'],{stdio:'inherit'});process.exit(0);
 }

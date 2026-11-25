@@ -74,11 +74,20 @@ try{
    if(i===11)throw Error(name+' controls did not settle');
   }
   const before=stable;
+  if(mobile){
+   const menuToggle=page.locator('#fleeced-mobile-menu-toggle');
+   assert(await menuToggle.isVisible(),name+' section toggle');
+   await menuToggle.tap();
+   assert.equal(await menuToggle.getAttribute('aria-expanded'),'true');
+   const heights=await page.locator('.tabs button[data-tab]').evaluateAll(xs=>xs.map(x=>x.getBoundingClientRect().height));
+   assert(heights.every(h=>h>=44),name+' expanded navigation targets');
+   await menuToggle.tap();
+  }
   assert.equal(before.mode,mobile?'mobile':'desktop',name+' default');
   assert.equal(before.viewport,'width=device-width,initial-scale=1,viewport-fit=cover');
   assert(before.nav.length>=6&&before.controls.length>=15,name+' original controls');
   assert.equal(before.normalizer,'function');
-  if(mobile)assert(before.originalNavTargets.every(([,height])=>height>=44),name+' navigation targets');
+  const sw=await button.boundingBox();assert(sw&&sw.x<32,name+' bottom-left view switch');
   // Same existing DOM and runtime, without a reload, when preference flips.
   await button.click();await page.waitForFunction(m=>document.documentElement.dataset.fleecedView===m,mobile?'desktop':'mobile');
   const switched=await snapshot();
@@ -98,7 +107,9 @@ try{
   const activate=locator=>mobile?locator.tap():locator.click();
   const menu=page.locator('#fleecedHeaderDropdown');
   const expectedMenus={tradeHistory:2,rankings:9,valueHistory:4,leagueHub:5};
+  const openSections=async()=>{if(mobile){const toggle=page.locator('#fleeced-mobile-menu-toggle');if(await toggle.getAttribute('aria-expanded')!=='true')await toggle.tap()}};
   for(const [tab,count] of Object.entries(expectedMenus)){
+   await openSections();
    const tabButton=page.locator('.tabs button[data-tab="'+tab+'"]');
    await activate(tabButton);
    await menu.waitFor({state:'visible'});
@@ -114,9 +125,11 @@ try{
    assert(await last.isVisible(),name+' '+tab+' final menu item reachable');
    await activate(tabButton);
    await menu.waitFor({state:'hidden'});
+   if(mobile){const toggle=page.locator('#fleeced-mobile-menu-toggle');if(await toggle.getAttribute('aria-expanded')==='true')await toggle.tap()}
   }
   // Real touch navigation without simulating league results or writes.
   for(const id of ['finder','evaluator','league','settings','home']){
+   await openSections();
    const tabButton=page.locator('.tabs button[data-tab="'+id+'"]');
    await activate(tabButton);
    await page.waitForFunction(id=>{const section=document.getElementById(id);return section&&!section.hidden&&document.querySelector('.tabs button[data-tab="'+id+'"]')?.classList.contains('active')},id);

@@ -50,6 +50,14 @@ export async function auditPopulatedMobile(page,browser){
   await safe(name,async()=>{await tab(id);if(required&&!await settle(selector,required,20000)){add(name,'BLOCKED','Expected populated content not available in this read-only runtime');return}await inspect(name,selector)});
  };
  await section('Home','home','#home',/Trade Finder/i);
+ await safe('Home diagnostic layout and removal',async()=>{
+  assert.equal(await page.locator('#offenseSourceAuditDownload,#offenseSourceAuditStatus').count(),0);
+  const source=page.locator('#consensusSources .asset').first();
+  await source.waitFor({state:'visible',timeout:20000});
+  const sizes=await source.evaluate(el=>({row:el.clientWidth,detail:el.firstElementChild.clientWidth,cols:getComputedStyle(el).gridTemplateColumns}));
+  assert(sizes.detail>=sizes.row*.85,'Consensus details still squeezed into narrow column');
+  add('Home diagnostic layout and removal','PASS',sizes);
+ });
  await section('Trade Finder','finder','#finder',/Trade recommendation|Search/i);
  await safe('Trade Finder actual filters',async()=>{
   const filter=page.locator('#tradeTier94');await filter.waitFor({state:'visible'});
@@ -128,6 +136,21 @@ export async function auditPopulatedMobile(page,browser){
     const select=page.locator('#leagueHub [data-lh-daily-week]');
     if(await select.count()){
      const options=await select.locator('option').count();add('Daily week selector',options>1?'PASS':'FAIL',options);
+     const style=await select.evaluate(el=>{const s=getComputedStyle(el);return{appearance:s.appearance,background:s.backgroundImage,position:s.backgroundPosition,padding:parseFloat(s.paddingRight)}});
+     assert(style.appearance==='none'&&style.background.includes('svg')&&style.padding>=32,'Week dropdown arrow not inset');
+     add('Week selector arrow inset','PASS',{position:style.position,padding:style.padding});
+     const rows=page.locator('#leagueHub .fleeced-mobile-week-results .lh-stat');
+     await rows.first().waitFor({state:'visible'});
+     const matches=await rows.evaluateAll(els=>els.map(el=>({name:el.querySelector('span')?.textContent,score:el.querySelector('strong')?.textContent,height:el.getBoundingClientRect().height,scoreWrap:getComputedStyle(el.querySelector('strong')).whiteSpace})));
+     assert.equal(matches.length,16,'All 16 completed matchups must remain visible');
+     assert(matches.every(x=>x.score&&x.scoreWrap==='nowrap'&&x.height<=48),'Matchup rows not compact or scores wrap');
+     add('All 16 compact weekly matchups','PASS',{rows:matches.length,maximumRowHeight:Math.max(...matches.map(x=>x.height))});
+     const spotlight=page.locator('#leagueHub .lh-spotlight');
+     await spotlight.waitFor({state:'visible'});
+     assert.equal(await spotlight.locator(':scope > .lh-sub').filter({hasText:'Regular-season career records are reconstructed'}).count(),0);
+     const spot=await spotlight.locator('.lh-spot-grid').evaluate(el=>({count:el.children.length,columns:getComputedStyle(el).gridTemplateColumns.split(' ').length}));
+     assert.equal(spot.count,12);assert.equal(spot.columns,2);
+     add('Compact Manager Spotlight and note removal','PASS',spot);
     }
     const inquirer=page.locator('#leagueHub [data-lh-broadcast-toggle]').first();
     if(await inquirer.count()&&await inquirer.isVisible()){

@@ -53,6 +53,32 @@
   footer.appendChild(control);
   document.body.appendChild(footer);
   if(/^(?:deploy-preview-\d+|[a-f0-9]{24})--/.test(location.hostname))root.dataset.fleecedPreview='1';
+  // Owner-approved display-only removals in BOTH presentations. Keep the
+  // original application, diagnostic methods and all valuation logic intact.
+  // Install after original inline handlers have bound, so no null-binding
+  // errors or changes to startup/refresh behavior are introduced.
+  document.getElementById('offenseSourceAuditDownload')?.remove();
+  document.getElementById('offenseSourceAuditStatus')?.remove();
+  const processNote='Current value and rank columns match Player Values. Historical change columns reflect comparable archived snapshots only.';
+  const spotlightPrefix='Regular-season career records are reconstructed from verified Sleeper matchups (ties excluded).';
+  const removeNotes=section=>{
+   if(section.id==='valueHistory'){
+    for(const el of section.querySelectorAll('#vhContent > .notice'))if(el.textContent.trim()===processNote)el.remove();
+   }else if(section.id==='leagueHub'){
+    for(const el of section.querySelectorAll('.lh-spotlight > .lh-sub'))if(el.textContent.trim().startsWith(spotlightPrefix))el.remove();
+    // Identify only the existing completed-results card. The marker is inert
+    // on desktop and the original matchup rows/data are never changed.
+    for(const h of section.querySelectorAll('.lh-card > h3')){
+     if(h.textContent.includes('Fleeced! Daily — Completed Week Results'))h.parentElement.classList.add('fleeced-mobile-week-results');
+    }
+   }
+  };
+  for(const id of ['valueHistory','leagueHub']){
+   const section=document.getElementById(id);
+   if(!section)continue;
+   removeNotes(section);
+   new MutationObserver(()=>removeNotes(section)).observe(section,{childList:true,subtree:true});
+  }
   // Reuse the actual swipeable tab strip and its existing submenu actions.
   // No substitute menu, labels, or routing. Keep active tab in view.
   const tabs=document.querySelector('header .tabs');

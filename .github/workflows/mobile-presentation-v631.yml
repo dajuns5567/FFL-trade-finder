@@ -33,7 +33,7 @@ jobs:
           const base='a1f3d19fe3524f97da9c51c2827607d74de4b38c';
           const git=(...args)=>execFileSync('git',args,{encoding:'utf8'});
           const paths=git('diff','--name-only',base,'HEAD').trim().split('\n').filter(Boolean);
-          const allowed=new Set(['fleeced-view-mode-v631.js','fleeced-mobile-v631.css','netlify/functions/site-v29.mjs','scripts/mobile-presentation-browser-v631.mjs','.github/workflows/mobile-presentation-v631.yml','netlify.toml','.github/workflows/netlify-v101-one-time-release-gate-ci.yml','value-history-v276.js']);
+          const allowed=new Set(['fleeced-view-mode-v631.js','fleeced-mobile-v631.css','netlify/functions/site-v29.mjs','scripts/mobile-presentation-browser-v631.mjs','.github/workflows/mobile-presentation-v631.yml','netlify.toml','.github/workflows/netlify-v101-one-time-release-gate-ci.yml']);
           assert.equal(paths.length,allowed.size);
           paths.forEach(p=>assert(allowed.has(p),'Unexpected application change '+p));
           const original=git('show',base+':netlify/functions/site-v29.mjs');
@@ -41,11 +41,7 @@ jobs:
           const strip=actual.replace(/  \/\/ Presentation only:[\s\S]*?(?=  const runtimeV21 = runtime;)/,'');
           assert.equal(strip,original,'Existing renderer, script graph and release identity must be exact');
           assert.equal(readFileSync('netlify.toml','utf8'),git('show',base+':netlify.toml').replace("'574','630'].includes","'574','630','637'].includes"),'Only this PR preview may be added');
-          const note="<div class=\"notice\">Current value and rank columns match Player Values. Historical change columns reflect comparable archived snapshots only.</div>";
-          const oldHistory=git('show',base+':value-history-v276.js');
-          assert.equal(oldHistory.split(note).length,2);
-          assert.equal(readFileSync('value-history-v276.js','utf8'),oldHistory.replace(note,''),'Only owner-requested process note may change');
-          console.log('Desktop backup and all original application logic intact; only requested note removed');
+          console.log('Desktop backup and all original application files intact; requested display removals isolated');
           JS
       - name: Install browser runtime
         run: |

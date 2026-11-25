@@ -72,6 +72,20 @@ jobs:
             'tests/presentation-copy-cleanup-v539.test.mjs'
           ]);
           const authorizedLeagueWeek=process.env.HEAD_REF==='fix/league-week-independent-of-inquirer-20261121';
+          // Independent weekly Awards: pin the entire reviewed patch. This
+          // is a no-deploy scope, not a new allowed production release subject.
+          if(process.env.HEAD_REF==='fix/independent-weekly-awards-release-20261124'){
+            const pinned={".github/workflows/independent-weekly-awards-release-ci.yml":"02668afd3d62735860850b4d3af726817d31e991","netlify/functions/league-hub.mjs":"497d536855fb2f37bc66d0ead058213220b8267b","netlify/functions/lib/league-completed-week.mjs":"f72aa264129a043eb05e45b275ec891ea8700316","netlify/functions/lib/league-hot-seat.mjs":"f1b924b6c90b34bc374b29839810742e63e9132a","netlify/functions/lib/league-week-projections.mjs":"ed22e045f45e2cedecf768fb3199029d6e2ebd96","netlify/functions/lib/weekly-award-stats-merge.mjs":"060e5082948c23e0ab766a4a7366304b20c2d69c","netlify/functions/weekly-awards-refresh.mjs":"c3f0c3527e7fb9ef2bb8920f92cfd5e66dcf1596","tests/inquirer-approved-cutover.test.mjs":"9ca833f6c78c282a2ca7268276a7f6a04f53cc7d","tests/inquirer-weekly-publication-consistency.test.mjs":"6e0845789b725631d41b143365a158a1d82b24e3","tests/league-projection-recovery.test.mjs":"10d75459ac15e7d3175b07a01b6dfe3bfd90f8f4","tests/league-week-independent-news.test.mjs":"6637caff7cdd971937b14460e3be4b95b78307a9","tests/weekly-awards-scheduled-capture.test.mjs":"193a5f107db17e1d30c230705492850e79509b97"};
+            const expected=new Set([...Object.keys(pinned),'.github/workflows/netlify-v101-one-time-release-gate-ci.yml']);
+            assert.equal(paths.length,expected.size,'Weekly Awards exact inventory');
+            for(const p of paths)assert(expected.has(p),'Out-of-scope weekly Awards file: '+p);
+            for(const [p,sha] of Object.entries(pinned)){
+              assert.equal(execFileSync('git',['rev-parse','HEAD:'+p],{encoding:'utf8'}).trim(),sha,'Unreviewed weekly Awards bytes: '+p);
+            }
+            assert.equal(execFileSync('git',['rev-parse','HEAD:netlify.toml'],{encoding:'utf8'}).trim(),'7031517e17fb4905fe3599d9e3e12b05c217cf08','Production deploy guard must remain byte-identical');
+            console.log('Exact no-deploy weekly Awards scope verified');
+            process.exit(0);
+          }
           const allowed=authorizedLeagueWeek?leagueWeek:authorizedGithubNative?githubNative:authorizedReader?week9Reader:authorizedHostFix?hostFix:authorized?release:legacy;
           assert.equal(paths.length,allowed.size,authorizedLeagueWeek?'League Hub weekly visibility must contain exactly eleven audited files':authorizedGithubNative?'GitHub Inquirer publisher must contain exactly twelve audited files':authorizedReader?'Week 9 editorial reader correction must contain exactly 11 audited files':authorizedHostFix?'V110 UUID-host correction must contain exactly six approved files':authorized?'V110 cutover must contain the exact audited Inquirer files':'Netlify deploy release must contain the exact six approved files');
           for(const path of paths)assert(allowed.has(path),'Out-of-scope file: '+path);

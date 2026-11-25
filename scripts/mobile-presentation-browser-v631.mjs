@@ -58,7 +58,19 @@ try{
    release:window.__section1Release,
    normalizer:typeof window.tradeValueNormalizationV139?.canonicalPackageValue
   }));
-  const before=await snapshot();
+  // Existing Finder enhancement installs on a deferred 100/500ms timer.
+  // Compare both views only after the original controls have initialized.
+  await page.locator('#tradeSelectedPositionsOnly262').waitFor({state:'attached'});
+  await page.waitForFunction(()=>document.querySelectorAll('.tabs button[data-tab]').length===9);
+  let stable=await snapshot();
+  for(let i=0;i<12;i++){
+   await page.waitForTimeout(150);
+   const next=await snapshot();
+   if(JSON.stringify(next.controls)===JSON.stringify(stable.controls)){stable=next;break}
+   stable=next;
+   if(i===11)throw Error(name+' controls did not settle');
+  }
+  const before=stable;
   assert.equal(before.mode,mobile?'mobile':'desktop',name+' default');
   assert.equal(before.viewport,'width=device-width,initial-scale=1,viewport-fit=cover');
   assert(before.nav.length>=6&&before.controls.length>=15,name+' original controls');

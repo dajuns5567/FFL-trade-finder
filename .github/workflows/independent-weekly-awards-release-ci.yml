@@ -23,14 +23,14 @@ jobs:
           git diff --name-only "${{ github.event.pull_request.base.sha }}" HEAD > /tmp/weekly-awards-files
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
-          const allowed=new Set(["netlify/functions/league-hub.mjs","tests/league-week-independent-news.test.mjs",".github/workflows/independent-weekly-awards-release-ci.yml","netlify/functions/lib/league-completed-week.mjs","netlify/functions/lib/league-hot-seat.mjs","netlify/functions/lib/league-week-projections.mjs","netlify/functions/lib/weekly-award-stats-merge.mjs","netlify/functions/weekly-awards-refresh.mjs","tests/league-projection-recovery.test.mjs","tests/weekly-awards-scheduled-capture.test.mjs"]);
+          const allowed=new Set(["netlify/functions/league-hub.mjs","tests/league-week-independent-news.test.mjs",".github/workflows/independent-weekly-awards-release-ci.yml","netlify/functions/lib/league-completed-week.mjs","netlify/functions/lib/league-hot-seat.mjs","netlify/functions/lib/league-week-projections.mjs","netlify/functions/lib/weekly-award-stats-merge.mjs","netlify/functions/weekly-awards-refresh.mjs","tests/league-projection-recovery.test.mjs","tests/weekly-awards-scheduled-capture.test.mjs","tests/inquirer-approved-cutover.test.mjs","tests/inquirer-weekly-publication-consistency.test.mjs"]);
           const changed=fs.readFileSync('/tmp/weekly-awards-files','utf8').trim().split('\n');
           if(changed.some(p=>!allowed.has(p)))throw Error('Unrelated release file: '+changed.filter(p=>!allowed.has(p)));
           console.log('ISOLATED_WEEKLY_AWARDS_SCOPE',changed);
           NODE
       - run: npm install --ignore-scripts --no-audit --no-fund
       - run: node --check netlify/functions/league-hub.mjs
-      - run: node --test tests/league-projection-recovery.test.mjs tests/weekly-awards-scheduled-capture.test.mjs tests/league-week-independent-news.test.mjs
+      - run: node --test tests/league-projection-recovery.test.mjs tests/weekly-awards-scheduled-capture.test.mjs tests/league-week-independent-news.test.mjs tests/inquirer-approved-cutover.test.mjs tests/inquirer-weekly-publication-consistency.test.mjs
       - name: Verify actual completed weeks and candidate Hot Seat results without writes
         run: |
           node --input-type=module <<'NODE'

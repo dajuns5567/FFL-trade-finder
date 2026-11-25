@@ -87,7 +87,8 @@ export const INTEGRATED_RUNTIME_BLOBS=Object.freeze({
  'league-hub-v451.js':'75a31c17a60592d60c31df7bfe4abb7b83f3547e',
  'netlify/functions/weekly-awards-refresh.mjs':'c3f0c3527e7fb9ef2bb8920f92cfd5e66dcf1596',
  'netlify/functions/value-history.mjs':'93993faf45620a84c3d81122669b9f57360f8ce1',
- 'value-history-v276.js':'fc911a0c79699b1560e3f490aa351722a6cd940d',
+ // PR 639: isolated player-outcome change with non-causal snapshot explanation.
+ 'value-history-v276.js':'7fa1de4c8f0d6c73f2937ba10ea14a82ab59ae8d',
  'netlify/functions/lib/player-weekly-milestone-awards.mjs':'74baf9df3761e4b2aedc76e58aa3819cc5b821a6'
 });
 export function verifyPinnedIntegration(readBlob){

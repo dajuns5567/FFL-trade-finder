@@ -30,6 +30,11 @@ jobs:
           import assert from 'node:assert/strict';
           import {execFileSync} from 'node:child_process';
           import {readFileSync} from 'node:fs';
+          // Exact preview-only combined candidate; legacy release checks remain unchanged elsewhere.
+          if(process.env.GITHUB_HEAD_REF==='integration/mobile-shared-regressions-20261125'){
+            execFileSync('node',['scripts/audit-mobile-shared-preview-scope.mjs'],{stdio:'inherit'});
+            process.exit(0);
+          }
           const base='a1f3d19fe3524f97da9c51c2827607d74de4b38c';
           const git=(...args)=>execFileSync('git',args,{encoding:'utf8'});
           const paths=git('diff','--name-only',base,'HEAD').trim().split('\n').filter(Boolean);

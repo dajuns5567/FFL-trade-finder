@@ -35,7 +35,7 @@ export async function auditFinder(page){
    // intentionally equivalent and may produce byte-identical results.
    await host.evaluate(h=>{window.__finderAuditMutations=0;window.__finderAuditObserver?.disconnect();window.__finderAuditObserver=new MutationObserver(()=>window.__finderAuditMutations++);window.__finderAuditObserver.observe(h,{childList:true,subtree:true,characterData:true})});
    started=Date.now();await run.click({timeout:5000});
-   await page.waitForFunction(()=>{const t=document.querySelector('#finderResults')?.innerText?.trim()||'';return window.__finderAuditMutations>0&&t&&!/Searching (?:realistic|maximum.value|specific.player|trades)|Finding trades|search in progress/i.test(t)},null,{timeout:90000});
+   await page.waitForFunction(()=>{const t=document.querySelector('#finderResults')?.innerText?.trim()||'';return window.__finderAuditMutations>0&&t&&!/^(?:Searching|Finding|Evaluating|Building|Calculating|Loading)\b|search in progress/i.test(t)},null,{timeout:90000});
    await host.evaluate(()=>window.__finderAuditObserver.disconnect());
    const result=await diagnostics();
    assert(!/stopped unexpectedly|search failed|error|undefined is not/i.test(result.results),result.results);

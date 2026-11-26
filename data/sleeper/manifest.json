@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-11-26T05:00:15.686Z",
+  "generatedAt": "2026-11-26T11:52:44.158Z",
   "source": "Sleeper public API",
   "currentLeagueId": "1316867686394769408",
   "currentSeason": 2026,
@@ -2009,14 +2009,6 @@
         "nullSlots": [],
         "slots": [
           {
-            "id": "401873079",
-            "state": "final",
-            "teams": [
-              "LAR",
-              "GB"
-            ]
-          },
-          {
             "id": "401873081",
             "state": "blocking",
             "teams": [
@@ -2038,6 +2030,14 @@
             "teams": [
               "BUF",
               "KC"
+            ]
+          },
+          {
+            "id": "401873079",
+            "state": "final",
+            "teams": [
+              "LAR",
+              "GB"
             ]
           },
           {

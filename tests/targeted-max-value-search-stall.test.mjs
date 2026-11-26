@@ -5,7 +5,7 @@ import vm from 'node:vm';
 
 const source=readFileSync(new URL('../trade-specific-max-value-v279.js',import.meta.url),'utf8');
 const site=readFileSync(new URL('../netlify/functions/site-v29.mjs',import.meta.url),'utf8');
-function runtime({outgoingCount=34,targetExtras=20}={}){
+function runtime({outgoingCount=34,targetExtras=20,eligible=null}={}){
  const my=1,other=2;
  const own=Array.from({length:outgoingCount},(_,i)=>({type:'player',id:'out-'+i,owner:my,value:1100+i*110,rank:40+i,name:'Outgoing '+i}));
  const target={type:'player',id:'jonathan-taylor',owner:other,value:7600,rank:8,name:'Jonathan Taylor'};
@@ -29,7 +29,7 @@ function runtime({outgoingCount=34,targetExtras=20}={}){
   playerName:x=>x==='jonathan-taylor'?'Jonathan Taylor':x,
   playerRankValue:x=>({rank:x.rank||9999}),
   groupPos:()=> 'RB',teamName:id=>'Team '+id,
-  section1V130:{fair:(a,b)=>({score:83,edgeEffective:110,aRaw:a.reduce((s,x)=>s+x.value,0),bRaw:b.reduce((s,x)=>s+x.value,0),aAdj:0,bAdj:0,aEffective:a.reduce((s,x)=>s+x.value,0),bEffective:b.reduce((s,x)=>s+x.value,0)+110,rejected:false})}
+  section1V130:{fair:(a,b)=>({score:eligible&&!eligible(a,b)?50:83,edgeEffective:110,aRaw:a.reduce((s,x)=>s+x.value,0),bRaw:b.reduce((s,x)=>s+x.value,0),aAdj:0,bAdj:0,aEffective:a.reduce((s,x)=>s+x.value,0),bEffective:b.reduce((s,x)=>s+x.value,0)+110,rejected:false})}
  };
  const ctx={window:win,document:doc,setTimeout:(cb)=>{yields++;return setTimeout(cb,0)},Math,Array,Set,Map,Number,String,Promise,console};
  vm.runInNewContext(source,ctx,{filename:'trade-specific-max-value-v279.js'});
@@ -63,8 +63,9 @@ test('real select-all + Jonathan Taylor target + maximum value + tier up complet
  assert.ok(api.sourceIntegrityStats().structureIndexBuilds<=3,'at most one index for each 1/2/3-asset outgoing bucket');
  const stats=api.sourceIntegrityStats().lastSearchStats;
  assert.ok(stats&&stats.elapsedMs<12000);
- assert.ok(stats.fairnessChecks<=2200&&stats.examined<=9000,'live search must enforce hard work limits');
- assert.ok(stats.receiveScans<=72,'live search must bound incoming packages');
+ assert.ok(stats.primary.fairnessChecks<=2200&&stats.primary.examined<=9000,'legacy pass must preserve its hard work limits');
+ assert.ok(stats.primary.receiveScans<=72,'legacy pass must bound incoming packages');
+ assert.ok(stats.fairnessChecks<=4200&&stats.examined<=16000&&stats.extensionScans<=144,'extension must remain bounded');
  assert.equal(target.owner,2);
 });
 test('every Max Value package still contains the target and no equity/consensus formula is replaced',()=>{
@@ -72,14 +73,14 @@ test('every Max Value package still contains the target and no equity/consensus 
  assert.match(source,/fs>=75&&fs<=90&&e>0/);
  assert.match(source,/function tierOK\(give,recv,tier,w\)/);
  assert.match(source,/const target=\(st\(\)\.allAssets\|\|\[\]\)\.find/);
- assert.match(source,/function incoming\(owner,target\)/);
+ assert.match(source,/function incoming\(owner,target,limit=20\)/);
  assert.match(source,/out=\[\[target\]\]/);
  assert.match(source,/window\.section1V130\?\.fair\?\.\(a,b\)/);
  assert.match(source,/if\(my!==token\)return/);
 });
 
 test('assembled preview loads the updated Finder script rather than the stale browser cache key',()=>{
- assert.match(site,/trade-specific-max-value-v279\.js\?v=444/);
+ assert.match(site,/trade-specific-max-value-v279\.js\?v=445/);
  assert.match(site,/trade-specific-max-tier-add-v300\.js\?v=303/);
  assert.match(site,/trade-finder-v256-compiled\.js\?v=450/);
  assert.match(site,/trade-specific-player-v232\.js\?v=441/);
@@ -98,10 +99,24 @@ test('adversarial expensive full-league fairness cannot leave the search spinner
  await Promise.race([f.api.run(),new Promise((_,reject)=>setTimeout(()=>reject(Error('live Finder still stuck after 12s')),12000))]);
  const stats=f.api.sourceIntegrityStats().lastSearchStats;
  assert.ok(stats.elapsedMs<=11000,'hard deadline must terminate a slow real fairness engine');
- assert.ok(stats.fairnessChecks<=2200);
- assert.ok(stats.examined<=9000);
- assert.ok(stats.receiveScans<=72);
+ assert.ok(stats.primary.fairnessChecks<=2200);
+ assert.ok(stats.primary.examined<=9000);
+ assert.ok(stats.primary.receiveScans<=72);
+ assert.ok(stats.fairnessChecks<=4200&&stats.examined<=16000&&stats.extensionScans<=144);
  assert.equal(actualCalls,stats.fairnessChecks);
  assert.doesNotMatch(f.elements.finderResults.innerHTML,/Searching maximum-value trades/);
  assert.ok(Date.now()-started<=12000);
+});
+
+// A low-value receiver outside the old top-20 extras is the only eligible
+// complement. The legacy pass finds nothing; the additive pass must find it.
+test('bounded extension reaches qualifying omitted incoming assets without weakening fairness',async()=>{
+ const f=runtime({outgoingCount:15,targetExtras:25,eligible:(_give,recv)=>recv.length===2&&recv.some(x=>x.id==='in-0')});
+ await f.api.run();
+ const stats=f.api.sourceIntegrityStats().lastSearchStats;
+ assert.equal(stats.primary.recommendations,0);
+ assert.ok(stats.added>0,'no additional qualifying recommendations');
+ assert.ok(stats.fairnessChecks<=4200&&stats.examined<=16000);
+ assert.ok(stats.elapsedMs<12000);
+ assert.match(f.elements.finderResults.innerHTML,/Incoming 0/);
 });

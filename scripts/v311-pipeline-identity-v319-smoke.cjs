@@ -44,16 +44,17 @@ const finderPerformanceHashes={...finderCandidateHashes,
   'trade-specific-max-tier-add-v300.js':'8c7425f19835621c99a27c40d03d1c406d7da004'
 };
 const finderScopedMemoHashes={...finderPerformanceHashes,'trade-specific-max-tier-add-v300.js':'69878bebe45548680384ac9de48264895599e16c'};
+const finderCoverageHashes={...finderScopedMemoHashes,'trade-specific-max-value-v279.js':'48d7c0ded702b2b78f45873eacd6ebff0ca079a8'};
 const matches=hashes=>Object.entries(hashes).every(([path,sha])=>{
   try{return cp.execFileSync('git',['hash-object',path],{encoding:'utf8'}).trim()===sha}
   catch{return false}
 });
-const finderScopedMemo=matches(finderScopedMemoHashes),finderPerformance=matches(finderPerformanceHashes),finderCandidate=matches(finderCandidateHashes);
+const finderCoverage=matches(finderCoverageHashes),finderScopedMemo=matches(finderScopedMemoHashes),finderPerformance=matches(finderPerformanceHashes),finderCandidate=matches(finderCandidateHashes);
 let bad=[];
 for(const [path,sha] of Object.entries(expected)){
   let actual='';
   try{actual=cp.execFileSync('git',['hash-object',path],{encoding:'utf8'}).trim()}catch(e){bad.push(path+': missing');continue}
-  const required=(finderScopedMemo?finderScopedMemoHashes[path]:finderPerformance?finderPerformanceHashes[path]:finderCandidate?finderCandidateHashes[path]:null)||sha;
+  const required=(finderCoverage?finderCoverageHashes[path]:finderScopedMemo?finderScopedMemoHashes[path]:finderPerformance?finderPerformanceHashes[path]:finderCandidate?finderCandidateHashes[path]:null)||sha;
   const reviewedPickChange=path==='trade-value-normalization-v139.js'&&
     actual===reviewedFuturePickDiscountHash;
   if(actual!==required&&!reviewedPickChange)
@@ -65,4 +66,4 @@ if(bad.length){
   process.exit(1);
 }
 require('./offense-consensus-coverage-gate-v384-smoke.cjs');
-console.log((finderScopedMemo?'Scoped memo Finder candidate':finderPerformance?'Performance Finder candidate':finderCandidate?'V106 Finder candidate':'Frozen V311')+' pipeline identity verified; unrelated modules and offense coverage remain anchored across '+Object.keys(expected).length+' loaded modules.');
+console.log((finderCoverage?'Coverage Finder candidate':finderScopedMemo?'Scoped memo Finder candidate':finderPerformance?'Performance Finder candidate':finderCandidate?'V106 Finder candidate':'Frozen V311')+' pipeline identity verified; unrelated modules and offense coverage remain anchored across '+Object.keys(expected).length+' loaded modules.');

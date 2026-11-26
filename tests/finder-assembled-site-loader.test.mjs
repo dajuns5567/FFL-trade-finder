@@ -10,7 +10,7 @@ const selected=[
  ['trade-specific-max-tier-add-v300.js',303],
  ['trade-specific-tier-up-v282.js',283],
  ['trade-specific-add-assets-v282.js',310],
- ['trade-specific-max-value-v279.js',444],
+ ['trade-specific-max-value-v279.js',445],
  ['trade-specific-player-v232.js',441],
  ['trade-finder-v256-compiled.js',450]
 ];

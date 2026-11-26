@@ -45,10 +45,25 @@ function combos(pool,maxLen=3){
 }
 function outgoing(me){const chosen=selectedGive();if(!chosen.length)return combos(owned(me),3);if(addAssets()&&window.tradeAddAssetsComplementV1?.build)return window.tradeAddAssetsComplementV1.build(chosen,owned(me),av,pos,{maxExtras:18,maxPairs:64});const out=[chosen];if(addAssets()&&chosen.length<3){const used=new Set(chosen.map(x=>`${x.type}:${id(x)}`)),extras=owned(me).filter(x=>!used.has(`${x.type}:${id(x)}`)).sort((a,b)=>av(b)-av(a)).slice(0,8);for(const x of extras)out.push([...chosen,x]);if(chosen.length===1)for(let i=0;i<extras.length;i++)for(let j=i+1;j<extras.length&&out.length<20;j++)out.push([chosen[0],extras[i],extras[j]])}return uniquePackages(out)}
 function uniquePackages(list){const out=[],seen=new Set();for(const xs of list){const k=xs.map(x=>`${x.type}:${id(x)}`).sort().join('|');if(!seen.has(k)){seen.add(k);out.push(xs)}}return out}
-function incoming(owner,target){const extras=owned(owner).filter(x=>!(x.type==='player'&&id(x)===id(target))).sort((a,b)=>av(b)-av(a)).slice(0,20),out=[[target]];for(const x of extras)out.push([target,x]);for(let i=0;i<extras.length;i++)for(let j=i+1;j<extras.length;j++)out.push([target,extras[i],extras[j]]);return out}
+function incoming(owner,target,limit=20){const extras=owned(owner).filter(x=>!(x.type==='player'&&id(x)===id(target))).sort((a,b)=>av(b)-av(a)).slice(0,limit),out=[[target]];for(const x of extras)out.push([target,x]);for(let i=0;i<extras.length;i++)for(let j=i+1;j<extras.length;j++)out.push([target,extras[i],extras[j]]);return out}
 function positions(){const checked=[...document.querySelectorAll('#tradePos97 .trade97-pos:checked,.trade97-pos:checked')].map(x=>String(x.value||'').toUpperCase());if(checked.includes('ANY')||!checked.length)return['ANY'];return[...new Set(checked)]}
 function posOK(xs,w){if(w.includes('ANY'))return true;const best=(xs||[]).filter(x=>x.type==='player').sort((a,b)=>av(b)-av(a)||rank(a)-rank(b))[0];return!!best&&w.includes(pos(best))}
 function tierOK(give,recv,tier,w){if(tier==='draft')return false;if(!posOK(recv,w))return false;if(tier==='neutral')return true;const gp=give.filter(x=>x.type==='player'),rp=recv.filter(x=>x.type==='player').sort((a,b)=>rank(a)-rank(b)||av(b)-av(a));if(!rp.length)return false;const c=rp[0];if(tier==='up')return gp.length?rank(c)<Math.min(...gp.map(rank)):av(c)>Math.max(...give.map(av),0);if(tier==='down')return gp.length&&recv.length>=2&&rank(c)>Math.min(...gp.map(rank));return true}
+function beginValueSlice(){
+ const restorers=[];
+ for(const host of new Set([window.tradeValueNormalizationV139,window.tradeValueNormalizationV130].filter(Boolean))){
+  const original=host.canonicalValue;if(typeof original!=='function')continue;
+  const memo=new WeakMap();
+  const wrapped=function(x,...args){
+   if(!x||typeof x!=='object'||args.length||this!==host)return original.call(this,x,...args);
+   if(memo.has(x))return memo.get(x);
+   const v=original.call(this,x);memo.set(x,v);return v;
+  };
+  host.canonicalValue=wrapped;
+  restorers.push(()=>{if(host.canonicalValue===wrapped)host.canonicalValue=original});
+ }
+ return ()=>{for(const restore of restorers.reverse())restore();restorers.length=0};
+}
 function fit(me,other,give,recv){try{return clamp(0,50+(Number(window.teamContextTradeFit90?.(me,other,'value',give,recv))||0)*5,100)}catch{return 50}}
 function score(f,pf,give,recv,tier){const send=Math.max(1,Number(f?.aEffective)||0),receive=Number(f?.bEffective)||0,edge=Math.max(0,receive-send),adv=clamp(0,edge/send,.35)/.35*100,fairTarget=clamp(0,100-Math.abs((Number(f?.score)||0)-83)*6,100);let s;if(tier==='up'||tier==='down')s=adv*.62+fairTarget*.33+pf*.05;else{const pref=clamp(0,50+4*((give?.length||0)-(recv?.length||0))+2*Math.max(0,(give?.length||0)-1),100);s=adv*.50+fairTarget*.30+pref*.15+pf*.05}const best=[...(give||[]),...(recv||[])].filter(x=>x.type==='player').map(av).sort((a,b)=>b-a)[0];if(best>=6000)s+=12;else if(best>=4000)s+=8;else if(best>=3000)s+=3;else if(best>=2000)s-=8;else if(best!=null)s-=30;return s}
 function candidateOK(f){const fs=Number(f?.score)||0,e=Number(f?.edgeEffective)||0;return fs>=75&&fs<=90&&e>0}
@@ -128,6 +143,11 @@ function draw(host){host.innerHTML=active.length?active.slice(0,visible).map(car
 const TARGET_SEARCH_MAX_MS=9000;
 const TARGET_SEARCH_MAX_FAIR=2200;
 const TARGET_SEARCH_MAX_EXAMINED=9000;
+// Extension is additive and may use only time remaining from the original deadline.
+const TARGET_EXTENSION_MAX_FAIR=4200;
+const TARGET_EXTENSION_MAX_EXAMINED=16000;
+const TARGET_EXTENSION_MAX_INCOMING=144;
+const TARGET_RESULT_LIMIT=140;
 let lastSearchStats=null;
 function boundedIncoming(rs){
  if(rs.length<=72)return rs;
@@ -135,6 +155,17 @@ function boundedIncoming(rs){
  const pair=rs.filter(r=>r.xs.length===2);
  const triple=rs.filter(r=>r.xs.length>=3).slice().sort((a,b)=>a.v-b.v);
  return [...single,...spreadTriples(pair,20),...spreadTriples(triple,51)].slice(0,72);
+}
+// Preserve the legacy result list as a prefix. Expand into omitted target
+// packages and wider outgoing neighborhoods only when there is spare time.
+function extensionIncoming(primary,all,completed){
+ const known=new Set(primary.map(x=>packageKey(x.xs))),omitted=all.filter(x=>!known.has(packageKey(x.xs)));
+ const pairs=omitted.filter(x=>x.xs.length===2);
+ const triples=omitted.filter(x=>x.xs.length>=3).sort((a,b)=>a.v-b.v);
+ const candidates=[...primary.slice(completed),...pairs,...spreadTriples(triples,72),...primary.slice(0,completed)];
+ const out=[],seen=new Set();
+ for(const r of candidates){const k=packageKey(r.xs);if(!seen.has(k)){seen.add(k);out.push(r)}if(out.length>=TARGET_EXTENSION_MAX_INCOMING)break}
+ return out;
 }
 async function run(){
  const my=++token,host=document.getElementById('finderResults'),
@@ -145,11 +176,26 @@ async function run(){
  if(!target){host.innerHTML='<div class="empty">That player could not be matched exactly to a rostered player.</div>';return}
  host.innerHTML=`<div class="empty">Searching maximum-value trades for ${esc(pname(target))}…</div>`;
  const started=Date.now(),deadline=started+TARGET_SEARCH_MAX_MS;
- let fairnessChecks=0,examined=0,receiveScans=0,capped=false;
- const result=[],seen=new Set(),finish=()=>{
+ let fairnessChecks=0,examined=0,receiveScans=0,capped=false,tier='neutral',primary=null,primaryRows=null,extensionScans=0;
+ const result=[],seen=new Set();
+ function select(list){
+  list.sort((a,b)=>b.maximumValueScore-a.maximumValueScore||(Number(b.f.edgeEffective)||0)-(Number(a.f.edgeEffective)||0));
+  let ranked=diversifyTieredResults(list,tier,TARGET_RESULT_LIMIT);
+  if(selectedGive().length&&addAssets()&&window.tradeAddAssetsComplementV1?.diversify)ranked=window.tradeAddAssetsComplementV1.diversify(ranked,selectedGive(),TARGET_RESULT_LIMIT);
+  return ranked;
+ }
+ const finish=()=>{
   if(my!==token)return;
-  result.sort((a,b)=>b.maximumValueScore-a.maximumValueScore||(Number(b.f.edgeEffective)||0)-(Number(a.f.edgeEffective)||0));
-  active=diversifyTieredResults(result,tier,140);if(selectedGive().length&&addAssets()&&window.tradeAddAssetsComplementV1?.diversify)active=window.tradeAddAssetsComplementV1.diversify(active,selectedGive(),140);visible=Math.min(5,active.length);
+  const restore=beginValueSlice();
+  try{
+   active=primaryRows||select(result);
+   if(primaryRows&&active.length<TARGET_RESULT_LIMIT){
+    const retained=new Set(active.map(r=>packageKey(r.give)+'>'+packageKey(r.recv)));
+    const extras=select(result.filter(r=>!retained.has(packageKey(r.give)+'>'+packageKey(r.recv))));
+    active=[...active,...extras.slice(0,TARGET_RESULT_LIMIT-active.length)];
+   }
+   visible=Math.min(5,active.length);
+  }finally{restore()}
   draw(host);
   if(capped){
    const note=document.createElement('div');
@@ -158,47 +204,75 @@ async function run(){
    host.appendChild(note);
   }
  };
- let tier='neutral';
  try{
   await new Promise(r=>setTimeout(r,0));
   if(my!==token)return;
   tier=String(document.getElementById('tradeTier94')?.value||'neutral');
-  const w=positions(),gs=outgoing(me).map(xs=>({xs,v:raw(xs)})).filter(g=>g.v>0),
+  const w=positions(),buckets=new Map([[1,[]],[2,[]],[3,[]]]);
+  let rs;const restore=beginValueSlice();
+  try{
+   const gs=outgoing(me).map(xs=>({xs,v:raw(xs)})).filter(g=>g.v>0);
    rs=boundedIncoming(incoming(Number(target.owner),target).map(xs=>({xs,v:raw(xs)})).filter(r=>r.v>0));
-  const buckets=new Map([[1,[]],[2,[]],[3,[]]]);
-  for(const g of gs)(buckets.get(g.xs.length)||buckets.get(3)).push(g);
-  for(const bucket of buckets.values())bucket.sort((x,y)=>x.v-y.v);
-  search:for(const recv of rs){
-   if(my!==token)return;
-   for(const n of[1,2,3]){
-    const bucket=buckets.get(n)||[];
-    if(!bucket.length)continue;
-    const candidates=structureCandidates(bucket,recv.v,n,n===1?24:n===2?44:40);
-    for(const g of candidates){
-     examined++;
-     if(examined%64===0){
-      await new Promise(r=>setTimeout(r,0));
-      if(my!==token)return;
+   for(const g of gs)(buckets.get(g.xs.length)||buckets.get(3)).push(g);
+   for(const bucket of buckets.values())bucket.sort((x,y)=>x.v-y.v);
+  }finally{restore()}
+  async function scan(receives,extended){
+   let scanned=0,release=beginValueSlice();
+   const maxFair=extended?TARGET_EXTENSION_MAX_FAIR:TARGET_SEARCH_MAX_FAIR;
+   const maxExamined=extended?TARGET_EXTENSION_MAX_EXAMINED:TARGET_SEARCH_MAX_EXAMINED;
+   try{
+    search:for(const recv of receives){
+     if(my!==token)return scanned;
+     for(const n of[1,2,3]){
+      if(Date.now()>=deadline||examined>=maxExamined||fairnessChecks>=maxFair){capped=true;break search}
+      const bucket=buckets.get(n)||[];
+      if(!bucket.length)continue;
+      const limit=extended?(n===1?36:n===2?64:64):(n===1?24:n===2?44:40);
+      const candidates=structureCandidates(bucket,recv.v,n,limit);
+      for(const g of candidates){
+       examined++;
+       if(examined%64===0){
+        release();await new Promise(r=>setTimeout(r,0));
+        if(my!==token)return scanned;
+        release=beginValueSlice();
+       }
+       if(examined>=maxExamined||fairnessChecks>=maxFair||Date.now()>=deadline){
+        capped=true;break search;
+       }
+       if(!g||!tierOK(g.xs,recv.xs,tier,w))continue;
+       const k=packageKey(g.xs)+'>'+packageKey(recv.xs);
+       if(seen.has(k))continue;
+       seen.add(k);
+       fairnessChecks++;
+       const f=fair(g.xs,recv.xs);
+       if(!f||f.rejected||!candidateOK(f))continue;
+       const pf=fit(me,Number(target.owner),g.xs,recv.xs);
+       result.push({other:Number(target.owner),target,give:g.xs,recv:recv.xs,f,fit:pf,maximumValueScore:score(f,pf,g.xs,recv.xs,tier)});
+      }
      }
-     if(examined>=TARGET_SEARCH_MAX_EXAMINED||fairnessChecks>=TARGET_SEARCH_MAX_FAIR||Date.now()>=deadline){
-      capped=true;break search;
-     }
-     if(!g||!tierOK(g.xs,recv.xs,tier,w))continue;
-     const k=packageKey(g.xs)+'>'+packageKey(recv.xs);
-     if(seen.has(k))continue;
-     seen.add(k);
-     fairnessChecks++;
-     const f=fair(g.xs,recv.xs);
-     if(!f||f.rejected||!candidateOK(f))continue;
-     const pf=fit(me,Number(target.owner),g.xs,recv.xs);
-     result.push({other:Number(target.owner),target,give:g.xs,recv:recv.xs,f,fit:pf,maximumValueScore:score(f,pf,g.xs,recv.xs,tier)});
+     scanned++;receiveScans++;
     }
-   }
-   receiveScans++;
+    return scanned;
+   }finally{release()}
+  }
+  await scan(rs,false);
+  if(my!==token)return;
+  const selectRestore=beginValueSlice();
+  try{primaryRows=select(result.slice())}finally{selectRestore()}
+  primary={examined,fairnessChecks,receiveScans,qualified:result.length,recommendations:primaryRows.length,capped};
+  if(!selectedGive().length&&primaryRows.length<TARGET_RESULT_LIMIT&&Date.now()<deadline&&fairnessChecks<TARGET_EXTENSION_MAX_FAIR&&examined<TARGET_EXTENSION_MAX_EXAMINED){
+   let extra;const extraRestore=beginValueSlice();
+   try{
+    const full=incoming(Number(target.owner),target,Infinity).map(xs=>({xs,v:raw(xs)})).filter(r=>r.v>0);
+    extra=extensionIncoming(rs,full,primary.receiveScans);
+   }finally{extraRestore()}
+   if(Date.now()<deadline)extensionScans=await scan(extra,true);
   }
  }finally{
-  lastSearchStats={elapsedMs:Date.now()-started,examined,fairnessChecks,receiveScans,results:result.length,capped};
-  finish();
+  if(my===token){
+   finish();
+   lastSearchStats={elapsedMs:Date.now()-started,examined,fairnessChecks,receiveScans,results:result.length,recommendations:active.length,primary,extensionScans,added:Math.max(0,active.length-(primary?.recommendations??active.length)),capped};
+  }
  }
 }
 

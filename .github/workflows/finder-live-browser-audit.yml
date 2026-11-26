@@ -1,0 +1,51 @@
+name: Actual league Finder browser execution
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/site-v*.mjs'
+      - 'index.html'
+      - 'trade-*.js'
+      - 'state-bridge-v141.js'
+      - 'draft-pick-rankings-v527.js'
+      - 'modeled-player-values-v319.js'
+      - 'nonblocking-consensus-v277.js'
+      - 'ui-player-values-v139.js'
+      - 'ui-runtime-values-v140.js'
+      - 'pick-display-sync-v279.js'
+      - 'fleeced-mobile-*.js'
+      - 'fleeced-mobile-*.css'
+      - 'tests/finder-verified-653-regression.test.mjs'
+      - 'scripts/finder-live-browser-audit.mjs'
+      - 'scripts/finder-scheduling-parity.mjs'
+      - 'trade-finder-v256-compiled.js'
+      - 'trade-specific-max-value-v279.js'
+      - 'trade-specific-max-tier-add-v300.js'
+      - 'tests/finder-scoped-performance-parity.test.mjs'
+      - 'scripts/compile-v256-runtimes.cjs'
+      - 'tests/finder-natural-filter-matrix.test.mjs'
+      - 'scripts/finder-live-browser-runner.mjs'
+      - '.github/workflows/finder-live-browser-audit.yml'
+permissions:
+  contents: read
+jobs:
+  finder:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install existing collector dependencies
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+          npm install --no-save --ignore-scripts --no-audit --no-fund --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Exercise real Finder button with current league rosters and values
+        run: |
+          node --test tests/finder-scoped-performance-parity.test.mjs
+          node --check scripts/finder-live-browser-audit.mjs
+          node --check scripts/finder-live-browser-runner.mjs
+          node scripts/finder-live-browser-runner.mjs

@@ -37,11 +37,13 @@ concurrency:
 jobs:
   verify:
     permissions:
-      contents: write # legacy isolated preview push; every write step is branch/event guarded
+      contents: read
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -62,6 +64,22 @@ jobs:
       - name: Verify legacy preview UI and historical editorial regression contracts
         if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref != 'refs/heads/main')
         run: node --test tests/inquirer-week9-unattended-publish-regression.test.mjs
+  isolated-preview-publication:
+    needs: verify
+    if: github.event_name == 'push' && github.ref == 'refs/heads/fix/inquirer-github-native-publication-20261121'
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install existing newsroom engine
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
       - name: Checkout immutable approved editions for editorial regression
         if: github.event_name == 'push' && github.ref == 'refs/heads/fix/inquirer-github-native-publication-20261121'
         uses: actions/checkout@v4

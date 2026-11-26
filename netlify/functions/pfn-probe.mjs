@@ -1,3 +1,4 @@
+import {privateDiagnosticDenied} from './lib/private-diagnostic-access.mjs';
 const PFN_URL = "https://www.profootballnetwork.com/fantasy-football-dynasty-rankings/";
 const TIMEOUT_MS = 7000;
 
@@ -76,7 +77,8 @@ function inspect(text, method, contentType, status) {
   };
 }
 
-export default async () => {
+export default async(req,context)=>{const denied=privateDiagnosticDenied(req,context);if(denied)return denied;
+
   const attempts = [];
 
   try {
@@ -109,3 +111,5 @@ function json(body, status = 200) {
     }
   });
 }
+
+export const config={rateLimit:{action:'rate_limit',aggregateBy:'domain',windowSize:60,windowLimit:10}};

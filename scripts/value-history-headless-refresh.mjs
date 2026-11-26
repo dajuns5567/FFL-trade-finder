@@ -154,8 +154,9 @@ async function proxySleeperData(url){
 function staticResponse(pathname){
   let rel=decodeURIComponent(pathname).replace(/^\/+/, '');
   if(!rel||rel.includes('..'))return null;
-  const path=normalize(join(process.cwd(),rel));
-  if(!path.startsWith(process.cwd()))return null;
+  const staticRoot=normalize(join(process.cwd(),process.env.PUBLIC_SITE_STATIC_ROOT||'.'));
+  const path=normalize(join(staticRoot,rel));
+  if(!path.startsWith(staticRoot+'/'))return null;
   try{if(!statSync(path).isFile())return null;return new Response(readFileSync(path),{headers:{'content-type':mime(path),'cache-control':'no-store'}})}catch{return null}
 }
 

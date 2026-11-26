@@ -1,3 +1,5 @@
+import {AWARD_RECORDS_PATH,mergeDraftRecords,mergeAwardPeriods,verifiedAwardRecords} from './lib/award-records-durable.mjs';
+import {rejectArchiveWrite,readBoundedJson} from './lib/public-release-authorization.mjs';
 import {inquirerMarketCutoff,editionAvailability} from './lib/inquirer-market-window.mjs';
 import {completedLeagueWeekView} from './lib/league-completed-week.mjs';
 import {completedWeekProjections} from './lib/league-week-projections.mjs';
@@ -1049,14 +1051,21 @@ async function draftAwards(){
  }
  return{draft_picks:out};
 }
+async function githubDurableAwardRecords(){
+ try{
+  const response=await fetch('https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/value-history-data/'+AWARD_RECORDS_PATH,{cache:'no-store',headers:{accept:'application/json'}});
+  return response.ok?verifiedAwardRecords(await response.json()):null;
+ }catch{return null}
+}
 async function draftRecords(req){
- const s=store(),body=req.method==='POST'?await req.json().catch(()=>null):null;
+ let s=null;try{s=store()}catch{}const body=req.method==='POST'?await req.json().catch(()=>null):null;
+ if(req.method==='POST'&&!s)return json({error:'Award store unavailable'},503);
  if(req.method==='POST'&&body?.records&&Array.isArray(body.records)){
   const old=await s.get('awards/draft-records.json',{type:'json'}).catch(()=>null),records=Array.isArray(old)?old:[],seen=new Set(records.map(x=>[x.season,x.roster_id,x.player_id,x.pick_no,x.captured_value].join('|')));
   for(const x of body.records){const rec={season:Number(x.season)||null,roster_id:String(x.roster_id||''),player_id:String(x.player_id||''),pick_no:Number(x.pick_no)||null,captured_value:Math.round(Number(x.captured_value)||0),delta:Math.round(Number(x.delta)||0),captured_at:new Date().toISOString()};const k=[rec.season,rec.roster_id,rec.player_id,rec.pick_no,rec.captured_value].join('|');if(rec.season&&rec.roster_id&&rec.player_id&&rec.pick_no&&!seen.has(k)){seen.add(k);records.push(rec)}}
   await s.setJSON('awards/draft-records.json',records.slice(-5000));return json({ok:true,records});
  }
- const records=await s.get('awards/draft-records.json',{type:'json'}).catch(()=>null);return json({records:Array.isArray(records)?records:[]});
+ const [records,durable]=await Promise.all([s?s.get('awards/draft-records.json',{type:'json'}).catch(()=>null):null,githubDurableAwardRecords()]);return json({records:mergeDraftRecords(Array.isArray(records)?records:[],durable?.records||[])});
 }
 function managerScoringSummary(scoringGames,career,currentSeason,currentWeek){
  const rows=(scoringGames||[]).filter(g=>Number(g?.season)>=2024&&Number.isFinite(Number(g?.points))).map(g=>({...g,season:Number(g.season),week:Number(g.week),points:Number(g.points)}));
@@ -1187,15 +1196,25 @@ async function awardHighs(req){
   source:'league-awards-uncorroborated-browser-snapshot',cache_written:!!(changed&&s)});
 }
 async function awards(req){
- const s=store();
- if(req.method==='GET'){const list=await s.get('awards/history.json',{type:'json'}).catch(()=>null);return json({history:Array.isArray(list)?list:[]})}
+ let s=null;try{s=store()}catch{}
+ if(req.method==='GET'){const [list,durable]=await Promise.all([s?s.get('awards/history.json',{type:'json'}).catch(()=>null):null,githubDurableAwardRecords()]);return json({history:mergeAwardPeriods(Array.isArray(list)?list:[],durable?.history||[])})}
+ if(!s)return json({error:'Award store unavailable'},503);
  const body=await req.json().catch(()=>null),period=String(body?.period||''),rows=Array.isArray(body?.awards)?body.awards:[];
  if(!/^\w+ \d{4}$/.test(period)||!rows.length)return json({error:'invalid award snapshot'},400);
  const old=await s.get('awards/history.json',{type:'json'}).catch(()=>null),history=Array.isArray(old)?old:[];
  if(!history.some(x=>x.period===period)){history.push({period,captured_at:new Date().toISOString(),awards:rows.slice(0,20).map(x=>({key:String(x.key||''),title:String(x.title||''),roster_id:String(x.roster_id||''),detail:String(x.detail||'')}))});history.sort((a,b)=>String(a.period).localeCompare(String(b.period)));await s.setJSON('awards/history.json',history)}
  return json({ok:true,history});
 }
-export default async req=>{try{const u=new URL(req.url);
+export default async (req,context)=>{try{const denied=rejectArchiveWrite(req,context);if(denied)return denied;const u=new URL(req.url);
+ // Only the three known producer write routes are admissible. Reject other
+ // methods/queries before any generator, storage or network work.
+ if(req.method==='POST'){
+  const keys=[...u.searchParams.keys()];
+  if(keys.length!==1||!['draft_records','award_highs','awards'].includes(keys[0])||u.searchParams.get(keys[0])!=='1')return json({error:'Unknown write operation'},400);
+  const parsed=await readBoundedJson(req,1024*1024);if(parsed.error)return parsed.error;
+  // Existing validators remain unchanged and receive only the bounded body.
+  req=new Request(req.url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(parsed.body)});
+ }
  // Netlify's site-wide Blob store is shared by previews and production. A
  // preview must never silently backfill awards, manager caches or POST snapshots.
  if(isReadOnlyEditorialPreview(req.url,process.env.CONTEXT)){
@@ -1207,7 +1226,7 @@ export default async req=>{try{const u=new URL(req.url);
    return json({...await displayWeeklyAwards(previewAwards),preview_read_only:true});
   }
   if(u.searchParams.get('managers')==='1'){
-   const cached=await store().get('managers/history-cache.json',{type:'json'}).catch(()=>null);
+   const cached=await Promise.resolve().then(()=>store().get('managers/history-cache.json',{type:'json'})).catch(()=>null);
    // A complete but outdated Blob cache is still stale after a finalized week.
    // Verify the same completed-week season/cutoff used by the production reader.
    const nfl=await fetchJson(`${API}/state/nfl`).catch(()=>null);
@@ -1244,3 +1263,7 @@ if(u.searchParams.get('league_week')!==null)return json(await latestCompletedLea
  return json(reviewedReaderEdition(await broadcastStored(latest.season,latest.week)));
 }if(u.searchParams.get('reporters')==='1')return json(await reporterDirectory());if(u.searchParams.get('reporter_archive'))return json(await reporterArchive(u.searchParams.get('reporter_archive')));if(u.searchParams.get('broadcast_archive')==='1')return json(await broadcastArchive());if(u.searchParams.get('broadcast_season')&&u.searchParams.get('broadcast_week')){const edition=await broadcastStored(u.searchParams.get('broadcast_season'),u.searchParams.get('broadcast_week'));return json(req.method==='GET'?reviewedReaderEdition(edition):edition);}if(u.searchParams.get('weekly_awards')==='1')return json(await displayWeeklyAwards(await weeklyAwards()));if(u.searchParams.get('managers')==='1'){const s=store(),cached=await s.get('managers/history-cache.json',{type:'json'}).catch(()=>null),valid=cached?.cache_version===MANAGER_CACHE_VERSION&&cached?.career?.length&&cached.career.some(x=>(Number(x.wins)||0)+(Number(x.losses)||0)>0);if(valid){const nfl=await fetchJson(`${API}/state/nfl`).catch(()=>({})),season=Number(nfl?.season)||0,through=Math.max(0,Math.min(17,(Number(nfl?.week)||1)-1)),fresh=Number(cached?.scoring_history?.through_season)===season&&Number(cached?.scoring_history?.through_week)>=through;if(fresh)return json({...cached,cache_hit:true,stale:false})}return json(await managerHistory())}if(u.searchParams.get('drafts')==='1')return json(await draftAwards());if(u.searchParams.get('draft_records')==='1')return draftRecords(req);if(u.searchParams.get('award_highs')==='1')return awardHighs(req);if(u.searchParams.get('awards')==='1')return awards(req);return json({error:'query required'},400)}catch(e){console.error('league-hub',e);return json({error:'league hub unavailable'},503)}};
 
+
+// Netlify edge admission limit: cap costly calls across warm instances.
+// A minute of normal concurrent league use fits within this budget.
+export const config={rateLimit:{action:'rate_limit',aggregateBy:'domain',windowSize:60,windowLimit:600}};

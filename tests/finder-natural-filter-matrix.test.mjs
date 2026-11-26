@@ -93,7 +93,7 @@ test('balanced/need ordinary targeted mode uses indexed max-value neighborhood a
 
 test('regular non-targeted searches still cap blank-package generation and yield between partners',()=>{
  assert.match(fullFinder,/return out\.slice\(0,80\)/);
- assert.match(fullFinder,/if\(\+\+steps%2===0\)await yieldUI\(\)/);
+ assert.match(fullFinder,/if\(Date\.now\(\)-sliceStart>=18\)\{await yieldUI\(\);sliceStart=Date\.now\(\)\}/);
  assert.match(fullFinder,/if\(token!==runToken\)return\[\]/);
  assert.match(routerCode,/const api=mode==='value'\?window\.tradeSpecificMaxValueV279:window\.tradeSpecificPlayerV232/);
 });

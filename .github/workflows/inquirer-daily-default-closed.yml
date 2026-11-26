@@ -1,0 +1,37 @@
+name: Inquirer Daily default collapsed regression
+on:
+  pull_request:
+    paths:
+      - 'league-hub-v451.js'
+      - 'fleeced-header-v512.js'
+      - 'tests/inquirer-daily-default-closed.test.mjs'
+      - '.github/workflows/inquirer-daily-default-closed.yml'
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          if [ "$GITHUB_HEAD_REF" = "fix/final-navigation-logo-20261126" ]; then
+            node scripts/audit-final-navigation-scope-v659.mjs
+          elif [ "$GITHUB_HEAD_REF" = "security/public-release-write-boundary-20261125" ]; then
+            node scripts/audit-security-scope-v657.mjs
+          elif [ "$GITHUB_HEAD_REF" = "perf/history-hub-navigation-20261125" ]; then
+            node scripts/audit-navigation-scope-v656.mjs
+          elif [ "$GITHUB_HEAD_REF" = "fix/presentation-consistency-20261125" ]; then
+            node scripts/audit-presentation-consistency-scope.mjs
+          elif [ "$GITHUB_HEAD_REF" = "integration/verified-preview-653-ci-reconciliation-20261125" ]; then
+            node scripts/audit-verified-preview-653-continuation.mjs
+          else
+            node scripts/audit-inquirer-closed-preview-scope.mjs
+          fi
+          node --check league-hub-v451.js
+          node --check fleeced-header-v512.js
+          node --test tests/inquirer-daily-default-closed.test.mjs tests/fleeced-daily-week-filter.test.mjs tests/inquirer-single-archive-picker-regression.test.mjs tests/league-hub-async-tab-race.test.mjs tests/header-click-menu-v536.test.mjs

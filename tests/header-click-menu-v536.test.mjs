@@ -22,7 +22,7 @@ function fixture(){
  const context={
   MENUS:{tradeHistory:[['All History','trade-all']],rankings:[['All','rank:ALL']],
     valueHistory:[['Market','value:market']],leagueHub:[['Daily','league:daily']]},
-  activeMenuButton:null,menuEl:()=>menu,
+  activeMenuButton:null,navigationGeneration:0,menuEl:()=>menu,
   document:{
    getElementById:id=>id==='fleecedHeaderDropdown'?menu:null,
    querySelectorAll:()=>tabs,
@@ -102,5 +102,5 @@ test('outside-click/Escape close installed; no hover-dismiss timer remains; orig
  assert.match(src,/button.addEventListener\('click'/);
  assert.match(src,/e\.stopImmediatePropagation\(\)/);
  assert.match(src,/if\(!e\.isTrusted\)return/);
- assert.match(site,/fleeced-header-v512\.js\?v=537/);
+ const revision=site.match(/fleeced-header-v512\.js\?v=(\d+)"/);assert.ok(revision&&Number(revision[1])>=537,'Keep the approved header revision or a newer one');
 });

@@ -1,0 +1,68 @@
+/* V648: tidy dense mobile layouts; keep original interactions and data. */
+@media(max-width:1024px){
+html[data-fleeced-view="mobile"] header .fleeced-header-tabs button{min-height:44px!important}
+html[data-fleeced-view="mobile"] header.fleeced-site-header :is(#siteBackBtn,#updateBtn,#fleeced-view-switch){min-height:44px!important}
+html[data-fleeced-view="mobile"] :is(#findShop,#evalChooserA,#evalChooserB) .checklist{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:4px!important}
+html[data-fleeced-view="mobile"] :is(#findShop,#evalChooserA,#evalChooserB) label.checkrow{flex:0 0 auto!important;height:auto!important;min-height:44px!important;max-height:none!important;display:grid!important;grid-template-columns:24px minmax(0,1fr)!important;gap:4px 7px!important;align-items:center!important;padding:5px 7px!important;overflow:visible!important}
+html[data-fleeced-view="mobile"] #finder .trade98-finder-grid #findShop label.checkrow{flex:0 0 auto!important;height:auto!important;min-height:44px!important;max-height:none!important;display:grid!important;grid-template-columns:24px minmax(0,1fr)!important;gap:4px 7px!important;padding:5px 7px!important}
+html[data-fleeced-view="mobile"] :is(#findShop,#evalChooserA,#evalChooserB) label.checkrow>span{display:block!important;min-width:0!important;overflow-wrap:anywhere;white-space:normal!important;line-height:1.35!important}
+html[data-fleeced-view="mobile"] :is(#findShop,#evalChooserA,#evalChooserB) label.checkrow .fleeced-view-history{position:static!important;transform:none!important;grid-column:2;justify-self:start;min-height:24px!important;padding:2px 0!important;line-height:1.1!important;font-size:10px!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-heat-wrap{overflow:visible!important;min-width:0!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-heat-grid{min-width:0!important;grid-template-columns:minmax(35px,.65fr) repeat(4,minmax(0,1fr))!important;gap:2px!important;margin:3px 0!important}
+html[data-fleeced-view="mobile"] #valueHistory :is(.vh-heat-head,.vh-heat-label,.vh-heat-cell){padding:3px 1px!important;border-radius:5px!important;font-size:9px!important;white-space:normal!important;overflow-wrap:anywhere;text-align:center!important}
+html[data-fleeced-view="mobile"] #valueHistory button.vh-heat-cell{min-height:58px!important;font-size:12px!important}
+html[data-fleeced-view="mobile"] #valueHistory button.vh-heat-cell small{font-size:8px!important;line-height:1.15!important;margin:2px 0 0!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-grid-2>.vh-card,html[data-fleeced-view="mobile"] #valueHistory .vh-intel-grid>.vh-card{padding:5px!important;min-width:0!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-mover-card .vh-card-head{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:3px!important;margin-bottom:4px!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-mover-card .vh-card-head h3{font-size:12px!important;line-height:1.2!important;min-height:2.4em;margin:0!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-mover-card .vh-card-head .vh-sub{font-size:10px!important;line-height:1.2!important;margin:2px 0!important;min-height:2.4em}
+html[data-fleeced-view="mobile"] #valueHistory .vh-mover-card :is(.vh-card-periods,.vh-pool-filter){gap:2px!important;grid-template-columns:repeat(3,minmax(0,1fr))!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-mover-card :is(.vh-card-periods,.vh-pool-filter) button{min-height:24px!important;padding:2px 1px!important;border-radius:5px!important;font-size:9px!important;line-height:1.1!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-mover-card .vh-card-actions>button{min-height:25px!important;padding:3px!important;font-size:10px!important;margin:0!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-grid-2 .vh-mover{grid-template-columns:11px minmax(0,1fr) auto!important;grid-template-rows:auto auto!important;gap:1px 3px!important;min-height:0!important;align-items:start!important;padding:4px 0!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-grid-2 .vh-mover .vh-ranknum{grid-column:1;grid-row:1;align-self:start}
+html[data-fleeced-view="mobile"] #valueHistory .vh-grid-2 .vh-mover .vh-player-link{grid-column:2;grid-row:1;min-height:0!important;text-align:left!important;padding:0!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-grid-2 .vh-mover .vh-delta{grid-column:3;grid-row:1;font-size:11px!important;line-height:1.2!important;max-width:45px;text-align:right!important;align-self:start!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-grid-2 .vh-mover .vh-view-history{grid-column:2/-1;grid-row:2;min-height:22px!important;padding:1px 0!important;font-size:9px!important;line-height:1.1!important;margin:0!important;justify-self:start}
+html[data-fleeced-view="mobile"] #valueHistory .vh-intel-grid .vh-intel-row{grid-template-columns:minmax(0,1fr) auto!important;gap:2px 3px!important;align-items:start!important;padding:4px 0!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-intel-grid .vh-intel-row>.vh-player-link{grid-column:1;grid-row:1;padding:0!important;min-height:0!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-intel-grid .vh-intel-row>.vh-intel-metric{grid-column:2;grid-row:1;max-width:50px;align-self:start;text-align:right}
+html[data-fleeced-view="mobile"] #valueHistory .vh-intel-grid .vh-intel-row>.vh-intel-metric small{font-size:8px!important;line-height:1.1!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-intel-grid .vh-intel-row>.vh-intel-metric b{font-size:11px!important;line-height:1.15!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-intel-grid .vh-view-history{grid-column:1/-1;grid-row:2;min-height:22px!important;padding:1px 0!important;font-size:9px!important;margin:0!important;justify-self:start}
+html[data-fleeced-view="mobile"] #valueHistory .vh-intel-grid .vh-intel-card-title{display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:2px!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-intel-grid .vh-intel-card-title h3{min-height:2.4em;font-size:12px!important;margin:0!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-intel-grid>.vh-card>.vh-sub{font-size:10px!important;line-height:1.25!important;margin:2px 0!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-view-history{min-height:22px!important;padding:1px 2px!important;font-size:9px!important;line-height:1.1!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-driver-chart{min-height:22px!important;padding:0!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-net-metrics{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:3px!important;margin:4px 0!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-net-metric{min-width:0;padding:4px!important;overflow-wrap:anywhere}
+html[data-fleeced-view="mobile"] #valueHistory .vh-net-metric b{font-size:14px!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-net-metric :is(small,span){font-size:9px!important;line-height:1.2!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-net-chart svg{height:auto!important;min-height:0!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-net-axis-text{font-size:13px!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-value-chart svg{width:100%!important;height:auto!important;max-height:none!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-value-axis{font-size:13px!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-team-trade-events .vh-empty{padding:6px!important;min-height:0!important}
+html[data-fleeced-view="mobile"] #leagueHub .lh-title-action:has(>.lh-manager-grid){display:block!important;width:100%!important}
+html[data-fleeced-view="mobile"] #leagueHub .lh-manager-grid{width:100%!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:4px!important;margin:4px 0!important}
+html[data-fleeced-view="mobile"] #leagueHub .lh-manager{padding:5px 3px!important;min-height:42px!important;min-width:0!important;border-radius:7px!important;font-size:11px!important;line-height:1.2!important}
+html[data-fleeced-view="mobile"] #leagueHub .lh-manager b{white-space:normal!important;overflow:visible!important;overflow-wrap:anywhere;text-overflow:clip!important}
+html[data-fleeced-view="mobile"] #leagueHub .lh-manager small{font-size:9px!important;line-height:1.2!important;margin-top:2px!important}
+html[data-fleeced-view="mobile"] #leagueHub .lh-awards-page .lh-stat{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:3px!important;padding:4px 0!important;margin:0!important;align-items:center!important;font-size:11px!important;line-height:1.2!important}
+html[data-fleeced-view="mobile"] #leagueHub .lh-awards-page .lh-stat>span{min-width:0!important;overflow-wrap:anywhere}
+html[data-fleeced-view="mobile"] #leagueHub .lh-awards-page .lh-stat>span:last-child{display:flex!important;flex-wrap:wrap!important;align-items:center!important;justify-content:flex-end!important;gap:2px!important;text-align:right!important}
+html[data-fleeced-view="mobile"] #leagueHub .lh-awards-page .lh-stat small{font-size:10px!important;line-height:1.2!important}
+html[data-fleeced-view="mobile"] #leagueHub .lh-awards-page :is(.lh-stat,.lh-action) button{min-height:25px!important;padding:3px 5px!important;font-size:10px!important;line-height:1.1!important;white-space:normal!important;margin:0!important}
+html[data-fleeced-view="mobile"] #leagueHub .lh-archive-filters{grid-template-columns:minmax(0,.75fr) minmax(0,1fr) minmax(0,1.5fr)!important;gap:3px!important;margin:4px 0!important}
+html[data-fleeced-view="mobile"] #leagueHub .lh-archive-filters>:last-child{grid-column:auto!important}
+html[data-fleeced-view="mobile"] #leagueHub .lh-archive-filter{min-width:0!important;gap:2px!important}
+html[data-fleeced-view="mobile"] #leagueHub .lh-archive-filter select{min-width:0!important;width:100%!important;padding:3px 2px!important;min-height:36px!important}
+html[data-fleeced-view="mobile"] #leagueHub .lh-archive-filter span{font-size:10px!important}
+html[data-fleeced-view="mobile"] #leagueHub .lh-hall-page .lh-card .lh-sub{min-height:3.8em;font-size:10px!important}
+}
+
+@media(max-width:1024px){
+html[data-fleeced-view="mobile"] #valueHistory :is(.vh-net-chart,.vh-value-chart) svg.vh-desktop-chart{display:none!important}
+html[data-fleeced-view="mobile"] #valueHistory :is(.vh-net-chart,.vh-value-chart) svg.vh-mobile-chart{display:block!important;width:100%!important;height:auto!important}
+}

@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
+const frozen='5d34d624da07fc18519b113a8c26b9b1815fc3d8',main='a1f3d19fe3524f97da9c51c2827607d74de4b38c';
+const git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();
+assert.equal(process.env.GITHUB_HEAD_REF,'perf/history-hub-navigation-20261125');
+assert.equal(git('rev-parse','origin/main'),main);
+assert.equal(git('ls-remote','origin','refs/heads/archive/visual-approved-preview-655-20261125').split(/\s+/)[0],frozen);
+assert.equal(git('ls-remote','origin','refs/heads/archive/verified-preview-653-20261125').split(/\s+/)[0],'10cab63ce7437d9fdc80e3e5ca8c97462514ca7c');
+execFileSync('git',['merge-base','--is-ancestor',frozen,'HEAD']);
+assert.deepEqual(git('diff','--name-only',frozen,'HEAD').split('\n').filter(Boolean).sort(),[".github/workflows/inquirer-daily-default-closed.yml",".github/workflows/mobile-presentation-v631.yml",".github/workflows/navigation-read-scope-v656.yml",".github/workflows/netlify-v101-one-time-release-gate-ci.yml",".github/workflows/release-v107-recorder-after-market-ui-isolated.yml",".github/workflows/release-v112-team-trade-linkage-ci.yml",".github/workflows/release-v114-historical-pick-projection-ci.yml",".github/workflows/release-v116-market-period-parity-ci.yml","league-hub-v451.js","netlify.toml","netlify/functions/site-v29.mjs","scripts/audit-combined-weekly-badge-provenance.mjs","scripts/audit-navigation-scope-v656.mjs","scripts/navigation-live-parity-v656.mjs","scripts/navigation-live-runner-v656.mjs","scripts/navigation-site-profile-v656.mjs","tests/managers-preview-readonly-fallback.test.mjs","tests/navigation-read-scope-v656.test.mjs","value-history-v276.js"]);
+assert.equal(git('rev-parse','HEAD:value-history-v276.js'),'a593d3fcdad13d4b8e0a665b4577c0ec669c6896');
+assert.equal(git('rev-parse','HEAD:league-hub-v451.js'),'0ea25cd9cf3c8ae8c386b00d0597796dd63195c1');
+let loader=git('show',frozen+':netlify/functions/site-v29.mjs');
+for(const [file,version] of [["value-history-v276.js","648"],["league-hub-v451.js","648"]])loader=loader.replace('/'+file+'?v='+version,'/'+file+'?v=656');
+assert.equal(git('show','HEAD:netlify/functions/site-v29.mjs'),loader);
+assert.equal(git('show','HEAD:netlify.toml'),git('show',frozen+':netlify.toml').replace("'651','653','655'].includes","'651','653','655','656'].includes"),'Only preview 656 newly authorized; production policy identical');
+console.log('Exact isolated navigation runtime, all other approved application bytes and production policy preserved.');

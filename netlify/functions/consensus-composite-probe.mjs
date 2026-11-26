@@ -1,3 +1,4 @@
+import {privateDiagnosticDenied} from './lib/private-diagnostic-access.mjs';
 import { refreshAllSources } from "./consensus-source-overrides.mjs";
 import { buildConsensusComposite } from "./consensus-composite.mjs";
 
@@ -9,10 +10,13 @@ const SAMPLE=[
   {id:"sample-hamilton",name:"Kyle Hamilton",position:"DB"}
 ];
 
-export default async()=>{
+export default async(req,context)=>{const denied=privateDiagnosticDenied(req,context);if(denied)return denied;
+
   try{
     const refresh=await refreshAllSources();
     const composite=buildConsensusComposite(refresh.results,SAMPLE);
     return new Response(JSON.stringify({ok:true,sourceStatus:refresh.results.map(r=>({source:r.source,valid:r.valid,rows:r.ranking_rows,reducedWeight:!!r.reducedWeight})),sourceCounts:composite.sourceCounts,ambiguousNames:composite.ambiguousNames,samples:composite.details},null,2),{headers:{"content-type":"application/json","cache-control":"no-store"}});
   }catch(error){return new Response(JSON.stringify({ok:false,error:String(error?.stack||error)},null,2),{status:500,headers:{"content-type":"application/json","cache-control":"no-store"}})}
 };
+
+export const config={rateLimit:{action:'rate_limit',aggregateBy:'domain',windowSize:60,windowLimit:10}};

@@ -1,6 +1,8 @@
+import {privateDiagnosticDenied} from './lib/private-diagnostic-access.mjs';
 import siteV25 from './site-v25.mjs';
 
-export default async () => {
+export default async(req,context)=>{const denied=privateDiagnosticDenied(req,context);if(denied)return denied;
+
   const base = await siteV25();
   if (!base.ok) return base;
   let raw = await base.text();
@@ -12,3 +14,5 @@ export default async () => {
   const html = raw.replace('</body>', value127 + runtime127 + '</body>');
   return new Response(html,{status:200,headers:{'content-type':'text/html; charset=utf-8','cache-control':'no-store','x-fll-release':'section1-v127-stable-values-picks-finder'}});
 };
+
+export const config={rateLimit:{action:'rate_limit',aggregateBy:'domain',windowSize:60,windowLimit:30}};

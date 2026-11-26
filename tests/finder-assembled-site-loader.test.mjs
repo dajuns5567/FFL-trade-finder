@@ -7,12 +7,12 @@ const read=filename=>readFileSync(new URL('../'+filename,import.meta.url),'utf8'
 const selected=[
  ['trade-specific-blank-router-v325.js',439],
  ['trade-add-assets-complement-v1.js',2],
- ['trade-specific-max-tier-add-v300.js',301],
+ ['trade-specific-max-tier-add-v300.js',303],
  ['trade-specific-tier-up-v282.js',283],
  ['trade-specific-add-assets-v282.js',310],
- ['trade-specific-max-value-v279.js',443],
+ ['trade-specific-max-value-v279.js',445],
  ['trade-specific-player-v232.js',441],
- ['trade-finder-v256-compiled.js',449]
+ ['trade-finder-v256-compiled.js',450]
 ];
 async function rendered(){
  const response=await siteV29();

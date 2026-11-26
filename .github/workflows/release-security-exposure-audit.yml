@@ -1,0 +1,54 @@
+name: Release credential and dependency exposure audit
+on:
+  pull_request:
+    paths:
+      - 'scripts/audit-release-security-exposure.mjs'
+      - 'scripts/audit-release-history-security.mjs'
+      - '.github/workflows/release-security-exposure-audit.yml'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'netlify.toml'
+      - 'netlify/functions/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exposure:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Scan tracked release files without printing suspected secrets
+        run: node scripts/audit-release-security-exposure.mjs
+      - name: Check installed production dependencies
+        if: always()
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund --package-lock=true
+          node --input-type=module <<'JS'
+          import {spawnSync} from 'node:child_process';
+          const r=spawnSync('npm',['audit','--omit=dev','--json'],{encoding:'utf8',maxBuffer:8*1024*1024});
+          let report;try{report=JSON.parse(r.stdout)}catch{throw Error('Dependency audit returned no valid report; do not mark clean')}
+          if(report.error||!report.metadata?.vulnerabilities){console.log('DEPENDENCY_AUDIT_UNAVAILABLE '+JSON.stringify({code:report.error?.code||null,status:r.status}));throw Error('Dependency audit unavailable; review required')}
+          const counts=report.metadata.vulnerabilities;
+          console.log('PRODUCTION_DEPENDENCY_AUDIT '+JSON.stringify({counts,packages:Object.entries(report.vulnerabilities||{}).map(([name,v])=>({name,severity:v.severity,fixAvailable:!!v.fixAvailable}))}));
+          if(counts.high||counts.critical)process.exitCode=1;
+          JS
+
+  historical-exposure:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Read-only reachable history, private fields and function exposure audit
+        run: node scripts/audit-release-history-security.mjs

@@ -102,7 +102,9 @@ async function buildSignals(origin){
 export default async req=>{
   try{
     if(req.method!=='GET')return json({error:'method not allowed'},405);
-    const url=new URL(req.url),data=await buildSignals(url.origin),id=String(url.searchParams.get('player_id')||'');
+    const url=new URL(req.url),id=String(url.searchParams.get('player_id')||'');
+    if(id&&!/^[A-Za-z0-9_-]{1,64}$/.test(id))return json({error:'Invalid player ID'},400);
+    const data=await buildSignals(url.origin);
     if(id){
       const history=data.history_by_player?.[id]||[],current=history.length?{...history[history.length-1],ownership:data.signals.find(x=>String(x.player_id)===id)?.ownership||null}:null;
       return json({available:!!current,signal_version:data.signal_version,season:data.season,through_week:data.through_week,generated_at:data.generated_at,source:data.source,player_id:id,current,history});
@@ -110,5 +112,9 @@ export default async req=>{
     const compact=url.searchParams.get('compact')==='1',
       transitions=compact?Object.values(data.history_by_player||{}).flatMap(history=>(history||[]).flatMap((x,i)=>x?.changed?[{...x,previous_reporter_label:history[i-1]?.reporter_label||null,previous_reporter_status:history[i-1]?.reporter_status||null,previous_label:history[i-1]?.label||null}]:[])).sort((a,b)=>Number(b.week)-Number(a.week)||String(a.player_name).localeCompare(String(b.player_name))):null;
     return json(compact?{available:true,signal_version:data.signal_version,season:data.season,through_week:data.through_week,generated_at:data.generated_at,source:data.source,summary:data.summary,signals:data.signals,transitions}:data);
-  }catch(e){return json({available:false,error:String(e?.message||e)},500)}
+  }catch(e){return json({available:false,error:'Player signals unavailable'},500)}
 };
+
+// Netlify edge admission limit: cap costly calls across warm instances.
+// A minute of normal concurrent league use fits within this budget.
+export const config={rateLimit:{action:'rate_limit',aggregateBy:'domain',windowSize:60,windowLimit:300}};

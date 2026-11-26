@@ -1,4 +1,9 @@
+import {archiveWriteAuthorized,readBoundedJson,securityJson} from './lib/public-release-authorization.mjs';
 import { refreshAllSources } from "./consensus-source-overrides.mjs";
+import {createPublicRefreshBudget,createSharedRefresh} from './lib/public-refresh-budget.mjs';
+import {publisherCachePayload,canPersistPublisherCache,lastGoodComposite,shareCacheCommit} from './lib/verified-publisher-cache.mjs';
+const publicRefreshBudget=createPublicRefreshBudget();
+const sharedPublisherFetch=createSharedRefresh(refreshAllSources);
 import { buildConsensusComposite } from "./consensus-composite-v3.mjs";
 import { buildFreshnessSnapshot,ageFreshness } from "./consensus-source-freshness.mjs";
 import { getStore } from "@netlify/blobs";
@@ -7,7 +12,8 @@ const SNAPSHOT_STORE="fleeced-consensus-lkg";
 const SNAPSHOT_KEY="validated-sources-v1";
 const sourceStore=()=>getStore(SNAPSHOT_STORE,{consistency:"strong"});
 async function readLastGood(){try{return await sourceStore().get(SNAPSHOT_KEY,{type:"json"})||null}catch{return null}}
-async function writeLastGood(value){try{await sourceStore().setJSON(SNAPSHOT_KEY,value)}catch(e){console.warn("Consensus LKG persistence failed",e)}}
+async function writeLastGood(value){try{await sourceStore().setJSON(SNAPSHOT_KEY,value);return true}catch(e){console.warn("Consensus LKG persistence failed",e);return false}}
+const commitPublisherCache=shareCacheCommit(writeLastGood);
 
 function addSnapshot(sources,name,result,rows,kind,updatedAt){
   const data={};
@@ -43,13 +49,22 @@ export function buildConsensusPayload(refresh,players=[],updatedAt=new Date().to
   return {ok:true,sources:integrityReady?sources:{},composite,withheld:!integrityReady,integrity:{all_sources_valid:integrityReady,failed_sources:failedSources,reason:integrityReady?null:`Consensus replacement withheld because ${failedSources.length?failedSources.join(', '):'one or more required sources'} did not validate; prior validated source set remains in use`},summary:{total:results.length,successful,failed:results.length-successful,results:diagnostics},updatedAt};
 }
 
-export default async (req)=>{
+export default async (req,context)=>{
   if(req.method==="OPTIONS")return json({ok:true});
   if(req.method!=="POST")return json({ok:false,error:"POST required"},405);
-  let body={};try{body=await req.json()}catch{return json({ok:false,error:"Invalid JSON"},400)}
-  const players=Array.isArray(body.players)?body.players:[];
-  if(!players.length)return json({ok:false,error:"No player list supplied"},400);
-  const refresh=await refreshAllSources();
+  if(!/^application\/json(?:\s*;|$)/i.test(req.headers.get('content-type')||''))return securityJson(415,'JSON required');
+  const parsed=await readBoundedJson(req,5*1024*1024);if(parsed.error)return parsed.error;
+  const players=Array.isArray(parsed.body?.players)?parsed.body.players:[];
+  if(!players.length||players.length>25000)return json({ok:false,error:"Invalid player list size"},400);
+  if(players.some(p=>!p||typeof p!=='object'||! /^[A-Za-z0-9_-]{1,64}$/.test(String(p.id||''))||['__proto__','constructor','prototype'].includes(String(p.id))||typeof p.name!=='string'||p.name.length>160||/[\u0000-\u001f]/.test(p.name)||Array.isArray(p.positions)&&(p.positions.length>16||p.positions.some(pos=>typeof pos!=='string'||pos.length>24))))return json({ok:false,error:'Invalid player identity list'},400);
+  const hosted=!!context?.deploy||!!process.env.NETLIFY;
+  const trusted=archiveWriteAuthorized(req,context);
+  // Hosted anonymous clients receive bounded access. Local scheduled/test
+  // runtime is not a remotely reachable endpoint and keeps its exact retries.
+  const lease=hosted&&!trusted?publicRefreshBudget.acquire(context?.ip):null;
+  if(lease&&!lease.allowed)return new Response(JSON.stringify({ok:false,error:'Refresh temporarily busy; retry shortly'}),{status:429,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store','retry-after':String(lease.retryAfter)}});
+  try{
+  const refresh=hosted&&!trusted?await sharedPublisherFetch():await refreshAllSources();
   const candidate=buildConsensusPayload(refresh,players);
   const previous=await readLastGood();
 
@@ -59,7 +74,10 @@ export default async (req)=>{
       snapshot.freshness=buildFreshnessSnapshot(snapshot,old,candidate.updatedAt);
     }
     const promoted={sources:candidate.sources,composite:candidate.composite,updatedAt:candidate.updatedAt,sourceManifest:candidate.summary.results.map(x=>({source:x.source,status:"fresh",snapshot_timestamp:x.timestamp||candidate.updatedAt,attempt_timestamp:x.timestamp||candidate.updatedAt,players_extracted:x.players_extracted,ranking_rows:x.ranking_rows,publisher_updated_at:null,source_freshness:(x.source==="The IDP Show Combined"?candidate.sources["The IDP Show Combined Offense"]?.freshness:candidate.sources[x.source]?.freshness)||null,market_observation:x.market_observation||null,source_provenance:x.source_provenance||null}))};
-    await writeLastGood(promoted);
+    // Public requests can trigger the trusted server publisher adapters,
+    // but no caller-supplied identity or composite is persisted. Previews
+    // and the local collector cannot write the production cache.
+    if(canPersistPublisherCache(context))await commitPublisherCache(refresh,publisherCachePayload(refresh,promoted));
     const summary={...candidate.summary,results:candidate.summary.results.map(x=>({...x,
       source_freshness:(x.source==="The IDP Show Combined"?candidate.sources["The IDP Show Combined Offense"]?.freshness:candidate.sources[x.source]?.freshness)||null,
       market_observation:x.market_observation||null,
@@ -69,7 +87,7 @@ export default async (req)=>{
   }
 
   const priorSources=previous?.sources&&Object.keys(previous.sources).length?previous.sources:null;
-  const priorComposite=previous?.composite||null;
+  const priorComposite=lastGoodComposite(previous,players,buildConsensusComposite);
   const priorManifest=Array.isArray(previous?.sourceManifest)?previous.sourceManifest:[];
   const attemptBySource=new Map((candidate.summary.results||[]).map(x=>[x.source,x]));
   const manifest=(candidate.summary.results||[]).map(x=>{
@@ -79,5 +97,10 @@ export default async (req)=>{
   });
   const summary={...candidate.summary,successful:candidate.summary.results.filter(x=>x.ok).length,results:manifest.map(x=>({source:x.source,ok:x.status==="fresh-not-promoted",status:x.status,players_extracted:x.players_extracted,ranking_rows:x.ranking_rows,timestamp:x.attempt_timestamp,snapshot_timestamp:x.snapshot_timestamp,source_freshness:x.source_freshness||null,market_observation:x.market_observation||null,source_provenance:x.source_provenance||null,publisher_updated_at:x.publisher_updated_at||null,error:x.error||null}))};
   return json({...candidate,sources:priorSources||{},composite:priorComposite||candidate.composite,summary,sourceManifest:manifest,promotion:{promoted:false,using_last_known_good:!!priorSources,last_good_updated_at:previous?.updatedAt||null},integrity:{...candidate.integrity,reason:priorSources?`${candidate.integrity.reason}; complete last-known-good consensus from ${previous.updatedAt} remains active`:`${candidate.integrity.reason}; no persisted last-known-good consensus is available yet`}});
+  }finally{lease?.release?.()}
 };
 function json(body,status=200){return new Response(JSON.stringify(body),{status,headers:{"content-type":"application/json; charset=utf-8","cache-control":"no-store"}})}
+
+// Netlify edge admission limit: cap costly calls across warm instances.
+// A minute of normal concurrent league use fits within this budget.
+export const config={rateLimit:{action:'rate_limit',aggregateBy:'domain',windowSize:60,windowLimit:120}};

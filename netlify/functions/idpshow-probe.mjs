@@ -1,3 +1,4 @@
+import {privateDiagnosticDenied} from './lib/private-diagnostic-access.mjs';
 const SOURCE_URL="https://www.theidpshow.com/p/combined-idp-offense-dynasty-rankings-fantasy-football";
 const TIMEOUT_MS=7000;
 
@@ -43,7 +44,8 @@ function inspect(text,method,status,contentType){
   };
 }
 
-export default async()=>{
+export default async(req,context)=>{const denied=privateDiagnosticDenied(req,context);if(denied)return denied;
+
   const attempts=[];
   try{
     const direct=await fetchText(SOURCE_URL);
@@ -56,3 +58,5 @@ export default async()=>{
   }catch(error){attempts.push({method:"jina",error:String(error?.message||error)});}
   return new Response(JSON.stringify({ok:true,source:"The IDP Show Combined",url:SOURCE_URL,attempts},null,2),{headers:{"content-type":"application/json; charset=utf-8","cache-control":"no-store"}});
 };
+
+export const config={rateLimit:{action:'rate_limit',aggregateBy:'domain',windowSize:60,windowLimit:10}};

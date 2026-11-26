@@ -47,7 +47,7 @@ test('private Inquirer history reads remain local, SSO-independent, and mutation
  assert.match(hub,/if\(previewReadOnly\)url\.searchParams\.set\('readonly_preview','1'\)/);
  assert.match(hub,/const r=await valueHistoryHandler\(new Request\(url\)\)/);
  assert.match(history,/const readonlyPreview=isDeployPreview\|\|\(req\.method==='GET'&&url\.searchParams\.get\('readonly_preview'\)==='1'\)/);
- assert.match(history,/if\(s&&!readonlyPreview\)\{/);
+ assert.match(history,/if\(s&&!readonlyPreview&&req\.method==='POST'&&archiveWriteAuthorized\(req,context\)\)\{/);
 });
 
 test('an unchanged earlier-week editorial hold blocks later weeks without repeated costly generation',()=>{

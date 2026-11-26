@@ -1,6 +1,8 @@
+import {privateDiagnosticDenied} from './lib/private-diagnostic-access.mjs';
 import siteV17 from './site-v17.mjs';
 
-export default async () => {
+export default async(req,context)=>{const denied=privateDiagnosticDenied(req,context);if(denied)return denied;
+
   const base = await siteV17();
   if (!base.ok) return base;
   let raw = await base.text();
@@ -18,3 +20,5 @@ export default async () => {
     }
   });
 };
+
+export const config={rateLimit:{action:'rate_limit',aggregateBy:'domain',windowSize:60,windowLimit:30}};

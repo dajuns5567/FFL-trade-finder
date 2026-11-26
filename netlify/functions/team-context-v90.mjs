@@ -1,5 +1,7 @@
 const SOURCE='https://raw.githubusercontent.com/dajuns5567/FFL-trade-finder/mida-live-data/data/mida-team-context.csv';
-export default async()=>{
+export default async(req)=>{
+  if(req&&req.method!=='GET')return new Response(JSON.stringify({error:'Method not allowed'}),{status:405,headers:{'content-type':'application/json','cache-control':'no-store'}});
+
   const fetchedAt=new Date().toISOString();
   try{
     const r=await fetch(`${SOURCE}?ts=${Date.now()}`,{cache:'no-store',headers:{accept:'text/csv,text/plain;q=0.9,*/*;q=0.8'}});
@@ -11,3 +13,5 @@ export default async()=>{
     return new Response(JSON.stringify({ok:false,error:String(e?.message||e),fetchedAt}),{status:502,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
   }
 };
+
+export const config={rateLimit:{action:'rate_limit',aggregateBy:'domain',windowSize:60,windowLimit:120}};

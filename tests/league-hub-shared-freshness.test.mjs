@@ -29,7 +29,7 @@ function fixture(){
   }
  };
  vm.createContext(ctx);
- vm.runInContext("let tradeCache=null,draftCache=null,weeklyAwardsCache=null,currentView='awards',openBroadcastTeam='';"+implementation,ctx);
+ vm.runInContext("let tradeCache=null,draftCache=null,weeklyAwardsCache=null,currentView='awards',openBroadcastTeam='',leagueHubRenderGeneration=0;"+implementation,ctx);
  return{ctx,get:()=>({requests:[...requests],rerenders}),
   advance:x=>{now=x},trade:x=>{tradeId=x},awards:x=>{awardsWeek=x},draft:x=>{draftCount=x},
   fail:(kind,on=true)=>on?broken.add(kind):broken.delete(kind)};

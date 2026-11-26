@@ -6,7 +6,8 @@ const source=readFileSync(new URL('../league-hub-v451.js',import.meta.url),'utf8
 const start=source.indexOf('let leagueHubRenderGeneration=0;');
 const end=source.indexOf('\nfunction wireSection',start);
 assert.ok(start>=0&&end>start,'extract the actual installed async League Hub renderer');
-const section=source.slice(start,end);
+const hallHelper=source.slice(source.indexOf('async function collectHallRowsV659('),source.indexOf('function hallHTML('));
+const section=hallHelper+source.slice(start,end);
 function fixture(){
  let resolveFirst;
  const pendingFirst=new Promise(resolve=>resolveFirst=resolve);
@@ -25,6 +26,7 @@ function fixture(){
   weekly:async()=>({available:false}),drafts:async()=>({draft_picks:[]}),
   weeklyAwards:async()=>({records:[]}),liveLeagueWeek:async()=>null,
   reporterDirectory:async()=>({reporters:[]}),
+  fetchPublishedInquirerArchive:async()=>[],
   fetch:async()=>({ok:true,json:async()=>({reports:[]})}),
   teamTradeStats:()=>[],currentAwards:()=>[],
   awardsHTML:()=>'<section data-test="awards">Awards page</section>',
@@ -32,7 +34,7 @@ function fixture(){
   syncAwards:()=>{},inquirerPreviewPollAttempts:0,
   spotlightWeek:async()=>null,dailyHTML:()=>'<section data-test="daily">Daily page</section>',
   captureAllTimeHighsOnSiteOpen:()=>Promise.resolve(),
-  console,setTimeout,Number,String,Math,Array,Object,Promise
+  esc:String,performance:{now:()=>0},console,setTimeout,Number,String,Math,Array,Object,Promise
  };
  vm.createContext(context);
  vm.runInContext(section+';globalThis.testRender=render',context);

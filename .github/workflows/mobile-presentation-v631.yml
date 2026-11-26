@@ -1,0 +1,129 @@
+name: Mobile presentation and desktop isolation
+on:
+  pull_request:
+    paths:
+      - 'fleeced-view-mode-v631.js'
+      - 'fleeced-mobile-v631.css'
+      - 'fleeced-mobile-density-v645.css'
+      - 'fleeced-mobile-pairs-v646.css'
+      - 'fleeced-mobile-compact-v647.css'
+      - 'fleeced-mobile-clean-v648.css'
+      - 'fleeced-mobile-align-v649.css'
+      - 'fleeced-mobile-align-v649.js'
+      - 'fleeced-mobile-home-v650.css'
+      - 'fleeced-mobile-home-v650.js'
+      - 'scripts/mobile-home-browser-v650.mjs'
+      - 'scripts/mobile-aligned-browser-v649.mjs'
+      - 'scripts/mobile-clean-browser-v648.mjs'
+      - 'scripts/mobile-compact-browser-v647.mjs'
+      - 'scripts/mobile-pairs-browser-v646.mjs'
+      - 'scripts/mobile-density-browser-v645.mjs'
+      - 'netlify/functions/site-v29.mjs'
+      - 'scripts/mobile-presentation-browser-v631.mjs'
+      - '.github/workflows/mobile-presentation-v631.yml'
+permissions:
+  contents: read
+jobs:
+  presentation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preserve exact released desktop and application bytes
+        run: |
+          set -euo pipefail
+          base=a1f3d19fe3524f97da9c51c2827607d74de4b38c
+          test "$(git ls-remote origin refs/heads/archive/desktop-release-630-20261125 | cut -f1)" = "$base"
+          git diff --name-only "$base" HEAD
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {execFileSync} from 'node:child_process';
+          import {readFileSync} from 'node:fs';
+          // Exact preview-only combined candidate; legacy release checks remain unchanged elsewhere.
+          if(process.env.GITHUB_HEAD_REF==='fix/final-navigation-logo-20261126'){
+            execFileSync('node',['scripts/audit-final-navigation-scope-v659.mjs'],{stdio:'inherit'});
+            process.exit(0);
+          }
+          if(process.env.GITHUB_HEAD_REF==='security/public-release-write-boundary-20261125'){
+            execFileSync('node',['scripts/audit-security-scope-v657.mjs'],{stdio:'inherit'});
+            process.exit(0);
+          }
+          if(process.env.GITHUB_HEAD_REF==='perf/history-hub-navigation-20261125'){
+            execFileSync('node',['scripts/audit-navigation-scope-v656.mjs'],{stdio:'inherit'});
+            process.exit(0);
+          }
+          if(process.env.GITHUB_HEAD_REF==='fix/presentation-consistency-20261125'){
+            execFileSync('node',['scripts/audit-presentation-consistency-scope.mjs'],{stdio:'inherit'});
+            process.exit(0);
+          }
+          if(process.env.GITHUB_HEAD_REF==='integration/verified-preview-653-ci-reconciliation-20261125'){
+            execFileSync('node',['scripts/audit-verified-preview-653-continuation.mjs'],{stdio:'inherit'});
+            process.exit(0);
+          }
+          if(process.env.GITHUB_HEAD_REF==='perf/finder-target-coverage-20261125'){
+            execFileSync('node',['scripts/audit-finder-preview-scope.mjs'],{stdio:'inherit'});
+            process.exit(0);
+          }
+          if(process.env.GITHUB_HEAD_REF==='fix/mobile-home-market-navigation-20261125'){
+            execFileSync('node',['scripts/audit-mobile-home-preview-scope.mjs'],{stdio:'inherit'});
+            process.exit(0);
+          }
+          if(process.env.GITHUB_HEAD_REF==='fix/mobile-aligned-rows-touch-20261125'){
+            execFileSync('node',['scripts/audit-mobile-aligned-preview-scope.mjs'],{stdio:'inherit'});
+            process.exit(0);
+          }
+          if(process.env.GITHUB_HEAD_REF==='fix/mobile-clean-presentation-20261125'){
+            execFileSync('node',['scripts/audit-mobile-clean-preview-scope.mjs'],{stdio:'inherit'});
+            process.exit(0);
+          }
+          if(process.env.GITHUB_HEAD_REF==='fix/mobile-compact-all-views-20261125'){
+            execFileSync('node',['scripts/audit-mobile-compact-preview-scope.mjs'],{stdio:'inherit'});
+            process.exit(0);
+          }
+          if(process.env.GITHUB_HEAD_REF==='fix/mobile-paired-comparisons-20261125'){
+            execFileSync('node',['scripts/audit-mobile-pairs-preview-scope.mjs'],{stdio:'inherit'});
+            process.exit(0);
+          }
+          if(process.env.GITHUB_HEAD_REF==='fix/mobile-information-density-20261125'){
+            execFileSync('node',['scripts/audit-mobile-density-preview-scope.mjs'],{stdio:'inherit'});
+            process.exit(0);
+          }
+          if(process.env.GITHUB_HEAD_REF==='fix/inquirer-daily-default-closed-20261125'){
+            execFileSync('node',['scripts/audit-inquirer-closed-preview-scope.mjs'],{stdio:'inherit'});
+            process.exit(0);
+          }
+          if(process.env.GITHUB_HEAD_REF==='integration/mobile-shared-regressions-20261125'){
+            execFileSync('node',['scripts/audit-mobile-shared-preview-scope.mjs'],{stdio:'inherit'});
+            process.exit(0);
+          }
+          const base='a1f3d19fe3524f97da9c51c2827607d74de4b38c';
+          const git=(...args)=>execFileSync('git',args,{encoding:'utf8'});
+          const paths=git('diff','--name-only',base,'HEAD').trim().split('\n').filter(Boolean);
+          const allowed=new Set(['fleeced-view-mode-v631.js','fleeced-mobile-v631.css','netlify/functions/site-v29.mjs','scripts/mobile-presentation-browser-v631.mjs','.github/workflows/mobile-presentation-v631.yml','netlify.toml','.github/workflows/netlify-v101-one-time-release-gate-ci.yml']);
+          assert.equal(paths.length,allowed.size);
+          paths.forEach(p=>assert(allowed.has(p),'Unexpected application change '+p));
+          const original=git('show',base+':netlify/functions/site-v29.mjs');
+          const actual=readFileSync('netlify/functions/site-v29.mjs','utf8');
+          const strip=actual.replace(/  \/\/ Presentation only:[\s\S]*?(?=  const runtimeV21 = runtime;)/,'');
+          assert.equal(strip,original,'Existing renderer, script graph and release identity must be exact');
+          assert.equal(readFileSync('netlify.toml','utf8'),git('show',base+':netlify.toml').replace("'574','630'].includes","'574','630','637'].includes"),'Only this PR preview may be added');
+          console.log('Desktop backup and all original application files intact; requested display removals isolated');
+          JS
+      - name: Install browser runtime
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+          npm install --no-save --ignore-scripts --no-audit --no-fund --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium webkit
+      - name: Actual renderer and touch-device browser checks
+        run: |
+          node --check fleeced-view-mode-v631.js
+          node --check netlify/functions/site-v29.mjs
+          node scripts/mobile-presentation-browser-v631.mjs
+          node scripts/mobile-density-browser-v645.mjs
+          node scripts/mobile-pairs-browser-v646.mjs
+          node scripts/mobile-home-browser-v650.mjs

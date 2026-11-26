@@ -12,6 +12,11 @@ export default async function inquirerPublishScheduled(req,netlifyContext){
  const skip=reason=>{console.info('inquirer-schedule-not-queued',{reason});return new Response(JSON.stringify({queued:false,reason}),{
   headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}
  });};
+ // The approved current site publishes through GitHub Actions, not this
+ // legacy HTTP scheduler. A public request must never bootstrap an internal
+ // queue credential or start an expensive historical cutover.
+ const hostedSite=netlifyContext?.site?.id||globalThis.Netlify?.env?.get?.('SITE_ID')||(process.env.NETLIFY==='true'?process.env.SITE_ID:'');
+ if(hostedSite==='a516be3b-6c65-4f54-a9fb-23c5361bf3d2')return skip('GitHub Actions owns Inquirer publication');
  // No newly created site can publish until historical state is restored and
  // an explicit, site-scoped cutover flag is enabled. Previews never publish.
  const site=process.env.SITE_NAME||globalThis.Netlify?.env?.get?.('SITE_NAME')||'';

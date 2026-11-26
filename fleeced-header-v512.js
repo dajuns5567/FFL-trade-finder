@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-let installed=false,currentTab='',entryFromTab='',backNavigating=false,tabHistory=[],activeMenuButton=null;
+let installed=false,currentTab='',entryFromTab='',backNavigating=false,tabHistory=[],activeMenuButton=null,navigationGeneration=0;
 const $=s=>document.querySelector(s);
 const activeTab=()=>$('.tabs button.active[data-tab]')?.dataset.tab||[...document.querySelectorAll('.tab')].find(x=>!x.hidden)?.id||'';
 const visible=el=>!!(el&&el.isConnected&&el.getClientRects().length);
@@ -84,10 +84,11 @@ function markSameTabNavigation(e){
 }
 function tabButton(id){return document.querySelector('.tabs button[data-tab="'+CSS.escape(String(id))+'"]')}
 function tabSection(id){return document.getElementById(String(id))}
-function waitForActiveTab(id,fn,tries=48,delay=60){
+function waitForActiveTab(id,fn,tries=48,delay=60,generation=navigationGeneration){
+ if(generation!==navigationGeneration)return;
  const sec=tabSection(id),btn=tabButton(id);
- if(sec&&btn&&!sec.hidden&&btn.classList.contains('active')){requestAnimationFrame(()=>fn(sec,btn));return}
- if(tries>0)setTimeout(()=>waitForActiveTab(id,fn,tries-1,delay),delay)
+ if(sec&&btn&&!sec.hidden&&btn.classList.contains('active')){requestAnimationFrame(()=>{if(generation===navigationGeneration&&activeTab()===id)fn(sec,btn)});return}
+ if(tries>0)setTimeout(()=>waitForActiveTab(id,fn,tries-1,delay,generation),delay)
 }
 function navigateTab(id,fn){
  const b=tabButton(id);if(!b)return false;
@@ -112,6 +113,7 @@ function internalBack(){
  return false
 }
 function goBack(){
+ navigationGeneration++;
  closeMenu();
  if(!entryFromTab&&internalBack())return;
  while(tabHistory.length){
@@ -120,10 +122,11 @@ function goBack(){
  if(internalBack())return;
  const now=currentTab||activeTab();if(now!=='home')clickTab('home')
 }
-function waitFor(selector,fn,tries=42,delay=90){
+function waitFor(selector,fn,tries=42,delay=90,generation=navigationGeneration,expectedTab=activeTab()){
+ if(generation!==navigationGeneration||activeTab()!==expectedTab)return;
  const el=document.querySelector(selector);
  if(el){fn(el);return}
- if(tries>0)setTimeout(()=>waitFor(selector,fn,tries-1,delay),delay)
+ if(tries>0)setTimeout(()=>waitFor(selector,fn,tries-1,delay,generation,expectedTab),delay)
 }
 function scrollToEl(el,behavior='smooth'){
  if(!el)return;
@@ -180,34 +183,22 @@ function openLeagueView(view){
 function openFleecedDaily(){
  navigateTab('leagueHub',()=>{
  waitFor('#leagueHub [data-lh-view="daily"]',daily=>{
-  daily.click();
-  setTimeout(()=>{
-   const back=$('#leagueHub [data-lh-inquirer-back]');
-   if(visible(back)){back.click();setTimeout(()=>scrollToEl($('#leagueHub')),60)}
-   else scrollToEl($('#leagueHub'))
-  },120)
+  if(activeTab()!=='leagueHub')return;
+  daily.click();scrollToEl($('#leagueHub'))
  })
  })
 }
 function openInquirer(){
  navigateTab('leagueHub',()=>{
  waitFor('#leagueHub [data-lh-view="daily"]',daily=>{
-  daily.click();
-  const open=()=>{
-   const back=$('#leagueHub [data-lh-inquirer-back]');
-   if(visible(back)){const report=$('#leagueHub .lh-report');scrollToEl(report||$('#leagueHub'));return}
-   const toggle=$('#leagueHub [data-lh-broadcast-toggle]');
-   if(visible(toggle)){toggle.click();return}
-   const archive=[...document.querySelectorAll('#leagueHub [data-lh-archive-season]')].find(x=>/open full inquirer/i.test(x.textContent||''));
-   if(archive){archive.click();return}
-   setTimeout(open,100)
-  };
-  setTimeout(open,100)
+  if(activeTab()!=='leagueHub')return;
+  daily.dispatchEvent(new CustomEvent('fll:open-inquirer',{bubbles:true}))
  })
  })
 }
 function runMenuAction(action){
  if(!action)return;
+ navigationGeneration++;
  if(action==='trade-all'){openAllTrades();return}
  if(action.startsWith('rank:')){
   const parts=action.split(':');openRank(parts[1]||'ALL',parts[2]||'');return
@@ -273,6 +264,7 @@ function wireMenus(){
    // onclick or any later delegated tab-navigation handlers. Programmatic
    // .click() from menu actions and cross-section links must still navigate.
    if(!e.isTrusted)return;
+   navigationGeneration++;
    e.preventDefault();
    e.stopImmediatePropagation();
    if(activeMenuButton===button)closeMenu();

@@ -22,18 +22,22 @@ function markEvaluatorWinner(){
   for(const host of [document.getElementById('finderResults'),document.getElementById('evalResults')]){
     if(!host)continue;
     for(const card of host.querySelectorAll('.trade95-card')){
-      card.querySelectorAll('.trade95-side').forEach(s=>s.classList.remove('fleeced-eval-winner'));
+      card.querySelectorAll('.trade95-side.fleeced-eval-winner').forEach(s=>s.classList.remove('fleeced-eval-winner'));
     }
   }
 }
-function playerIdFromName(name){
-  const target=String(name||'').trim().toLowerCase();
-  if(!target||/^20\d{2}\s+r\d$/i.test(target))return'';
+function playerNameIndex(){
+  const index=new Map();
   for(const [id,p] of Object.entries(window.state?.players||{})){
     const full=String(p?.full_name||[p?.first_name,p?.last_name].filter(Boolean).join(' ')||'').trim().toLowerCase();
-    if(full&&full===target)return String(id);
+    if(full&&!index.has(full))index.set(full,String(id));
   }
-  return'';
+  return index;
+}
+function playerIdFromName(name,index){
+  const target=String(name||'').trim().toLowerCase();
+  if(!target||/^20\d{2}\s+r\d$/i.test(target))return'';
+  return index.get(target)||'';
 }
 function playerIdFromControl(el){
   const box=el?.matches?.('input[type="checkbox"]')?el:el?.querySelector?.('input[type="checkbox"]');
@@ -66,9 +70,12 @@ function decorateChecklists(){
   }
 }
 function decoratePresentedPlayers(){
-  for(const asset of document.querySelectorAll('#finderResults .trade95-asset,#evalResults .trade95-asset')){
+  const assets=document.querySelectorAll('#finderResults .trade95-asset,#evalResults .trade95-asset');
+  if(!assets.length)return;
+  const index=playerNameIndex();
+  for(const asset of assets){
     const name=asset.querySelector('b');if(!name)continue;
-    const id=playerIdFromName(name.textContent);if(!id)continue;
+    const id=playerIdFromName(name.textContent,index);if(!id)continue;
     name.classList.add('fleeced-presented-player');
     name.dataset.fleecedHistory=id;
     name.setAttribute('role','button');
@@ -166,13 +173,37 @@ function brandSelectAll(){
     if(/^select all$/i.test((b.textContent||'').trim()))b.classList.add('fleeced-select-all');
   }
 }
+let presentationObserver=null,decorationQueued=false,decorating=false;
+function observeTradePresentation(){
+  // Finder and Evaluator are permanent sections in the original application.
+  // Header moves, market updates and other sections cannot trigger a trade scan.
+  for(const id of ['finder','evaluator']){
+    const host=document.getElementById(id);
+    if(host)presentationObserver?.observe(host,{childList:true,subtree:true});
+  }
+}
+function scheduleTradeDecoration(){
+  if(decorationQueued)return;
+  decorationQueued=true;
+  queueMicrotask(()=>{decorationQueued=false;decorate()});
+}
 function decorate(){
-  arrangeFinderFields();
-  brandSelectAll();
-  decorateChecklists();
-  decoratePresentedPlayers();
-  decorateScores();
-  markEvaluatorWinner();
+  if(decorating)return;
+  decorating=true;
+  // This pass scans the complete current trade presentation. Its own
+  // generated history links and card decoration must not reschedule itself.
+  presentationObserver?.disconnect();
+  try{
+    arrangeFinderFields();
+    brandSelectAll();
+    decorateChecklists();
+    decoratePresentedPlayers();
+    decorateScores();
+    markEvaluatorWinner();
+  }finally{
+    decorating=false;
+    observeTradePresentation();
+  }
 }
 function clickHandler(e){
   const h=e.target.closest?.('[data-fleeced-history]');
@@ -187,8 +218,7 @@ function keyHandler(e){
 function install(){
   document.addEventListener('click',clickHandler,true);
   document.addEventListener('keydown',keyHandler,true);
-  const observer=new MutationObserver(()=>queueMicrotask(decorate));
-  observer.observe(document.documentElement,{childList:true,subtree:true});
+  presentationObserver=new MutationObserver(scheduleTradeDecoration);
   decorate();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();

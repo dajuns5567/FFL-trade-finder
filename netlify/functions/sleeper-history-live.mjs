@@ -14,8 +14,12 @@ async function weekFinality(season,week){
 }
 
 export default async function handler(req){
+  if(req&&req.method!=='GET')return new Response(JSON.stringify({error:'Method not allowed'}),{status:405,headers:{'content-type':'application/json','cache-control':'no-store'}});
+
   try{
-    const u=new URL(req.url),start=String(u.searchParams.get('leagueId')||DEFAULT_LEAGUE_ID),league=await getJson(`${API}/league/${start}`),currentSeason=Number(league?.season);
+    const u=new URL(req.url),start=String(u.searchParams.get('leagueId')||DEFAULT_LEAGUE_ID);
+    if(!/^\d{1,24}$/.test(start))return new Response(JSON.stringify({error:'Invalid league ID'}),{status:400,headers:{'content-type':'application/json','cache-control':'no-store'}});
+    const league=await getJson(`${API}/league/${start}`),currentSeason=Number(league?.season);
     if(!currentSeason)throw new Error('No Sleeper league season found');
 
     // Finalized games may be present during a partial NFL week, but valuation advances only after the whole week is final.
@@ -45,3 +49,5 @@ export default async function handler(req){
     return new Response(JSON.stringify({ok:true,generatedAt:new Date().toISOString(),currentLeagueId:start,currentSeason,currentLeagueStatus:league?.status||null,completedWeek,weekFinalityByWeek,fullWeekValuationGate:true,weightPlan:plan,requiredYears,availableYears,qualifyingHistoricalSeasonMinimumGames:8,pprScoringWeights:PPR_WEIGHTS,pprDiagnostics,seasonFetchSource,seasonErrors,complete:availableYears.length===requiredYears.length,partial:availableYears.length<requiredYears.length,aggregatedBySeason,rosterMutation:false,notes:['This endpoint does not fetch or modify live rosters.','Finalized current-week stats are withheld from valuation until every non-ignored NFL game slot in that week is final.','Delayed, postponed, suspended, and canceled slots are null/non-blocking; a later final for the same event fills that stable slot.','Production seasons are fetched directly by year and are independent of previous_league_id.','Season aggregate endpoints are tried with and without season_type=regular; complete weekly aggregation is the fallback.','Each weighted season is resolved independently so one unavailable season cannot erase usable history from other years.','Missing seasons remain missing evidence; the valuation layer retains its short-history confidence controls rather than inventing points.','Native Sleeper pts_ppr is preserved when supplied; otherwise standard PPR is reconstructed from Sleeper raw offensive stats.']}),{status:200,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
   }catch(e){return new Response(JSON.stringify({ok:false,error:String(e?.message||e)}),{status:500,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}})}
 }
+
+export const config={rateLimit:{action:'rate_limit',aggregateBy:'domain',windowSize:60,windowLimit:60}};

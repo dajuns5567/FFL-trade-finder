@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
+import {readFileSync} from 'node:fs';
+const base='ebdd98fe874f83a0d41cfa4fb4a6fef02a57488f',main='a1f3d19fe3524f97da9c51c2827607d74de4b38c';
+const git=(...args)=>execFileSync('git',args,{encoding:'utf8'});
+assert.equal(process.env.GITHUB_HEAD_REF,'perf/finder-target-coverage-20261125');
+assert.equal(git('rev-parse','origin/main').trim(),main);
+assert.equal(git('ls-remote','origin','refs/heads/archive/desktop-release-630-20261125').trim().split(/\s+/)[0],main);
+execFileSync('git',['merge-base','--is-ancestor',base,'HEAD']);
+assert.deepEqual(git('diff','--name-only',base,'HEAD').trim().split('\n').filter(Boolean).sort(),[".github/workflows/finder-live-browser-audit.yml",".github/workflows/mobile-presentation-v631.yml","netlify.toml","netlify/functions/site-v29.mjs","scripts/audit-finder-preview-scope.mjs","scripts/compile-v256-runtimes.cjs","scripts/finder-live-browser-audit.mjs","scripts/finder-live-browser-runner.mjs","scripts/finder-scheduling-parity.mjs","scripts/mobile-home-browser-v650.mjs","scripts/v311-pipeline-identity-v319-smoke.cjs","tests/finder-assembled-site-loader.test.mjs","tests/finder-natural-filter-matrix.test.mjs","tests/finder-scoped-performance-parity.test.mjs","tests/targeted-max-value-search-stall.test.mjs","trade-finder-v256-compiled.js","trade-specific-max-tier-add-v300.js","trade-specific-max-value-v279.js"]);
+const prior=path=>git('show',base+':'+path);
+const expected=prior('netlify/functions/site-v29.mjs').replace('trade-finder-v256-compiled.js?v=449','trade-finder-v256-compiled.js?v=450').replace('trade-specific-max-tier-add-v300.js?v=301','trade-specific-max-tier-add-v300.js?v=303').replace('trade-specific-max-value-v279.js?v=443','trade-specific-max-value-v279.js?v=445');
+assert.equal(readFileSync('netlify/functions/site-v29.mjs','utf8'),expected,'Only shared Finder cache versions may differ from Preview 650');
+const netlify=prior('netlify.toml').replace("'649','650'].includes","'649','650','651','653'].includes");
+assert.equal(readFileSync('netlify.toml','utf8'),netlify,'Existing production gate must remain exact');
+assert.equal(readFileSync('scripts/mobile-home-browser-v650.mjs','utf8'),prior('scripts/mobile-home-browser-v650.mjs').replace(".innerText(),'Heat Map'",".textContent(),'Heat Map'"),'Only the mobile test label case assertion may change');
+console.log('Preview 650 presentation and unrelated application bytes preserved; only explicitly listed Finder scope changed');

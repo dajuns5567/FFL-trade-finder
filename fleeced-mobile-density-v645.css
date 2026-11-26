@@ -1,0 +1,115 @@
+/* V645: compact, readable native mobile layouts; no desktop or data changes.
+   Use space efficiently without viewport zoom, hidden data, or smaller form text. */
+@media (max-width:1024px){
+html[data-fleeced-view="mobile"] main{padding-top:5px!important;padding-inline:max(6px,env(safe-area-inset-left)) max(6px,env(safe-area-inset-right))!important;font-size:13px;line-height:1.35}
+html[data-fleeced-view="mobile"] header.fleeced-site-header{padding-top:max(3px,env(safe-area-inset-top))!important;padding-bottom:2px!important}
+html[data-fleeced-view="mobile"] header h1.fleeced106.fleecedImage106{width:112px!important;height:40px!important;margin:0!important}
+html[data-fleeced-view="mobile"] header .fleeced-header-tabs{margin-top:1px!important;padding:1px 0 2px!important;gap:4px!important}
+html[data-fleeced-view="mobile"] header .fleeced-header-tabs button{padding:5px 9px!important;font-size:11px!important}
+html[data-fleeced-view="mobile"] main .card{padding:7px!important;margin-bottom:6px!important;border-radius:9px!important}
+html[data-fleeced-view="mobile"] main .card h2,html[data-fleeced-view="mobile"] main #home .fleeced-home-head h2,html[data-fleeced-view="mobile"] main #rankings h2{font-size:20px!important;line-height:1.15!important;margin:0 0 6px!important}
+html[data-fleeced-view="mobile"] main h3{line-height:1.2;margin:5px 0}
+html[data-fleeced-view="mobile"] main :is(.grid,.grid3){gap:6px!important}
+html[data-fleeced-view="mobile"] main :is(.asset,.notice,.empty){padding:6px!important;margin-block:3px}
+html[data-fleeced-view="mobile"] main :is(select,input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]),textarea){font-size:16px!important;min-height:44px!important;padding-block:6px!important}
+html[data-fleeced-view="mobile"] main label{margin-bottom:3px}
+html[data-fleeced-view="mobile"] main button:not(.lh-inline-player):not(.lh-inline-team):not(.lh-inline-trade-options){min-height:44px}
+html[data-fleeced-view="mobile"] main :is(.lh-inline-player,.lh-inline-team,.lh-inline-trade-options){min-height:0}
+html[data-fleeced-view="mobile"] main :is(#finder,#evaluator) .card h3{font-size:14px!important;margin:4px 0!important}
+html[data-fleeced-view="mobile"] #finder .fleeced-search-label{margin-top:5px!important}
+html[data-fleeced-view="mobile"] #finder .trade98-prefcol{padding:6px!important}
+html[data-fleeced-view="mobile"] #finder .trade98-prefcol>label{margin-top:4px!important}
+html[data-fleeced-view="mobile"] #finder :is(.trade97-controls,.trade97-assist){margin-block:4px!important;padding-block:4px!important}
+html[data-fleeced-view="mobile"] :is(#findShop,#evalChooserA,#evalChooserB) .checklist{gap:3px!important;padding:3px!important;max-height:clamp(180px,33dvh,310px)!important}
+html[data-fleeced-view="mobile"] #finder .trade98-finder-grid #findShop label.checkrow,html[data-fleeced-view="mobile"] :is(#findShop,#evalChooserA,#evalChooserB) label.checkrow{min-height:44px!important;padding:4px 7px!important;gap:7px!important;border-radius:7px!important}
+html[data-fleeced-view="mobile"] :is(#findShop,#evalChooserA,#evalChooserB) label.checkrow>span{line-height:1.25!important;font-size:13px!important}
+html[data-fleeced-view="mobile"] :is(#finderResults,#evalResults) .trade95-card{padding:7px!important;margin:7px 0!important;border-radius:9px!important}
+html[data-fleeced-view="mobile"] :is(#finderResults,#evalResults) .trade95-head{padding-bottom:4px!important}
+html[data-fleeced-view="mobile"] :is(#finderResults,#evalResults) .fleeced-result-matchup{padding-bottom:3px!important;margin:0 0 5px!important;font-size:13px!important}
+html[data-fleeced-view="mobile"] :is(#finderResults,#evalResults) .fleeced-hindsight-board{grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-template-areas:"left right" "vs vs"!important;gap:4px!important}
+html[data-fleeced-view="mobile"] :is(#finderResults,#evalResults) .fleeced-result-team{padding:5px!important;overflow-wrap:anywhere}
+html[data-fleeced-view="mobile"] :is(#finderResults,#evalResults) .fleeced-result-team strong{font-size:19px!important;margin:3px 0!important}
+html[data-fleeced-view="mobile"] :is(#finderResults,#evalResults) .fleeced-result-vs{padding:4px!important}
+html[data-fleeced-view="mobile"] :is(#finderResults,#evalResults) .fleeced-result-vs strong{font-size:15px!important;margin-top:2px!important}
+html[data-fleeced-view="mobile"] :is(#finderResults,#evalResults) .trade95-grid{gap:5px!important;margin-top:6px!important}
+html[data-fleeced-view="mobile"] :is(#finderResults,#evalResults) .trade95-side{padding:6px!important;min-width:0!important;border-radius:8px!important}
+html[data-fleeced-view="mobile"] :is(#finderResults,#evalResults) .trade95-asset{padding:5px 0!important;gap:5px!important;min-width:0}
+html[data-fleeced-view="mobile"] :is(#finderResults,#evalResults) .trade95-asset>*{min-width:0;overflow-wrap:anywhere}
+html[data-fleeced-view="mobile"] :is(#finderResults,#evalResults) .trade95-sub{font-size:11px!important;margin-top:1px!important;line-height:1.3!important}
+html[data-fleeced-view="mobile"] :is(#finderResults,#evalResults) .trade95-total,html[data-fleeced-view="mobile"] :is(#finderResults,#evalResults) :is(.trade97-adjust,.trade97-effective){margin-top:4px!important;padding-block:4px!important;gap:4px!important}
+html[data-fleeced-view="mobile"] :is(#finderResults,#evalResults) .trade95-card .rationaleBody{padding:6px 8px!important;margin-top:5px!important}
+html[data-fleeced-view="mobile"] #rankings :is(#playerValueFilter,#playerPositionFilter){gap:4px!important;margin-bottom:5px!important}
+html[data-fleeced-view="mobile"] #rankings :is(#playerValueFilter,#playerPositionFilter) button{padding:5px 8px!important;min-height:44px!important;font-size:12px!important}
+html[data-fleeced-view="mobile"] #rankings .asset.valueRow19{padding:3px 0!important;margin:0!important}
+html[data-fleeced-view="mobile"] #rankings .valueRow19>div{min-width:0;width:100%}
+html[data-fleeced-view="mobile"] #rankings .pv-history-name{display:flex!important;flex-wrap:wrap;gap:4px!important;font-size:13px!important}
+html[data-fleeced-view="mobile"] #rankings .pv-history-meta,html[data-fleeced-view="mobile"] #rankings .valueRow19 small{font-size:11px!important;line-height:1.25!important;overflow-wrap:anywhere}
+html[data-fleeced-view="mobile"] #rankings .pv-history-link{min-height:44px!important}
+html[data-fleeced-view="mobile"] #home .fleeced-home-status{gap:4px!important;margin-bottom:6px!important}
+html[data-fleeced-view="mobile"] #home #homeNavigation{gap:5px!important}
+html[data-fleeced-view="mobile"] #home #homeNavigation>.fleeced-home-card:not(.fleeced-home-expandable){padding:6px!important;min-height:58px!important}
+html[data-fleeced-view="mobile"] #home #homeNavigation .fleeced-home-card-main{padding:6px!important}
+html[data-fleeced-view="mobile"] #home #homeNavigation .fleeced-home-card-toggle{width:44px!important;height:44px!important;margin:0!important}
+html[data-fleeced-view="mobile"] #home #homeNavigation .fleeced-home-card small{margin-top:3px!important}
+html[data-fleeced-view="mobile"] #home #homeTopPlayers,html[data-fleeced-view="mobile"] #home #homeValueRisers{padding:0 6px 5px!important}
+html[data-fleeced-view="mobile"] #home :is(#homeTopPlayers,#homeValueRisers) .fleeced-home-two-col{gap:0 6px!important}
+html[data-fleeced-view="mobile"] #home :is(#homeTopPlayers,#homeValueRisers) .fleeced-home-two-col>div+div{padding-left:4px!important}
+html[data-fleeced-view="mobile"] #home :is(#homeTopPlayers,#homeValueRisers) .fleeced-home-data-row{grid-template-columns:16px minmax(0,1fr)!important;gap:3px!important;padding:2px 0!important;min-height:44px!important}
+html[data-fleeced-view="mobile"] #home #homeTopPlayers .fleeced-home-player-row::after{content:none!important}
+html[data-fleeced-view="mobile"] #home #homeValueRisers .fleeced-home-up{grid-column:2;width:auto!important;text-align:left!important}
+html[data-fleeced-view="mobile"] #home .fleeced-home-player-link{min-height:44px!important}
+html[data-fleeced-view="mobile"] #valueHistory :is(.vh-shell,#vhContent,.vh-market-section,#vhMarketIntelligence,.vh-grid,.vh-grid-2,.vh-intel-grid,.vh-rank-grid){gap:6px!important}
+html[data-fleeced-view="mobile"] :is(#valueHistory,#tradeHistory) :is(.vh-card,.vh-filter-card,.vh-chart-card,.vh-breakdown-side,.vh-trade-side,.vh-trade-card){padding:7px!important;border-radius:9px!important;min-width:0}
+html[data-fleeced-view="mobile"] #valueHistory :is(.vh-card h3,.vh-section-heading,.vh-market-section-title h3,.vh-intel-title){font-size:14px!important;line-height:1.2!important;margin-bottom:3px!important}
+html[data-fleeced-view="mobile"] #valueHistory :is(.vh-sub,.vh-card-head,.vh-control-row){margin-bottom:4px!important;gap:4px!important}
+html[data-fleeced-view="mobile"] #valueHistory :is(.vh-mover-card .vh-card-head,.vh-intel-grid>.vh-card>.vh-sub){min-height:0!important}
+html[data-fleeced-view="mobile"] #valueHistory :is(.vh-index-grid,.vh-category-grid,.vh-metrics,.vh-team-neighbor-list){gap:4px!important}
+html[data-fleeced-view="mobile"] #valueHistory :is(.vh-metric,.vh-index-card,.vh-category-card,.vh-team-neighbor){padding:5px!important;min-height:0!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-metric{grid-template-rows:auto auto auto!important;gap:1px!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-metric>small{min-height:0!important;line-height:1.2!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-metric b{line-height:1.15!important;font-size:16px!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-index-card b{font-size:18px!important;margin-top:3px!important}
+html[data-fleeced-view="mobile"] #valueHistory :is(.vh-profile-primary,.vh-profile-fact,.vh-current){padding:5px!important;grid-template-rows:auto auto auto!important;gap:2px}
+html[data-fleeced-view="mobile"] #valueHistory :is(.vh-intel-periodbar,.vh-volatility-pools,.vh-refresh-callout){padding:6px!important;gap:5px!important;margin-block:4px!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-intel-list{grid-auto-rows:minmax(44px,auto)!important;margin-top:3px!important}
+html[data-fleeced-view="mobile"] #valueHistory :is(.vh-intel-row,.vh-mover,.vh-volatility-stat){min-height:44px!important;padding:3px 0!important;gap:4px!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-table :is(th,td){padding:4px 5px!important;font-size:12px!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-table .vh-player-link{min-height:44px!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-heat-grid{gap:3px!important;margin-top:4px!important}
+html[data-fleeced-view="mobile"] #valueHistory button.vh-heat-cell{min-height:48px!important;padding:5px!important}
+html[data-fleeced-view="mobile"] :is(#tradeHistory,#valueHistory) :is(.vh-trade-list,.vh-trade-sides,.vh-breakdown-sides,.vh-trade-toggle-row){gap:5px!important}
+html[data-fleeced-view="mobile"] :is(#tradeHistory,#valueHistory) .vh-trade-head{margin:0 0 4px!important;padding:4px!important;gap:5px!important}
+html[data-fleeced-view="mobile"] :is(#tradeHistory,#valueHistory) :is(.vh-trade-assets,.vh-history-section,.vh-hindsight,.vh-team-trade-events){margin-block:5px!important;padding-block:5px!important}
+html[data-fleeced-view="mobile"] :is(#tradeHistory,#valueHistory) .vh-trade-asset{padding:4px 0!important;font-size:13px!important}
+html[data-fleeced-view="mobile"] #leagueHub .lh-head h2{font-size:19px!important;line-height:1.15!important}
+html[data-fleeced-view="mobile"] #leagueHub .lh-card{padding:6px!important;border-radius:9px!important}
+html[data-fleeced-view="mobile"] #leagueHub .lh-card h3{font-size:14px!important;margin-bottom:3px!important}
+html[data-fleeced-view="mobile"] #leagueHub .lh-nav{gap:3px!important;margin-bottom:5px!important;padding:3px!important}
+html[data-fleeced-view="mobile"] #leagueHub .lh-grid{gap:5px!important}
+html[data-fleeced-view="mobile"] #leagueHub :is(.lh-stat,.lh-story){padding-block:4px!important;gap:4px!important;margin-block:2px!important}
+html[data-fleeced-view="mobile"] #leagueHub :is(.lh-sub,.lh-article-picker){margin-block:3px!important;gap:4px!important}
+html[data-fleeced-view="mobile"] #leagueHub .lh-article-picker{padding-bottom:5px!important}
+html[data-fleeced-view="mobile"] #leagueHub .lh-archive-filters{gap:4px!important;margin-block:5px!important}
+html[data-fleeced-view="mobile"] #leagueHub :is(.lh-reporter-desks,.lh-manager-grid,.lh-spot-grid){gap:4px!important;margin-top:4px!important}
+html[data-fleeced-view="mobile"] #leagueHub :is(.lh-manager,.lh-reporter-desk,.lh-spot-card){padding:5px!important;min-width:0;overflow-wrap:anywhere}
+html[data-fleeced-view="mobile"] #leagueHub :is(.lh-overview-section,.lh-team-story-section,.lh-fan-sentiment){margin-block:12px!important;padding-block:5px!important}
+html[data-fleeced-view="mobile"] #leagueHub :is(.lh-overview-section,.lh-team-story-section) p{font-size:14px!important;line-height:1.55!important;margin-bottom:9px!important}
+html[data-fleeced-view="mobile"] :is(#league,#settings) p{margin-block:6px;line-height:1.4}
+html[data-fleeced-view="mobile"] main table :is(th,td){padding:4px 5px!important;font-size:12px!important}
+}
+@media (min-width:375px) and (max-width:760px){
+html[data-fleeced-view="mobile"] #home #homeNavigation>.fleeced-home-half{grid-column:span 1!important}
+html[data-fleeced-view="mobile"] #valueHistory :is(.vh-metrics,.vh-index-grid){grid-template-columns:repeat(3,minmax(0,1fr))!important}
+html[data-fleeced-view="mobile"] #leagueHub .lh-archive-filters{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+html[data-fleeced-view="mobile"] #leagueHub .lh-archive-filters>:last-child{grid-column:1/-1}
+html[data-fleeced-view="mobile"] #leagueHub .lh-nav{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+html[data-fleeced-view="mobile"] #leagueHub .lh-nav button{font-size:11px!important;padding:3px!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-subnav{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto;overscroll-behavior-x:contain}
+html[data-fleeced-view="mobile"] #valueHistory .vh-subnav button{flex:0 0 auto;width:auto!important;white-space:nowrap!important;padding:5px 8px!important}
+}
+@media (min-width:390px) and (max-width:760px){
+html[data-fleeced-view="mobile"] :is(#finderResults,#evalResults) .trade95-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+html[data-fleeced-view="mobile"] :is(#finderResults,#evalResults) .trade95-asset{flex-wrap:wrap}
+html[data-fleeced-view="mobile"] :is(#finderResults,#evalResults) .trade95-total,html[data-fleeced-view="mobile"] :is(#finderResults,#evalResults) :is(.trade97-adjust,.trade97-effective){font-size:10px!important}
+html[data-fleeced-view="mobile"] :is(#finderResults,#evalResults) .trade95-total b{font-size:14px!important}
+}

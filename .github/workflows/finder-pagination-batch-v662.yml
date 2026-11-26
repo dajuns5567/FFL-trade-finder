@@ -2,6 +2,14 @@ name: Finder Load More read batch parity and performance
 on:
   push:
     branches: ['perf/finder-load-more-20261126']
+  pull_request:
+    branches: ['fix/iphone-finder-scroll-20261126']
+    paths:
+      - 'finder-pagination-read-batch-v662.js'
+      - 'trade-recommended-pick-ownership-v662.js'
+      - 'scripts/finder-pagination-browser-v662.mjs'
+      - 'tests/finder-pagination-read-batch-v662.test.mjs'
+      - '.github/workflows/finder-pagination-batch-v662.yml'
 permissions:
   contents: read
 jobs:

@@ -120,7 +120,7 @@ try{
    if(mobile&&id==='valueHistory'){
     const nav=page.locator('.vh-market-jump');await nav.locator('button').first().click();
     assert.equal(await nav.locator('[data-mobile-jump-current="1"]').count(),1);
-    await nav.locator('button').last().click();assert.equal(await nav.locator('[data-mobile-jump-current="1"]').innerText(),'Heat Map');
+    await nav.locator('button').last().click();assert.equal(await nav.locator('[data-mobile-jump-current="1"]').textContent(),'Heat Map');
     assert.equal(await nav.locator('button').first().evaluate(e=>getComputedStyle(e).backgroundColor),'rgba(0, 0, 0, 0)');
     assert(!(await page.locator('.vh-value-chart+p.tiny.muted').isVisible()),'Player chart explanation hidden');
     assert(!(await page.locator('.vh-net-note').isVisible()),'Team chart explanation hidden');

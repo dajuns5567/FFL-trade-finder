@@ -1,0 +1,20 @@
+name: Navigation read scope and exact output parity
+on:
+  pull_request:
+    paths:
+      - 'value-history-v276.js'
+      - 'league-hub-v451.js'
+      - 'tests/navigation-read-scope-v656.test.mjs'
+      - '.github/workflows/navigation-read-scope-v656.yml'
+permissions:
+  contents: read
+jobs:
+  parity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check value-history-v276.js && node --check league-hub-v451.js && node --test tests/navigation-read-scope-v656.test.mjs

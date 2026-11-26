@@ -1487,7 +1487,16 @@ async function teamNetFetch(ids,teamId){
   const data=await r.json();teamNetCache.set(key,data);return data;
 }
 let marketHistoryCacheUpdatedAtV112=0;
-async function ensureMarketCache(force=false){if(!marketCache||force){const data=await marketFetch();marketCache=data.market||{};marketHistoryCacheUpdatedAtV112=Date.now()}return marketCache}
+let marketReadPendingV656=null;
+async function ensureMarketCache(force=false){
+ if(marketCache&&!force)return marketCache;
+ if(marketReadPendingV656?.generation===marketIntelligenceGeneration)return marketReadPendingV656.promise;
+ const generation=marketIntelligenceGeneration;
+ const pending={generation,promise:null};
+ pending.promise=(async()=>{const data=await marketFetch();if(generation===marketIntelligenceGeneration){marketCache=data.market||{};marketHistoryCacheUpdatedAtV112=Date.now()}return marketCache||data.market||{}})();
+ marketReadPendingV656=pending;
+ try{return await pending.promise}finally{if(marketReadPendingV656===pending)marketReadPendingV656=null}
+}
 async function loadMarket(force=false){
   const box=document.getElementById('vhContent');if(!box)return;
   currentView='market';syncSubnav();setPrimaryPlayerSearchVisible(false);currentPlayerId=null;
@@ -2654,6 +2663,38 @@ function boot(){addShell();searchTradesOnSiteOpen();installPlayerWeeklyBadgeRefr
    updateLiveConsumersV102();
  });
  setInterval(refreshVisibleTradeHistory,TRADE_HISTORY_REFRESH_MS);setInterval(refreshVisibleMarketHistoryV112,TRADE_HISTORY_REFRESH_MS);window.addEventListener('focus',refreshVisibleTradeHistory);window.addEventListener('focus',refreshVisibleMarketHistoryV112);document.addEventListener('visibilitychange',()=>{if(!document.hidden){refreshVisibleTradeHistory();refreshVisibleMarketHistoryV112()}});scheduleSnapshot(0,snapshotSourceFromUrl());document.getElementById('updateBtn')?.addEventListener('click',()=>{invalidatePlayerHistoryNavCache();playerScoringCompleteAt.clear();invalidateLiveMarketV97();marketCache=null;marketIntelligenceGeneration++;marketInsightsCache=null;marketSignalCache=null;marketInsightsPending=null;marketSignalsPending=null;teamNetCache.clear();scheduleSnapshot(1000,'manual-update');if(currentPlayerId)setTimeout(()=>loadPlayer(currentPlayerId),1800)},{passive:true})}
+// NAVIGATION_READ_SCOPE_V656: cache only during one synchronous display operation.
+let historyReadScopeV656=false;
+function withHistoryReadScopeV656(fn){
+ if(historyReadScopeV656)return fn();
+ const original={ranked,posRanks,currentRows,livePlayerMeta,verifiedValueMove};
+ const ranks=new WeakMap(),meta=new Map(),moves=new Map();
+ let list,rows,hasList=false,hasRows=false;
+ historyReadScopeV656=true;
+ ranked=()=>{if(!hasList){list=original.ranked();hasList=true}return list};
+ posRanks=items=>{if(!ranks.has(items))ranks.set(items,original.posRanks(items));return ranks.get(items)};
+ currentRows=()=>{if(!hasRows){rows=original.currentRows();hasRows=true}return rows};
+ livePlayerMeta=id=>{const key=String(id);if(!meta.has(key))meta.set(key,original.livePlayerMeta(id));return meta.get(key)};
+ verifiedValueMove=(id,period=marketIntelPeriod)=>{const key=String(id)+'|'+period;if(!moves.has(key))moves.set(key,original.verifiedValueMove(id,period));return moves.get(key)};
+ try{return fn()}finally{
+  ({ranked,posRanks,currentRows,livePlayerMeta,verifiedValueMove}=original);
+  historyReadScopeV656=false;
+ }
+}
+function historyScopedRenderV656(fn){return function(...args){return withHistoryReadScopeV656(()=>fn.apply(this,args))}}
+renderMarketDashboard=historyScopedRenderV656(renderMarketDashboard);
+renderMarketIntelligence=historyScopedRenderV656(renderMarketIntelligence);
+renderFullMarketHistory=historyScopedRenderV656(renderFullMarketHistory);
+renderMarketTable=historyScopedRenderV656(renderMarketTable);
+renderTrackedTeamTable=historyScopedRenderV656(renderTrackedTeamTable);
+renderPlayerHistoryTeamRoster=historyScopedRenderV656(renderPlayerHistoryTeamRoster);
+renderPlayerProfile=historyScopedRenderV656(renderPlayerProfile);
+renderTradeHistory=historyScopedRenderV656(renderTradeHistory);
+openMarketIntelModal=historyScopedRenderV656(openMarketIntelModal);
+openHeatMapModal=historyScopedRenderV656(openHeatMapModal);
+openMoverModal=historyScopedRenderV656(openMoverModal);
+openTeamNetModal=historyScopedRenderV656(openTeamNetModal);
+// END_NAVIGATION_READ_SCOPE_V656
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 window.valueHistoryV331={liveMarketRowV97,liveMarketRowsV97,liveFullMarketRowsV97,invalidateLiveMarketV97,currentRows,currentPickRows,currentTeamRows,currentEvaluatorValue,hindsightValue,recordSnapshot,historyFetch,marketFetch,marketData:(force=false)=>ensureMarketCache(!!force),livePlayerMeta,periodPoints,openPlayer:(id)=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>selectPlayer(String(id)),0)},openPlayerHistory:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(renderPlayerHistoryHub,0)},openFullMarket:()=>{const btn=document.querySelector('.tabs button[data-tab="valueHistory"]');if(btn)btn.click();setTimeout(()=>loadFullMarketHistory(),0)}};
 })();

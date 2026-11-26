@@ -112,6 +112,10 @@ export function verifyLocalBadgeIntegration(){
   const successor={'league-hub-v451.js':'0ea25cd9cf3c8ae8c386b00d0597796dd63195c1','value-history-v276.js':'a593d3fcdad13d4b8e0a665b4577c0ec669c6896'};
   const matches=Object.entries(successor).every(([file,hash])=>git('hash-object',file).trim()===hash);
   if(matches)return verifyPinnedIntegration(file=>Object.hasOwn(successor,file)?INTEGRATED_RUNTIME_BLOBS[file]:git('hash-object',file).trim());
+  // Exact security-only successor. No broader provenance exemption.
+  const security={"netlify/functions/league-hub.mjs":"8e9f828ba4624b7283c6930035bab4d42956a884","league-hub-v451.js":"585e0cc9a05086290f93968449949be4f2c66b0b","netlify/functions/value-history.mjs":"88bc76bc1aa152d819e74f52787469f4019f318e","value-history-v276.js":"077acba39306220ef4c370db3998fc8b065f64aa"};
+  if(Object.entries(security).every(([file,hash])=>git('hash-object',file).trim()===hash))
+   return verifyPinnedIntegration(file=>Object.hasOwn(security,file)?INTEGRATED_RUNTIME_BLOBS[file]:git('hash-object',file).trim());
   return original;
  }
  return verifyCombinedBadgeProvenance(

@@ -54,7 +54,8 @@ test('when Value History is due, it publishes the SAME completed award capture w
   'Persist scheduled observation directly to durable Value History archive',
   'Verify 20-category Awards from this exact valuation refresh',
   'Persist matched verified All-Time Highs',
-  'Independently confirm Awards were published to GitHub'
+  'Independently confirm Awards were published to GitHub',
+  'Persist verified six-month awards and draft observations'
  ];
  const positions=labels.map(t=>flow.indexOf(t));
  assert.ok(positions.every(x=>x>=0),JSON.stringify(positions));
@@ -63,7 +64,8 @@ test('when Value History is due, it publishes the SAME completed award capture w
  const awardSteps=flow.slice(positions[2]);
  assert.match(awardSteps,/VALUE_HISTORY_SNAPSHOT_FILE: \.tmp\/value-history-scheduled\.json/);
  assert.match(awardSteps,/ALL_TIME_HIGHS_SCHEDULED_FILE: \.tmp\/all-time-highs-scheduled\.json/);
- assert.equal((awardSteps.match(/if: steps\.due\.outputs\.due == 'true'/g)||[]).length,3);
+ assert.equal((awardSteps.match(/if: steps\.due\.outputs\.due == 'true'/g)||[]).length,4);
+ assert.match(awardSteps,/node scripts\/archive-scheduled-award-records\.mjs/);
  assert.doesNotMatch(flow.split('\n').filter(line=>!/^\s*#/.test(line)).join('\n'),/netlify\s+deploy|netlify-cli|deploy-prod/i);
 });
 
@@ -75,6 +77,7 @@ test('daily independent Awards fallback remains configured but cannot write from
  assert.match(workflow,/VALUE_HISTORY_SNAPSHOT_FILE: \.tmp\/value-history-awards-only\.json/);
  assert.match(workflow,/node scripts\/verify-scheduled-all-time-highs\.mjs/);
  assert.match(workflow,/node scripts\/verify-durable-all-time-highs-readback\.mjs/);
+ assert.match(workflow,/node scripts\/archive-scheduled-award-records\.mjs/);
 });
 
 test('visible Awards rerender when canonical player values refresh without promoting provisional highs',()=>{

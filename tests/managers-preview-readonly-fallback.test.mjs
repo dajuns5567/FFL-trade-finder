@@ -44,7 +44,7 @@ test('Netlify permits explicitly reviewed PR previews, never unsanctioned produc
  assert.ok(ids.length>0&&ids.every(id=>/^\d+$/.test(id)),'all Netlify preview IDs must be explicit numeric review IDs');
  const activePR=String(process.env.GITHUB_REF||'').match(/^refs\/pull\/(\d+)\//)?.[1];
  if(activePR==='656'&&process.env.GITHUB_HEAD_REF==='perf/history-hub-navigation-20261125'){
-  assert.ok(!ids.includes(activePR),'Unverified navigation candidate must not deploy');
+  assert.ok(ids.includes(activePR),'Reviewed navigation preview must be explicitly allowlisted');
   const shallow=execFileSync('git',['rev-parse','--is-shallow-repository'],{encoding:'utf8'}).trim()==='true';
   execFileSync('git',['fetch','--no-tags',...(shallow?['--unshallow']:[]),'origin','+refs/heads/main:refs/remotes/origin/main'],{stdio:'inherit'});
   execFileSync(process.execPath,['scripts/audit-navigation-scope-v656.mjs'],{stdio:'inherit'});

@@ -8,36 +8,44 @@
  const key='fleeced.presentation.mode.v1';
  const touchDevice=Boolean((window.matchMedia?.('(pointer: coarse)').matches||navigator.maxTouchPoints>0)&&Math.min(screen.width,screen.height)<=1024);
  const narrow=window.matchMedia('(max-width: 760px)');
+ const compact=window.matchMedia('(max-width: 1024px)');
  const defaultMode=touchDevice||narrow.matches?'mobile':'desktop';
  let mode;
  try{mode=localStorage.getItem(key)}catch{}
  let explicit=mode==='mobile'||mode==='desktop';
  if(!explicit)mode=defaultMode;
- let control,footer;
+ let control,footer,queueHeaderMeasure=()=>{};
  function placeControl(){
   if(!control||!footer)return;
   const actions=document.querySelector('header .fleeced-site-header-actions');
   // Move only the new switch, never any original desktop controls.
-  const inMobileHeader=mode==='mobile'&&window.matchMedia('(max-width: 1024px)').matches&&actions;
+  const inMobileHeader=mode==='mobile'&&compact.matches&&actions;
   const target=inMobileHeader?actions:footer;
   if(control.parentElement!==target)target.appendChild(control);
  }
  function apply(next,persist=false){
   if(next!=='mobile'&&next!=='desktop')return;
   mode=next;
-  root.dataset.fleecedView=mode;
+  if(root.dataset.fleecedView!==mode)root.dataset.fleecedView=mode;
   // A wide layout viewport triggers the original desktop breakpoints on a
   // phone. Do not disable pinch zoom or alter a desktop browser's viewport.
   const content=mode==='desktop'&&touchDevice?'width=1280,viewport-fit=cover':original;
   if(viewport.content!==content)viewport.content=content;
   if(persist){explicit=true;try{localStorage.setItem(key,mode)}catch{}}
-  placeControl();
   if(control){
    const target=mode==='mobile'?'Desktop View':'Mobile View';
-   control.textContent=target;
-   control.setAttribute('aria-label','Switch to '+target+' (current: '+mode+')');
-   control.title='Current layout: '+mode;
+   // Keep a stable text node; redundant child-list mutations used to wake
+   // unrelated application observers on every presentation change.
+   if(control.textContent!==target){
+    if(control.firstChild?.nodeType===3&&control.childNodes.length===1)control.firstChild.data=target;
+    else control.textContent=target;
+   }
+   const label='Switch to '+target+' (current: '+mode+')';
+   if(control.getAttribute('aria-label')!==label)control.setAttribute('aria-label',label);
+   if(control.title!=='Current layout: '+mode)control.title='Current layout: '+mode;
   }
+  placeControl();
+  queueHeaderMeasure();
  }
  apply(mode);
  narrow.addEventListener?.('change',()=>{if(!explicit)apply(touchDevice||narrow.matches?'mobile':'desktop')});
@@ -93,13 +101,23 @@
    };
    new MutationObserver(reveal).observe(tabs,{subtree:true,attributes:true,attributeFilter:['class']});
   }
-  window.matchMedia('(max-width: 1024px)').addEventListener?.('change',placeControl);
+  compact.addEventListener?.('change',()=>{placeControl();queueHeaderMeasure()});
   // Offset existing scroll-to-section actions by the actual sticky header
   // height, including orientation changes. No viewport scaling or zoom lock.
   const header=document.querySelector('header');
   if(header&&typeof ResizeObserver==='function'){
-   const measure=()=>{if(mode==='mobile')root.style.setProperty('--fleeced-mobile-header-height',Math.ceil(header.getBoundingClientRect().height)+'px')};
-   new ResizeObserver(measure).observe(header);measure();
+   let measurementFrame=0,lastHeight='';
+   queueHeaderMeasure=()=>{
+    if(measurementFrame||mode!=='mobile'||!compact.matches)return;
+    measurementFrame=requestAnimationFrame(()=>{
+     measurementFrame=0;
+     if(mode!=='mobile'||!compact.matches)return;
+     const height=Math.ceil(header.getBoundingClientRect().height)+'px';
+     if(height!==lastHeight){lastHeight=height;root.style.setProperty('--fleeced-mobile-header-height',height)}
+    });
+   };
+   // Never write layout-affecting styles synchronously inside ResizeObserver.
+   new ResizeObserver(queueHeaderMeasure).observe(header);queueHeaderMeasure();
   }
   apply(mode);
  }

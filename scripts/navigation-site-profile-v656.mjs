@@ -67,6 +67,48 @@ export async function profileSiteNavigation(page){
   await checkShortcut('Home → player value history',async()=>{await nav('home');await page.locator('#homeTopPlayers [data-home-history]').first().click()},()=>page.locator('#valueHistory #vhSearch').waitFor({state:'visible',timeout:90000}));
   await checkShortcut('Rapid Hall → Home navigation',async()=>{await daily();await page.getByRole('button',{name:'Enter Hall of Fleeced',exact:true}).click();await nav('home');await page.waitForTimeout(1500)},()=>page.locator('#home').waitFor({state:'visible'}));
  }
+ // The previous audit resized the viewport but did not click the actual
+ // switch after canonical player values and full history had loaded.
+ const switchResults=[];
+ const flip=async(expected)=>{
+  const start=Date.now();
+  const nonce=await page.evaluate(()=>{
+   window.__viewSwitchHeartbeat={last:performance.now(),gap:0,document};
+   const h=window.__viewSwitchHeartbeat;
+   h.timer=setInterval(()=>{const n=performance.now();h.gap=Math.max(h.gap,n-h.last);h.last=n},50);
+   return performance.timeOrigin;
+  });
+  try{
+   await page.locator('#fleeced-view-switch').click({timeout:10000});
+   await page.waitForFunction(expected=>document.documentElement.dataset.fleecedView===expected,expected,{timeout:10000});
+   await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+   await page.waitForTimeout(250);
+   const result=await page.evaluate(()=>{const h=window.__viewSwitchHeartbeat;return{sameDocument:h?.document===document,timeOrigin:performance.timeOrigin,gap:Math.max(h?.gap||0,performance.now()-(h?.last||0))}});
+   assert(result.sameDocument&&result.timeOrigin===nonce,'View switch must not reload the application');
+   assert(Date.now()-start<10000&&result.gap<8000,'Unresponsive view switch: '+JSON.stringify(result));
+   return{ms:Date.now()-start,maxMainThreadGapMs:Math.round(result.gap)};
+  }finally{await page.evaluate(()=>{clearInterval(window.__viewSwitchHeartbeat?.timer);delete window.__viewSwitchHeartbeat})}
+ };
+ for(const [width,height] of [[1440,900],[900,650],[381,595]]){
+  await page.setViewportSize({width,height});
+  if(await page.evaluate(()=>document.documentElement.dataset.fleecedView)!=='desktop')await flip('desktop');
+  const selected=width===1440?['Home']:['Home','Player Values All','Market Dashboard','Full Market Value History','Trade History','Fleeced Daily','Hall of Fleeced','Managers'];
+  for(const [name,tab,label,selector] of tests.filter(t=>selected.includes(t[0]))){
+   await nav(tab,label);
+   const ready=async()=>{if(selector)await page.locator(selector).first().waitFor({state:'visible',timeout:90000});else await waitHub(name)};
+   await ready();
+   const desktop=await page.locator('#'+tab).evaluate(e=>({nodes:e.querySelectorAll('*').length,visible:!e.hidden}));
+   assert(desktop.visible&&desktop.nodes>10,'Actual section must be populated: '+name);
+   const mobileResult=await flip('mobile');await ready();
+   assert(await page.locator('#'+tab).isVisible(),'Mobile switch lost the selected section '+name);
+   const desktopResult=await flip('desktop');await ready();
+   assert(await page.locator('#'+tab).isVisible(),'Desktop switch lost the selected section '+name);
+   const result={width,name,desktopNodes:desktop.nodes,mobile:mobileResult,desktop:desktopResult};
+   switchResults.push(result);console.log('LIVE_VIEW_SWITCH_PASS '+JSON.stringify(result));
+  }
+ }
+ assert.equal(switchResults.length,17,'Every populated-view switch case must run');
+ console.log('LIVE_VIEW_SWITCH_SUMMARY '+JSON.stringify({cases:switchResults.length,clicks:switchResults.length*2,results:switchResults}));
  assert.deepEqual(errors,[],'Browser exceptions during site profiling');
  assert(records.every(r=>r.status==='PASS'),'Some section readiness checks did not complete');
  }finally{

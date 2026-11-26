@@ -8,7 +8,7 @@ const html=await(await render()).text();
 const root=process.cwd();
 // Reconstruct the exact original renderer output only by removing the two
 // explicitly verified presentation insertions; no substitute application.
-const baseline=html.replace('<script src="/fleeced-view-mode-v631.js?v=631"></script>','').replace('<link rel="stylesheet" href="/fleeced-mobile-v631.css?v=631">','');
+const baseline=html.replace('<script src="/fleeced-view-mode-v631.js?v=660"></script>','').replace('<link rel="stylesheet" href="/fleeced-mobile-v631.css?v=631">','');
 const assets=new Set(),broken=new Set();
 const server=createServer(async(req,res)=>{
  try{
@@ -27,6 +27,7 @@ const modern=(width,height,landscape=false)=>({...devices['iPhone 13'],viewport:
 const cases=[
  ['Desktop Chromium',chromium,{viewport:{width:1440,height:900}},false],
  ['Desktop WebKit',webkit,{viewport:{width:1440,height:900}},false],
+ ['Narrow desktop Chromium',chromium,{viewport:{width:900,height:650}},false],
  ['iPhone SE WebKit',webkit,devices['iPhone SE'],true],
  ['Reported 381x595 Chromium',chromium,{viewport:{width:381,height:595},screen:{width:381,height:595},hasTouch:true,isMobile:true,deviceScaleFactor:1},true],
  ['iPhone 15 class 393x852 WebKit',webkit,modern(393,852),true],

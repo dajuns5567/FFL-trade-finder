@@ -1226,7 +1226,7 @@ export default async (req,context)=>{try{const denied=rejectArchiveWrite(req,con
    return json({...await displayWeeklyAwards(previewAwards),preview_read_only:true});
   }
   if(u.searchParams.get('managers')==='1'){
-   const cached=await store().get('managers/history-cache.json',{type:'json'}).catch(()=>null);
+   const cached=await Promise.resolve().then(()=>store().get('managers/history-cache.json',{type:'json'})).catch(()=>null);
    // A complete but outdated Blob cache is still stale after a finalized week.
    // Verify the same completed-week season/cutoff used by the production reader.
    const nfl=await fetchJson(`${API}/state/nfl`).catch(()=>null);

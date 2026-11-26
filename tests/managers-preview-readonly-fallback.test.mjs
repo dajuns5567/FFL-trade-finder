@@ -140,3 +140,13 @@ test('new matchup-derived Manager records invalidate earlier stale cached standi
  assert.match(live,/cached\?\.cache_version===MANAGER_CACHE_VERSION/);
  assert.match(manager,/cache_version=MANAGER_CACHE_VERSION/);
 });
+
+test('read-only manager cache initialization failure still reaches verified reconstruction',async()=>{
+ const expression=preview.match(/const cached=(await Promise\.resolve\(\)\.then\(\(\)=>store\(\)\.get\('managers\/history-cache\.json',\{type:'json'\}\)\)\.catch\(\(\)=>null\));/);
+ assert.ok(expression,'cache initialization must catch synchronous as well as asynchronous failures');
+ const read=new Function('store','return (async()=>{return '+expression[1]+'})()');
+ assert.equal(await read(()=>{throw Error('Missing Blobs environment')}),null);
+ assert.equal(await read(()=>({get:async()=>{throw Error('storage unavailable')}})),null);
+ const verified={current:Array(32).fill({}),career:[{}]};
+ assert.equal(await read(()=>({get:async()=>verified})),verified);
+});

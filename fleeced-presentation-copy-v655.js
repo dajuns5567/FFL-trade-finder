@@ -206,17 +206,100 @@ const rules=[
     "#valueHistory th[data-vh-sort=\"posRankDelta7\"]",
     "Pos Δ 1W",
     "Pos Δ 7D"
+  ],
+  [
+    "#settings .notice",
+    "V13 data-loading change: Sleeper core data is rendered before market-source refresh. A failed consensus/news source can no longer prevent the team selector from populating.",
+    ""
+  ],
+  [
+    "#tradeHistory .vh-trade-note",
+    "Historical player value is unavailable for part of this package because the trade predates reliable stored Value History or a player is missing from that snapshot. No value was guessed.",
+    "Some player values were not recorded at the time of this trade."
+  ],
+  [
+    "#tradeHistory .vh-trade-note",
+    "N/A indicates that the historical player value is unavailable. These trades occurred before Trade History was established, so no historical player value is guessed or replaced with today's value.",
+    "N/A: historical player value unavailable."
+  ],
+  [
+    "#valueHistory .vh-sub",
+    "Negative Fleeced states and cold recent-form signals. A player can cool statistically while value still rises—the two measures are intentionally shown separately.",
+    "Cooling performance may coincide with rising value."
+  ],
+  [
+    "#valueHistory .vh-sub",
+    "Completed-week Fleeced directional state changes shown with the most specific verified reporter tags and supporting evidence available.",
+    "Changes in completed-week player signals."
+  ],
+  [
+    "#valueHistory .vh-sub",
+    "Lower-priced positional assets where positive Fleeced evidence is stronger than the current market tier. Research screen, not a fair-value claim.",
+    "Lower-priced players with improving signals."
+  ],
+  [
+    "#valueHistory .vh-sub",
+    "Higher-priced positional assets where recent Fleeced momentum is weakening. Temporary cold form alone does not establish overvaluation.",
+    "Higher-priced players with weakening signals."
+  ],
+  [
+    "#valueHistory .vh-opportunity-note",
+    "Requires positive completed-week signal/hot momentum, improving recent PPG, strong/established confidence, and outside the top 35% of positional market value. No player valuation is changed.",
+    "Strong or established positive weekly signal, rising PPG, outside the top 35% at the position."
+  ],
+  [
+    "#valueHistory .vh-opportunity-note",
+    "Requires negative completed-week signal/cold momentum, falling recent PPG, strong/established confidence, and inside the top 40% of positional market value. No player valuation is changed.",
+    "Strong or established negative weekly signal, falling PPG, inside the top 40% at the position."
+  ],
+  [
+    "#valueHistory .vh-sub",
+    "Completed-trade context is available in the dedicated Trade History tab.",
+    ""
+  ],
+  [
+    "#valueHistory .vh-sub",
+    "5 players immediately above and below by current value",
+    "Five players on either side by value."
+  ],
+  [
+    "#valueHistory .vh-sub",
+    "5 players immediately above and below in positional rank",
+    "Five players on either side by positional rank."
+  ],
+  [
+    "#valueHistory .tiny.muted",
+    "Scoring milestones use Sleeper weekly regular-season stats and this league’s scoring settings. Informational only.",
+    "Regular-season milestones use league scoring."
+  ],
+  [
+    "#leagueHub .lh-sub",
+    "Sleeper league data, canonical Trade History, canonical Value History, verified NFL schedule and Sleeper player/injury metadata. Draft-position discussion is standings-based unless the league provides a verified draft-order rule.",
+    "Sources: Sleeper, Trade History, Value History and NFL schedules. Draft projections use standings unless a verified order is available."
+  ],
+  [
+    "#leagueHub .lh-sub",
+    "Archived badges are locked to their completed week; provisional finalized-score Hot Seat results are labeled until the weekly award archive catches up.",
+    "Weekly badges are archived; provisional Hot Seat results are labeled."
+  ],
+  [
+    "#leagueHub .lh-sub",
+    "Sleeper managers found in prior league seasons who are no longer active. Historical ownership is matched by Sleeper user ID across seasons, and playoff scoring only counts winners-bracket participants.",
+    "Former league managers. Playoff scoring counts winners-bracket games only."
   ]
 ];
 const normalize=s=>String(s||'').replace(/\s+/g,' ').trim();
-const selectors=[...new Set(rules.map(r=>r[0]))].join(',');
+const patterns=[["#league #leagueInfo p.tiny.muted","^Sleeper league ID (\\d+)\\. Future pick ownership is derived from Sleeper's roster IDs and league draft rounds, with explicit traded-pick ownership overrides from Sleeper's traded_picks endpoint\\.$","Sleeper league ID $1 · Pick ownership from Sleeper."],["#valueHistory .vh-sub","^(\\d+) current players • (?:exact same columns and Market Value History data used in Track My Team|same columns and data as Full Market History)$","$1 current players"],["#valueHistory #vhTrackedTeam .vh-mover-card .vh-sub","^Largest (?:value gains|value declines|overall-rank improvements|overall-rank declines|improvements within each player's position|declines within each player's position) on .+$",""],["#valueHistory .vh-net-note","^Simple addition of the selected team's (\\d+) current player values\\. No scarcity, fit, package, Trade Finder, Trade Evaluator, or other adjustments are applied\\.$","Sum of $1 player values, excluding picks and trade adjustments."],["#valueHistory .vh-sub","^Current neighbors around (.+); informational only\\.$",""],["#valueHistory .vh-sub","^Players reaching verified new tracked-history value (highs|lows) at any time during (.+); earlier records may predate the window\\.$","New value $1 during $2."],["#valueHistory .vh-sub","^Largest verified high-to-low value ranges for (.+) inside (.+)\\. Segment is based on current overall Fleeced rank\\.$","Value ranges for $1 during $2."],["#leagueHub .lh-sub","^(\\d{4} Week \\d+) • Finalized Sleeper fantasy matchups • Independent of Inquirer publication$","$1 • Finalized matchups"],["#leagueHub .lh-sub","^(.+) • every trade below opens that exact deal in Trade History$","$1"]] .map(([selector,pattern,replacement])=>[selector,new RegExp(pattern),replacement]);
+const selectors=[...new Set([...rules,...patterns].map(r=>r[0]))].join(',');
 const marker='data-ffl-copy-hidden';
 function clean(el){
  if(el.children.length)return;
  const original=normalize(el.textContent);
- const rule=rules.find(r=>original===r[1]&&el.matches(r[0]));
- if(rule){
-  if(rule[2]){el.removeAttribute(marker);if(el.textContent!==rule[2])el.textContent=rule[2]}
+ const exact=rules.find(r=>original===r[1]&&el.matches(r[0]));
+ const dynamic=exact?null:patterns.find(r=>el.matches(r[0])&&r[1].test(original));
+ if(exact||dynamic){
+  const replacement=exact?exact[2]:original.replace(dynamic[1],dynamic[2]);
+  if(replacement){el.removeAttribute(marker);if(el.textContent!==replacement)el.textContent=replacement}
   else el.setAttribute(marker,'1');
  }else if(el.hasAttribute(marker))el.removeAttribute(marker);
 }
@@ -226,7 +309,7 @@ function scan(node){
  for(const el of node.querySelectorAll(selectors))clean(el);
 }
 function init(){
- const roots=['valueHistory','tradeHistory','leagueHub'];
+ const roots=['valueHistory','tradeHistory','leagueHub','league','settings'];
  for(const id of roots){
   const root=document.getElementById(id);if(!root)continue;
   scan(root);

@@ -91,7 +91,11 @@ export async function profileSiteNavigation(page){
  };
  for(const [width,height] of [[1440,900],[900,650],[381,595]]){
   await page.setViewportSize({width,height});
-  if(await page.evaluate(()=>document.documentElement.dataset.fleecedView)!=='desktop')await flip('desktop');
+  // No explicit preference exists during the earlier resize-only profile.
+  // The first wide resize asynchronously restores desktop. Wait for that
+  // event before clicking, otherwise the test may invert an already-restored
+  // layout and wait for the wrong target. Subsequent flips persist desktop.
+  await page.waitForFunction(()=>document.documentElement.dataset.fleecedView==='desktop',null,{timeout:10000});
   const selected=width===1440?['Home']:['Home','Player Values All','Market Dashboard','Full Market Value History','Trade History','Fleeced Daily','Hall of Fleeced','Managers'];
   for(const [name,tab,label,selector] of tests.filter(t=>selected.includes(t[0]))){
    await nav(tab,label);

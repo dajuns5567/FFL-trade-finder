@@ -116,6 +116,10 @@ export function verifyLocalBadgeIntegration(){
   const security={"netlify/functions/league-hub.mjs":"8e9f828ba4624b7283c6930035bab4d42956a884","league-hub-v451.js":"585e0cc9a05086290f93968449949be4f2c66b0b","netlify/functions/value-history.mjs":"1ce8eb8bd6c686bcb69b1041bd7bf9aa398e86d6","value-history-v276.js":"077acba39306220ef4c370db3998fc8b065f64aa"};
   if(Object.entries(security).every(([file,hash])=>git('hash-object',file).trim()===hash))
    return verifyPinnedIntegration(file=>Object.hasOwn(security,file)?INTEGRATED_RUNTIME_BLOBS[file]:git('hash-object',file).trim());
+  // Exact final navigation successor; keep the security server blobs pinned.
+  const navigation={...security,'league-hub-v451.js':'4e3706414988e9aee8508ee0b299ed38abcc4432','value-history-v276.js':'00c221d709ab52c6cac20c722c0f52f682f10cd8'};
+  if(Object.entries(navigation).every(([file,hash])=>git('hash-object',file).trim()===hash))
+   return verifyPinnedIntegration(file=>Object.hasOwn(navigation,file)?INTEGRATED_RUNTIME_BLOBS[file]:git('hash-object',file).trim());
   return original;
  }
  return verifyCombinedBadgeProvenance(

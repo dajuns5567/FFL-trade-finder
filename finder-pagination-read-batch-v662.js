@@ -46,5 +46,6 @@ function prepare(e){
  }
  wrapped.add(click);button.onclick=click;
 }
+window.finderPaginationReadBatchV662={run:batch};
 document.addEventListener('click',prepare,true);
 })();

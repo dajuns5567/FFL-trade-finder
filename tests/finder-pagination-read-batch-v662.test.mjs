@@ -12,7 +12,8 @@ const engines=[
  ['trade-specific-tier-up-v282.js','rows','visible'],
  ['trade-specific-add-assets-v282.js','rows','visible'],
  ['trade-specific-max-value-v279.js','active','visible'],
- ['trade-specific-player-v232.js','activeRows','visibleRows']
+ ['trade-specific-player-v232.js','activeRows','visibleRows'],
+ ['trade-runtime-v256-compiled.js','lastFinderRows','visibleFinder']
 ];
 function harness(enabled){
  const picks=Array.from({length:288},(_,i)=>({type:'pick',id:'pick-'+i,season:2027+Math.floor(i/96),round:1+Math.floor(i%96/32),owner:1+i%32,original_owner:1+i%32}));
@@ -43,10 +44,10 @@ function harness(enabled){
    return '<div>'+a.id+'|'+v+'|'+JSON.stringify(r)+'</div>';
  }).join('')+'</article>';
  function run(engine){
-  const [path,array,count]=engine,s=read(path),i=s.indexOf('function draw(host)'),j=s.indexOf('\n',i);assert(i>=0&&j>i);
+  const [path,array,count]=engine,s=read(path),fallback=path==='trade-runtime-v256-compiled.js',i=s.indexOf(fallback?'function renderFinder(){':'function draw(host)'),j=s.indexOf('\n',i);assert(i>=0&&j>i);
   const draw=s.slice(i,j);assert.match(draw,/Load more trades/);assert.match(draw,/\+5/);
   Object.assign(ctx,{fixtureRows:rows,fixtureCard:card,fixtureHost:host});
-  vm.runInContext('(()=>{let '+array+'=fixtureRows,'+count+'=5;const card=fixtureCard;'+draw+';draw(fixtureHost)})()',ctx);
+  vm.runInContext('(()=>{let '+array+'=fixtureRows,'+count+'=5;const card=fixtureCard;'+(fallback?'const generateFinder=()=>fixtureRows;const wireRationale=()=>{};':'')+draw+';'+(fallback?'renderFinder()':'draw(fixtureHost)')+'})()',ctx);
   const pages=[],calls=[];for(let n=0;n<3;n++){
    assert(button);const old=button,evt={target:old};
    // Change canonical source between clicks: cache must never persist.
@@ -60,7 +61,7 @@ function harness(enabled){
  }
  return{run,win,norm,assertRestored,listener};
 }
-test('six actual Finder pagination handlers preserve exact ordered rendered values and current pick projections while eliminating redundant projection reads',()=>{
+test('seven actual Finder pagination handlers preserve exact ordered rendered values and current pick projections while eliminating redundant projection reads',()=>{
  let baseline=0,candidate=0,oldMs=0,newMs=0;
  for(const engine of engines){
   const a=harness(false).run(engine),b=harness(true).run(engine);

@@ -7,7 +7,7 @@ permissions:
 jobs:
   parity:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
@@ -21,11 +21,18 @@ jobs:
           import assert from 'node:assert/strict';
           import {execFileSync} from 'node:child_process';
           const base='a99139f3051c3a1d4a71a1f1e9d5a5fba8451aaa',git=(...a)=>execFileSync('git',a,{encoding:'utf8'}).trim();
-          assert.deepEqual(git('diff','--name-only',base,'HEAD').split('\n').filter(Boolean).sort(),['.github/workflows/finder-pagination-batch-v662.yml','finder-pagination-read-batch-v662.js','netlify/functions/site-v29.mjs','tests/finder-pagination-read-batch-v662.test.mjs']);
+          assert.deepEqual(git('diff','--name-only',base,'HEAD').split('\n').filter(Boolean).sort(),[".github/workflows/finder-pagination-batch-v662.yml","finder-pagination-read-batch-v662.js","netlify/functions/site-v29.mjs","scripts/finder-pagination-browser-v662.mjs","tests/finder-pagination-read-batch-v662.test.mjs","tests/finder-verified-653-regression.test.mjs","trade-recommended-pick-ownership-v662.js"]);
           const marker='<script src="/trade-recommended-pick-ownership-v301.js?v=301"></script>';
-          assert.equal(git('show','HEAD:netlify/functions/site-v29.mjs'),git('show',base+':netlify/functions/site-v29.mjs').replace(marker,marker+'<script src="/finder-pagination-read-batch-v662.js?v=662"></script>'));
+          assert.equal(git('show','HEAD:netlify/functions/site-v29.mjs'),git('show',base+':netlify/functions/site-v29.mjs').replace(marker,'<script src="/finder-pagination-read-batch-v662.js?v=662"></script><script src="/trade-recommended-pick-ownership-v662.js?v=662"></script>'));
           JS
-      - name: Actual six renderer pagination parity and read counts
+      - name: Actual seven renderer pagination parity and read counts
         run: |
           node --check finder-pagination-read-batch-v662.js
           node --test tests/finder-pagination-read-batch-v662.test.mjs
+      - name: Native WebKit and Chromium click-through-paint parity
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+          npm install --no-save --ignore-scripts --no-audit --no-fund --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium webkit
+          node scripts/finder-pagination-browser-v662.mjs
+          node --test tests/finder-verified-653-regression.test.mjs

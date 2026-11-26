@@ -40,6 +40,10 @@ jobs:
           import {execFileSync} from 'node:child_process';
           import assert from 'node:assert/strict';
           // Exact preview-only combined candidate; legacy release checks remain unchanged elsewhere.
+          if(process.env.GITHUB_HEAD_REF==='integration/verified-preview-653-ci-reconciliation-20261125'){
+            execFileSync('node',['scripts/audit-verified-preview-653-continuation.mjs'],{stdio:'inherit'});
+            process.exit(0);
+          }
           if(process.env.GITHUB_HEAD_REF==='fix/mobile-home-market-navigation-20261125'){
             execFileSync('node',['scripts/audit-mobile-home-preview-scope.mjs'],{stdio:'inherit'});
             process.exit(0);

@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
+const frozen='10cab63ce7437d9fdc80e3e5ca8c97462514ca7c',main='a1f3d19fe3524f97da9c51c2827607d74de4b38c';
+const git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();
+assert.equal(process.env.GITHUB_HEAD_REF,'integration/verified-preview-653-ci-reconciliation-20261125');
+assert.equal(git('rev-parse','origin/main'),main,'Main changed; re-audit rather than permit new application bytes');
+assert.equal(git('ls-remote','origin','refs/heads/archive/verified-preview-653-20261125').split(/\s+/)[0],frozen,'Verified archive ref moved');
+assert.equal(git('ls-remote','origin','refs/heads/archive/desktop-release-630-20261125').split(/\s+/)[0],main,'Desktop archive ref moved');
+execFileSync('git',['merge-base','--is-ancestor',frozen,'HEAD']);
+const allowed=[".github/workflows/inquirer-daily-default-closed.yml",".github/workflows/mobile-presentation-v631.yml",".github/workflows/netlify-v101-one-time-release-gate-ci.yml",".github/workflows/release-v107-recorder-after-market-ui-isolated.yml",".github/workflows/release-v112-team-trade-linkage-ci.yml",".github/workflows/release-v114-historical-pick-projection-ci.yml",".github/workflows/release-v116-market-period-parity-ci.yml","scripts/audit-verified-preview-653-continuation.mjs"];
+assert.deepEqual(git('diff','--name-only',frozen,'HEAD').split('\n').filter(Boolean).sort(),allowed,'Only the explicit CI workflow and scope verifier files may change');
+assert.equal(git('rev-parse','HEAD:netlify.toml'),git('rev-parse',frozen+':netlify.toml'),'Preview and production deployment policy must remain byte-identical');
+console.log('Verified user-tested Preview 653 source preserved byte-for-byte; only CI scope reconciliation changed. No merge or production authorization.');

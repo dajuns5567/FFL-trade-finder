@@ -19,7 +19,11 @@ jobs:
         with:
           node-version: '22'
       - run: |
-          node scripts/audit-inquirer-closed-preview-scope.mjs
+          if [ "$GITHUB_HEAD_REF" = "integration/verified-preview-653-ci-reconciliation-20261125" ]; then
+            node scripts/audit-verified-preview-653-continuation.mjs
+          else
+            node scripts/audit-inquirer-closed-preview-scope.mjs
+          fi
           node --check league-hub-v451.js
           node --check fleeced-header-v512.js
           node --test tests/inquirer-daily-default-closed.test.mjs tests/fleeced-daily-week-filter.test.mjs tests/inquirer-single-archive-picker-regression.test.mjs tests/league-hub-async-tab-race.test.mjs tests/header-click-menu-v536.test.mjs

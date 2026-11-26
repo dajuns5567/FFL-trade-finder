@@ -57,3 +57,17 @@ test('simultaneous source refreshes share one fetch; fresh attempts and failures
  const [a,b]=await Promise.all([read(),read()]);assert.equal(calls,1);assert.equal(a,b);
  assert.equal((await read()).calls,2);fail=true;await assert.rejects(read());fail=false;assert.equal((await read()).calls,4);
 });
+
+test('publisher cache never persists caller-computed values; fallback recomputes exact complete source set',async()=>{
+ const {publisherCachePayload,lastGoodComposite,canPersistPublisherCache,shareCacheCommit}=await import('../netlify/functions/lib/verified-publisher-cache.mjs');
+ const refresh={results:Array.from({length:7},(_,i)=>({id:'source'+i,source:'source'+i,valid:true,rankings:[{player:'Example Player',rank:i+1}],dynastyVerified:true}))};
+ const p=publisherCachePayload(refresh,{sources:{verified:true},updatedAt:'now',sourceManifest:[],composite:{byId:{malicious:99999}}});
+ assert.equal(p.schema_version,2);assert.equal(p.composite,undefined);assert.equal(p.publisher_results.length,7);
+ const players=[{id:'legitimate',name:'Example Player'}];
+ assert.deepEqual(lastGoodComposite(p,players,(rows,ids)=>({rows:rows.length,ids})),{rows:7,ids:players});
+ assert.equal(publisherCachePayload({results:refresh.results.slice(0,6)},{}),null);
+ assert.equal(canPersistPublisherCache({deploy:{context:'deploy-preview'}},{CONTEXT:'production'}),false);
+ assert.equal(canPersistPublisherCache({},{CONTEXT:'production',BRANCH:'main'}),true);
+ let writes=0;const commit=shareCacheCommit(async()=>++writes);
+ await Promise.all([commit(refresh,p),commit(refresh,p)]);assert.equal(writes,1);
+});

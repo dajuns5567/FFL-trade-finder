@@ -1,7 +1,7 @@
 // Best-effort warm-instance cost guard. Netlify-wide distributed rate
 // limiting remains a separate platform configuration requirement.
 // Trust the platform's IP metadata, never user-controlled forwarding headers.
-export function createPublicRefreshBudget({windowMs=60000,perClient=12,total=60,maxClients=512,maxConcurrent=6,clock=Date.now}={}){
+export function createPublicRefreshBudget({windowMs=60000,perClient=12,total=120,maxClients=512,maxConcurrent=48,clock=Date.now}={}){
  let windowStart=clock(),used=0,active=0;
  const clients=new Map();
  return {acquire(ip){

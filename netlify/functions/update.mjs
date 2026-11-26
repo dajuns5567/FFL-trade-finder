@@ -1,6 +1,7 @@
 import {archiveWriteAuthorized,readBoundedJson,securityJson} from './lib/public-release-authorization.mjs';
 import { refreshAllSources } from "./consensus-source-overrides.mjs";
 import {createPublicRefreshBudget,createSharedRefresh} from './lib/public-refresh-budget.mjs';
+import {publisherCachePayload,canPersistPublisherCache,lastGoodComposite,shareCacheCommit} from './lib/verified-publisher-cache.mjs';
 const publicRefreshBudget=createPublicRefreshBudget();
 const sharedPublisherFetch=createSharedRefresh(refreshAllSources);
 import { buildConsensusComposite } from "./consensus-composite-v3.mjs";
@@ -11,7 +12,8 @@ const SNAPSHOT_STORE="fleeced-consensus-lkg";
 const SNAPSHOT_KEY="validated-sources-v1";
 const sourceStore=()=>getStore(SNAPSHOT_STORE,{consistency:"strong"});
 async function readLastGood(){try{return await sourceStore().get(SNAPSHOT_KEY,{type:"json"})||null}catch{return null}}
-async function writeLastGood(value){try{await sourceStore().setJSON(SNAPSHOT_KEY,value)}catch(e){console.warn("Consensus LKG persistence failed",e)}}
+async function writeLastGood(value){try{await sourceStore().setJSON(SNAPSHOT_KEY,value);return true}catch(e){console.warn("Consensus LKG persistence failed",e);return false}}
+const commitPublisherCache=shareCacheCommit(writeLastGood);
 
 function addSnapshot(sources,name,result,rows,kind,updatedAt){
   const data={};
@@ -71,9 +73,10 @@ export default async (req,context)=>{
       snapshot.freshness=buildFreshnessSnapshot(snapshot,old,candidate.updatedAt);
     }
     const promoted={sources:candidate.sources,composite:candidate.composite,updatedAt:candidate.updatedAt,sourceManifest:candidate.summary.results.map(x=>({source:x.source,status:"fresh",snapshot_timestamp:x.timestamp||candidate.updatedAt,attempt_timestamp:x.timestamp||candidate.updatedAt,players_extracted:x.players_extracted,ranking_rows:x.ranking_rows,publisher_updated_at:null,source_freshness:(x.source==="The IDP Show Combined"?candidate.sources["The IDP Show Combined Offense"]?.freshness:candidate.sources[x.source]?.freshness)||null,market_observation:x.market_observation||null,source_provenance:x.source_provenance||null}))};
-    // Caller-provided player identities may affect this request's composite,
-    // but only a trusted producer can promote it to shared fallback storage.
-    if(trusted)await writeLastGood(promoted);
+    // Public requests can trigger the trusted server publisher adapters,
+    // but no caller-supplied identity or composite is persisted. Previews
+    // and the local collector cannot write the production cache.
+    if(canPersistPublisherCache(context))await commitPublisherCache(refresh,publisherCachePayload(refresh,promoted));
     const summary={...candidate.summary,results:candidate.summary.results.map(x=>({...x,
       source_freshness:(x.source==="The IDP Show Combined"?candidate.sources["The IDP Show Combined Offense"]?.freshness:candidate.sources[x.source]?.freshness)||null,
       market_observation:x.market_observation||null,
@@ -83,7 +86,7 @@ export default async (req,context)=>{
   }
 
   const priorSources=previous?.sources&&Object.keys(previous.sources).length?previous.sources:null;
-  const priorComposite=previous?.composite||null;
+  const priorComposite=lastGoodComposite(previous,players,buildConsensusComposite);
   const priorManifest=Array.isArray(previous?.sourceManifest)?previous.sourceManifest:[];
   const attemptBySource=new Map((candidate.summary.results||[]).map(x=>[x.source,x]));
   const manifest=(candidate.summary.results||[]).map(x=>{

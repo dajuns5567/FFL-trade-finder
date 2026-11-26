@@ -1,6 +1,8 @@
+import {privateDiagnosticDenied} from './lib/private-diagnostic-access.mjs';
 import siteV27 from './site-v27.mjs';
 
-export default async () => {
+export default async(req,context)=>{const denied=privateDiagnosticDenied(req,context);if(denied)return denied;
+
   const base = await siteV27();
   if (!base.ok) return base;
   let raw = await base.text();
@@ -9,3 +11,5 @@ export default async () => {
   const html = raw.replace('</body>', runtime129 + '</body>');
   return new Response(html,{status:200,headers:{'content-type':'text/html; charset=utf-8','cache-control':'no-store','x-fll-release':'section1-v129-regression-safe-finder-search-team-labels'}});
 };
+
+export const config={rateLimit:{action:'rate_limit',aggregateBy:'domain',windowSize:60,windowLimit:30}};

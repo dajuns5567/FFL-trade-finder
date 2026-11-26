@@ -1,3 +1,4 @@
+import {privateDiagnosticDenied} from './lib/private-diagnostic-access.mjs';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -8,7 +9,8 @@ function localText(name){
   throw last||new Error(`Unable to read packaged ${name}`);
 }
 
-export default async()=>{
+export default async(req,context)=>{const denied=privateDiagnosticDenied(req,context);if(denied)return denied;
+
   try{
     const raw=localText('index.html');
     const section1Core=localText('trade-section1-core-v100.js').replace(/<\/script/gi,"<\\/script");
@@ -27,3 +29,4 @@ export default async()=>{
     return new Response(html,{status:200,headers:{"content-type":"text/html; charset=utf-8","cache-control":"no-store","x-fll-release":"section1-v116"}});
   }catch(e){return new Response(`Site loader failed: ${String(e?.message||e)}`,{status:500,headers:{"content-type":"text/plain; charset=utf-8","cache-control":"no-store"}})}
 };
+export const config={rateLimit:{action:'rate_limit',aggregateBy:'domain',windowSize:60,windowLimit:30}};

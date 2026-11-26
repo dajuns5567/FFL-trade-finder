@@ -12,7 +12,9 @@ function usable(data){
   return players>100&&withGames>75&&withPpr>75;
 }
 
-export default async()=>{
+export default async(req)=>{
+  if(req&&req.method!=='GET')return new Response(JSON.stringify({error:'Method not allowed'}),{status:405,headers:{'content-type':'application/json','cache-control':'no-store'}});
+
   try{
     const r=await fetch(`${URL}?ts=${Date.now()}`,{headers:{accept:'application/json','user-agent':'FFL-Trade-Finder-Sleeper-Importer-Bridge/1.1'},cache:'no-store'});
     if(!r.ok)throw new Error(`offense-history.json ${r.status}`);
@@ -25,3 +27,5 @@ export default async()=>{
     return new Response(JSON.stringify({ok:false,error:String(e?.message||e)}),{status:502,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
   }
 };
+
+export const config={rateLimit:{action:'rate_limit',aggregateBy:'domain',windowSize:60,windowLimit:120}};

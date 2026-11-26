@@ -11,7 +11,9 @@ function newestScheduled(items=[]){
   return null;
 }
 
-export default async ()=>{
+export default async (req)=>{
+  if(req&&req.method!=='GET')return new Response(JSON.stringify({error:'Method not allowed'}),{status:405,headers:{'content-type':'application/json','cache-control':'no-store'}});
+
   let latest=null,archive=null;
   try{
     const store=getStore('fll-value-history-v2');
@@ -36,3 +38,5 @@ export default async ()=>{
     archive_snapshot_count:Number(archive?.snapshot_count)||Number(archive?.items?.length)||0
   });
 };
+
+export const config={rateLimit:{action:'rate_limit',aggregateBy:'domain',windowSize:60,windowLimit:120}};

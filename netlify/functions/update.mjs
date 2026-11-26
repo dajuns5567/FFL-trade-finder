@@ -56,6 +56,7 @@ export default async (req,context)=>{
   const parsed=await readBoundedJson(req,5*1024*1024);if(parsed.error)return parsed.error;
   const players=Array.isArray(parsed.body?.players)?parsed.body.players:[];
   if(!players.length||players.length>25000)return json({ok:false,error:"Invalid player list size"},400);
+  if(players.some(p=>!p||typeof p!=='object'||! /^[A-Za-z0-9_-]{1,64}$/.test(String(p.id||''))||['__proto__','constructor','prototype'].includes(String(p.id))||typeof p.name!=='string'||p.name.length>160||/[\u0000-\u001f]/.test(p.name)||Array.isArray(p.positions)&&(p.positions.length>16||p.positions.some(pos=>typeof pos!=='string'||pos.length>24))))return json({ok:false,error:'Invalid player identity list'},400);
   const hosted=!!context?.deploy||!!process.env.NETLIFY;
   const trusted=archiveWriteAuthorized(req,context);
   // Hosted anonymous clients receive bounded access. Local scheduled/test

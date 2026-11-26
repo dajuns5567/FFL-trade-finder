@@ -6,8 +6,11 @@ const DEFAULT_LEAGUE_ID='1316867686394769408';
 const countPayload=x=>Array.isArray(x)?x.length:(x&&typeof x==='object'?Object.keys(x).length:0);
 
 export default async function handler(req){
+  if(req&&req.method!=='GET')return new Response(JSON.stringify({error:'Method not allowed'}),{status:405,headers:{'content-type':'application/json','cache-control':'no-store'}});
+
   try{
     const u=new URL(req.url),season=Number(u.searchParams.get('season'))||new Date().getUTCFullYear(),leagueId=String(u.searchParams.get('leagueId')||DEFAULT_LEAGUE_ID);
+    if(!/^\d{1,24}$/.test(leagueId)||!Number.isInteger(season)||season<2000||season>new Date().getUTCFullYear()+1)return new Response(JSON.stringify({error:'Invalid league or season'}),{status:400,headers:{'content-type':'application/json','cache-control':'no-store'}});
     let leagueStatus='';try{leagueStatus=String((await getJson(`${API}/league/${leagueId}`))?.status||'')}catch{}
     const current=await fetchWeeklyAggregate(season,{strict:false}).catch(()=>({weekly:{},errors:[]}));
     let completedWeek=0;for(let week=1;week<=18;week++)if(countPayload(current.weekly?.[week])>0)completedWeek=week;
@@ -23,3 +26,5 @@ export default async function handler(req){
     return new Response(JSON.stringify({ok:true,season,currentSeason:season,years:requiredYears,requiredYears,availableYears,stats:out,aggregatedBySeason:out,completedWeek,weightPlan:plan,pprScoringWeights:PPR_WEIGHTS,pprDiagnostics,pprReconstruction:true,fallback:true,complete:availableYears.length===requiredYears.length,partial:availableYears.length<requiredYears.length,seasonFetchSource,seasonErrors}),{status:200,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
   }catch(e){return new Response(JSON.stringify({ok:false,error:String(e?.message||e),fallback:true,complete:false}),{status:502,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}})}
 }
+
+export const config={rateLimit:{action:'rate_limit',aggregateBy:'domain',windowSize:60,windowLimit:60}};

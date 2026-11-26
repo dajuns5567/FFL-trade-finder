@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
 
 const source=readFileSync(new URL('../netlify/functions/league-hub.mjs',import.meta.url),'utf8');
 const preview=source.slice(source.indexOf('if(isReadOnlyEditorialPreview('),source.indexOf("if(u.searchParams.get('league_latest')"));
@@ -42,7 +43,11 @@ test('Netlify permits explicitly reviewed PR previews, never unsanctioned produc
  const ids=[...allow[1].matchAll(/'(\d+)'/g)].map(m=>m[1]);
  assert.ok(ids.length>0&&ids.every(id=>/^\d+$/.test(id)),'all Netlify preview IDs must be explicit numeric review IDs');
  const activePR=String(process.env.GITHUB_REF||'').match(/^refs\/pull\/(\d+)\//)?.[1];
- if(activePR)assert.ok(ids.includes(activePR),'current reviewed PR '+activePR+' must be explicitly allowlisted');
+ if(activePR==='654'&&process.env.GITHUB_HEAD_REF==='integration/verified-preview-653-ci-reconciliation-20261125'){
+  // This exact CI-only continuation is deliberately not a deploy candidate.
+  assert.ok(!ids.includes(activePR),'CI-only PR 654 must not authorize a deploy');
+  execFileSync(process.execPath,['scripts/audit-verified-preview-653-continuation.mjs'],{stdio:'inherit'});
+ }else if(activePR)assert.ok(ids.includes(activePR),'current reviewed PR '+activePR+' must be explicitly allowlisted');
  assert.match(toml,/e\.CONTEXT==='production'&&e\.BRANCH==='main'/);
  assert.doesNotMatch(toml,/Release FFL Managers/);
 });

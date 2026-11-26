@@ -2,6 +2,19 @@ name: Actual league Finder browser execution
 on:
   pull_request:
     paths:
+      - 'netlify/functions/site-v*.mjs'
+      - 'index.html'
+      - 'trade-*.js'
+      - 'state-bridge-v141.js'
+      - 'draft-pick-rankings-v527.js'
+      - 'modeled-player-values-v319.js'
+      - 'nonblocking-consensus-v277.js'
+      - 'ui-player-values-v139.js'
+      - 'ui-runtime-values-v140.js'
+      - 'pick-display-sync-v279.js'
+      - 'fleeced-mobile-*.js'
+      - 'fleeced-mobile-*.css'
+      - 'tests/finder-verified-653-regression.test.mjs'
       - 'scripts/finder-live-browser-audit.mjs'
       - 'scripts/finder-scheduling-parity.mjs'
       - 'trade-finder-v256-compiled.js'

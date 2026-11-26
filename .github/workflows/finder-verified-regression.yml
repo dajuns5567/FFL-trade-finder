@@ -1,0 +1,22 @@
+name: Verified Finder 653 regression guard
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  verified-finder:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Enforce owner-tested Finder source and actual loader on every change
+        run: node --test tests/finder-verified-653-regression.test.mjs tests/finder-assembled-site-loader.test.mjs
+      - name: Verify bounded search, tier eligibility and exact fairness-call parity
+        run: node --test tests/finder-natural-filter-matrix.test.mjs tests/finder-scoped-performance-parity.test.mjs tests/targeted-max-value-search-stall.test.mjs

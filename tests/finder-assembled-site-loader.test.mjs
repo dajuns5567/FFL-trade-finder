@@ -7,7 +7,7 @@ const read=filename=>readFileSync(new URL('../'+filename,import.meta.url),'utf8'
 const selected=[
  ['trade-specific-blank-router-v325.js',439],
  ['trade-add-assets-complement-v1.js',2],
- ['trade-specific-max-tier-add-v300.js',302],
+ ['trade-specific-max-tier-add-v300.js',303],
  ['trade-specific-tier-up-v282.js',283],
  ['trade-specific-add-assets-v282.js',310],
  ['trade-specific-max-value-v279.js',444],

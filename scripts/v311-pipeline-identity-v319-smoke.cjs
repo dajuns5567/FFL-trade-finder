@@ -43,16 +43,17 @@ const finderPerformanceHashes={...finderCandidateHashes,
   'trade-specific-max-value-v279.js':'4f22407f87466f2afe9d63e27dccfeeee9b11cf4',
   'trade-specific-max-tier-add-v300.js':'8c7425f19835621c99a27c40d03d1c406d7da004'
 };
+const finderScopedMemoHashes={...finderPerformanceHashes,'trade-specific-max-tier-add-v300.js':'69878bebe45548680384ac9de48264895599e16c'};
 const matches=hashes=>Object.entries(hashes).every(([path,sha])=>{
   try{return cp.execFileSync('git',['hash-object',path],{encoding:'utf8'}).trim()===sha}
   catch{return false}
 });
-const finderPerformance=matches(finderPerformanceHashes),finderCandidate=matches(finderCandidateHashes);
+const finderScopedMemo=matches(finderScopedMemoHashes),finderPerformance=matches(finderPerformanceHashes),finderCandidate=matches(finderCandidateHashes);
 let bad=[];
 for(const [path,sha] of Object.entries(expected)){
   let actual='';
   try{actual=cp.execFileSync('git',['hash-object',path],{encoding:'utf8'}).trim()}catch(e){bad.push(path+': missing');continue}
-  const required=(finderPerformance?finderPerformanceHashes[path]:finderCandidate?finderCandidateHashes[path]:null)||sha;
+  const required=(finderScopedMemo?finderScopedMemoHashes[path]:finderPerformance?finderPerformanceHashes[path]:finderCandidate?finderCandidateHashes[path]:null)||sha;
   const reviewedPickChange=path==='trade-value-normalization-v139.js'&&
     actual===reviewedFuturePickDiscountHash;
   if(actual!==required&&!reviewedPickChange)
@@ -64,4 +65,4 @@ if(bad.length){
   process.exit(1);
 }
 require('./offense-consensus-coverage-gate-v384-smoke.cjs');
-console.log((finderPerformance?'Performance Finder candidate':finderCandidate?'V106 Finder candidate':'Frozen V311')+' pipeline identity verified; unrelated modules and offense coverage remain anchored across '+Object.keys(expected).length+' loaded modules.');
+console.log((finderScopedMemo?'Scoped memo Finder candidate':finderPerformance?'Performance Finder candidate':finderCandidate?'V106 Finder candidate':'Frozen V311')+' pipeline identity verified; unrelated modules and offense coverage remain anchored across '+Object.keys(expected).length+' loaded modules.');

@@ -28,6 +28,7 @@ const cases=[
  ['Desktop Chromium',chromium,{viewport:{width:1440,height:900}},false],
  ['Desktop WebKit',webkit,{viewport:{width:1440,height:900}},false],
  ['iPhone SE WebKit',webkit,devices['iPhone SE'],true],
+ ['Reported 381x595 Chromium',chromium,{viewport:{width:381,height:595},screen:{width:381,height:595},hasTouch:true,isMobile:true,deviceScaleFactor:1},true],
  ['iPhone 15 class 393x852 WebKit',webkit,modern(393,852),true],
  ['iPhone 15 Plus class 430x932 WebKit',webkit,modern(430,932),true],
  ['iPhone 16/17 Pro class 402x874 WebKit',webkit,modern(402,874),true],
@@ -74,6 +75,30 @@ try{
    if(i===11)throw Error(name+' controls did not settle');
   }
   const before=stable;
+  await page.waitForFunction(()=>document.querySelector('header h1.fleecedFlat113>.fleecedArrow113')&&document.getElementById('fleecedFlat113Style'));
+  const logoGeometry=()=>page.evaluate(()=>{
+   const h=document.querySelector('header h1.fleecedFlat113'),w=h.querySelector('.fleecedWord113'),a=h.querySelector('.fleecedArrow113');
+   const rect=el=>{const r=el.getBoundingClientRect();return{left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height}};
+   const s=getComputedStyle(a),l=getComputedStyle(a,'::before'),r=getComputedStyle(a,'::after');
+   return{logo:rect(h),word:rect(w),arrow:rect(a),position:s.position,leftHead:l.borderRightWidth,rightHead:r.borderLeftWidth,tip:parseFloat(l.borderTopWidth),display:getComputedStyle(h).display,font:getComputedStyle(h).fontSize};
+  });
+  if(mobile){
+   const g=await logoGeometry(),{logo,word,arrow,tip}=g;
+   assert.equal(g.position,'relative',name+' mobile arrow uses layout, not desktop offsets');
+   assert.equal(g.display,'grid');
+   assert(Math.abs((arrow.left+arrow.right-word.left-word.right)/2)<1,name+' arrow horizontally centered beneath word '+JSON.stringify(g));
+   assert(arrow.top+arrow.height/2-tip>=word.bottom-0.5,name+' arrowheads overlap word '+JSON.stringify(g));
+   assert(arrow.bottom+tip-arrow.height/2<=logo.bottom-2,name+' arrowheads clipped by bubble '+JSON.stringify(g));
+   assert(word.left>=logo.left+2&&word.right<=logo.right-2,name+' word fits '+JSON.stringify(g));
+   assert(arrow.left>=word.left-1&&arrow.right<=word.right+1&&arrow.width>=word.width-6,name+' underline spans lettering '+JSON.stringify(g));
+   assert(parseFloat(g.leftHead)>0&&parseFloat(g.rightHead)>0,name+' both arrowheads retained');
+   console.log('MOBILE_LOGO_PASS',name,JSON.stringify(g));
+  }else{
+   const originalLogo=await logoGeometry();
+   assert.equal(originalLogo.position,'absolute',name+' desktop arrow positioning unchanged');
+   assert.equal(originalLogo.arrow.width,96,name+' desktop underline width unchanged');
+   console.log('DESKTOP_LOGO_PASS',name,JSON.stringify(originalLogo));
+  }
   assert.equal(await page.locator('#offenseSourceAuditDownload,#offenseSourceAuditStatus').count(),0,name+' requested diagnostic UI removed');
   if(mobile){
    assert.equal(await page.locator('#fleeced-mobile-menu-toggle,#fleeced-mobile-current-section').count(),0,name+' no replacement menu or repeated section label');

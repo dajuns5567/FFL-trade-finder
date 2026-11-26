@@ -13,3 +13,24 @@ html[data-fleeced-view="mobile"] #valueHistory #vhContent .vh-market-jump button
 html[data-fleeced-view="mobile"] #valueHistory .vh-value-chart+p.tiny.muted,html[data-fleeced-view="mobile"] #valueHistory .vh-net-card>.vh-net-note{display:none!important}
 html[data-fleeced-view="mobile"] #valueHistory .vh-net-card .vh-net-head .vh-sub,html[data-fleeced-view="mobile"] #valueHistory .vh-value-chart>.vh-sub{display:none!important}
 }
+
+/* Mobile wordmark: keep the two arrowheads under the lettering, not at
+   fixed desktop offsets inside the shorter, wider mobile speech bubble. */
+@media(max-width:1024px){
+ html[data-fleeced-view="mobile"] body header.fleeced-site-header .fleeced-site-header-row h1.fleecedFlat113{
+  display:grid!important;grid-template-columns:max-content!important;
+  grid-template-rows:auto 8px!important;justify-content:center!important;
+  align-content:center!important;align-items:center!important;row-gap:1px!important;
+  padding:0 5px!important;font-size:clamp(19px,6vw,22px)!important;
+ }
+ html[data-fleeced-view="mobile"] body header.fleeced-site-header h1.fleecedFlat113>.fleecedWord113{
+  grid-column:1!important;grid-row:1!important;line-height:1!important;
+  justify-self:center!important;
+ }
+ html[data-fleeced-view="mobile"] body header.fleeced-site-header h1.fleecedFlat113>.fleecedArrow113{
+  grid-column:1!important;grid-row:2!important;position:relative!important;
+  inset:auto!important;left:auto!important;bottom:auto!important;
+  width:calc(100% - 4px)!important;height:3px!important;
+  justify-self:center!important;align-self:center!important;
+ }
+}

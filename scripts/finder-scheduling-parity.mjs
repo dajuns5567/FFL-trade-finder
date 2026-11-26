@@ -41,37 +41,37 @@ export async function auditFinderScheduling(page){
 }
 
 export async function auditTargetedParity(page){
- const path='trade-specific-max-value-v279.js';
+ const path='trade-specific-max-tier-add-v300.js';
  const original=execFileSync('git',['show',base+':'+path],{encoding:'utf8'});
  const candidate=readFileSync(path,'utf8');
  const pair=await page.evaluate(async({original,candidate})=>{
-  const originalAPI=window.tradeSpecificMaxValueV279,host=document.getElementById('finderResults');
+  const originalAPI=window.tradeSpecificMaxTierAddV300,host=document.getElementById('finderResults');
   const selected=[...document.querySelectorAll('#findShop .shopCheck:checked')].map(x=>x._asset?.id);
   if(selected.length!==1||!document.getElementById('tradeAssist97')?.checked||document.getElementById('findMode')?.value!=='value'||document.getElementById('tradeTier94')?.value!=='up'||!document.getElementById('desiredPlayerSearch')?.value||window.tradeSelectAllV165?.aliasActive?.())throw Error('Exact target configuration lost');
   function load(src){
    const lines=src.split('\n');const listeners=lines.filter(x=>x.startsWith("document.addEventListener('click'"));
    if(listeners.length!==1)throw Error('Target listener anchor drift');
    const clean=lines.filter(x=>x!==listeners[0]).join('\n');
-   const anchor='window.tradeSpecificMaxValueV279={run,';if(clean.split(anchor).length!==2)throw Error('Target export anchor drift');
-   (0,eval)(clean.replace(anchor,'window.tradeSpecificMaxValueV279={auditRows:()=>active,run,'));return window.tradeSpecificMaxValueV279;
+   const anchor='window.tradeSpecificMaxTierAddV300={run,';if(clean.split(anchor).length!==2)throw Error('Target export anchor drift');
+   (0,eval)(clean.replace(anchor,'window.tradeSpecificMaxTierAddV300={auditRows:()=>rows,run,'));return window.tradeSpecificMaxTierAddV300;
   }
   async function measure(src){
-   const api=load(src),started=performance.now();await api.run();
-   const ms=Math.round(performance.now()-started),stats=api.sourceIntegrityStats().lastSearchStats;
-   if(!stats)throw Error('Target engine did not run');
-   for(let i=0;i<30;i++){const more=[...host.querySelectorAll('button')].find(b=>/^Load more trades/.test(b.textContent));if(!more)break;more.click()}
+   const api=load(src);if(!api.active())throw Error('Scoped max-tier-add engine is not active');
+   const started=performance.now();await api.run();
+   const ms=Math.round(performance.now()-started);
+   for(let i=0;i<40;i++){const more=[...host.querySelectorAll('button')].find(b=>/^Load more trades/.test(b.textContent));if(!more)break;more.click()}
    if([...host.querySelectorAll('button')].some(b=>/^Load more trades/.test(b.textContent)))throw Error('Incomplete result readback');
    const value=a=>Number((window.tradeValueNormalizationV139||window.tradeValueNormalizationV130)?.canonicalValue?.(a))||0;
    const asset=a=>({type:a.type,id:a.id,owner:a.owner,value:value(a)});
-   const rows=api.auditRows().map(x=>({other:x.other,target:asset(x.target),give:x.give.map(asset),recv:x.recv.map(asset),fair:x.f,fit:x.fit,maximumValueScore:x.maximumValueScore}));
+   const rows=api.auditRows().map(x=>({other:x.other,target:asset(x.target),give:x.give.map(asset),recv:x.recv.map(asset),fair:x.f,fit:x.fit,maximumValueScore:x.maxScore}));
    if(host.querySelectorAll('.trade95-card').length!==rows.length)throw Error('Rendered card count differs from recommendations');
-   return {ms,stats,rows,empty:rows.length===0};
+   return {ms,rows,empty:rows.length===0};
   }
-  try{return {selected,view:document.documentElement.dataset.fleecedView,baseline:await measure(original),candidate:await measure(candidate)}}finally{window.tradeSpecificMaxValueV279=originalAPI}
+  try{return {selected,view:document.documentElement.dataset.fleecedView,baseline:await measure(original),candidate:await measure(candidate)}}finally{window.tradeSpecificMaxTierAddV300=originalAPI}
  },{original,candidate});
  assert.deepEqual(pair.candidate.rows,pair.baseline.rows,'Targeted ordered recommendation and value parity');
  assert.equal(pair.candidate.empty,pair.baseline.empty,'Targeted empty-state parity');
- for(const key of ['examined','fairnessChecks','receiveScans','results','capped'])assert.equal(pair.candidate.stats[key],pair.baseline.stats[key],'Targeted search coverage parity: '+key);
- console.log('FINDER_TARGETED_PARITY '+JSON.stringify({view:pair.view,selected:pair.selected,baselineMs:pair.baseline.ms,candidateMs:pair.candidate.ms,count:pair.candidate.rows.length,stats:pair.candidate.stats}));
+ assert(pair.candidate.rows.length>0,'Exact target scenario produced no recommendations; cannot prove positive-result parity');
+ console.log('FINDER_TARGETED_PARITY '+JSON.stringify({view:pair.view,selected:pair.selected,baselineMs:pair.baseline.ms,candidateMs:pair.candidate.ms,count:pair.candidate.rows.length}));
  return {rows:pair.candidate.rows,empty:pair.candidate.empty,selected:pair.selected};
 }

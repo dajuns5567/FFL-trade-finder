@@ -6,6 +6,8 @@ on:
       - 'scripts/finder-scheduling-parity.mjs'
       - 'trade-finder-v256-compiled.js'
       - 'trade-specific-max-value-v279.js'
+      - 'trade-specific-max-tier-add-v300.js'
+      - 'tests/finder-scoped-performance-parity.test.mjs'
       - 'scripts/compile-v256-runtimes.cjs'
       - 'tests/finder-natural-filter-matrix.test.mjs'
       - 'scripts/finder-live-browser-runner.mjs'
@@ -30,6 +32,7 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Exercise real Finder button with current league rosters and values
         run: |
+          node --test tests/finder-scoped-performance-parity.test.mjs
           node --check scripts/finder-live-browser-audit.mjs
           node --check scripts/finder-live-browser-runner.mjs
           node scripts/finder-live-browser-runner.mjs

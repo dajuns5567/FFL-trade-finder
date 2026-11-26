@@ -4,7 +4,7 @@ export async function auditFinder(page){
  const errors=[];
  page.on('pageerror',e=>errors.push(String(e.stack||e)));
  page.on('console',m=>{if(m.type()==='error'&&/finder|specific.player|trade search/i.test(m.text()))errors.push(m.text())});
- const state=await page.evaluate(()=>({players:window.valueHistoryV331.currentRows().length,teams:window.state?.teams?.length,assets:window.state?.allAssets?.length,engines:{compiled:typeof window.tradeFinderV168?.render,max:typeof window.tradeSpecificMaxValueV279?.run,target:typeof window.tradeSpecificPlayerV232?.run},teamForJT:window.state?.allAssets?.find(a=>a.type==='player'&&String(a.id)==='6794')?.owner}));
+ const state=await page.evaluate(()=>({players:window.valueHistoryV331.currentRows().length,teams:window.state?.teams?.length,assets:window.state?.allAssets?.length,engines:{compiled:typeof window.tradeFinderV168?.render,max:typeof window.tradeSpecificMaxValueV279?.run,scoped:typeof window.tradeSpecificMaxTierAddV300?.run,target:typeof window.tradeSpecificPlayerV232?.run},teamForJT:window.state?.allAssets?.find(a=>a.type==='player'&&String(a.id)==='6794')?.owner}));
  console.log('FINDER_LIVE_STATE '+JSON.stringify(state));
  assert(state.players>100&&state.teams===32&&state.assets>100);
  assert(Object.values(state.engines).every(x=>x==='function'));
@@ -63,6 +63,7 @@ export async function auditFinder(page){
    const assist=document.getElementById('tradeAssist97');if(assist&&!assist.checked)assist.click();
    return {id:box._asset.id,count:document.querySelectorAll('#findShop .shopCheck:checked').length,assist:assist?.checked,alias:window.tradeSelectAllV165?.aliasActive?.()};
   });
+  assert(await page.evaluate(()=>window.tradeSpecificMaxTierAddV300?.active()),'Scoped max-tier-add engine is not active');
   assert(selected&&selected.count===1&&selected.assist&&!selected.alias,'Exact manual-add-assets configuration not established: '+JSON.stringify(selected));
  });
  console.log('FINDER_LIVE_SUMMARY '+JSON.stringify({checks,errors:errors.slice(0,15)}));

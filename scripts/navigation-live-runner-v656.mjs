@@ -1,0 +1,14 @@
+import {readFileSync,writeFileSync,unlinkSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
+const original='scripts/value-history-headless-refresh.mjs',ephemeral='scripts/.navigation-live-audit-collector.mjs';
+let source=readFileSync(original,'utf8');
+const replace=(from,to)=>{if(source.split(from).length!==2)throw Error('Original collector anchor drift: '+from);source=source.replace(from,to)};
+replace("async function valueHistory(req){","let finderAuditReadMode=false;\nasync function valueHistory(req){\n if(finderAuditReadMode&&req.method==='GET'){const safe=new URL(req.url);safe.searchParams.set('readonly_preview','1');return valueHistoryReadHandler(new Request(safe.toString(),{method:'GET'}))}");
+replace("    let response;","    if(finderAuditReadMode&&req.method!=='GET'){res.writeHead(403);res.end('NAVIGATION AUDIT READ ONLY');return}\n    let response;");
+replace("}finally{\n  await browser.close();\n  await new Promise(resolve=>server.close(resolve));\n}","  finderAuditReadMode=true;\n  const {auditNavigationParity}=await import('./navigation-live-parity-v656.mjs');\n  await auditNavigationParity(page);\n"+"}finally{\n  await browser.close();\n  await new Promise(resolve=>server.close(resolve));\n}");
+replace("return new Response(readFileSync(path),{headers:{'content-type':mime(path),'cache-control':'no-store'}})","let bytes=readFileSync(path);if(rel==='value-history-v276.js'){let code=bytes.toString('utf8');const marker='// END_NAVIGATION_READ_SCOPE_V656';if(code.split(marker).length!==2)throw Error('Missing navigation scope');code=code.replace('if(historyReadScopeV656)return fn();','if(window.__navigationAuditBypassV656||historyReadScopeV656)return fn();');code=code.replace(marker,\"window.__navigationAuditV656={dashboard:()=>renderMarketDashboard(),intelligence:()=>renderMarketIntelligence(),full:()=>renderFullMarketHistory(),team:()=>renderTrackedTeamTable(teamNetCache.get(teamNetCacheKey((state.allAssets||[]).filter(a=>a?.type==='player'&&String(a.owner)===String(trackedTeamId)).map(a=>String(a.id)),trackedTeamId))||{points:[]}),ready:()=>Boolean(marketCache&&marketInsightsCache&&marketSignalCache)};\"+marker);bytes=Buffer.from(code)}return new Response(bytes,{headers:{'content-type':mime(path),'cache-control':'no-store'}})");
+writeFileSync(ephemeral,source);
+try{
+ const r=spawnSync(process.execPath,[ephemeral],{stdio:'inherit',env:{...process.env,CONTEXT:'deploy-preview',VALUE_HISTORY_CANDIDATE_MODEL:'idp-v101-verified-role-growth-v100-source-free-lineage',VALUE_HISTORY_READ_ONLY_CANDIDATE:'1',VALUE_HISTORY_SCHEDULED_MODEL:'idp-v96-single-source-continuous-v95-evidence',VALUE_HISTORY_V101_APPROVED:'0',VALUE_HISTORY_SNAPSHOT_FILE:'.tmp/navigation-audit-snapshot.json',ALL_TIME_HIGHS_SCHEDULED_FILE:'.tmp/navigation-audit-highs.json'},timeout:1100000});
+ if(r.error)throw r.error;process.exitCode=r.status??1;
+}finally{unlinkSync(ephemeral)}

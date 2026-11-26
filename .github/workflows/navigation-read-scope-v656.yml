@@ -18,3 +18,19 @@ jobs:
         with:
           node-version: '22'
       - run: node --check value-history-v276.js && node --check league-hub-v451.js && node --test tests/navigation-read-scope-v656.test.mjs
+  live-parity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+          npm install --no-save --ignore-scripts --no-audit --no-fund --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Compare complete rendered HTML and synchronous timing with identical live inputs
+        run: node scripts/navigation-live-runner-v656.mjs

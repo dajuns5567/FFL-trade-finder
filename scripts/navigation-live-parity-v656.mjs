@@ -18,7 +18,7 @@ export async function auditNavigationParity(page){
   }
   await nav('Full Market Value History');await page.locator('#vhMarketTable tbody tr').first().waitFor({state:'visible'});
   const full=await compare('full','#vhContent');assert(full.exact&&full.bytes>1000);result.push({mode,...full});console.log('NAVIGATION_LIVE_PARITY '+JSON.stringify({mode,...full}));
-  await nav('Track My Team');const team=page.locator('[data-vh-team-select]');const id=await team.locator('option').evaluateAll(xs=>xs.find(x=>x.value&&/Detroit/i.test(x.textContent))?.value||xs.find(x=>x.value)?.value);await team.selectOption(id);await page.locator('#vhTrackedTeam .vh-table tbody tr').first().waitFor({state:'visible'});
+  await nav('Track My Team');const team=page.locator('[data-vh-team-select]');await team.waitFor({state:'visible'});await team.locator('option[value]:not([value=""])').first().waitFor({state:'attached'});const id=await team.locator('option').evaluateAll(xs=>xs.find(x=>x.value&&/Detroit/i.test(x.textContent))?.value||xs.find(x=>x.value)?.value);await team.selectOption(id);await page.locator('#vhTrackedTeam .vh-table tbody tr').first().waitFor({state:'visible'});
   const tracked=await compare('team','#vhTrackedTeam');assert(tracked.exact&&tracked.bytes>1000);result.push({mode,...tracked});console.log('NAVIGATION_LIVE_PARITY '+JSON.stringify({mode,...tracked}));
  }
  assert.deepEqual(pageErrors,[]);

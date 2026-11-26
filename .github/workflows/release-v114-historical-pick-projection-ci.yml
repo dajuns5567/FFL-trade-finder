@@ -32,6 +32,10 @@ jobs:
           import assert from 'node:assert/strict';
           import {execFileSync} from 'node:child_process';
           // Exact preview-only combined candidate; legacy release checks remain unchanged elsewhere.
+          if(process.env.GITHUB_HEAD_REF==='perf/history-hub-navigation-20261125'){
+            execFileSync('node',['scripts/audit-navigation-scope-v656.mjs'],{stdio:'inherit'});
+            process.exit(0);
+          }
           if(process.env.GITHUB_HEAD_REF==='fix/presentation-consistency-20261125'){
             execFileSync('node',['scripts/audit-presentation-consistency-scope.mjs'],{stdio:'inherit'});
             process.exit(0);

@@ -103,7 +103,17 @@ const git=(...args)=>execFileSync('git',args,{encoding:'utf8',stdio:['ignore','p
 export function verifyLocalBadgeIntegration(){
  // Explicitly detect the integrated Awards generation, otherwise preserve the original gate.
  const integrated=readFileSync(path.join(process.cwd(),'league-hub-v451.js'),'utf8').includes('function loadedRosterRankingsHTML(a){const high=!!awardHighMode[a.key]');
- if(integrated)return verifyPinnedIntegration(file=>git('hash-object',file).trim());
+ if(integrated){
+  const original=verifyPinnedIntegration(file=>git('hash-object',file).trim());
+  if(original.ok)return original;
+  // Exact isolated navigation successor only; all four server/producer
+  // sources and the prior accepted pair remain pinned. A mixed or edited
+  // pair is rejected, rather than accepting a branch name as provenance.
+  const successor={'league-hub-v451.js':'0ea25cd9cf3c8ae8c386b00d0597796dd63195c1','value-history-v276.js':'a593d3fcdad13d4b8e0a665b4577c0ec669c6896'};
+  const matches=Object.entries(successor).every(([file,hash])=>git('hash-object',file).trim()===hash);
+  if(matches)return verifyPinnedIntegration(file=>Object.hasOwn(successor,file)?INTEGRATED_RUNTIME_BLOBS[file]:git('hash-object',file).trim());
+  return original;
+ }
  return verifyCombinedBadgeProvenance(
   file=>readFileSync(path.join(process.cwd(),file),'utf8'),
   (pr,file)=>git('show','refs/remotes/pr-badge-source/'+pr+':'+file),

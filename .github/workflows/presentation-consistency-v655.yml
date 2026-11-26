@@ -1,0 +1,34 @@
+name: Shared copy and mobile history presentation consistency
+on:
+  pull_request:
+    paths:
+      - 'fleeced-presentation-copy-v655.js'
+      - 'fleeced-mobile-uniform-v655.css'
+      - 'netlify/functions/site-v29.mjs'
+      - 'scripts/presentation-consistency-browser-v655.mjs'
+      - '.github/workflows/presentation-consistency-v655.yml'
+      - 'value-history-v276.js'
+      - 'league-hub-v451.js'
+permissions:
+  contents: read
+jobs:
+  presentation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install existing browser test runtime
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+          npm install --no-save --ignore-scripts --no-audit --no-fund --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium webkit
+      - name: Confirm copy-only and identical history-table rendering across views
+        run: |
+          node --check fleeced-presentation-copy-v655.js
+          node --check netlify/functions/site-v29.mjs
+          node scripts/presentation-consistency-browser-v655.mjs

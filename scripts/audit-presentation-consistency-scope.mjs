@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
+import {readFileSync} from 'node:fs';
+const baseline='30632f0c88709c5673d7e15df90d832bb2ffff8d',frozen='10cab63ce7437d9fdc80e3e5ca8c97462514ca7c',main='a1f3d19fe3524f97da9c51c2827607d74de4b38c';
+const git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();
+assert.equal(process.env.GITHUB_HEAD_REF,'fix/presentation-consistency-20261125');
+assert.equal(git('rev-parse','origin/main'),main);
+assert.equal(git('ls-remote','origin','refs/heads/archive/verified-preview-653-20261125').split(/\s+/)[0],frozen);
+execFileSync('git',['merge-base','--is-ancestor',baseline,'HEAD']);
+const delta=[".github/workflows/inquirer-daily-default-closed.yml",".github/workflows/mobile-presentation-v631.yml",".github/workflows/netlify-v101-one-time-release-gate-ci.yml",".github/workflows/presentation-consistency-v655.yml",".github/workflows/release-v107-recorder-after-market-ui-isolated.yml",".github/workflows/release-v112-team-trade-linkage-ci.yml",".github/workflows/release-v114-historical-pick-projection-ci.yml",".github/workflows/release-v116-market-period-parity-ci.yml","fleeced-mobile-uniform-v655.css","fleeced-presentation-copy-v655.js","netlify/functions/site-v29.mjs","scripts/audit-presentation-consistency-scope.mjs","scripts/presentation-consistency-browser-v655.mjs","tests/managers-preview-readonly-fallback.test.mjs"];
+assert.deepEqual(git('diff','--name-only',baseline,'HEAD').split('\n').filter(Boolean).sort(),delta,'Only approved presentation files and scoped tests may change');
+const prior=git('show',baseline+':netlify/functions/site-v29.mjs'),now=readFileSync('netlify/functions/site-v29.mjs','utf8').trim();
+assert.equal(now.replace("<link rel=\"stylesheet\" href=\"/fleeced-mobile-uniform-v655.css?v=655\"><script defer src=\"/fleeced-presentation-copy-v655.js?v=655\"></script>",''),prior,'Only two new presentation assets may be injected');
+assert.equal(git('rev-parse','HEAD:netlify.toml'),git('rev-parse',baseline+':netlify.toml'),'No deployment policy change');
+console.log('Frozen Finder and all data, history, publication, scoring and valuation code preserved. Presentation-only candidate.');

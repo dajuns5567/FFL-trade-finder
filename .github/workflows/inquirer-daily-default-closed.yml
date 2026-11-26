@@ -19,7 +19,9 @@ jobs:
         with:
           node-version: '22'
       - run: |
-          if [ "$GITHUB_HEAD_REF" = "integration/verified-preview-653-ci-reconciliation-20261125" ]; then
+          if [ "$GITHUB_HEAD_REF" = "fix/presentation-consistency-20261125" ]; then
+            node scripts/audit-presentation-consistency-scope.mjs
+          elif [ "$GITHUB_HEAD_REF" = "integration/verified-preview-653-ci-reconciliation-20261125" ]; then
             node scripts/audit-verified-preview-653-continuation.mjs
           else
             node scripts/audit-inquirer-closed-preview-scope.mjs

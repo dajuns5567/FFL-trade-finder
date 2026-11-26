@@ -1,0 +1,38 @@
+/* Shared copy-only cleanup; mobile-only geometry. Keep all values and controls. */
+[data-ffl-copy-hidden="1"]{display:none!important}
+@media(max-width:1024px){
+html[data-fleeced-view="mobile"] #valueHistory :is(.vh-card-head,.vh-market-section-title){margin-block:0 4px!important;gap:3px!important}
+html[data-fleeced-view="mobile"] #valueHistory :is(.vh-card-head,.vh-market-section-title) :is(h3,p){margin-block:0 3px!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-mover-card .vh-card-head h3{min-height:0!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-mover-card .vh-card-head>div:first-child{min-height:var(--ffl-paired-min,0px)!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-intel-periodbar{gap:4px!important;padding:6px!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-intel-period-copy{min-width:0!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-intel-period-note{font-size:11px!important;line-height:1.3!important;padding:3px 0!important}
+html[data-fleeced-view="mobile"] #valueHistory :is(.vh-team-toolbar,.vh-search-wrap){gap:4px!important;margin-block:3px!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-team-toolbar label{min-width:0!important;width:100%!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-market-table summary{padding:4px 0!important;gap:5px!important;letter-spacing:.03em!important}
+html[data-fleeced-view="mobile"] #valueHistory #vhMarketSearch{margin:5px 0!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-table:has(th[data-vh-sort="delta365"]) tr{grid-template-columns:repeat(4,minmax(0,1fr))!important;grid-auto-flow:row dense!important;gap:2px!important;padding:4px 2px!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-table:has(th[data-vh-sort="delta365"]) :is(th,td):first-child{grid-column:1/span 2!important;grid-row:1!important;width:auto!important;min-width:0!important;max-width:none!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-table:has(th[data-vh-sort="delta365"]) :is(th,td):nth-child(2){grid-column:3!important;grid-row:1!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-table:has(th[data-vh-sort="delta365"]) :is(th,td):nth-child(8){grid-column:4!important;grid-row:1!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-table:has(th[data-vh-sort="delta365"]) :is(th,td):nth-child(3){grid-column:1!important;grid-row:2!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-table:has(th[data-vh-sort="delta365"]) :is(th,td):nth-child(4){grid-column:2!important;grid-row:2!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-table:has(th[data-vh-sort="delta365"]) :is(th,td):nth-child(5){grid-column:3!important;grid-row:2!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-table:has(th[data-vh-sort="delta365"]) :is(th,td):nth-child(6){grid-column:4!important;grid-row:2!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-table:has(th[data-vh-sort="delta365"]) :is(th,td):nth-child(7){grid-column:1!important;grid-row:3!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-table:has(th[data-vh-sort="delta365"]) :is(th,td):nth-child(9){grid-column:2!important;grid-row:3!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-table:has(th[data-vh-sort="delta365"]) :is(th,td):nth-child(10){grid-column:3!important;grid-row:3!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-table:has(th[data-vh-sort="delta365"]) :is(th,td):nth-child(11){grid-column:4!important;grid-row:3!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-table:has(th[data-vh-sort="delta365"]) :is(th,td):nth-child(12){grid-column:1!important;grid-row:4!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-table:has(th[data-vh-sort="delta365"]) :is(th,td):nth-child(13){grid-column:2!important;grid-row:4!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-table:has(th[data-vh-sort="delta365"]) :is(th,td):nth-child(14){grid-column:3!important;grid-row:4!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-table:has(th[data-vh-sort="delta365"]) td:nth-child(12)::before{content:"Pos Δ 7D"!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-table:has(th[data-vh-sort="delta365"]) td:not(:first-child){padding:3px 1px!important;white-space:nowrap!important;overflow-wrap:normal!important;font-variant-numeric:tabular-nums}
+html[data-fleeced-view="mobile"] #valueHistory .vh-table:has(th[data-vh-sort="delta365"]) td:not(:first-child)::before{white-space:normal!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-table:has(th[data-vh-sort="delta365"]) .vh-player-link{min-height:44px!important;padding:3px 2px!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-table:has(th[data-vh-sort="delta365"]) th{min-height:32px!important;line-height:1.15!important}
+html[data-fleeced-view="mobile"] #leagueHub :is(.lh-sub,.lh-head p){line-height:1.35!important}
+html[data-fleeced-view="mobile"] #leagueHub .lh-card h3{overflow-wrap:anywhere}
+html[data-fleeced-view="mobile"] #leagueHub .lh-archive-filter select{font-size:clamp(10px,3vw,13px)!important;min-height:40px!important}
+}

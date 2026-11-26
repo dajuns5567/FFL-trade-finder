@@ -71,3 +71,44 @@ test('publisher cache never persists caller-computed values; fallback recomputes
  let writes=0;const commit=shareCacheCommit(async()=>++writes);
  await Promise.all([commit(refresh,p),commit(refresh,p)]);assert.equal(writes,1);
 });
+
+test('actual legacy diagnostic endpoints deny anonymous hosted requests before external fetches',async()=>{
+ const names=['consensus-composite-probe','draftsharks-idp-cell-probe','draftsharks-idp-loadrows-endpoint-probe','draftsharks-idp-loadrows-probe','draftsharks-idp-pagination-probe','draftsharks-idp-probe','draftsharks-offense-config-probe','draftsharks-offense-loadrows-probe','draftsharks-offense-probe','fanranked-probe','fantasypros-superflex-audit-probe','idpshow-probe','pfn-probe','rotowire-idp-probe','valuation-calibration-probe',...Array.from({length:12},(_,i)=>'site-v'+(17+i))];
+ const original=globalThis.fetch;let calls=0;globalThis.fetch=async()=>{calls++;throw Error('Unexpected external request')};
+ try{
+  for(const name of names){
+   const mod=await import('../netlify/functions/'+name+'.mjs');
+   for(const context of [{deploy:{context:'production'}},{deploy:{context:'deploy-preview'}},{deploy:{context:'branch-deploy'},user:{id:'example'}}]){
+    const res=await mod.default(new Request('https://example.invalid/.netlify/functions/'+name),context);
+    assert.equal(res.status,404,name);
+   }
+   assert.equal(mod.config?.rateLimit?.action,'rate_limit');
+  }
+  assert.equal(calls,0);
+ }finally{globalThis.fetch=original}
+});
+test('protected preview identity is server-verified, not a spoofable request header',async()=>{
+ const {privateDiagnosticDenied}=await import('../netlify/functions/lib/private-diagnostic-access.mjs');
+ const req=new Request('https://example.invalid/',{headers:{'x-user-id':'spoofed','x-forwarded-for':'127.0.0.1'}});
+ assert.equal(privateDiagnosticDenied(req,{deploy:{context:'deploy-preview'}}).status,404);
+ assert.equal(privateDiagnosticDenied(req,{deploy:{context:'deploy-preview'},user:{id:'authenticated-team-member'}}),null);
+ assert.equal(privateDiagnosticDenied(req,{deploy:{context:'production'},user:{id:'authenticated-team-member'}}).status,404);
+ assert.equal(privateDiagnosticDenied(new Request('http://127.0.0.1/'),{deploy:{context:'production'}}).status,404);
+});
+test('current published site cannot remotely trigger the retired Inquirer scheduler',async()=>{
+ const {default:schedule}=await import('../netlify/functions/inquirer-publish-scheduled.mjs');
+ const original=globalThis.fetch;let calls=0;globalThis.fetch=async()=>{calls++;throw Error('Unexpected external request')};
+ try{
+  const response=await schedule(new Request('https://example.invalid/.netlify/functions/inquirer-publish-scheduled'),{site:{id:'a516be3b-6c65-4f54-a9fb-23c5361bf3d2'},deploy:{context:'production'}});
+  assert.equal((await response.json()).queued,false);assert.equal(calls,0);
+ }finally{globalThis.fetch=original}
+});
+test('actual assembled site retains browser security headers and all canonical runtime scripts',async()=>{
+ const {default:site}=await import('../netlify/functions/site-v29.mjs');
+ const res=await site();assert.equal(res.status,200);
+ assert.match(res.headers.get('content-security-policy'),/frame-ancestors 'none'/);
+ assert.equal(res.headers.get('x-content-type-options'),'nosniff');
+ assert.equal(res.headers.get('x-frame-options'),'DENY');
+ assert.match(res.headers.get('x-robots-tag'),/noindex/);
+ const html=await res.text();for(const asset of ['trade-finder-v256-compiled.js','value-history-v276.js','league-hub-v451.js','modeled-player-values-v319.js'])assert(html.includes(asset),asset);
+});

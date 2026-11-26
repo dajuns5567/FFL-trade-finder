@@ -12,5 +12,6 @@ for(const file of ["league-hub-v451.js","netlify/functions/consensus-composite-p
 const original=git('show',frozen+':netlify.toml');
 let expectedToml=original.replace('  publish = "."','  publish = ".public-site"\n  command = "node scripts/build-public-site.mjs"');
 expectedToml+='\n\n# Do not expose the unassembled repository index as a bypass route.\n[[redirects]]\n  from = "/index.html"\n  to = "/.netlify/functions/site-v29"\n  status = 200\n  force = true';
-assert.equal(git('show','HEAD:netlify.toml').replace(/\n\n+/g,'\n\n'),expectedToml.replace(/\n\n+/g,'\n\n'),'Only static publish isolation and index redirect permitted; production/preview policy unchanged');
+expectedToml=expectedToml.replace("'655','656'].includes","'655','656','657'].includes");
+assert.equal(git('show','HEAD:netlify.toml').replace(/\n\n+/g,'\n\n'),expectedToml.replace(/\n\n+/g,'\n\n'),'Only static publish isolation, index redirect, and reviewed Preview 657 permitted; production policy unchanged');
 console.log('Exact accepted Preview 656 lineage, pinned security application, no unreviewed valuation/Finder/UI changes and no release authorization.');

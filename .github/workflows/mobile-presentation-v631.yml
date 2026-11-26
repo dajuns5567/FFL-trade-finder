@@ -10,6 +10,9 @@ on:
       - 'fleeced-mobile-clean-v648.css'
       - 'fleeced-mobile-align-v649.css'
       - 'fleeced-mobile-align-v649.js'
+      - 'fleeced-mobile-home-v650.css'
+      - 'fleeced-mobile-home-v650.js'
+      - 'scripts/mobile-home-browser-v650.mjs'
       - 'scripts/mobile-aligned-browser-v649.mjs'
       - 'scripts/mobile-clean-browser-v648.mjs'
       - 'scripts/mobile-compact-browser-v647.mjs'
@@ -42,6 +45,10 @@ jobs:
           import {execFileSync} from 'node:child_process';
           import {readFileSync} from 'node:fs';
           // Exact preview-only combined candidate; legacy release checks remain unchanged elsewhere.
+          if(process.env.GITHUB_HEAD_REF==='fix/mobile-home-market-navigation-20261125'){
+            execFileSync('node',['scripts/audit-mobile-home-preview-scope.mjs'],{stdio:'inherit'});
+            process.exit(0);
+          }
           if(process.env.GITHUB_HEAD_REF==='fix/mobile-aligned-rows-touch-20261125'){
             execFileSync('node',['scripts/audit-mobile-aligned-preview-scope.mjs'],{stdio:'inherit'});
             process.exit(0);
@@ -95,4 +102,4 @@ jobs:
           node scripts/mobile-presentation-browser-v631.mjs
           node scripts/mobile-density-browser-v645.mjs
           node scripts/mobile-pairs-browser-v646.mjs
-          node scripts/mobile-aligned-browser-v649.mjs
+          node scripts/mobile-home-browser-v650.mjs

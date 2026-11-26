@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
+import {readFileSync} from 'node:fs';
+const base='df5050cd910a1c8e30818d3c24f04daeb5660370',main='a1f3d19fe3524f97da9c51c2827607d74de4b38c';
+const git=(...a)=>execFileSync('git',a,{encoding:'utf8'}).trim();
+assert.equal(process.env.GITHUB_HEAD_REF,'fix/mobile-home-market-navigation-20261125');
+assert.equal(git('rev-parse','origin/main'),main);
+assert.equal(git('ls-remote','origin','refs/heads/archive/desktop-release-630-20261125').split(/\s+/)[0],main);
+execFileSync('git',['merge-base','--is-ancestor',base,'HEAD']);
+assert.deepEqual(git('diff','--name-only',base,'HEAD').split('\n').filter(Boolean).sort(),[".github/workflows/mobile-presentation-v631.yml",".github/workflows/netlify-v101-one-time-release-gate-ci.yml",".github/workflows/release-v107-recorder-after-market-ui-isolated.yml",".github/workflows/release-v112-team-trade-linkage-ci.yml",".github/workflows/release-v114-historical-pick-projection-ci.yml",".github/workflows/release-v116-market-period-parity-ci.yml","fleeced-mobile-home-v650.css","fleeced-mobile-home-v650.js","netlify.toml","netlify/functions/site-v29.mjs","scripts/audit-inquirer-closed-preview-scope.mjs","scripts/audit-mobile-home-preview-scope.mjs","scripts/mobile-density-browser-v645.mjs","scripts/mobile-home-browser-v650.mjs","scripts/mobile-pairs-browser-v646.mjs"]);
+const prior=p=>execFileSync('git',['show',base+':'+p],{encoding:'utf8'});
+assert.equal(readFileSync('netlify/functions/site-v29.mjs','utf8'),prior('netlify/functions/site-v29.mjs').replace("<script defer src=\"/fleeced-mobile-align-v649.js?v=649\"></script>","<script defer src=\"/fleeced-mobile-align-v649.js?v=649\"></script><link rel=\"stylesheet\" href=\"/fleeced-mobile-home-v650.css?v=650\"><script defer src=\"/fleeced-mobile-home-v650.js?v=650\"></script>"));
+assert.equal(readFileSync('netlify.toml','utf8'),prior('netlify.toml').replace("'574','630','637','641','642','645','646','647','648','649'].includes","'574','630','637','641','642','645','646','647','648','649','650'].includes"));
+for(const l of readFileSync('fleeced-mobile-home-v650.css','utf8').split('\n').filter(l=>l.includes('{')&&!l.startsWith('@media')))assert(l.startsWith('html[data-fleeced-view="mobile"]'));
+console.log('PR 650 exact mobile-only delta; original calculation, trade, and chart source files unchanged');

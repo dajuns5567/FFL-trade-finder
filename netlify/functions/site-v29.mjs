@@ -18,7 +18,7 @@ export default async () => {
   const viewport = '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">';
   if (!raw.includes(viewport)) throw new Error('Original viewport missing');
   raw = raw.replace(viewport, viewport + '<script src="/fleeced-view-mode-v631.js?v=631"></script>');
-  raw = raw.replace('</head>', '<link rel="stylesheet" href="/fleeced-mobile-v631.css?v=631"><link rel="stylesheet" href="/fleeced-mobile-density-v645.css?v=645"><link rel="stylesheet" href="/fleeced-mobile-pairs-v646.css?v=646"><link rel="stylesheet" href="/fleeced-mobile-compact-v647.css?v=647"><link rel="stylesheet" href="/fleeced-mobile-clean-v648.css?v=648"><link rel="stylesheet" href="/fleeced-mobile-align-v649.css?v=649"><script defer src="/fleeced-mobile-align-v649.js?v=649"></script></head>');
+  raw = raw.replace('</head>', '<link rel="stylesheet" href="/fleeced-mobile-v631.css?v=631"><link rel="stylesheet" href="/fleeced-mobile-density-v645.css?v=645"><link rel="stylesheet" href="/fleeced-mobile-pairs-v646.css?v=646"><link rel="stylesheet" href="/fleeced-mobile-compact-v647.css?v=647"><link rel="stylesheet" href="/fleeced-mobile-clean-v648.css?v=648"><link rel="stylesheet" href="/fleeced-mobile-align-v649.css?v=649"><script defer src="/fleeced-mobile-align-v649.js?v=649"></script><link rel="stylesheet" href="/fleeced-mobile-home-v650.css?v=650"><script defer src="/fleeced-mobile-home-v650.js?v=650"></script></head>');
   const runtimeV21 = runtime;
   const html = raw.replace('</body>', runtimeV21 + '</body>');
 

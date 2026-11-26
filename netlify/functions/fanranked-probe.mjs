@@ -1,3 +1,4 @@
+import {privateDiagnosticDenied} from './lib/private-diagnostic-access.mjs';
 const ORIGIN="https://www.fanranked.com";
 const PAGE=`${ORIGIN}/football/dynasty-rankings`;
 const TIMEOUT_MS=7000;
@@ -30,7 +31,8 @@ function apiUrls(text){
   return [...new Set(out)].slice(0,120);
 }
 
-export default async ()=>{
+export default async(req,context)=>{const denied=privateDiagnosticDenied(req,context);if(denied)return denied;
+
   const page=await fetchAny(PAGE);
   const scripts=[...page.text.matchAll(/<script\b[^>]*src=["']([^"']+)["']/gi)].map(m=>new URL(m[1],ORIGIN).href);
   let main=null;
@@ -56,3 +58,5 @@ export default async ()=>{
     chunks
   },null,2),{headers:{"content-type":"application/json; charset=utf-8","cache-control":"no-store"}});
 };
+
+export const config={rateLimit:{action:'rate_limit',aggregateBy:'domain',windowSize:60,windowLimit:10}};

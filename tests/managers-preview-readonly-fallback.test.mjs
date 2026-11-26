@@ -43,7 +43,8 @@ test('Netlify permits explicitly reviewed PR previews, never unsanctioned produc
  const ids=[...allow[1].matchAll(/'(\d+)'/g)].map(m=>m[1]);
  assert.ok(ids.length>0&&ids.every(id=>/^\d+$/.test(id)),'all Netlify preview IDs must be explicit numeric review IDs');
  const activePR=String(process.env.GITHUB_REF||'').match(/^refs\/pull\/(\d+)\//)?.[1];
- if(activePR&&process.env.GITHUB_HEAD_REF==='fix/presentation-consistency-20261125'){
+ if(activePR==='655'&&process.env.GITHUB_HEAD_REF==='fix/presentation-consistency-20261125'){
+  assert.ok(ids.includes(activePR),'Reviewed presentation preview must be explicitly allowlisted');
   const shallow=execFileSync('git',['rev-parse','--is-shallow-repository'],{encoding:'utf8'}).trim()==='true';
   execFileSync('git',['fetch','--no-tags',...(shallow?['--unshallow']:[]),'origin','+refs/heads/main:refs/remotes/origin/main'],{stdio:'inherit'});
   execFileSync(process.execPath,['scripts/audit-presentation-consistency-scope.mjs'],{stdio:'inherit'});

@@ -45,6 +45,10 @@ jobs:
           import {execFileSync} from 'node:child_process';
           import {readFileSync} from 'node:fs';
           // Exact preview-only combined candidate; legacy release checks remain unchanged elsewhere.
+          if(process.env.GITHUB_HEAD_REF==='fix/iphone-finder-scroll-20261126'){
+            execFileSync('node',['scripts/audit-iphone-finder-scroll-v661.mjs'],{stdio:'inherit'});
+            process.exit(0);
+          }
           if(process.env.GITHUB_HEAD_REF==='fix/final-navigation-logo-20261126'){
             execFileSync('node',['scripts/audit-final-navigation-scope-v659.mjs'],{stdio:'inherit'});
             process.exit(0);

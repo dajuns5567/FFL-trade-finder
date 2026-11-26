@@ -27,12 +27,12 @@ jobs:
       - name: Check installed production dependencies
         if: always()
         run: |
-          npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+          npm install --ignore-scripts --no-audit --no-fund --package-lock=true
           node --input-type=module <<'JS'
           import {spawnSync} from 'node:child_process';
           const r=spawnSync('npm',['audit','--omit=dev','--json'],{encoding:'utf8',maxBuffer:8*1024*1024});
           let report;try{report=JSON.parse(r.stdout)}catch{throw Error('Dependency audit returned no valid report; do not mark clean')}
-          if(report.error||!report.metadata?.vulnerabilities)throw Error('Dependency audit unavailable; review required');
+          if(report.error||!report.metadata?.vulnerabilities){console.log('DEPENDENCY_AUDIT_UNAVAILABLE '+JSON.stringify({code:report.error?.code||null,status:r.status}));throw Error('Dependency audit unavailable; review required')}
           const counts=report.metadata.vulnerabilities;
           console.log('PRODUCTION_DEPENDENCY_AUDIT '+JSON.stringify({counts,packages:Object.entries(report.vulnerabilities||{}).map(([name,v])=>({name,severity:v.severity,fixAvailable:!!v.fixAvailable}))}));
           if(counts.high||counts.critical)process.exitCode=1;

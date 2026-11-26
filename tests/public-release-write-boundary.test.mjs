@@ -41,3 +41,19 @@ test('consensus request shape rejected before upstream work',async()=>{
  assert.equal((await update(request('POST',null,JSON.stringify({players:Array(25001).fill({})})))).status,400);
  assert.equal(calls,0)}finally{globalThis.fetch=original}
 });
+
+test('refresh budget rejects excessive clients, concurrent work and request count, and recovers',async()=>{
+ const {createPublicRefreshBudget}=await import('../netlify/functions/lib/public-refresh-budget.mjs');
+ let now=1000;const b=createPublicRefreshBudget({windowMs:1000,perClient:2,total:3,maxClients:2,maxConcurrent:2,clock:()=>now});
+ const a=b.acquire('a'),c=b.acquire('b');assert(a.allowed&&c.allowed);
+ assert(!b.acquire('a').allowed);a.release();a.release();
+ const d=b.acquire('a');assert(d.allowed);d.release();c.release();
+ assert(!b.acquire('b').allowed);now+=1000;const e=b.acquire('b');assert(e.allowed);e.release();
+});
+test('simultaneous source refreshes share one fetch; fresh attempts and failures are not permanently cached',async()=>{
+ const {createSharedRefresh}=await import('../netlify/functions/lib/public-refresh-budget.mjs');
+ let calls=0,fail=false;
+ const read=createSharedRefresh(async()=>{calls++;if(fail)throw Error('test');return {calls}});
+ const [a,b]=await Promise.all([read(),read()]);assert.equal(calls,1);assert.equal(a,b);
+ assert.equal((await read()).calls,2);fail=true;await assert.rejects(read());fail=false;assert.equal((await read()).calls,4);
+});

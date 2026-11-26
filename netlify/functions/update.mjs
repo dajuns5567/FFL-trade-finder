@@ -1,5 +1,8 @@
 import {archiveWriteAuthorized,readBoundedJson,securityJson} from './lib/public-release-authorization.mjs';
 import { refreshAllSources } from "./consensus-source-overrides.mjs";
+import {createPublicRefreshBudget,createSharedRefresh} from './lib/public-refresh-budget.mjs';
+const publicRefreshBudget=createPublicRefreshBudget();
+const sharedPublisherFetch=createSharedRefresh(refreshAllSources);
 import { buildConsensusComposite } from "./consensus-composite-v3.mjs";
 import { buildFreshnessSnapshot,ageFreshness } from "./consensus-source-freshness.mjs";
 import { getStore } from "@netlify/blobs";
@@ -51,7 +54,14 @@ export default async (req,context)=>{
   const parsed=await readBoundedJson(req,5*1024*1024);if(parsed.error)return parsed.error;
   const players=Array.isArray(parsed.body?.players)?parsed.body.players:[];
   if(!players.length||players.length>25000)return json({ok:false,error:"Invalid player list size"},400);
-  const refresh=await refreshAllSources();
+  const hosted=!!context?.deploy||!!process.env.NETLIFY;
+  const trusted=archiveWriteAuthorized(req,context);
+  // Hosted anonymous clients receive bounded access. Local scheduled/test
+  // runtime is not a remotely reachable endpoint and keeps its exact retries.
+  const lease=hosted&&!trusted?publicRefreshBudget.acquire(context?.ip):null;
+  if(lease&&!lease.allowed)return new Response(JSON.stringify({ok:false,error:'Refresh temporarily busy; retry shortly'}),{status:429,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store','retry-after':String(lease.retryAfter)}});
+  try{
+  const refresh=hosted&&!trusted?await sharedPublisherFetch():await refreshAllSources();
   const candidate=buildConsensusPayload(refresh,players);
   const previous=await readLastGood();
 
@@ -63,7 +73,7 @@ export default async (req,context)=>{
     const promoted={sources:candidate.sources,composite:candidate.composite,updatedAt:candidate.updatedAt,sourceManifest:candidate.summary.results.map(x=>({source:x.source,status:"fresh",snapshot_timestamp:x.timestamp||candidate.updatedAt,attempt_timestamp:x.timestamp||candidate.updatedAt,players_extracted:x.players_extracted,ranking_rows:x.ranking_rows,publisher_updated_at:null,source_freshness:(x.source==="The IDP Show Combined"?candidate.sources["The IDP Show Combined Offense"]?.freshness:candidate.sources[x.source]?.freshness)||null,market_observation:x.market_observation||null,source_provenance:x.source_provenance||null}))};
     // Caller-provided player identities may affect this request's composite,
     // but only a trusted producer can promote it to shared fallback storage.
-    if(archiveWriteAuthorized(req,context))await writeLastGood(promoted);
+    if(trusted)await writeLastGood(promoted);
     const summary={...candidate.summary,results:candidate.summary.results.map(x=>({...x,
       source_freshness:(x.source==="The IDP Show Combined"?candidate.sources["The IDP Show Combined Offense"]?.freshness:candidate.sources[x.source]?.freshness)||null,
       market_observation:x.market_observation||null,
@@ -83,5 +93,6 @@ export default async (req,context)=>{
   });
   const summary={...candidate.summary,successful:candidate.summary.results.filter(x=>x.ok).length,results:manifest.map(x=>({source:x.source,ok:x.status==="fresh-not-promoted",status:x.status,players_extracted:x.players_extracted,ranking_rows:x.ranking_rows,timestamp:x.attempt_timestamp,snapshot_timestamp:x.snapshot_timestamp,source_freshness:x.source_freshness||null,market_observation:x.market_observation||null,source_provenance:x.source_provenance||null,publisher_updated_at:x.publisher_updated_at||null,error:x.error||null}))};
   return json({...candidate,sources:priorSources||{},composite:priorComposite||candidate.composite,summary,sourceManifest:manifest,promotion:{promoted:false,using_last_known_good:!!priorSources,last_good_updated_at:previous?.updatedAt||null},integrity:{...candidate.integrity,reason:priorSources?`${candidate.integrity.reason}; complete last-known-good consensus from ${previous.updatedAt} remains active`:`${candidate.integrity.reason}; no persisted last-known-good consensus is available yet`}});
+  }finally{lease?.release?.()}
 };
 function json(body,status=200){return new Response(JSON.stringify(body),{status,headers:{"content-type":"application/json; charset=utf-8","cache-control":"no-store"}})}

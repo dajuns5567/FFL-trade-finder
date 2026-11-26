@@ -676,7 +676,8 @@ function snapshotSourceFromUrl(){
   try{return new URLSearchParams(location.search).get('vh_source')==='scheduled'?'scheduled':'page-load'}catch{return'page-load'}
 }
 async function recordSnapshot(source=pendingSnapshotSource){
-  if(isValueHistoryDeployPreview()||!localSnapshotCollector())return false;
+  if(isValueHistoryDeployPreview())return false;
+  if(!localSnapshotCollector())return false;
   try{
     if(!snapshotPreconditions()||!scheduledRefreshReady()){
       if(window.__fllConsensusRefresh?.complete===true&&window.__fllConsensusRefresh?.ok!==true){

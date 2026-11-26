@@ -29,6 +29,7 @@ export default async () => {
       'cache-control': 'no-store',
       'x-content-type-options': 'nosniff',
       'x-frame-options': 'DENY',
+      'x-robots-tag': 'noindex, nofollow, noarchive',
       'referrer-policy': 'strict-origin-when-cross-origin',
       'permissions-policy': 'camera=(), microphone=(), geolocation=()',
       'x-fll-release': 'section1-v263-selected-positions-add-assets-performance-methodology-v264-value-history-ktc-embedded-parser-ui-alignment-v347-theme-v274-nonblocking-consensus-v277-evaluator-roster-v285-specific-max-value-pick-display-v279-specific-tier-up-v282-specific-add-assets-v309-broad-acquire-specific-diversity-specific-max-tier-add-v300-recommended-pick-ownership-v301-specific-player-v309-value-adjustment-v322-test-only-draft-order-v527-market-intelligence-r1-modeled-player-values-v319-specific-blank-router-v325-value-history-market-defaults-v386-headless-observability-v387-scheduled-full-refresh-v390-headless-pipeline-v395'

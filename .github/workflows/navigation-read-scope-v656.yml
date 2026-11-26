@@ -5,6 +5,7 @@ on:
       - 'value-history-v276.js'
       - 'league-hub-v451.js'
       - 'tests/navigation-read-scope-v656.test.mjs'
+      - 'scripts/navigation-*-v656.mjs'
       - '.github/workflows/navigation-read-scope-v656.yml'
 permissions:
   contents: read
@@ -33,4 +34,7 @@ jobs:
           npm install --no-save --ignore-scripts --no-audit --no-fund --package-lock=false playwright@1.55.0
           npx playwright install --with-deps chromium
       - name: Compare complete rendered HTML and synchronous timing with identical live inputs
-        run: node scripts/navigation-live-runner-v656.mjs
+        run: |
+          node --check scripts/navigation-site-profile-v656.mjs
+          node --check scripts/navigation-live-runner-v656.mjs
+          node scripts/navigation-live-runner-v656.mjs

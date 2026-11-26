@@ -4,7 +4,7 @@ export async function profileSiteNavigation(page){
  const records=[],errors=[],requests=new Map();
  let current=null;
  page.on('pageerror',e=>errors.push(e.message));
- page.on('request',r=>{if(!current)return;const u=new URL(r.url());if(!/\\.netlify\\/functions|\\/api\\//.test(u.pathname))return;const key=u.pathname+'?'+[...u.searchParams.keys()].sort().join('&');const entry={endpoint:key,start:Date.now(),method:r.method()};current.requests.push(entry);requests.set(r,entry)});
+ page.on('request',r=>{if(!current)return;const u=new URL(r.url());if(!u.pathname.includes('/.netlify/functions/')&&!u.pathname.includes('/api/'))return;const key=u.pathname+'?'+[...u.searchParams.keys()].sort().join('&');const entry={endpoint:key,start:Date.now(),method:r.method()};current.requests.push(entry);requests.set(r,entry)});
  page.on('requestfinished',r=>{const entry=requests.get(r);if(entry){entry.ms=Date.now()-entry.start;requests.delete(r)}});
  page.on('requestfailed',r=>{const entry=requests.get(r);if(entry){entry.failed=true;entry.ms=Date.now()-entry.start;requests.delete(r)}});
  const nav=async(tab,label)=>{

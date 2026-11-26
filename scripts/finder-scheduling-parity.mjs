@@ -99,6 +99,11 @@ async function auditTargetedParityCase(page,expectedCount){
 }
 
 export async function auditTargetedParity(page){
+ await page.locator('#findMode').selectOption('value');
+ await page.locator('#tradeTier94').selectOption('up');
+ await page.locator('#desiredPlayerSearch').fill('Jonathan Taylor');
+ await page.locator('#desiredPlayerSearch').dispatchEvent('change');
+ await page.evaluate(()=>{const x=document.getElementById('tradeAssist97');if(!x.checked)x.click()});
  const ids=['9487','9501','11705'],sets=[];
  for(let count=1;count<=3;count++){
   const selected=await page.evaluate(ids=>{

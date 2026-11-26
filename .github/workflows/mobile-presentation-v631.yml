@@ -45,6 +45,10 @@ jobs:
           import {execFileSync} from 'node:child_process';
           import {readFileSync} from 'node:fs';
           // Exact preview-only combined candidate; legacy release checks remain unchanged elsewhere.
+          if(process.env.GITHUB_HEAD_REF==='perf/finder-target-coverage-20261125'){
+            execFileSync('node',['scripts/audit-finder-preview-scope.mjs'],{stdio:'inherit'});
+            process.exit(0);
+          }
           if(process.env.GITHUB_HEAD_REF==='fix/mobile-home-market-navigation-20261125'){
             execFileSync('node',['scripts/audit-mobile-home-preview-scope.mjs'],{stdio:'inherit'});
             process.exit(0);

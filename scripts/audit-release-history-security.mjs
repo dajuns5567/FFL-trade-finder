@@ -53,7 +53,27 @@ const functions=tracked.filter(p=>/^netlify\/functions\/[^/]+\.(?:mjs|js|mts|ts|
 });
 const workflows=tracked.filter(p=>/^\.github\/workflows\/[^/]+\.ya?ml$/.test(p)).flatMap(file=>{
  const code=readFileSync(file,'utf8');
- return /pull_request_target\s*:/m.test(code)||(/pull_request\s*:/m.test(code)&&/contents:\s*write\b/m.test(code))?[{file,reason:'review PR-triggered privileged workflow'}]:[];
+ if(/pull_request_target\s*:/m.test(code))return[{file,reason:'review pull_request_target workflow'}];
+ if(!/pull_request\s*:/m.test(code)||!/contents:\s*write\b/m.test(code))return [];
+ // Only explicitly branch/event-gated jobs may hold write permission in a
+ // PR-triggerable workflow. Check the actual job-level guard, not step guards.
+ // This deliberately rejects unfamiliar YAML layouts for manual review.
+ const lines=code.split('\n'),jobStart=lines.findIndex(line=>/^jobs:\s*$/.test(line));
+ const allowed=new Set([
+  "github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push')",
+  "github.event_name == 'push' && github.ref == 'refs/heads/fix/inquirer-github-native-publication-20261121'"
+ ]);
+ const bad=[];let job='',guard='';
+ for(let i=0;i<lines.length;i++){
+  const line=lines[i];
+  if(i>jobStart&&/^  [A-Za-z0-9_-]+:\s*$/.test(line)){job=line.trim().slice(0,-1);guard='';}
+  if(i>jobStart&&/^    if: /.test(line))guard=line.trim().slice(4);
+  if(/contents:\s*write\b/.test(line)&&!/^\s*#/.test(line)){
+   if(jobStart<0||i<=jobStart||!job||!/^      contents: write(?:\s*(?:#.*)?)$/.test(line)||!allowed.has(guard))
+    bad.push({file,job:job||'workflow',reason:'write permission lacks explicit trusted job-level event/ref guard'});
+  }
+ }
+ return bad;
 });
 console.log('HISTORICAL_SECURITY_REPORT '+JSON.stringify({reachableObjects:listing.length,textBlobsScanned:scanned,binaryBlobs:binary,skippedLargeBlobs:skipped.length,possibleSecretFindings:findings,possiblePrivateFields:privateFields,limitations:['Known credential patterns only; binary/large blobs and unreachable objects are excluded. No account settings or active token validity inferred.']}));
 console.log('FUNCTION_ACCESS_INVENTORY '+JSON.stringify(functions));

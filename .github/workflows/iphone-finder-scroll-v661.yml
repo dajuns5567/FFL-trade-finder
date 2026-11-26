@@ -1,0 +1,38 @@
+name: iPhone Finder scroll and pagination isolation
+on:
+  pull_request:
+    paths:
+      - 'fleeced-mobile-align-v649.js'
+      - 'scripts/iphone-finder-scroll-v661.mjs'
+      - '.github/workflows/iphone-finder-scroll-v661.yml'
+permissions:
+  contents: read
+jobs:
+  scroll:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact approved production scope
+        run: |
+          if [ "${GITHUB_HEAD_REF}" = "perf/finder-load-more-20261126" ]; then
+            node scripts/audit-finder-pagination-v662.mjs
+          else
+            node scripts/audit-iphone-finder-scroll-v661.mjs
+          fi
+      - name: Browser installation
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+          npm install --no-save --ignore-scripts --no-audit --no-fund --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium webkit
+      - name: Real pagination and WebKit viewport-height regression
+        run: |
+          node --check fleeced-mobile-align-v649.js
+          node --check scripts/iphone-finder-scroll-v661.mjs
+          node scripts/iphone-finder-scroll-v661.mjs
+          node scripts/mobile-aligned-browser-v649.mjs

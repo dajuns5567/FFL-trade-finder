@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
+const base='14d706ac5482114af477ca76e678497b164a55fa',git=(...a)=>execFileSync('git',a,{encoding:'utf8'}).trim();
+assert.equal(git('rev-parse','origin/main'),base,'Production base must remain pinned');
+execFileSync('git',['merge-base','--is-ancestor',base,'HEAD']);
+assert.deepEqual(git('diff','--name-only',base,'HEAD').split('\n').filter(Boolean).sort(),[".github/workflows/iphone-finder-scroll-v661.yml",".github/workflows/mobile-presentation-v631.yml",".github/workflows/netlify-v101-one-time-release-gate-ci.yml","fleeced-mobile-align-v649.js","netlify.toml","netlify/functions/site-v29.mjs","scripts/audit-iphone-finder-scroll-v661.mjs","scripts/iphone-finder-scroll-v661.mjs","scripts/mobile-pairs-browser-v646.mjs","tests/managers-preview-readonly-fallback.test.mjs"]);
+assert.equal(git('show','HEAD:netlify/functions/site-v29.mjs'),git('show',base+':netlify/functions/site-v29.mjs').replace('fleeced-mobile-align-v649.js?v=649','fleeced-mobile-align-v649.js?v=661'));
+assert.equal(git('show','HEAD:netlify.toml'),git('show',base+':netlify.toml').replace("'657','658'].includes","'657','658','659'].includes"),'Only verified PR 659 may be added to the preview gate');
+const verified='c441a27fca525d9d7abae33e430a00bb6ddcd023';
+execFileSync('git',['merge-base','--is-ancestor',verified,'HEAD']);
+assert.deepEqual(git('diff','--name-only',verified,'HEAD').split('\n').filter(Boolean).sort(),['netlify.toml','scripts/audit-iphone-finder-scroll-v661.mjs','tests/managers-preview-readonly-fallback.test.mjs'],'All 27-workflow verified application and browser-test bytes remain exact');
+console.log('Exact mobile Finder presentation scope; verified runtime preserved and preview 659 alone enabled.');

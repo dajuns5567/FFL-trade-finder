@@ -43,7 +43,17 @@ test('Netlify permits explicitly reviewed PR previews, never unsanctioned produc
  const ids=[...allow[1].matchAll(/'(\d+)'/g)].map(m=>m[1]);
  assert.ok(ids.length>0&&ids.every(id=>/^\d+$/.test(id)),'all Netlify preview IDs must be explicit numeric review IDs');
  const activePR=String(process.env.GITHUB_REF||'').match(/^refs\/pull\/(\d+)\//)?.[1];
- if(activePR==='658'&&process.env.GITHUB_HEAD_REF==='fix/final-navigation-logo-20261126'){
+ if(activePR==='660'&&process.env.GITHUB_HEAD_REF==='perf/finder-load-more-20261126'){
+  assert.ok(ids.includes(activePR),'Fully verified Preview 660 must be explicitly allowlisted');
+  const shallow=execFileSync('git',['rev-parse','--is-shallow-repository'],{encoding:'utf8'}).trim()==='true';
+  execFileSync('git',['fetch','--no-tags',...(shallow?['--unshallow']:[]),'origin','+refs/heads/main:refs/remotes/origin/main'],{stdio:'inherit'});
+  execFileSync(process.execPath,['scripts/audit-finder-pagination-v662.mjs'],{stdio:'inherit'});
+ }else if(activePR==='659'&&process.env.GITHUB_HEAD_REF==='fix/iphone-finder-scroll-20261126'){
+  assert.ok(ids.includes(activePR),'Browser-verified iPhone scroll candidate must be explicitly allowlisted');
+  const shallow=execFileSync('git',['rev-parse','--is-shallow-repository'],{encoding:'utf8'}).trim()==='true';
+  execFileSync('git',['fetch','--no-tags',...(shallow?['--unshallow']:[]),'origin','+refs/heads/main:refs/remotes/origin/main'],{stdio:'inherit'});
+  execFileSync(process.execPath,['scripts/audit-iphone-finder-scroll-v661.mjs'],{stdio:'inherit'});
+ }else if(activePR==='658'&&process.env.GITHUB_HEAD_REF==='fix/final-navigation-logo-20261126'){
   assert.ok(ids.includes(activePR),'Browser-verified view-switch preview must be explicitly allowlisted');
   const shallow=execFileSync('git',['rev-parse','--is-shallow-repository'],{encoding:'utf8'}).trim()==='true';
   execFileSync('git',['fetch','--no-tags',...(shallow?['--unshallow']:[]),'origin','+refs/heads/main:refs/remotes/origin/main'],{stdio:'inherit'});

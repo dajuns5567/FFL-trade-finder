@@ -1,0 +1,39 @@
+name: Finder Load More read batch parity and performance
+on:
+  push:
+    branches: ['perf/finder-load-more-20261126']
+  pull_request:
+    branches: ['fix/iphone-finder-scroll-20261126']
+    paths:
+      - 'finder-pagination-read-batch-v662.js'
+      - 'trade-recommended-pick-ownership-v662.js'
+      - 'scripts/finder-pagination-browser-v662.mjs'
+      - 'tests/finder-pagination-read-batch-v662.test.mjs'
+      - '.github/workflows/finder-pagination-batch-v662.yml'
+permissions:
+  contents: read
+jobs:
+  parity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preserve exact verified search and valuation assets
+        run: |
+          node scripts/audit-finder-pagination-v662.mjs
+      - name: Actual seven renderer pagination parity and read counts
+        run: |
+          node --check finder-pagination-read-batch-v662.js
+          node --test tests/finder-pagination-read-batch-v662.test.mjs
+      - name: Native WebKit and Chromium click-through-paint parity
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+          npm install --no-save --ignore-scripts --no-audit --no-fund --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium webkit
+          node scripts/finder-pagination-browser-v662.mjs
+          node --test tests/finder-verified-653-regression.test.mjs

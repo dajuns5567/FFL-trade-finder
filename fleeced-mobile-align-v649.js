@@ -2,12 +2,20 @@
 (()=>{
 'use strict';
 const root=document.documentElement,active=()=>root.dataset.fleecedView==='mobile'&&matchMedia('(max-width:1024px)').matches;
-const prop='--ffl-paired-min',gap='--ffl-total-gap',marked=new Set();
-let frame=0;
+const prop='--ffl-paired-min',gap='--ffl-total-gap',marked=new Set(),finderMarked=new Set();
+let frame=0,finderDirty=true,lastLayoutWidth=document.documentElement.clientWidth;
+function invalidateFinder(){finderDirty=true;schedule()}
+function clearMarks(set){for(const e of set){e.style.removeProperty(prop);e.style.removeProperty(gap);if(!e.getAttribute('style'))e.removeAttribute('style')}set.clear()}
+function mark(e){(e.closest('#finderResults')?finderMarked:marked).add(e)}
 function schedule(){if(!frame)frame=requestAnimationFrame(align)}
 function align(){
  frame=0;
- for(const e of marked){e.style.removeProperty(prop);e.style.removeProperty(gap);if(!e.getAttribute('style'))e.removeAttribute('style')}marked.clear();
+ // Keep a populated Finder's row heights stable during unrelated DOM updates
+ // and iOS browser-toolbar height changes. Only its own content, mode or width
+ // invalidates its measurements. Clear detached nodes on the next real redraw.
+ const measureFinder=finderDirty;finderDirty=false;
+ clearMarks(marked);
+ if(measureFinder||!active())clearMarks(finderMarked);
  if(!active())return;
  const groups=[],totals=[];
  const visible=e=>e?.getClientRects().length&&e.getBoundingClientRect().width>0;
@@ -25,22 +33,42 @@ function align(){
   }
  }
  for(const g of document.querySelectorAll('#finderResults .trade95-grid,#evalResults .trade95-grid,#tradeHistory .vh-eval-grid,#valueHistory .vh-eval-grid,#tradeHistory .vh-compact-trade')){
+  if(!measureFinder&&g.closest('#finderResults'))continue;
   const [a,b]=g.children;if(g.children.length!==2||!visible(g))continue;
   const at=a.querySelector('.trade95-total,.vh-eval-totals'),bt=b.querySelector('.trade95-total,.vh-eval-totals');if(visible(at)&&visible(bt))totals.push([at,bt]);
   for(const sel of ['.trade95-side-title,.vh-eval-side-title,.vh-compact-header','.trade95-asset,.vh-eval-asset,.vh-compact-asset','.trade95-total,.vh-eval-total:not(.adjust):not(.effective)','.trade97-adjust,.vh-eval-total.adjust','.trade97-effective,.vh-eval-total.effective'])pairRows(a,b,sel);
  }
  const sizes=groups.map(g=>[g,Math.ceil(Math.max(...g.map(e=>e.getBoundingClientRect().height)))]);
- for(const [g,h] of sizes)for(const e of g){e.style.setProperty(prop,h+'px');marked.add(e)}
+ for(const [g,h] of sizes)for(const e of g){e.style.setProperty(prop,h+'px');mark(e)}
  // Align the first totals line, not the bottom of uneven adjustment stacks.
  const offsets=totals.map(([a,b])=>{const ay=a.getBoundingClientRect().top,by=b.getBoundingClientRect().top;return [[a,Math.max(0,by-ay)],[b,Math.max(0,ay-by)]]});
- for(const pair of offsets)for(const [e,d] of pair){e.style.setProperty(gap,(4+d)+'px');marked.add(e)}
+ for(const pair of offsets)for(const [e,d] of pair){e.style.setProperty(gap,(4+d)+'px');mark(e)}
 }
 function init(){
- const mo=new MutationObserver(records=>{if(records.some(r=>r.type==='attributes'||(r.type==='childList'&&!(r.target.nodeType===1&&r.target.closest('.vh-chart-tooltip')))))schedule()});
+ const mo=new MutationObserver(records=>{
+  // A real Finder result redraw or visibility change needs fresh alignment;
+  // filter polling and mutations in other sections do not.
+  if(records.some(r=>r.target.nodeType===1&&(r.target.closest('#finderResults')||(r.target.id==='finder'&&r.type==='attributes')||[...r.addedNodes,...r.removedNodes].some(n=>n.nodeType===1&&(n.id==='finderResults'||n.querySelector('#finderResults'))))))finderDirty=true;
+  if(records.some(r=>r.type==='attributes'||(r.type==='childList'&&!(r.target.nodeType===1&&r.target.closest('.vh-chart-tooltip')))))schedule();
+ });
  for(const id of ['valueHistory','tradeHistory','finder','evaluator','leagueHub']){const e=document.getElementById(id);if(e)mo.observe(e,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden']})}
- new MutationObserver(schedule).observe(root,{attributes:true,attributeFilter:['data-fleeced-view']});
- window.addEventListener('resize',schedule,{passive:true});
- document.fonts?.ready.then(schedule);
+ new MutationObserver(invalidateFinder).observe(root,{attributes:true,attributeFilter:['data-fleeced-view']});
+ window.addEventListener('resize',()=>{
+  const width=document.documentElement.clientWidth;
+  if(width!==lastLayoutWidth){lastLayoutWidth=width;finderDirty=true}
+  schedule();
+ },{passive:true});
+ // The rendered result container can change width without a window resize
+ // (notably WebKit's layout viewport). Observe width, never its height.
+ const finder=document.getElementById('finderResults');
+ if(finder&&typeof ResizeObserver==='function'){
+  let lastWidth=finder.getBoundingClientRect().width;
+  new ResizeObserver(()=>{
+   const width=finder.getBoundingClientRect().width;
+   if(Math.abs(width-lastWidth)>0.5){lastWidth=width;invalidateFinder()}
+  }).observe(finder);
+ }
+ document.fonts?.ready.then(invalidateFinder);
  let touchHit=null,touchId=null;
  // Pointer capture keeps movement targeted at the same original plot even
  // after a finger crosses a point or drifts outside its bounds.

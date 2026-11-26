@@ -128,8 +128,12 @@ const graph=[
     "197"
   ],
   [
-    "trade-recommended-pick-ownership-v301.js",
-    "301"
+    "finder-pagination-read-batch-v662.js",
+    "662"
+  ],
+  [
+    "trade-recommended-pick-ownership-v662.js",
+    "662"
   ]
 ];
 const pinned=[
@@ -193,6 +197,10 @@ test('actual assembled page retains every verified Finder dependency and cache r
   assert(matches[0].i>last,'Verified Finder script order changed: '+path);
   last=matches[0].i;
  }
+ const prior=git('show',frozen+':trade-recommended-pick-ownership-v301.js').toString();
+ const expected=prior.replace('function enhance(){','function enhanceUnbatched(){').replace('let queued=false;', "function enhance(){const batch=window.finderPaginationReadBatchV662?.run;return typeof batch==='function'?batch(enhanceUnbatched):enhanceUnbatched()}\nlet queued=false;");
+ assert.equal(readFileSync(new URL('../trade-recommended-pick-ownership-v662.js',import.meta.url),'utf8'),expected,'Ownership successor must preserve every original rule and label; only batch synchronous reads');
+ assert.equal(urls.filter(url=>url.startsWith('/trade-recommended-pick-ownership-v301.js?')).length,0,'Do not run both ownership observers');
  // The exact target control is dynamically installed and exercised by the 15-case browser audit.
  for(const id of ['findTeam','findShop','runFinder','findMode'])assert(html.includes('id="'+id+'"'),'Missing Finder control: '+id);
 });

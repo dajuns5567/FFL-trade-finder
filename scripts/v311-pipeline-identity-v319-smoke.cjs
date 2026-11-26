@@ -44,7 +44,7 @@ const finderPerformanceHashes={...finderCandidateHashes,
   'trade-specific-max-tier-add-v300.js':'8c7425f19835621c99a27c40d03d1c406d7da004'
 };
 const finderScopedMemoHashes={...finderPerformanceHashes,'trade-specific-max-tier-add-v300.js':'69878bebe45548680384ac9de48264895599e16c'};
-const finderCoverageHashes={...finderScopedMemoHashes,'trade-specific-max-value-v279.js':'48d7c0ded702b2b78f45873eacd6ebff0ca079a8'};
+const finderCoverageHashes={...finderScopedMemoHashes,'trade-specific-max-value-v279.js':'c3a046931c609ebb1730c856ef28504fb957cb07'};
 const matches=hashes=>Object.entries(hashes).every(([path,sha])=>{
   try{return cp.execFileSync('git',['hash-object',path],{encoding:'utf8'}).trim()===sha}
   catch{return false}

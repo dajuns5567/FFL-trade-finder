@@ -5,7 +5,7 @@ import vm from 'node:vm';
 
 const source=readFileSync(new URL('../trade-specific-max-value-v279.js',import.meta.url),'utf8');
 const site=readFileSync(new URL('../netlify/functions/site-v29.mjs',import.meta.url),'utf8');
-function runtime({outgoingCount=34,targetExtras=20,eligible=null}={}){
+function runtime({outgoingCount=34,targetExtras=20,eligible=null,sourceCode=source}={}){
  const my=1,other=2;
  const own=Array.from({length:outgoingCount},(_,i)=>({type:'player',id:'out-'+i,owner:my,value:1100+i*110,rank:40+i,name:'Outgoing '+i}));
  const target={type:'player',id:'jonathan-taylor',owner:other,value:7600,rank:8,name:'Jonathan Taylor'};
@@ -32,7 +32,9 @@ function runtime({outgoingCount=34,targetExtras=20,eligible=null}={}){
   section1V130:{fair:(a,b)=>({score:eligible&&!eligible(a,b)?50:83,edgeEffective:110,aRaw:a.reduce((s,x)=>s+x.value,0),bRaw:b.reduce((s,x)=>s+x.value,0),aAdj:0,bAdj:0,aEffective:a.reduce((s,x)=>s+x.value,0),bEffective:b.reduce((s,x)=>s+x.value,0)+110,rejected:false})}
  };
  const ctx={window:win,document:doc,setTimeout:(cb)=>{yields++;return setTimeout(cb,0)},Math,Array,Set,Map,Number,String,Promise,console};
- vm.runInNewContext(source,ctx,{filename:'trade-specific-max-value-v279.js'});
+ const exportAnchor='window.tradeSpecificMaxValueV279={run,';
+ assert.equal(sourceCode.split(exportAnchor).length,2);
+ vm.runInNewContext(sourceCode.replace(exportAnchor,'window.tradeSpecificMaxValueV279={auditRows:()=>active,run,'),ctx,{filename:'trade-specific-max-value-v279.js'});
  return {api:win.tradeSpecificMaxValueV279,elements,win,own,target,others,getYields:()=>yields};
 }
 test('index once for each sorted outgoing bucket, not once for every target-containing receive package',()=>{
@@ -118,5 +120,22 @@ test('bounded extension reaches qualifying omitted incoming assets without weake
  assert.ok(stats.added>0,'no additional qualifying recommendations');
  assert.ok(stats.fairnessChecks<=4200&&stats.examined<=16000);
  assert.ok(stats.elapsedMs<12000);
- assert.match(f.elements.finderResults.innerHTML,/Incoming 0/);
+ assert.match(f.elements.finderResults.innerHTML,/in-0/);
+});
+
+test('additional coverage retains the complete ordered primary result prefix and rejects ineligible trades',async()=>{
+ const eligible=(give,recv)=>give.length===1&&give[0].id==='out-0'&&(recv.length===1||(recv.length===2&&recv.some(x=>x.id==='in-0')));
+ const legacyOnly=source.replace('if(!selectedGive().length&&primaryRows.length<TARGET_RESULT_LIMIT','if(false&&!selectedGive().length&&primaryRows.length<TARGET_RESULT_LIMIT');
+ assert.notEqual(legacyOnly,source);
+ const old=runtime({outgoingCount:15,targetExtras:25,eligible,sourceCode:legacyOnly});
+ const next=runtime({outgoingCount:15,targetExtras:25,eligible});
+ await old.api.run();await next.api.run();
+ const normalize=rows=>JSON.parse(JSON.stringify(rows));
+ const previous=normalize(old.api.auditRows()),after=normalize(next.api.auditRows());
+ assert.ok(previous.length>0);
+ assert.deepEqual(after.slice(0,previous.length),previous);
+ assert.ok(after.length>previous.length,'coverage did not add a new eligible trade');
+ for(const r of after){assert.ok(eligible(r.give,r.recv));assert.ok(r.f.score>=75&&r.f.score<=90&&r.f.edgeEffective>0)}
+ const keys=after.map(r=>r.give.map(x=>x.id).sort().join('|')+'>'+r.recv.map(x=>x.id).sort().join('|'));
+ assert.equal(new Set(keys).size,keys.length,'duplicate recommendations');
 });

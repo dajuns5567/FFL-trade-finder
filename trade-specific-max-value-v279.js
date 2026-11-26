@@ -162,7 +162,7 @@ function extensionIncoming(primary,all,completed){
  const known=new Set(primary.map(x=>packageKey(x.xs))),omitted=all.filter(x=>!known.has(packageKey(x.xs)));
  const pairs=omitted.filter(x=>x.xs.length===2);
  const triples=omitted.filter(x=>x.xs.length>=3).sort((a,b)=>a.v-b.v);
- const candidates=[...primary.slice(completed),...pairs,...spreadTriples(triples,72),...primary.slice(0,completed)];
+ const candidates=[...pairs,...primary.slice(completed),...spreadTriples(triples,72),...primary.slice(0,completed)];
  const out=[],seen=new Set();
  for(const r of candidates){const k=packageKey(r.xs);if(!seen.has(k)){seen.add(k);out.push(r)}if(out.length>=TARGET_EXTENSION_MAX_INCOMING)break}
  return out;

@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-11-25T22:29:45.172Z",
+  "generatedAt": "2026-11-26T05:00:15.686Z",
   "source": "Sleeper public API",
   "currentLeagueId": "1316867686394769408",
   "currentSeason": 2026,
@@ -175,9 +175,9 @@
   ],
   "seasonDiagnostics": {
     "2023": {
-      "players": 885,
+      "players": 886,
       "withPpr": 733,
-      "withGames": 885
+      "withGames": 886
     },
     "2024": {
       "players": 960,
@@ -198,9 +198,9 @@
   },
   "compactDiagnostics": {
     "2023": {
-      "players": 885,
+      "players": 886,
       "withPpr": 733,
-      "withGames": 885
+      "withGames": 886
     },
     "2024": {
       "players": 960,
@@ -579,6 +579,10 @@
         "MIN",
         "WSH",
         "CIN"
+      ],
+      "12": [
+        "LAR",
+        "GB"
       ]
     },
     "weekFinalityByWeek": {
@@ -1995,12 +1999,150 @@
             ]
           }
         ]
+      },
+      "12": {
+        "scheduledGames": 16,
+        "finalGames": 1,
+        "ignoredGames": 0,
+        "blockingGames": 15,
+        "complete": false,
+        "nullSlots": [],
+        "slots": [
+          {
+            "id": "401873079",
+            "state": "final",
+            "teams": [
+              "LAR",
+              "GB"
+            ]
+          },
+          {
+            "id": "401873081",
+            "state": "blocking",
+            "teams": [
+              "DET",
+              "CHI"
+            ]
+          },
+          {
+            "id": "401873080",
+            "state": "blocking",
+            "teams": [
+              "DAL",
+              "PHI"
+            ]
+          },
+          {
+            "id": "401873082",
+            "state": "blocking",
+            "teams": [
+              "BUF",
+              "KC"
+            ]
+          },
+          {
+            "id": "401873083",
+            "state": "blocking",
+            "teams": [
+              "PIT",
+              "DEN"
+            ]
+          },
+          {
+            "id": "401873087",
+            "state": "blocking",
+            "teams": [
+              "CIN",
+              "NO"
+            ]
+          },
+          {
+            "id": "401873088",
+            "state": "blocking",
+            "teams": [
+              "IND",
+              "NYG"
+            ]
+          },
+          {
+            "id": "401873089",
+            "state": "blocking",
+            "teams": [
+              "MIA",
+              "NYJ"
+            ]
+          },
+          {
+            "id": "401873084",
+            "state": "blocking",
+            "teams": [
+              "MIN",
+              "ATL"
+            ]
+          },
+          {
+            "id": "401873090",
+            "state": "blocking",
+            "teams": [
+              "JAX",
+              "TEN"
+            ]
+          },
+          {
+            "id": "401873085",
+            "state": "blocking",
+            "teams": [
+              "HOU",
+              "BAL"
+            ]
+          },
+          {
+            "id": "401873093",
+            "state": "blocking",
+            "teams": [
+              "LAC",
+              "NE"
+            ]
+          },
+          {
+            "id": "401873092",
+            "state": "blocking",
+            "teams": [
+              "ARI",
+              "WSH"
+            ]
+          },
+          {
+            "id": "401873091",
+            "state": "blocking",
+            "teams": [
+              "SF",
+              "SEA"
+            ]
+          },
+          {
+            "id": "401873086",
+            "state": "blocking",
+            "teams": [
+              "CLE",
+              "LV"
+            ]
+          },
+          {
+            "id": "401873094",
+            "state": "blocking",
+            "teams": [
+              "TB",
+              "CAR"
+            ]
+          }
+        ]
       }
     },
     "diagnostics": {
-      "finalGames": 163,
-      "qualifiedPlayerGames": 10732,
-      "rejectedPlayerGames": 12451,
+      "finalGames": 164,
+      "qualifiedPlayerGames": 10754,
+      "rejectedPlayerGames": 12583,
       "ignoredGames": 0
     }
   },

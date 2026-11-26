@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-11-25T22:29:45.172Z",
+  "generatedAt": "2026-11-26T05:00:15.686Z",
   "source": "Sleeper importer snapshot",
   "currentSeason": 2026,
   "completedWeek": 11,
@@ -388,6 +388,10 @@
         "MIN",
         "WSH",
         "CIN"
+      ],
+      "12": [
+        "LAR",
+        "GB"
       ]
     },
     "weekFinalityByWeek": {
@@ -1804,12 +1808,150 @@
             ]
           }
         ]
+      },
+      "12": {
+        "scheduledGames": 16,
+        "finalGames": 1,
+        "ignoredGames": 0,
+        "blockingGames": 15,
+        "complete": false,
+        "nullSlots": [],
+        "slots": [
+          {
+            "id": "401873079",
+            "state": "final",
+            "teams": [
+              "LAR",
+              "GB"
+            ]
+          },
+          {
+            "id": "401873081",
+            "state": "blocking",
+            "teams": [
+              "DET",
+              "CHI"
+            ]
+          },
+          {
+            "id": "401873080",
+            "state": "blocking",
+            "teams": [
+              "DAL",
+              "PHI"
+            ]
+          },
+          {
+            "id": "401873082",
+            "state": "blocking",
+            "teams": [
+              "BUF",
+              "KC"
+            ]
+          },
+          {
+            "id": "401873083",
+            "state": "blocking",
+            "teams": [
+              "PIT",
+              "DEN"
+            ]
+          },
+          {
+            "id": "401873087",
+            "state": "blocking",
+            "teams": [
+              "CIN",
+              "NO"
+            ]
+          },
+          {
+            "id": "401873088",
+            "state": "blocking",
+            "teams": [
+              "IND",
+              "NYG"
+            ]
+          },
+          {
+            "id": "401873089",
+            "state": "blocking",
+            "teams": [
+              "MIA",
+              "NYJ"
+            ]
+          },
+          {
+            "id": "401873084",
+            "state": "blocking",
+            "teams": [
+              "MIN",
+              "ATL"
+            ]
+          },
+          {
+            "id": "401873090",
+            "state": "blocking",
+            "teams": [
+              "JAX",
+              "TEN"
+            ]
+          },
+          {
+            "id": "401873085",
+            "state": "blocking",
+            "teams": [
+              "HOU",
+              "BAL"
+            ]
+          },
+          {
+            "id": "401873093",
+            "state": "blocking",
+            "teams": [
+              "LAC",
+              "NE"
+            ]
+          },
+          {
+            "id": "401873092",
+            "state": "blocking",
+            "teams": [
+              "ARI",
+              "WSH"
+            ]
+          },
+          {
+            "id": "401873091",
+            "state": "blocking",
+            "teams": [
+              "SF",
+              "SEA"
+            ]
+          },
+          {
+            "id": "401873086",
+            "state": "blocking",
+            "teams": [
+              "CLE",
+              "LV"
+            ]
+          },
+          {
+            "id": "401873094",
+            "state": "blocking",
+            "teams": [
+              "TB",
+              "CAR"
+            ]
+          }
+        ]
       }
     },
     "diagnostics": {
-      "finalGames": 163,
-      "qualifiedPlayerGames": 10732,
-      "rejectedPlayerGames": 12451,
+      "finalGames": 164,
+      "qualifiedPlayerGames": 10754,
+      "rejectedPlayerGames": 12583,
       "ignoredGames": 0
     }
   },
@@ -49045,9 +49187,9 @@
   "pprMethod": "Sleeper raw weekly stats aggregated with native pts_ppr when supplied; otherwise deterministic standard-PPR reconstruction from Sleeper raw stat fields.",
   "seasonDiagnostics": {
     "2023": {
-      "players": 885,
+      "players": 886,
       "withPpr": 733,
-      "withGames": 885
+      "withGames": 886
     },
     "2024": {
       "players": 960,
@@ -54548,6 +54690,17 @@
         "rec_td_40p": 3,
         "rec_td_50p": 2,
         "rec_yd": 593
+      },
+      "6177": {
+        "gp": 17,
+        "off_snp": 16,
+        "def_snp": 523,
+        "idp_tkl": 57,
+        "idp_tkl_loss": 1,
+        "idp_tkl_solo": 24,
+        "idp_pass_def": 1,
+        "idp_qb_hit": 2,
+        "idp_tkl_ast": 33
       },
       "6179": {
         "pts_ppr": 7,
@@ -69481,6 +69634,21 @@
         "idp_qb_hit": 9,
         "idp_tkl_ast": 40
       },
+      "6177": {
+        "pts_ppr": 4,
+        "gp": 13,
+        "def_snp": 461,
+        "idp_tkl": 42,
+        "idp_sack_yd": 18,
+        "idp_tkl_loss": 3,
+        "idp_tkl_solo": 18,
+        "idp_int": 1,
+        "idp_int_ret_yd": 37,
+        "idp_sack": 2,
+        "idp_pass_def": 3,
+        "idp_qb_hit": 5,
+        "idp_tkl_ast": 24
+      },
       "6179": {
         "pts_ppr": 3,
         "gp": 17,
@@ -72663,18 +72831,6 @@
       "7979": {
         "gp": 9,
         "off_snp": 572
-      },
-      "8004": {
-        "pts_ppr": 1,
-        "gp": 8,
-        "def_snp": 235,
-        "idp_tkl": 24,
-        "idp_tkl_loss": 1,
-        "idp_tkl_solo": 12,
-        "st_tkl_solo": 2,
-        "idp_sack": 1,
-        "idp_qb_hit": 1,
-        "idp_tkl_ast": 12
       },
       "8025": {
         "gp": 11,

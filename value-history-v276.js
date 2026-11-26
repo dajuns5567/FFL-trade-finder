@@ -1064,11 +1064,7 @@ function fairWithValue(give,recv,valueFn){
   return{aRaw:ar,bRaw:br,aAdj:aa,bAdj:ba,aEffective:a,bEffective:b,edgeRaw:b?br-ar:0,edgeEffective:b-a,ratio,score,rejected:score<55||ratio<.62,status:score>=94?'Excellent Fit':score>=82?'Fair':'Negotiable'};
 }
 function tradeHistoryFair(give,recv,trade){return fairWithValue(give,recv,a=>tradeHistoryEvaluatorValue(a,trade))}
-function hindsightFair(give,recv,trade){
- // A fairness calculation is synchronous and repeatedly reads the same exact asset objects.
- // Cache only that invocation, never across trades or a value refresh.
- const values=new Map();return fairWithValue(give,recv,a=>{if(!values.has(a))values.set(a,hindsightValue(a,trade));return values.get(a)})
-}
+function hindsightFair(give,recv,trade){return fairWithValue(give,recv,a=>hindsightValue(a,trade))}
 function currentTradePlayerMeta(id){
   const sid=String(id),row=currentRows().find(r=>String(r?.id)===sid),asset=tradePlayerAsset(sid,0),pos=row?.pos||groupPos(asset),team=String(state.players?.[sid]?.team||'FA').toUpperCase(),overall=Number(row?.overall),posRank=Number(row?.posRank);
   return`${pos} • ${team}${Number.isFinite(overall)?` • Overall #${overall}`:''}${Number.isFinite(posRank)?` • ${pos} #${posRank}`:''}`;

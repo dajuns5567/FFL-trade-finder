@@ -22,7 +22,7 @@ function fixture(){
  const context={
   MENUS:{tradeHistory:[['All History','trade-all']],rankings:[['All','rank:ALL']],
     valueHistory:[['Market','value:market']],leagueHub:[['Daily','league:daily']]},
-  activeMenuButton:null,menuEl:()=>menu,
+  activeMenuButton:null,navigationGeneration:0,menuEl:()=>menu,
   document:{
    getElementById:id=>id==='fleecedHeaderDropdown'?menu:null,
    querySelectorAll:()=>tabs,

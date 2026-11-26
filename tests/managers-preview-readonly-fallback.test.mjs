@@ -43,7 +43,12 @@ test('Netlify permits explicitly reviewed PR previews, never unsanctioned produc
  const ids=[...allow[1].matchAll(/'(\d+)'/g)].map(m=>m[1]);
  assert.ok(ids.length>0&&ids.every(id=>/^\d+$/.test(id)),'all Netlify preview IDs must be explicit numeric review IDs');
  const activePR=String(process.env.GITHUB_REF||'').match(/^refs\/pull\/(\d+)\//)?.[1];
- if(activePR==='657'&&process.env.GITHUB_HEAD_REF==='security/public-release-write-boundary-20261125'){
+ if(activePR==='658'&&process.env.GITHUB_HEAD_REF==='fix/final-navigation-logo-20261126'){
+  assert.ok(!ids.includes(activePR),'Unverified navigation candidate must remain blocked from Netlify');
+  const shallow=execFileSync('git',['rev-parse','--is-shallow-repository'],{encoding:'utf8'}).trim()==='true';
+  execFileSync('git',['fetch','--no-tags',...(shallow?['--unshallow']:[]),'origin','+refs/heads/main:refs/remotes/origin/main'],{stdio:'inherit'});
+  execFileSync(process.execPath,['scripts/audit-final-navigation-scope-v659.mjs'],{stdio:'inherit'});
+ }else if(activePR==='657'&&process.env.GITHUB_HEAD_REF==='security/public-release-write-boundary-20261125'){
   assert.ok(ids.includes(activePR),'Verified security candidate must be explicitly allowlisted');
   const shallow=execFileSync('git',['rev-parse','--is-shallow-repository'],{encoding:'utf8'}).trim()==='true';
   execFileSync('git',['fetch','--no-tags',...(shallow?['--unshallow']:[]),'origin','+refs/heads/main:refs/remotes/origin/main'],{stdio:'inherit'});
@@ -89,7 +94,7 @@ test('browser Managers refreshes on revisits, visibility and focus without repla
  assert.match(ui,/document\.addEventListener\('visibilitychange',/);
  assert.match(ui,/\['managers','career'\]\.includes\(currentView\)/);
  assert.match(ui,/managerVersionSignature\(next\)!==previous/);
- assert.match(ui,/await render\(currentView,selectedManagerId\)/);
+ assert.match(ui,/leagueHubRenderGeneration===refreshGeneration&&selectedManagerId===refreshManager\)await render\(refreshView,refreshManager\)/);
  assert.match(ui,/return managerCache\|\|\{current:\[\],graveyard:\[\],career:\[\],unavailable:true\}/);
  assert.match(ui,/if\(generation===managerRequestGeneration\)/);
  assert.match(ui,/clearManagerHistoryCache\(\); \/\/ verified completed week invalidates stale manager history/);

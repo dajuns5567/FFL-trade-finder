@@ -84,7 +84,7 @@ test('visible Awards rerender when canonical player values refresh without promo
  const hub=read('league-hub-v451.js');
  assert.match(hub,/let lastHubAwardValueToken=null/);
  assert.match(hub,/valuesChanged=currentView==='awards'&&!!valueToken&&valueToken!==lastHubAwardValueToken/);
- assert.match(hub,/if\(changed\|\|valuesChanged\)\{/);
+ assert.match(hub,/if\(\(changed\|\|valuesChanged\)&&currentView===refreshView&&leagueHubRenderGeneration===refreshGeneration&&!panel.hidden\)\{/);
  assert.match(hub,/if\(valuesChanged\)lastHubAwardValueToken=valueToken/);
  assert.match(hub,/observer\.observe\(status,\{childList:true,subtree:true,characterData:true\}\)/);
  assert.match(hub,/new MutationObserver\(\(\)=>\{/);

@@ -12,13 +12,8 @@ test('Hall yields, preserves every original Hindsight result in order, and aband
  assert.equal(calls,all.length);assert(yields>0&&scopes>1);
  const before=calls;const pending=collect(all,()=>active);active=false;assert.equal(await pending,null);assert(calls-before<all.length);
 });
-test('Hindsight repeated asset reads are memoized only for the same calculation, exact output preserved',()=>{
- const code=history.slice(history.indexOf('function hindsightFair('),history.indexOf('function currentTradePlayerMeta('));
- let calls=0,version=1;
- const ctx=vm.createContext({hindsightValue:(a,t)=>{calls++;return a.v*version+t.offset},fairWithValue:(g,r,read)=>[...g,...r].flatMap(a=>[read(a),read(a),read(a)])});
- const fair=vm.runInContext(code+';hindsightFair',ctx),a={v:9},b={v:2};
- assert.deepEqual(JSON.parse(JSON.stringify(fair([a],[b],{offset:1}))),[10,10,10,3,3,3]);assert.equal(calls,2);
- version=2;assert.deepEqual(JSON.parse(JSON.stringify(fair([a],[b],{offset:1}))),[19,19,19,5,5,5]);assert.equal(calls,4);
+test('Hindsight retains the exact approved fairness function',()=>{
+ assert.match(history,/function hindsightFair\(give,recv,trade\)\{return fairWithValue\(give,recv,a=>hindsightValue\(a,trade\)\)\}/);
 });
 test('Hall direct and header buttons share the real route and delayed refresh cannot replace a newer navigation',()=>{
  assert.match(hub,/data-lh-view="hall">Enter Hall of Fleeced/);

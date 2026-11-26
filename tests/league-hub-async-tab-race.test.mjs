@@ -26,6 +26,7 @@ function fixture(){
   weekly:async()=>({available:false}),drafts:async()=>({draft_picks:[]}),
   weeklyAwards:async()=>({records:[]}),liveLeagueWeek:async()=>null,
   reporterDirectory:async()=>({reporters:[]}),
+  fetchPublishedInquirerArchive:async()=>[],
   fetch:async()=>({ok:true,json:async()=>({reports:[]})}),
   teamTradeStats:()=>[],currentAwards:()=>[],
   awardsHTML:()=>'<section data-test="awards">Awards page</section>',

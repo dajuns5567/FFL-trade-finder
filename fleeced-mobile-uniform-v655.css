@@ -36,3 +36,10 @@ html[data-fleeced-view="mobile"] #leagueHub :is(.lh-sub,.lh-head p){line-height:
 html[data-fleeced-view="mobile"] #leagueHub .lh-card h3{overflow-wrap:anywhere}
 html[data-fleeced-view="mobile"] #leagueHub .lh-archive-filter select{font-size:clamp(10px,3vw,13px)!important;min-height:40px!important}
 }
+
+@media(max-width:1024px){
+/* Keep all rows accessible without a 1,000-row page or a nested horizontal scroller. */
+html[data-fleeced-view="mobile"] #valueHistory .vh-table-wrap:has(.vh-table th[data-vh-sort="delta365"]){max-height:clamp(260px,66dvh,560px)!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior-y:auto;scrollbar-width:thin}
+html[data-fleeced-view="mobile"] #valueHistory .vh-table:has(th[data-vh-sort="delta365"]) thead{position:sticky!important;top:0!important;z-index:2;background:var(--card)!important}
+html[data-fleeced-view="mobile"] #valueHistory .vh-table:has(th[data-vh-sort="delta365"]) tbody td:not(:first-child){line-height:1.1!important;padding-block:2px!important}
+}

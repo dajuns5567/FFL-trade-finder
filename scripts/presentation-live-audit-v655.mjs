@@ -45,7 +45,7 @@ export async function auditLivePresentation(page){
   await nav('finder');await chooseTeam('#findTeam');await page.locator('#findShop .shopCheck').first().waitFor({state:'attached'});await inspect(mode,'Trade Finder controls','finder');
   await nav('evaluator');await inspect(mode,'Trade Evaluator','evaluator');
   await nav('tradeHistory','All Trade History');await page.locator('#tradeHistoryContent').waitFor({state:'visible'});await page.waitForFunction(()=>!/^Loading completed trades/i.test(document.getElementById('tradeHistoryContent')?.textContent.trim()||''),null,{timeout:90000});await inspect(mode,'Trade History','tradeHistory');
-  await nav('valueHistory','Market Dashboard');await page.locator('#vhMarketMovers').waitFor({state:'visible'});await inspect(mode,'Market Dashboard','valueHistory');
+  await nav('valueHistory','Market Dashboard');await page.locator('#vhMarketMovers').waitFor({state:'visible'});await page.locator('#vhMarketReversals').waitFor({state:'visible',timeout:90000});await inspect(mode,'Market Dashboard','valueHistory');
   // Capture individual repeated dashboard regions rather than a misleading full-page screenshot.
   for(const id of ['vhMarketMovers','vhPositionIndexes','vhMarketHeat','vhCategoryLeaders','vhMarketHighLow','vhMomentumLeaders','vhOpportunityWatch','vhMarketReversals','vhMarketVolatility']){
    const el=page.locator('#'+id);if(await el.count()){await el.scrollIntoViewIfNeeded();await page.screenshot({path:dir+'/'+mode+'-'+id+'.png',fullPage:false,timeout:30000})}
@@ -59,12 +59,14 @@ export async function auditLivePresentation(page){
   assert.deepEqual([...roster.rows].sort((a,b)=>a.id.localeCompare(b.id)),[...tracked.rows].sort((a,b)=>a.id.localeCompare(b.id)));
   if(mode==='mobile')for(const t of [full,roster,tracked])assert.deepEqual(t.header,t.first,'Header / row geometry mismatch');
   allTables[mode]={full:full.rows.length,roster:roster.rows.length,columns:full.columns};
-  const player=page.locator('#vhTrackedTeam .vh-table tbody tr [data-vh-player]').first();if(await player.count()){await player.click();await settle();await inspect(mode,'Player profile','valueHistory')}
+  const player=page.locator('#vhTrackedTeam .vh-table tbody tr [data-vh-player]').first();if(await player.count()){await player.click();await page.locator('#valueHistory .vh-profile-back').waitFor({state:'visible',timeout:90000});await inspect(mode,'Player profile','valueHistory')}
   for(const label of ['Fleeced Daily','Fleeced Inquirer','Awards','Hall of Fleeced','Managers']){await nav('leagueHub',label);await waitHub();await inspect(mode,label,'leagueHub')}
   await nav('league');await inspect(mode,'League','league');
   await nav('settings');await inspect(mode,'Methodology','settings');
  }
  assert.deepEqual(allTables.desktop.columns,allTables.mobile.columns);
+ assert.deepEqual(errors,[],'Unexpected page exceptions');
+ assert.deepEqual(issues,[],'Unresolved document or control overflow');
  }finally{
   await writeFile(dir+'/report.json',JSON.stringify({checks,issues,errors,allTables},null,2));
   console.log('PRESENTATION_LIVE_SUMMARY '+JSON.stringify({views:checks.length,issues,errors,allTables}));

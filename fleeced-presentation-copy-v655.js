@@ -286,16 +286,54 @@ const rules=[
     "#leagueHub .lh-sub",
     "Sleeper managers found in prior league seasons who are no longer active. Historical ownership is matched by Sleeper user ID across seasons, and playoff scoring only counts winners-bracket participants.",
     "Former league managers. Playoff scoring counts winners-bracket games only."
+  ],
+  [
+    "#valueHistory .vh-sub",
+    "Positive Fleeced states and hot recent-form signals. The right-side number is the verified selected-window market value change; underlying PPG evidence is shown beneath the player.",
+    "Improving weekly performance; value change at right."
+  ],
+  [
+    "#settings .notice",
+    "Presentation only: this Methodology page describes the established system. Its text, headings and numbers are not read by the valuation engine and are not inputs to player values, rankings, consensus calculations, scoring components, draft-pick values, fairness, Finder or Evaluator.",
+    ""
+  ],
+  [
+    "#leagueHub .lh-sub",
+    "Strongest elite core: ranks teams by the combined current value of their five highest-valued rostered players.",
+    "Combined value of the five highest-valued players."
+  ],
+  [
+    "#leagueHub .lh-sub",
+    "Best individual rookie selection: greatest delta between the value expected from the pick used and the player’s current value. Historic observations are preserved.",
+    "Largest gain over the rookie's original pick value."
+  ],
+  [
+    "#leagueHub .lh-sub",
+    "Ranks each team by the cumulative current value produced by all of its rookie selections in the selected draft year.",
+    "Combined rookie value from the selected draft year."
+  ],
+  [
+    "#leagueHub .lh-sub",
+    "Ranks teams by cumulative trade-adjusted current value gained across all completed trades.",
+    "Total trade-adjusted value gained."
+  ],
+  [
+    "#valueHistory .vh-empty",
+    "No historical observations recorded yet. The current value is live and has not been added to the archive; historical movement remains unavailable until a verified snapshot exists.",
+    "No recorded history yet. Current value is live."
   ]
 ];
 const normalize=s=>String(s||'').replace(/\s+/g,' ').trim();
-const patterns=[["#league #leagueInfo p.tiny.muted","^Sleeper league ID (\\d+)\\. Future pick ownership is derived from Sleeper's roster IDs and league draft rounds, with explicit traded-pick ownership overrides from Sleeper's traded_picks endpoint\\.$","Sleeper league ID $1 · Pick ownership from Sleeper."],["#valueHistory .vh-sub","^(\\d+) current players • (?:exact same columns and Market Value History data used in Track My Team|same columns and data as Full Market History)$","$1 current players"],["#valueHistory #vhTrackedTeam .vh-mover-card .vh-sub","^Largest (?:value gains|value declines|overall-rank improvements|overall-rank declines|improvements within each player's position|declines within each player's position) on .+$",""],["#valueHistory .vh-net-note","^Simple addition of the selected team's (\\d+) current player values\\. No scarcity, fit, package, Trade Finder, Trade Evaluator, or other adjustments are applied\\.$","Sum of $1 player values, excluding picks and trade adjustments."],["#valueHistory .vh-sub","^Current neighbors around (.+); informational only\\.$",""],["#valueHistory .vh-sub","^Players reaching verified new tracked-history value (highs|lows) at any time during (.+); earlier records may predate the window\\.$","New value $1 during $2."],["#valueHistory .vh-sub","^Largest verified high-to-low value ranges for (.+) inside (.+)\\. Segment is based on current overall Fleeced rank\\.$","Value ranges for $1 during $2."],["#leagueHub .lh-sub","^(\\d{4} Week \\d+) • Finalized Sleeper fantasy matchups • Independent of Inquirer publication$","$1 • Finalized matchups"],["#leagueHub .lh-sub","^(.+) • every trade below opens that exact deal in Trade History$","$1"]] .map(([selector,pattern,replacement])=>[selector,new RegExp(pattern),replacement]);
+const patterns=[["#league #leagueInfo p.tiny.muted","^Sleeper league ID (\\d+)\\. Future pick ownership is derived from Sleeper's roster IDs and league draft rounds, with explicit traded-pick ownership overrides from Sleeper's traded_picks endpoint\\.$","Sleeper league ID $1 · Pick ownership from Sleeper."],["#valueHistory .vh-sub","^(\\d+) current players • (?:exact same columns and Market Value History data used in Track My Team|same columns and data as Full Market History)$","$1 current players"],["#valueHistory #vhTrackedTeam .vh-mover-card .vh-sub","^Largest (?:value gains|value declines|overall-rank improvements|overall-rank declines|improvements within each player's position|declines within each player's position) on .+$",""],["#valueHistory .vh-net-note","^Simple addition of the selected team's (\\d+) current player values\\. No scarcity, fit, package, Trade Finder, Trade Evaluator, or other adjustments are applied\\.$","Sum of $1 player values, excluding picks and trade adjustments."],["#valueHistory .vh-sub","^Current neighbors around (.+); informational only\\.$",""],["#valueHistory .vh-sub","^Players reaching verified new tracked-history value (highs|lows) at any time during (.+); earlier records may predate the window\\.$","New value $1 during $2."],["#valueHistory .vh-sub","^Largest verified high-to-low value ranges for (.+) inside (.+)\\. Segment is based on current overall Fleeced rank\\.$","Value ranges for $1 during $2."],["#leagueHub .lh-sub","^(\\d{4} Week \\d+) • Finalized Sleeper fantasy matchups • Independent of Inquirer publication$","$1 • Finalized matchups"],["#leagueHub .lh-sub","^(.+) • every trade below opens that exact deal in Trade History$","$1"],["#valueHistory .vh-sub","^Preserved observations from (.+?) through (.+?) under the preceding valuation era\\. ([\\d,]+) sampled observations\\. These are historical values, NOT current Player Values or changes across model versions\\.$","Earlier model: $1–$2 · $3 observations. Not current values or cross-model changes."],["#valueHistory .vh-sub","^(.+) • (\\d+) total Buy Low and (\\d+) total Sell High candidates\\. Rankings are compared within offense and IDP, not across unlike raw PPG distributions\\.$","$1 • $2 Buy Low · $3 Sell High. Offense and IDP ranked separately."],["#valueHistory .vh-sub","^(.+) current value uses Player Values; chart preserves recorded team snapshots$","Recorded team values."],["#leagueHub .lh-sub","^(\\d{4}) • full team beat columns \\+ Weekly Recap • Week 14 begins the archived Playoffs classification$","$1 • Team columns & Weekly Recap • Playoffs from Week 14"],["#leagueHub .lh-sub","^(\\d{4} Week \\d+) • highest fantasy scorer by side of the ball under this league’s scoring settings$","$1 • Top offensive and defensive scorers"]] .map(([selector,pattern,replacement])=>[selector,new RegExp(pattern),replacement]);
 const selectors=[...new Set([...rules,...patterns].map(r=>r[0]))].join(',');
 const marker='data-ffl-copy-hidden';
 function clean(el){
- if(el.children.length){el.removeAttribute(marker);return;}
+ // Only these two known copy blocks may contain simple emphasis markup.
+ const rich=el.children.length&&el.matches('#settings .notice,#valueHistory .vh-sub')&&[...el.children].every(c=>c.tagName==='B'&&!c.children.length);
+ if(el.children.length&&!rich){el.removeAttribute(marker);return;}
  const original=normalize(el.textContent);
  const exact=rules.find(r=>original===r[1]&&el.matches(r[0]));
+ if(rich&&!exact){el.removeAttribute(marker);return;}
  const dynamic=exact?null:patterns.find(r=>el.matches(r[0])&&r[1].test(original));
  if(exact||dynamic){
   const replacement=exact?exact[2]:original.replace(dynamic[1],dynamic[2]);

@@ -9,7 +9,7 @@ const html=await(await render()).text(),root=process.cwd(),source=await readFile
 const begin=source.indexOf('function marketTableRowsMarkup('),end=source.indexOf('function renderMarketTable(',begin);assert(begin>=0&&end>begin);
 const ctx={liveMarketRowsV97:x=>x,playerName:id=>'Player '+id+' Long Surname',state:{players:{'1':{team:'DET'}}},esc:x=>String(x??''),fmt:x=>Number(x).toLocaleString('en-US'),signed:x=>(x>0?'+':'')+Number(x).toLocaleString('en-US'),deltaClass:x=>x>0?'vh-up':'vh-down',dateShort:x=>String(x),marketSort:{key:'value',dir:-1}};
 vm.createContext(ctx);vm.runInContext(source.slice(begin,end),ctx);
-const rows=[{id:'1',pos:'WR',posRank:19,overall:55,value:6120,delta1:23,delta7:345,delta30:-1124,delta365:800,deltaAll:2300,overallDelta7:7,posRankDelta1:2,posRankDelta7:3,posRankDelta30:5,posRankDeltaAll:9}];
+const rows=Array.from({length:12},(_,i)=>({id:String(i+1),pos:'WR',posRank:19+i,overall:55+i,value:6120-i,delta1:23,delta7:345,delta30:-1124,delta365:800,deltaAll:2300,overallDelta7:7,posRankDelta1:2,posRankDelta7:3,posRankDelta30:5,posRankDeltaAll:9}));
 const table=ctx.marketTableRowsMarkup(rows);
 const note='Full Market History Table — sort the complete current market by value or historical movement. Select any player to open their Player Value History.';
 const warning='No verified historical baseline for this player';
@@ -34,6 +34,8 @@ try{
    assert.equal(measure.sort[11],'posRankDelta7');
    assert.equal(await page.locator('th[data-vh-sort="posRankDelta7"]').textContent(),'Pos Δ 7D');
    if(mobile){assert(measure.scroll<=measure.width+1,name+' page overflow');assert.deepEqual(measure.header.map(x=>[x.column,x.row]),measure.cells.map(x=>[x.column,x.row]),name+' header/cell alignment');assert(measure.labels.every(x=>x!=='none'&&x!=='normal'));assert(!measure.cells.slice(1).some(x=>x.overflow),name+' numeric values clipped')}
+   assert.equal(await page.locator('.vh-table tbody tr').count(),12,'All original rows retained');
+   if(mobile){const wrap=page.locator('.vh-table-wrap');const scroll=await wrap.evaluate(el=>{el.scrollTop=el.scrollHeight;return{height:el.clientHeight,scrollHeight:el.scrollHeight,scrollTop:el.scrollTop,header:getComputedStyle(el.querySelector('thead')).position}});assert(scroll.height<=562&&scroll.scrollHeight>scroll.height&&scroll.scrollTop>0&&scroll.header==='sticky',name+' bounded history scroll and reachable final row');await page.locator('.vh-table tbody tr').last().scrollIntoViewIfNeeded();assert(await page.locator('.vh-table tbody tr').last().isVisible());await wrap.evaluate(el=>el.scrollTop=0)}
    results.push({sort:measure.sort,values:measure.values,header:measure.header.map(x=>[x.column,x.row]),cells:measure.cells.map(x=>[x.column,x.row])});
    // Reused status nodes must become visible when they contain a genuine warning.
    await page.locator('#meta').evaluate(e=>e.textContent='Historical data is temporarily unavailable.');
@@ -43,6 +45,8 @@ try{
   await page.evaluate(()=>{for(const x of document.querySelectorAll('main>.tab'))x.hidden=true;const h=document.getElementById('leagueHub');h.hidden=false;h.innerHTML='<div class="lh-sub">Browse the four reporter desks and their archived team coverage.</div><div class="lh-sub" id="high-warning">VERIFIED ALL-TIME HIGH NOT YET ESTABLISHED.</div><article>Browse the four reporter desks and their archived team coverage.</article>'});
   await page.waitForFunction(()=>document.querySelector('#leagueHub .lh-sub')?.hasAttribute('data-ffl-copy-hidden'));
   assert(await page.locator('#high-warning').isVisible());assert(await page.locator('#leagueHub article').isVisible());
+  await page.evaluate(()=>{for(const x of document.querySelectorAll('main>.tab'))x.hidden=true;const s=document.getElementById('settings');s.hidden=false;s.innerHTML='<div class="notice" id="method-note"><b>Presentation only:</b> this Methodology page describes the established system. Its text, headings and numbers are not read by the valuation engine and are not inputs to player values, rankings, consensus calculations, scoring components, draft-pick values, fairness, Finder or Evaluator.</div><div class="notice" id="method-warning"><b>Warning:</b> Source unavailable.</div>'});
+  await page.waitForFunction(()=>document.querySelector('#method-note')?.hasAttribute('data-ffl-copy-hidden'));assert(!(await page.locator('#method-note').isVisible()));assert(await page.locator('#method-warning').isVisible());
   console.log('PRESENTATION_CONSISTENCY_PASS '+name+' — 3 identical 14-column history views; copy and warning controls');
   await context.close();await browser.close();browser=null;
  }

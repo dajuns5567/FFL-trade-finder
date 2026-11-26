@@ -15,21 +15,37 @@ export async function auditFinderScheduling(page){
  await page.locator('#desiredPlayerSearch').fill('');
  // Both implementations run against the same current page state and the
  // same per-search cache, with no network refresh between comparisons.
- const outcomes=[],recommendations=[];
+ const outcomes=[],recommendations=[],cacheSource=readFileSync('trade-blank-cache-v167.js','utf8');
  for(const [mode,tier] of [['balanced','neutral'],['value','neutral'],['balanced','up'],['need','neutral'],['balanced','down']]){
   await page.locator('#findMode').selectOption(mode);await page.locator('#tradeTier94').selectOption(tier);
-  const pair=await page.evaluate(async({original,candidate})=>{
+  const pair=await page.evaluate(async({original,candidate,cacheSource})=>{
    function load(src){const patched=src.replace("document.addEventListener('click',e=>{const b=e.target.closest?.('#runFinder');if(!b)return;e.preventDefault();e.stopImmediatePropagation();render()},true);","");(0,eval)(patched);return window.tradeFinderV168}
    const existing=window.tradeFinderV168;
    const old=load(original),next=load(candidate);
    const summarize=rs=>rs.map(r=>({other:r.other,give:r.give.map(a=>[a.type,a.id,a.owner]),recv:r.recv.map(a=>[a.type,a.id,a.owner]),fair:r.f,fit:r.fit,recommend:r.recommend,gap:r.gap,maximumValueScore:r.maximumValueScore}));
+   // Reuse the actual production blank-search cache implementation, but
+   // expose its private install method only in the audit's isolated copy.
+   const liveCache=window.tradeBlankCacheV167,guard=window.tradeFinderCandidateGuardV223;
+   const listenerStart=cacheSource.indexOf("document.addEventListener('click',e=>{"),exportStart=cacheSource.indexOf("window.tradeBlankCacheV167={");
+   if(listenerStart<0||exportStart<=listenerStart||!guard?.install)throw Error('Missing live search cache/guard');
+   const cacheCode=cacheSource.slice(0,listenerStart)+cacheSource.slice(exportStart);
+   (0,eval)(cacheCode.replace('window.tradeBlankCacheV167={restore,','window.tradeBlankCacheV167={auditInstall:install,restore,'));
+   const auditCache=window.tradeBlankCacheV167;window.tradeBlankCacheV167=liveCache;
    async function measure(api){
-    const started=performance.now();
-    const rows=await api.generateAsync(0);
-    return {ms:Math.round(performance.now()-started),rows:summarize(rows)};
+    const host=document.getElementById('finderResults');
+    liveCache.restore();guard.deactivate();host.textContent='Searching realistic trades…';
+    if(!guard.install())throw Error('Candidate guard unavailable');
+    guard.activate();auditCache.auditInstall();
+    if(!auditCache.active)throw Error('Blank cache not active');
+    try{
+     const started=performance.now(),rows=await api.generateAsync(0);
+     const ms=Math.round(performance.now()-started);
+     if(!auditCache.active)throw Error('Blank cache expired during comparison');
+     return {ms,rows:summarize(rows)};
+    }finally{auditCache.restore();guard.deactivate()}
    }
    try{return {baseline:await measure(old),candidate:await measure(next)}}finally{window.tradeFinderV168=existing}
-  },{original,candidate});
+  },{original,candidate,cacheSource});
   assert.deepEqual(pair.candidate.rows,pair.baseline.rows,mode+' '+tier+' full ordered recommendation parity');
   recommendations.push({mode,tier,rows:pair.candidate.rows});
   outcomes.push({mode,tier,baselineMs:pair.baseline.ms,candidateMs:pair.candidate.ms,count:pair.candidate.rows.length});
@@ -57,7 +73,12 @@ export async function auditTargetedParity(page){
   }
   async function measure(src){
    const api=load(src);if(!api.active())throw Error('Scoped max-tier-add engine is not active');
-   const started=performance.now();await api.run();
+   const guard=window.tradeFinderCandidateGuardV223;
+   window.tradeBlankCacheV167?.restore();guard.deactivate();
+   if(!guard.install())throw Error('Candidate guard unavailable');
+   guard.activate();
+   const started=performance.now();
+   try{await api.run()}finally{guard.deactivate()}
    const ms=Math.round(performance.now()-started);
    for(let i=0;i<40;i++){const more=[...host.querySelectorAll('button')].find(b=>/^Load more trades/.test(b.textContent));if(!more)break;more.click()}
    if([...host.querySelectorAll('button')].some(b=>/^Load more trades/.test(b.textContent)))throw Error('Incomplete result readback');

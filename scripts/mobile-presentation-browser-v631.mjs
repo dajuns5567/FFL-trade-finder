@@ -86,6 +86,9 @@ try{
    const g=await logoGeometry(),{logo,word,arrow,tip}=g;
    assert.equal(g.position,'relative',name+' mobile arrow uses layout, not desktop offsets');
    assert.equal(g.display,'grid');
+   assert(Math.abs(logo.width/logo.height-168/53)<.12,name+' desktop bubble aspect ratio '+JSON.stringify(g));
+   assert(Math.abs(parseFloat(g.font)/logo.width-28/168)<.015,name+' desktop word-to-bubble ratio '+JSON.stringify(g));
+   assert(logo.width<=132,name+' bubble does not stretch across available header');
    assert(Math.abs((arrow.left+arrow.right-word.left-word.right)/2)<1,name+' arrow horizontally centered beneath word '+JSON.stringify(g));
    assert(arrow.top+arrow.height/2-tip>=word.bottom-0.5,name+' arrowheads overlap word '+JSON.stringify(g));
    assert(arrow.bottom+tip-arrow.height/2<=logo.bottom-2,name+' arrowheads clipped by bubble '+JSON.stringify(g));

@@ -5,6 +5,7 @@ on:
       - 'value-history-v276.js'
       - 'league-hub-v451.js'
       - 'tests/navigation-read-scope-v656.test.mjs'
+      - 'tests/final-navigation-v659.test.mjs'
       - 'scripts/navigation-*-v656.mjs'
       - '.github/workflows/navigation-read-scope-v656.yml'
 permissions:
@@ -18,7 +19,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --check value-history-v276.js && node --check league-hub-v451.js && node --test tests/navigation-read-scope-v656.test.mjs
+      - run: node --check value-history-v276.js && node --check league-hub-v451.js && node --test tests/navigation-read-scope-v656.test.mjs tests/final-navigation-v659.test.mjs tests/hall-of-fleeced-hindsight-parity-refresh.test.mjs
   live-parity:
     runs-on: ubuntu-24.04
     timeout-minutes: 30

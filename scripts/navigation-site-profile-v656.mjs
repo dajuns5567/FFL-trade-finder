@@ -12,9 +12,13 @@ export async function profileSiteNavigation(page){
   await b.click();if(label){const menu=page.locator('#fleecedHeaderDropdown');await menu.waitFor({state:'visible'});await menu.getByRole('menuitem',{name:label,exact:true}).click()}
   await page.locator('#'+tab).waitFor({state:'visible'});
  };
- const waitHub=async()=>page.waitForFunction(()=>{const h=document.getElementById('leagueHubContent');return h&&h.textContent.trim()&&!/^Loading league intelligence|^Open League Hub/i.test(h.textContent.trim())&&!/temporarily unavailable\. Trade Finder/.test(h.textContent)},null,{timeout:90000});
+ const hubTargets={'Fleeced Daily':'[data-lh-view="hall"]','Awards':'.lh-awards-page','Hall of Fleeced':'.lh-hall-page','Managers':'[data-lh-manager]','Fleeced Inquirer':'[data-lh-inquirer-back]'};
+ const waitHub=async(name)=>page.locator('#leagueHubContent '+hubTargets[name]).first().waitFor({state:'visible',timeout:90000});
  const tests=[
  ['Home','home',null,'#homeTopPlayers [data-home-history]'],
+ ['Trade Finder','finder',null,'#runFinder'],
+ ['Trade Evaluator','evaluator',null,'#evaluate'],
+ ['Model','settings',null,'#settings'],
  ['Player Values All','rankings','All','#playerValuesBody .valueRow19'],
  ['Player Values Offense','rankings','Offense','#playerValuesBody .valueRow19'],
  ['Player Values Defense','rankings','Defense','#playerValuesBody .valueRow19'],
@@ -39,7 +43,7 @@ export async function profileSiteNavigation(page){
    const entry={mode,round,name,requests:[]};current=entry;const start=Date.now();
    try{
     await nav(tab,label);
-    if(selector)await page.locator(selector).first().waitFor({state:'visible',timeout:90000});else await waitHub();
+    if(selector)await page.locator(selector).first().waitFor({state:'visible',timeout:90000});else await waitHub(name);
     // Wait for the first visible content paint, not merely the navigation bar.
     await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
     entry.ms=Date.now()-start;
@@ -49,6 +53,19 @@ export async function profileSiteNavigation(page){
    current=null;records.push(entry);
    console.log('SITE_NAV_PROFILE '+JSON.stringify({...entry,requests:entry.requests.map(({endpoint,ms,failed})=>({endpoint,ms,failed}))}));
   }
+  const checkShortcut=async(name,action,ready)=>{
+   const entry={mode,round:'shortcut',name,requests:[]};current=entry;const start=Date.now();
+   try{await action();await ready();await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));entry.ms=Date.now()-start;entry.status='PASS'}
+   catch(e){entry.status='FAIL';entry.error=String(e.message||e).slice(0,600)}
+   finally{current=null;records.push(entry);console.log('SITE_NAV_SHORTCUT '+JSON.stringify(entry))}
+  };
+  const daily=async()=>{await nav('leagueHub','Fleeced Daily');await waitHub('Fleeced Daily')};
+  await checkShortcut('Daily → Enter Hall of Fleeced',async()=>{await daily();await page.getByRole('button',{name:'Enter Hall of Fleeced',exact:true}).click()},()=>waitHub('Hall of Fleeced'));
+  await checkShortcut('Hall → exact trade Hindsight',async()=>{const card=page.locator('#leagueHubContent .lh-hall-page [data-lh-trade]').first();await card.waitFor({state:'visible',timeout:90000});const key=await card.getAttribute('data-lh-trade');await card.click();await page.waitForFunction(id=>[...document.querySelectorAll('#tradeHistory [data-vh-trade-card-id]')].some(x=>x.dataset.vhTradeCardId===id&&x.querySelector('.vh-hindsight')),key,{timeout:90000})},()=>page.locator('#tradeHistory').waitFor({state:'visible'}));
+  await checkShortcut('Daily → View Awards',async()=>{await daily();await page.getByRole('button',{name:'View Awards',exact:true}).click()},()=>waitHub('Awards'));
+  await checkShortcut('Daily → career rankings → Daily',async()=>{await daily();await page.locator('#leagueHubContent [data-lh-career-rank]').first().click();await page.locator('#leagueHubContent [data-lh-view="daily"]').waitFor({state:'visible',timeout:90000});await page.locator('#leagueHubContent [data-lh-view="daily"]').click()},()=>waitHub('Fleeced Daily'));
+  await checkShortcut('Home → player value history',async()=>{await nav('home');await page.locator('#homeTopPlayers [data-home-history]').first().click()},()=>page.locator('#valueHistory #vhSearch').waitFor({state:'visible',timeout:90000}));
+  await checkShortcut('Rapid Hall → Home navigation',async()=>{await daily();await page.getByRole('button',{name:'Enter Hall of Fleeced',exact:true}).click();await nav('home');await page.waitForTimeout(1500)},()=>page.locator('#home').waitFor({state:'visible'}));
  }
  assert.deepEqual(errors,[],'Browser exceptions during site profiling');
  assert(records.every(r=>r.status==='PASS'),'Some section readiness checks did not complete');

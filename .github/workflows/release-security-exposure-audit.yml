@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'scripts/audit-release-security-exposure.mjs'
+      - 'scripts/audit-release-history-security.mjs'
       - '.github/workflows/release-security-exposure-audit.yml'
       - 'package.json'
       - 'package-lock.json'
@@ -37,3 +38,17 @@ jobs:
           console.log('PRODUCTION_DEPENDENCY_AUDIT '+JSON.stringify({counts,packages:Object.entries(report.vulnerabilities||{}).map(([name,v])=>({name,severity:v.severity,fixAvailable:!!v.fixAvailable}))}));
           if(counts.high||counts.critical)process.exitCode=1;
           JS
+
+  historical-exposure:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Read-only reachable history, private fields and function exposure audit
+        run: node scripts/audit-release-history-security.mjs

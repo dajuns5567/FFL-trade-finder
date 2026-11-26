@@ -15,7 +15,7 @@ export async function auditFinderScheduling(page){
  await page.locator('#desiredPlayerSearch').fill('');
  // Both implementations run against the same current page state and the
  // same per-search cache, with no network refresh between comparisons.
- const outcomes=[];
+ const outcomes=[],recommendations=[];
  for(const [mode,tier] of [['balanced','neutral'],['value','neutral'],['balanced','up'],['need','neutral'],['balanced','down']]){
   await page.locator('#findMode').selectOption(mode);await page.locator('#tradeTier94').selectOption(tier);
   const pair=await page.evaluate(async({original,candidate})=>{
@@ -31,11 +31,13 @@ export async function auditFinderScheduling(page){
    try{return {baseline:await measure(old),candidate:await measure(next)}}finally{window.tradeFinderV168=existing}
   },{original,candidate});
   assert.deepEqual(pair.candidate.rows,pair.baseline.rows,mode+' '+tier+' full ordered recommendation parity');
+  recommendations.push({mode,tier,rows:pair.candidate.rows});
   outcomes.push({mode,tier,baselineMs:pair.baseline.ms,candidateMs:pair.candidate.ms,count:pair.candidate.rows.length});
   console.log('FINDER_SCHEDULING_PARITY '+JSON.stringify(outcomes.at(-1)));
  }
  assert(outcomes.some(x=>x.count>0),'No qualifying recommendations to compare');
  console.log('FINDER_SCHEDULING_SUMMARY '+JSON.stringify(outcomes));
+ return recommendations;
 }
 
 export async function auditTargetedParity(page){
@@ -49,7 +51,9 @@ export async function auditTargetedParity(page){
   function load(src){
    const lines=src.split('\n');const listeners=lines.filter(x=>x.startsWith("document.addEventListener('click'"));
    if(listeners.length!==1)throw Error('Target listener anchor drift');
-   (0,eval)(lines.filter(x=>x!==listeners[0]).join('\n'));return window.tradeSpecificMaxValueV279;
+   const clean=lines.filter(x=>x!==listeners[0]).join('\n');
+   const anchor='window.tradeSpecificMaxValueV279={run,';if(clean.split(anchor).length!==2)throw Error('Target export anchor drift');
+   (0,eval)(clean.replace(anchor,'window.tradeSpecificMaxValueV279={auditRows:()=>active,run,'));return window.tradeSpecificMaxValueV279;
   }
   async function measure(src){
    const api=load(src),started=performance.now();await api.run();
@@ -57,11 +61,15 @@ export async function auditTargetedParity(page){
    if(!stats)throw Error('Target engine did not run');
    for(let i=0;i<30;i++){const more=[...host.querySelectorAll('button')].find(b=>/^Load more trades/.test(b.textContent));if(!more)break;more.click()}
    if([...host.querySelectorAll('button')].some(b=>/^Load more trades/.test(b.textContent)))throw Error('Incomplete result readback');
-   return {ms,stats,rows:[...host.querySelectorAll('.trade95-card')].map(x=>x.outerHTML),empty:host.querySelector('.empty')?.textContent||null};
+   const value=a=>Number((window.tradeValueNormalizationV139||window.tradeValueNormalizationV130)?.canonicalValue?.(a))||0;
+   const asset=a=>({type:a.type,id:a.id,owner:a.owner,value:value(a)});
+   const rows=api.auditRows().map(x=>({other:x.other,target:asset(x.target),give:x.give.map(asset),recv:x.recv.map(asset),fair:x.f,fit:x.fit,maximumValueScore:x.maximumValueScore}));
+   if(host.querySelectorAll('.trade95-card').length!==rows.length)throw Error('Rendered card count differs from recommendations');
+   return {ms,stats,rows,empty:rows.length===0};
   }
   try{return {selected,view:document.documentElement.dataset.fleecedView,baseline:await measure(original),candidate:await measure(candidate)}}finally{window.tradeSpecificMaxValueV279=originalAPI}
  },{original,candidate});
- assert.deepEqual(pair.candidate.rows,pair.baseline.rows,'Targeted ordered card parity');
+ assert.deepEqual(pair.candidate.rows,pair.baseline.rows,'Targeted ordered recommendation and value parity');
  assert.equal(pair.candidate.empty,pair.baseline.empty,'Targeted empty-state parity');
  for(const key of ['examined','fairnessChecks','receiveScans','results','capped'])assert.equal(pair.candidate.stats[key],pair.baseline.stats[key],'Targeted search coverage parity: '+key);
  console.log('FINDER_TARGETED_PARITY '+JSON.stringify({view:pair.view,selected:pair.selected,baselineMs:pair.baseline.ms,candidateMs:pair.candidate.ms,count:pair.candidate.rows.length,stats:pair.candidate.stats}));

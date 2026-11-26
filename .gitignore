@@ -12,3 +12,4 @@ test-results/
 *.key
 .netlify/
 .tmp/
+.public-site/

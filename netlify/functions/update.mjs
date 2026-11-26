@@ -99,3 +99,7 @@ export default async (req,context)=>{
   }finally{lease?.release?.()}
 };
 function json(body,status=200){return new Response(JSON.stringify(body),{status,headers:{"content-type":"application/json; charset=utf-8","cache-control":"no-store"}})}
+
+// Netlify edge admission limit: cap costly calls across warm instances.
+// A minute of normal concurrent league use fits within this budget.
+export const config={rateLimit:{action:'rate_limit',aggregateBy:'domain',windowSize:60,windowLimit:120}};

@@ -1570,3 +1570,7 @@ export default async (req,context)=>{
   }
 };
 
+
+// Netlify edge admission limit: cap costly calls across warm instances.
+// A minute of normal concurrent league use fits within this budget.
+export const config={rateLimit:{action:'rate_limit',aggregateBy:'domain',windowSize:60,windowLimit:600}};

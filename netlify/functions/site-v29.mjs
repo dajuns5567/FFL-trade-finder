@@ -29,6 +29,7 @@ export default async () => {
       'cache-control': 'no-store',
       'x-content-type-options': 'nosniff',
       'x-frame-options': 'DENY',
+      'content-security-policy': "object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
       'x-robots-tag': 'noindex, nofollow, noarchive',
       'referrer-policy': 'strict-origin-when-cross-origin',
       'permissions-policy': 'camera=(), microphone=(), geolocation=()',
@@ -36,3 +37,7 @@ export default async () => {
     }
   });
 };
+
+// Netlify edge admission limit: cap costly calls across warm instances.
+// A minute of normal concurrent league use fits within this budget.
+export const config={rateLimit:{action:'rate_limit',aggregateBy:'domain',windowSize:60,windowLimit:300}};

@@ -112,3 +112,7 @@ export default async req=>{
     return json(compact?{available:true,signal_version:data.signal_version,season:data.season,through_week:data.through_week,generated_at:data.generated_at,source:data.source,summary:data.summary,signals:data.signals,transitions}:data);
   }catch(e){return json({available:false,error:String(e?.message||e)},500)}
 };
+
+// Netlify edge admission limit: cap costly calls across warm instances.
+// A minute of normal concurrent league use fits within this budget.
+export const config={rateLimit:{action:'rate_limit',aggregateBy:'domain',windowSize:60,windowLimit:300}};

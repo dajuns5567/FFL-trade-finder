@@ -1,6 +1,7 @@
 
 [build]
-  publish = "."
+  publish = ".public-site"
+  command = "node scripts/build-public-site.mjs"
   functions = "netlify/functions"
   # One-time user-authorized release for the current Netlify site only.
   # Gate ONLY the original V101 and owner-authorized Inquirer V110 cutover subjects;
@@ -49,5 +50,12 @@
 [[redirects]]
   from = "/api/picks"
   to = "/.netlify/functions/picks"
+  status = 200
+  force = true
+
+# Do not expose the unassembled repository index as a bypass route.
+[[redirects]]
+  from = "/index.html"
+  to = "/.netlify/functions/site-v29"
   status = 200
   force = true

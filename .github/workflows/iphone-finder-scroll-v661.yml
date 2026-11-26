@@ -1,0 +1,44 @@
+name: iPhone Finder scroll and pagination isolation
+on:
+  push:
+    branches: ['fix/iphone-finder-scroll-20261126']
+  pull_request:
+    paths:
+      - 'fleeced-mobile-align-v649.js'
+      - 'scripts/iphone-finder-scroll-v661.mjs'
+      - '.github/workflows/iphone-finder-scroll-v661.yml'
+permissions:
+  contents: read
+jobs:
+  scroll:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact approved production scope
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {execFileSync} from 'node:child_process';
+          const base='14d706ac5482114af477ca76e678497b164a55fa',git=(...a)=>execFileSync('git',a,{encoding:'utf8'}).trim();
+          const delta=git('diff','--name-only',base,'HEAD').split('\n').filter(Boolean).sort();
+          assert.deepEqual(delta,['.github/workflows/iphone-finder-scroll-v661.yml','fleeced-mobile-align-v649.js','netlify/functions/site-v29.mjs','scripts/iphone-finder-scroll-v661.mjs']);
+          assert.equal(git('show','HEAD:netlify/functions/site-v29.mjs'),git('show',base+':netlify/functions/site-v29.mjs').replace('fleeced-mobile-align-v649.js?v=649','fleeced-mobile-align-v649.js?v=661'));
+          assert.equal(git('show','HEAD:netlify.toml'),git('show',base+':netlify.toml'));
+          JS
+      - name: Browser installation
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+          npm install --no-save --ignore-scripts --no-audit --no-fund --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium webkit
+      - name: Real pagination and WebKit viewport-height regression
+        run: |
+          node --check fleeced-mobile-align-v649.js
+          node --check scripts/iphone-finder-scroll-v661.mjs
+          node scripts/iphone-finder-scroll-v661.mjs
+          node scripts/mobile-aligned-browser-v649.mjs

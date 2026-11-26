@@ -103,9 +103,13 @@ function structureCandidates(sorted,target,size,limit){
  if(!sorted.length)return[];
  const index=structureIndex(sorted),near=closestByValue(sorted,target,Math.min(limit,Math.max(24,Math.floor(limit*.45))),g=>g.v);
  const simple=closestByValue(index.simple,target,Math.max(20,Math.floor(limit*.30)),g=>g.v);
- const assetRows=[];
- for(const arr of index.byAsset.values())for(const z of closestByValue(arr,target,3,z=>z.g.v))assetRows.push({...z,gap:Math.abs(z.g.v-target)});
- assetRows.sort((a,b)=>{const va=av(a.x),vb=av(b.x),pa=va<2500?1:0,pb=vb<2500?1:0;return pa-pb||a.gap-b.gap||vb-va});
+ // Cache canonical reads only within this synchronous candidate selection.
+ const assetRows=[],values=new Map();
+ for(const arr of index.byAsset.values())for(const z of closestByValue(arr,target,3,z=>z.g.v)){
+  if(!values.has(z.x))values.set(z.x,av(z.x));
+  assetRows.push({...z,gap:Math.abs(z.g.v-target),assetValue:values.get(z.x)});
+ }
+ assetRows.sort((a,b)=>{const va=a.assetValue,vb=b.assetValue,pa=va<2500?1:0,pb=vb<2500?1:0;return pa-pb||a.gap-b.gap||vb-va});
  const seeded=[],seen=new Set(),add=g=>{const k=packageKey(g?.xs||[]);if(!k||seen.has(k))return;seen.add(k);seeded.push(g)};
  for(const g of near)add(g);
  for(const g of simple)add(g);

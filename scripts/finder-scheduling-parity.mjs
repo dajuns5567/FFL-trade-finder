@@ -4,7 +4,7 @@ import {execFileSync} from 'node:child_process';
 const base='ebdd98fe874f83a0d41cfa4fb4a6fef02a57488f';
 const original=execFileSync('git',['show',base+':trade-finder-v256-compiled.js'],{encoding:'utf8'});
 const candidate=readFileSync('trade-finder-v256-compiled.js','utf8');
-assert.equal(candidate,original.replace('const all=[];let steps=0;','const all=[];let sliceStart=performance.now();').replaceAll('if(++steps%2===0)await yieldUI()','if(performance.now()-sliceStart>=18){await yieldUI();sliceStart=performance.now()}'));
+assert.equal(candidate,original.replace('const all=[];let steps=0;','const all=[];let sliceStart=Date.now();').replaceAll('if(++steps%2===0)await yieldUI()','if(Date.now()-sliceStart>=18){await yieldUI();sliceStart=Date.now()}'));
 export async function auditFinderScheduling(page){
  const team=page.locator('#findTeam');
  await page.locator('.tabs button[data-tab="finder"]').click();
@@ -36,4 +36,34 @@ export async function auditFinderScheduling(page){
  }
  assert(outcomes.some(x=>x.count>0),'No qualifying recommendations to compare');
  console.log('FINDER_SCHEDULING_SUMMARY '+JSON.stringify(outcomes));
+}
+
+export async function auditTargetedParity(page){
+ const path='trade-specific-max-value-v279.js';
+ const original=execFileSync('git',['show',base+':'+path],{encoding:'utf8'});
+ const candidate=readFileSync(path,'utf8');
+ const pair=await page.evaluate(async({original,candidate})=>{
+  const originalAPI=window.tradeSpecificMaxValueV279,host=document.getElementById('finderResults');
+  const selected=[...document.querySelectorAll('#findShop .shopCheck:checked')].map(x=>x._asset?.id);
+  if(selected.length!==1||!document.getElementById('tradeAssist97')?.checked||document.getElementById('findMode')?.value!=='value'||document.getElementById('tradeTier94')?.value!=='up'||!document.getElementById('desiredPlayerSearch')?.value||window.tradeSelectAllV165?.aliasActive?.())throw Error('Exact target configuration lost');
+  function load(src){
+   const lines=src.split('\n');const listeners=lines.filter(x=>x.startsWith("document.addEventListener('click'"));
+   if(listeners.length!==1)throw Error('Target listener anchor drift');
+   (0,eval)(lines.filter(x=>x!==listeners[0]).join('\n'));return window.tradeSpecificMaxValueV279;
+  }
+  async function measure(src){
+   const api=load(src),started=performance.now();await api.run();
+   const ms=Math.round(performance.now()-started),stats=api.sourceIntegrityStats().lastSearchStats;
+   if(!stats)throw Error('Target engine did not run');
+   for(let i=0;i<30;i++){const more=[...host.querySelectorAll('button')].find(b=>/^Load more trades/.test(b.textContent));if(!more)break;more.click()}
+   if([...host.querySelectorAll('button')].some(b=>/^Load more trades/.test(b.textContent)))throw Error('Incomplete result readback');
+   return {ms,stats,rows:[...host.querySelectorAll('.trade95-card')].map(x=>x.outerHTML),empty:host.querySelector('.empty')?.textContent||null};
+  }
+  try{return {selected,view:document.documentElement.dataset.fleecedView,baseline:await measure(original),candidate:await measure(candidate)}}finally{window.tradeSpecificMaxValueV279=originalAPI}
+ },{original,candidate});
+ assert.deepEqual(pair.candidate.rows,pair.baseline.rows,'Targeted ordered card parity');
+ assert.equal(pair.candidate.empty,pair.baseline.empty,'Targeted empty-state parity');
+ for(const key of ['examined','fairnessChecks','receiveScans','results','capped'])assert.equal(pair.candidate.stats[key],pair.baseline.stats[key],'Targeted search coverage parity: '+key);
+ console.log('FINDER_TARGETED_PARITY '+JSON.stringify({view:pair.view,selected:pair.selected,baselineMs:pair.baseline.ms,candidateMs:pair.candidate.ms,count:pair.candidate.rows.length,stats:pair.candidate.stats}));
+ return {rows:pair.candidate.rows,empty:pair.candidate.empty,selected:pair.selected};
 }

@@ -26,7 +26,7 @@ export async function auditFinder(page){
  const clear=async()=>{await page.evaluate(()=>{for(const x of document.querySelectorAll('#findShop .shopCheck:checked'))x.click()})};
  const runCase=async(name,setup)=>{
   const started=Date.now();try{
-   await clear();await setTarget('');await page.locator('#findMode').selectOption('balanced');await page.locator('#tradeTier94').selectOption('neutral');
+   await clear();await page.evaluate(()=>{const x=document.getElementById('tradeAssist97');if(x?.checked)x.click()});await setTarget('');await page.locator('#findMode').selectOption('balanced');await page.locator('#tradeTier94').selectOption('neutral');
    await setup();await page.waitForTimeout(250);
    const before=await diagnostics();
    console.log('FINDER_LIVE_START '+JSON.stringify({name,before}));
@@ -49,6 +49,22 @@ export async function auditFinder(page){
  await runCase('select all balanced',selectAll);
  await runCase('Jonathan Taylor balanced select all',async()=>{await setTarget('Jonathan Taylor');await selectAll()});
  await runCase('Jonathan Taylor maximum value tier up select all',async()=>{await setTarget('Jonathan Taylor');await page.locator('#findMode').selectOption('value');await page.locator('#tradeTier94').selectOption('up');await selectAll()});
+ await runCase('Jonathan Taylor maximum value tier up one outgoing add assets',async()=>{
+  await setTarget('Jonathan Taylor');await page.locator('#findMode').selectOption('value');await page.locator('#tradeTier94').selectOption('up');
+  const selected=await page.evaluate(()=>{
+   const target=window.state?.allAssets?.find(a=>a.type==='player'&&String(a.id)==='6794');
+   const rank=a=>Number(window.playerRankValue?.(a)?.rank)||9999;
+   const value=a=>Number(window.tradeValueNormalizationV139?.canonicalValue?.(a)||window.tradeValueNormalizationV130?.canonicalValue?.(a))||0;
+   const boxes=[...document.querySelectorAll('#findShop .shopCheck')].filter(b=>!b.disabled&&b._asset);
+   const players=boxes.filter(b=>b._asset.type==='player'&&rank(b._asset)>rank(target)).sort((a,b)=>value(b._asset)-value(a._asset));
+   const box=players[0]||boxes.find(b=>b._asset.type==='player')||boxes[0];
+   if(!box)return null;
+   if(!box.checked)box.click();
+   const assist=document.getElementById('tradeAssist97');if(assist&&!assist.checked)assist.click();
+   return {id:box._asset.id,count:document.querySelectorAll('#findShop .shopCheck:checked').length,assist:assist?.checked,alias:window.tradeSelectAllV165?.aliasActive?.()};
+  });
+  assert(selected&&selected.count===1&&selected.assist&&!selected.alias,'Exact manual-add-assets configuration not established: '+JSON.stringify(selected));
+ });
  console.log('FINDER_LIVE_SUMMARY '+JSON.stringify({checks,errors:errors.slice(0,15)}));
  assert(checks.some(x=>x.status==='PASS'),'No actual trade recommendations were rendered');
  assert(!checks.some(x=>x.status==='FAIL'),'Finder browser execution failure');

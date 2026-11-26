@@ -5,6 +5,9 @@ on:
       - 'scripts/finder-live-browser-audit.mjs'
       - 'scripts/finder-scheduling-parity.mjs'
       - 'trade-finder-v256-compiled.js'
+      - 'trade-specific-max-value-v279.js'
+      - 'scripts/compile-v256-runtimes.cjs'
+      - 'tests/finder-natural-filter-matrix.test.mjs'
       - 'scripts/finder-live-browser-runner.mjs'
       - '.github/workflows/finder-live-browser-audit.yml'
 permissions:

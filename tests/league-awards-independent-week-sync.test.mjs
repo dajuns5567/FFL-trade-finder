@@ -60,7 +60,7 @@ test('the visible Fleeced Daily dashboard invalidates old badges when a complete
  assert.match(refresh,/clearManagerHistoryCache\(\)/,'completed week invalidates manager cache and in-flight generation');
  assert.match(browser,/function clearManagerHistoryCache\(/,'manager invalidator must exist');
  assert.match(refresh,/weeklyAwardsCache=null/);
- assert.match(refresh,/await render\(currentView\)/,'refresh correct active awards, daily or manager view');
+ assert.match(refresh,/currentView===refreshView&&leagueHubRenderGeneration===refreshGeneration&&!openBroadcastTeam\)await render\(refreshView\)/,'refresh only the still-active awards, daily or manager view');
  const loader=readFileSync(new URL('../netlify/functions/site-v29.mjs',import.meta.url),'utf8');
  assert.ok(Number(loader.match(/league-hub-v451\.js\?v=(\d+)/)?.[1])>=557,'league-hub-v451 must retain at least the verified cache revision 557');
 });

@@ -36,7 +36,7 @@ function fixture(){
  };
  vm.createContext(ctx);
  vm.runInContext(`let managerCache=null,weeklyCache=null,tradeCache=null,weeklyAwardsCache=null,spotlightWeeklyCache=null,liveLeagueWeekCache=null,draftCache=null;
- const inquirerPreviewMode=false;let currentView='managers',selectedManagerId='4';`+managerCode,ctx);
+ const inquirerPreviewMode=false;let currentView='managers',selectedManagerId='4',leagueHubRenderGeneration=0;`+managerCode,ctx);
  return {ctx,
   setManager:x=>{current=x},setTrades:x=>{trades=x},setWeek:x=>{leagueWeek=x},setFailManager:x=>{failManager=x},setFailTrades:x=>{failTrades=x},setFailWeek:x=>{failWeek=x},
   get:()=>({managerCalls,tradeCalls,weekCalls,rerenders})

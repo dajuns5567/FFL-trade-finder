@@ -117,7 +117,7 @@ export function verifyLocalBadgeIntegration(){
   if(Object.entries(security).every(([file,hash])=>git('hash-object',file).trim()===hash))
    return verifyPinnedIntegration(file=>Object.hasOwn(security,file)?INTEGRATED_RUNTIME_BLOBS[file]:git('hash-object',file).trim());
   // Exact final navigation successor; keep the security server blobs pinned.
-  const navigation={...security,'league-hub-v451.js':'4e3706414988e9aee8508ee0b299ed38abcc4432','value-history-v276.js':'00c221d709ab52c6cac20c722c0f52f682f10cd8'};
+  const navigation={...security,'league-hub-v451.js':'4e3706414988e9aee8508ee0b299ed38abcc4432','value-history-v276.js':'9c31458bd2695d7140a4013ceee80ab2050176c3'};
   if(Object.entries(navigation).every(([file,hash])=>git('hash-object',file).trim()===hash))
    return verifyPinnedIntegration(file=>Object.hasOwn(navigation,file)?INTEGRATED_RUNTIME_BLOBS[file]:git('hash-object',file).trim());
   return original;

@@ -39,9 +39,13 @@ async function check(name,engine,options,source,changed){
  const snapshot=()=>page.evaluate(()=>{const b=document.querySelector('#finderResults > button'),r=b.getBoundingClientRect();return{scrollY:window.scrollY,top:r.top,bottom:r.bottom,height:innerHeight,docHeight:document.documentElement.scrollHeight,width:document.documentElement.clientWidth,mutations:window.__finderStyleMutations}});
  await more.scrollIntoViewIfNeeded();
  await page.evaluate(()=>{window.__finderStyleMutations=0;new MutationObserver(rs=>window.__finderStyleMutations+=rs.length).observe(document.getElementById('finderResults'),{subtree:true,attributes:true,attributeFilter:['style']})});
+ const settle=()=>page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))));
+ await settle();
  const before=await snapshot();
  await page.evaluate(()=>{for(let i=0;i<8;i++){window.dispatchEvent(new Event('resize'));document.getElementById('filters').append(document.createTextNode(''));document.getElementById('leagueHub').append(document.createElement('i'))}});
- await page.waitForTimeout(200);
+ // Synchronize with the actual rendering frames, not wall time on a busy CI runner.
+ await settle();
+ if(!changed)await page.waitForFunction(()=>window.__finderStyleMutations>0,undefined,{timeout:10000});
  const after=await snapshot();
  if(changed){assert.equal(after.mutations,0,name+' no Finder alignment writes after height-only resize/other sections');assert.equal(after.docHeight,before.docHeight);assert(Math.abs(after.scrollY-before.scrollY)<=1,name+' stationary scroll');assert(Math.abs(after.top-before.top)<=1,name+' stable button')}
  else assert(after.mutations>0,name+' old unnecessary reflow reproduced');
@@ -49,16 +53,16 @@ async function check(name,engine,options,source,changed){
  // Exercise actual height-only viewport changes while the button is at the bottom.
  const v=page.viewportSize();
  for(const height of [v.height-80,v.height,v.height-60,v.height]){
-  await page.setViewportSize({width:v.width,height});await page.waitForTimeout(140);
+  await page.setViewportSize({width:v.width,height});await settle();
   assert.equal((await snapshot()).mutations,0,name+' Safari-style height changes must not reset alignment');
  }
  await more.scrollIntoViewIfNeeded();
- await more.tap();await page.waitForTimeout(200);
+ await more.tap();await settle();
  assert.deepEqual(await ids(),Array.from({length:10},(_,i)=>i+1));
  await page.waitForFunction(()=>document.querySelectorAll('#finderResults .trade95-card:nth-child(10) [style*="--ffl-paired-min"]').length>0);
- await more.scrollIntoViewIfNeeded();await more.tap();await page.waitForTimeout(200);
+ await more.scrollIntoViewIfNeeded();await more.tap();await settle();
  assert.deepEqual(await ids(),Array.from({length:15},(_,i)=>i+1));
- await more.scrollIntoViewIfNeeded();await more.tap();await page.waitForTimeout(200);
+ await more.scrollIntoViewIfNeeded();await more.tap();await settle();
  assert.deepEqual(await ids(),Array.from({length:17},(_,i)=>i+1));assert.equal(await more.count(),0);
  // Real width and view-mode changes still invalidate alignment.
  await page.evaluate(()=>window.__finderStyleMutations=0);
@@ -70,9 +74,9 @@ async function check(name,engine,options,source,changed){
  await page.waitForFunction(()=>window.__finderStyleMutations>1);
  assert((await page.evaluate(()=>window.__finderStyleMutations))>1,name+' width changes remeasure');
  await host.evaluate(e=>e.style.removeProperty('width'));
- await page.evaluate(()=>document.documentElement.dataset.fleecedView='desktop');await page.waitForTimeout(200);
+ await page.evaluate(()=>document.documentElement.dataset.fleecedView='desktop');await settle();
  assert.equal(await host.locator('[style*="--ffl-paired-min"]').count(),0,'desktop alignment not applied');
- await page.evaluate(()=>document.documentElement.dataset.fleecedView='mobile');await page.waitForTimeout(200);
+ await page.evaluate(()=>document.documentElement.dataset.fleecedView='mobile');await settle();
  assert(await host.locator('[style*="--ffl-paired-min"]').count()>0,'mobile alignment restored');
  return{name,stableResizeWrites:after.mutations,pages:[5,10,15,17],widthAndMode:'PASS'};
  }finally{await browser.close()}

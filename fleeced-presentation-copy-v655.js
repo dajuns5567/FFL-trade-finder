@@ -293,7 +293,7 @@ const patterns=[["#league #leagueInfo p.tiny.muted","^Sleeper league ID (\\d+)\\
 const selectors=[...new Set([...rules,...patterns].map(r=>r[0]))].join(',');
 const marker='data-ffl-copy-hidden';
 function clean(el){
- if(el.children.length)return;
+ if(el.children.length){el.removeAttribute(marker);return;}
  const original=normalize(el.textContent);
  const exact=rules.find(r=>original===r[1]&&el.matches(r[0]));
  const dynamic=exact?null:patterns.find(r=>el.matches(r[0])&&r[1].test(original));
@@ -308,21 +308,30 @@ function scan(node){
  if(node.matches(selectors))clean(node);
  for(const el of node.querySelectorAll(selectors))clean(el);
 }
+const observed=new WeakSet();
+function attach(root){
+ if(!root||observed.has(root))return;
+ observed.add(root);
+ scan(root);
+ new MutationObserver(records=>{
+  const pending=new Set();
+  for(const rec of records){
+   const target=rec.target.nodeType===1?rec.target:rec.target.parentElement;
+   if(target?.matches(selectors))pending.add(target);
+   for(const node of rec.addedNodes)if(node.nodeType===1)pending.add(node);
+  }
+  for(const el of pending)if(el.isConnected)scan(el);
+ }).observe(root,{childList:true,subtree:true,characterData:true});
+}
 function init(){
  const roots=['valueHistory','tradeHistory','leagueHub','league','settings'];
- for(const id of roots){
-  const root=document.getElementById(id);if(!root)continue;
-  scan(root);
-  new MutationObserver(records=>{
-   const pending=new Set();
-   for(const rec of records){
-    const target=rec.target.nodeType===1?rec.target:rec.target.parentElement;
-    if(target?.matches(selectors))pending.add(target);
-    for(const node of rec.addedNodes)if(node.nodeType===1)pending.add(node);
-   }
-   for(const el of pending)if(el.isConnected)scan(el);
-  }).observe(root,{childList:true,subtree:true,characterData:true});
- }
+ const attachAll=()=>roots.forEach(id=>attach(document.getElementById(id)));
+ // The deferred original history modules can create their tab roots after
+ // our DOMContentLoaded callback. Only watch direct main children for roots;
+ // do not attach a page-wide subtree observer or scan Finder results.
+ const main=document.querySelector('main');
+ if(main)new MutationObserver(attachAll).observe(main,{childList:true});
+ attachAll();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();

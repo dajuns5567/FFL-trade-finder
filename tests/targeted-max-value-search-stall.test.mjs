@@ -79,7 +79,9 @@ test('every Max Value package still contains the target and no equity/consensus 
 });
 
 test('assembled preview loads the updated Finder script rather than the stale browser cache key',()=>{
- assert.match(site,/trade-specific-max-value-v279\.js\?v=443/);
+ assert.match(site,/trade-specific-max-value-v279\.js\?v=444/);
+ assert.match(site,/trade-specific-max-tier-add-v300\.js\?v=302/);
+ assert.match(site,/trade-finder-v256-compiled\.js\?v=450/);
  assert.match(site,/trade-specific-player-v232\.js\?v=441/);
 });
 

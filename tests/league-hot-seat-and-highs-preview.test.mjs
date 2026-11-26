@@ -73,7 +73,7 @@ test('a newly finalized week refreshes Hot Seat and awards even when Managers or
  assert.match(refresh,/\['daily','managers','awards'\]\.includes\(currentView\)/);
  assert.match(refresh,/weeklyAwardsCache=null/);
  assert.match(refresh,/spotlightWeeklyCache=null/);
- assert.match(refresh,/await render\(currentView\)/);
+ assert.match(refresh,/currentView===refreshView&&leagueHubRenderGeneration===refreshGeneration&&!openBroadcastTeam\)await render\(refreshView\)/);
  assert.doesNotMatch(refresh,/currentView!=='daily'/);
 });
 

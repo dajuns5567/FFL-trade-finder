@@ -5,7 +5,7 @@ import vm from 'node:vm';
 const history=readFileSync(new URL('../value-history-v276.js',import.meta.url),'utf8'),hub=readFileSync(new URL('../league-hub-v451.js',import.meta.url),'utf8');
 test('synchronous read scope exactly preserves values, restores original functions and never crosses a refresh',()=>{
  const code=history.slice(history.indexOf('// NAVIGATION_READ_SCOPE_V656'),history.indexOf('function historyScopedRenderV656'));
- const ctx=vm.createContext({});vm.runInContext(`
+ const ctx=vm.createContext({window:{}});vm.runInContext(`
  let calls={ranked:0,posRanks:0,currentRows:0,meta:0,move:0},version=1,marketIntelPeriod='7D';
  function ranked(){calls.ranked++;return Array.from({length:1100},(_,i)=>({id:String(i),value:1000-i+version}))}
  function posRanks(list){calls.posRanks++;return new Map(list.map((r,i)=>[r.id,i+1]))}

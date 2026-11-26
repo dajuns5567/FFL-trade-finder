@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
+const base='a99139f3051c3a1d4a71a1f1e9d5a5fba8451aaa',production='14d706ac5482114af477ca76e678497b164a55fa',git=(...a)=>execFileSync('git',a,{encoding:'utf8'}).trim();
+assert.equal(git('rev-parse','origin/main'),production,'Public production must remain unchanged');
+execFileSync('git',['merge-base','--is-ancestor',base,'HEAD']);
+assert.deepEqual(git('diff','--name-only',base,'HEAD').split('\n').filter(Boolean).sort(),[".github/workflows/finder-pagination-batch-v662.yml",".github/workflows/mobile-presentation-v631.yml",".github/workflows/netlify-v101-one-time-release-gate-ci.yml","finder-pagination-read-batch-v662.js","netlify/functions/site-v29.mjs","scripts/audit-finder-pagination-v662.mjs","scripts/finder-pagination-browser-v662.mjs","tests/finder-pagination-read-batch-v662.test.mjs","tests/finder-verified-653-regression.test.mjs","tests/managers-preview-readonly-fallback.test.mjs","trade-recommended-pick-ownership-v662.js"]);
+const old='<script src="/trade-recommended-pick-ownership-v301.js?v=301"></script>',next='<script src="/finder-pagination-read-batch-v662.js?v=662"></script><script src="/trade-recommended-pick-ownership-v662.js?v=662"></script>';
+assert.equal(git('show','HEAD:netlify/functions/site-v29.mjs'),git('show',base+':netlify/functions/site-v29.mjs').replace(old,next),'Only the verified pagination/ownership script insertion may change');
+assert.equal(git('show','HEAD:netlify.toml'),git('show',base+':netlify.toml'),'Preview 660 remains blocked pending scope verification; production gate unchanged');
+const prior=git('show',base+':trade-recommended-pick-ownership-v301.js');
+const expected=prior.replace('function enhance(){','function enhanceUnbatched(){').replace('let queued=false;', "function enhance(){const batch=window.finderPaginationReadBatchV662?.run;return typeof batch==='function'?batch(enhanceUnbatched):enhanceUnbatched()}\nlet queued=false;");
+assert.equal(git('show','HEAD:trade-recommended-pick-ownership-v662.js'),expected,'Ownership successor preserves the entire original algorithm');
+console.log('Exact stacked Finder pagination scope; all existing search, scoring, scroll correction and production runtime preserved.');

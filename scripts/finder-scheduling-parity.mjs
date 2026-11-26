@@ -128,7 +128,7 @@ export async function auditTargetedCoverage(page){
  const result=await page.evaluate(async({original,candidate})=>{
   const host=document.getElementById('finderResults'),originalAPI=window.tradeSpecificMaxValueV279;
   const guard=window.tradeFinderCandidateGuardV223;
-  const target=window.state.allAssets.find(a=>a.type==='player'&&String(a.id)==='6794');
+  const target=window.state.allAssets.find(a=>a.type==='player'&&String(a.id)==='6813');
   const me=Number(document.getElementById('findTeam').value);
   if(!target||Number(target.owner)===me||document.querySelectorAll('#findShop .shopCheck:checked').length)throw Error('Coverage audit configuration lost');
   const value=a=>Number((window.tradeValueNormalizationV139||window.tradeValueNormalizationV130)?.canonicalValue?.(a))||0;
@@ -175,7 +175,7 @@ export async function auditTargetedCoverage(page){
  const output=new Set(result.after.rows.map(key));
  const omittedFromDisplay=result.before.rows.filter(r=>!output.has(key(r))).length;
  for(const r of result.after.rows){
-  assert(r.recv.some(a=>a.type==='player'&&a.id==='6794'),'Required target absent');
+  assert(r.recv.some(a=>a.type==='player'&&a.id==='6813'),'Required target absent');
   assert(r.give.every(a=>a.owner===result.me)&&r.recv.every(a=>a.owner===result.targetOwner),'Invalid asset ownership');
   assert(r.fair.score>=75&&r.fair.score<=90&&r.fair.edgeEffective>0,'Trade violates unchanged max-value eligibility');
  }

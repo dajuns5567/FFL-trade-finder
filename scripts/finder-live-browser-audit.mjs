@@ -4,7 +4,7 @@ export async function auditFinder(page){
  const errors=[];
  page.on('pageerror',e=>errors.push(String(e.stack||e)));
  page.on('console',m=>{if(m.type()==='error'&&/finder|specific.player|trade search/i.test(m.text()))errors.push(m.text())});
- const state=await page.evaluate(()=>({players:window.valueHistoryV331.currentRows().length,teams:window.state?.teams?.length,assets:window.state?.allAssets?.length,engines:{compiled:typeof window.tradeFinderV168?.render,max:typeof window.tradeSpecificMaxValueV279?.run,scoped:typeof window.tradeSpecificMaxTierAddV300?.run,target:typeof window.tradeSpecificPlayerV232?.run},teamForJT:window.state?.allAssets?.find(a=>a.type==='player'&&String(a.id)==='6794')?.owner}));
+ const state=await page.evaluate(()=>({players:window.valueHistoryV331.currentRows().length,teams:window.state?.teams?.length,assets:window.state?.allAssets?.length,engines:{compiled:typeof window.tradeFinderV168?.render,max:typeof window.tradeSpecificMaxValueV279?.run,scoped:typeof window.tradeSpecificMaxTierAddV300?.run,target:typeof window.tradeSpecificPlayerV232?.run},teamForJT:window.state?.allAssets?.find(a=>a.type==='player'&&String(a.id)==='6813')?.owner}));
  console.log('FINDER_LIVE_STATE '+JSON.stringify(state));
  assert(state.players>100&&state.teams===32&&state.assets>100);
  assert(Object.values(state.engines).every(x=>x==='function'));
@@ -52,7 +52,7 @@ export async function auditFinder(page){
  await runCase('Jonathan Taylor maximum value tier up one outgoing add assets',async()=>{
   await setTarget('Jonathan Taylor');await page.locator('#findMode').selectOption('value');await page.locator('#tradeTier94').selectOption('up');
   const selected=await page.evaluate(()=>{
-   const target=window.state?.allAssets?.find(a=>a.type==='player'&&String(a.id)==='6794');
+   const target=window.state?.allAssets?.find(a=>a.type==='player'&&String(a.id)==='6813');
    const rank=a=>Number(window.playerRankValue?.(a)?.rank)||9999;
    const value=a=>Number(window.tradeValueNormalizationV139?.canonicalValue?.(a)||window.tradeValueNormalizationV130?.canonicalValue?.(a))||0;
    const boxes=[...document.querySelectorAll('#findShop .shopCheck')].filter(b=>!b.disabled&&b._asset);

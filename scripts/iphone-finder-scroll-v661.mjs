@@ -62,8 +62,14 @@ async function check(name,engine,options,source,changed){
  assert.deepEqual(await ids(),Array.from({length:17},(_,i)=>i+1));assert.equal(await more.count(),0);
  // Real width and view-mode changes still invalidate alignment.
  await page.evaluate(()=>window.__finderStyleMutations=0);
- await page.setViewportSize({width:v.width+30,height:v.height});await page.waitForTimeout(200);
- assert((await page.evaluate(()=>window.__finderStyleMutations))>0,name+' width changes remeasure');
+ const oldWidth=await host.evaluate(e=>e.getBoundingClientRect().width);
+ // WebKit's emulated screen can hold its layout width despite a viewport
+ // resize; change the actual result width to exercise the observer directly.
+ await host.evaluate((e,w)=>e.style.setProperty('width',(w-30)+'px','important'),oldWidth);
+ assert(Math.abs(await host.evaluate(e=>e.getBoundingClientRect().width)-oldWidth)>20,name+' rendered width genuinely changed');
+ await page.waitForFunction(()=>window.__finderStyleMutations>1);
+ assert((await page.evaluate(()=>window.__finderStyleMutations))>1,name+' width changes remeasure');
+ await host.evaluate(e=>e.style.removeProperty('width'));
  await page.evaluate(()=>document.documentElement.dataset.fleecedView='desktop');await page.waitForTimeout(200);
  assert.equal(await host.locator('[style*="--ffl-paired-min"]').count(),0,'desktop alignment not applied');
  await page.evaluate(()=>document.documentElement.dataset.fleecedView='mobile');await page.waitForTimeout(200);

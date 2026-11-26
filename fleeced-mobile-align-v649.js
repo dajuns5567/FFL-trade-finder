@@ -58,6 +58,16 @@ function init(){
   if(width!==lastLayoutWidth){lastLayoutWidth=width;finderDirty=true}
   schedule();
  },{passive:true});
+ // The rendered result container can change width without a window resize
+ // (notably WebKit's layout viewport). Observe width, never its height.
+ const finder=document.getElementById('finderResults');
+ if(finder&&typeof ResizeObserver==='function'){
+  let lastWidth=finder.getBoundingClientRect().width;
+  new ResizeObserver(()=>{
+   const width=finder.getBoundingClientRect().width;
+   if(Math.abs(width-lastWidth)>0.5){lastWidth=width;invalidateFinder()}
+  }).observe(finder);
+ }
  document.fonts?.ready.then(invalidateFinder);
  let touchHit=null,touchId=null;
  // Pointer capture keeps movement targeted at the same original plot even

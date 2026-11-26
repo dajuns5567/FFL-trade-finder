@@ -71,7 +71,15 @@ try{
     const root=document.getElementById(id),rect=e=>{const r=e.getBoundingClientRect();return{x:Math.round(r.x),y:Math.round(r.y),w:Math.round(r.width),h:Math.round(r.height)}};
     const grids=[...root.querySelectorAll('.vh-result-board,.vh-eval-grid,.lh-hall-page>.lh-grid,.vh-grid-2,.vh-intel-grid,.vh-rank-grid')].map(e=>({class:e.className,rect:rect(e),children:[...e.children].map(rect)}));
     const table=root.querySelector('.vh-table'),wrap=root.querySelector('.vh-table-wrap');
-    return{height:rect(root).h,grids,content:root.innerHTML,docWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,table:table?{cols:table.rows[0].cells.length,rows:table.tBodies[0].rows.length,player:rect(table.rows[0].cells[0]).w,scroll:wrap.scrollWidth,viewport:wrap.clientWidth}:null};
+    // V649 alignment writes only these two measured CSS variables. CSS
+    // comparison legitimately changes their values, not the trade content.
+    // Compare the complete DOM with only those computed variables removed.
+    const semantic=root.cloneNode(true);
+    for(const e of semantic.querySelectorAll('[style]')){
+     e.style.removeProperty('--ffl-paired-min');e.style.removeProperty('--ffl-total-gap');
+     if(!e.getAttribute('style'))e.removeAttribute('style');
+    }
+    return{height:rect(root).h,grids,content:semantic.innerHTML,docWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,table:table?{cols:table.rows[0].cells.length,rows:table.tBodies[0].rows.length,player:rect(table.rows[0].cells[0]).w,scroll:wrap.scrollWidth,viewport:wrap.clientWidth}:null};
    },id)};
    const before=await measure(true),after=await measure(false);
    assert.equal(after.content,before.content,'All labels, values, data attributes and actions unchanged: '+id);

@@ -22,7 +22,7 @@ async function run(src,tier,position,sendPick){
  assert.equal(src.split(anchor).length,2);
  vm.runInContext(src.replace(anchor,'window.tradeSpecificMaxTierAddV300={auditRows:()=>rows,run,'),ctx);
  const api=win.tradeSpecificMaxTierAddV300;assert(api.active());await api.run();
- return {fairCalls,rows:JSON.parse(JSON.stringify(api.auditRows())),ranks};
+ return {fairCalls:JSON.parse(JSON.stringify(fairCalls)),rows:JSON.parse(JSON.stringify(api.auditRows())),ranks};
 }
 test('scoped max value tier add preserves every fairness call and complete ordered results while reducing rank reads',async()=>{
  let positive=0,oldRanks=0,newRanks=0;

@@ -46,6 +46,9 @@ test('Netlify permits explicitly reviewed PR previews, never unsanctioned produc
  if(activePR==='654'&&process.env.GITHUB_HEAD_REF==='integration/verified-preview-653-ci-reconciliation-20261125'){
   // This exact CI-only continuation is deliberately not a deploy candidate.
   assert.ok(!ids.includes(activePR),'CI-only PR 654 must not authorize a deploy');
+  // The scope verifier needs full refs even in shallow regression jobs.
+  const shallow=execFileSync('git',['rev-parse','--is-shallow-repository'],{encoding:'utf8'}).trim()==='true';
+  execFileSync('git',['fetch','--no-tags',...(shallow?['--unshallow']:[]),'origin','+refs/heads/main:refs/remotes/origin/main'],{stdio:'inherit'});
   execFileSync(process.execPath,['scripts/audit-verified-preview-653-continuation.mjs'],{stdio:'inherit'});
  }else if(activePR)assert.ok(ids.includes(activePR),'current reviewed PR '+activePR+' must be explicitly allowlisted');
  assert.match(toml,/e\.CONTEXT==='production'&&e\.BRANCH==='main'/);

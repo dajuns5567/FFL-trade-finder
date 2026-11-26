@@ -103,14 +103,13 @@ test('scheduled award capture executes only AFTER canonical browser parity and n
   'only an accepted canonical browser observation can earn a historical high');
 });
 
-test('saved legacy snapshots remain readable even if explicitly requested legacy write fails',async()=>{
+test('saved legacy snapshots remain readable and explicit browser write requests are ignored',async()=>{
  const source=read('league-hub-v451.js');
  const fragment=source.slice(source.indexOf('async function refreshAllTimeHighs('),
   source.indexOf('let allTimeHighCaptureAt=',source.indexOf('async function refreshAllTimeHighs(')));
  assert(fragment.includes("awardLegacyHighHistory=data.records;"));
  assert(fragment.includes("awardHighHistory=Array.isArray(data.verified_records)?data.verified_records:[];"));
- assert(fragment.includes("league-award-highs-write-unavailable"));
- assert(fragment.indexOf('awardLegacyHighHistory=data.records')<fragment.indexOf("method:'POST'"));
+ assert.doesNotMatch(fragment,/method:\s*['"]POST['"]/,'Public browser must not submit any award observation');
  const setup=new Function('fetch','console','globalThis',`
   const awardRecordKey=key=>key;
   let awardHighHistory=[],awardLegacyHighHistory=[],onNetlifyDeployPreview=false,inquirerPreviewMode=false,
@@ -127,7 +126,7 @@ test('saved legacy snapshots remain readable even if explicitly requested legacy
   modeledPlayerValuesV319:{ready:true},tradeValueNormalizationV130:{canonicalValue:()=>900}};
  const app=setup(fetcher,{warn:()=>{}},state);
  await app.run([{key:'powerhouse',standings:[{roster_id:'2',score:1000,detail:'top five'}]}],{record:true,verifiedInputs:true});
- assert.equal(posts,1);
+ assert.equal(posts,0,'Even an explicit record:true cannot cause an anonymous write');
  assert.equal(app.legacy()[0].score,900);
  assert.equal(app.records().length,0,'uncorroborated baseline is never certified');
 });

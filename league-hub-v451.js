@@ -641,11 +641,15 @@ function openInquirerTeamChoice(id,name){const rid=String(id||'');if(!rid)return
 function openInquirerWeeklyTeamReport(id){const rid=String(id||'');if(!rid||!(weeklyCache?.teams||[]).some(t=>String(t.roster_id)===rid))return;inquirerNavigationGeneration++;openBroadcastTeam=rid;showWeeklyArticle(weeklyCache,true)}
 function openLoadedRoster(){activate('valueHistory');document.querySelector('.tabs button[data-tab="valueHistory"]')?.click();let n=0;const timer=setInterval(()=>{n++;if(typeof globalThis.openValueHistoryLeagueNetModalV476==='function'){clearInterval(timer);globalThis.openValueHistoryLeagueNetModalV476()}else if(n>30)clearInterval(timer)},50)}
 function openSpecificTrade(id){const key=String(id||'');if(!key)return;if(tradeCache){globalThis.fleecedTradeHistorySharedCacheV515=tradeCache;globalThis.primeTradeHistoryCacheV515?.(tradeCache)}activate('tradeHistory');const b=document.querySelector('.tabs button[data-tab="tradeHistory"]');b?.click();const open=()=>{if(typeof globalThis.openTradeHistoryTradeV452==='function'){globalThis.openTradeHistoryTradeV452(key);return true}return false};if(open())return;let n=0;const timer=setInterval(()=>{n++;if(open()||n>20)clearInterval(timer)},40)}
+function awardDraftValueContext(assets){
+ const value=id=>Number(globalThis.tradeValueNormalizationV130?.canonicalValue?.({type:'player',id:String(id),owner:0}))||0,expected=p=>Math.max(250,9200-Math.max(0,Number(p)-1)*310),retroPick=(season,pickNo)=>{const round=Math.max(1,Math.ceil(Number(pickNo)/32)),slot=((Number(pickNo)-1)%32)+1,norm=globalThis.tradeValueNormalizationV130,nearest=Number(norm?.nearestSeason?.())||Math.min(...assets.filter(a=>a?.type==='pick').map(a=>Number(a.season)).filter(Number.isFinite)),proxy={type:'pick',season:nearest,round,original_roster_id:slot,owner:0},v=Number(norm?.canonicalValue?.(proxy));if(Number.isFinite(v)&&v>0)return Math.round(v/5)*5;const asset={...proxy,season:Number(season)},fn=globalThis.retroactiveTradeHistoryPickValueV461,fallback=typeof fn==='function'?Number(fn(asset,{season:Number(season)-1,created:`${Number(season)-1}-09-01T00:00:00Z`})):NaN;return Number.isFinite(fallback)&&fallback>0?fallback:expected(pickNo)};
+ return{value,retroPick};
+}
 function awardStandings(stats,draftData){
  const teams=globalThis.state?.teams||[],assets=globalThis.state?.allAssets||[],teamIds=teams.map(t=>String(t.id)),byId=new Map(stats.map(x=>[String(x.id),x])),players=globalThis.state?.players||{},draftPicks=draftData?.draft_picks||[];
  const assetPlayers=id=>assets.filter(a=>a?.type==='player'&&String(a.owner)===id&&String(a.id||'').length<12),pickCount=id=>assets.filter(a=>a?.type==='pick'&&String(a.owner)===id).length;
  const age=id=>{const p=players[id]||{},n=Number(p.age);if(Number.isFinite(n))return n;const d=new Date(p.birth_date||p.birthdate||p.dob||'');return Number.isFinite(d.getTime())?(Date.now()-d.getTime())/31557600000:null};
- const value=id=>Number(globalThis.tradeValueNormalizationV130?.canonicalValue?.({type:'player',id:String(id),owner:0}))||0,expected=p=>Math.max(250,9200-Math.max(0,Number(p)-1)*310),retroPick=(season,pickNo)=>{const round=Math.max(1,Math.ceil(Number(pickNo)/32)),slot=((Number(pickNo)-1)%32)+1,norm=globalThis.tradeValueNormalizationV130,nearest=Number(norm?.nearestSeason?.())||Math.min(...assets.filter(a=>a?.type==='pick').map(a=>Number(a.season)).filter(Number.isFinite)),proxy={type:'pick',season:nearest,round,original_roster_id:slot,owner:0},v=Number(norm?.canonicalValue?.(proxy));if(Number.isFinite(v)&&v>0)return Math.round(v/5)*5;const asset={...proxy,season:Number(season)},fn=globalThis.retroactiveTradeHistoryPickValueV461,fallback=typeof fn==='function'?Number(fn(asset,{season:Number(season)-1,created:`${Number(season)-1}-09-01T00:00:00Z`})):NaN;return Number.isFinite(fallback)&&fallback>0?fallback:expected(pickNo)};
+ const {value,retroPick}=awardDraftValueContext(assets);
  const ranks=(key,title,rows,detail,desc,extra={})=>({key,title,desc,...extra,standings:rows.map((x,i)=>({rank:i+1,roster_id:String(x.id),score:Number(x.score)||0,detail:detail(x),trade_id:x.trade_id||''}))});
  const statRows=fn=>teamIds.map(id=>({id,...fn(byId.get(id)||{id,trades:0,wins:0,losses:0,net:0,biggestWin:0,biggestLoss:0,biggestWinTrade:'',biggestLossTrade:''})}));
  const years=[...new Set(draftPicks.map(p=>Number(p.season)).filter(y=>y>=2024))].sort((a,b)=>a-b),bestPickYear=String(awardYearFilters['best-draft-pick']||'all'),draftYear=String(awardYearFilters['best-draft']||'all'),currentPickAssets=assets.filter(a=>a?.type==='pick'&&Number(a.season)>=2027),stackYears=Array.from({length:Math.max(1,Math.max(2027,...currentPickAssets.map(a=>Number(a.season)||2027))-2027+1)},(_,i)=>2027+i),stackYear=String(awardYearFilters['pick-stacker']||'all');
@@ -694,14 +698,6 @@ async function refreshAllTimeHighs(rows,{record=false,verifiedInputs=false}={}){
  }catch(error){
   console.warn('league-award-highs-read-unavailable',String(error?.message||error));
  }
- const teams=globalThis.state?.teams||[];
- const completeContext=verifiedInputs||Array.isArray(rows)&&rows.length===20&&
-   Array.isArray(tradeCache?.trades)&&tradeCache.trades.length>0&&
-   Array.isArray(draftCache?.draft_picks)&&draftCache.draft_picks.length>0;
- const ready=completeContext&&teams.length===32&&
-   new Set(teams.map(t=>String(t.id))).size===32&&
-   globalThis.modeledPlayerValuesV319?.ready===true&&
-   typeof globalThis.tradeValueNormalizationV130?.canonicalValue==='function';
  // Durable observations are collected by fleecedAwardHighsScheduledObservation.
  if(currentView==='awards'&&rankingAwardKey&&awardHighMode[rankingAwardKey]&&
      tradeCache&&draftCache){
@@ -776,10 +772,17 @@ window.fleecedAwardHighsScheduledObservation=async function(){
     x.score!=null&&Number.isFinite(Number(x.score))&&
     Number(x.score)!==-999999&&!/not enough data|unavailable/i.test(String(x.detail)));
  if(observations.length<500)throw Error('Award collector refused incomplete ranking coverage '+observations.length);
+ const {value,retroPick}=awardDraftValueContext(assets);
+ const draftRecords=(draftData.draft_picks||[]).map(p=>{
+  const v=value(p.player_id);return v&&p.pick_no?{season:p.season,roster_id:p.roster_id,player_id:p.player_id,pick_no:p.pick_no,captured_value:v,delta:Math.round(v-retroPick(p.season,p.pick_no))}:null;
+ }).filter(Boolean);
  return{schema_version:1,season:Number(globalThis.state?.season||2026),
   captured_at:new Date().toISOString(),source:'canonical-live-32-team-awards',
   team_count:32,trade_count:tradeData.trades.length,draft_count:draftData.draft_picks.length,
-  categories:awards.length,observations};
+  categories:awards.length,observations,
+  award_period:awardPeriod(),
+  award_winners:awards.map(a=>({key:a.key,title:a.title,roster_id:a.roster_id,detail:a.detail})),
+  draft_records:draftRecords};
 };
 async function syncAwards(rows){
  await refreshAllTimeHighs(rows);

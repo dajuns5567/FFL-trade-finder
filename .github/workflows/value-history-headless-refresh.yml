@@ -150,3 +150,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ALL_TIME_HIGHS_SCHEDULED_FILE: .tmp/all-time-highs-scheduled.json
         run: node scripts/verify-durable-all-time-highs-readback.mjs
+
+      - name: Persist verified six-month awards and draft observations
+        if: steps.due.outputs.due == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALUE_HISTORY_SNAPSHOT_FILE: .tmp/value-history-scheduled.json
+          ALL_TIME_HIGHS_SCHEDULED_FILE: .tmp/all-time-highs-scheduled.json
+        run: node scripts/archive-scheduled-award-records.mjs

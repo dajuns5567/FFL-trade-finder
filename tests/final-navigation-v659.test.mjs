@@ -26,3 +26,10 @@ test('Hall direct and header buttons share the real route and delayed refresh ca
  assert.match(hub,/leagueHubRenderGeneration===refreshGeneration/);
  assert.match(hub,/AbortSignal\?\.timeout\?\.\(25000\)/);
 });
+
+test('an archive refresh started on Daily never reopens Daily after navigating to Hall',async()=>{
+ const code=hub.slice(hub.indexOf('async function refreshPublishedInquirerIfAdvanced('),hub.indexOf('function installInquirerArchiveRefresh('));
+ let resolve;const pending=new Promise(r=>resolve=r),renders=[];
+ const ctx=vm.createContext({inquirerPreviewMode:false,dailyWeekSelection:'latest',inquirerArchiveRefreshInFlight:false,document:{hidden:false,getElementById:()=>({hidden:false})},currentView:'daily',leagueHubRenderGeneration:1,inquirerNavigationGeneration:1,fetchPublishedInquirerArchive:()=>pending,render:v=>renders.push(v),console});
+ const refresh=vm.runInContext(code+';refreshPublishedInquirerIfAdvanced',ctx),run=refresh();ctx.currentView='hall';ctx.leagueHubRenderGeneration++;resolve([]);await run;assert.deepEqual(renders,[]);assert.equal(ctx.inquirerArchiveRefreshInFlight,false);
+});

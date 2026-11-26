@@ -200,7 +200,7 @@ async function fetchPublishedInquirerArchive(){
 }
 async function weekly(){if(inquirerPreviewMode)return loadInquirerPreview();const rows=await fetchPublishedInquirerArchive(),latest=latestPublishedInquirerRow(rows);if(!latest)return{available:false,reason:'No published Inquirer edition is available yet.'};if(weeklyCache?.available&&Number(weeklyCache.season)===Number(latest.season)&&Number(weeklyCache.week)===Number(latest.week))return weeklyCache;const r=await fetch('/.netlify/functions/league-hub?broadcast_season='+Number(latest.season)+'&broadcast_week='+Number(latest.week),{cache:'no-store'});if(!r.ok)throw Error('published edition unavailable');const edition=await r.json();if(edition?.available!==true||!Array.isArray(edition.teams)||edition.teams.length!==32||!edition.league_overview?.headline)throw Error('latest indexed newspaper is not fully readable');invalidatePublishedInquirerCaches();weeklyCache=edition;return edition}
 let inquirerArchiveRefreshInstalled=false,inquirerArchiveRefreshInFlight=false;
-async function refreshPublishedInquirerIfAdvanced(){if(inquirerPreviewMode||dailyWeekSelection!=='latest'||inquirerArchiveRefreshInFlight||document.hidden||currentView!=='daily')return;const section=document.getElementById('leagueHub');if(!section||section.hidden)return;inquirerArchiveRefreshInFlight=true;try{const rows=await fetchPublishedInquirerArchive(),latest=latestPublishedInquirerRow(rows),old=latestPublishedInquirerRow(broadcastArchive);const readerBehind=!openBroadcastTeam&&!!latest&&(!weeklyCache?.available||inquirerRowIsNewer(latest,weeklyCache));if(!inquirerRowIsNewer(latest,old)&&!readerBehind)return;broadcastArchive=rows;if(openBroadcastTeam&&weeklyCache?.available){showWeeklyArticle(weeklyCache);return}invalidatePublishedInquirerCaches();await render('daily')}catch(error){console.warn('inquirer-archive-refresh-unavailable',String(error?.message||error))}finally{inquirerArchiveRefreshInFlight=false}}
+async function refreshPublishedInquirerIfAdvanced(){if(inquirerPreviewMode||dailyWeekSelection!=='latest'||inquirerArchiveRefreshInFlight||document.hidden||currentView!=='daily')return;const section=document.getElementById('leagueHub');if(!section||section.hidden)return;const refreshGeneration=leagueHubRenderGeneration,refreshNavigation=inquirerNavigationGeneration;inquirerArchiveRefreshInFlight=true;try{const rows=await fetchPublishedInquirerArchive();if(section.hidden||currentView!=='daily'||dailyWeekSelection!=='latest'||leagueHubRenderGeneration!==refreshGeneration||inquirerNavigationGeneration!==refreshNavigation)return;const latest=latestPublishedInquirerRow(rows),old=latestPublishedInquirerRow(broadcastArchive);const readerBehind=!openBroadcastTeam&&!!latest&&(!weeklyCache?.available||inquirerRowIsNewer(latest,weeklyCache));if(!inquirerRowIsNewer(latest,old)&&!readerBehind)return;broadcastArchive=rows;if(openBroadcastTeam&&weeklyCache?.available){showWeeklyArticle(weeklyCache);return}invalidatePublishedInquirerCaches();await render('daily')}catch(error){console.warn('inquirer-archive-refresh-unavailable',String(error?.message||error))}finally{inquirerArchiveRefreshInFlight=false}}
 function installInquirerArchiveRefresh(){if(inquirerArchiveRefreshInstalled||inquirerPreviewMode)return;inquirerArchiveRefreshInstalled=true;setInterval(refreshPublishedInquirerIfAdvanced,60000);setInterval(refreshLiveLeagueWeekIfAdvanced,60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden){refreshPublishedInquirerIfAdvanced();refreshLiveLeagueWeekIfAdvanced()}});window.addEventListener('focus',()=>{refreshPublishedInquirerIfAdvanced();refreshLiveLeagueWeekIfAdvanced()})}
 // Independent completed-week feed. Newspaper availability never controls this.
 let liveLeagueWeekPendingV656=null;
@@ -268,6 +268,7 @@ async function refreshLiveLeagueWeekIfAdvanced(){
  if(inquirerPreviewMode||liveLeagueWeekRefreshInFlight||document.hidden||!['daily','managers','awards'].includes(currentView)||openBroadcastTeam)return;
  const panel=document.getElementById('leagueHub');
  if(!panel||panel.hidden)return;
+ const refreshGeneration=leagueHubRenderGeneration,refreshView=currentView;
  liveLeagueWeekRefreshInFlight=true;
  try{
   const old=liveLeagueWeekCache,latest=await liveLeagueWeek();
@@ -279,7 +280,7 @@ async function refreshLiveLeagueWeekIfAdvanced(){
    weeklyAwardsCache=null; // completed Sleeper weeks also earn new weekly badges
    spotlightWeeklyCache=null;
    allTimeHighCaptureAt=0;
-   await render(currentView);
+   if(!panel.hidden&&currentView===refreshView&&leagueHubRenderGeneration===refreshGeneration&&!openBroadcastTeam)await render(refreshView);
   }
  }catch(error){console.warn('league-week-refresh-unavailable',String(error?.message||error))}
  finally{liveLeagueWeekRefreshInFlight=false}
@@ -328,6 +329,7 @@ async function refreshManagersIfVisible(){
  if(managerVisibleRefreshPending||inquirerPreviewMode||document.hidden||!['managers','career'].includes(currentView))return;
  const panel=document.getElementById('leagueHub');
  if(!panel||panel.hidden)return;
+ const refreshGeneration=leagueHubRenderGeneration,refreshView=currentView,refreshManager=selectedManagerId;
  managerVisibleRefreshPending=true;
  try{
   const previous=managerVersionSignature(managerCache),next=await managers({force:true});
@@ -363,8 +365,8 @@ async function refreshManagersIfVisible(){
   if(!managersChanged&&!tradesChanged&&!spotlightChanged)return;
   if(managersChanged){weeklyAwardsCache=null;spotlightWeeklyCache=null}
   if(tradesChanged)draftCache=null;
-  // Rerender the active manager/card/leaderboard with current verified sources.
-  await render(currentView,selectedManagerId);
+  // Rerender only the still-active manager/card/leaderboard.
+  if(!panel.hidden&&currentView===refreshView&&leagueHubRenderGeneration===refreshGeneration&&selectedManagerId===refreshManager)await render(refreshView,refreshManager);
  }catch(error){console.warn('manager-view-refresh-unavailable',String(error?.message||error))}
  finally{managerVisibleRefreshPending=false}
 }
@@ -614,9 +616,9 @@ function teamTradeStats(all,{strict=false}={}){
  }
  return rows;
 }
-function openTradeHistory(team=''){activate('tradeHistory');const b=document.querySelector('.tabs button[data-tab="tradeHistory"]');b?.click();if(team){let n=0;const timer=setInterval(()=>{n++;if(typeof globalThis.openTradeHistoryTeamV455==='function'){globalThis.openTradeHistoryTeamV455(String(team));clearInterval(timer)}else if(n>20)clearInterval(timer)},50)}}
-function openValueHistoryTeam(id,comparison=false){activate('valueHistory');document.querySelector('.tabs button[data-tab="valueHistory"]')?.click();let n=0;const timer=setInterval(()=>{n++;if(typeof globalThis.openValueHistoryTeamV458==='function'){globalThis.openValueHistoryTeamV458(String(id),!!comparison);clearInterval(timer)}else if(n>20)clearInterval(timer)},50)}
-function openValueHistoryPlayer(id){const pid=String(id||'');if(!pid)return;activate('valueHistory');document.querySelector('.tabs button[data-tab="valueHistory"]')?.click();let n=0;const timer=setInterval(()=>{n++;const api=globalThis.valueHistoryV331;if(typeof api?.openPlayer==='function'){clearInterval(timer);api.openPlayer(pid)}else if(n>30)clearInterval(timer)},50)}
+function openTradeHistory(team=''){activate('tradeHistory');const b=document.querySelector('.tabs button[data-tab="tradeHistory"]');b?.click();if(team){let n=0;const timer=setInterval(()=>{if(document.getElementById('tradeHistory')?.hidden){clearInterval(timer);return}n++;if(typeof globalThis.openTradeHistoryTeamV455==='function'){globalThis.openTradeHistoryTeamV455(String(team));clearInterval(timer)}else if(n>20)clearInterval(timer)},50)}}
+function openValueHistoryTeam(id,comparison=false){activate('valueHistory');document.querySelector('.tabs button[data-tab="valueHistory"]')?.click();let n=0;const timer=setInterval(()=>{if(document.getElementById('valueHistory')?.hidden){clearInterval(timer);return}n++;if(typeof globalThis.openValueHistoryTeamV458==='function'){globalThis.openValueHistoryTeamV458(String(id),!!comparison);clearInterval(timer)}else if(n>20)clearInterval(timer)},50)}
+function openValueHistoryPlayer(id){const pid=String(id||'');if(!pid)return;activate('valueHistory');document.querySelector('.tabs button[data-tab="valueHistory"]')?.click();let n=0;const timer=setInterval(()=>{if(document.getElementById('valueHistory')?.hidden){clearInterval(timer);return}n++;const api=globalThis.valueHistoryV331;if(typeof api?.openPlayer==='function'){clearInterval(timer);api.openPlayer(pid)}else if(n>30)clearInterval(timer)},50)}
 function closeScoringLeaderboard(){document.getElementById('lhScoringLeaderboard')?.remove()}
 function openScoringLeaderboard(key){
  const labels={year_highest:'Highest Scorer of the Year',year_lowest:'Lowest Scorer of the Year',all_time_highest:'All-Time Highest Scorer',all_time_lowest:'All-Time Lowest Scorer'},rows=managerCache?.scoring_history?.leaderboards?.[String(key)]||[],host=document.getElementById('leagueHub');if(!host)return;
@@ -639,8 +641,8 @@ function openInquirerTradeChoice(id){
 function closeInquirerTeamChoice(){document.getElementById('lhInquirerTeamChoice')?.remove()}
 function openInquirerTeamChoice(id,name){const rid=String(id||'');if(!rid)return;closeInquirerTeamChoice();const host=document.getElementById('leagueHub');if(!host)return;const root=document.createElement('div');root.id='lhInquirerTeamChoice';root.className='lh-inquirer-team-choice-backdrop';root.setAttribute('role','presentation');root.innerHTML='<div class="lh-inquirer-team-choice" role="dialog" aria-modal="true" aria-label="Open '+esc(name||teamName(rid))+'"><h4>'+esc(name||teamName(rid))+'</h4><p>Choose where to go for this team.</p><div class="lh-inquirer-team-choice-actions"><button type="button" data-lh-inquirer-value="'+esc(rid)+'">Team Value History</button><button type="button" class="secondary" data-lh-inquirer-report="'+esc(rid)+'">Weekly Team Report</button><button type="button" class="secondary lh-inquirer-team-choice-cancel" data-lh-inquirer-close>Cancel</button></div></div>';host.appendChild(root);requestAnimationFrame(()=>root.querySelector('[data-lh-inquirer-value]')?.focus())}
 function openInquirerWeeklyTeamReport(id){const rid=String(id||'');if(!rid||!(weeklyCache?.teams||[]).some(t=>String(t.roster_id)===rid))return;inquirerNavigationGeneration++;openBroadcastTeam=rid;showWeeklyArticle(weeklyCache,true)}
-function openLoadedRoster(){activate('valueHistory');document.querySelector('.tabs button[data-tab="valueHistory"]')?.click();let n=0;const timer=setInterval(()=>{n++;if(typeof globalThis.openValueHistoryLeagueNetModalV476==='function'){clearInterval(timer);globalThis.openValueHistoryLeagueNetModalV476()}else if(n>30)clearInterval(timer)},50)}
-function openSpecificTrade(id){const key=String(id||'');if(!key)return;if(tradeCache){globalThis.fleecedTradeHistorySharedCacheV515=tradeCache;globalThis.primeTradeHistoryCacheV515?.(tradeCache)}activate('tradeHistory');const b=document.querySelector('.tabs button[data-tab="tradeHistory"]');b?.click();const open=()=>{if(typeof globalThis.openTradeHistoryTradeV452==='function'){globalThis.openTradeHistoryTradeV452(key);return true}return false};if(open())return;let n=0;const timer=setInterval(()=>{n++;if(open()||n>20)clearInterval(timer)},40)}
+function openLoadedRoster(){activate('valueHistory');document.querySelector('.tabs button[data-tab="valueHistory"]')?.click();let n=0;const timer=setInterval(()=>{if(document.getElementById('valueHistory')?.hidden){clearInterval(timer);return}n++;if(typeof globalThis.openValueHistoryLeagueNetModalV476==='function'){clearInterval(timer);globalThis.openValueHistoryLeagueNetModalV476()}else if(n>30)clearInterval(timer)},50)}
+function openSpecificTrade(id){const key=String(id||'');if(!key)return;if(tradeCache){globalThis.fleecedTradeHistorySharedCacheV515=tradeCache;globalThis.primeTradeHistoryCacheV515?.(tradeCache)}activate('tradeHistory');const b=document.querySelector('.tabs button[data-tab="tradeHistory"]');b?.click();const open=()=>{if(typeof globalThis.openTradeHistoryTradeV452==='function'){globalThis.openTradeHistoryTradeV452(key);return true}return false};if(open())return;let n=0;const timer=setInterval(()=>{if(document.getElementById('tradeHistory')?.hidden){clearInterval(timer);return}n++;if(open()||n>20)clearInterval(timer)},40)}
 function awardDraftValueContext(assets){
  const value=id=>Number(globalThis.tradeValueNormalizationV130?.canonicalValue?.({type:'player',id:String(id),owner:0}))||0,expected=p=>Math.max(250,9200-Math.max(0,Number(p)-1)*310),retroPick=(season,pickNo)=>{const round=Math.max(1,Math.ceil(Number(pickNo)/32)),slot=((Number(pickNo)-1)%32)+1,norm=globalThis.tradeValueNormalizationV130,nearest=Number(norm?.nearestSeason?.())||Math.min(...assets.filter(a=>a?.type==='pick').map(a=>Number(a.season)).filter(Number.isFinite)),proxy={type:'pick',season:nearest,round,original_roster_id:slot,owner:0},v=Number(norm?.canonicalValue?.(proxy));if(Number.isFinite(v)&&v>0)return Math.round(v/5)*5;const asset={...proxy,season:Number(season)},fn=globalThis.retroactiveTradeHistoryPickValueV461,fallback=typeof fn==='function'?Number(fn(asset,{season:Number(season)-1,created:`${Number(season)-1}-09-01T00:00:00Z`})):NaN;return Number.isFinite(fallback)&&fallback>0?fallback:expected(pickNo)};
  return{value,retroPick};

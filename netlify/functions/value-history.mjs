@@ -1,3 +1,4 @@
+import {archiveWriteAuthorized,rejectArchiveWrite,readBoundedJson} from './lib/public-release-authorization.mjs';
 import {snapshotsThroughEdition} from './lib/inquirer-market-window.mjs';
 import {playerWeeklyMilestoneAwards} from './lib/player-weekly-milestone-awards.mjs';
 import {verifiedSleeperCompletedAwardWeek} from './lib/league-award-completion-fallback.mjs';
@@ -1464,15 +1465,16 @@ async function health(s){
 
 export { monthKey, marketFromSnapshots, baselineFor, marketInsightsFromSnapshots, marketInsightRange };
 
-export default async (req)=>{
+export default async (req,context)=>{
   try{
+    const denied=rejectArchiveWrite(req,context);if(denied)return denied;
     const url=new URL(req.url),s=safeStore();
     // Deploy Previews are experimental branches; never let their page loads
     // overwrite the canonical league's shared history or run cleanup writes.
     // Check both the request hostname and Netlify's runtime deploy context.
     const isDeployPreview=/^(?:deploy-preview-\d+|[a-f0-9]{24})--precious-dango-fb4633\.netlify\.app$/i.test(url.hostname)||process.env.CONTEXT==='deploy-preview';
     const readonlyPreview=isDeployPreview||(req.method==='GET'&&url.searchParams.get('readonly_preview')==='1');
-    if(s&&!readonlyPreview){
+    if(s&&!readonlyPreview&&req.method==='POST'&&archiveWriteAuthorized(req,context)){
       try{await scrubV346KtcContamination(s)}catch(e){console.warn('v346-history-scrub',e)}
       try{await scrubV348ConsensusContamination(s)}catch(e){console.warn('v348-history-scrub',e)}
       try{await scrubV380PartialWeekSnapshot(s)}catch(e){console.warn('v380-history-scrub',e)}
@@ -1542,7 +1544,7 @@ export default async (req)=>{
     if(req.method!=='POST')return json({error:'method not allowed'},405);
     if(isDeployPreview)return json({error:'deploy previews are read-only for canonical value history'},403);
     if(!s)return json({error:'live history store unavailable'},503);
-    const body=await req.json().catch(()=>null);
+    const parsed=await readBoundedJson(req,2*1024*1024);if(parsed.error)return parsed.error;const body=parsed.body;
     if(String(body?.league||'')!==LEAGUE)return json({error:'league mismatch'},400);
     const rows=cleanRows(body?.rows),picks=cleanPicks(body?.picks),teams=cleanTeams(body?.teams),source=['scheduled','page-load','manual-update'].includes(String(body?.source||''))?String(body.source):'page-load';
     if(rows.length<100)return json({error:'incomplete snapshot'},400);

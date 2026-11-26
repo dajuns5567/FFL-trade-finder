@@ -1,3 +1,4 @@
+import {archiveWriteAuthorized,readBoundedJson,securityJson} from './lib/public-release-authorization.mjs';
 import { refreshAllSources } from "./consensus-source-overrides.mjs";
 import { buildConsensusComposite } from "./consensus-composite-v3.mjs";
 import { buildFreshnessSnapshot,ageFreshness } from "./consensus-source-freshness.mjs";
@@ -43,12 +44,13 @@ export function buildConsensusPayload(refresh,players=[],updatedAt=new Date().to
   return {ok:true,sources:integrityReady?sources:{},composite,withheld:!integrityReady,integrity:{all_sources_valid:integrityReady,failed_sources:failedSources,reason:integrityReady?null:`Consensus replacement withheld because ${failedSources.length?failedSources.join(', '):'one or more required sources'} did not validate; prior validated source set remains in use`},summary:{total:results.length,successful,failed:results.length-successful,results:diagnostics},updatedAt};
 }
 
-export default async (req)=>{
+export default async (req,context)=>{
   if(req.method==="OPTIONS")return json({ok:true});
   if(req.method!=="POST")return json({ok:false,error:"POST required"},405);
-  let body={};try{body=await req.json()}catch{return json({ok:false,error:"Invalid JSON"},400)}
-  const players=Array.isArray(body.players)?body.players:[];
-  if(!players.length)return json({ok:false,error:"No player list supplied"},400);
+  if(!/^application\/json(?:\s*;|$)/i.test(req.headers.get('content-type')||''))return securityJson(415,'JSON required');
+  const parsed=await readBoundedJson(req,5*1024*1024);if(parsed.error)return parsed.error;
+  const players=Array.isArray(parsed.body?.players)?parsed.body.players:[];
+  if(!players.length||players.length>25000)return json({ok:false,error:"Invalid player list size"},400);
   const refresh=await refreshAllSources();
   const candidate=buildConsensusPayload(refresh,players);
   const previous=await readLastGood();
@@ -59,7 +61,9 @@ export default async (req)=>{
       snapshot.freshness=buildFreshnessSnapshot(snapshot,old,candidate.updatedAt);
     }
     const promoted={sources:candidate.sources,composite:candidate.composite,updatedAt:candidate.updatedAt,sourceManifest:candidate.summary.results.map(x=>({source:x.source,status:"fresh",snapshot_timestamp:x.timestamp||candidate.updatedAt,attempt_timestamp:x.timestamp||candidate.updatedAt,players_extracted:x.players_extracted,ranking_rows:x.ranking_rows,publisher_updated_at:null,source_freshness:(x.source==="The IDP Show Combined"?candidate.sources["The IDP Show Combined Offense"]?.freshness:candidate.sources[x.source]?.freshness)||null,market_observation:x.market_observation||null,source_provenance:x.source_provenance||null}))};
-    await writeLastGood(promoted);
+    // Caller-provided player identities may affect this request's composite,
+    // but only a trusted producer can promote it to shared fallback storage.
+    if(archiveWriteAuthorized(req,context))await writeLastGood(promoted);
     const summary={...candidate.summary,results:candidate.summary.results.map(x=>({...x,
       source_freshness:(x.source==="The IDP Show Combined"?candidate.sources["The IDP Show Combined Offense"]?.freshness:candidate.sources[x.source]?.freshness)||null,
       market_observation:x.market_observation||null,

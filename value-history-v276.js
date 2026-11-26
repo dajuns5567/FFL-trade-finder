@@ -668,12 +668,15 @@ function scheduledRefreshReady(){
   const gate=window.__vhScheduledRefreshGate;
   return !!(gate?.ready&&gate?.sleeperReady&&gate?.consensusReady);
 }
+// The existing trusted headless collector binds to loopback. Hosted pages
+// still refresh valuations, but never submit durable snapshots.
+const localSnapshotCollector=()=>['127.0.0.1','localhost','[::1]'].includes(location.hostname)&&snapshotSourceFromUrl()==='scheduled';
 let pendingSnapshotSource='page-load';
 function snapshotSourceFromUrl(){
   try{return new URLSearchParams(location.search).get('vh_source')==='scheduled'?'scheduled':'page-load'}catch{return'page-load'}
 }
 async function recordSnapshot(source=pendingSnapshotSource){
-  if(isValueHistoryDeployPreview())return false;
+  if(isValueHistoryDeployPreview()||!localSnapshotCollector())return false;
   try{
     if(!snapshotPreconditions()||!scheduledRefreshReady()){
       if(window.__fllConsensusRefresh?.complete===true&&window.__fllConsensusRefresh?.ok!==true){
@@ -723,7 +726,7 @@ async function recordSnapshot(source=pendingSnapshotSource){
     scheduleSnapshot(3000,source);return false
   }
 }
-function scheduleSnapshot(delay=60000,source=pendingSnapshotSource){if(isValueHistoryDeployPreview())return;pendingSnapshotSource=source;clearTimeout(snapshotTimer);snapshotTimer=setTimeout(()=>{if('requestIdleCallback'in window)requestIdleCallback(()=>recordSnapshot(source),{timeout:5000});else recordSnapshot(source)},delay)}
+function scheduleSnapshot(delay=60000,source=pendingSnapshotSource){if(isValueHistoryDeployPreview()||!localSnapshotCollector())return;pendingSnapshotSource=source;clearTimeout(snapshotTimer);snapshotTimer=setTimeout(()=>{if('requestIdleCallback'in window)requestIdleCallback(()=>recordSnapshot(source),{timeout:5000});else recordSnapshot(source)},delay)}
 
 function initUI(){
   if(uiReady)return;uiReady=true;

@@ -702,26 +702,7 @@ async function refreshAllTimeHighs(rows,{record=false,verifiedInputs=false}={}){
    new Set(teams.map(t=>String(t.id))).size===32&&
    globalThis.modeledPlayerValuesV319?.ready===true&&
    typeof globalThis.tradeValueNormalizationV130?.canonicalValue==='function';
- if(record&&!onNetlifyDeployPreview&&!inquirerPreviewMode&&ready&&Array.isArray(rows)){
-  const observations=rows.flatMap(a=>(a.standings||[]).map(x=>({
-   award_key:awardRecordKey(a.key),roster_id:String(x.roster_id||''),
-   score:x.score,detail:x.detail
-  }))).filter(x=>x.roster_id&&Number.isFinite(Number(x.score))&&
-     Number(x.score)!==-999999&&Number(x.score)>-1e8);
-  if(observations.length){
-   try{
-    const response=await fetch(endpoint,{method:'POST',
-     headers:{'content-type':'application/json'},
-     body:JSON.stringify({records:observations})});
-    if(!response.ok)throw Error('All-Time Highs write returned '+response.status);
-    const data=await response.json();
-    if(Array.isArray(data?.records))awardLegacyHighHistory=data.records;
-    if(Array.isArray(data?.verified_records))awardHighHistory=data.verified_records;
-   }catch(error){
-    console.warn('league-award-highs-write-unavailable',String(error?.message||error));
-   }
-  }
- }
+ // Durable observations are collected by fleecedAwardHighsScheduledObservation.
  if(currentView==='awards'&&rankingAwardKey&&awardHighMode[rankingAwardKey]&&
      tradeCache&&draftCache){
   const host=document.getElementById('leagueHubContent');
@@ -803,25 +784,9 @@ window.fleecedAwardHighsScheduledObservation=async function(){
 async function syncAwards(rows){
  await refreshAllTimeHighs(rows);
  try{
-  const draftAward=rows.find(x=>x.key==='best-draft-pick');
-  if(draftAward&&!onNetlifyDeployPreview){
-   const records=(draftCache?.draft_picks||[]).map(p=>{
-    const v=Number(globalThis.tradeValueNormalizationV130?.canonicalValue?.({type:'player',id:String(p.player_id),owner:0}))||0;
-    return v&&p.pick_no?{season:p.season,roster_id:p.roster_id,player_id:p.player_id,
-     pick_no:p.pick_no,captured_value:v,delta:Math.round(v-retroPick(p.season,p.pick_no))}:null
-   }).filter(Boolean);
-   fetch('/.netlify/functions/league-hub?draft_records=1',{method:'POST',
-    headers:{'content-type':'application/json'},body:JSON.stringify({records})}).catch(()=>{});
-  }
   const response=await fetch('/.netlify/functions/league-hub?awards=1',{cache:'no-store'});
   if(!response.ok)throw Error('Awards history read unavailable');
   const data=await response.json();awardHistory=data.history||[];
-  const p=awardPeriod();
-  if(!onNetlifyDeployPreview&&!awardHistory.some(x=>x.period===p)){
-   const next=await fetch('/.netlify/functions/league-hub?awards=1',{method:'POST',
-    headers:{'content-type':'application/json'},body:JSON.stringify({period:p,awards:rows})});
-   if(next.ok){const value=await next.json();awardHistory=value.history||awardHistory}
-  }
  }catch(error){console.warn('league-awards-history-unavailable',String(error?.message||error))}
 }
 function awardCard(a){const yf=a.yearFilter?`<label class="lh-year-filter"><b>YEAR</b><select data-lh-award-year="${esc(a.key)}"><option value="all">All</option>${(a.years||[]).map(y=>`<option value="${y}" ${String(awardYearFilters[a.key]||'all')===String(y)?'selected':''}>${y}</option>`).join('')}</select></label>`:'';const win=a.standings?.[0],link=a.leagueNetModal?`<button class="secondary small" data-lh-loaded-roster>Open Value History chart</button>`:a.teamTradeLink&&win?`<button class="secondary small" data-lh-manager-trades="${esc(win.roster_id)}">Winner Trade History</button>`:a.specificTradeLink&&win?.trade_id?`<button class="secondary small" data-lh-trade="${esc(win.trade_id)}">View Winning Trade</button>`:'';return`<div class="lh-card"><h3>${esc(a.title)}</h3><div class="lh-sub">${esc(a.desc||'')}</div>${yf}<div class="lh-story"><b>${a.roster_id?esc(teamName(a.roster_id)):'—'}</b><small>${esc(a.detail)}</small></div><div class="lh-action"><button class="secondary small" data-lh-rankings="${esc(a.key)}">View all rankings</button> ${link}</div></div>`}

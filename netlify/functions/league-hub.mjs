@@ -1,3 +1,4 @@
+import {rejectArchiveWrite,readBoundedJson} from './lib/public-release-authorization.mjs';
 import {inquirerMarketCutoff,editionAvailability} from './lib/inquirer-market-window.mjs';
 import {completedLeagueWeekView} from './lib/league-completed-week.mjs';
 import {completedWeekProjections} from './lib/league-week-projections.mjs';
@@ -1195,7 +1196,16 @@ async function awards(req){
  if(!history.some(x=>x.period===period)){history.push({period,captured_at:new Date().toISOString(),awards:rows.slice(0,20).map(x=>({key:String(x.key||''),title:String(x.title||''),roster_id:String(x.roster_id||''),detail:String(x.detail||'')}))});history.sort((a,b)=>String(a.period).localeCompare(String(b.period)));await s.setJSON('awards/history.json',history)}
  return json({ok:true,history});
 }
-export default async req=>{try{const u=new URL(req.url);
+export default async (req,context)=>{try{const denied=rejectArchiveWrite(req,context);if(denied)return denied;const u=new URL(req.url);
+ // Only the three known producer write routes are admissible. Reject other
+ // methods/queries before any generator, storage or network work.
+ if(req.method==='POST'){
+  const keys=[...u.searchParams.keys()];
+  if(keys.length!==1||!['draft_records','award_highs','awards'].includes(keys[0])||u.searchParams.get(keys[0])!=='1')return json({error:'Unknown write operation'},400);
+  const parsed=await readBoundedJson(req,1024*1024);if(parsed.error)return parsed.error;
+  // Existing validators remain unchanged and receive only the bounded body.
+  req=new Request(req.url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(parsed.body)});
+ }
  // Netlify's site-wide Blob store is shared by previews and production. A
  // preview must never silently backfill awards, manager caches or POST snapshots.
  if(isReadOnlyEditorialPreview(req.url,process.env.CONTEXT)){

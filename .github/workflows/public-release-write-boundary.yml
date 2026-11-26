@@ -1,0 +1,26 @@
+name: Public release write boundary (read-only CI)
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/**'
+      - 'value-history-v276.js'
+      - 'league-hub-v451.js'
+      - 'tests/public-release-write-boundary.test.mjs'
+      - '.github/workflows/public-release-write-boundary.yml'
+permissions:
+  contents: read
+jobs:
+  access-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+      - run: |
+          node --check value-history-v276.js
+          node --check league-hub-v451.js
+          node --check netlify/functions/lib/public-release-authorization.mjs
+          node --test tests/public-release-write-boundary.test.mjs

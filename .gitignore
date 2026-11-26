@@ -3,3 +3,12 @@ artifacts/inquirer-week5-local/
 playwright-report/
 test-results/
 *.storage-state.json
+
+# Local credentials and private diagnostics must never enter the public repository.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.netlify/
+.tmp/

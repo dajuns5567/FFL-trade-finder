@@ -20,7 +20,7 @@ function harness(initialRows){
   currentView:'daily',inquirerPreviewMode:false,openBroadcastTeam:'',managerCache:null,
   broadcastArchive:initialRows.slice(),render:async()=>{state.renders++}};
  const module=vm.runInNewContext(`(function(){
-  let weeklyCache=null,spotlightWeeklyCache=null,weeklyAwardsCache=null,reporterArchiveCache={};
+  let weeklyCache=null,spotlightWeeklyCache=null,weeklyAwardsCache=null,reporterArchiveCache={},leagueHubRenderGeneration=0;
   let inquirerArchiveRefreshInstalled=false,inquirerArchiveRefreshInFlight=false;
   ${implementation.replace("let inquirerArchiveRefreshInstalled=false,inquirerArchiveRefreshInFlight=false;","")}
   return {weekly,refreshPublishedInquirerIfAdvanced,latestPublishedInquirerRow,inquirerRowIsNewer,

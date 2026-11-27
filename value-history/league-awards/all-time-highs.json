@@ -2,10 +2,10 @@
   "schema_version": 1,
   "league_id": "1316867686394769408",
   "source": "github-canonical-headless-all-time-highs",
-  "latest_observation_at": "2026-11-27T18:58:29.832Z",
+  "latest_observation_at": "2026-11-27T22:02:07.632Z",
   "model_used": "idp-v101-verified-role-growth-v100-source-free-lineage",
   "source_commit": "279244e00b5050856f64057b69aebb91830dca1e",
-  "canonical_fingerprint": "fzkpye",
+  "canonical_fingerprint": "119wd5o",
   "records": [
     {
       "award_key": "balanced:trade-adjusted-v1",
@@ -38,9 +38,9 @@
     {
       "award_key": "balanced:trade-adjusted-v1",
       "roster_id": "5",
-      "score": 0.8093219866267436,
-      "detail": "37 trades • -21,165 net edge",
-      "captured_at": "2026-11-25T20:13:36.289Z"
+      "score": 0.8227578294969915,
+      "detail": "37 trades • -19,674 net edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "balanced:trade-adjusted-v1",
@@ -87,16 +87,16 @@
     {
       "award_key": "balanced:trade-adjusted-v1",
       "roster_id": "12",
-      "score": 0.938873699699196,
-      "detail": "16 trades • -2,934 net edge",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": 0.9437722259776998,
+      "detail": "16 trades • -2,699 net edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "balanced:trade-adjusted-v1",
       "roster_id": "13",
-      "score": 0.8942257427896114,
-      "detail": "23 trades • -7,298 net edge",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": 0.9174124901637436,
+      "detail": "23 trades • -5,699 net edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "balanced:trade-adjusted-v1",
@@ -108,16 +108,16 @@
     {
       "award_key": "balanced:trade-adjusted-v1",
       "roster_id": "15",
-      "score": 0.6372038489738991,
-      "detail": "25 trades • -27,210 net edge",
-      "captured_at": "2026-11-26T03:13:46.712Z"
+      "score": 0.6507535280622898,
+      "detail": "25 trades • -26,193 net edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "balanced:trade-adjusted-v1",
       "roster_id": "16",
-      "score": 0.403194704772614,
-      "detail": "10 trades • +17,904 net edge",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": 0.41485038538156715,
+      "detail": "10 trades • +17,554 net edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "balanced:trade-adjusted-v1",
@@ -136,16 +136,16 @@
     {
       "award_key": "balanced:trade-adjusted-v1",
       "roster_id": "19",
-      "score": 0.9660963112435176,
-      "detail": "11 trades • -1,119 net edge",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": 0.9750544475310926,
+      "detail": "11 trades • -823 net edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "balanced:trade-adjusted-v1",
       "roster_id": "20",
-      "score": 0.579614594001036,
-      "detail": "10 trades • +12,612 net edge",
-      "captured_at": "2026-11-25T20:13:36.289Z"
+      "score": 0.5983244415526215,
+      "detail": "10 trades • +12,050 net edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "balanced:trade-adjusted-v1",
@@ -157,9 +157,9 @@
     {
       "award_key": "balanced:trade-adjusted-v1",
       "roster_id": "22",
-      "score": 0.9288335363200991,
-      "detail": "77 trades • +16,439 net edge",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": 0.9296241823326632,
+      "detail": "77 trades • +16,257 net edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "balanced:trade-adjusted-v1",
@@ -171,16 +171,16 @@
     {
       "award_key": "balanced:trade-adjusted-v1",
       "roster_id": "24",
-      "score": 0.6128844051625884,
-      "detail": "23 trades • +26,711 net edge",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": 0.6267536294899247,
+      "detail": "23 trades • +25,754 net edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "balanced:trade-adjusted-v1",
       "roster_id": "25",
-      "score": 0.7161871481467448,
-      "detail": "7 trades • -5,960 net edge",
-      "captured_at": "2026-11-25T23:39:30.665Z"
+      "score": 0.7254174227630907,
+      "detail": "7 trades • -5,766 net edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "balanced:trade-adjusted-v1",
@@ -206,23 +206,23 @@
     {
       "award_key": "balanced:trade-adjusted-v1",
       "roster_id": "29",
-      "score": 0.614739342085932,
-      "detail": "2 trades • -2,312 net edge",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": 0.6563581722988294,
+      "detail": "2 trades • -2,062 net edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "balanced:trade-adjusted-v1",
       "roster_id": "30",
-      "score": 0.7541699781842386,
-      "detail": "12 trades • +8,850 net edge",
-      "captured_at": "2026-11-26T08:23:14.905Z"
+      "score": 0.7915545148646503,
+      "detail": "12 trades • +7,504 net edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "balanced:trade-adjusted-v1",
       "roster_id": "31",
-      "score": 0.9519822693078918,
-      "detail": "36 trades • +5,186 net edge",
-      "captured_at": "2026-11-25T14:31:33.829Z"
+      "score": 0.9572146575515869,
+      "detail": "36 trades • +4,621 net edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "balanced:trade-adjusted-v1",
@@ -262,16 +262,16 @@
     {
       "award_key": "best-draft",
       "roster_id": "5",
-      "score": 38672,
-      "detail": "38,672 cumulative current value from 14 drafted players",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": 39027,
+      "detail": "39,027 cumulative current value from 14 drafted players",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "best-draft",
       "roster_id": "6",
-      "score": 39134,
-      "detail": "39,134 cumulative current value from 15 drafted players",
-      "captured_at": "2026-11-27T02:13:16.587Z"
+      "score": 39273,
+      "detail": "39,273 cumulative current value from 15 drafted players",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "best-draft",
@@ -283,9 +283,9 @@
     {
       "award_key": "best-draft",
       "roster_id": "8",
-      "score": 48929,
-      "detail": "48,929 cumulative current value from 22 drafted players",
-      "captured_at": "2026-11-27T02:13:16.587Z"
+      "score": 49197,
+      "detail": "49,197 cumulative current value from 22 drafted players",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "best-draft",
@@ -304,16 +304,16 @@
     {
       "award_key": "best-draft",
       "roster_id": "11",
-      "score": 50946,
-      "detail": "50,946 cumulative current value from 18 drafted players",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": 51277,
+      "detail": "51,277 cumulative current value from 18 drafted players",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "best-draft",
       "roster_id": "12",
-      "score": 40066,
-      "detail": "40,066 cumulative current value from 18 drafted players",
-      "captured_at": "2026-11-26T03:13:46.712Z"
+      "score": 40090,
+      "detail": "40,090 cumulative current value from 18 drafted players",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "best-draft",
@@ -325,9 +325,9 @@
     {
       "award_key": "best-draft",
       "roster_id": "14",
-      "score": 39635,
-      "detail": "39,635 cumulative current value from 18 drafted players",
-      "captured_at": "2026-11-26T22:38:25.924Z"
+      "score": 39729,
+      "detail": "39,729 cumulative current value from 18 drafted players",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "best-draft",
@@ -339,9 +339,9 @@
     {
       "award_key": "best-draft",
       "roster_id": "16",
-      "score": 81285,
-      "detail": "81,285 cumulative current value from 26 drafted players",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": 81499,
+      "detail": "81,499 cumulative current value from 26 drafted players",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "best-draft",
@@ -374,9 +374,9 @@
     {
       "award_key": "best-draft",
       "roster_id": "21",
-      "score": 54449,
-      "detail": "54,449 cumulative current value from 23 drafted players",
-      "captured_at": "2026-11-26T11:53:48.761Z"
+      "score": 54485,
+      "detail": "54,485 cumulative current value from 23 drafted players",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "best-draft",
@@ -388,9 +388,9 @@
     {
       "award_key": "best-draft",
       "roster_id": "23",
-      "score": 38639,
-      "detail": "38,639 cumulative current value from 19 drafted players",
-      "captured_at": "2026-11-27T10:55:24.430Z"
+      "score": 38678,
+      "detail": "38,678 cumulative current value from 19 drafted players",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "best-draft",
@@ -577,9 +577,9 @@
     {
       "award_key": "best-draft-pick",
       "roster_id": "18",
-      "score": 6270,
-      "detail": "George Pickens • 2024 pick #89 • current value 6,885 • delta +6,270",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": 6272,
+      "detail": "George Pickens • 2024 pick #89 • current value 6,887 • delta +6,272",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "best-draft-pick",
@@ -612,9 +612,9 @@
     {
       "award_key": "best-draft-pick",
       "roster_id": "23",
-      "score": 2861,
-      "detail": "Deshaun Watson • 2024 pick #213 • current value 3,046 • delta +2,861",
-      "captured_at": "2026-11-27T10:55:24.430Z"
+      "score": 3020,
+      "detail": "Deshaun Watson • 2024 pick #213 • current value 3,205 • delta +3,020",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "best-draft-pick",
@@ -717,9 +717,9 @@
     {
       "award_key": "big-regret:trade-adjusted-v1",
       "roster_id": "6",
-      "score": 11585,
-      "detail": "11,585 largest current trade deficit",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": 12339,
+      "detail": "12,339 largest current trade deficit",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "big-regret:trade-adjusted-v1",
@@ -808,16 +808,16 @@
     {
       "award_key": "big-regret:trade-adjusted-v1",
       "roster_id": "19",
-      "score": 5040.25,
-      "detail": "5,040 largest current trade deficit",
-      "captured_at": "2026-11-26T03:13:46.712Z"
+      "score": 5100,
+      "detail": "5,100 largest current trade deficit",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "big-regret:trade-adjusted-v1",
       "roster_id": "20",
-      "score": 1832.8000000000002,
-      "detail": "1,833 largest current trade deficit",
-      "captured_at": "2026-11-27T02:13:16.587Z"
+      "score": 1856.3500000000004,
+      "detail": "1,856 largest current trade deficit",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "big-regret:trade-adjusted-v1",
@@ -857,9 +857,9 @@
     {
       "award_key": "big-regret:trade-adjusted-v1",
       "roster_id": "26",
-      "score": 4125,
-      "detail": "4,125 largest current trade deficit",
-      "captured_at": "2026-11-27T10:55:24.430Z"
+      "score": 4192,
+      "detail": "4,192 largest current trade deficit",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "big-regret:trade-adjusted-v1",
@@ -871,9 +871,9 @@
     {
       "award_key": "big-regret:trade-adjusted-v1",
       "roster_id": "28",
-      "score": 566.25,
-      "detail": "566 largest current trade deficit",
-      "captured_at": "2026-11-25T14:31:33.829Z"
+      "score": 639.25,
+      "detail": "639 largest current trade deficit",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "big-regret:trade-adjusted-v1",
@@ -899,9 +899,9 @@
     {
       "award_key": "big-regret:trade-adjusted-v1",
       "roster_id": "32",
-      "score": 5894,
-      "detail": "5,894 largest current trade deficit",
-      "captured_at": "2026-11-26T08:23:14.905Z"
+      "score": 5920,
+      "detail": "5,920 largest current trade deficit",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "big-swing:trade-adjusted-v1",
@@ -962,9 +962,9 @@
     {
       "award_key": "big-swing:trade-adjusted-v1",
       "roster_id": "9",
-      "score": 7606.050321699011,
-      "detail": "+7,606 largest single trade win",
-      "captured_at": "2026-11-26T19:03:12.866Z"
+      "score": 7856,
+      "detail": "+7,856 largest single trade win",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "big-swing:trade-adjusted-v1",
@@ -997,9 +997,9 @@
     {
       "award_key": "big-swing:trade-adjusted-v1",
       "roster_id": "14",
-      "score": 2250.5,
-      "detail": "+2,251 largest single trade win",
-      "captured_at": "2026-11-27T02:13:16.587Z"
+      "score": 2267.5,
+      "detail": "+2,268 largest single trade win",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "big-swing:trade-adjusted-v1",
@@ -1032,9 +1032,9 @@
     {
       "award_key": "big-swing:trade-adjusted-v1",
       "roster_id": "19",
-      "score": 2908.2999999999993,
-      "detail": "+2,908 largest single trade win",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": 2943.3500000000004,
+      "detail": "+2,943 largest single trade win",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "big-swing:trade-adjusted-v1",
@@ -1074,9 +1074,9 @@
     {
       "award_key": "big-swing:trade-adjusted-v1",
       "roster_id": "25",
-      "score": 727,
-      "detail": "+727 largest single trade win",
-      "captured_at": "2026-11-26T15:12:47.143Z"
+      "score": 822,
+      "detail": "+822 largest single trade win",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "big-swing:trade-adjusted-v1",
@@ -1095,9 +1095,9 @@
     {
       "award_key": "big-swing:trade-adjusted-v1",
       "roster_id": "28",
-      "score": 1921,
-      "detail": "+1,921 largest single trade win",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": 1970,
+      "detail": "+1,970 largest single trade win",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "big-swing:trade-adjusted-v1",
@@ -1158,9 +1158,9 @@
     {
       "award_key": "crown-jewel",
       "roster_id": "5",
-      "score": 538,
-      "detail": "Caleb Williams • 8,697 vs next asset 8,159 • crown gap +538",
-      "captured_at": "2026-11-27T10:55:24.430Z"
+      "score": 540,
+      "detail": "Caleb Williams • 8,699 vs next asset 8,159 • crown gap +540",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "crown-jewel",
@@ -1186,9 +1186,9 @@
     {
       "award_key": "crown-jewel",
       "roster_id": "9",
-      "score": 2601,
-      "detail": "Joe Burrow • 9,160 vs next asset 6,559 • crown gap +2,601",
-      "captured_at": "2026-11-27T18:58:29.832Z"
+      "score": 2611,
+      "detail": "Joe Burrow • 9,161 vs next asset 6,550 • crown gap +2,611",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "crown-jewel",
@@ -1319,16 +1319,16 @@
     {
       "award_key": "crown-jewel",
       "roster_id": "28",
-      "score": 2976,
-      "detail": "CeeDee Lamb • 8,330 vs next asset 5,354 • crown gap +2,976",
-      "captured_at": "2026-11-27T02:13:16.587Z"
+      "score": 3000,
+      "detail": "CeeDee Lamb • 8,330 vs next asset 5,330 • crown gap +3,000",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "crown-jewel",
       "roster_id": "29",
-      "score": 2019,
-      "detail": "Patrick Mahomes • 7,867 vs next asset 5,848 • crown gap +2,019",
-      "captured_at": "2026-11-27T18:58:29.832Z"
+      "score": 2024,
+      "detail": "Patrick Mahomes • 7,867 vs next asset 5,843 • crown gap +2,024",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "crown-jewel",
@@ -1683,9 +1683,9 @@
     {
       "award_key": "deal-maker:trade-adjusted-v1",
       "roster_id": "16",
-      "score": 6,
-      "detail": "6 hindsight wins",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": 7,
+      "detail": "7 hindsight wins",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "deal-maker:trade-adjusted-v1",
@@ -1725,9 +1725,9 @@
     {
       "award_key": "deal-maker:trade-adjusted-v1",
       "roster_id": "22",
-      "score": 42,
-      "detail": "42 hindsight wins",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": 43,
+      "detail": "43 hindsight wins",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "deal-maker:trade-adjusted-v1",
@@ -1907,9 +1907,9 @@
     {
       "award_key": "efficiency:trade-adjusted-v1",
       "roster_id": "16",
-      "score": 0.6,
-      "detail": "60% win rate across 10 trades",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": 0.7,
+      "detail": "70% win rate across 10 trades",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "efficiency:trade-adjusted-v1",
@@ -1949,9 +1949,9 @@
     {
       "award_key": "efficiency:trade-adjusted-v1",
       "roster_id": "22",
-      "score": 0.5454545454545454,
-      "detail": "55% win rate across 77 trades",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": 0.5584415584415584,
+      "detail": "56% win rate across 77 trades",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "efficiency:trade-adjusted-v1",
@@ -2047,9 +2047,9 @@
     {
       "award_key": "fleeced:trade-adjusted-v1",
       "roster_id": "4",
-      "score": 10753.021121635087,
-      "detail": "-10,753 cumulative trade edge",
-      "captured_at": "2026-11-27T18:58:29.832Z"
+      "score": 11435.675068869989,
+      "detail": "-11,436 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleeced:trade-adjusted-v1",
@@ -2061,9 +2061,9 @@
     {
       "award_key": "fleeced:trade-adjusted-v1",
       "roster_id": "6",
-      "score": 8775.574667538423,
-      "detail": "-8,776 cumulative trade edge",
-      "captured_at": "2026-11-27T10:55:24.430Z"
+      "score": 9478.315885843362,
+      "detail": "-9,478 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleeced:trade-adjusted-v1",
@@ -2117,9 +2117,9 @@
     {
       "award_key": "fleeced:trade-adjusted-v1",
       "roster_id": "14",
-      "score": 3132.546834206769,
-      "detail": "-3,133 cumulative trade edge",
-      "captured_at": "2026-11-26T08:23:14.905Z"
+      "score": 3610.0674009494523,
+      "detail": "-3,610 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleeced:trade-adjusted-v1",
@@ -2131,9 +2131,9 @@
     {
       "award_key": "fleeced:trade-adjusted-v1",
       "roster_id": "16",
-      "score": -17904.15885682158,
-      "detail": "+17,904 cumulative trade edge",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": -17554.488438552984,
+      "detail": "+17,554 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleeced:trade-adjusted-v1",
@@ -2145,9 +2145,9 @@
     {
       "award_key": "fleeced:trade-adjusted-v1",
       "roster_id": "18",
-      "score": 1331.328797849369,
-      "detail": "-1,331 cumulative trade edge",
-      "captured_at": "2026-11-27T02:13:16.587Z"
+      "score": 2130.370784860869,
+      "detail": "-2,130 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleeced:trade-adjusted-v1",
@@ -2159,9 +2159,9 @@
     {
       "award_key": "fleeced:trade-adjusted-v1",
       "roster_id": "20",
-      "score": -12611.562179968918,
-      "detail": "+12,612 cumulative trade edge",
-      "captured_at": "2026-11-25T20:13:36.289Z"
+      "score": -12050.266753421354,
+      "detail": "+12,050 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleeced:trade-adjusted-v1",
@@ -2173,9 +2173,9 @@
     {
       "award_key": "fleeced:trade-adjusted-v1",
       "roster_id": "22",
-      "score": -16439.453110057097,
-      "detail": "+16,439 cumulative trade edge",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": -16256.813881154814,
+      "detail": "+16,257 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleeced:trade-adjusted-v1",
@@ -2187,9 +2187,9 @@
     {
       "award_key": "fleeced:trade-adjusted-v1",
       "roster_id": "24",
-      "score": -26710.976043781404,
-      "detail": "+26,711 cumulative trade edge",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": -25753.999565195198,
+      "detail": "+25,754 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleeced:trade-adjusted-v1",
@@ -2201,9 +2201,9 @@
     {
       "award_key": "fleeced:trade-adjusted-v1",
       "roster_id": "26",
-      "score": 1418.3742581655233,
-      "detail": "-1,418 cumulative trade edge",
-      "captured_at": "2026-11-27T18:58:29.832Z"
+      "score": 2012.903269882403,
+      "detail": "-2,013 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleeced:trade-adjusted-v1",
@@ -2229,23 +2229,23 @@
     {
       "award_key": "fleeced:trade-adjusted-v1",
       "roster_id": "30",
-      "score": -8849.88078536741,
-      "detail": "+8,850 cumulative trade edge",
-      "captured_at": "2026-11-26T08:23:14.905Z"
+      "score": -7504.037464872588,
+      "detail": "+7,504 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleeced:trade-adjusted-v1",
       "roster_id": "31",
-      "score": -5185.914914747691,
-      "detail": "+5,186 cumulative trade edge",
-      "captured_at": "2026-11-25T14:31:33.829Z"
+      "score": -4620.816984428625,
+      "detail": "+4,621 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleeced:trade-adjusted-v1",
       "roster_id": "32",
-      "score": 4458.645690777533,
-      "detail": "-4,459 cumulative trade edge",
-      "captured_at": "2026-11-27T18:58:29.832Z"
+      "score": 4615.310592693541,
+      "detail": "-4,615 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleecer:trade-adjusted-v1",
@@ -2257,16 +2257,16 @@
     {
       "award_key": "fleecer:trade-adjusted-v1",
       "roster_id": "2",
-      "score": 11340.464073506366,
-      "detail": "+11,340 cumulative trade edge",
-      "captured_at": "2026-11-25T14:31:33.829Z"
+      "score": 13085.214386717504,
+      "detail": "+13,085 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleecer:trade-adjusted-v1",
       "roster_id": "3",
-      "score": 7267.821909358452,
-      "detail": "+7,268 cumulative trade edge",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": 8839.748197464049,
+      "detail": "+8,840 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleecer:trade-adjusted-v1",
@@ -2278,9 +2278,9 @@
     {
       "award_key": "fleecer:trade-adjusted-v1",
       "roster_id": "5",
-      "score": -21165.25948443146,
-      "detail": "-21,165 cumulative trade edge",
-      "captured_at": "2026-11-25T20:13:36.289Z"
+      "score": -19673.880925833942,
+      "detail": "-19,674 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleecer:trade-adjusted-v1",
@@ -2306,9 +2306,9 @@
     {
       "award_key": "fleecer:trade-adjusted-v1",
       "roster_id": "9",
-      "score": 13058.288409051642,
-      "detail": "+13,058 cumulative trade edge",
-      "captured_at": "2026-11-27T02:13:16.587Z"
+      "score": 13971.513728987273,
+      "detail": "+13,972 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleecer:trade-adjusted-v1",
@@ -2327,16 +2327,16 @@
     {
       "award_key": "fleecer:trade-adjusted-v1",
       "roster_id": "12",
-      "score": -2934.06241443859,
-      "detail": "-2,934 cumulative trade edge",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": -2698.9331530704103,
+      "detail": "-2,699 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleecer:trade-adjusted-v1",
       "roster_id": "13",
-      "score": -7298.423747516812,
-      "detail": "-7,298 cumulative trade edge",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": -5698.538178701692,
+      "detail": "-5,699 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleecer:trade-adjusted-v1",
@@ -2348,9 +2348,9 @@
     {
       "award_key": "fleecer:trade-adjusted-v1",
       "roster_id": "15",
-      "score": -27209.711326957564,
-      "detail": "-27,210 cumulative trade edge",
-      "captured_at": "2026-11-26T03:13:46.712Z"
+      "score": -26193.485395328265,
+      "detail": "-26,193 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleecer:trade-adjusted-v1",
@@ -2376,9 +2376,9 @@
     {
       "award_key": "fleecer:trade-adjusted-v1",
       "roster_id": "19",
-      "score": -1118.8217289639183,
-      "detail": "-1,119 cumulative trade edge",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": -823.203231473944,
+      "detail": "-823 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleecer:trade-adjusted-v1",
@@ -2418,9 +2418,9 @@
     {
       "award_key": "fleecer:trade-adjusted-v1",
       "roster_id": "25",
-      "score": -5960.0698889183595,
-      "detail": "-5,960 cumulative trade edge",
-      "captured_at": "2026-11-25T23:39:30.665Z"
+      "score": -5766.234121975096,
+      "detail": "-5,766 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleecer:trade-adjusted-v1",
@@ -2439,16 +2439,16 @@
     {
       "award_key": "fleecer:trade-adjusted-v1",
       "roster_id": "28",
-      "score": 1169.75,
-      "detail": "+1,170 cumulative trade edge",
-      "captured_at": "2026-11-27T10:55:24.430Z"
+      "score": 1330.75,
+      "detail": "+1,331 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleecer:trade-adjusted-v1",
       "roster_id": "29",
-      "score": -2311.5639474844083,
-      "detail": "-2,312 cumulative trade edge",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": -2061.8509662070237,
+      "detail": "-2,062 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleecer:trade-adjusted-v1",
@@ -2943,9 +2943,9 @@
     {
       "award_key": "powerhouse",
       "roster_id": "4",
-      "score": 18053,
-      "detail": "18,053 combined value across top 5 players",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": 18072,
+      "detail": "18,072 combined value across top 5 players",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "powerhouse",
@@ -3013,16 +3013,16 @@
     {
       "award_key": "powerhouse",
       "roster_id": "14",
-      "score": 18377,
-      "detail": "18,377 combined value across top 5 players",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": 18391,
+      "detail": "18,391 combined value across top 5 players",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "powerhouse",
       "roster_id": "15",
-      "score": 6865,
-      "detail": "6,865 combined value across top 5 players",
-      "captured_at": "2026-11-27T10:55:24.430Z"
+      "score": 7030,
+      "detail": "7,030 combined value across top 5 players",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "powerhouse",
@@ -3090,9 +3090,9 @@
     {
       "award_key": "powerhouse",
       "roster_id": "25",
-      "score": 18065,
-      "detail": "18,065 combined value across top 5 players",
-      "captured_at": "2026-11-26T19:03:12.866Z"
+      "score": 18150,
+      "detail": "18,150 combined value across top 5 players",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "powerhouse",
@@ -3405,9 +3405,9 @@
     {
       "award_key": "roster-value",
       "roster_id": "6",
-      "score": 44735,
-      "detail": "44,735 current player value",
-      "captured_at": "2026-11-25T14:31:33.829Z"
+      "score": 44888,
+      "detail": "44,888 current player value",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "roster-value",
@@ -3419,16 +3419,16 @@
     {
       "award_key": "roster-value",
       "roster_id": "8",
-      "score": 46375,
-      "detail": "46,375 current player value",
-      "captured_at": "2026-11-26T15:12:47.143Z"
+      "score": 46585,
+      "detail": "46,585 current player value",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "roster-value",
       "roster_id": "9",
-      "score": 59055,
-      "detail": "59,055 current player value",
-      "captured_at": "2026-11-27T02:13:16.587Z"
+      "score": 59427,
+      "detail": "59,427 current player value",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "roster-value",
@@ -3475,9 +3475,9 @@
     {
       "award_key": "roster-value",
       "roster_id": "16",
-      "score": 64508,
-      "detail": "64,508 current player value",
-      "captured_at": "2026-11-26T15:12:47.143Z"
+      "score": 64850,
+      "detail": "64,850 current player value",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "roster-value",
@@ -3510,37 +3510,37 @@
     {
       "award_key": "roster-value",
       "roster_id": "21",
-      "score": 47794,
-      "detail": "47,794 current player value",
-      "captured_at": "2026-11-25T14:31:33.829Z"
+      "score": 48099,
+      "detail": "48,099 current player value",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "roster-value",
       "roster_id": "22",
-      "score": 55340,
-      "detail": "55,340 current player value",
-      "captured_at": "2026-11-25T20:13:36.289Z"
+      "score": 55488,
+      "detail": "55,488 current player value",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "roster-value",
       "roster_id": "23",
-      "score": 33499,
-      "detail": "33,499 current player value",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": 33610,
+      "detail": "33,610 current player value",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "roster-value",
       "roster_id": "24",
-      "score": 62856,
-      "detail": "62,856 current player value",
-      "captured_at": "2026-11-26T22:38:25.924Z"
+      "score": 62988,
+      "detail": "62,988 current player value",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "roster-value",
       "roster_id": "25",
-      "score": 40257,
-      "detail": "40,257 current player value",
-      "captured_at": "2026-11-26T15:12:47.143Z"
+      "score": 40615,
+      "detail": "40,615 current player value",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "roster-value",
@@ -3559,23 +3559,23 @@
     {
       "award_key": "roster-value",
       "roster_id": "28",
-      "score": 44816,
-      "detail": "44,816 current player value",
-      "captured_at": "2026-11-25T20:13:36.289Z"
+      "score": 44884,
+      "detail": "44,884 current player value",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "roster-value",
       "roster_id": "29",
-      "score": 36465,
-      "detail": "36,465 current player value",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": 36706,
+      "detail": "36,706 current player value",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "roster-value",
       "roster_id": "30",
-      "score": 48573,
-      "detail": "48,573 current player value",
-      "captured_at": "2026-11-26T15:12:47.143Z"
+      "score": 48845,
+      "detail": "48,845 current player value",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "roster-value",
@@ -3601,16 +3601,16 @@
     {
       "award_key": "trade-average:trade-adjusted-v1",
       "roster_id": "2",
-      "score": 177.19475114853697,
-      "detail": "+177 average value edge per trade across 64 trades",
-      "captured_at": "2026-11-25T14:31:33.829Z"
+      "score": 204.456474792461,
+      "detail": "+204 average value edge per trade across 64 trades",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "trade-average:trade-adjusted-v1",
       "roster_id": "3",
-      "score": 519.1301363827466,
-      "detail": "+519 average value edge per trade across 14 trades",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": 631.4105855331463,
+      "detail": "+631 average value edge per trade across 14 trades",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "trade-average:trade-adjusted-v1",
@@ -3622,9 +3622,9 @@
     {
       "award_key": "trade-average:trade-adjusted-v1",
       "roster_id": "5",
-      "score": -572.0340401197692,
-      "detail": "-572 average value edge per trade across 37 trades",
-      "captured_at": "2026-11-25T20:13:36.289Z"
+      "score": -531.7265115090255,
+      "detail": "-532 average value edge per trade across 37 trades",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "trade-average:trade-adjusted-v1",
@@ -3650,9 +3650,9 @@
     {
       "award_key": "trade-average:trade-adjusted-v1",
       "roster_id": "9",
-      "score": 1632.2860511314552,
-      "detail": "+1,632 average value edge per trade across 8 trades",
-      "captured_at": "2026-11-27T02:13:16.587Z"
+      "score": 1746.439216123409,
+      "detail": "+1,746 average value edge per trade across 8 trades",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "trade-average:trade-adjusted-v1",
@@ -3671,16 +3671,16 @@
     {
       "award_key": "trade-average:trade-adjusted-v1",
       "roster_id": "12",
-      "score": -183.37890090241189,
-      "detail": "-183 average value edge per trade across 16 trades",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": -168.68332206690064,
+      "detail": "-169 average value edge per trade across 16 trades",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "trade-average:trade-adjusted-v1",
       "roster_id": "13",
-      "score": -317.3227716311657,
-      "detail": "-317 average value edge per trade across 23 trades",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": -247.76252950876923,
+      "detail": "-248 average value edge per trade across 23 trades",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "trade-average:trade-adjusted-v1",
@@ -3692,9 +3692,9 @@
     {
       "award_key": "trade-average:trade-adjusted-v1",
       "roster_id": "15",
-      "score": -1088.3884530783025,
-      "detail": "-1,088 average value edge per trade across 25 trades",
-      "captured_at": "2026-11-26T03:13:46.712Z"
+      "score": -1047.7394158131306,
+      "detail": "-1,048 average value edge per trade across 25 trades",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "trade-average:trade-adjusted-v1",
@@ -3720,9 +3720,9 @@
     {
       "award_key": "trade-average:trade-adjusted-v1",
       "roster_id": "19",
-      "score": -101.71106626944712,
-      "detail": "-102 average value edge per trade across 11 trades",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": -74.83665740672218,
+      "detail": "-75 average value edge per trade across 11 trades",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "trade-average:trade-adjusted-v1",
@@ -3755,9 +3755,9 @@
     {
       "award_key": "trade-average:trade-adjusted-v1",
       "roster_id": "25",
-      "score": -851.4385555597656,
-      "detail": "-851 average value edge per trade across 7 trades",
-      "captured_at": "2026-11-25T23:39:30.665Z"
+      "score": -823.747731710728,
+      "detail": "-824 average value edge per trade across 7 trades",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "trade-average:trade-adjusted-v1",
@@ -3776,16 +3776,16 @@
     {
       "award_key": "trade-average:trade-adjusted-v1",
       "roster_id": "28",
-      "score": 389.9166666666667,
-      "detail": "+390 average value edge per trade across 3 trades",
-      "captured_at": "2026-11-27T10:55:24.430Z"
+      "score": 443.5833333333333,
+      "detail": "+444 average value edge per trade across 3 trades",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "trade-average:trade-adjusted-v1",
       "roster_id": "29",
-      "score": -1155.7819737422042,
-      "detail": "-1,156 average value edge per trade across 2 trades",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": -1030.9254831035119,
+      "detail": "-1,031 average value edge per trade across 2 trades",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "trade-average:trade-adjusted-v1",
@@ -4042,9 +4042,9 @@
     {
       "award_key": "volume-wins:trade-adjusted-v1",
       "roster_id": "2",
-      "score": 3511340.464073506,
-      "detail": "35 wins • +11,340 edge",
-      "captured_at": "2026-11-25T14:31:33.829Z"
+      "score": 3513085.2143867174,
+      "detail": "35 wins • +13,085 edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "volume-wins:trade-adjusted-v1",
@@ -4063,9 +4063,9 @@
     {
       "award_key": "volume-wins:trade-adjusted-v1",
       "roster_id": "5",
-      "score": 1178834.7405155685,
-      "detail": "12 wins • -21,165 edge",
-      "captured_at": "2026-11-25T20:13:36.289Z"
+      "score": 1180326.119074166,
+      "detail": "12 wins • -19,674 edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "volume-wins:trade-adjusted-v1",
@@ -4091,9 +4091,9 @@
     {
       "award_key": "volume-wins:trade-adjusted-v1",
       "roster_id": "9",
-      "score": 513058.28840905166,
-      "detail": "5 wins • +13,058 edge",
-      "captured_at": "2026-11-27T02:13:16.587Z"
+      "score": 513971.51372898725,
+      "detail": "5 wins • +13,972 edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "volume-wins:trade-adjusted-v1",
@@ -4112,16 +4112,16 @@
     {
       "award_key": "volume-wins:trade-adjusted-v1",
       "roster_id": "12",
-      "score": 697065.9375855614,
-      "detail": "7 wins • -2,934 edge",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": 697301.0668469296,
+      "detail": "7 wins • -2,699 edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "volume-wins:trade-adjusted-v1",
       "roster_id": "13",
-      "score": 1292701.5762524833,
-      "detail": "13 wins • -7,298 edge",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": 1294301.4618212983,
+      "detail": "13 wins • -5,699 edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "volume-wins:trade-adjusted-v1",
@@ -4133,16 +4133,16 @@
     {
       "award_key": "volume-wins:trade-adjusted-v1",
       "roster_id": "15",
-      "score": 672775.703313149,
-      "detail": "7 wins • -27,224 edge",
-      "captured_at": "2026-11-27T10:55:24.430Z"
+      "score": 673806.5146046717,
+      "detail": "7 wins • -26,193 edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "volume-wins:trade-adjusted-v1",
       "roster_id": "16",
-      "score": 618681.5537691045,
-      "detail": "6 wins • +18,682 edge",
-      "captured_at": "2026-11-26T19:03:12.866Z"
+      "score": 717554.488438553,
+      "detail": "7 wins • +17,554 edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "volume-wins:trade-adjusted-v1",
@@ -4161,9 +4161,9 @@
     {
       "award_key": "volume-wins:trade-adjusted-v1",
       "roster_id": "19",
-      "score": 698881.1782710361,
-      "detail": "7 wins • -1,119 edge",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": 699176.7967685261,
+      "detail": "7 wins • -823 edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "volume-wins:trade-adjusted-v1",
@@ -4182,9 +4182,9 @@
     {
       "award_key": "volume-wins:trade-adjusted-v1",
       "roster_id": "22",
-      "score": 4217868.73294346,
-      "detail": "42 wins • +17,869 edge",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": 4316256.813881155,
+      "detail": "43 wins • +16,257 edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "volume-wins:trade-adjusted-v1",
@@ -4203,9 +4203,9 @@
     {
       "award_key": "volume-wins:trade-adjusted-v1",
       "roster_id": "25",
-      "score": 194039.93011108163,
-      "detail": "2 wins • -5,960 edge",
-      "captured_at": "2026-11-25T23:39:30.665Z"
+      "score": 194233.76587802492,
+      "detail": "2 wins • -5,766 edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "volume-wins:trade-adjusted-v1",
@@ -4224,16 +4224,16 @@
     {
       "award_key": "volume-wins:trade-adjusted-v1",
       "roster_id": "28",
-      "score": 101169.75,
-      "detail": "1 wins • +1,170 edge",
-      "captured_at": "2026-11-27T10:55:24.430Z"
+      "score": 101330.75,
+      "detail": "1 wins • +1,331 edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "volume-wins:trade-adjusted-v1",
       "roster_id": "29",
-      "score": -2311.5639474844083,
-      "detail": "0 wins • -2,312 edge",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": -2061.8509662070237,
+      "detail": "0 wins • -2,062 edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "volume-wins:trade-adjusted-v1",
@@ -4513,9 +4513,9 @@
     {
       "award_key": "balanced:trade-adjusted-v1",
       "roster_id": "5",
-      "score": 0.8093219866267436,
-      "detail": "37 trades • -21,165 net edge",
-      "captured_at": "2026-11-25T20:13:36.289Z"
+      "score": 0.8227578294969915,
+      "detail": "37 trades • -19,674 net edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "balanced:trade-adjusted-v1",
@@ -4562,16 +4562,16 @@
     {
       "award_key": "balanced:trade-adjusted-v1",
       "roster_id": "12",
-      "score": 0.938873699699196,
-      "detail": "16 trades • -2,934 net edge",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": 0.9437722259776998,
+      "detail": "16 trades • -2,699 net edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "balanced:trade-adjusted-v1",
       "roster_id": "13",
-      "score": 0.8942257427896114,
-      "detail": "23 trades • -7,298 net edge",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": 0.9174124901637436,
+      "detail": "23 trades • -5,699 net edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "balanced:trade-adjusted-v1",
@@ -4583,16 +4583,16 @@
     {
       "award_key": "balanced:trade-adjusted-v1",
       "roster_id": "15",
-      "score": 0.6372038489738991,
-      "detail": "25 trades • -27,210 net edge",
-      "captured_at": "2026-11-26T03:13:46.712Z"
+      "score": 0.6507535280622898,
+      "detail": "25 trades • -26,193 net edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "balanced:trade-adjusted-v1",
       "roster_id": "16",
-      "score": 0.403194704772614,
-      "detail": "10 trades • +17,904 net edge",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": 0.41485038538156715,
+      "detail": "10 trades • +17,554 net edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "balanced:trade-adjusted-v1",
@@ -4611,16 +4611,16 @@
     {
       "award_key": "balanced:trade-adjusted-v1",
       "roster_id": "19",
-      "score": 0.9660963112435176,
-      "detail": "11 trades • -1,119 net edge",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": 0.9750544475310926,
+      "detail": "11 trades • -823 net edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "balanced:trade-adjusted-v1",
       "roster_id": "20",
-      "score": 0.579614594001036,
-      "detail": "10 trades • +12,612 net edge",
-      "captured_at": "2026-11-25T20:13:36.289Z"
+      "score": 0.5983244415526215,
+      "detail": "10 trades • +12,050 net edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "balanced:trade-adjusted-v1",
@@ -4632,9 +4632,9 @@
     {
       "award_key": "balanced:trade-adjusted-v1",
       "roster_id": "22",
-      "score": 0.9288335363200991,
-      "detail": "77 trades • +16,439 net edge",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": 0.9296241823326632,
+      "detail": "77 trades • +16,257 net edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "balanced:trade-adjusted-v1",
@@ -4646,16 +4646,16 @@
     {
       "award_key": "balanced:trade-adjusted-v1",
       "roster_id": "24",
-      "score": 0.6128844051625884,
-      "detail": "23 trades • +26,711 net edge",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": 0.6267536294899247,
+      "detail": "23 trades • +25,754 net edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "balanced:trade-adjusted-v1",
       "roster_id": "25",
-      "score": 0.7161871481467448,
-      "detail": "7 trades • -5,960 net edge",
-      "captured_at": "2026-11-25T23:39:30.665Z"
+      "score": 0.7254174227630907,
+      "detail": "7 trades • -5,766 net edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "balanced:trade-adjusted-v1",
@@ -4681,23 +4681,23 @@
     {
       "award_key": "balanced:trade-adjusted-v1",
       "roster_id": "29",
-      "score": 0.614739342085932,
-      "detail": "2 trades • -2,312 net edge",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": 0.6563581722988294,
+      "detail": "2 trades • -2,062 net edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "balanced:trade-adjusted-v1",
       "roster_id": "30",
-      "score": 0.7541699781842386,
-      "detail": "12 trades • +8,850 net edge",
-      "captured_at": "2026-11-26T08:23:14.905Z"
+      "score": 0.7915545148646503,
+      "detail": "12 trades • +7,504 net edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "balanced:trade-adjusted-v1",
       "roster_id": "31",
-      "score": 0.9519822693078918,
-      "detail": "36 trades • +5,186 net edge",
-      "captured_at": "2026-11-25T14:31:33.829Z"
+      "score": 0.9572146575515869,
+      "detail": "36 trades • +4,621 net edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "balanced:trade-adjusted-v1",
@@ -4737,16 +4737,16 @@
     {
       "award_key": "best-draft",
       "roster_id": "5",
-      "score": 38672,
-      "detail": "38,672 cumulative current value from 14 drafted players",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": 39027,
+      "detail": "39,027 cumulative current value from 14 drafted players",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "best-draft",
       "roster_id": "6",
-      "score": 39134,
-      "detail": "39,134 cumulative current value from 15 drafted players",
-      "captured_at": "2026-11-27T02:13:16.587Z"
+      "score": 39273,
+      "detail": "39,273 cumulative current value from 15 drafted players",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "best-draft",
@@ -4758,9 +4758,9 @@
     {
       "award_key": "best-draft",
       "roster_id": "8",
-      "score": 48929,
-      "detail": "48,929 cumulative current value from 22 drafted players",
-      "captured_at": "2026-11-27T02:13:16.587Z"
+      "score": 49197,
+      "detail": "49,197 cumulative current value from 22 drafted players",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "best-draft",
@@ -4779,16 +4779,16 @@
     {
       "award_key": "best-draft",
       "roster_id": "11",
-      "score": 50946,
-      "detail": "50,946 cumulative current value from 18 drafted players",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": 51277,
+      "detail": "51,277 cumulative current value from 18 drafted players",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "best-draft",
       "roster_id": "12",
-      "score": 40066,
-      "detail": "40,066 cumulative current value from 18 drafted players",
-      "captured_at": "2026-11-26T03:13:46.712Z"
+      "score": 40090,
+      "detail": "40,090 cumulative current value from 18 drafted players",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "best-draft",
@@ -4800,9 +4800,9 @@
     {
       "award_key": "best-draft",
       "roster_id": "14",
-      "score": 39635,
-      "detail": "39,635 cumulative current value from 18 drafted players",
-      "captured_at": "2026-11-26T22:38:25.924Z"
+      "score": 39729,
+      "detail": "39,729 cumulative current value from 18 drafted players",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "best-draft",
@@ -4814,9 +4814,9 @@
     {
       "award_key": "best-draft",
       "roster_id": "16",
-      "score": 81285,
-      "detail": "81,285 cumulative current value from 26 drafted players",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": 81499,
+      "detail": "81,499 cumulative current value from 26 drafted players",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "best-draft",
@@ -4849,9 +4849,9 @@
     {
       "award_key": "best-draft",
       "roster_id": "21",
-      "score": 54449,
-      "detail": "54,449 cumulative current value from 23 drafted players",
-      "captured_at": "2026-11-26T11:53:48.761Z"
+      "score": 54485,
+      "detail": "54,485 cumulative current value from 23 drafted players",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "best-draft",
@@ -4863,9 +4863,9 @@
     {
       "award_key": "best-draft",
       "roster_id": "23",
-      "score": 38639,
-      "detail": "38,639 cumulative current value from 19 drafted players",
-      "captured_at": "2026-11-27T10:55:24.430Z"
+      "score": 38678,
+      "detail": "38,678 cumulative current value from 19 drafted players",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "best-draft",
@@ -5052,9 +5052,9 @@
     {
       "award_key": "best-draft-pick",
       "roster_id": "18",
-      "score": 6270,
-      "detail": "George Pickens • 2024 pick #89 • current value 6,885 • delta +6,270",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": 6272,
+      "detail": "George Pickens • 2024 pick #89 • current value 6,887 • delta +6,272",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "best-draft-pick",
@@ -5087,9 +5087,9 @@
     {
       "award_key": "best-draft-pick",
       "roster_id": "23",
-      "score": 2861,
-      "detail": "Deshaun Watson • 2024 pick #213 • current value 3,046 • delta +2,861",
-      "captured_at": "2026-11-27T10:55:24.430Z"
+      "score": 3020,
+      "detail": "Deshaun Watson • 2024 pick #213 • current value 3,205 • delta +3,020",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "best-draft-pick",
@@ -5192,9 +5192,9 @@
     {
       "award_key": "big-regret:trade-adjusted-v1",
       "roster_id": "6",
-      "score": 11585,
-      "detail": "11,585 largest current trade deficit",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": 12339,
+      "detail": "12,339 largest current trade deficit",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "big-regret:trade-adjusted-v1",
@@ -5283,16 +5283,16 @@
     {
       "award_key": "big-regret:trade-adjusted-v1",
       "roster_id": "19",
-      "score": 5040.25,
-      "detail": "5,040 largest current trade deficit",
-      "captured_at": "2026-11-26T03:13:46.712Z"
+      "score": 5100,
+      "detail": "5,100 largest current trade deficit",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "big-regret:trade-adjusted-v1",
       "roster_id": "20",
-      "score": 1832.8000000000002,
-      "detail": "1,833 largest current trade deficit",
-      "captured_at": "2026-11-27T02:13:16.587Z"
+      "score": 1856.3500000000004,
+      "detail": "1,856 largest current trade deficit",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "big-regret:trade-adjusted-v1",
@@ -5332,9 +5332,9 @@
     {
       "award_key": "big-regret:trade-adjusted-v1",
       "roster_id": "26",
-      "score": 4125,
-      "detail": "4,125 largest current trade deficit",
-      "captured_at": "2026-11-27T10:55:24.430Z"
+      "score": 4192,
+      "detail": "4,192 largest current trade deficit",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "big-regret:trade-adjusted-v1",
@@ -5346,9 +5346,9 @@
     {
       "award_key": "big-regret:trade-adjusted-v1",
       "roster_id": "28",
-      "score": 566.25,
-      "detail": "566 largest current trade deficit",
-      "captured_at": "2026-11-25T14:31:33.829Z"
+      "score": 639.25,
+      "detail": "639 largest current trade deficit",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "big-regret:trade-adjusted-v1",
@@ -5374,9 +5374,9 @@
     {
       "award_key": "big-regret:trade-adjusted-v1",
       "roster_id": "32",
-      "score": 5894,
-      "detail": "5,894 largest current trade deficit",
-      "captured_at": "2026-11-26T08:23:14.905Z"
+      "score": 5920,
+      "detail": "5,920 largest current trade deficit",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "big-swing:trade-adjusted-v1",
@@ -5437,9 +5437,9 @@
     {
       "award_key": "big-swing:trade-adjusted-v1",
       "roster_id": "9",
-      "score": 7606.050321699011,
-      "detail": "+7,606 largest single trade win",
-      "captured_at": "2026-11-26T19:03:12.866Z"
+      "score": 7856,
+      "detail": "+7,856 largest single trade win",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "big-swing:trade-adjusted-v1",
@@ -5472,9 +5472,9 @@
     {
       "award_key": "big-swing:trade-adjusted-v1",
       "roster_id": "14",
-      "score": 2250.5,
-      "detail": "+2,251 largest single trade win",
-      "captured_at": "2026-11-27T02:13:16.587Z"
+      "score": 2267.5,
+      "detail": "+2,268 largest single trade win",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "big-swing:trade-adjusted-v1",
@@ -5507,9 +5507,9 @@
     {
       "award_key": "big-swing:trade-adjusted-v1",
       "roster_id": "19",
-      "score": 2908.2999999999993,
-      "detail": "+2,908 largest single trade win",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": 2943.3500000000004,
+      "detail": "+2,943 largest single trade win",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "big-swing:trade-adjusted-v1",
@@ -5549,9 +5549,9 @@
     {
       "award_key": "big-swing:trade-adjusted-v1",
       "roster_id": "25",
-      "score": 727,
-      "detail": "+727 largest single trade win",
-      "captured_at": "2026-11-26T15:12:47.143Z"
+      "score": 822,
+      "detail": "+822 largest single trade win",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "big-swing:trade-adjusted-v1",
@@ -5570,9 +5570,9 @@
     {
       "award_key": "big-swing:trade-adjusted-v1",
       "roster_id": "28",
-      "score": 1921,
-      "detail": "+1,921 largest single trade win",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": 1970,
+      "detail": "+1,970 largest single trade win",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "big-swing:trade-adjusted-v1",
@@ -5633,9 +5633,9 @@
     {
       "award_key": "crown-jewel",
       "roster_id": "5",
-      "score": 538,
-      "detail": "Caleb Williams • 8,697 vs next asset 8,159 • crown gap +538",
-      "captured_at": "2026-11-27T10:55:24.430Z"
+      "score": 540,
+      "detail": "Caleb Williams • 8,699 vs next asset 8,159 • crown gap +540",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "crown-jewel",
@@ -5661,9 +5661,9 @@
     {
       "award_key": "crown-jewel",
       "roster_id": "9",
-      "score": 2601,
-      "detail": "Joe Burrow • 9,160 vs next asset 6,559 • crown gap +2,601",
-      "captured_at": "2026-11-27T18:58:29.832Z"
+      "score": 2611,
+      "detail": "Joe Burrow • 9,161 vs next asset 6,550 • crown gap +2,611",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "crown-jewel",
@@ -5794,16 +5794,16 @@
     {
       "award_key": "crown-jewel",
       "roster_id": "28",
-      "score": 2976,
-      "detail": "CeeDee Lamb • 8,330 vs next asset 5,354 • crown gap +2,976",
-      "captured_at": "2026-11-27T02:13:16.587Z"
+      "score": 3000,
+      "detail": "CeeDee Lamb • 8,330 vs next asset 5,330 • crown gap +3,000",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "crown-jewel",
       "roster_id": "29",
-      "score": 2019,
-      "detail": "Patrick Mahomes • 7,867 vs next asset 5,848 • crown gap +2,019",
-      "captured_at": "2026-11-27T18:58:29.832Z"
+      "score": 2024,
+      "detail": "Patrick Mahomes • 7,867 vs next asset 5,843 • crown gap +2,024",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "crown-jewel",
@@ -6158,9 +6158,9 @@
     {
       "award_key": "deal-maker:trade-adjusted-v1",
       "roster_id": "16",
-      "score": 6,
-      "detail": "6 hindsight wins",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": 7,
+      "detail": "7 hindsight wins",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "deal-maker:trade-adjusted-v1",
@@ -6200,9 +6200,9 @@
     {
       "award_key": "deal-maker:trade-adjusted-v1",
       "roster_id": "22",
-      "score": 42,
-      "detail": "42 hindsight wins",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": 43,
+      "detail": "43 hindsight wins",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "deal-maker:trade-adjusted-v1",
@@ -6382,9 +6382,9 @@
     {
       "award_key": "efficiency:trade-adjusted-v1",
       "roster_id": "16",
-      "score": 0.6,
-      "detail": "60% win rate across 10 trades",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": 0.7,
+      "detail": "70% win rate across 10 trades",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "efficiency:trade-adjusted-v1",
@@ -6424,9 +6424,9 @@
     {
       "award_key": "efficiency:trade-adjusted-v1",
       "roster_id": "22",
-      "score": 0.5454545454545454,
-      "detail": "55% win rate across 77 trades",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": 0.5584415584415584,
+      "detail": "56% win rate across 77 trades",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "efficiency:trade-adjusted-v1",
@@ -6522,9 +6522,9 @@
     {
       "award_key": "fleeced:trade-adjusted-v1",
       "roster_id": "4",
-      "score": 10753.021121635087,
-      "detail": "-10,753 cumulative trade edge",
-      "captured_at": "2026-11-27T18:58:29.832Z"
+      "score": 11435.675068869989,
+      "detail": "-11,436 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleeced:trade-adjusted-v1",
@@ -6536,9 +6536,9 @@
     {
       "award_key": "fleeced:trade-adjusted-v1",
       "roster_id": "6",
-      "score": 8775.574667538423,
-      "detail": "-8,776 cumulative trade edge",
-      "captured_at": "2026-11-27T10:55:24.430Z"
+      "score": 9478.315885843362,
+      "detail": "-9,478 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleeced:trade-adjusted-v1",
@@ -6592,9 +6592,9 @@
     {
       "award_key": "fleeced:trade-adjusted-v1",
       "roster_id": "14",
-      "score": 3132.546834206769,
-      "detail": "-3,133 cumulative trade edge",
-      "captured_at": "2026-11-26T08:23:14.905Z"
+      "score": 3610.0674009494523,
+      "detail": "-3,610 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleeced:trade-adjusted-v1",
@@ -6606,9 +6606,9 @@
     {
       "award_key": "fleeced:trade-adjusted-v1",
       "roster_id": "16",
-      "score": -17904.15885682158,
-      "detail": "+17,904 cumulative trade edge",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": -17554.488438552984,
+      "detail": "+17,554 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleeced:trade-adjusted-v1",
@@ -6620,9 +6620,9 @@
     {
       "award_key": "fleeced:trade-adjusted-v1",
       "roster_id": "18",
-      "score": 1331.328797849369,
-      "detail": "-1,331 cumulative trade edge",
-      "captured_at": "2026-11-27T02:13:16.587Z"
+      "score": 2130.370784860869,
+      "detail": "-2,130 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleeced:trade-adjusted-v1",
@@ -6634,9 +6634,9 @@
     {
       "award_key": "fleeced:trade-adjusted-v1",
       "roster_id": "20",
-      "score": -12611.562179968918,
-      "detail": "+12,612 cumulative trade edge",
-      "captured_at": "2026-11-25T20:13:36.289Z"
+      "score": -12050.266753421354,
+      "detail": "+12,050 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleeced:trade-adjusted-v1",
@@ -6648,9 +6648,9 @@
     {
       "award_key": "fleeced:trade-adjusted-v1",
       "roster_id": "22",
-      "score": -16439.453110057097,
-      "detail": "+16,439 cumulative trade edge",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": -16256.813881154814,
+      "detail": "+16,257 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleeced:trade-adjusted-v1",
@@ -6662,9 +6662,9 @@
     {
       "award_key": "fleeced:trade-adjusted-v1",
       "roster_id": "24",
-      "score": -26710.976043781404,
-      "detail": "+26,711 cumulative trade edge",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": -25753.999565195198,
+      "detail": "+25,754 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleeced:trade-adjusted-v1",
@@ -6676,9 +6676,9 @@
     {
       "award_key": "fleeced:trade-adjusted-v1",
       "roster_id": "26",
-      "score": 1418.3742581655233,
-      "detail": "-1,418 cumulative trade edge",
-      "captured_at": "2026-11-27T18:58:29.832Z"
+      "score": 2012.903269882403,
+      "detail": "-2,013 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleeced:trade-adjusted-v1",
@@ -6704,23 +6704,23 @@
     {
       "award_key": "fleeced:trade-adjusted-v1",
       "roster_id": "30",
-      "score": -8849.88078536741,
-      "detail": "+8,850 cumulative trade edge",
-      "captured_at": "2026-11-26T08:23:14.905Z"
+      "score": -7504.037464872588,
+      "detail": "+7,504 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleeced:trade-adjusted-v1",
       "roster_id": "31",
-      "score": -5185.914914747691,
-      "detail": "+5,186 cumulative trade edge",
-      "captured_at": "2026-11-25T14:31:33.829Z"
+      "score": -4620.816984428625,
+      "detail": "+4,621 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleeced:trade-adjusted-v1",
       "roster_id": "32",
-      "score": 4458.645690777533,
-      "detail": "-4,459 cumulative trade edge",
-      "captured_at": "2026-11-27T18:58:29.832Z"
+      "score": 4615.310592693541,
+      "detail": "-4,615 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleecer:trade-adjusted-v1",
@@ -6732,16 +6732,16 @@
     {
       "award_key": "fleecer:trade-adjusted-v1",
       "roster_id": "2",
-      "score": 11340.464073506366,
-      "detail": "+11,340 cumulative trade edge",
-      "captured_at": "2026-11-25T14:31:33.829Z"
+      "score": 13085.214386717504,
+      "detail": "+13,085 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleecer:trade-adjusted-v1",
       "roster_id": "3",
-      "score": 7267.821909358452,
-      "detail": "+7,268 cumulative trade edge",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": 8839.748197464049,
+      "detail": "+8,840 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleecer:trade-adjusted-v1",
@@ -6753,9 +6753,9 @@
     {
       "award_key": "fleecer:trade-adjusted-v1",
       "roster_id": "5",
-      "score": -21165.25948443146,
-      "detail": "-21,165 cumulative trade edge",
-      "captured_at": "2026-11-25T20:13:36.289Z"
+      "score": -19673.880925833942,
+      "detail": "-19,674 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleecer:trade-adjusted-v1",
@@ -6781,9 +6781,9 @@
     {
       "award_key": "fleecer:trade-adjusted-v1",
       "roster_id": "9",
-      "score": 13058.288409051642,
-      "detail": "+13,058 cumulative trade edge",
-      "captured_at": "2026-11-27T02:13:16.587Z"
+      "score": 13971.513728987273,
+      "detail": "+13,972 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleecer:trade-adjusted-v1",
@@ -6802,16 +6802,16 @@
     {
       "award_key": "fleecer:trade-adjusted-v1",
       "roster_id": "12",
-      "score": -2934.06241443859,
-      "detail": "-2,934 cumulative trade edge",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": -2698.9331530704103,
+      "detail": "-2,699 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleecer:trade-adjusted-v1",
       "roster_id": "13",
-      "score": -7298.423747516812,
-      "detail": "-7,298 cumulative trade edge",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": -5698.538178701692,
+      "detail": "-5,699 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleecer:trade-adjusted-v1",
@@ -6823,9 +6823,9 @@
     {
       "award_key": "fleecer:trade-adjusted-v1",
       "roster_id": "15",
-      "score": -27209.711326957564,
-      "detail": "-27,210 cumulative trade edge",
-      "captured_at": "2026-11-26T03:13:46.712Z"
+      "score": -26193.485395328265,
+      "detail": "-26,193 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleecer:trade-adjusted-v1",
@@ -6851,9 +6851,9 @@
     {
       "award_key": "fleecer:trade-adjusted-v1",
       "roster_id": "19",
-      "score": -1118.8217289639183,
-      "detail": "-1,119 cumulative trade edge",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": -823.203231473944,
+      "detail": "-823 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleecer:trade-adjusted-v1",
@@ -6893,9 +6893,9 @@
     {
       "award_key": "fleecer:trade-adjusted-v1",
       "roster_id": "25",
-      "score": -5960.0698889183595,
-      "detail": "-5,960 cumulative trade edge",
-      "captured_at": "2026-11-25T23:39:30.665Z"
+      "score": -5766.234121975096,
+      "detail": "-5,766 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleecer:trade-adjusted-v1",
@@ -6914,16 +6914,16 @@
     {
       "award_key": "fleecer:trade-adjusted-v1",
       "roster_id": "28",
-      "score": 1169.75,
-      "detail": "+1,170 cumulative trade edge",
-      "captured_at": "2026-11-27T10:55:24.430Z"
+      "score": 1330.75,
+      "detail": "+1,331 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleecer:trade-adjusted-v1",
       "roster_id": "29",
-      "score": -2311.5639474844083,
-      "detail": "-2,312 cumulative trade edge",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": -2061.8509662070237,
+      "detail": "-2,062 cumulative trade edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "fleecer:trade-adjusted-v1",
@@ -7418,9 +7418,9 @@
     {
       "award_key": "powerhouse",
       "roster_id": "4",
-      "score": 18053,
-      "detail": "18,053 combined value across top 5 players",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": 18072,
+      "detail": "18,072 combined value across top 5 players",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "powerhouse",
@@ -7488,16 +7488,16 @@
     {
       "award_key": "powerhouse",
       "roster_id": "14",
-      "score": 18377,
-      "detail": "18,377 combined value across top 5 players",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": 18391,
+      "detail": "18,391 combined value across top 5 players",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "powerhouse",
       "roster_id": "15",
-      "score": 6865,
-      "detail": "6,865 combined value across top 5 players",
-      "captured_at": "2026-11-27T10:55:24.430Z"
+      "score": 7030,
+      "detail": "7,030 combined value across top 5 players",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "powerhouse",
@@ -7565,9 +7565,9 @@
     {
       "award_key": "powerhouse",
       "roster_id": "25",
-      "score": 18065,
-      "detail": "18,065 combined value across top 5 players",
-      "captured_at": "2026-11-26T19:03:12.866Z"
+      "score": 18150,
+      "detail": "18,150 combined value across top 5 players",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "powerhouse",
@@ -7880,9 +7880,9 @@
     {
       "award_key": "roster-value",
       "roster_id": "6",
-      "score": 44735,
-      "detail": "44,735 current player value",
-      "captured_at": "2026-11-25T14:31:33.829Z"
+      "score": 44888,
+      "detail": "44,888 current player value",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "roster-value",
@@ -7894,16 +7894,16 @@
     {
       "award_key": "roster-value",
       "roster_id": "8",
-      "score": 46375,
-      "detail": "46,375 current player value",
-      "captured_at": "2026-11-26T15:12:47.143Z"
+      "score": 46585,
+      "detail": "46,585 current player value",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "roster-value",
       "roster_id": "9",
-      "score": 59055,
-      "detail": "59,055 current player value",
-      "captured_at": "2026-11-27T02:13:16.587Z"
+      "score": 59427,
+      "detail": "59,427 current player value",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "roster-value",
@@ -7950,9 +7950,9 @@
     {
       "award_key": "roster-value",
       "roster_id": "16",
-      "score": 64508,
-      "detail": "64,508 current player value",
-      "captured_at": "2026-11-26T15:12:47.143Z"
+      "score": 64850,
+      "detail": "64,850 current player value",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "roster-value",
@@ -7985,37 +7985,37 @@
     {
       "award_key": "roster-value",
       "roster_id": "21",
-      "score": 47794,
-      "detail": "47,794 current player value",
-      "captured_at": "2026-11-25T14:31:33.829Z"
+      "score": 48099,
+      "detail": "48,099 current player value",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "roster-value",
       "roster_id": "22",
-      "score": 55340,
-      "detail": "55,340 current player value",
-      "captured_at": "2026-11-25T20:13:36.289Z"
+      "score": 55488,
+      "detail": "55,488 current player value",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "roster-value",
       "roster_id": "23",
-      "score": 33499,
-      "detail": "33,499 current player value",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": 33610,
+      "detail": "33,610 current player value",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "roster-value",
       "roster_id": "24",
-      "score": 62856,
-      "detail": "62,856 current player value",
-      "captured_at": "2026-11-26T22:38:25.924Z"
+      "score": 62988,
+      "detail": "62,988 current player value",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "roster-value",
       "roster_id": "25",
-      "score": 40257,
-      "detail": "40,257 current player value",
-      "captured_at": "2026-11-26T15:12:47.143Z"
+      "score": 40615,
+      "detail": "40,615 current player value",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "roster-value",
@@ -8034,23 +8034,23 @@
     {
       "award_key": "roster-value",
       "roster_id": "28",
-      "score": 44816,
-      "detail": "44,816 current player value",
-      "captured_at": "2026-11-25T20:13:36.289Z"
+      "score": 44884,
+      "detail": "44,884 current player value",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "roster-value",
       "roster_id": "29",
-      "score": 36465,
-      "detail": "36,465 current player value",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": 36706,
+      "detail": "36,706 current player value",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "roster-value",
       "roster_id": "30",
-      "score": 48573,
-      "detail": "48,573 current player value",
-      "captured_at": "2026-11-26T15:12:47.143Z"
+      "score": 48845,
+      "detail": "48,845 current player value",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "roster-value",
@@ -8076,16 +8076,16 @@
     {
       "award_key": "trade-average:trade-adjusted-v1",
       "roster_id": "2",
-      "score": 177.19475114853697,
-      "detail": "+177 average value edge per trade across 64 trades",
-      "captured_at": "2026-11-25T14:31:33.829Z"
+      "score": 204.456474792461,
+      "detail": "+204 average value edge per trade across 64 trades",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "trade-average:trade-adjusted-v1",
       "roster_id": "3",
-      "score": 519.1301363827466,
-      "detail": "+519 average value edge per trade across 14 trades",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": 631.4105855331463,
+      "detail": "+631 average value edge per trade across 14 trades",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "trade-average:trade-adjusted-v1",
@@ -8097,9 +8097,9 @@
     {
       "award_key": "trade-average:trade-adjusted-v1",
       "roster_id": "5",
-      "score": -572.0340401197692,
-      "detail": "-572 average value edge per trade across 37 trades",
-      "captured_at": "2026-11-25T20:13:36.289Z"
+      "score": -531.7265115090255,
+      "detail": "-532 average value edge per trade across 37 trades",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "trade-average:trade-adjusted-v1",
@@ -8125,9 +8125,9 @@
     {
       "award_key": "trade-average:trade-adjusted-v1",
       "roster_id": "9",
-      "score": 1632.2860511314552,
-      "detail": "+1,632 average value edge per trade across 8 trades",
-      "captured_at": "2026-11-27T02:13:16.587Z"
+      "score": 1746.439216123409,
+      "detail": "+1,746 average value edge per trade across 8 trades",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "trade-average:trade-adjusted-v1",
@@ -8146,16 +8146,16 @@
     {
       "award_key": "trade-average:trade-adjusted-v1",
       "roster_id": "12",
-      "score": -183.37890090241189,
-      "detail": "-183 average value edge per trade across 16 trades",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": -168.68332206690064,
+      "detail": "-169 average value edge per trade across 16 trades",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "trade-average:trade-adjusted-v1",
       "roster_id": "13",
-      "score": -317.3227716311657,
-      "detail": "-317 average value edge per trade across 23 trades",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": -247.76252950876923,
+      "detail": "-248 average value edge per trade across 23 trades",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "trade-average:trade-adjusted-v1",
@@ -8167,9 +8167,9 @@
     {
       "award_key": "trade-average:trade-adjusted-v1",
       "roster_id": "15",
-      "score": -1088.3884530783025,
-      "detail": "-1,088 average value edge per trade across 25 trades",
-      "captured_at": "2026-11-26T03:13:46.712Z"
+      "score": -1047.7394158131306,
+      "detail": "-1,048 average value edge per trade across 25 trades",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "trade-average:trade-adjusted-v1",
@@ -8195,9 +8195,9 @@
     {
       "award_key": "trade-average:trade-adjusted-v1",
       "roster_id": "19",
-      "score": -101.71106626944712,
-      "detail": "-102 average value edge per trade across 11 trades",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": -74.83665740672218,
+      "detail": "-75 average value edge per trade across 11 trades",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "trade-average:trade-adjusted-v1",
@@ -8230,9 +8230,9 @@
     {
       "award_key": "trade-average:trade-adjusted-v1",
       "roster_id": "25",
-      "score": -851.4385555597656,
-      "detail": "-851 average value edge per trade across 7 trades",
-      "captured_at": "2026-11-25T23:39:30.665Z"
+      "score": -823.747731710728,
+      "detail": "-824 average value edge per trade across 7 trades",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "trade-average:trade-adjusted-v1",
@@ -8251,16 +8251,16 @@
     {
       "award_key": "trade-average:trade-adjusted-v1",
       "roster_id": "28",
-      "score": 389.9166666666667,
-      "detail": "+390 average value edge per trade across 3 trades",
-      "captured_at": "2026-11-27T10:55:24.430Z"
+      "score": 443.5833333333333,
+      "detail": "+444 average value edge per trade across 3 trades",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "trade-average:trade-adjusted-v1",
       "roster_id": "29",
-      "score": -1155.7819737422042,
-      "detail": "-1,156 average value edge per trade across 2 trades",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": -1030.9254831035119,
+      "detail": "-1,031 average value edge per trade across 2 trades",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "trade-average:trade-adjusted-v1",
@@ -8517,9 +8517,9 @@
     {
       "award_key": "volume-wins:trade-adjusted-v1",
       "roster_id": "2",
-      "score": 3511340.464073506,
-      "detail": "35 wins • +11,340 edge",
-      "captured_at": "2026-11-25T14:31:33.829Z"
+      "score": 3513085.2143867174,
+      "detail": "35 wins • +13,085 edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "volume-wins:trade-adjusted-v1",
@@ -8538,9 +8538,9 @@
     {
       "award_key": "volume-wins:trade-adjusted-v1",
       "roster_id": "5",
-      "score": 1178834.7405155685,
-      "detail": "12 wins • -21,165 edge",
-      "captured_at": "2026-11-25T20:13:36.289Z"
+      "score": 1180326.119074166,
+      "detail": "12 wins • -19,674 edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "volume-wins:trade-adjusted-v1",
@@ -8566,9 +8566,9 @@
     {
       "award_key": "volume-wins:trade-adjusted-v1",
       "roster_id": "9",
-      "score": 513058.28840905166,
-      "detail": "5 wins • +13,058 edge",
-      "captured_at": "2026-11-27T02:13:16.587Z"
+      "score": 513971.51372898725,
+      "detail": "5 wins • +13,972 edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "volume-wins:trade-adjusted-v1",
@@ -8587,16 +8587,16 @@
     {
       "award_key": "volume-wins:trade-adjusted-v1",
       "roster_id": "12",
-      "score": 697065.9375855614,
-      "detail": "7 wins • -2,934 edge",
-      "captured_at": "2026-11-25T10:32:09.831Z"
+      "score": 697301.0668469296,
+      "detail": "7 wins • -2,699 edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "volume-wins:trade-adjusted-v1",
       "roster_id": "13",
-      "score": 1292701.5762524833,
-      "detail": "13 wins • -7,298 edge",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": 1294301.4618212983,
+      "detail": "13 wins • -5,699 edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "volume-wins:trade-adjusted-v1",
@@ -8608,16 +8608,16 @@
     {
       "award_key": "volume-wins:trade-adjusted-v1",
       "roster_id": "15",
-      "score": 672775.703313149,
-      "detail": "7 wins • -27,224 edge",
-      "captured_at": "2026-11-27T10:55:24.430Z"
+      "score": 673806.5146046717,
+      "detail": "7 wins • -26,193 edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "volume-wins:trade-adjusted-v1",
       "roster_id": "16",
-      "score": 618681.5537691045,
-      "detail": "6 wins • +18,682 edge",
-      "captured_at": "2026-11-26T19:03:12.866Z"
+      "score": 717554.488438553,
+      "detail": "7 wins • +17,554 edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "volume-wins:trade-adjusted-v1",
@@ -8636,9 +8636,9 @@
     {
       "award_key": "volume-wins:trade-adjusted-v1",
       "roster_id": "19",
-      "score": 698881.1782710361,
-      "detail": "7 wins • -1,119 edge",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": 699176.7967685261,
+      "detail": "7 wins • -823 edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "volume-wins:trade-adjusted-v1",
@@ -8657,9 +8657,9 @@
     {
       "award_key": "volume-wins:trade-adjusted-v1",
       "roster_id": "22",
-      "score": 4217868.73294346,
-      "detail": "42 wins • +17,869 edge",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": 4316256.813881155,
+      "detail": "43 wins • +16,257 edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "volume-wins:trade-adjusted-v1",
@@ -8678,9 +8678,9 @@
     {
       "award_key": "volume-wins:trade-adjusted-v1",
       "roster_id": "25",
-      "score": 194039.93011108163,
-      "detail": "2 wins • -5,960 edge",
-      "captured_at": "2026-11-25T23:39:30.665Z"
+      "score": 194233.76587802492,
+      "detail": "2 wins • -5,766 edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "volume-wins:trade-adjusted-v1",
@@ -8699,16 +8699,16 @@
     {
       "award_key": "volume-wins:trade-adjusted-v1",
       "roster_id": "28",
-      "score": 101169.75,
-      "detail": "1 wins • +1,170 edge",
-      "captured_at": "2026-11-27T10:55:24.430Z"
+      "score": 101330.75,
+      "detail": "1 wins • +1,331 edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "volume-wins:trade-adjusted-v1",
       "roster_id": "29",
-      "score": -2311.5639474844083,
-      "detail": "0 wins • -2,312 edge",
-      "captured_at": "2026-11-27T14:24:54.469Z"
+      "score": -2061.8509662070237,
+      "detail": "0 wins • -2,062 edge",
+      "captured_at": "2026-11-27T22:02:07.632Z"
     },
     {
       "award_key": "volume-wins:trade-adjusted-v1",

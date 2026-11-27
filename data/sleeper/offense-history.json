@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-11-27T08:25:13.888Z",
+  "generatedAt": "2026-11-27T18:56:46.851Z",
   "source": "Sleeper importer snapshot",
   "currentSeason": 2026,
   "completedWeek": 11,
@@ -1956,8 +1956,8 @@
     },
     "diagnostics": {
       "finalGames": 167,
-      "qualifiedPlayerGames": 10861,
-      "rejectedPlayerGames": 12895,
+      "qualifiedPlayerGames": 10985,
+      "rejectedPlayerGames": 12770,
       "ignoredGames": 0
     }
   },
@@ -49146,9 +49146,9 @@
   "pprMethod": "Sleeper raw weekly stats aggregated with native pts_ppr when supplied; otherwise deterministic standard-PPR reconstruction from Sleeper raw stat fields.",
   "seasonDiagnostics": {
     "2023": {
-      "players": 886,
-      "withPpr": 733,
-      "withGames": 886
+      "players": 885,
+      "withPpr": 732,
+      "withGames": 885
     },
     "2024": {
       "players": 959,
@@ -49156,9 +49156,9 @@
       "withGames": 959
     },
     "2025": {
-      "players": 1054,
-      "withPpr": 566,
-      "withGames": 1054
+      "players": 1053,
+      "withPpr": 565,
+      "withGames": 1053
     },
     "2026": {
       "players": 1601,
@@ -62211,23 +62211,6 @@
         "rec_yd": 103,
         "rush_td_40p": 1,
         "bonus_fd_rb": 14
-      },
-      "11210": {
-        "pts_ppr": 30.999999999999996,
-        "gp": 9,
-        "off_snp": 229,
-        "rec_tgt": 20,
-        "rec_0_4": 4,
-        "rec_td": 1,
-        "bonus_fd_wr": 4,
-        "rec": 14,
-        "rec_fd": 4,
-        "kr_yd": 1,
-        "st_tkl_solo": 2,
-        "rec_5_9": 5,
-        "bonus_rec_wr": 14,
-        "rec_10_19": 5,
-        "rec_yd": 110
       },
       "11292": {
         "pts_ppr": 95.98,
@@ -92250,21 +92233,6 @@
         "rec_10_19": 1,
         "fum": 1,
         "rec_yd": 85
-      },
-      "11210": {
-        "pts_ppr": 14.6,
-        "gp": 9,
-        "off_snp": 190,
-        "rec_tgt": 6,
-        "rec_30_39": 1,
-        "bonus_fd_wr": 4,
-        "rec": 6,
-        "rec_fd": 4,
-        "st_tkl_solo": 1,
-        "rec_5_9": 3,
-        "bonus_rec_wr": 6,
-        "rec_10_19": 2,
-        "rec_yd": 86
       },
       "11233": {
         "gp": 14,

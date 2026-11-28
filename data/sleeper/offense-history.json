@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-11-28T01:57:38.518Z",
+  "generatedAt": "2026-11-28T10:22:30.000Z",
   "source": "Sleeper importer snapshot",
   "currentSeason": 2026,
   "completedWeek": 11,
@@ -390,8 +390,6 @@
         "CIN"
       ],
       "12": [
-        "PIT",
-        "DEN",
         "LAR",
         "GB",
         "DET",
@@ -399,7 +397,9 @@
         "DAL",
         "PHI",
         "BUF",
-        "KC"
+        "KC",
+        "PIT",
+        "DEN"
       ]
     },
     "weekFinalityByWeek": {
@@ -1826,14 +1826,6 @@
         "nullSlots": [],
         "slots": [
           {
-            "id": "401873083",
-            "state": "final",
-            "teams": [
-              "PIT",
-              "DEN"
-            ]
-          },
-          {
             "id": "401873079",
             "state": "final",
             "teams": [
@@ -1863,6 +1855,14 @@
             "teams": [
               "BUF",
               "KC"
+            ]
+          },
+          {
+            "id": "401873083",
+            "state": "final",
+            "teams": [
+              "PIT",
+              "DEN"
             ]
           },
           {

@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generatedAt": "2026-11-27T18:56:46.851Z",
+  "generatedAt": "2026-11-28T01:57:38.518Z",
   "source": "Sleeper public API",
   "currentLeagueId": "1316867686394769408",
   "currentSeason": 2026,
@@ -581,6 +581,8 @@
         "CIN"
       ],
       "12": [
+        "PIT",
+        "DEN",
         "LAR",
         "GB",
         "DET",
@@ -2008,15 +2010,15 @@
       },
       "12": {
         "scheduledGames": 16,
-        "finalGames": 4,
+        "finalGames": 5,
         "ignoredGames": 0,
-        "blockingGames": 12,
+        "blockingGames": 11,
         "complete": false,
         "nullSlots": [],
         "slots": [
           {
             "id": "401873083",
-            "state": "blocking",
+            "state": "final",
             "teams": [
               "PIT",
               "DEN"
@@ -2146,9 +2148,9 @@
       }
     },
     "diagnostics": {
-      "finalGames": 167,
-      "qualifiedPlayerGames": 10985,
-      "rejectedPlayerGames": 12770,
+      "finalGames": 168,
+      "qualifiedPlayerGames": 11006,
+      "rejectedPlayerGames": 12894,
       "ignoredGames": 0
     }
   },
